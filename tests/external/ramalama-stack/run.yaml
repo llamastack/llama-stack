@@ -1,12 +1,20 @@
 version: 2
-distro_name: ramalama
+distro_name: external-provider-test
 apis:
 - inference
+- eval
 providers:
   inference:
-  - provider_id: ramalama
-    provider_type: remote::ramalama
-    module: ramalama_stack==0.3.0a0
-    config: {}
+  - provider_id: ollama
+    provider_type: remote::ollama
+    config:
+      base_url: ${env.OLLAMA_URL:=http://localhost:11434}
+  eval:
+  - provider_id: trustyai_lmeval
+    provider_type: remote::trustyai_lmeval
+    module: llama_stack_provider_lmeval
+    config:
+      use_k8s: false
+      base_url: ${env.OLLAMA_URL:=http://localhost:11434}
 server:
   port: 8321

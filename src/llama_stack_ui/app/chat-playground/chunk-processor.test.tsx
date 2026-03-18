@@ -10,6 +10,7 @@ function createProcessChunk() {
       return (
         content.includes('"type": "function"') ||
         content.includes('"name": "knowledge_search"') ||
+        content.includes('"name": "file_search"') ||
         content.includes('"parameters":') ||
         !!content.match(/\{"type":\s*"function".*?\}/)
       );
@@ -446,7 +447,7 @@ describe("Chunk Processor", () => {
   describe("Function Call Detection", () => {
     test("detects function calls in direct string chunks", () => {
       const chunk =
-        '{"type": "function", "name": "knowledge_search", "parameters": {"query": "test"}}';
+        '{"type": "function", "name": "file_search", "parameters": {"query": "test"}}';
       const result = processChunk(chunk);
       expect(result.isToolCall).toBe(true);
       expect(result.text).toBe(null);
@@ -457,7 +458,7 @@ describe("Chunk Processor", () => {
         event: {
           payload: {
             content:
-              '{"type": "function", "name": "knowledge_search", "parameters": {"query": "test"}}',
+              '{"type": "function", "name": "file_search", "parameters": {"query": "test"}}',
           },
         },
       };
@@ -469,7 +470,7 @@ describe("Chunk Processor", () => {
     test("detects tool_calls in delta structure", () => {
       const chunk = {
         delta: {
-          tool_calls: [{ function: { name: "knowledge_search" } }],
+          tool_calls: [{ function: { name: "file_search" } }],
         },
       };
       const result = processChunk(chunk);
@@ -479,7 +480,7 @@ describe("Chunk Processor", () => {
 
     test("detects function call in mixed content but skips it", () => {
       const chunk =
-        '{"type": "function", "name": "knowledge_search", "parameters": {"query": "test"}} Based on the search results, here is your answer.';
+        '{"type": "function", "name": "file_search", "parameters": {"query": "test"}} Based on the search results, here is your answer.';
       const result = processChunk(chunk);
       // This is detected as a tool call and skipped entirely - the implementation prioritizes safety
       expect(result.isToolCall).toBe(true);
@@ -601,7 +602,7 @@ describe("Chunk Processor", () => {
 
     test("handles malformed JSON in function calls gracefully", () => {
       const chunk =
-        '{"type": "function", "name": "knowledge_search"} incomplete json';
+        '{"type": "function", "name": "file_search"} incomplete json';
       const result = processChunk(chunk);
       expect(result.isToolCall).toBe(true);
       expect(result.text).toBe(null);

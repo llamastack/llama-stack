@@ -154,6 +154,9 @@ set -e
 CMD_PREFIX=""
 if env | grep -q '^OTEL_'; then
   CMD_PREFIX="opentelemetry-instrument"
+  # Disable low-level DB driver instrumentation to prevent duplicate spans
+  # when SQLAlchemy ORM instrumentation is also active (known OTel issue).
+  export OTEL_PYTHON_DISABLED_INSTRUMENTATIONS="${OTEL_PYTHON_DISABLED_INSTRUMENTATIONS:+$OTEL_PYTHON_DISABLED_INSTRUMENTATIONS,}asyncpg,sqlite3"
 fi
 
 if [ -n "$RUN_CONFIG_PATH" ] && [ -f "$RUN_CONFIG_PATH" ]; then
