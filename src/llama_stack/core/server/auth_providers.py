@@ -167,14 +167,6 @@ class OAuth2TokenAuthProvider(AuthProvider):
             jwks_client: jwt.PyJWKClient = self._get_jwks_client()
             signing_key = jwks_client.get_signing_key_from_jwt(token)
             algorithm = jwt.get_unverified_header(token)["alg"]
-            claims = jwt.decode(
-                token,
-                signing_key.key,
-                algorithms=[algorithm],
-                audience=self.config.audience,
-                issuer=self.config.issuer,
-                options={"verify_exp": True, "verify_aud": True, "verify_iss": True},
-            )
 
             # Decode and verify the JWT
             claims = jwt.decode(
