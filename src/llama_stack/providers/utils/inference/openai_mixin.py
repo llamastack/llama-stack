@@ -27,6 +27,7 @@ from llama_stack.providers.utils.inference.openai_compat import (
     prepare_openai_completion_params,
 )
 from llama_stack.providers.utils.inference.prompt_adapter import localize_image_content
+from llama_stack.providers.utils.inference.stream_utils import _normalize_tool_call_arguments
 from llama_stack_api import (
     Model,
     ModelType,
@@ -306,6 +307,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
             async def _gen():
                 async for chunk in resp:
+                    _normalize_tool_call_arguments(chunk)
                     if new_id:
                         chunk.id = new_id
                     yield chunk
