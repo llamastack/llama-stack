@@ -6,7 +6,7 @@ tags: [responses-api, agents, rag, mcp, open-responses]
 date: 2026-03-18
 ---
 
-The Responses API is rapidly emerging as one of the most influential interfaces for building AI agents. It handles multi-step reasoning, tool orchestration, and conversational state in a single interaction, which is a big improvement over the manual orchestration loops that developers had to build on top of chat completion APIs. Llama Stack's implementation of the Responses API brings these capabilities to the open source world, where you can choose your own models and run on your own infrastructure.
+The [Responses API](https://developers.openai.com/blog/responses-api) is rapidly emerging as one of the most influential interfaces for building AI agents. It handles multi-step reasoning, tool orchestration, and conversational state in a single interaction, which is a big improvement over the manual orchestration loops that developers had to build on top of chat completion APIs. Llama Stack's implementation of the Responses API brings these capabilities to the open source world, where you can choose your own models and run on your own infrastructure.
 
 This post covers why the Responses API matters, what Llama Stack's implementation enables, and how it connects to the broader move toward open agent standards like Open Responses.
 
