@@ -14,8 +14,8 @@ def test_add_dependent_providers_expands_required_apis():
     provider_list = {
         "agents": [
             Provider(
-                provider_type="inline::meta-reference",
-                provider_id="meta-reference",
+                provider_type="inline::builtin",
+                provider_id="builtin",
             )
         ]
     }
@@ -23,7 +23,7 @@ def test_add_dependent_providers_expands_required_apis():
     add_dependent_providers(
         provider_list=provider_list,
         provider_registry=provider_registry,
-        requested_provider_types=["inline::meta-reference"],
+        requested_provider_types=["inline::builtin"],
     )
 
     # Required API dependencies for agents should be present.
@@ -44,8 +44,8 @@ def test_add_dependent_providers_include_configs():
     provider_list = {
         "agents": [
             Provider(
-                provider_type="inline::meta-reference",
-                provider_id="meta-reference",
+                provider_type="inline::builtin",
+                provider_id="builtin",
             )
         ]
     }
@@ -53,7 +53,7 @@ def test_add_dependent_providers_include_configs():
     add_dependent_providers(
         provider_list=provider_list,
         provider_registry=provider_registry,
-        requested_provider_types=["inline::meta-reference"],
+        requested_provider_types=["inline::builtin"],
         include_configs=True,
         distro_dir="~/.llama/distributions/providers-run",
     )
