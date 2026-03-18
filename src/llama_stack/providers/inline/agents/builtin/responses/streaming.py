@@ -114,7 +114,7 @@ tracer = trace.get_tracer(__name__)
 
 # Built-in tool names that the server knows how to execute itself.
 # Anything else is either a registered function tool (client-side) or a hallucinated name.
-_SERVER_SIDE_BUILTIN_TOOL_NAMES = frozenset({"web_search", "knowledge_search"})
+_SERVER_SIDE_BUILTIN_TOOL_NAMES = frozenset({"web_search", "knowledge_search", "file_search"})
 
 # Maps OpenAI Chat Completions error codes to Responses API error codes
 _RESPONSES_API_ERROR_CODES = {
@@ -1298,7 +1298,7 @@ class StreamingResponseOrchestrator:
                     id=matching_item_id,
                     status="in_progress",
                 )
-            elif tool_call.function.name == "knowledge_search":
+            elif tool_call.function.name in ("knowledge_search", "file_search"):
                 item = OpenAIResponseOutputMessageFileSearchToolCall(
                     id=matching_item_id,
                     status="in_progress",
@@ -1416,11 +1416,22 @@ class StreamingResponseOrchestrator:
                     raise ValueError(f"Tool {tool_name} not found")
                 self.ctx.chat_tools.append(make_openai_tool(tool_name, tool))
             elif input_tool.type == "file_search":
-                tool_name = "knowledge_search"
-                tool = await self.tool_executor.tool_groups_api.get_tool(tool_name)
-                if not tool:
-                    raise ValueError(f"Tool {tool_name} not found")
-                self.ctx.chat_tools.append(make_openai_tool(tool_name, tool))
+                tool_name = "file_search"
+                file_search_tool_def = ToolDef(
+                    name=tool_name,
+                    description="Search files for relevant information",
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "The search query",
+                            },
+                        },
+                        "required": ["query"],
+                    },
+                )
+                self.ctx.chat_tools.append(make_openai_tool(tool_name, file_search_tool_def))
             elif input_tool.type == "mcp":
                 async for stream_event in self._process_mcp_tool(input_tool, output_messages):
                     yield stream_event
