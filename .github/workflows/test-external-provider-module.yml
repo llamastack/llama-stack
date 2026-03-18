@@ -52,8 +52,14 @@ jobs:
 
       - name: Verify external provider is loaded
         run: |
-          curl -s http://localhost:8321/v1/providers | python3 -m json.tool
-          echo "External provider loaded successfully"
+          response=$(curl -s http://localhost:8321/v1/providers)
+          echo "$response" | python3 -m json.tool
+          if echo "$response" | grep -q "trustyai_lmeval"; then
+            echo "lmeval external provider loaded successfully"
+          else
+            echo "ERROR: lmeval provider not found in providers list"
+            exit 1
+          fi
 
       - name: Upload all logs to artifacts
         if: ${{ always() }}
