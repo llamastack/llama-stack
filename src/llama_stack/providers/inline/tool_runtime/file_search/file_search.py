@@ -43,7 +43,7 @@ from llama_stack_api import (
     VectorStoreChunkingStrategyStaticConfig,
 )
 
-from .config import RagToolRuntimeConfig
+from .config import FileSearchToolRuntimeConfig
 from .context_retriever import generate_rag_query
 
 log = get_logger(name=__name__, category="tool_runtime")
@@ -95,10 +95,10 @@ async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
             return content_str.encode("utf-8"), "text/plain"
 
 
-class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
+class FileSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
     def __init__(
         self,
-        config: RagToolRuntimeConfig,
+        config: FileSearchToolRuntimeConfig,
         vector_io_api: VectorIO,
         inference_api: Inference,
         files_api: Files,

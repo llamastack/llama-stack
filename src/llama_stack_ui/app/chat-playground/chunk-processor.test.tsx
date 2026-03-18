@@ -9,7 +9,6 @@ function createProcessChunk() {
     const containsToolCall = (content: string): boolean => {
       return (
         content.includes('"type": "function"') ||
-        content.includes('"name": "knowledge_search"') ||
         content.includes('"name": "file_search"') ||
         content.includes('"parameters":') ||
         !!content.match(/\{"type":\s*"function".*?\}/)
