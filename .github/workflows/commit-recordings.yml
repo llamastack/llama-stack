@@ -102,7 +102,7 @@ jobs:
             core.setOutput('head_repo', headRepo);
             core.setOutput('head_ref', headRef);
             core.setOutput('head_sha', headSha);
-            core.setOutput('is_fork_pr', headRepo !== context.repo.repository);
+            core.setOutput('is_fork_pr', headRepo !== `${context.repo.owner}/${context.repo.repo}`);
 
       - name: Checkout PR branch
         if: steps.pr-info.outputs.skip != 'true'
