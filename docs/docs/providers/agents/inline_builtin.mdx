@@ -41,11 +41,11 @@ Meta's reference implementation of an agent system that can use tools, access ve
 Improved query: | Prompt template for query rewriting. Use &#123;query&#125; as placeholder for the original query. |
 | `vector_stores_config.rewrite_query_params.max_tokens` | `int` | No | 100 | Maximum number of tokens for query expansion responses. |
 | `vector_stores_config.rewrite_query_params.temperature` | `float` | No | 0.3 | Temperature for query expansion model (0.0 = deterministic, 1.0 = creative). |
-| `vector_stores_config.file_search_params` | `FileSearchParams` | No | header_template='knowledge_search tool found &#123;num_chunks&#125; chunks:\nBEGIN of knowledge_search tool results.\n' footer_template='END of knowledge_search tool results.\n' | Configuration for file search tool output formatting. |
-| `vector_stores_config.file_search_params.header_template` | `str` | No | knowledge_search tool found &#123;num_chunks&#125; chunks:
-BEGIN of knowledge_search tool results.
+| `vector_stores_config.file_search_params` | `FileSearchParams` | No | header_template='file_search tool found &#123;num_chunks&#125; chunks:\nBEGIN of file_search tool results.\n' footer_template='END of file_search tool results.\n' | Configuration for file search tool output formatting. |
+| `vector_stores_config.file_search_params.header_template` | `str` | No | file_search tool found &#123;num_chunks&#125; chunks:
+BEGIN of file_search tool results.
  | Template for the header text shown before search results. Available placeholders: &#123;num_chunks&#125; number of chunks found. |
-| `vector_stores_config.file_search_params.footer_template` | `str` | No | END of knowledge_search tool results.
+| `vector_stores_config.file_search_params.footer_template` | `str` | No | END of file_search tool results.
  | Template for the footer text shown after search results. |
 | `vector_stores_config.context_prompt_params` | `ContextPromptParams` | No | chunk_annotation_template='Result &#123;index&#125;\nContent: &#123;chunk.content&#125;\nMetadata: &#123;metadata&#125;\n' context_template='The above results were retrieved to help answer the user\'s query: "&#123;query&#125;". Use them as supporting information only in answering this query. &#123;annotation_instruction&#125;\n' | Configuration for LLM prompt content and chunk formatting. |
 | `vector_stores_config.context_prompt_params.chunk_annotation_template` | `str` | No | Result &#123;index&#125;

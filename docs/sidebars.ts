@@ -178,7 +178,7 @@ const sidebars: SidebarsConfig = {
           collapsed: true,
           items: [
             'providers/tool_runtime/index',
-            'providers/tool_runtime/inline_rag-runtime',
+            'providers/tool_runtime/inline_file-search',
             'providers/tool_runtime/remote_bing-search',
             'providers/tool_runtime/remote_brave-search',
             'providers/tool_runtime/remote_model-context-protocol',

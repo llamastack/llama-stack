@@ -237,10 +237,12 @@ docker network rm llama-telemetry
 
 ## Known Issues
 
-Some database instrumentation libraries have a known bug where spans get wrapped twice or do not get connected to a trace. To prevent this, disable database-specific tracing:
+When OpenTelemetry auto-instrumentation is enabled, both the low-level database driver instrumentor
+(e.g. `asyncpg`, `sqlite3`) and the SQLAlchemy ORM instrumentor activate simultaneously. This causes
+duplicate spans and inflated traces. To prevent this, disable the driver-level instrumentors:
 
 ```bash
-export OTEL_PYTHON_DISABLED_INSTRUMENTATIONS="sqlite3"
+export OTEL_PYTHON_DISABLED_INSTRUMENTATIONS="sqlite3,asyncpg"
 ```
 
 ## References

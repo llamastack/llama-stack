@@ -130,6 +130,13 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "embedding_dimension": 1536,
         },
     ),
+    "gpt-reasoning": Setup(
+        name="gpt-reasoning",
+        description="OpenAI reasoning models (o4-mini) for reasoning effort tests",
+        defaults={
+            "text_model": "openai/o4-mini",
+        },
+    ),
     "azure": Setup(
         name="azure",
         description="Azure-hosted GPT models via the Azure OpenAI-compatible endpoint",
@@ -262,6 +269,14 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         name="vllm-reasoning",
         roots=["tests/integration/responses/test_reasoning.py"],
         default_setup="vllm",
+    ),
+    "gpt-reasoning": Suite(
+        name="gpt-reasoning",
+        roots=[
+            "tests/integration/responses/test_openai_responses.py::test_openai_response_reasoning_effort",
+            "tests/integration/responses/test_openai_responses.py::test_openai_response_reasoning_effort_streaming",
+        ],
+        default_setup="gpt-reasoning",
     ),
     "ollama-reasoning": Suite(
         name="ollama-reasoning",

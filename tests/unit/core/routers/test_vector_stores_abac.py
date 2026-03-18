@@ -48,6 +48,9 @@ class MockDistRegistry:
     def __init__(self):
         self.dist = None
 
+    def get_cached(self, type_name: str, identifier: str):
+        return None
+
 
 @pytest.fixture
 def mock_provider():

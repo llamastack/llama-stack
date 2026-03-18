@@ -139,17 +139,6 @@ def convert_finish_reason(
     return _GEMINI_TO_OPENAI_FINISH_REASON.get(reason_str, "stop")
 
 
-def convert_model_name(model: str) -> str:
-    """Ensure model ID is in the bare form expected by the Gemini API.
-
-    Strips ``google/`` or ``models/`` prefixes if present so callers can
-    pass either ``"gemini-2.5-flash"`` or ``"google/gemini-2.5-flash"``.
-    """
-    model = model.removeprefix("google/")
-    model = model.removeprefix("models/")
-    return model
-
-
 def convert_response_format(
     response_format: dict[str, Any] | None,
 ) -> dict[str, Any]:

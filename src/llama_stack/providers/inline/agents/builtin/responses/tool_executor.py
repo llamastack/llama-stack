@@ -123,12 +123,12 @@ class ToolExecutor:
             ),
         )
 
-    async def _execute_knowledge_search_via_vector_store(
+    async def _execute_file_search_via_vector_store(
         self,
         query: str,
         response_file_search_tool: OpenAIResponseInputToolFileSearch,
     ) -> ToolInvocationResult:
-        """Execute knowledge search using vector_stores.search API with filters support."""
+        """Execute file search using vector_stores.search API with filters support."""
         search_results = []
 
         # Create search tasks for all vector stores
@@ -275,7 +275,7 @@ class ToolExecutor:
                 ),
                 sequence_number=sequence_number,
             )
-        elif function_name == "knowledge_search":
+        elif function_name in ("knowledge_search", "file_search"):
             sequence_number += 1
             yield ToolExecutionResult(
                 stream_event=OpenAIResponseObjectStreamResponseFileSearchCallInProgress(
@@ -299,7 +299,7 @@ class ToolExecutor:
             )
 
         # For file search, emit searching event
-        if function_name == "knowledge_search":
+        if function_name in ("knowledge_search", "file_search"):
             sequence_number += 1
             yield ToolExecutionResult(
                 stream_event=OpenAIResponseObjectStreamResponseFileSearchCallSearching(
@@ -343,7 +343,7 @@ class ToolExecutor:
                         authorization=mcp_tool.authorization,
                         session_manager=self.mcp_session_manager,
                     )
-            elif function_name == "knowledge_search":
+            elif function_name in ("knowledge_search", "file_search"):
                 response_file_search_tool = (
                     next(
                         (t for t in ctx.response_tools if isinstance(t, OpenAIResponseInputToolFileSearch)),
@@ -353,11 +353,11 @@ class ToolExecutor:
                     else None
                 )
                 if response_file_search_tool:
-                    # Use vector_stores.search API instead of knowledge_search tool
+                    # Use vector_stores.search API instead of file_search tool
                     # to support filters and ranking_options
                     query = tool_kwargs.get("query", "")
-                    with tracer.start_as_current_span("knowledge_search"):
-                        result = await self._execute_knowledge_search_via_vector_store(
+                    with tracer.start_as_current_span(function_name):
+                        result = await self._execute_file_search_via_vector_store(
                             query=query,
                             response_file_search_tool=response_file_search_tool,
                         )
@@ -408,7 +408,7 @@ class ToolExecutor:
                 sequence_number=sequence_number,
             )
             yield ToolExecutionResult(stream_event=web_completion_event, sequence_number=sequence_number)
-        elif function_name == "knowledge_search":
+        elif function_name in ("knowledge_search", "file_search"):
             sequence_number += 1
             file_completion_event = OpenAIResponseObjectStreamResponseFileSearchCallCompleted(
                 item_id=item_id,
@@ -465,7 +465,7 @@ class ToolExecutor:
                 )
                 if has_error:
                     message.status = "failed"
-            elif function.name == "knowledge_search":
+            elif function.name in ("knowledge_search", "file_search"):
                 message = OpenAIResponseOutputMessageFileSearchToolCall(
                     id=item_id,
                     queries=[tool_kwargs.get("query", "")],

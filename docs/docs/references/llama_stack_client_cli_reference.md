@@ -333,7 +333,7 @@ llama-stack-client toolgroups list
 +---------------------------+------------------+------+---------------+
 | identifier                | provider_id      | args | mcp_endpoint  |
 +===========================+==================+======+===============+
-| builtin::rag              | rag-runtime      | None | None          |
+| builtin::file_search              | file-search      | None | None          |
 +---------------------------+------------------+------+---------------+
 | builtin::websearch        | tavily-search    | None | None          |
 +---------------------------+------------------+------+---------------+

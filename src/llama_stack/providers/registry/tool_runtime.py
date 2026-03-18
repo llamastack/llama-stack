@@ -18,6 +18,25 @@ def available_providers() -> list[ProviderSpec]:
     return [
         InlineProviderSpec(
             api=Api.tool_runtime,
+            provider_type="inline::file-search",
+            pip_packages=DEFAULT_VECTOR_IO_DEPS
+            + [
+                "tqdm",
+                "numpy",
+                "scikit-learn",
+                "scipy",
+                "nltk",
+                "sentencepiece",
+                "transformers",
+            ],
+            module="llama_stack.providers.inline.tool_runtime.file_search",
+            config_class="llama_stack.providers.inline.tool_runtime.file_search.config.FileSearchToolRuntimeConfig",
+            api_dependencies=[Api.vector_io, Api.inference, Api.files],
+            description="File search tool runtime for document ingestion, chunking, and semantic search.",
+        ),
+        # Deprecated alias for backward compatibility
+        InlineProviderSpec(
+            api=Api.tool_runtime,
             provider_type="inline::rag-runtime",
             pip_packages=DEFAULT_VECTOR_IO_DEPS
             + [
@@ -29,10 +48,11 @@ def available_providers() -> list[ProviderSpec]:
                 "sentencepiece",
                 "transformers",
             ],
-            module="llama_stack.providers.inline.tool_runtime.rag",
-            config_class="llama_stack.providers.inline.tool_runtime.rag.config.RagToolRuntimeConfig",
+            module="llama_stack.providers.inline.tool_runtime.file_search",
+            config_class="llama_stack.providers.inline.tool_runtime.file_search.config.FileSearchToolRuntimeConfig",
             api_dependencies=[Api.vector_io, Api.inference, Api.files],
-            description="RAG (Retrieval-Augmented Generation) tool runtime for document ingestion, chunking, and semantic search.",
+            description="Deprecated: Use inline::file-search instead.",
+            deprecation_warning="Please use the `inline::file-search` provider instead.",
         ),
         RemoteProviderSpec(
             api=Api.tool_runtime,

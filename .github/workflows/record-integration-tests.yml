@@ -65,6 +65,9 @@ jobs:
           OPENAI_API_KEY: ${{ inputs.test-setup == 'gpt' && secrets.OPENAI_API_KEY || '' }}
           AZURE_API_KEY: ${{ inputs.test-setup == 'azure' && secrets.AZURE_API_KEY || '' }}
           AZURE_API_BASE: ${{ inputs.test-setup == 'azure' && secrets.AZURE_API_BASE || '' }}
+          WATSONX_API_KEY: ${{ inputs.test-setup == 'watsonx' && secrets.WATSONX_API_KEY || '' }}
+          WATSONX_BASE_URL: ${{ inputs.test-setup == 'watsonx' && secrets.WATSONX_BASE_URL || '' }}
+          WATSONX_PROJECT_ID: ${{ inputs.test-setup == 'watsonx' && secrets.WATSONX_PROJECT_ID || '' }}
           TAVILY_SEARCH_API_KEY: ${{ contains(fromJSON('["gpt","azure"]'), inputs.test-setup) && secrets.TAVILY_SEARCH_API_KEY || '' }}
         with:
           stack-config: 'server:ci-tests'  # recording must be done with server since more tests are run
