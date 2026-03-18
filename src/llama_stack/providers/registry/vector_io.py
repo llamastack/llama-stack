@@ -948,7 +948,7 @@ for more details about Oracle 26ai in general.
             api=Api.vector_io,
             adapter_type="infinispan",
             provider_type="remote::infinispan",
-            pip_packages=["httpx>=0.27.0"] + DEFAULT_VECTOR_IO_DEPS,
+            pip_packages=DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.remote.vector_io.infinispan",
             config_class="llama_stack.providers.remote.vector_io.infinispan.InfinispanVectorIOConfig",
             api_dependencies=[Api.inference],
@@ -975,14 +975,6 @@ search and full-text search capabilities.
 - **Vector Search** (`mode="vector"`): Performs vector similarity search using embeddings
 - **Keyword Search** (`mode="keyword"`): Full-text search using Infinispan Query DSL/Ickle
 - **Hybrid Search** (`mode="hybrid"`): Combines vector and keyword search with configurable reranking
-
-## Installation
-
-You can install the required dependencies using pip:
-
-```bash
-pip install httpx
-```
 
 ## Configuration
 
@@ -1014,7 +1006,7 @@ vector_io:
       password: "password"
       use_https: true
       auth_mechanism: "basic"
-      verify_ssl: true
+      verify_tls: true
       persistence:
         backend: "kv_default"
         namespace: "vector_io::infinispan"
@@ -1069,7 +1061,6 @@ Set the `auth_mechanism` parameter to either `"digest"` or `"basic"`.
 ## Requirements
 
 - Infinispan Server 16.0+ (with vector search support)
-- httpx >= 0.27.0
 """,
         ),
     ]

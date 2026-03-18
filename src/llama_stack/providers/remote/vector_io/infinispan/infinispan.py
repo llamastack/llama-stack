@@ -581,21 +581,21 @@ class InfinispanVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPr
                     auth = httpx.BasicAuth(username=self.config.username, password=password)
 
         # Create async HTTP client
-        verify_ssl = self.config.verify_ssl if self.config.use_https else False
+        verify_tls = self.config.verify_tls if self.config.use_https else False
         self.client = httpx.AsyncClient(
             auth=auth,
-            verify=verify_ssl,
+            verify=verify_tls,
             timeout=30.0,
         )
 
-        if self.config.use_https and not self.config.verify_ssl:
+        if self.config.use_https and not self.config.verify_tls:
             log.warning(
-                "SSL certificate verification is disabled. "
+                "TLS certificate verification is disabled. "
                 "This should only be used for development/testing with self-signed certificates. "
                 "DO NOT use in production environments."
             )
 
-        log.info(f"Connected to Infinispan server at: {self.config.url}")
+        log.info(f"Connected to Infinispan server at: {str(self.config.url)}")
 
         # Load existing vector stores from KVStore
         await self._load_vector_stores_from_kvstore()
@@ -638,7 +638,7 @@ class InfinispanVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPr
                     index = InfinispanIndex(
                         client=self.client,
                         cache_name=vector_store.identifier,
-                        base_url=self.config.url,
+                        base_url=str(self.config.url),
                         embedding_dimension=vector_store.embedding_dimension,
                         kvstore=self.kvstore,
                     )
@@ -688,7 +688,7 @@ class InfinispanVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPr
         index = InfinispanIndex(
             client=self.client,
             cache_name=vector_store.identifier,
-            base_url=self.config.url,
+            base_url=str(self.config.url),
             embedding_dimension=vector_store.embedding_dimension,
             kvstore=self.kvstore,
         )
@@ -805,7 +805,7 @@ class InfinispanVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPr
         index = InfinispanIndex(
             client=self.client,
             cache_name=vector_store_id,
-            base_url=self.config.url,
+            base_url=str(self.config.url),
             embedding_dimension=vector_store.embedding_dimension,
             kvstore=self.kvstore,
         )

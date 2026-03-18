@@ -22,14 +22,6 @@ description: |
   - **Keyword Search** (`mode="keyword"`): Full-text search using Infinispan Query DSL/Ickle
   - **Hybrid Search** (`mode="hybrid"`): Combines vector and keyword search with configurable reranking
 
-  ## Installation
-
-  You can install the required dependencies using pip:
-
-  ```bash
-  pip install httpx
-  ```
-
   ## Configuration
 
   ### Basic Configuration (HTTP)
@@ -60,7 +52,7 @@ description: |
         password: "password"
         use_https: true
         auth_mechanism: "basic"
-        verify_ssl: true
+        verify_tls: true
         persistence:
           backend: "kv_default"
           namespace: "vector_io::infinispan"
@@ -115,7 +107,6 @@ description: |
   ## Requirements
 
   - Infinispan Server 16.0+ (with vector search support)
-  - httpx >= 0.27.0
 sidebar_label: Remote - Infinispan
 title: remote::infinispan
 ---
@@ -147,14 +138,6 @@ search and full-text search capabilities.
 - **Keyword Search** (`mode="keyword"`): Full-text search using Infinispan Query DSL/Ickle
 - **Hybrid Search** (`mode="hybrid"`): Combines vector and keyword search with configurable reranking
 
-## Installation
-
-You can install the required dependencies using pip:
-
-```bash
-pip install httpx
-```
-
 ## Configuration
 
 ### Basic Configuration (HTTP)
@@ -185,7 +168,7 @@ vector_io:
       password: "password"
       use_https: true
       auth_mechanism: "basic"
-      verify_ssl: true
+      verify_tls: true
       persistence:
         backend: "kv_default"
         namespace: "vector_io::infinispan"
@@ -240,19 +223,18 @@ Set the `auth_mechanism` parameter to either `"digest"` or `"basic"`.
 ## Requirements
 
 - Infinispan Server 16.0+ (with vector search support)
-- httpx >= 0.27.0
 
 
 ## Configuration
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `url` | `str` | No | http://localhost:11222 | Infinispan server URL (e.g., http://localhost:11222) |
+| `url` | `HttpUrl` | No | http://localhost:11222/ | Infinispan server URL (e.g., http://localhost:11222) |
 | `username` | `str \| None` | No |  | Authentication username |
 | `password` | `SecretStr \| None` | No |  | Authentication password |
 | `use_https` | `bool` | No | False | Enable HTTPS/TLS connection |
 | `auth_mechanism` | `str` | No | digest | Authentication mechanism: 'digest' or 'basic' |
-| `verify_ssl` | `bool` | No | True | Verify SSL certificates for HTTPS connections (set to False only for development/testing with self-signed certificates) |
+| `verify_tls` | `bool` | No | True | Verify TLS certificates for HTTPS connections (set to False only for development/testing with self-signed certificates) |
 | `persistence` | `KVStoreReference` | No |  | Config for KV store backend |
 | `persistence.namespace` | `str` | No |  | Key prefix for KVStore backends |
 | `persistence.backend` | `str` | No |  | Name of backend from storage.backends |
@@ -265,7 +247,7 @@ username: ${env.INFINISPAN_USERNAME:=admin}
 password: ${env.INFINISPAN_PASSWORD:=}
 use_https: false
 auth_mechanism: digest
-verify_ssl: true
+verify_tls: true
 persistence:
   namespace: vector_io::infinispan
   backend: kv_default

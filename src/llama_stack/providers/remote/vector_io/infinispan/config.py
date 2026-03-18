@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field, HttpUrl, SecretStr
 
 from llama_stack.core.storage.datatypes import KVStoreReference
 from llama_stack_api import json_schema_type
@@ -14,16 +14,16 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class InfinispanVectorIOConfig(BaseModel):
-    url: str = Field(
-        default="http://localhost:11222", description="Infinispan server URL (e.g., http://localhost:11222)"
+    url: HttpUrl = Field(
+        default=HttpUrl("http://localhost:11222"), description="Infinispan server URL (e.g., http://localhost:11222)"
     )
     username: str | None = Field(default=None, description="Authentication username")
     password: SecretStr | None = Field(default=None, description="Authentication password")
     use_https: bool = Field(default=False, description="Enable HTTPS/TLS connection")
     auth_mechanism: str = Field(default="digest", description="Authentication mechanism: 'digest' or 'basic'")
-    verify_ssl: bool = Field(
+    verify_tls: bool = Field(
         default=True,
-        description="Verify SSL certificates for HTTPS connections (set to False only for development/testing with self-signed certificates)",
+        description="Verify TLS certificates for HTTPS connections (set to False only for development/testing with self-signed certificates)",
     )
     persistence: KVStoreReference = Field(description="Config for KV store backend")
 
@@ -35,7 +35,7 @@ class InfinispanVectorIOConfig(BaseModel):
             "password": "${env.INFINISPAN_PASSWORD:=}",
             "use_https": False,
             "auth_mechanism": "digest",
-            "verify_ssl": True,
+            "verify_tls": True,
             "persistence": KVStoreReference(
                 backend="kv_default",
                 namespace="vector_io::infinispan",

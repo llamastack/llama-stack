@@ -14,15 +14,9 @@ from pathlib import Path
 
 def get_schema_path(schema_name: str) -> Path:
     """Get the path to a schema file."""
-    try:
-        # Python 3.9+
-        traversable = pkg_resources.files(__name__) / schema_name
-        # Convert Traversable to Path for type consistency
-        return Path(str(traversable))
-    except AttributeError:
-        # Python 3.8 fallback
-        with pkg_resources.path(__name__, schema_name) as p:
-            return p
+    traversable = pkg_resources.files(__name__) / schema_name
+    # Convert Traversable to Path for type consistency
+    return Path(str(traversable))
 
 
 def load_schema(schema_name: str) -> str:
