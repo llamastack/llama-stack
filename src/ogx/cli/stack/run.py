@@ -66,6 +66,19 @@ class StackRun(Subcommand):
             default=None,
             help="Run a stack with only a list of providers. This list is formatted like: api1=provider1,api1=provider2,api2=provider3. Where there can be multiple providers per API.",
         )
+        self.parser.add_argument(
+            "--security-mode",
+            type=str,
+            choices=["development", "production"],
+            default=None,
+            help="Override the security mode from config. 'production' requires TLS certificates.",
+        )
+        self.parser.add_argument(
+            "--insecure",
+            action="store_true",
+            default=False,
+            help="Force development security mode (allows HTTP without TLS). Overrides --security-mode and config.",
+        )
 
     def _run_stack_run_cmd(self, args: argparse.Namespace) -> None:
         import yaml
@@ -129,7 +142,19 @@ class StackRun(Subcommand):
         config_file = resolve_config_or_distro(str(config_file))
         with open(config_file) as fp:
             config_contents = yaml.safe_load(fp)
-            config = StackConfig(**cast_distro_name_to_string(replace_env_vars(config_contents)))
+            config_contents = cast_distro_name_to_string(replace_env_vars(config_contents))
+
+            # Apply CLI security mode overrides BEFORE model validation,
+            # so --insecure can downgrade production mode without triggering the validator.
+            if args.insecure or args.security_mode:
+                if "server" not in config_contents:
+                    config_contents["server"] = {}
+                if args.insecure:
+                    config_contents["server"]["security_mode"] = "development"
+                elif args.security_mode:
+                    config_contents["server"]["security_mode"] = args.security_mode
+
+            config = StackConfig(**config_contents)
 
         port = args.port or config.server.port
         workers = config.server.workers
@@ -165,11 +190,17 @@ class StackRun(Subcommand):
                 uvicorn_config["ssl_ca_certs"] = config.server.tls_cafile
                 uvicorn_config["ssl_cert_reqs"] = ssl.CERT_REQUIRED
 
+            if config.server.tls_config and config.server.tls_config.ciphers:
+                uvicorn_config["ssl_ciphers"] = ":".join(config.server.tls_config.ciphers)
+
             logger.info(
                 "HTTPS enabled with certificates", keyfile=keyfile, certfile=certfile, cafile=config.server.tls_cafile
             )
         else:
-            logger.info("HTTPS enabled with certificates", keyfile=keyfile, certfile=certfile)
+            logger.warning(
+                "TLS is not enabled — server will transmit data in cleartext. "
+                "Set tls_certfile and tls_keyfile in server config to enable HTTPS."
+            )
 
         logger.info("Listening on", host=host, port=port)
 

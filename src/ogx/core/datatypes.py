@@ -755,6 +755,9 @@ class RegisteredResources(BaseModel):
         return self
 
 
+from ogx.core.server_tls import FIPS_APPROVED_CIPHERS, SecurityMode, ServerTLSConfig  # noqa: E402
+
+
 class ServerConfig(BaseModel):
     """Configuration for the HTTP(S) server including TLS, authentication, and quotas."""
 
@@ -803,6 +806,33 @@ class ServerConfig(BaseModel):
         description="Interval in seconds between registry refreshes for syncing model information from providers",
         gt=0,
     )
+    security_mode: SecurityMode = Field(
+        default=SecurityMode.DEVELOPMENT,
+        description="Security mode: 'development' (allows HTTP, warnings only) or 'production' (requires TLS with FIPS-approved ciphers)",
+    )
+    tls_config: ServerTLSConfig | None = Field(
+        default=None,
+        description="TLS configuration (cipher suites). Auto-populated with FIPS defaults in production mode.",
+    )
+    hsts_max_age: int = Field(
+        default=31536000,
+        description="HSTS Strict-Transport-Security max-age in seconds. Only applied when TLS is enabled. Set to 0 to disable HSTS.",
+        ge=0,
+    )
+
+    @model_validator(mode="after")
+    def validate_security_mode(self) -> "ServerConfig":
+        if self.security_mode == SecurityMode.PRODUCTION:
+            if not self.tls_certfile or not self.tls_keyfile:
+                raise ValueError(
+                    "Production security mode requires TLS: set 'tls_certfile' and 'tls_keyfile' in server config, "
+                    "or use '--insecure' / security_mode='development' to run without TLS."
+                )
+            if self.tls_config is None:
+                self.tls_config = ServerTLSConfig(ciphers=FIPS_APPROVED_CIPHERS)
+            elif self.tls_config.ciphers is None:
+                self.tls_config.ciphers = FIPS_APPROVED_CIPHERS
+        return self
 
 
 class StackConfig(BaseModel):
