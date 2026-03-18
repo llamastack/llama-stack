@@ -402,6 +402,218 @@ def test_delete_response_maps_value_error_to_400():
     assert "not found" in resp.json()["detail"].lower()
 
 
+def test_openapi_create_response_advertises_form_urlencoded_request_body():
+    """OpenAPI schema should advertise application/x-www-form-urlencoded as accepted request content type."""
+    app = FastAPI()
+    impl = AsyncMock(spec=Agents)
+    router = build_fastapi_router(Api.agents, impl)
+    assert router is not None
+    app.include_router(router)
+
+    schema = app.openapi()
+    post = schema["paths"]["/v1/responses"]["post"]
+    request_body_content = post["requestBody"]["content"]
+    assert "application/x-www-form-urlencoded" in request_body_content
+
+
+def test_create_response_accepts_form_urlencoded():
+    """POST /v1/responses accepts application/x-www-form-urlencoded content type."""
+    app = FastAPI()
+    impl = AsyncMock(spec=Agents)
+
+    expected_response = OpenAIResponseObject(
+        id="resp_form",
+        created_at=1234567890,
+        model="test-model",
+        object="response",
+        output=[],
+        status="completed",
+        store=True,
+    )
+    impl.create_openai_response.return_value = expected_response
+
+    router = build_fastapi_router(Api.agents, impl)
+    assert router is not None
+    app.include_router(router)
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.post(
+        "/v1/responses",
+        data={"input": "hi", "model": "test", "stream": "false"},
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["id"] == "resp_form"
+    # Verify the impl received the correct request
+    impl.create_openai_response.assert_awaited_once()
+    call_args = impl.create_openai_response.call_args[0][0]
+    assert call_args.input == "hi"
+    assert call_args.model == "test"
+    assert call_args.stream is False
+
+
+def test_create_response_form_urlencoded_with_json_encoded_complex_fields():
+    """Form-urlencoded requests support JSON-encoded strings for complex fields like tools."""
+    app = FastAPI()
+    impl = AsyncMock(spec=Agents)
+
+    expected_response = OpenAIResponseObject(
+        id="resp_complex",
+        created_at=1234567890,
+        model="test-model",
+        object="response",
+        output=[],
+        status="completed",
+        store=True,
+    )
+    impl.create_openai_response.return_value = expected_response
+
+    router = build_fastapi_router(Api.agents, impl)
+    assert router is not None
+    app.include_router(router)
+
+    import json
+
+    tools_json = json.dumps([{"type": "web_search_preview"}])
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.post(
+        "/v1/responses",
+        data={
+            "input": "search for cats",
+            "model": "test",
+            "stream": "false",
+            "tools": tools_json,
+            "temperature": "0.7",
+        },
+    )
+
+    assert resp.status_code == 200
+    call_args = impl.create_openai_response.call_args[0][0]
+    assert call_args.input == "search for cats"
+    assert call_args.temperature == 0.7
+    assert call_args.tools is not None
+    assert len(call_args.tools) == 1
+
+
+def test_create_response_form_urlencoded_validation_error():
+    """Form-urlencoded requests with invalid data return 422."""
+    app = FastAPI()
+    impl = AsyncMock(spec=Agents)
+
+    router = build_fastapi_router(Api.agents, impl)
+    assert router is not None
+    app.include_router(router)
+
+    client = TestClient(app, raise_server_exceptions=False)
+    # Missing required 'model' field
+    resp = client.post(
+        "/v1/responses",
+        data={"input": "hi"},
+    )
+
+    assert resp.status_code == 422
+
+
+def test_create_response_form_urlencoded_raw_wire_format():
+    """POST /v1/responses parses raw key=value&key=value form-urlencoded body."""
+    app = FastAPI()
+    impl = AsyncMock(spec=Agents)
+
+    expected_response = OpenAIResponseObject(
+        id="resp_raw",
+        created_at=1234567890,
+        model="test-model",
+        object="response",
+        output=[],
+        status="completed",
+        store=True,
+    )
+    impl.create_openai_response.return_value = expected_response
+
+    router = build_fastapi_router(Api.agents, impl)
+    assert router is not None
+    app.include_router(router)
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.post(
+        "/v1/responses",
+        content="input=hello+world&model=test-model&stream=false&temperature=0.5",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["id"] == "resp_raw"
+    call_args = impl.create_openai_response.call_args[0][0]
+    assert call_args.input == "hello world"
+    assert call_args.model == "test-model"
+    assert call_args.stream is False
+    assert call_args.temperature == 0.5
+
+
+def test_create_response_form_urlencoded_repeated_keys_collected_as_list():
+    """Repeated form keys are collected into a list (e.g. include=a&include=b)."""
+    app = FastAPI()
+    impl = AsyncMock(spec=Agents)
+
+    expected_response = OpenAIResponseObject(
+        id="resp_multi",
+        created_at=1234567890,
+        model="test-model",
+        object="response",
+        output=[],
+        status="completed",
+        store=True,
+    )
+    impl.create_openai_response.return_value = expected_response
+
+    router = build_fastapi_router(Api.agents, impl)
+    assert router is not None
+    app.include_router(router)
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.post(
+        "/v1/responses",
+        content="input=hi&model=test&stream=false&include=file_search_call.results&include=reasoning.encrypted_content",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+
+    assert resp.status_code == 200
+    call_args = impl.create_openai_response.call_args[0][0]
+    assert call_args.include is not None
+    assert len(call_args.include) == 2
+
+
+def test_create_response_form_urlencoded_with_charset():
+    """Content-Type with charset parameter is handled correctly."""
+    app = FastAPI()
+    impl = AsyncMock(spec=Agents)
+
+    expected_response = OpenAIResponseObject(
+        id="resp_charset",
+        created_at=1234567890,
+        model="test-model",
+        object="response",
+        output=[],
+        status="completed",
+        store=True,
+    )
+    impl.create_openai_response.return_value = expected_response
+
+    router = build_fastapi_router(Api.agents, impl)
+    assert router is not None
+    app.include_router(router)
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.post(
+        "/v1/responses",
+        content="input=hi&model=test&stream=false",
+        headers={"Content-Type": "application/x-www-form-urlencoded; charset=utf-8"},
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["id"] == "resp_charset"
+
+
 def test_request_validation_error_passes_through_route_class():
     """RequestValidationError must NOT be caught by _ExceptionTranslatingRoute.
 
