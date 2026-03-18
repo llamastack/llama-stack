@@ -1996,7 +1996,7 @@ async def test_file_search_results_include_chunk_metadata_attributes(mock_vector
 
     # Execute the file search
     file_search_tool = OpenAIResponseInputToolFileSearch(vector_store_ids=[vector_store_id])
-    result = await tool_executor._execute_knowledge_search_via_vector_store(
+    result = await tool_executor._execute_file_search_via_vector_store(
         query=query,
         response_file_search_tool=file_search_tool,
     )
