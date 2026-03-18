@@ -14,7 +14,7 @@ providers:
     provider_type: remote::trustyai_lmeval
     module: llama_stack_provider_lmeval
     config:
-      use_k8s: false
+      use_k8s: ${env.TRUSTYAI_LMEVAL_USE_K8S:=false}
       base_url: ${env.OLLAMA_URL:=http://localhost:11434}
 server:
   port: 8321
