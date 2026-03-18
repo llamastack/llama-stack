@@ -399,3 +399,14 @@ def test_response_extra_body_guided_choice(client_with_models, text_model_id):
     assert len(response.output) > 0
     output_text = response.output_text.strip()
     assert output_text in ["joy", "sadness"]
+
+
+def test_simple_greeting_response(responses_client, text_model_id):
+    """Simple test to verify basic greeting response works."""
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="Say hello and introduce yourself in one sentence.",
+        stream=False,
+    )
+    output_text = response.output_text.lower()
+    assert len(output_text) > 0
