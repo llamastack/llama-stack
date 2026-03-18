@@ -663,7 +663,7 @@ describe("ChatPlaygroundPage", () => {
         agent_config: {
           toolgroups: [
             {
-              name: "builtin::rag/knowledge_search",
+              name: "builtin::rag/file_search",
               args: { vector_db_ids: ["test-vector-db"] },
             },
           ],
@@ -698,7 +698,7 @@ describe("ChatPlaygroundPage", () => {
         agent_config: {
           toolgroups: [
             {
-              name: "builtin::rag/knowledge_search",
+              name: "builtin::rag/file_search",
               args: { vector_db_ids: ["test-vector-db"] },
             },
           ],
