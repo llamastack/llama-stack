@@ -83,7 +83,7 @@ def test_stack_list_deps_expands_provider_dependencies():
     agents_args = argparse.Namespace(
         config=None,
         env_name="test-env",
-        providers="agents=inline::meta-reference",
+        providers="agents=inline::builtin",
         format="deps-only",
     )
 
