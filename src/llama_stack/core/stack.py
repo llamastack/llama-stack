@@ -47,7 +47,6 @@ from llama_stack.core.store.registry import create_dist_registry
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 from llama_stack_api import (
-    Agents,
     Api,
     Batches,
     Benchmarks,
@@ -67,6 +66,7 @@ from llama_stack_api import (
     RegisterModelRequest,
     RegisterScoringFunctionRequest,
     RegisterShieldRequest,
+    Responses,
     Safety,
     Scoring,
     ScoringFunctions,
@@ -83,7 +83,7 @@ logger = get_logger(name=__name__, category="core")
 class LlamaStack(
     Providers,
     Inference,
-    Agents,
+    Responses,
     Batches,
     Safety,
     Datasets,

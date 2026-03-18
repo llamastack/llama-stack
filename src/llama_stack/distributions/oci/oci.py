@@ -22,7 +22,7 @@ def get_distribution_template(name: str = "oci") -> DistributionTemplate:
             BuildProvider(provider_type="remote::pgvector"),
         ],
         "safety": [BuildProvider(provider_type="inline::llama-guard")],
-        "agents": [BuildProvider(provider_type="inline::builtin")],
+        "responses": [BuildProvider(provider_type="inline::builtin")],
         "eval": [BuildProvider(provider_type="inline::builtin")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),

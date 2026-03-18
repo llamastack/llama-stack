@@ -11,19 +11,19 @@ from starlette.testclient import TestClient
 
 from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
 from llama_stack.core.server.server import global_exception_handler
-from llama_stack_api import Agents, Api
-from llama_stack_api.agents.models import (
-    CreateResponseRequest,
-    DeleteResponseRequest,
-    ListResponseInputItemsRequest,
-    ListResponsesRequest,
-    RetrieveResponseRequest,
-)
+from llama_stack_api import Api, Responses
 from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
     OpenAIDeleteResponseObject,
     OpenAIResponseObject,
+)
+from llama_stack_api.responses.models import (
+    CreateResponseRequest,
+    DeleteResponseRequest,
+    ListResponseInputItemsRequest,
+    ListResponsesRequest,
+    RetrieveResponseRequest,
 )
 
 
@@ -36,8 +36,8 @@ def test_openapi_create_response_advertises_json_and_sse_200():
     """
 
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
-    router = build_fastapi_router(Api.agents, impl)
+    impl = AsyncMock(spec=Responses)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -58,14 +58,14 @@ def test_openapi_create_response_advertises_json_and_sse_200():
 
 async def test_create_response_returns_sse_streaming_response_when_impl_streams():
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
     async def _stream():
         yield {"type": "response.output_text.delta", "delta": "hello"}
 
     impl.create_openai_response.return_value = _stream()
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -85,10 +85,10 @@ def test_create_response_maps_value_error_to_400():
     """_ExceptionTranslatingRoute converts ValueError to HTTP 400."""
     app = FastAPI()
     app.add_exception_handler(Exception, global_exception_handler)
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
     impl.create_openai_response.side_effect = ValueError("not found")
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -102,7 +102,7 @@ def test_create_response_maps_value_error_to_400():
 async def test_create_response_returns_json_for_non_streaming():
     """Test POST /v1/responses returns OpenAIResponseObject when stream=False."""
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
     expected_response = OpenAIResponseObject(
         id="resp_123",
@@ -115,7 +115,7 @@ async def test_create_response_returns_json_for_non_streaming():
     )
     impl.create_openai_response.return_value = expected_response
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -136,7 +136,7 @@ async def test_create_response_returns_json_for_non_streaming():
 async def test_sse_format_is_correct():
     """Test that streaming responses produce valid SSE format."""
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
     async def _stream():
         yield {"type": "response.output_text.delta", "delta": "hello"}
@@ -144,7 +144,7 @@ async def test_sse_format_is_correct():
 
     impl.create_openai_response.return_value = _stream()
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -173,7 +173,7 @@ async def test_sse_stream_keeps_provider_context():
     from llama_stack.core.request_headers import PROVIDER_DATA_VAR
 
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
     provider_data = {"provider": "test"}
 
     async def _stream():
@@ -182,7 +182,7 @@ async def test_sse_stream_keeps_provider_context():
 
     impl.create_openai_response.return_value = _stream()
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -210,7 +210,7 @@ async def test_sse_stream_keeps_provider_context():
 
 async def test_sse_stream_reports_value_error_as_http_exception():
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
     async def _stream():
         raise ValueError("not found")
@@ -218,7 +218,7 @@ async def test_sse_stream_reports_value_error_as_http_exception():
 
     impl.create_openai_response.return_value = _stream()
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -244,7 +244,7 @@ async def test_sse_stream_reports_value_error_as_http_exception():
 async def test_get_response_returns_response_object():
     """Test GET /v1/responses/{response_id} returns OpenAIResponseObject."""
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
     expected_response = OpenAIResponseObject(
         id="resp_123",
@@ -257,7 +257,7 @@ async def test_get_response_returns_response_object():
     )
     impl.get_openai_response.return_value = expected_response
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -279,10 +279,10 @@ def test_get_response_maps_value_error_to_400():
     """_ExceptionTranslatingRoute converts ValueError on GET to HTTP 400."""
     app = FastAPI()
     app.add_exception_handler(Exception, global_exception_handler)
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
     impl.get_openai_response.side_effect = ValueError("Response not found")
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -296,7 +296,7 @@ def test_get_response_maps_value_error_to_400():
 async def test_list_responses_returns_list():
     """Test GET /v1/responses returns ListOpenAIResponseObject."""
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
     expected_response = ListOpenAIResponseObject(
         object="list",
@@ -307,7 +307,7 @@ async def test_list_responses_returns_list():
     )
     impl.list_openai_responses.return_value = expected_response
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -328,7 +328,7 @@ async def test_list_responses_returns_list():
 async def test_list_input_items_returns_items():
     """Test GET /v1/responses/{response_id}/input_items returns input items."""
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
     expected_response = ListOpenAIResponseInputItem(
         object="list",
@@ -336,7 +336,7 @@ async def test_list_input_items_returns_items():
     )
     impl.list_openai_response_input_items.return_value = expected_response
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -354,7 +354,7 @@ async def test_list_input_items_returns_items():
 async def test_delete_response_returns_confirmation():
     """Test DELETE /v1/responses/{response_id} returns deletion confirmation."""
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
     expected_response = OpenAIDeleteResponseObject(
         id="resp_123",
@@ -363,7 +363,7 @@ async def test_delete_response_returns_confirmation():
     )
     impl.delete_openai_response.return_value = expected_response
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -385,10 +385,10 @@ def test_delete_response_maps_value_error_to_400():
     """_ExceptionTranslatingRoute converts ValueError on DELETE to HTTP 400."""
     app = FastAPI()
     app.add_exception_handler(Exception, global_exception_handler)
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
     impl.delete_openai_response.side_effect = ValueError("Response not found")
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -408,9 +408,9 @@ def test_request_validation_error_passes_through_route_class():
     get a proper 422 instead of a generic 500.
     """
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -435,10 +435,10 @@ def test_exception_translating_route_converts_value_error_to_400():
     via TestClient (full ASGI stack) to verify end-to-end behavior.
     """
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
     impl.create_openai_response.side_effect = ValueError("bad input value")
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -459,10 +459,10 @@ def test_unknown_exception_propagates_to_global_handler():
     """
     app = FastAPI()
     app.add_exception_handler(Exception, global_exception_handler)
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
     impl.create_openai_response.side_effect = RuntimeError("something broke")
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -481,10 +481,10 @@ def test_consecutive_value_errors_keep_connection_alive():
     on the same TestClient verify the connection stays alive.
     """
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
     impl.create_openai_response.side_effect = ValueError("bad request")
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 

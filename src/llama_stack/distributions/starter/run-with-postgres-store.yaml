@@ -1,13 +1,13 @@
 version: 2
 distro_name: starter
 apis:
-- agents
 - batches
 - datasetio
 - eval
 - file_processors
 - files
 - inference
+- responses
 - safety
 - scoring
 - tool_runtime
@@ -187,7 +187,7 @@ providers:
       excluded_categories: []
   - provider_id: code-scanner
     provider_type: inline::code-scanner
-  agents:
+  responses:
   - provider_id: builtin
     provider_type: inline::builtin
     config:

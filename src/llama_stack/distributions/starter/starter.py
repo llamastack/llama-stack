@@ -140,7 +140,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::llama-guard"),
             BuildProvider(provider_type="inline::code-scanner"),
         ],
-        "agents": [BuildProvider(provider_type="inline::builtin")],
+        "responses": [BuildProvider(provider_type="inline::builtin")],
         "eval": [BuildProvider(provider_type="inline::builtin")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),
