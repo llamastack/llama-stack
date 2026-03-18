@@ -442,9 +442,9 @@ export default function ChatPlaygroundPage() {
     ) => {
       try {
         const processedToolgroups = toolgroups.map(toolgroup => {
-          if (toolgroup === "builtin::rag" && vectorDBs.length > 0) {
+          if (toolgroup === "builtin::file_search" && vectorDBs.length > 0) {
             return {
-              name: "builtin::rag/file_search",
+              name: "builtin::file_search/file_search",
               args: {
                 vector_db_ids: vectorDBs,
               },
@@ -1780,7 +1780,7 @@ export default function ChatPlaygroundPage() {
               </div>
 
               {/* Vector DB Configuration for RAG */}
-              {selectedToolgroups.includes("builtin::rag") && (
+              {selectedToolgroups.includes("builtin::file_search") && (
                 <div>
                   <label className="text-sm font-medium block mb-2">
                     Vector Databases for RAG
@@ -1844,7 +1844,7 @@ export default function ChatPlaygroundPage() {
                     )}
                   </div>
                   {selectedVectorDBs.length === 0 &&
-                    selectedToolgroups.includes("builtin::rag") && (
+                    selectedToolgroups.includes("builtin::file_search") && (
                       <p className="text-xs text-muted-foreground mt-1">
                         ⚠️ RAG tool selected but no vector databases chosen.
                         Create or select a vector database.
