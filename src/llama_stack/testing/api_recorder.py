@@ -1220,7 +1220,6 @@ def patch_inference_clients():
     global _original_methods
 
     import aiohttp
-    import litellm
     from ollama import AsyncClient as OllamaAsyncClient
     from openai.resources.chat.completions import AsyncCompletions as AsyncChatCompletions
     from openai.resources.completions import AsyncCompletions
@@ -1229,6 +1228,11 @@ def patch_inference_clients():
     from openai.resources.responses import AsyncResponses
 
     from llama_stack.providers.remote.tool_runtime.tavily_search.tavily_search import TavilySearchToolRuntimeImpl
+
+    try:
+        import litellm
+    except ModuleNotFoundError:
+        litellm = None
 
     # Store original methods for OpenAI, Ollama clients, LiteLLM, tool runtimes, and aiohttp
     _original_methods = {
@@ -1243,11 +1247,12 @@ def patch_inference_clients():
         "ollama_ps": OllamaAsyncClient.ps,
         "ollama_pull": OllamaAsyncClient.pull,
         "ollama_list": OllamaAsyncClient.list,
-        "litellm_acompletion": litellm.acompletion,
-        "litellm_atext_completion": litellm.atext_completion,
         "tavily_invoke_tool": TavilySearchToolRuntimeImpl.invoke_tool,
         "aiohttp_post": aiohttp.ClientSession.post,
     }
+    if litellm:
+        _original_methods["litellm_acompletion"] = litellm.acompletion
+        _original_methods["litellm_atext_completion"] = litellm.atext_completion
 
     # Create patched methods for OpenAI client
     async def patched_chat_completions_create(self, *args, **kwargs):
@@ -1325,20 +1330,21 @@ def patch_inference_clients():
     OllamaAsyncClient.pull = patched_ollama_pull
     OllamaAsyncClient.list = patched_ollama_list
 
-    # Create patched functions for LiteLLM
-    async def patched_litellm_acompletion(*args, **kwargs):
-        return await _patched_litellm_method(
-            _original_methods["litellm_acompletion"], "/v1/chat/completions", *args, **kwargs
-        )
+    # Create and apply patched functions for LiteLLM (if available)
+    if litellm:
 
-    async def patched_litellm_atext_completion(*args, **kwargs):
-        return await _patched_litellm_method(
-            _original_methods["litellm_atext_completion"], "/v1/completions", *args, **kwargs
-        )
+        async def patched_litellm_acompletion(*args, **kwargs):
+            return await _patched_litellm_method(
+                _original_methods["litellm_acompletion"], "/v1/chat/completions", *args, **kwargs
+            )
 
-    # Apply LiteLLM patches
-    litellm.acompletion = patched_litellm_acompletion
-    litellm.atext_completion = patched_litellm_atext_completion
+        async def patched_litellm_atext_completion(*args, **kwargs):
+            return await _patched_litellm_method(
+                _original_methods["litellm_atext_completion"], "/v1/completions", *args, **kwargs
+            )
+
+        litellm.acompletion = patched_litellm_acompletion
+        litellm.atext_completion = patched_litellm_atext_completion
 
     # Create patched methods for tool runtimes
     async def patched_tavily_invoke_tool(
@@ -1368,7 +1374,6 @@ def unpatch_inference_clients():
 
     # Import here to avoid circular imports
     import aiohttp
-    import litellm
     from ollama import AsyncClient as OllamaAsyncClient
     from openai.resources.chat.completions import AsyncCompletions as AsyncChatCompletions
     from openai.resources.completions import AsyncCompletions
@@ -1393,9 +1398,15 @@ def unpatch_inference_clients():
     OllamaAsyncClient.pull = _original_methods["ollama_pull"]
     OllamaAsyncClient.list = _original_methods["ollama_list"]
 
-    # Restore LiteLLM functions
-    litellm.acompletion = _original_methods["litellm_acompletion"]
-    litellm.atext_completion = _original_methods["litellm_atext_completion"]
+    # Restore LiteLLM functions (if they were patched)
+    if "litellm_acompletion" in _original_methods:
+        try:
+            import litellm
+
+            litellm.acompletion = _original_methods["litellm_acompletion"]
+            litellm.atext_completion = _original_methods["litellm_atext_completion"]
+        except ModuleNotFoundError:
+            pass
 
     # Restore tool runtime methods
     TavilySearchToolRuntimeImpl.invoke_tool = _original_methods["tavily_invoke_tool"]
