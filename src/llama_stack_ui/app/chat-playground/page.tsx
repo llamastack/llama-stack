@@ -444,7 +444,7 @@ export default function ChatPlaygroundPage() {
         const processedToolgroups = toolgroups.map(toolgroup => {
           if (toolgroup === "builtin::rag" && vectorDBs.length > 0) {
             return {
-              name: "builtin::rag/knowledge_search",
+              name: "builtin::rag/file_search",
               args: {
                 vector_db_ids: vectorDBs,
               },
@@ -809,6 +809,7 @@ export default function ChatPlaygroundPage() {
           return (
             content.includes('"type": "function"') ||
             content.includes('"name": "knowledge_search"') ||
+            content.includes('"name": "file_search"') ||
             content.includes('"parameters":') ||
             !!content.match(/\{"type":\s*"function".*?\}/)
           );
@@ -1072,7 +1073,11 @@ export default function ChatPlaygroundPage() {
           ).event;
           if (event?.payload?.event_type === "turn_complete") {
             const content = event?.payload?.turn?.output_message?.content;
-            if (content && content.includes("knowledge_search")) {
+            if (
+              content &&
+              (content.includes("knowledge_search") ||
+                content.includes("file_search"))
+            ) {
               console.log("🔍 Function call found in turn_complete:", content);
             }
           }

@@ -63,7 +63,7 @@ class TestOpenAIBaseURLConfig:
         adapter = OpenAIInferenceAdapter(config=config)
         adapter.provider_data_api_key_field = None  # Disable provider data for this test
 
-        # Mock the get_api_key method since it's delegated to LiteLLMOpenAIMixin
+        # Mock the get_api_key method since it's delegated to OpenAIMixin
         adapter.get_api_key = MagicMock(return_value="test-key")
 
         # Access the client property to trigger AsyncOpenAI initialization

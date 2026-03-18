@@ -315,8 +315,8 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
                     description="Insert documents into memory",
                 ),
                 ToolDef(
-                    name="knowledge_search",
-                    description="Search for information in a database.",
+                    name="file_search",
+                    description="Search files for relevant information",
                     input_schema={
                         "type": "object",
                         "properties": {
