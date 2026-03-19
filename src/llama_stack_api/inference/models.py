@@ -591,15 +591,16 @@ class OpenAITokenLogProb(BaseModel):
     )
 
 
+@json_schema_type
 class OpenAIChoiceLogprobs(BaseModel):
     """The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response."""
 
     content: list[OpenAITokenLogProb] | None = Field(
-        ...,
+        default=None,
         description="The log probabilities for the tokens in the message.",
     )
     refusal: list[OpenAITokenLogProb] | None = Field(
-        ...,
+        default=None,
         description="The log probabilities for the refusal tokens.",
     )
 

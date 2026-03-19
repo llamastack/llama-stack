@@ -1156,7 +1156,9 @@ def _fix_schema_issues(openapi_schema: dict[str, Any]) -> dict[str, Any]:
         tc_schema = openapi_schema["components"]["schemas"].get("OpenAIChatCompletionToolCall")
         if tc_schema:
             props = tc_schema.get("properties", {})
-            # Make id non-nullable (remove anyOf, use plain string)
+            # Make id non-nullable (remove anyOf, use plain string).
+            # The Pydantic model keeps id optional for streaming delta parsing,
+            # but the response schema should match OpenAI's non-nullable definition.
             if "id" in props and "anyOf" in props["id"]:
                 non_null = [s for s in props["id"]["anyOf"] if s.get("type") != "null"]
                 if len(non_null) == 1:
@@ -1164,7 +1166,8 @@ def _fix_schema_issues(openapi_schema: dict[str, Any]) -> dict[str, Any]:
                     props["id"] = non_null[0]
                     if desc:
                         props["id"]["description"] = desc
-            # Make function non-nullable (remove anyOf, use plain $ref)
+            # Make function non-nullable (remove anyOf, use plain $ref).
+            # Same rationale as id above.
             if "function" in props and "anyOf" in props["function"]:
                 non_null = [s for s in props["function"]["anyOf"] if s.get("type") != "null"]
                 if len(non_null) == 1:

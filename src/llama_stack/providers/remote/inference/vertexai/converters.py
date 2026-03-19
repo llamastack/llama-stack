@@ -519,7 +519,7 @@ def _extract_logprobs(candidate: Any) -> OpenAIChoiceLogprobs | None:
 
     if not token_logprobs:
         return None
-    return OpenAIChoiceLogprobs(content=token_logprobs, refusal=None)
+    return OpenAIChoiceLogprobs(content=token_logprobs)
 
 
 def _process_candidates(response_or_chunk: Any) -> list[_CandidateData]:

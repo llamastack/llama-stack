@@ -1029,9 +1029,6 @@ components:
                   type: array
                 - type: 'null'
                 description: The log probabilities for the refusal tokens.
-            required:
-            - content
-            - refusal
           - type: 'null'
           description: The log probabilities for the tokens in the message.
           title: LogprobsUnion
@@ -1057,9 +1054,6 @@ components:
             type: array
           - type: 'null'
           description: The log probabilities for the refusal tokens.
-      required:
-      - content
-      - refusal
       title: OpenAIChoiceLogprobs
       description: The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response.
     OpenAIDeveloperMessageParam:
@@ -1772,9 +1766,6 @@ components:
                 type: array
               - type: 'null'
               description: The log probabilities for the refusal tokens.
-          required:
-          - content
-          - refusal
           description: The log probabilities for the tokens in the message.
       required:
       - delta
@@ -2056,9 +2047,6 @@ components:
                   type: array
                 - type: 'null'
                 description: The log probabilities for the refusal tokens.
-            required:
-            - content
-            - refusal
           - type: 'null'
           description: The log probabilities for the tokens in the choice.
           nullable: true
