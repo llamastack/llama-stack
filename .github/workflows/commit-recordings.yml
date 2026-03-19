@@ -182,6 +182,8 @@ jobs:
         run: |
           # Move artifacts out of the way before cloning, then restore after.
           mv recordings-temp /tmp/recordings-temp 2>/dev/null || true
+          # Clean up workspace files (artifacts, metadata) to ensure empty directory for clone
+          rm -f recordings-*.zip pr-metadata.zip pr-info.json
           git clone --depth 1 --branch "${HEAD_REF}" "https://x-access-token:${GH_TOKEN}@github.com/${HEAD_REPO}.git" .
           mv /tmp/recordings-temp recordings-temp 2>/dev/null || true
 
