@@ -54,7 +54,7 @@ def _parse_registry_values(values: list[str]) -> list[RoutableObjectWithProvider
             obj = pydantic.TypeAdapter(RoutableObjectWithProvider).validate_json(value)
             all_objects.append(obj)
         except pydantic.ValidationError as e:
-            logger.error(f"Error parsing registry value, raw value: {value}. Error: {e}")
+            logger.error("Error parsing registry value", raw_value=value, error=str(e))
             continue
 
     return all_objects
@@ -84,7 +84,13 @@ class DiskDistributionRegistry(DistributionRegistry):
         try:
             return pydantic.TypeAdapter(RoutableObjectWithProvider).validate_json(json_str)
         except pydantic.ValidationError as e:
-            logger.error(f"Error parsing registry value for {type}:{identifier}, raw value: {json_str}. Error: {e}")
+            logger.error(
+                "Error parsing registry value",
+                resource_type=type,
+                identifier=identifier,
+                raw_value=json_str,
+                error=str(e),
+            )
             return None
 
     async def update(self, obj: RoutableObjectWithProvider) -> RoutableObjectWithProvider:
@@ -117,7 +123,7 @@ class DiskDistributionRegistry(DistributionRegistry):
                     f"with conflicting field values: {conflicts}. "
                     "Unregister it first if you want to replace it."
                 )
-            logger.debug(f"Re-registration of {obj.type} '{obj.identifier}' is a no-op (subset match)")
+            logger.debug("Re-registration is a no-op (subset match)", obj_type=obj.type, identifier=obj.identifier)
             return True
 
         await self.kvstore.set(

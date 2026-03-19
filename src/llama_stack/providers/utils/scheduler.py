@@ -186,7 +186,7 @@ class _NaiveSchedulerBackend(_SchedulerBackend):
             except Exception as e:
                 on_log_message_cb(str(e))
                 job.status = JobStatus.failed
-                logger.exception(f"Job {job.id} failed.")
+                logger.exception("Job failed", job_id=job.id)
 
         asyncio.run_coroutine_threadsafe(do(), self._loop)
 
@@ -222,7 +222,7 @@ class Scheduler:
         msg = (datetime.now(UTC), message)
         # At least for the time being, until there's a better way to expose
         # logs to users, log messages on console
-        logger.info(f"Job {job.id}: {message}")
+        logger.info(message, job_id=job.id)
         job.append_log(msg)
         self._backend.on_log_message_cb(job, msg)
 

@@ -111,9 +111,9 @@ class AuthorizedSqlStore:
 
         if SQL_OPTIMIZED_POLICY != actual_default:
             logger.warning(
-                f"SQL_OPTIMIZED_POLICY does not match default_policy(). "
-                f"SQL filtering will use conservative mode. "
-                f"Expected: {SQL_OPTIMIZED_POLICY}, Got: {actual_default}",
+                "SQL_OPTIMIZED_POLICY does not match default_policy(). SQL filtering will use conservative mode. Expected: , Got",
+                sql_optimized_policy=SQL_OPTIMIZED_POLICY,
+                actual_default=actual_default,
             )
 
     async def create_table(self, table: str, schema: Mapping[str, ColumnType | ColumnDefinition]) -> None:

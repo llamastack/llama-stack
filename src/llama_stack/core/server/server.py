@@ -124,7 +124,7 @@ class StackApp(FastAPI):
 async def lifespan(app: StackApp):
     server_version = parse_version("llama-stack")
 
-    logger.info(f"Starting up Llama Stack server (version: {server_version})")
+    logger.info("Starting up Llama Stack server", version=server_version)
     assert app.stack is not None
     app.stack.create_registry_refresh_task()
     yield
@@ -178,11 +178,13 @@ async def log_request_pre_validation(request: Request):
                     log_output = rich.pretty.pretty_repr(parsed_body)
                 except (json.JSONDecodeError, UnicodeDecodeError):
                     log_output = repr(body_bytes)
-                logger.debug(f"Incoming raw request body for {request.method} {request.url.path}:\n{log_output}")
+                logger.debug("Incoming raw request body", method=request.method, path=request.url.path, body=log_output)
             else:
-                logger.debug(f"Incoming {request.method} {request.url.path} request with empty body.")
+                logger.debug("Incoming request with empty body", method=request.method, path=request.url.path)
         except Exception as e:
-            logger.warning(f"Could not read or log request body for {request.method} {request.url.path}: {e}")
+            logger.warning(
+                "Could not read or log request body", method=request.method, path=request.url.path, error=str(e)
+            )
 
 
 def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
@@ -214,9 +216,9 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
                 return result
         except Exception as e:
             if logger.isEnabledFor(logging.INFO):
-                logger.exception(f"Error executing endpoint {route=} {method=}")
+                logger.exception("Error executing endpoint", route=route, method=method)
             else:
-                logger.error(f"Error executing endpoint {route=} {method=}: {str(e)}")
+                logger.error("Error executing endpoint", route=route, method=method, error=str(e))
             raise translate_exception(e) from e
 
     sig = inspect.signature(func)
@@ -370,13 +372,13 @@ def create_app() -> StackApp:
         # NOTE: Add this FIRST because middleware wraps in reverse order (last added runs first)
         # We want: Request → Auth → RouteAuth → App
         if config.server.auth.route_policy:
-            logger.info(f"Enabling route-level authorization with {len(config.server.auth.route_policy)} rules")
+            logger.info("Enabling route-level authorization", rule_count=len(config.server.auth.route_policy))
             app.add_middleware(RouteAuthorizationMiddleware, route_policy=config.server.auth.route_policy)
 
         # Add authentication middleware only if provider is configured
         # This runs FIRST in the middleware chain (last added = first to run)
         if config.server.auth.provider_config:
-            logger.info(f"Enabling authentication with provider: {config.server.auth.provider_config.type.value}")
+            logger.info("Enabling authentication", provider=config.server.auth.provider_config.type.value)
             app.add_middleware(AuthenticationMiddleware, auth_config=config.server.auth, impls=impls)
     else:
         if config.server.quota:
@@ -444,7 +446,7 @@ def create_app() -> StackApp:
         router = build_fastapi_router(api, impl)
         if router:
             app.include_router(router)
-            logger.debug(f"Registered FastAPIrouter for {api} API")
+            logger.debug("Registered FastAPI router", api=str(api))
             continue
 
         # Fall back to old webmethod-based route discovery until the migration is complete
@@ -462,7 +464,7 @@ def create_app() -> StackApp:
             if not available_methods:
                 raise ValueError(f"No methods found for {route.name} on {impl}")
             method = available_methods[0]
-            logger.debug(f"{method} {route.path}")
+            logger.debug("Registering route", method=method, path=route.path)
 
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._fields")
@@ -474,7 +476,7 @@ def create_app() -> StackApp:
                     )
                 )
 
-    logger.debug(f"serving APIs: {apis_to_serve}")
+    logger.debug("Serving APIs", apis=list(apis_to_serve))
 
     # Register specific exception handlers before the generic Exception handler
     # This prevents the re-raising behavior that causes connection resets

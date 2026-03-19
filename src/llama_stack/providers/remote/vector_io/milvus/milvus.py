@@ -90,7 +90,7 @@ class MilvusIndex(EmbeddingIndex):
             return
 
         if not await asyncio.to_thread(self.client.has_collection, self.collection_name):
-            logger.info(f"Creating new collection {self.collection_name} with nullable sparse field")
+            logger.info("Creating new collection with nullable sparse field", collection_name=self.collection_name)
             # Create schema for vector search
             schema = self.client.create_schema()
             schema.add_field(field_name="chunk_id", datatype=DataType.VARCHAR, is_primary=True, max_length=100)
@@ -142,7 +142,9 @@ class MilvusIndex(EmbeddingIndex):
         try:
             await asyncio.to_thread(self.client.insert, self.collection_name, data=data)
         except Exception as e:
-            logger.error(f"Error inserting chunks into Milvus collection {self.collection_name}: {e}")
+            logger.error(
+                "Error inserting chunks into Milvus collection", collection_name=self.collection_name, error=str(e)
+            )
             raise e
 
     def _translate_filters(self, filters: Filter | None) -> str | None:
@@ -278,7 +280,7 @@ class MilvusIndex(EmbeddingIndex):
             return QueryChunksResponse(chunks=filtered_chunks, scores=filtered_scores)
 
         except Exception as e:
-            logger.error(f"Error performing BM25 search: {e}")
+            logger.error("Error performing BM25 search", error=str(e))
             # Fallback to simple text search
             return await self._fallback_keyword_search(query_string, k, score_threshold)
 
@@ -374,7 +376,9 @@ class MilvusIndex(EmbeddingIndex):
                 self.client.delete, collection_name=self.collection_name, filter=f"chunk_id in [{chunk_ids_str}]"
             )
         except Exception as e:
-            logger.error(f"Error deleting chunks from Milvus collection {self.collection_name}: {e}")
+            logger.error(
+                "Error deleting chunks from Milvus collection", collection_name=self.collection_name, error=str(e)
+            )
             raise
 
 
@@ -412,10 +416,10 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
             )
             self.cache[vector_store.identifier] = index
         if isinstance(self.config, RemoteMilvusVectorIOConfig):
-            logger.info(f"Connecting to Milvus server at {self.config.uri}")
+            logger.info("Connecting to Milvus server at", uri=self.config.uri)
             self.client = MilvusClient(**self.config.model_dump(exclude_none=True))
         else:
-            logger.info(f"Connecting to Milvus Lite at: {self.config.db_path}")
+            logger.info("Connecting to Milvus Lite at", db_path=self.config.db_path)
             uri = os.path.expanduser(self.config.db_path)
             self.client = MilvusClient(uri=uri)
 

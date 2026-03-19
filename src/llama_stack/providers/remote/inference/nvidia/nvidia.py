@@ -44,7 +44,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
     }
 
     async def initialize(self) -> None:
-        logger.info(f"Initializing NVIDIAInferenceAdapter({self.config.base_url})...")
+        logger.info("Initializing NVIDIAInferenceAdapter", base_url=self.config.base_url)
 
         if _is_nvidia_hosted(self.config):
             if not self.config.auth_credential:
@@ -112,7 +112,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
         if _is_nvidia_hosted(self.config) and provider_model_id in self.config.rerank_model_to_url:
             ranking_url = self.config.rerank_model_to_url[provider_model_id]
 
-        logger.debug(f"Using rerank endpoint: {ranking_url} for model: {provider_model_id}")
+        logger.debug("Using rerank endpoint: for model", ranking_url=ranking_url, provider_model_id=provider_model_id)
 
         # Convert query to text format
         if isinstance(request.query, str):

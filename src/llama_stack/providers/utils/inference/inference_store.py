@@ -105,8 +105,9 @@ class InferenceStore:
         if self._queue is None:
             self._queue = asyncio.Queue(maxsize=self._max_write_queue_size)
             logger.debug(
-                f"Inference store write queue created with max size {self._max_write_queue_size} "
-                f"and {self._num_writers} writers"
+                "Inference store write queue created with max size and writers",
+                _max_write_queue_size=self._max_write_queue_size,
+                _num_writers=self._num_writers,
             )
 
         if not self._worker_tasks:
@@ -126,7 +127,8 @@ class InferenceStore:
                 self._queue.put_nowait(item)
             except asyncio.QueueFull:
                 logger.warning(
-                    f"Write queue full; adding chat completion id={getattr(chat_completion, 'id', '<unknown>')}"
+                    "Write queue full; adding chat completion id",
+                    getattr_chat_completion_id_unknown=getattr(chat_completion, "id", "<unknown>"),
                 )
                 await self._queue.put(item)
         else:
@@ -143,7 +145,7 @@ class InferenceStore:
                 with activate_request_context(item.request_context):
                     await self._write_chat_completion(item.completion, item.messages)
             except Exception as e:  # noqa: BLE001
-                logger.error(f"Error writing chat completion: {e}")
+                logger.error("Error writing chat completion", error=str(e))
             finally:
                 self._queue.task_done()
 

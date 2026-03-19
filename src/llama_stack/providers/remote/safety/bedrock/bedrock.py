@@ -62,12 +62,12 @@ class BedrockSafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPriva
             raise ValueError(f"Shield {request.shield_id} not found")
 
         shield_params = shield.params
-        logger.debug(f"run_shield::{shield_params}::messages={request.messages}")
+        logger.debug("run_shield", shield_params=shield_params, messages=request.messages)
 
         content_messages = []
         for message in request.messages:
             content_messages.append({"text": {"text": message.content}})
-        logger.debug(f"run_shield::final:messages::{json.dumps(content_messages, indent=2)}:")
+        logger.debug("run_shield final messages", content_messages=json.dumps(content_messages, indent=2))
 
         response = self.bedrock_runtime_client.apply_guardrail(
             guardrailIdentifier=shield.provider_resource_id,

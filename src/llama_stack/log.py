@@ -8,7 +8,9 @@ import logging  # allow-direct-logging
 import os
 import re
 from logging.config import dictConfig  # allow-direct-logging
+from typing import Any
 
+import structlog  # allow-direct-logging
 from pydantic import BaseModel, Field
 from rich.console import Console
 from rich.errors import MarkupError
@@ -57,6 +59,9 @@ UNCATEGORIZED = "uncategorized"
 
 # Initialize category levels with default level
 _category_levels: dict[str, int] = dict.fromkeys(CATEGORIES, DEFAULT_LOG_LEVEL)
+
+# Track whether structlog has been configured
+_structlog_configured = False
 
 
 def config_to_category_levels(category: str, level: str):
@@ -164,16 +169,96 @@ class CustomRichHandler(RichHandler):
 
 
 class CustomFileHandler(logging.FileHandler):
-    def __init__(self, filename, mode="a", encoding=None, delay=False):
-        super().__init__(filename, mode, encoding, delay)
-        # Default formatter to match console output
-        self.default_formatter = logging.Formatter("%(asctime)s %(name)s:%(lineno)d %(category)s: %(message)s")
-        self.setFormatter(self.default_formatter)
+    """File handler that strips Rich markup from log output.
 
-    def emit(self, record):
-        if hasattr(record, "msg"):
-            record.msg = strip_rich_markup(str(record.msg))
-        super().emit(record)
+    Overrides format() to strip Rich markup tags after the formatter
+    (structlog ProcessorFormatter or stdlib Formatter) has rendered the
+    final message string. This avoids interfering with the parent emit()
+    which manages stream lifecycle (open, write, flush, close).
+    """
+
+    def format(self, record):
+        output = super().format(record)
+        return strip_rich_markup(output)
+
+
+def _extract_event_message(_, __, event_dict):
+    """
+    Extract the structlog event and any bound key-value pairs into a
+    human-readable message suitable for the Rich console handler.
+
+    For structlog-originated records the event_dict contains structured
+    context (category, extra keys, etc.).  We render the extra keys as
+    ``key=value`` pairs appended to the event string so that Rich shows
+    a clean, informative line instead of a raw dict.
+
+    For foreign (stdlib) log records we simply pass through.
+    """
+    # Only render structured key-value pairs for structlog-originated records.
+    # Foreign stdlib records (e.g. uvicorn) pass through unchanged.
+    if not event_dict.get("_from_structlog", False):
+        # Strip uvicorn's color_message which contains raw ANSI escape codes
+        event_dict.pop("color_message", None)
+        return event_dict
+
+    # Keys managed by structlog / ProcessorFormatter internals that should
+    # not appear in the rendered message.
+    internal_keys = {
+        "event",
+        "_record",
+        "_from_structlog",
+    }
+
+    event = event_dict.get("event", "")
+
+    extra_parts = []
+    for key, value in sorted(event_dict.items()):
+        if key in internal_keys:
+            continue
+        extra_parts.append(f"{key}={value}")
+
+    if extra_parts:
+        event_dict["event"] = f"{event} [{', '.join(extra_parts)}]"
+    return event_dict
+
+
+def _configure_structlog(json_output: bool = False) -> None:
+    """
+    Configure structlog processors and output format.
+
+    Parameters:
+        json_output (bool): If True, output JSON format. Otherwise, use human-readable console format.
+    """
+    global _structlog_configured
+
+    # Shared processors applied to all structlog-originated log entries
+    # before they are passed to the stdlib logging infrastructure.
+    shared_processors: list[structlog.types.Processor] = [
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.ExtraAdder(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.UnicodeDecoder(),
+    ]
+
+    structlog.configure(
+        processors=[
+            *shared_processors,
+            # Hand off to stdlib ProcessorFormatter for final rendering
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+        ],
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )
+
+    _structlog_configured = True
+
+    # Stash for setup_logging() to build ProcessorFormatter instances
+    _configure_structlog._shared_processors = shared_processors  # type: ignore[attr-defined]
+    _configure_structlog._json_output = json_output  # type: ignore[attr-defined]
 
 
 def setup_logging(category_levels: dict[str, int] | None = None, log_file: str | None = None) -> None:
@@ -200,6 +285,14 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
 
     if log_file is None:
         log_file = os.environ.get("LLAMA_STACK_LOG_FILE")
+
+    # Determine output format from environment
+    log_format_env = os.environ.get("LLAMA_STACK_LOG_FORMAT", "").lower()
+    json_output = log_format_env == "json"
+
+    # Configure structlog
+    _configure_structlog(json_output=json_output)
+
     log_format = "%(asctime)s %(name)s:%(lineno)d %(category)s: %(message)s"
 
     class CategoryFilter(logging.Filter):
@@ -221,36 +314,86 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
     # Determine the root logger's level (default to WARNING if not specified)
     root_level = category_levels.get("root", logging.WARNING)
 
-    handlers = {
-        "console": {
-            "()": CustomRichHandler,  # Use custom console handler
-            "formatter": "rich",
-            "rich_tracebacks": True,
-            "show_time": False,
-            "show_path": False,
-            "markup": True,
-            "filters": ["category_filter"],
+    # Build the ProcessorFormatter that structlog uses to render the final
+    # log line.  For JSON mode we render JSON; for console mode we extract
+    # the event message so Rich can display it nicely.
+    shared_processors = _configure_structlog._shared_processors  # type: ignore[attr-defined]
+
+    if json_output:
+        # JSON renderer for production
+        formatter = structlog.stdlib.ProcessorFormatter(
+            processors=[
+                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+                structlog.processors.JSONRenderer(),
+            ],
+            foreign_pre_chain=shared_processors,
+        )
+
+        # Simple stderr handler with JSON formatting
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        console_handler.addFilter(CategoryFilter())
+
+        handlers: dict[str, Any] = {
+            "console": {
+                "()": lambda: console_handler,
+            }
         }
-    }
+    else:
+        # Console renderer for development - extract event message then let
+        # Rich handle the actual display.
+        console_formatter = structlog.stdlib.ProcessorFormatter(
+            processors=[
+                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+                _extract_event_message,
+                structlog.dev.ConsoleRenderer(colors=False, pad_event=0),
+            ],
+            foreign_pre_chain=shared_processors,
+        )
+
+        handlers = {
+            "console": {
+                "()": CustomRichHandler,
+                "formatter": "structlog_console",
+                "rich_tracebacks": True,
+                "show_time": False,
+                "show_path": False,
+                "markup": True,
+                "filters": ["category_filter"],
+            }
+        }
 
     # Add a file handler if log_file is set
     if log_file:
+        file_formatter = structlog.stdlib.ProcessorFormatter(
+            processors=[
+                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+                _extract_event_message,
+                structlog.dev.ConsoleRenderer(colors=False, pad_event=0),
+            ],
+            foreign_pre_chain=shared_processors,
+        )
+        file_handler = CustomFileHandler(log_file, mode="a", encoding="utf-8")
+        file_handler.setFormatter(file_formatter)
         handlers["file"] = {
-            "()": CustomFileHandler,
-            "filename": log_file,
-            "mode": "a",
-            "encoding": "utf-8",
+            "()": lambda: file_handler,
+        }
+
+    formatters: dict = {
+        "rich": {
+            "()": logging.Formatter,
+            "format": log_format,
+        }
+    }
+    if not json_output:
+        formatters["structlog_console"] = {
+            "()": lambda: console_formatter,  # noqa: B023
         }
 
     logging_config = {
         "version": 1,
         "disable_existing_loggers": False,
-        "formatters": {
-            "rich": {
-                "()": logging.Formatter,
-                "format": log_format,
-            }
-        },
+        "formatters": formatters,
         "handlers": handlers,
         "filters": {
             "category_filter": {
@@ -312,10 +455,14 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
 
 def get_logger(
     name: str, category: str = "uncategorized", config: LoggingConfig | None | None = None
-) -> logging.LoggerAdapter:
+) -> structlog.stdlib.BoundLogger:
     """
-    Returns a logger with the specified name and category.
+    Returns a structlog logger with the specified name and category.
     If no category is provided, defaults to 'uncategorized'.
+
+    The returned logger is a structlog BoundLogger that supports standard
+    logging methods (info, warning, error, debug, etc.) as well as structured
+    key-value context binding via bind().
 
     Parameters:
         name (str): The name of the logger (e.g., module or filename).
@@ -323,12 +470,18 @@ def get_logger(
         config (Logging): optional yaml config to override the existing logger configuration
 
     Returns:
-        logging.LoggerAdapter: Configured logger with category support.
+        structlog.stdlib.BoundLogger: Configured logger with category support.
     """
+    global _structlog_configured
+    if not _structlog_configured:
+        # Configure structlog with defaults if not yet configured
+        _configure_structlog()
+
     if config:
         _category_levels.update(parse_yaml_config(config))
 
-    logger = logging.getLogger(name)
+    # Get or create the stdlib logger and set its level
+    stdlib_logger = logging.getLogger(name)
     if category in _category_levels:
         log_level = _category_levels[category]
     else:
@@ -342,5 +495,8 @@ def get_logger(
                     f"or add it to the CATEGORIES list. Available categories: {CATEGORIES}"
                 )
             log_level = _category_levels.get("root", DEFAULT_LOG_LEVEL)
-    logger.setLevel(log_level)
-    return logging.LoggerAdapter(logger, {"category": category})
+    stdlib_logger.setLevel(log_level)
+
+    # Create a structlog logger bound to the same stdlib logger name
+    # and bind the category as structured context
+    return structlog.get_logger(name, category=category)  # type: ignore[no-any-return]  # structlog.get_logger returns BoundLogger at runtime when configured with stdlib.BoundLogger

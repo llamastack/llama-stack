@@ -366,7 +366,7 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
             self._model_cache[provider_model_id] = model
             models.append(model)
 
-        logger.info("%s.list_models() returned %d model(s)", self.__class__.__name__, len(models))
+        logger.info("list_models() returned models", provider=self.__class__.__name__, count=len(models))
         return models
 
     async def should_refresh_models(self) -> bool:
@@ -467,7 +467,7 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
 
         level = effort_to_thinking_level.get(reasoning_effort)
         if level is None:
-            logger.warning("Unknown reasoning_effort value %r; ignoring", reasoning_effort)
+            logger.warning("Unknown reasoning_effort value, ignoring", reasoning_effort=repr(reasoning_effort))
             return None
 
         return genai_types.ThinkingConfig(thinking_level=cast(Any, level))

@@ -426,7 +426,7 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         except Exception as e:
             # If any error occurs during migration, log it but don't fail
             # The table creation will handle adding the column
-            logger.error(f"Error adding column {column_name} to table {table}: {e}")
+            logger.error("Error adding column to table", column_name=column_name, table=table, error=str(e))
             pass
 
     def _get_dialect_insert(self, table: Table):

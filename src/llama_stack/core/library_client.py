@@ -80,7 +80,7 @@ def convert_to_pydantic(annotation: Any, value: Any) -> Any:
         try:
             return [convert_to_pydantic(item_type, item) for item in value]
         except Exception:
-            logger.error(f"Error converting list {value} into {item_type}")
+            logger.error("Error converting list", value=value, item_type=item_type)
             return value
 
     elif origin is dict:
@@ -88,7 +88,7 @@ def convert_to_pydantic(annotation: Any, value: Any) -> Any:
         try:
             return {k: convert_to_pydantic(val_type, v) for k, v in value.items()}
         except Exception:
-            logger.error(f"Error converting dict {value} into {val_type}")
+            logger.error("Error converting dict", value=value, val_type=val_type)
             return value
 
     try:
@@ -105,7 +105,10 @@ def convert_to_pydantic(annotation: Any, value: Any) -> Any:
                 except Exception:
                     continue
             logger.warning(
-                f"Warning: direct client failed to convert parameter {value} into {annotation}: {e}",
+                "Warning: direct client failed to convert parameter into",
+                value=value,
+                annotation=annotation,
+                error=str(e),
             )
         raise ValueError(f"Failed to convert parameter {value} into {annotation}: {e}") from e
 
@@ -273,7 +276,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
 
         for handler in root_logger.handlers[:]:
             root_logger.removeHandler(handler)
-            logger.info(f"Removed handler {handler.__class__.__name__} from root logger")
+            logger.info("Removed handler from root logger", handler_name=handler.__class__.__name__)
 
     async def initialize(self) -> bool:
         """
@@ -575,11 +578,11 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             type_hints = typing.get_type_hints(func, include_extras=True)
         except NameError as e:
             # Forward reference could not be resolved - fall back to raw annotations
-            logger.debug(f"Could not resolve type hints for {func.__name__}: {e}")
+            logger.debug("Could not resolve type hints", func_name=func.__name__, error=str(e))
             type_hints = {}
         except Exception as e:
             # Unexpected error - log and fall back
-            logger.warning(f"Failed to resolve type hints for {func.__name__}: {e}")
+            logger.warning("Failed to resolve type hints", func_name=func.__name__, error=str(e))
             type_hints = {}
 
         # Helper to get the resolved type for a parameter

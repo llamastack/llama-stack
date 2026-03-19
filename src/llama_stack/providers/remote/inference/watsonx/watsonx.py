@@ -65,7 +65,7 @@ def _get_iam_token(api_key: str) -> str:
         _iam_token_expiry = data.get("expiration", time.time() + 3600)
         return _iam_token
     except Exception as e:
-        logger.warning(f"IAM token exchange failed ({e}), using API key directly")
+        logger.warning("IAM token exchange failed, using API key directly", error=str(e))
         return api_key
 
 

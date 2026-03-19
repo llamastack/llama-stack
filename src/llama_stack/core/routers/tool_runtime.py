@@ -41,7 +41,7 @@ class ToolRuntimeRouter(ToolRuntime):
         pass
 
     async def invoke_tool(self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None) -> Any:
-        logger.debug(f"ToolRuntimeRouter.invoke_tool: {tool_name}")
+        logger.debug("ToolRuntimeRouter.invoke_tool", tool_name=tool_name)
         start_time = time.perf_counter()
         metric_attrs = None
 

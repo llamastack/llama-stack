@@ -223,9 +223,14 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
             if hasattr(obj, "provider_id"):
                 # Do not register models on disabled providers
                 if not obj.provider_id or obj.provider_id == "__disabled__":
-                    logger.debug(f"Skipping {rsrc.capitalize()} registration for disabled provider.")
+                    logger.debug("Skipping registration for disabled provider", resource=rsrc.capitalize())
                     continue
-                logger.debug(f"registering {rsrc.capitalize()} {obj} for provider {obj.provider_id}")
+                logger.debug(
+                    "Registering resource for provider",
+                    resource=rsrc.capitalize(),
+                    obj=obj,
+                    provider_id=obj.provider_id,
+                )
 
             # TODO: Once all register methods are migrated to accept request objects,
             # remove this conditional and always use the request_class pattern.
@@ -246,7 +251,10 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
 
         for obj in objects_to_process:
             logger.debug(
-                f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
+                ": served by",
+                rsrc_capitalize=rsrc.capitalize(),
+                identifier=obj.identifier,
+                provider_id=obj.provider_id,
             )
 
 
@@ -316,7 +324,7 @@ async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
 
     # Register/Update config connectors
     for connector in run_config.connectors:
-        logger.debug(f"Registering connector: {connector.connector_id}")
+        logger.debug("Registering connector", connector_id=connector.connector_id)
         await connectors_impl.register_connector(
             connector_id=connector.connector_id,
             connector_type=connector.connector_type,
@@ -328,7 +336,7 @@ async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
     existing_connectors = await connectors_impl.list_connectors()
     for connector in existing_connectors.data:
         if connector.connector_id not in config_connector_ids:
-            logger.info(f"Removing orphaned connector: {connector.connector_id}")
+            logger.info("Removing orphaned connector", connector_id=connector.connector_id)
             await connectors_impl.unregister_connector(connector.connector_id)
 
 
@@ -380,7 +388,9 @@ async def _validate_embedding_model(embedding_model: QualifiedModel, impls: dict
     except ValueError as err:
         raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
 
-    logger.debug(f"Validated embedding model: {model_identifier} (dimension: {embedding_dimension})")
+    logger.debug(
+        "Validated embedding model", model_identifier=model_identifier, embedding_dimension=embedding_dimension
+    )
 
 
 async def _validate_reranker_model(reranker_model: RerankerModel, impls: dict[Api, Any]) -> None:
@@ -402,7 +412,7 @@ async def _validate_reranker_model(reranker_model: RerankerModel, impls: dict[Ap
             f"Reranker model '{model_identifier}' not found. Available reranker models: {list(models_list.keys())}"
         )
 
-    logger.debug(f"Validated reranker model: {model_identifier}.")
+    logger.debug("Validated reranker model", model_identifier=model_identifier)
 
 
 async def _validate_rewrite_query_model(rewrite_query_model: QualifiedModel, impls: dict[Api, Any]) -> None:
@@ -426,7 +436,7 @@ async def _validate_rewrite_query_model(rewrite_query_model: QualifiedModel, imp
             f"Rewrite query model '{model_identifier}' not found. Available LLM models: {list(llm_models_list.keys())}"
         )
 
-    logger.debug(f"Validated rewrite query model: {model_identifier}")
+    logger.debug("Validated rewrite query model", model_identifier=model_identifier)
 
 
 async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict[Api, Any]):
@@ -493,7 +503,8 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
                     # If we can't resolve type, continue with normal processing
                     # and let validation catch the error
                     logger.debug(
-                        f"Could not resolve auth provider type field: {e.var_name} - continuing with normal processing"
+                        "Could not resolve auth provider type field: - continuing with normal processing",
+                        var_name=e.var_name,
                     )
 
         result = {}
@@ -515,7 +526,8 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
                         resolved_provider_id = replace_env_vars(v["provider_id"], f"{path}[{i}].provider_id")
                         if resolved_provider_id == "__disabled__":
                             logger.debug(
-                                f"Skipping config env variable expansion for disabled provider: {v.get('provider_id', '')}"
+                                "Skipping config env variable expansion for disabled provider",
+                                v_get_provider_id=v.get("provider_id", ""),
                             )
                             continue
                     except EnvVarError:
@@ -532,13 +544,21 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
                                 resolved_id = replace_env_vars(v[id_field], f"{path}[{i}].{id_field}")
                                 if resolved_id is None or resolved_id == "":
                                     logger.debug(
-                                        f"Skipping {path}[{i}] with empty {id_field} (conditional env var not set)"
+                                        "Skipping [] with empty (conditional env var not set)",
+                                        path=path,
+                                        i=i,
+                                        id_field=id_field,
                                     )
                                     should_skip = True
                                     break
                             except EnvVarError as e:
                                 logger.warning(
-                                    f"Could not resolve {id_field} in {path}[{i}], env var '{e.var_name}': {e}"
+                                    "Could not resolve in [], env var",
+                                    id_field=id_field,
+                                    path=path,
+                                    i=i,
+                                    var_name=e.var_name,
+                                    error=str(e),
                                 )
                     if should_skip:
                         continue
@@ -720,7 +740,7 @@ class Stack:
             TEST_RECORDING_CONTEXT = setup_api_recording()
             if TEST_RECORDING_CONTEXT:
                 TEST_RECORDING_CONTEXT.__enter__()
-                logger.info(f"API recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
+                logger.info("API recording enabled", mode=os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"))
 
         _initialize_storage(self.run_config)
         stores = self.run_config.storage.stores
@@ -767,7 +787,7 @@ class Stack:
             if task.cancelled():
                 logger.error("Model refresh task cancelled")
             elif task.exception():
-                logger.error(f"Model refresh task failed: {task.exception()}")
+                logger.error("Model refresh task failed", error=str(task.exception()))
                 traceback.print_exception(task.exception())
             else:
                 logger.debug("Model refresh task completed")
@@ -777,23 +797,23 @@ class Stack:
     async def shutdown(self):
         for impl in self.impls.values():
             impl_name = impl.__class__.__name__
-            logger.debug(f"Shutting down {impl_name}")
+            logger.debug("Shutting down", impl_name=impl_name)
             try:
                 if hasattr(impl, "shutdown"):
                     await asyncio.wait_for(impl.shutdown(), timeout=5)
                 else:
-                    logger.warning(f"No shutdown method for {impl_name}")
+                    logger.warning("No shutdown method for", impl_name=impl_name)
             except TimeoutError:
-                logger.exception(f"Shutdown timeout for {impl_name}")
+                logger.exception("Shutdown timeout", impl_name=impl_name)
             except (Exception, asyncio.CancelledError) as e:
-                logger.exception(f"Failed to shutdown {impl_name}: {e}")
+                logger.exception("Failed to shutdown", impl_name=impl_name, error=str(e))
 
         global TEST_RECORDING_CONTEXT
         if TEST_RECORDING_CONTEXT:
             try:
                 TEST_RECORDING_CONTEXT.__exit__(None, None, None)
             except Exception as e:
-                logger.error(f"Error during API recording cleanup: {e}")
+                logger.error("Error during API recording cleanup", error=str(e))
 
         global REGISTRY_REFRESH_TASK
         if REGISTRY_REFRESH_TASK:
@@ -806,12 +826,12 @@ class Stack:
         try:
             await shutdown_kvstore_backends()
         except Exception as e:
-            logger.exception(f"Failed to shutdown KV store backends: {e}")
+            logger.exception("Failed to shutdown KV store backends", error=str(e))
 
         try:
             await shutdown_sqlstore_backends()
         except Exception as e:
-            logger.exception(f"Failed to shutdown SQL store backends: {e}")
+            logger.exception("Failed to shutdown SQL store backends", error=str(e))
 
 
 async def refresh_registry_once(impls: dict[Api, Any]):

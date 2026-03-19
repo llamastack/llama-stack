@@ -163,7 +163,7 @@ jobs:
             # Note: /v1/health does not require authentication
             if curl -s -L http://localhost:8321/v1/health | grep -q "OK"; then
               echo "Llama Stack server is up!"
-              if grep -q "Enabling authentication with provider: ${{ matrix.auth-provider }}" server.log; then
+              if grep -q "Enabling authentication.*provider=${{ matrix.auth-provider }}" server.log; then
                 echo "Llama Stack server is configured to use ${{ matrix.auth-provider }} auth"
                 exit 0
               else
