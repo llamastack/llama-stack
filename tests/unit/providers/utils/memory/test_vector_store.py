@@ -56,11 +56,11 @@ def test_content_from_data_and_mime_type_both_encodings_fail():
 
 async def test_memory_tool_error_handling():
     """Test that memory tool handles various failures gracefully without crashing."""
-    from llama_stack.providers.inline.tool_runtime.rag.config import RagToolRuntimeConfig
-    from llama_stack.providers.inline.tool_runtime.rag.memory import MemoryToolRuntimeImpl
+    from llama_stack.providers.inline.tool_runtime.file_search.config import FileSearchToolRuntimeConfig
+    from llama_stack.providers.inline.tool_runtime.file_search.file_search import FileSearchToolRuntimeImpl
 
-    config = RagToolRuntimeConfig()
-    memory_tool = MemoryToolRuntimeImpl(
+    config = FileSearchToolRuntimeConfig()
+    memory_tool = FileSearchToolRuntimeImpl(
         config=config,
         vector_io_api=AsyncMock(),
         inference_api=AsyncMock(),

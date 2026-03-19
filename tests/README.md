@@ -73,28 +73,22 @@ You must be careful when re-recording. CI workflows assume a specific setup for 
 **For easier re-recording without local setup**, use the automated recording workflow:
 
 ```bash
-# Record tests for specific test subdirectories
-./scripts/github/schedule-record-workflow.sh --test-subdirs "agents,inference"
+# Automated: just open a PR with test changes - recordings are auto-recorded!
 
-# Record with vision tests enabled
-./scripts/github/schedule-record-workflow.sh --test-suite vision
+# Manual: record for a specific PR with specific providers
+gh workflow run record-integration-tests.yml -f pr_number=1234 -f providers="gpt,azure"
 
-# Record with specific provider
-./scripts/github/schedule-record-workflow.sh --test-subdirs "agents" --test-provider vllm
+# Manual: record with specific subdirs or pattern
+gh workflow run record-integration-tests.yml -f pr_number=1234 -f subdirs="agents,inference"
 ```
 
-This script:
-- 🚀 **Runs in GitHub Actions** - no local Ollama setup required
-- 🔍 **Auto-detects your branch** and associated PR
-- 🍴 **Works from forks** - handles repository context automatically
-- ✅ **Commits recordings back** to your branch
+This workflow:
+- Runs in GitHub Actions - no local Ollama setup required
+- Auto-triggers on PRs that change tests or source code
+- Works from forks (auto-pushes if "Allow edits from maintainers" is enabled, otherwise uploads artifacts)
+- Commits recordings back to your branch
 
-**Prerequisites:**
-- GitHub CLI: `brew install gh && gh auth login`
-- jq: `brew install jq`
-- Your branch pushed to a remote
-
-**Supported providers:** `vllm`, `ollama`
+**Supported providers:** `ollama` (auto), `gpt`, `azure`, `bedrock` (manual trigger)
 
 
 ### Next Steps
