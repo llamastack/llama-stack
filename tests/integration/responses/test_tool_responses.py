@@ -48,12 +48,13 @@ def test_response_non_streaming_web_search(responses_client, text_model_id, case
         stream=False,
     )
     assert len(response.output) > 1
-    assert response.output[0].type == "web_search_call"
-    assert response.output[0].status == "completed"
-    assert response.output[1].type == "message"
-    assert response.output[1].status == "completed"
-    assert response.output[1].role == "assistant"
-    assert len(response.output[1].content) > 0
+    for output in response.output[:-1]:
+        assert output.type == "web_search_call"
+        assert output.status == "completed"
+    assert response.output[-1].type == "message"
+    assert response.output[-1].status == "completed"
+    assert response.output[-1].role == "assistant"
+    assert len(response.output[-1].content) > 0
     assert case.expected.lower() in response.output_text.lower().strip()
 
 

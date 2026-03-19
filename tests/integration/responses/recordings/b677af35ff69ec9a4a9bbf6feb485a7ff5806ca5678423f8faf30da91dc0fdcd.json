@@ -1,0 +1,24 @@
+{
+  "test_id": "tests/integration/responses/test_openai_responses.py::TestOpenAIResponses::test_openai_response_incomplete_details_max_iterations_exceeded_streaming[txt=vllm/Qwen/Qwen3.5-35B-A3B]",
+  "request": {
+    "test_id": "tests/integration/responses/test_openai_responses.py::TestOpenAIResponses::test_openai_response_incomplete_details_max_iterations_exceeded_streaming[txt=vllm/Qwen/Qwen3.5-35B-A3B]",
+    "provider": "tavily",
+    "tool_name": "web_search",
+    "kwargs": {
+      "query": "latest artificial intelligence news 2026"
+    }
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.tools.ToolInvocationResult",
+      "__data__": {
+        "content": "{\"query\": \"latest artificial intelligence news 2026\", \"top_k\": [{\"url\": \"https://www.reuters.com/technology/artificial-intelligence/\", \"title\": \"AI News | Latest Headlines and Developments | Reuters\", \"content\": \"27-28 Apr 2026 \\u00b7 New York, USA. Artificial Intelligence silicon chip with ... Tencent pledges higher AI investment in 2026 after chip curbs hit capex plans.\", \"score\": 0.9988752, \"raw_content\": null}, {\"url\": \"https://www.youtube.com/watch?v=tJS_ycc2lNs\", \"title\": \"The 9 AI Trends that Will Define 2026 (Researched & Ranked)\", \"content\": \"... AI Uncovered, your ultimate destination for exploring the fascinating world of artificial intelligence! Our channel delves deep into the latest\", \"score\": 0.99856746, \"raw_content\": null}, {\"url\": \"https://www.technologyreview.com/2026/01/05/1130662/whats-next-for-ai-in-2026/\", \"title\": \"What's next for AI in 2026 | MIT Technology Review\", \"content\": \"In 2026, expect more Silicon Valley apps to quietly ship on top of Chinese open models, and look for the lag between Chinese releases and the\", \"score\": 0.99762183, \"raw_content\": null}, {\"url\": \"https://techcrunch.com/2026/01/02/in-2026-ai-will-move-from-hype-to-pragmatism/\", \"title\": \"In 2026, AI will move from hype to pragmatism - TechCrunch\", \"content\": \"In 2026, here's what you can expect from the AI industry: new architectures, smaller models, world models, reliable agents, physical AI,\", \"score\": 0.9975274, \"raw_content\": null}, {\"url\": \"https://www.forbes.com/sites/sylvainduranton/2026/01/30/the-next-phase-of-ai-takes-shape-in-2026/\", \"title\": \"The Next Phase Of AI Takes Shape In 2026 - Forbes\", \"content\": \"In 2024, Elon Musk claimed AI would surpass human intelligence by 2026. A prediction that today seems unlikely. Between Sam Altman\\u2014convinced he\", \"score\": 0.99736834, \"raw_content\": null}]}",
+        "error_message": null,
+        "error_code": null,
+        "metadata": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

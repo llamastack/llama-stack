@@ -235,6 +235,17 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
         },
     ),
+    "vllm-qwen35": Setup(
+        name="vllm-qwen35",
+        description="vLLM provider with Qwen3.5 model",
+        env={
+            "VLLM_URL": "http://127.0.0.1:8000/v1",
+        },
+        defaults={
+            "text_model": "vllm/Qwen/Qwen3.5-35B-A3B",
+            "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
+        },
+    ),
 }
 
 

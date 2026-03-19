@@ -1,0 +1,24 @@
+{
+  "test_id": "tests/integration/responses/test_basic_responses.py::test_include_logprobs_with_web_search[txt=vllm/Qwen/Qwen3.5-35B-A3B]",
+  "request": {
+    "test_id": "tests/integration/responses/test_basic_responses.py::test_include_logprobs_with_web_search[txt=vllm/Qwen/Qwen3.5-35B-A3B]",
+    "provider": "tavily",
+    "tool_name": "web_search",
+    "kwargs": {
+      "query": "positive news stories today uplifting news 2026"
+    }
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.tools.ToolInvocationResult",
+      "__data__": {
+        "content": "{\"query\": \"positive news stories today uplifting news 2026\", \"top_k\": [{\"url\": \"https://www.bbc.com/news/topics/cx2pk70323et\", \"title\": \"Uplifting stories - BBC News\", \"content\": \"Alex McClean thanked strangers Wesley Beynon and Marc Willding, who rescued her nine-month-old baby from her burning car. 18 Jan 2026.\", \"score\": 0.7447496, \"raw_content\": null}, {\"url\": \"https://www.positive.news/society/good-news-stories-from-week-11-of-2026/\", \"title\": \"What went right this week: the good news that matters\", \"content\": \"Events strengthened the case for renewables, Croatia eliminated landmines, and an 'extinct' species returned to England, plus more good\", \"score\": 0.70263255, \"raw_content\": null}, {\"url\": \"https://www.buzzfeed.com/jake_farrington/good-news-february-2026-reddit\", \"title\": \"Uplifting News Stories You Might Have Missed - BuzzFeed\", \"content\": \"People Are Sharing The Positive News Headlines That Have \\\"Flown ... Reading the news in the year 2026 is somewhat of a treacherous feat.\", \"score\": 0.6729558, \"raw_content\": null}, {\"url\": \"https://www.today.com/news/good-news\", \"title\": \"Good News: Inspirational, Uplifting and Happy News | TODAY\", \"content\": \"View good news for the week with photos, videos and positive news stories to make you smile. Read the latest feel good news today with stories to inspire you.\", \"score\": 0.38560653, \"raw_content\": null}, {\"url\": \"https://www.goodnewsnetwork.org/\", \"title\": \"Good News Network: Good News, Inspiring, Positive Stories\", \"content\": \"The #1 source for good news! For 20 years, our positive news from around the world has uplifted and inspired millions to become more optimistic.\", \"score\": 0.33424217, \"raw_content\": null}]}",
+        "error_message": null,
+        "error_code": null,
+        "metadata": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

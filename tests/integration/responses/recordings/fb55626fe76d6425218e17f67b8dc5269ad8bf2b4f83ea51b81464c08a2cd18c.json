@@ -1,0 +1,24 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_multi_turn_streaming_web_search[client_with_models-txt=vllm/Qwen/Qwen3.5-35B-A3B]",
+  "request": {
+    "test_id": "tests/integration/responses/test_tool_responses.py::test_response_multi_turn_streaming_web_search[client_with_models-txt=vllm/Qwen/Qwen3.5-35B-A3B]",
+    "provider": "tavily",
+    "tool_name": "web_search",
+    "kwargs": {
+      "query": "latest Python version 2025"
+    }
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.tools.ToolInvocationResult",
+      "__data__": {
+        "content": "{\"query\": \"latest Python version 2025\", \"top_k\": [{\"url\": \"https://www.liquidweb.com/blog/latest-python-version/\", \"title\": \"The latest Python version: Python 3.14\", \"content\": \"Python 3.14 was released on October 7, 2025 with several improvements: Faster startup and import times with deferred annotations for reduced overhead. Memory\", \"score\": 0.9996018, \"raw_content\": null}, {\"url\": \"https://www.jumpingrivers.com/blog/whats-new-py314/\", \"title\": \"What's new for Python in 2025?\", \"content\": \"Python 3.14 was released on 7th October 2025. Here we summarise some of the more interesting changes and some trends in Python development and\", \"score\": 0.9994253, \"raw_content\": null}, {\"url\": \"https://medium.com/@muruganantham52524/python-developers-are-sticking-with-old-versions-in-2025-heres-why-that-s-costing-you-237d1770e5ac\", \"title\": \"Python Developers Are Sticking with Old Versions in 2025\", \"content\": \"2. The Python Version Landscape in 2025 \\u00b7 Latest release: Python 3.13 (stable, September 2024) \\u00b7 Actively supported: Python 3.10, 3.11, 3.12, 3.13\", \"score\": 0.99938333, \"raw_content\": null}, {\"url\": \"https://devguide.python.org/versions/\", \"title\": \"Status of Python versions\", \"content\": \"The main branch is currently the future Python 3.15, and is the only branch that accepts new features. The latest release for each Python version ... bugfix. 2025\", \"score\": 0.99856746, \"raw_content\": null}, {\"url\": \"https://realpython.com/python-news-november-2025/\", \"title\": \"Python 3.14 Released and Other Python News for ...\", \"content\": \"Python 3.14.0 was released on October 7, 2025, delivering a packed set of improvements and new capabilities. This is a major release that the\", \"score\": 0.9980276, \"raw_content\": null}]}",
+        "error_message": null,
+        "error_code": null,
+        "metadata": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

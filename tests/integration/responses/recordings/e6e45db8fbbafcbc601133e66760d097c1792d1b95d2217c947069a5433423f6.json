@@ -1,0 +1,24 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_non_streaming_web_search[client_with_models-txt=vllm/Qwen/Qwen3.5-35B-A3B-web_search_2025_08_26_type]",
+  "request": {
+    "test_id": "tests/integration/responses/test_tool_responses.py::test_response_non_streaming_web_search[client_with_models-txt=vllm/Qwen/Qwen3.5-35B-A3B-web_search_2025_08_26_type]",
+    "provider": "tavily",
+    "tool_name": "web_search",
+    "kwargs": {
+      "query": "latest version of Python 2026"
+    }
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.tools.ToolInvocationResult",
+      "__data__": {
+        "content": "{\"query\": \"latest version of Python 2026\", \"top_k\": [{\"url\": \"https://www.reddit.com/r/archlinux/comments/1q3o9ri/latest_python_upgrade_313_314_on_jan_3_2026/\", \"title\": \"Latest Python upgrade (3.13 -> 3.14) on Jan, 3 2026 (!!) : r/archlinux\", \"content\": \"Latest Python upgrade details for Arch Linux. Python 3.14 release date and features. Current stable version of Python. Django latest version\", \"score\": 0.9992446, \"raw_content\": null}, {\"url\": \"https://devguide.python.org/versions/\", \"title\": \"Status of Python versions - Python Developer's Guide\", \"content\": \"The main branch is currently the future Python 3.15, and is the only branch that accepts new features. The latest release for each Python version ... 2026-10-01.\", \"score\": 0.99371004, \"raw_content\": null}, {\"url\": \"https://www.python.org/downloads/source/\", \"title\": \"Python Source Releases\", \"content\": \"Python 3.12.13 - March 3, 2026 \\u00b7 Python 3.10.20 - March 3, 2026 \\u00b7 Python 3.11.15 - March 3, 2026 \\u00b7 Python 3.13.12 - Feb. 3, 2026 \\u00b7 Python 3.14.3 - Feb. 3, 2026.\", \"score\": 0.9881309, \"raw_content\": null}, {\"url\": \"https://www.python.org/downloads/windows/\", \"title\": \"Python Releases for Windows\", \"content\": \"Stable Releases. Python install manager 26.0 - Feb. 23, 2026. Download Installer (MSIX); Download MSI package \\u00b7 Python 3.13.12 - Feb. 3, 2026.\", \"score\": 0.9879462, \"raw_content\": null}, {\"url\": \"https://www.python.org/downloads/\", \"title\": \"Download Python - Python.org\", \"content\": \"Python 3.14.3 Feb. 3, 2026 Download Release notes \\u00b7 Python 3.14.2 Dec. 5, 2025 Download Release notes \\u00b7 Python 3.14.1 Dec. 2, 2025 Download Release notes \\u00b7 Python\", \"score\": 0.987375, \"raw_content\": null}]}",
+        "error_message": null,
+        "error_code": null,
+        "metadata": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

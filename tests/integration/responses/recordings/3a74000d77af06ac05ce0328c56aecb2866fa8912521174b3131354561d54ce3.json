@@ -1,0 +1,24 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_streaming_web_search[openai_client-txt=vllm/Qwen/Qwen3.5-35B-A3B-llama_experts]",
+  "request": {
+    "test_id": "tests/integration/responses/test_tool_responses.py::test_response_streaming_web_search[openai_client-txt=vllm/Qwen/Qwen3.5-35B-A3B-llama_experts]",
+    "provider": "tavily",
+    "tool_name": "web_search",
+    "kwargs": {
+      "query": "Llama 4 Maverick model experts architecture"
+    }
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.tools.ToolInvocationResult",
+      "__data__": {
+        "content": "{\"query\": \"Llama 4 Maverick model experts architecture\", \"top_k\": [{\"url\": \"https://apxml.com/models/llama-4-maverick\", \"title\": \"Llama 4 Maverick: Specifications and GPU VRAM Requirements\", \"content\": \"# Llama 4 Maverick. ### Llama 4 Maverick. The Llama 4 Maverick model is a natively multimodal large language model developed by Meta, released as part of the Llama 4 model family. From an architectural perspective, Llama 4 Maverick leverages a Mixture-of-Experts (MoE) design, a significant departure from previous dense transformer models. The model integrates different modalities, such as text and images, through an early fusion mechanism, allowing for comprehensive multimodal processing from the initial stages. Llama 4 Maverick demonstrates robust performance across diverse benchmarks, including coding, reasoning, and multilingual tasks, as well as long-context processing and image understanding. The model's design facilitates its deployment in scenarios requiring sophisticated multimodal interaction and efficient resource utilization, addressing modern AI application requirements. #### About Llama 4. Meta's Llama 4 model family implements a Mixture-of-Experts (MoE) architecture for efficient scaling. This iteration also supports significantly extended context lengths, with models capable of processing up to 10 million tokens. ##### Other Llama 4 Models.\", \"score\": 0.90102744, \"raw_content\": null}, {\"url\": \"https://docs.oracle.com/en-us/iaas/Content/generative-ai/meta-llama-4-maverick.htm\", \"title\": \"Meta Llama 4 Maverick - Oracle Help Center\", \"content\": \"The Llama 4 models leverage a Mixture of Experts (MoE) architecture, enabling efficient and powerful processing capabilities.\", \"score\": 0.882276, \"raw_content\": null}, {\"url\": \"https://ai.meta.com/blog/llama-4-multimodal-intelligence/\", \"title\": \"The Llama 4 herd: The beginning of a new era of natively ...\", \"content\": \"* Llama 4 Maverick, a 17 billion active parameter model with 128 experts, is the best multimodal model in its class, beating GPT-4o and Gemini 2.0 Flash across a broad range of widely reported benchmarks, while achieving comparable results to the new DeepSeek v3 on reasoning and coding\\u2014at less than half the active parameters. We\\u2019re introducing Llama 4 Scout and Llama 4 Maverick, the first open-weight natively multimodal models with unprecedented context length support and our first built using a mixture-of-experts (MoE) architecture. Whether you\\u2019re a developer building on top of our models, an enterprise integrating them into your workflows, or simply curious about the potential uses and benefits of AI, Llama 4 Scout and Llama 4 Maverick are the best choices for adding next-generation intelligence to your products. Building the next generation of Llama models required us to take several new approaches during pre-training. Llama 4 Scout is both pre-trained and post-trained with a 256K context length, which empowers the base model with advanced length generalization capability.\", \"score\": 0.8785752, \"raw_content\": null}, {\"url\": \"https://www.youtube.com/watch?v=_xTA17bKjF4\", \"title\": \"Llama 4 Maverick - Everything You Need To Know - YouTube\", \"content\": \"... Llama 4 #Maverick, a 17-billion-parameter model utilizing a mixture-of-experts (MoE) architecture with 128 experts. This design enables Maverick\", \"score\": 0.8482825, \"raw_content\": null}, {\"url\": \"https://blog.box.com/evaluating-metas-llama-4-models-enterprise-content-box-ai\", \"title\": \"Evaluating Meta's Llama 4 Models for Enterprise Content with Box AI\", \"content\": \"Meta recently introduced Llama 4 Scout and Maverick, its first models featuring a Mixture of Experts (MoE) architecture. At Box, we wanted\", \"score\": 0.78214747, \"raw_content\": null}]}",
+        "error_message": null,
+        "error_code": null,
+        "metadata": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

@@ -1,0 +1,24 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_streaming_web_search[client_with_models-txt=vllm/Qwen/Qwen3.5-35B-A3B-web_search_2025_08_26_type]",
+  "request": {
+    "test_id": "tests/integration/responses/test_tool_responses.py::test_response_streaming_web_search[client_with_models-txt=vllm/Qwen/Qwen3.5-35B-A3B-web_search_2025_08_26_type]",
+    "provider": "tavily",
+    "tool_name": "web_search",
+    "kwargs": {
+      "query": "latest version of Python 2025 2026"
+    }
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.tools.ToolInvocationResult",
+      "__data__": {
+        "content": "{\"query\": \"latest version of Python 2025 2026\", \"top_k\": [{\"url\": \"https://realpython.com/python-news-november-2025/\", \"title\": \"Python 3.14 Released and Other Python News for November 2025\", \"content\": \"Python 3.15 is scheduled for final release in October 2026. The alpha period, which will run through April 2026, is when new features land.\", \"score\": 0.9985335, \"raw_content\": null}, {\"url\": \"https://www.reddit.com/r/archlinux/comments/1q3o9ri/latest_python_upgrade_313_314_on_jan_3_2026/\", \"title\": \"Latest Python upgrade (3.13 -> 3.14) on Jan, 3 2026 (!!) : r/archlinux\", \"content\": \"python 3.13.11-1, last updated 2025-12-10 08:15 UTC ... Because if it's AUR packages you have to rebuild them when a new python version comes out.\", \"score\": 0.9969722, \"raw_content\": null}, {\"url\": \"https://en.wikipedia.org/wiki/History_of_Python\", \"title\": \"History of Python - Wikipedia\", \"content\": \"As of February 2026, Python 3.14.3 is the latest stable release. This version currently receives full bug-fix and security updates, while Python 3.13\\u2014released\", \"score\": 0.99440175, \"raw_content\": null}, {\"url\": \"https://www.python.org/downloads/\", \"title\": \"Download Python - Python.org\", \"content\": \"Python 3.14.3 Feb. 3, 2026 Download Release notes \\u00b7 Python 3.14.2 Dec. 5, 2025 Download Release notes \\u00b7 Python 3.14.1 Dec. 2, 2025 Download Release notes \\u00b7 Python\", \"score\": 0.99187535, \"raw_content\": null}, {\"url\": \"https://www.python.org/doc/versions/\", \"title\": \"Python documentation by version\", \"content\": \"Python 3.13.12, released on 3 February 2026 \\u00b7 Python 3.13.11, released on 5 December 2025 \\u00b7 Python 3.13.10, released on 2 December 2025 \\u00b7 Python 3.13.9, released\", \"score\": 0.99108386, \"raw_content\": null}]}",
+        "error_message": null,
+        "error_code": null,
+        "metadata": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

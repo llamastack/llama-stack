@@ -1,0 +1,24 @@
+{
+  "test_id": "tests/integration/responses/test_openai_responses.py::TestOpenAIResponses::test_openai_response_incomplete_details_max_iterations_exceeded[txt=vllm/Qwen/Qwen3.5-35B-A3B]",
+  "request": {
+    "test_id": "tests/integration/responses/test_openai_responses.py::TestOpenAIResponses::test_openai_response_incomplete_details_max_iterations_exceeded[txt=vllm/Qwen/Qwen3.5-35B-A3B]",
+    "provider": "tavily",
+    "tool_name": "web_search",
+    "kwargs": {
+      "query": "latest news artificial intelligence 2024 2025"
+    }
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.tools.ToolInvocationResult",
+      "__data__": {
+        "content": "{\"query\": \"latest news artificial intelligence 2024 2025\", \"top_k\": [{\"url\": \"https://www.crescendo.ai/news/latest-ai-news-and-updates\", \"title\": \"Latest AI News and AI Breakthroughs that Matter Most: 2026 & 2025\", \"content\": \"Summary: AWS research shows that between 2024 and 2025, 1.3 million Australian businesses, about 50%, will now use AI solutions, with one adopting every three\", \"score\": 0.85538095, \"raw_content\": null}, {\"url\": \"https://caias.mst.edu/ai-news/\", \"title\": \"AI News - Center for Artificial Intelligence and Autonomous Systems\", \"content\": \"Google DeepMind CEO Demis Hassabis thinks startups are in the midst of an 'AI bubble'. December 19, 2025. AI startups raising huge rounds fresh out the traps\", \"score\": 0.7686816, \"raw_content\": null}, {\"url\": \"https://www.crn.com/news/ai/2025/the-10-biggest-ai-news-stories-of-2025\", \"title\": \"The 10 Biggest AI News Stories Of 2025 - CRN\", \"content\": \"Google, Amazon, Apple, Facebook parent Meta, Tesla, Nvidia and Microsoft are spending more than $300 billion on AI in 2025, according to Reuters\", \"score\": 0.7355091, \"raw_content\": null}, {\"url\": \"https://news.microsoft.com/source/features/ai/6-ai-trends-youll-see-more-of-in-2025/\", \"title\": \"6 AI trends you'll see more of in 2025 - Microsoft Source\", \"content\": \"In 2025, one trend is certain: AI will continue to drive innovation and unlock new potential for people and organizations around the globe.\", \"score\": 0.72042775, \"raw_content\": null}, {\"url\": \"https://medium.com/write-a-catalyst/hot-trends-to-watch-in-ai-in-2024-2025-5e336a47c8e8\", \"title\": \"Hot Trends to Watch in AI in 2024/2025 | by Muhammad Faheem\", \"content\": \"Hot Trends to Watch in AI in 2024/2025 \\u00b7 1. AI Models That Think Beyond Text \\u00b7 2. AI in the Real World: From Sandbox to Production \\u00b7 3. AI-Assisted\", \"score\": 0.7040996, \"raw_content\": null}]}",
+        "error_message": null,
+        "error_code": null,
+        "metadata": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
