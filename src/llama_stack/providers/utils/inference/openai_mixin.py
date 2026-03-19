@@ -143,7 +143,10 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         :return: A dictionary of extra headers, or empty dict if none configured
         """
         if self.provider_data_extra_headers_field:
-            provider_data = self.get_request_provider_data()
+            try:
+                provider_data = self.get_request_provider_data()
+            except (AttributeError, ValueError):
+                return {}
             if provider_data and (headers := getattr(provider_data, self.provider_data_extra_headers_field, None)):
                 return dict(headers)
         return {}
