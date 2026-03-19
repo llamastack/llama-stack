@@ -371,35 +371,27 @@ class OpenAIResponseMCPApprovalResponse(BaseModel):
 class OpenAIResponseOutputMessageReasoningSummary(BaseModel):
     """A summary of reasoning output from the model."""
 
-    text: str = Field(description="The summary text of the reasoning output.")
-    type: Literal["summary_text"] = Field(
-        default="summary_text", description="The type identifier, always 'summary_text'."
-    )
+    text: str
+    type: Literal["summary_text"] = "summary_text"
 
 
 @json_schema_type
 class OpenAIResponseOutputMessageReasoningContent(BaseModel):
     """Reasoning text from the model."""
 
-    text: str = Field(description="The reasoning text content from the model.")
-    type: Literal["reasoning_text"] = Field(
-        default="reasoning_text", description="The type identifier, always 'reasoning_text'."
-    )
+    text: str
+    type: Literal["reasoning_text"] = "reasoning_text"
 
 
 @json_schema_type
 class OpenAIResponseOutputMessageReasoningItem(BaseModel):
     """Reasoning output from the model, representing the model's thinking process."""
 
-    id: str = Field(description="Unique identifier for the reasoning output item.")
-    summary: list[OpenAIResponseOutputMessageReasoningSummary] = Field(description="Summary of the reasoning output.")
-    type: Literal["reasoning"] = Field(default="reasoning", description="The type identifier, always 'reasoning'.")
-    content: list[OpenAIResponseOutputMessageReasoningContent] | None = Field(
-        default=None, description="The reasoning content from the model."
-    )
-    status: Literal["in_progress", "completed", "incomplete"] | None = Field(
-        default=None, description="The status of the reasoning output."
-    )
+    id: str
+    summary: list[OpenAIResponseOutputMessageReasoningSummary]
+    type: Literal["reasoning"] = "reasoning"
+    content: list[OpenAIResponseOutputMessageReasoningContent] | None = None
+    status: str | None = None
 
 
 OpenAIResponseOutput = Annotated[
@@ -458,9 +450,6 @@ class OpenAIResponseReasoning(BaseModel):
     """
 
     effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = None
-    summary: Literal["auto", "concise", "detailed"] | None = Field(
-        default=None, description="Summary mode for reasoning output. One of 'auto', 'concise', or 'detailed'."
-    )
 
 
 # Must match type Literals of OpenAIResponseInputToolWebSearch below
