@@ -11,6 +11,7 @@ from .config import VLLMInferenceAdapterConfig
 
 class VLLMProviderDataValidator(BaseModel):
     vllm_api_token: SecretStr | None = None
+    vllm_extra_headers: dict[str, str] | None = None
 
 
 async def get_adapter_impl(config: VLLMInferenceAdapterConfig, _deps):

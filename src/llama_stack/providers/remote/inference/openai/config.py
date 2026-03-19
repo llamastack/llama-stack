@@ -17,6 +17,7 @@ class OpenAIProviderDataValidator(BaseModel):
         default=None,
         description="API key for OpenAI models",
     )
+    openai_extra_headers: dict[str, str] | None = None
 
 
 @json_schema_type

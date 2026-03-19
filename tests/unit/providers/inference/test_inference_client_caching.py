@@ -140,6 +140,57 @@ def test_openai_provider_data_used(config_cls, adapter_cls, provider_data_valida
 
 
 @pytest.mark.parametrize(
+    "config_cls,adapter_cls,provider_data_validator,config_params,extra_provider_data",
+    [
+        (
+            VLLMInferenceAdapterConfig,
+            VLLMInferenceAdapter,
+            "llama_stack.providers.remote.inference.vllm.VLLMProviderDataValidator",
+            {"base_url": "http://fake"},
+            {},
+        ),
+        (
+            OpenAIConfig,
+            OpenAIInferenceAdapter,
+            "llama_stack.providers.remote.inference.openai.config.OpenAIProviderDataValidator",
+            {},
+            {"openai_api_key": "test-key"},
+        ),
+    ],
+)
+def test_extra_headers_from_provider_data(
+    config_cls, adapter_cls, provider_data_validator: str, config_params: dict, extra_provider_data: dict
+):
+    """Ensure extra headers from provider data are forwarded to the OpenAI client."""
+    inference_adapter = adapter_cls(config=config_cls(**config_params))
+
+    inference_adapter.__provider_spec__ = MagicMock()
+    inference_adapter.__provider_spec__.provider_data_validator = provider_data_validator
+
+    extra_headers = {"X-Custom-Header": "custom-value", "X-Another": "another-value"}
+    provider_data = {inference_adapter.provider_data_extra_headers_field: extra_headers, **extra_provider_data}
+
+    with request_provider_data_context({"x-llamastack-provider-data": json.dumps(provider_data)}):
+        assert inference_adapter._get_provider_data_extra_headers() == extra_headers
+        assert inference_adapter.get_extra_client_params() == {"default_headers": extra_headers}
+        assert extra_headers.items() <= dict(inference_adapter.client.default_headers).items()
+
+
+def test_extra_headers_absent_returns_empty():
+    """Ensure get_extra_client_params returns empty dict when no extra headers are set."""
+    inference_adapter = VLLMInferenceAdapter(config=VLLMInferenceAdapterConfig(base_url="http://fake"))
+
+    inference_adapter.__provider_spec__ = MagicMock()
+    inference_adapter.__provider_spec__.provider_data_validator = (
+        "llama_stack.providers.remote.inference.vllm.VLLMProviderDataValidator"
+    )
+
+    with request_provider_data_context({"x-llamastack-provider-data": json.dumps({})}):
+        assert inference_adapter._get_provider_data_extra_headers() == {}
+        assert inference_adapter.get_extra_client_params() == {}
+
+
+@pytest.mark.parametrize(
     "config_cls,adapter_cls,provider_data_validator",
     [
         (

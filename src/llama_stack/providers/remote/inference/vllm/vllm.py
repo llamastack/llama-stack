@@ -40,6 +40,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     provider_data_api_key_field: str = "vllm_api_token"
+    provider_data_extra_headers_field: str = "vllm_extra_headers"
 
     def get_api_key(self) -> str | None:
         if self.config.auth_credential:
@@ -164,7 +165,9 @@ class VLLMInferenceAdapter(OpenAIMixin):
                 #    we have located it at `/rerank`. Please update your client accordingly.
                 #    (Note: Conforms to JinaAI rerank API)" - vLLM 0.15.1
                 endpoint = self.get_base_url().replace("/v1", "") + "/rerank"  # TODO: find a better solution
-                async with session.post(endpoint, headers={}, json=payload) as response:
+                async with session.post(
+                    endpoint, headers=self._get_provider_data_extra_headers(), json=payload
+                ) as response:
                     if response.status != 200:
                         response_text = await response.text()
                         raise RuntimeError(

@@ -106,6 +106,9 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     # Optional field name in provider data to look for API key, which takes precedence
     provider_data_api_key_field: str | None = None
 
+    # Optional field name in provider data to look for extra headers to forward
+    provider_data_extra_headers_field: str | None = None
+
     # Shared SSL context for all calls to improve performance
     # SSL context construction touches disk and is expensive
     # Trade-off: SSL context changes require server restart
@@ -133,6 +136,18 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         pass
 
+    def _get_provider_data_extra_headers(self) -> dict[str, str]:
+        """
+        Get extra headers from provider data if provider_data_extra_headers_field is set.
+
+        :return: A dictionary of extra headers, or empty dict if none configured
+        """
+        if self.provider_data_extra_headers_field:
+            provider_data = self.get_request_provider_data()
+            if provider_data and (headers := getattr(provider_data, self.provider_data_extra_headers_field, None)):
+                return dict(headers)
+        return {}
+
     def get_extra_client_params(self) -> dict[str, Any]:
         """
         Get any extra parameters to pass to the AsyncOpenAI client.
@@ -145,6 +160,9 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
         :return: A dictionary of extra parameters
         """
+        extra_headers = self._get_provider_data_extra_headers()
+        if extra_headers:
+            return {"default_headers": extra_headers}
         return {}
 
     def construct_model_from_identifier(self, identifier: str) -> Model:

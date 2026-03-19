@@ -23,6 +23,7 @@ class OpenAIInferenceAdapter(OpenAIMixin):
     config: OpenAIConfig
 
     provider_data_api_key_field: str = "openai_api_key"
+    provider_data_extra_headers_field: str = "openai_extra_headers"
 
     supports_tokenized_embeddings_input: bool = True
 
