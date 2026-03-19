@@ -240,8 +240,9 @@ async def test_sse_stream_reports_value_error_as_http_exception():
         break
 
     assert first_event is not None
-    assert '"code": "400"' in first_event
-    assert '"message": "not found"' in first_event
+    assert '"type":"error"' in first_event
+    assert '"code":"400"' in first_event
+    assert '"message":"not found"' in first_event
 
 
 async def test_get_response_returns_response_object():
