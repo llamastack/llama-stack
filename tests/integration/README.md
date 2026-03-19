@@ -169,12 +169,71 @@ cat recordings/responses/abc123.json | jq '.'
 
 ### Re-recording Tests
 
-#### Remote Re-recording (Recommended)
-Use the automated workflow script for easier re-recording:
+#### Automated Re-recording (Recommended)
+
+When you open a PR with new or modified tests, the recording workflow automatically:
+1. Detects missing test recordings
+2. Records them using ollama (no API keys needed)
+3. Commits the recordings back to your PR
+
+The workflow uses two steps for security:
+- Step 1: Runs tests with read-only permissions and uploads recordings as artifacts
+- Step 2: Commits recordings from artifacts (only runs trusted base repo code with write permissions)
+
+**For PR authors:**
+- Just open a PR with test changes - that's it!
+- Works for both same-repo and fork PRs (if "Allow edits from maintainers" is enabled)
+- Recording commits trigger tests again in replay mode to validate the recordings work
+
+**For maintainers** - recording with providers requiring API keys (gpt, azure, bedrock):
+
+Via GitHub UI:
+1. Go to **Actions** → **Integration Tests (Record)**
+2. Click **Run workflow**
+3. Enter PR number and providers: `gpt,azure`
+
+Via GitHub CLI:
 ```bash
-./scripts/github/schedule-record-workflow.sh --subdirs "inference,agents"
+# Record for a specific PR with multiple providers
+gh workflow run record-integration-tests.yml \
+  -f pr_number=1234 \
+  -f providers="gpt,azure"
+
+# Just gpt
+gh workflow run record-integration-tests.yml \
+  -f pr_number=1234 \
+  -f providers="gpt"
+
+# Record specific subdirectories or patterns
+gh workflow run record-integration-tests.yml \
+  -f pr_number=1234 \
+  -f subdirs="agents,inference"
+
+gh workflow run record-integration-tests.yml \
+  -f pr_number=1234 \
+  -f pattern="test_streaming"
 ```
-See the [main testing guide](../README.md#remote-re-recording-recommended) for full details.
+
+**Available providers:**
+- `ollama` - No API keys (auto-runs on PRs)
+- `gpt` - OpenAI (requires `OPENAI_API_KEY` secret)
+- `azure` - Azure OpenAI (requires `AZURE_API_KEY`, `AZURE_API_BASE` secrets)
+- `bedrock` - AWS Bedrock (requires `AWS_BEARER_TOKEN_BEDROCK` secret)
+- `watsonx` - IBM watsonx (requires `WATSONX_API_KEY`, `WATSONX_BASE_URL`, `WATSONX_PROJECT_ID` secrets)
+
+Note: `vllm` is not yet supported in this recording workflow (not in the provider matrix).
+
+**Adding new providers:**
+1. Add a new entry to the `provider` matrix in `.github/workflows/record-integration-tests.yml`:
+   ```yaml
+   - setup: your-provider
+     suite: responses
+   ```
+2. Add the provider's API key env var in the `Run and record tests` step:
+   ```yaml
+   YOUR_PROVIDER_API_KEY: ${{ matrix.provider.setup == 'your-provider' && secrets.YOUR_PROVIDER_API_KEY || '' }}
+   ```
+3. Add the GitHub secret in repo settings
 
 #### Local Re-recording
 ```bash
