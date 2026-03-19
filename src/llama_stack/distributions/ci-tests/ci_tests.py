@@ -10,7 +10,6 @@ from llama_stack.distributions.template import DistributionTemplate
 from llama_stack.providers.inline.inference.sentence_transformers.config import (
     SentenceTransformersInferenceConfig,
 )
-from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
 from llama_stack_api import ConnectorInput, ModelInput, ModelType
 
 from ..starter.starter import get_distribution_template as get_starter_distribution_template
@@ -64,12 +63,6 @@ def get_distribution_template() -> DistributionTemplate:
         }
     }
 
-    watsonx_provider = Provider(
-        provider_id="${env.WATSONX_API_KEY:+watsonx}",
-        provider_type="remote::watsonx",
-        config=WatsonXConfig.sample_run_config(),
-    )
-
     # Override sentence-transformers to use trust_remote_code=True for CI tests
     sentence_transformers_provider = Provider(
         provider_id="sentence-transformers",
@@ -86,9 +79,6 @@ def get_distribution_template() -> DistributionTemplate:
             run_config.default_models = []
         run_config.default_models.append(azure_model)
         run_config.default_models.append(watsonx_model)
-
-        # Add WatsonX inference provider
-        run_config.provider_overrides["inference"].append(watsonx_provider)
 
         # Replace sentence-transformers provider with one that has trust_remote_code=True
         inference_providers = run_config.provider_overrides["inference"]
