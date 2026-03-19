@@ -192,18 +192,41 @@ jobs:
         run: |
           if [ -d "recordings-temp" ]; then
             echo "Copying recordings from artifacts to repo"
-            # Copy all recordings, preserving directory structure
-            if [ -d "recordings-temp/tests" ]; then
-              cp -r recordings-temp/tests/integration/recordings/* tests/integration/recordings/ 2>/dev/null || true
 
-              # Handle provider-specific recording directories
+            # Handle old artifact structure (if tests/integration path exists)
+            if [ -d "recordings-temp/tests/integration" ]; then
+              echo "Using old artifact structure (tests/integration/...)"
+              if [ -d "recordings-temp/tests/integration/recordings" ]; then
+                mkdir -p "tests/integration/recordings"
+                cp -r recordings-temp/tests/integration/recordings/* tests/integration/recordings/ 2>/dev/null || true
+              fi
+
               for dir in recordings-temp/tests/integration/*/recordings/; do
                 if [ -d "$dir" ]; then
-                  provider_dir=$(basename $(dirname "$dir"))
-                  mkdir -p "tests/integration/$provider_dir/recordings"
-                  cp -r "$dir"* "tests/integration/$provider_dir/recordings/" 2>/dev/null || true
+                  module_dir=$(basename $(dirname "$dir"))
+                  echo "Copying recordings for $module_dir"
+                  mkdir -p "tests/integration/$module_dir/recordings"
+                  cp -r "$dir"* "tests/integration/$module_dir/recordings/" 2>/dev/null || true
                 fi
               done
+            else
+              # Handle new flattened artifact structure (*/recordings/)
+              echo "Using flattened artifact structure (*/recordings/)"
+              for dir in recordings-temp/*/recordings/; do
+                if [ -d "$dir" ]; then
+                  module_dir=$(basename $(dirname "$dir"))
+                  echo "Copying recordings for $module_dir"
+                  mkdir -p "tests/integration/$module_dir/recordings"
+                  cp -r "$dir"* "tests/integration/$module_dir/recordings/" 2>/dev/null || true
+                fi
+              done
+
+              # Also handle top-level recordings directory if it exists
+              if [ -d "recordings-temp/recordings" ]; then
+                echo "Copying top-level recordings"
+                mkdir -p "tests/integration/recordings"
+                cp -r recordings-temp/recordings/* tests/integration/recordings/ 2>/dev/null || true
+              fi
             fi
           fi
 
