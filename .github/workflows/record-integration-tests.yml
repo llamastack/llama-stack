@@ -89,11 +89,12 @@ jobs:
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             if [ -n "$INPUT_PR_NUMBER" ]; then
               # Fetch PR info via API
-              PR_DATA=$(gh pr view "$INPUT_PR_NUMBER" --repo "$REPO" --json number,headRefName,headRefOid,headRepository)
+              PR_DATA=$(gh pr view "$INPUT_PR_NUMBER" --repo "$REPO" --json number,headRefName,headRefOid,headRepository,headRepositoryOwner)
               PR_NUMBER="$INPUT_PR_NUMBER"
               HEAD_REF=$(echo "$PR_DATA" | jq -r '.headRefName')
               HEAD_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid')
-              HEAD_REPO=$(echo "$PR_DATA" | jq -r '.headRepository.nameWithOwner')
+              # headRepository.nameWithOwner can be empty for fork PRs, so construct it manually
+              HEAD_REPO=$(echo "$PR_DATA" | jq -r '"\(.headRepositoryOwner.login)/\(.headRepository.name)"')
             else
               # Use current branch
               PR_NUMBER="manual"
