@@ -140,6 +140,39 @@ jobs:
           echo "  Fork PR: ${IS_FORK_PR}"
           echo "  Providers: ${PROVIDERS}"
 
+  # Upload PR metadata for companion workflow
+  upload-pr-metadata:
+    needs: compute-pr-info
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create PR metadata artifact
+        env:
+          # Pass via env vars to prevent code injection (same pattern as compute-pr-info step)
+          PR_NUMBER: ${{ needs.compute-pr-info.outputs.pr_number }}
+          PR_HEAD_REF: ${{ needs.compute-pr-info.outputs.pr_head_ref }}
+          PR_HEAD_SHA: ${{ needs.compute-pr-info.outputs.pr_head_sha }}
+          PR_HEAD_REPO: ${{ needs.compute-pr-info.outputs.pr_head_repo }}
+          IS_FORK_PR: ${{ needs.compute-pr-info.outputs.is_fork_pr }}
+        run: |
+          mkdir -p pr-metadata
+          cat > pr-metadata/pr-info.json <<EOF
+          {
+            "pr_number": "${PR_NUMBER}",
+            "pr_head_ref": "${PR_HEAD_REF}",
+            "pr_head_sha": "${PR_HEAD_SHA}",
+            "pr_head_repo": "${PR_HEAD_REPO}",
+            "is_fork_pr": "${IS_FORK_PR}"
+          }
+          EOF
+          cat pr-metadata/pr-info.json
+
+      - name: Upload PR metadata
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: pr-metadata-${{ github.run_id }}
+          path: pr-metadata/
+          retention-days: 1
+
   # Record tests for each provider
   record-providers:
     needs: compute-pr-info
@@ -190,7 +223,7 @@ jobs:
       # a trusted commit, not from PR checkout. This is critical for security.
       - name: Setup test environment
         if: steps.should_run.outputs.run == 'true'
-        uses: llamastack/llama-stack/.github/actions/setup-test-environment@ce063acfe127393537cb0a5deb29cd20063c76af
+        uses: llamastack/llama-stack/.github/actions/setup-test-environment@4a4f48ffda71163aba27360a8cb172d4fddb398c
         with:
           python-version: "3.12"
           client-version: "latest"
@@ -200,7 +233,7 @@ jobs:
 
       - name: Run and record tests
         if: steps.should_run.outputs.run == 'true'
-        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@ce063acfe127393537cb0a5deb29cd20063c76af
+        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@4a4f48ffda71163aba27360a8cb172d4fddb398c
         env:
           OPENAI_API_KEY: ${{ matrix.provider.setup == 'gpt' && secrets.OPENAI_API_KEY || '' }}
           AZURE_API_KEY: ${{ matrix.provider.setup == 'azure' && secrets.AZURE_API_KEY || '' }}
