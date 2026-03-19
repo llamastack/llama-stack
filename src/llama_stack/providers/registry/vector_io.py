@@ -25,8 +25,8 @@ def available_providers() -> list[ProviderSpec]:
             module="llama_stack.providers.inline.vector_io.faiss",
             config_class="llama_stack.providers.inline.vector_io.faiss.FaissVectorIOConfig",
             deprecation_warning="Please use the `inline::faiss` provider instead.",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
+            api_dependencies=[Api.inference, Api.file_processors],
+            optional_api_dependencies=[Api.files, Api.models],
             description="Meta's reference implementation of a vector database.",
         ),
         InlineProviderSpec(
@@ -35,8 +35,8 @@ def available_providers() -> list[ProviderSpec]:
             pip_packages=["faiss-cpu"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.inline.vector_io.faiss",
             config_class="llama_stack.providers.inline.vector_io.faiss.FaissVectorIOConfig",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
+            api_dependencies=[Api.inference, Api.file_processors],
+            optional_api_dependencies=[Api.files, Api.models],
             description="""
 [Faiss](https://github.com/facebookresearch/faiss) is an inline vector database provider for Llama Stack. It
 allows you to store and query vectors directly in memory.
@@ -88,8 +88,8 @@ more details about Faiss in general.
             pip_packages=["sqlite-vec"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.inline.vector_io.sqlite_vec",
             config_class="llama_stack.providers.inline.vector_io.sqlite_vec.SQLiteVectorIOConfig",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
+            api_dependencies=[Api.inference, Api.file_processors],
+            optional_api_dependencies=[Api.files, Api.models],
             description="""
 [SQLite-Vec](https://github.com/asg017/sqlite-vec) is an inline vector database provider for Llama Stack. It
 allows you to store and query vectors directly within an SQLite database.
@@ -296,8 +296,8 @@ See [sqlite-vec's GitHub repo](https://github.com/asg017/sqlite-vec/tree/main) f
             module="llama_stack.providers.inline.vector_io.sqlite_vec",
             config_class="llama_stack.providers.inline.vector_io.sqlite_vec.SQLiteVectorIOConfig",
             deprecation_warning="Please use the `inline::sqlite-vec` provider (notice the hyphen instead of underscore) instead.",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
+            api_dependencies=[Api.inference, Api.file_processors],
+            optional_api_dependencies=[Api.files, Api.models],
             description="""
 Please refer to the sqlite-vec provider documentation.
 """,
@@ -309,8 +309,8 @@ Please refer to the sqlite-vec provider documentation.
             pip_packages=["chromadb-client"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.remote.vector_io.chroma",
             config_class="llama_stack.providers.remote.vector_io.chroma.ChromaVectorIOConfig",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
+            api_dependencies=[Api.inference, Api.file_processors],
+            optional_api_dependencies=[Api.files, Api.models],
             description="""
 [Chroma](https://www.trychroma.com/) is an inline and remote vector
 database provider for Llama Stack. It allows you to store and query vectors directly within a Chroma database.
@@ -351,8 +351,8 @@ See [Chroma's documentation](https://docs.trychroma.com/docs/overview/introducti
             pip_packages=["chromadb"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.inline.vector_io.chroma",
             config_class="llama_stack.providers.inline.vector_io.chroma.ChromaVectorIOConfig",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
+            api_dependencies=[Api.inference, Api.file_processors],
+            optional_api_dependencies=[Api.files, Api.models],
             description="""
 [Chroma](https://www.trychroma.com/) is an inline and remote vector
 database provider for Llama Stack. It allows you to store and query vectors directly within a Chroma database.
@@ -395,8 +395,8 @@ See [Chroma's documentation](https://docs.trychroma.com/docs/overview/introducti
             pip_packages=["psycopg2-binary"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.remote.vector_io.pgvector",
             config_class="llama_stack.providers.remote.vector_io.pgvector.PGVectorVectorIOConfig",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
+            api_dependencies=[Api.inference, Api.file_processors],
+            optional_api_dependencies=[Api.files, Api.models],
             description="""
 [PGVector](https://github.com/pgvector/pgvector) is a remote vector database provider for Llama Stack. It
 allows you to store and query vectors directly in memory.
@@ -528,8 +528,8 @@ See [PGVector's documentation](https://github.com/pgvector/pgvector) for more de
             pip_packages=["weaviate-client>=4.16.5"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.remote.vector_io.weaviate",
             config_class="llama_stack.providers.remote.vector_io.weaviate.WeaviateVectorIOConfig",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
+            api_dependencies=[Api.inference, Api.file_processors],
+            optional_api_dependencies=[Api.files, Api.models],
             description="""
 [Weaviate](https://weaviate.io/) is a vector database provider for Llama Stack.
 It allows you to store and query vectors directly within a Weaviate database.
@@ -568,8 +568,8 @@ See [Weaviate's documentation](https://weaviate.io/developers/weaviate) for more
             pip_packages=["qdrant-client"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.inline.vector_io.qdrant",
             config_class="llama_stack.providers.inline.vector_io.qdrant.QdrantVectorIOConfig",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
+            api_dependencies=[Api.inference, Api.file_processors],
+            optional_api_dependencies=[Api.files, Api.models],
             description=r"""
 [Qdrant](https://qdrant.tech/documentation/) is an inline and remote vector database provider for Llama Stack. It
 allows you to store and query vectors directly in memory.
@@ -621,8 +621,8 @@ See the [Qdrant documentation](https://qdrant.tech/documentation/) for more deta
             pip_packages=["qdrant-client"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.remote.vector_io.qdrant",
             config_class="llama_stack.providers.remote.vector_io.qdrant.QdrantVectorIOConfig",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
+            api_dependencies=[Api.inference, Api.file_processors],
+            optional_api_dependencies=[Api.files, Api.models],
             description="""
 Please refer to the inline provider documentation.
 """,
@@ -634,8 +634,8 @@ Please refer to the inline provider documentation.
             pip_packages=["pymilvus>=2.4.10"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.remote.vector_io.milvus",
             config_class="llama_stack.providers.remote.vector_io.milvus.MilvusVectorIOConfig",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
+            api_dependencies=[Api.inference, Api.file_processors],
+            optional_api_dependencies=[Api.files, Api.models],
             description="""
 [Milvus](https://milvus.io/) is an inline and remote vector database provider for Llama Stack. It
 allows you to store and query vectors directly within a Milvus database.
@@ -840,8 +840,8 @@ For more details on TLS configuration, refer to the [TLS setup guide](https://mi
             pip_packages=["pymilvus[milvus-lite]>=2.4.10"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.inline.vector_io.milvus",
             config_class="llama_stack.providers.inline.vector_io.milvus.MilvusVectorIOConfig",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
+            api_dependencies=[Api.inference, Api.file_processors],
+            optional_api_dependencies=[Api.files, Api.models],
             description="""
 Please refer to the remote provider documentation.
 """,
@@ -853,8 +853,8 @@ Please refer to the remote provider documentation.
             pip_packages=["elasticsearch>=8.16.0,<9.0.0"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.remote.vector_io.elasticsearch",
             config_class="llama_stack.providers.remote.vector_io.elasticsearch.ElasticsearchVectorIOConfig",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
+            api_dependencies=[Api.inference, Api.file_processors],
+            optional_api_dependencies=[Api.files, Api.models],
             description="""
 [Elasticsearch](https://www.elastic.co/) is a vector database provider for Llama Stack.
 It allows you to store and query vectors directly within an Elasticsearch database.
@@ -902,8 +902,8 @@ See [Elasticsearch's documentation](https://www.elastic.co/docs/solutions/search
             pip_packages=["oracledb", "numpy"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.remote.vector_io.oci",
             config_class="llama_stack.providers.remote.vector_io.oci.OCI26aiVectorIOConfig",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
+            api_dependencies=[Api.inference, Api.file_processors],
+            optional_api_dependencies=[Api.files, Api.models],
             description="""
 [Oracle 26ai](https://docs.oracle.com/en/database/oracle/oracle-database/26/index.html)
 is a remote vector database provider for Llama Stack. It allows you to store and query vectors directly

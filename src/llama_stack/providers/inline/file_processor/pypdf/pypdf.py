@@ -58,10 +58,13 @@ class PyPDFFileProcessor:
 
         # Get file content
         if file:
+            # Read file in chunks to enable early termination on oversized files
+            # This prevents reading gigabytes before discovering the file exceeds limits
+            # Note: Full content is still assembled in memory for PDF/text processing
             content_parts = []
             bytes_read = 0
             while True:
-                chunk = await file.read(64 * 1024)
+                chunk = await file.read(64 * 1024)  # 64KB chunks for efficient I/O
                 if not chunk:
                     break
                 bytes_read += len(chunk)
@@ -87,7 +90,7 @@ class PyPDFFileProcessor:
                 )
 
         mime_type, _ = mimetypes.guess_type(filename)
-        mime_category = mime_type.split("/")[0] if mime_type else None
+        mime_category = mime_type.split("/")[0] if (mime_type and "/" in mime_type) else None
 
         if mime_type == "application/pdf":
             return self._process_pdf(content, filename, file_id, chunking_strategy, start_time)
