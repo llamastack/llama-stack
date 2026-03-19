@@ -7,6 +7,9 @@ fallback_version = "0.4.5"
 
 [tool.uv]
 required-version = ">=0.7.0"
+constraint-dependencies = [
+    "pyasn1>=0.6.3",  # CVE-2026-30922: DoS via unbounded recursion
+]
 
 [project]
 name = "llama_stack"
