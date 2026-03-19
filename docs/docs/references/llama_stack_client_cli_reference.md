@@ -68,17 +68,17 @@ llama-stack-client providers list
 +-----------+----------------+-----------------+
 | API       | Provider ID    | Provider Type   |
 +===========+================+=================+
-| scoring   | meta0          | meta-reference  |
+| scoring   | meta0          | builtin  |
 +-----------+----------------+-----------------+
-| datasetio | meta0          | meta-reference  |
+| datasetio | meta0          | builtin  |
 +-----------+----------------+-----------------+
 | inference | tgi0           | remote::tgi     |
 +-----------+----------------+-----------------+
-| memory    | meta-reference | meta-reference  |
+| memory    | builtin | builtin  |
 +-----------+----------------+-----------------+
-| agents    | meta-reference | meta-reference  |
+| agents    | builtin | builtin  |
 +-----------+----------------+-----------------+
-| safety    | meta-reference | meta-reference  |
+| safety    | builtin | builtin  |
 +-----------+----------------+-----------------+
 ```
 
@@ -333,7 +333,7 @@ llama-stack-client toolgroups list
 +---------------------------+------------------+------+---------------+
 | identifier                | provider_id      | args | mcp_endpoint  |
 +===========================+==================+======+===============+
-| builtin::rag              | rag-runtime      | None | None          |
+| builtin::file_search              | file-search      | None | None          |
 +---------------------------+------------------+------+---------------+
 | builtin::websearch        | tavily-search    | None | None          |
 +---------------------------+------------------+------+---------------+

@@ -143,6 +143,8 @@ class MongoDBKVStoreConfig(CommonConfig):
 
 
 class SqlAlchemySqlStoreConfig(BaseModel):
+    pool_pre_ping: bool = True
+
     @property
     @abstractmethod
     def engine_str(self) -> str: ...
@@ -182,6 +184,9 @@ class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
     db: str = "llamastack"
     user: str
     password: str | None = None
+    pool_size: int = Field(default=10, ge=1, description="Number of persistent connections in the pool")
+    max_overflow: int = Field(default=20, ge=0, description="Max additional connections beyond pool_size")
+    pool_recycle: int = Field(default=-1, ge=-1, description="Connection recycle interval in seconds, -1 to disable")
 
     @property
     def engine_str(self) -> str:
@@ -200,6 +205,10 @@ class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
             "db": "${env.POSTGRES_DB:=llamastack}",
             "user": "${env.POSTGRES_USER:=llamastack}",
             "password": "${env.POSTGRES_PASSWORD:=llamastack}",
+            "pool_size": "${env.POSTGRES_POOL_SIZE:=10}",
+            "max_overflow": "${env.POSTGRES_MAX_OVERFLOW:=20}",
+            "pool_recycle": "${env.POSTGRES_POOL_RECYCLE:=-1}",
+            "pool_pre_ping": "${env.POSTGRES_POOL_PRE_PING:=true}",
         }
 
 

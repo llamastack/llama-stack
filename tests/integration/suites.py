@@ -103,11 +103,21 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "rerank_model": "vllm/Qwen/Qwen3-Reranker-0.6B",
         },
     ),
+    "ollama-reasoning": Setup(
+        name="ollama",
+        description="Local Ollama provider with a reasoning-capable model (gpt-oss)",
+        env={
+            "OLLAMA_URL": "http://0.0.0.0:11434/v1",
+        },
+        defaults={
+            "text_model": "ollama/gpt-oss:20b",
+        },
+    ),
     "bedrock": Setup(
         name="bedrock",
         description="AWS Bedrock provider with OpenAI GPT-OSS model (us-west-2)",
         defaults={
-            "text_model": "bedrock/openai.gpt-oss-20b-1:0",
+            "text_model": "bedrock/openai.gpt-oss-20b",
         },
     ),
     "gpt": Setup(
@@ -115,8 +125,33 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         description="OpenAI GPT models for high-quality responses and tool calling",
         defaults={
             "text_model": "openai/gpt-4o",
+            "vision_model": "openai/gpt-4o",
             "embedding_model": "openai/text-embedding-3-small",
             "embedding_dimension": 1536,
+        },
+    ),
+    "gpt-reasoning": Setup(
+        name="gpt-reasoning",
+        description="OpenAI reasoning models (o4-mini) for reasoning effort tests",
+        defaults={
+            "text_model": "openai/o4-mini",
+        },
+    ),
+    "azure": Setup(
+        name="azure",
+        description="Azure-hosted GPT models via the Azure OpenAI-compatible endpoint",
+        defaults={
+            "text_model": "azure/gpt-4o",
+            "vision_model": "azure/gpt-4o",
+            "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
+            "embedding_dimension": 768,
+        },
+    ),
+    "watsonx": Setup(
+        name="watsonx",
+        description="IBM WatsonX AI models",
+        defaults={
+            "text_model": "watsonx/meta-llama/llama-3-3-70b-instruct",
         },
     ),
     "tgi": Setup(
@@ -206,8 +241,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
 base_roots = [
     str(p)
     for p in this_dir.glob("*")
-    if p.is_dir()
-    and p.name not in ("__pycache__", "fixtures", "test_cases", "recordings", "responses", "post_training")
+    if p.is_dir() and p.name not in ("__pycache__", "fixtures", "test_cases", "recordings", "responses")
 ]
 
 SUITE_DEFINITIONS: dict[str, Suite] = {
@@ -231,10 +265,25 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         roots=["tests/integration/inference/test_vision_inference.py"],
         default_setup="ollama-vision",
     ),
-    "reasoning": Suite(
-        name="reasoning",
+    "vllm-reasoning": Suite(
+        name="vllm-reasoning",
         roots=["tests/integration/responses/test_reasoning.py"],
         default_setup="vllm",
+    ),
+    "gpt-reasoning": Suite(
+        name="gpt-reasoning",
+        roots=[
+            "tests/integration/responses/test_openai_responses.py::test_openai_response_reasoning_effort",
+            "tests/integration/responses/test_openai_responses.py::test_openai_response_reasoning_effort_streaming",
+        ],
+        default_setup="gpt-reasoning",
+    ),
+    "ollama-reasoning": Suite(
+        name="ollama-reasoning",
+        roots=[
+            "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_reasoning_passthrough",
+        ],
+        default_setup="ollama-reasoning",
     ),
     # Bedrock-specific tests with pre-recorded responses (no live API calls in CI)
     "bedrock": Suite(

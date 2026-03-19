@@ -97,5 +97,9 @@ echo "  ✓ Delete successful"
 test_endpoint "http://127.0.0.1:8321/v1/files/$FILEID_USER2 -X DELETE" "llama-stack-user1-token" "404" || exit 1
 echo "  ✓ Delete correctly blocked"
 
+echo "Testing route_policy blocks /v1/models  (DENIED)"
+test_endpoint "http://127.0.0.1:8321/v1/models" "llama-stack-user1-token" "403" || exit 1
+echo "  ✓ Wildcard pattern denies /v1/models"
+
 echo ""
 echo "✓ ABAC test completed successfully!"

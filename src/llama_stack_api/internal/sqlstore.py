@@ -50,6 +50,7 @@ class SqlStore(Protocol):
         table: str,
         where: Mapping[str, Any] | None = None,
         where_sql: str | None = None,
+        where_sql_params: Mapping[str, Any] | None = None,
         limit: int | None = None,
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
         cursor: tuple[str, str] | None = None,
@@ -60,6 +61,7 @@ class SqlStore(Protocol):
         table: str,
         where: Mapping[str, Any] | None = None,
         where_sql: str | None = None,
+        where_sql_params: Mapping[str, Any] | None = None,
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
     ) -> dict[str, Any] | None: ...
 

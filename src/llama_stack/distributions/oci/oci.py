@@ -22,8 +22,8 @@ def get_distribution_template(name: str = "oci") -> DistributionTemplate:
             BuildProvider(provider_type="remote::pgvector"),
         ],
         "safety": [BuildProvider(provider_type="inline::llama-guard")],
-        "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "eval": [BuildProvider(provider_type="inline::meta-reference")],
+        "agents": [BuildProvider(provider_type="inline::builtin")],
+        "eval": [BuildProvider(provider_type="inline::builtin")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),
             BuildProvider(provider_type="inline::localfs"),
@@ -36,7 +36,7 @@ def get_distribution_template(name: str = "oci") -> DistributionTemplate:
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
-            BuildProvider(provider_type="inline::rag-runtime"),
+            BuildProvider(provider_type="inline::file-search"),
             BuildProvider(provider_type="remote::model-context-protocol"),
         ],
         "files": [BuildProvider(provider_type="inline::localfs")],
@@ -55,7 +55,7 @@ def get_distribution_template(name: str = "oci") -> DistributionTemplate:
     )
 
     files_provider = Provider(
-        provider_id="meta-reference-files",
+        provider_id="builtin-files",
         provider_type="inline::localfs",
         config=LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}"),
     )

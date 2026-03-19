@@ -12,7 +12,7 @@ from llama_stack_api import (
     RemoteProviderSpec,
 )
 
-META_REFERENCE_DEPS = [
+BUILTIN_DEPS = [
     "accelerate",
     "fairscale",
     "torch",
@@ -45,6 +45,19 @@ def available_providers() -> list[ProviderSpec]:
             module="llama_stack.providers.inline.inference.sentence_transformers",
             config_class="llama_stack.providers.inline.inference.sentence_transformers.config.SentenceTransformersInferenceConfig",
             description="Sentence Transformers inference provider for text embeddings and similarity search.",
+        ),
+        InlineProviderSpec(
+            api=Api.inference,
+            provider_type="inline::transformers",
+            pip_packages=[
+                "torch --extra-index-url https://download.pytorch.org/whl/cpu",
+                "transformers",
+                "tokenizers",
+                "safetensors",
+            ],
+            module="llama_stack.providers.inline.inference.transformers",
+            config_class="llama_stack.providers.inline.inference.transformers.config.TransformersInferenceConfig",
+            description="Transformers inference provider for neural rerank.",
         ),
         RemoteProviderSpec(
             api=Api.inference,
@@ -201,7 +214,7 @@ def available_providers() -> list[ProviderSpec]:
             adapter_type="vertexai",
             provider_type="remote::vertexai",
             pip_packages=[
-                "google-cloud-aiplatform",
+                "google-genai",
             ],
             module="llama_stack.providers.remote.inference.vertexai",
             config_class="llama_stack.providers.remote.inference.vertexai.VertexAIConfig",
@@ -271,7 +284,7 @@ Available Models:
             api=Api.inference,
             adapter_type="watsonx",
             provider_type="remote::watsonx",
-            pip_packages=["litellm"],
+            pip_packages=[],
             module="llama_stack.providers.remote.inference.watsonx",
             config_class="llama_stack.providers.remote.inference.watsonx.WatsonXConfig",
             provider_data_validator="llama_stack.providers.remote.inference.watsonx.config.WatsonXProviderDataValidator",

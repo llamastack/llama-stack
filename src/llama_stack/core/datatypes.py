@@ -355,6 +355,13 @@ class QualifiedModel(BaseModel):
     embedding_dimensions: int | None = None
 
 
+class RerankerModel(BaseModel):
+    """A model identifier of a reranker model, consisting of a provider ID and a model ID."""
+
+    provider_id: str
+    model_id: str
+
+
 class RewriteQueryParams(BaseModel):
     """Parameters for query rewriting/expansion."""
 
@@ -403,11 +410,11 @@ class FileSearchParams(BaseModel):
     """Configuration for file search tool output formatting."""
 
     header_template: str = Field(
-        default="knowledge_search tool found {num_chunks} chunks:\nBEGIN of knowledge_search tool results.\n",
+        default="file_search tool found {num_chunks} chunks:\nBEGIN of file_search tool results.\n",
         description="Template for the header text shown before search results. Available placeholders: {num_chunks} number of chunks found.",
     )
     footer_template: str = Field(
-        default="END of knowledge_search tool results.\n",
+        default="END of file_search tool results.\n",
         description="Template for the footer text shown after search results.",
     )
 
@@ -418,10 +425,8 @@ class FileSearchParams(BaseModel):
             raise ValueError("header_template must not be empty")
         if "{num_chunks}" not in v:
             raise ValueError("header_template must contain {num_chunks} placeholder")
-        if "knowledge_search" not in v.lower():
-            raise ValueError(
-                "header_template must contain 'knowledge_search' keyword to ensure proper tool identification"
-            )
+        if "file_search" not in v.lower():
+            raise ValueError("header_template must contain 'file_search' keyword to ensure proper tool identification")
         return v
 
 
@@ -588,6 +593,10 @@ class VectorStoresConfig(BaseModel):
     default_embedding_model: QualifiedModel | None = Field(
         default=None,
         description="Default embedding model configuration for vector stores.",
+    )
+    default_reranker_model: RerankerModel | None = Field(
+        default=None,
+        description="Default reranker model configuration for vector stores.",
     )
     rewrite_query_params: RewriteQueryParams | None = Field(
         default=None,
@@ -767,7 +776,7 @@ The list of APIs to serve. If not specified, all APIs specified in the provider_
 
     providers: dict[str, list[Provider]] = Field(
         description="""
-One or more providers to use for each API. The same provider_type (e.g., meta-reference)
+One or more providers to use for each API. The same provider_type (e.g., builtin)
 can be instantiated multiple times (with different configs) if necessary.
 """,
     )

@@ -3,10 +3,13 @@ requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-fallback_version = "0.5.2.dev0"
+fallback_version = "0.6.1.dev0"
 
 [tool.uv]
 required-version = ">=0.7.0"
+constraint-dependencies = [
+    "pyasn1>=0.6.3",  # CVE-2026-30922: DoS via unbounded recursion
+]
 
 [project]
 name = "llama_stack"
@@ -38,7 +41,7 @@ dependencies = [
     "openai>=2.5.0",
     "prompt-toolkit",
     "python-dotenv",
-    "pyjwt[crypto]>=2.10.0",                          # Pull crypto to support RS256 for jwt. Requires 2.10.0+ for ssl_context support.
+    "pyjwt[crypto]>=2.12.0",                          # Pull crypto to support RS256 for jwt. Requires 2.12.0+ to fix CVE-2026-32597.
     "pydantic>=2.11.9",
     "rich",
     "termcolor",
@@ -64,7 +67,7 @@ dependencies = [
 
 [project.optional-dependencies]
 client = [
-    "llama-stack-client>=0.4.0.dev0", # Optional for library-only usage
+    "llama-stack-client>=0.6.0", # Optional for library-only usage
 ]
 
 [dependency-groups]
@@ -90,7 +93,7 @@ type_checking = [
     "types-requests",
     "types-setuptools",
     "types-jsonschema",
-    "pypdf>=6.1.3",
+    "pypdf>=6.7.2",
     "pandas-stubs",
     "types-psutil",
     "types-tqdm",
@@ -115,10 +118,10 @@ type_checking = [
     "lm-format-enforcer",
     "mcp>=1.23.0",
     "ollama",
-    "llama-stack-client>=0.3.0",
     "langchain-openai",
     "langchain-core",
     "langgraph",
+    "llama-stack-client>=0.6.0",
 ]
 # These are the dependencies required for running unit tests.
 unit = [
@@ -129,7 +132,7 @@ unit = [
     "aiosqlite",
     "aiohttp",
     "psycopg2-binary>=2.9.0",
-    "pypdf>=6.1.3",
+    "pypdf>=6.7.2",
     "mcp>=1.23.0",
     "chardet",
     "sqlalchemy",
@@ -152,7 +155,7 @@ test = [
     "torchvision>=0.21.0",
     "chardet",
     "psycopg2-binary>=2.9.0",
-    "pypdf>=6.1.3",
+    "pypdf>=6.7.2",
     "mcp>=1.23.0",
     "datasets>=4.0.0",
     "autoevals",
@@ -305,9 +308,9 @@ exclude = [
     "^src/llama_stack/core/store/registry\\.py$",
     "^src/llama_stack/core/utils/exec\\.py$",
     "^src/llama_stack/core/utils/prompt_for_config\\.py$",
-    "^src/llama_stack/providers/inline/agents/meta_reference/",
+    "^src/llama_stack/providers/inline/agents/builtin/",
     "^src/llama_stack/providers/inline/datasetio/localfs/",
-    "^src/llama_stack/providers/inline/eval/meta_reference/eval\\.py$",
+    "^src/llama_stack/providers/inline/eval/builtin/eval\\.py$",
     "^src/llama_stack/providers/inline/inference/sentence_transformers/sentence_transformers\\.py$",
     "^src/llama_stack/providers/inline/post_training/common/validator\\.py$",
     "^src/llama_stack/providers/inline/safety/code_scanner/",
@@ -344,7 +347,6 @@ exclude = [
     "^src/llama_stack/providers/utils/bedrock/client\\.py$",
     "^src/llama_stack/providers/utils/bedrock/refreshable_boto_session\\.py$",
     "^src/llama_stack/providers/utils/inference/embedding_mixin\\.py$",
-    "^src/llama_stack/providers/utils/inference/litellm_openai_mixin\\.py$",
     "^src/llama_stack/providers/utils/inference/model_registry\\.py$",
     "^src/llama_stack/providers/utils/inference/prompt_adapter\\.py$",
     "^src/llama_stack/providers/utils/kvstore/kvstore\\.py$",
@@ -374,6 +376,7 @@ module = [
     "nest_asyncio",
     "streamlit_option_menu",
     "lmformatenforcer.*",
+    "google.genai.*",
 ]
 ignore_missing_imports = true
 

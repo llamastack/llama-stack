@@ -29,6 +29,9 @@ data:
       - provider_id: sentence-transformers
         provider_type: inline::sentence-transformers
         config: {}
+      - provider_id: transformers
+        provider_type: inline::transformers
+        config: {}
       vector_io:
       - provider_id: ${env.ENABLE_CHROMADB:+chromadb}
         provider_type: remote::chromadb
@@ -42,7 +45,7 @@ data:
             user: ${env.POSTGRES_USER:=llamastack}
             password: ${env.POSTGRES_PASSWORD:=llamastack}
       files:
-      - provider_id: meta-reference-files
+      - provider_id: builtin-files
         provider_type: inline::localfs
         config:
           storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter/files}
@@ -55,8 +58,8 @@ data:
         config:
           excluded_categories: []
       agents:
-      - provider_id: meta-reference
-        provider_type: inline::meta-reference
+      - provider_id: builtin
+        provider_type: inline::builtin
         config:
           persistence_store:
             type: postgres
@@ -83,8 +86,8 @@ data:
         config:
           api_key: ${env.TAVILY_SEARCH_API_KEY:+}
           max_results: 3
-      - provider_id: rag-runtime
-        provider_type: inline::rag-runtime
+      - provider_id: file-search
+        provider_type: inline::file-search
         config: {}
       - provider_id: model-context-protocol
         provider_type: remote::model-context-protocol
@@ -128,6 +131,10 @@ data:
       provider_id: sentence-transformers
       model_type: embedding
     - metadata: {}
+      model_id: Qwen/Qwen3-Reranker-0.6B
+      provider_id: transformers
+      model_type: rerank
+    - metadata: {}
       model_id: ${env.INFERENCE_MODEL}
       provider_id: vllm-inference
       model_type: llm
@@ -144,8 +151,8 @@ data:
     tool_groups:
     - toolgroup_id: builtin::websearch
       provider_id: tavily-search
-    - toolgroup_id: builtin::rag
-      provider_id: rag-runtime
+    - toolgroup_id: builtin::file_search
+      provider_id: file-search
     server:
       port: 8321
       auth:

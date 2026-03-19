@@ -13,14 +13,14 @@ from llama_stack_api import (
 )
 
 # Common dependencies for all vector IO providers that support document processing
-DEFAULT_VECTOR_IO_DEPS = ["chardet", "pypdf"]
+DEFAULT_VECTOR_IO_DEPS = ["chardet", "pypdf>=6.7.2"]
 
 
 def available_providers() -> list[ProviderSpec]:
     return [
         InlineProviderSpec(
             api=Api.vector_io,
-            provider_type="inline::meta-reference",
+            provider_type="inline::builtin",
             pip_packages=["faiss-cpu"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.inline.vector_io.faiss",
             config_class="llama_stack.providers.inline.vector_io.faiss.FaissVectorIOConfig",

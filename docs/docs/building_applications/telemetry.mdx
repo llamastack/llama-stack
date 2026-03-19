@@ -28,13 +28,20 @@ uv run opentelemetry-instrument llama stack run starter
 
 ### Known issues
 
-Some database instrumentation libraries have a known bug where spans get wrapped twice, or do not get connected to a trace.
-To prevent this, you can disable database specific tracing, and rely just on the SQLAlchemy tracing. If you are using
-`sqlite3` as your database, for example, you can disable the additional tracing like this:
+When OpenTelemetry auto-instrumentation is enabled, both the low-level database driver instrumentor
+(e.g. `asyncpg`, `sqlite3`) and the SQLAlchemy ORM instrumentor activate simultaneously. This causes
+every database operation to be traced twice -- once at the ORM level and once at the raw protocol level.
+The driver-level spans expose internal pool mechanics (such as connection health-check queries) that
+inflate traces with noise. To prevent this, disable the driver-level instrumentors and rely on the
+SQLAlchemy instrumentation alone:
 
 ```sh
-export OTEL_PYTHON_DISABLED_INSTRUMENTATIONS="sqlite3"
+export OTEL_PYTHON_DISABLED_INSTRUMENTATIONS="sqlite3,asyncpg"
 ```
+
+:::note
+The container image sets this automatically when any `OTEL_*` environment variable is present.
+:::
 
 
 ## Related Resources

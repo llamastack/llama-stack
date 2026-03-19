@@ -17,6 +17,8 @@ providers:
       tls_verify: ${env.VLLM_TLS_VERIFY:=true}
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
+  - provider_id: transformers
+    provider_type: inline::transformers
   vector_io:
   - provider_id: ${env.ENABLE_CHROMADB:+chromadb}
     provider_type: remote::chromadb
@@ -31,8 +33,8 @@ providers:
     config:
       excluded_categories: []
   agents:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       persistence:
         agent_state:
@@ -54,8 +56,8 @@ providers:
     config:
       api_key: ${env.TAVILY_SEARCH_API_KEY:=}
       max_results: 3
-  - provider_id: rag-runtime
-    provider_type: inline::rag-runtime
+  - provider_id: file-search
+    provider_type: inline::file-search
   - provider_id: model-context-protocol
     provider_type: remote::model-context-protocol
 storage:
@@ -101,6 +103,10 @@ registered_resources:
     model_id: nomic-embed-text-v1.5
     provider_id: sentence-transformers
     model_type: embedding
+  - metadata: {}
+    model_id: Qwen/Qwen3-Reranker-0.6B
+    provider_id: transformers
+    model_type: rerank
   shields:
   - shield_id: meta-llama/Llama-Guard-3-8B
   vector_dbs: []
@@ -110,7 +116,7 @@ registered_resources:
   tool_groups:
   - toolgroup_id: builtin::websearch
     provider_id: tavily-search
-  - toolgroup_id: builtin::rag
-    provider_id: rag-runtime
+  - toolgroup_id: builtin::file_search
+    provider_id: file-search
 server:
   port: 8321

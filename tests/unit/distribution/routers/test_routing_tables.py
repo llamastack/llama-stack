@@ -358,17 +358,15 @@ async def test_double_registration_models_positive(cached_disk_dist_registry):
 
 
 async def test_double_registration_models_negative(cached_disk_dist_registry):
-    """Test that registering the same model with different data fails."""
+    """Test that registering the same model with conflicting data fails."""
     table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
     await table.initialize()
 
     # Register a model with specific metadata
     await table.register_model(model_id="test-model", provider_id="test_provider", metadata={"param1": "value1"})
 
-    # Try to register the same model with different metadata - should fail
-    with pytest.raises(
-        ValueError, match="Object of type 'model' and identifier 'test_provider/test-model' already exists"
-    ):
+    # Try to register the same model with conflicting metadata - should fail
+    with pytest.raises(ValueError, match="conflicting field values"):
         await table.register_model(
             model_id="test-model", provider_id="test_provider", metadata={"param1": "different_value"}
         )
@@ -408,7 +406,7 @@ async def test_double_registration_scoring_functions_positive(cached_disk_dist_r
 
 
 async def test_double_registration_scoring_functions_negative(cached_disk_dist_registry):
-    """Test that registering the same scoring function with different data fails."""
+    """Test that registering the same scoring function with conflicting data fails."""
     from llama_stack_api import RegisterScoringFunctionRequest
 
     table = ScoringFunctionsRoutingTable({"test_provider": ScoringFunctionsImpl()}, cached_disk_dist_registry, {})
@@ -424,10 +422,8 @@ async def test_double_registration_scoring_functions_negative(cached_disk_dist_r
         )
     )
 
-    # Try to register the same scoring function with different description - should fail
-    with pytest.raises(
-        ValueError, match="Object of type 'scoring_function' and identifier 'test-scoring-fn' already exists"
-    ):
+    # Try to register the same scoring function with conflicting description - should fail
+    with pytest.raises(ValueError, match="conflicting field values"):
         await table.register_scoring_function(
             RegisterScoringFunctionRequest(
                 scoring_fn_id="test-scoring-fn",

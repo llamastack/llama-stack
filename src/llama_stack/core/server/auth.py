@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import json
+import re
 
 import httpx
 from aiohttp import hdrs
@@ -16,6 +16,7 @@ from llama_stack.core.request_headers import user_from_scope
 from llama_stack.core.server.auth_providers import create_auth_provider
 from llama_stack.core.server.routes import find_matching_route, initialize_route_impls
 from llama_stack.log import get_logger
+from llama_stack_api.common.errors import OpenAIErrorResponse
 
 logger = get_logger(name=__name__, category="core::auth")
 
@@ -164,8 +165,7 @@ class AuthenticationMiddleware:
                 "headers": [[b"content-type", b"application/json"]],
             }
         )
-        error_key = "message" if status == 401 else "detail"
-        error_msg = json.dumps({"error": {error_key: message}}).encode()
+        error_msg = OpenAIErrorResponse.from_message(message).to_bytes()
         await send({"type": "http.response.body", "body": error_msg})
 
 
@@ -271,6 +271,7 @@ class RouteAuthorizationMiddleware:
         - Exact match: "/v1/chat/completions"
         - Prefix wildcard: "/v1/files*" matches "/v1/files", "/v1/files/upload", "/v1/files/list", etc.
         - Full wildcard: "*" matches all routes
+        - Regex pattern: "regex:/v1/(chat|inference)/.*" matches routes using regular expressions
         """
         patterns = [rule_patterns] if isinstance(rule_patterns, str) else rule_patterns
 
@@ -278,6 +279,16 @@ class RouteAuthorizationMiddleware:
             if pattern == "*":
                 # Full wildcard matches everything
                 return True
+            elif pattern.startswith("regex:"):
+                # Regex pattern: extract pattern after "regex:" prefix
+                regex_pattern = pattern[6:]
+                try:
+                    if re.match(regex_pattern, request_route):
+                        return True
+                except re.error as e:
+                    logger.warning(
+                        f"Invalid regex pattern in route_policy: '{regex_pattern}'. Error: {e}. Skipping this pattern."
+                    )
             elif pattern.endswith("*"):
                 # Prefix wildcard: check if request route starts with the prefix
                 prefix = pattern[:-1]  # Remove "*"
@@ -345,8 +356,7 @@ class RouteAuthorizationMiddleware:
                 "headers": [[b"content-type", b"application/json"]],
             }
         )
-        error_key = "message" if status == 401 else "detail"
-        error_msg = json.dumps({"error": {error_key: message}}).encode()
+        error_msg = OpenAIErrorResponse.from_message(message).to_bytes()
         await send({"type": "http.response.body", "body": error_msg})
 
 

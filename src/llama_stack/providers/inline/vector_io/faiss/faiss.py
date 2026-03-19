@@ -8,19 +8,53 @@ import asyncio
 import base64
 import io
 import json
-from typing import Any
+import threading
+from typing import TYPE_CHECKING, Any
 
-import faiss  # type: ignore[import-untyped]
-import numpy as np
-from numpy.typing import NDArray
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+_faiss: Any = None
+_faiss_lock = threading.Lock()
+
+
+def _get_faiss() -> Any:
+    global _faiss
+    if _faiss is not None:
+        return _faiss
+    with _faiss_lock:
+        if _faiss is not None:
+            return _faiss
+        import faiss  # type: ignore[import-untyped]
+
+        _faiss = faiss
+        return _faiss
+
+
+_numpy: Any = None
+_numpy_lock = threading.Lock()
+
+
+def _get_numpy() -> Any:
+    global _numpy
+    if _numpy is not None:
+        return _numpy
+    with _numpy_lock:
+        if _numpy is not None:
+            return _numpy
+        import numpy
+
+        _numpy = numpy
+        return _numpy
+
 
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
+from llama_stack.providers.utils.vector_io.filters import CompoundFilter, Filter
 from llama_stack_api import (
-    ChunkForDeletion,
     DeleteChunksRequest,
     EmbeddedChunk,
     Files,
@@ -41,6 +75,25 @@ from .config import FaissVectorIOConfig
 
 logger = get_logger(name=__name__, category="vector_io")
 
+
+def _list_op(mv: Any, fv: Any, *, negate: bool) -> bool:
+    op = "nin" if negate else "in"
+    if not isinstance(fv, list):
+        raise ValueError(f"'{op}' filter requires a list value, got {type(fv)}")
+    return (mv not in fv) if negate else (mv in fv)
+
+
+_COMPARISON_OPS: dict[str, Any] = {
+    "eq": lambda mv, fv: mv == fv,
+    "ne": lambda mv, fv: mv != fv,
+    "gt": lambda mv, fv: mv > fv,
+    "gte": lambda mv, fv: mv >= fv,
+    "lt": lambda mv, fv: mv < fv,
+    "lte": lambda mv, fv: mv <= fv,
+    "in": lambda mv, fv: _list_op(mv, fv, negate=False),
+    "nin": lambda mv, fv: _list_op(mv, fv, negate=True),
+}
+
 VERSION = "v3"
 VECTOR_DBS_PREFIX = f"vector_stores:{VERSION}::"
 FAISS_INDEX_PREFIX = f"faiss_index:{VERSION}::"
@@ -51,7 +104,7 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 class FaissIndex(EmbeddingIndex):
     def __init__(self, dimension: int, kvstore: KVStore | None = None, bank_id: str | None = None):
-        self.index = faiss.IndexFlatL2(dimension)
+        self.index = _get_faiss().IndexFlatL2(dimension)
         self.chunk_by_index: dict[int, EmbeddedChunk] = {}
         self.kvstore = kvstore
         self.bank_id = bank_id
@@ -60,6 +113,10 @@ class FaissIndex(EmbeddingIndex):
         # must be updated when chunks are added or removed
         self.chunk_id_lock = asyncio.Lock()
         self.chunk_ids: list[Any] = []
+
+        # Inverted index: metadata_key -> metadata_value -> set of faiss positions
+        # Rebuilt from chunk_by_index on initialize(); not persisted separately.
+        self._meta_index: dict[str, dict[Any, set[int]]] = {}
 
     @classmethod
     async def create(cls, dimension: int, kvstore: KVStore | None = None, bank_id: str | None = None):
@@ -84,8 +141,12 @@ class FaissIndex(EmbeddingIndex):
 
             buffer = io.BytesIO(base64.b64decode(data["faiss_index"]))
             try:
-                self.index = faiss.deserialize_index(np.load(buffer, allow_pickle=False))
+                self.index = _get_faiss().deserialize_index(_get_numpy().load(buffer, allow_pickle=False))
                 self.chunk_ids = [embedded_chunk.chunk_id for embedded_chunk in self.chunk_by_index.values()]
+                # Rebuild inverted metadata index from loaded chunks
+                for pos, chunk in self.chunk_by_index.items():
+                    for key, val in chunk.metadata.items():
+                        self._meta_index.setdefault(key, {}).setdefault(val, set()).add(pos)
             except Exception as e:
                 logger.debug(e, exc_info=True)
                 raise ValueError(
@@ -98,9 +159,9 @@ class FaissIndex(EmbeddingIndex):
         if not self.kvstore or not self.bank_id:
             return
 
-        np_index = faiss.serialize_index(self.index)
+        np_index = _get_faiss().serialize_index(self.index)
         buffer = io.BytesIO()
-        np.save(buffer, np_index, allow_pickle=False)
+        _get_numpy().save(buffer, np_index, allow_pickle=False)
         data = {
             "chunk_by_index": {k: v.model_dump_json() for k, v in self.chunk_by_index.items()},
             "faiss_index": base64.b64encode(buffer.getvalue()).decode("utf-8"),
@@ -120,15 +181,19 @@ class FaissIndex(EmbeddingIndex):
             return
 
         # Extract embeddings and validate dimensions
+        np = _get_numpy()
         embeddings = np.array([ec.embedding for ec in embedded_chunks], dtype=np.float32)
         embedding_dim = embeddings.shape[1] if len(embeddings.shape) > 1 else embeddings.shape[0]
         if embedding_dim != self.index.d:
             raise ValueError(f"Embedding dimension mismatch. Expected {self.index.d}, got {embedding_dim}")
 
-        # Store chunks by index
+        # Store chunks by index and update inverted metadata index
         indexlen = len(self.chunk_by_index)
         for i, embedded_chunk in enumerate(embedded_chunks):
-            self.chunk_by_index[indexlen + i] = embedded_chunk
+            faiss_pos = indexlen + i
+            self.chunk_by_index[faiss_pos] = embedded_chunk
+            for key, val in embedded_chunk.metadata.items():
+                self._meta_index.setdefault(key, {}).setdefault(val, set()).add(faiss_pos)
 
         async with self.chunk_id_lock:
             self.index.add(embeddings)
@@ -143,18 +208,30 @@ class FaissIndex(EmbeddingIndex):
             return
 
         def remove_chunk(chunk_id: str):
-            index = self.chunk_ids.index(chunk_id)
-            self.index.remove_ids(np.array([index]))
+            removed_pos = self.chunk_ids.index(chunk_id)
+            self.index.remove_ids(_get_numpy().array([removed_pos]))
+
+            # Remove deleted position from _meta_index
+            for val_map in self._meta_index.values():
+                for positions in val_map.values():
+                    positions.discard(removed_pos)
 
             new_chunk_by_index = {}
             for idx, chunk in self.chunk_by_index.items():
                 # Shift all chunks after the removed chunk to the left
-                if idx > index:
+                if idx > removed_pos:
                     new_chunk_by_index[idx - 1] = chunk
                 else:
                     new_chunk_by_index[idx] = chunk
             self.chunk_by_index = new_chunk_by_index
-            self.chunk_ids.pop(index)
+            self.chunk_ids.pop(removed_pos)
+
+            # Shift all _meta_index positions > removed_pos down by 1
+            for val_map in self._meta_index.values():
+                for val in list(val_map):
+                    val_map[val] = {p - 1 if p > removed_pos else p for p in val_map[val]}
+                    if not val_map[val]:
+                        del val_map[val]
 
         async with self.chunk_id_lock:
             for chunk_id in chunk_ids:
@@ -162,8 +239,72 @@ class FaissIndex(EmbeddingIndex):
 
         await self._save_index()
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
-        distances, indices = await asyncio.to_thread(self.index.search, embedding.reshape(1, -1).astype(np.float32), k)
+    def _resolve_filter_positions(self, filter_obj: Filter) -> set[int]:
+        """
+        Return the set of faiss positions that match filter_obj.
+
+        Uses the inverted _meta_index for O(1) equality/set lookups and falls
+        back to a linear scan of chunk_by_index for range ops (gt/gte/lt/lte/ne).
+        """
+        if isinstance(filter_obj, CompoundFilter):
+            sub_sets = [self._resolve_filter_positions(f) for f in filter_obj.filters]
+            if not sub_sets:
+                return set()
+            if filter_obj.type == "and":
+                return set.intersection(*sub_sets)
+            else:  # "or"
+                return set.union(*sub_sets)
+
+        # ComparisonFilter
+        key, value, op_type = filter_obj.key, filter_obj.value, filter_obj.type
+        if op_type == "eq":
+            return self._meta_index.get(key, {}).get(value, set()).copy()
+        if op_type == "in":
+            result: set[int] = set()
+            for v in value:
+                result |= self._meta_index.get(key, {}).get(v, set())
+            return result
+        if op_type == "nin":
+            excluded: set[int] = set()
+            for v in value:
+                excluded |= self._meta_index.get(key, {}).get(v, set())
+            all_positions = {pos for s in self._meta_index.get(key, {}).values() for pos in s}
+            return all_positions - excluded
+        # Range ops and ne: linear scan over chunk_by_index metadata
+        op = _COMPARISON_OPS.get(op_type)
+        if op is None:
+            raise ValueError(f"Unknown comparison operator: {op_type}")
+        return {
+            pos
+            for pos, chunk in self.chunk_by_index.items()
+            if key in chunk.metadata and op(chunk.metadata[key], value)
+        }
+
+    async def query_vector(
+        self, embedding: "NDArray", k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
+        """
+        Performs vector-based search using Faiss similarity search.
+        When filters are provided, pre-computes matching positions via the
+        inverted _meta_index and passes them directly to Faiss via IDSelectorBatch,
+        eliminating the need for post-hoc filtering or over-retrieval heuristics.
+        """
+        np = _get_numpy()
+        faiss = _get_faiss()
+        if filters is not None:
+            candidate_positions = self._resolve_filter_positions(filters)
+            if not candidate_positions:
+                return QueryChunksResponse(chunks=[], scores=[])
+            sel = faiss.IDSelectorBatch(np.array(sorted(candidate_positions), dtype=np.int64))
+            params = faiss.SearchParameters(sel=sel)
+            distances, indices = await asyncio.to_thread(
+                lambda: self.index.search(embedding.reshape(1, -1).astype(np.float32), k, params=params)
+            )
+        else:
+            distances, indices = await asyncio.to_thread(
+                self.index.search, embedding.reshape(1, -1).astype(np.float32), k
+            )
+
         chunks: list[EmbeddedChunk] = []
         scores: list[float] = []
         for d, i in zip(distances[0], indices[0], strict=False):
@@ -177,19 +318,22 @@ class FaissIndex(EmbeddingIndex):
 
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_keyword(
+        self, query_string: str, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         raise NotImplementedError(
             "Keyword search is not supported - underlying DB FAISS does not support this search mode"
         )
 
     async def query_hybrid(
         self,
-        embedding: NDArray,
+        embedding: "NDArray",
         query_string: str,
         k: int,
         score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         raise NotImplementedError(
             "Hybrid search is not supported - underlying DB FAISS does not support this search mode"
@@ -236,7 +380,7 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
         """
         try:
             vector_dimension = 128  # sample dimension
-            faiss.IndexFlatL2(vector_dimension)
+            _get_faiss().IndexFlatL2(vector_dimension)
             return HealthResponse(status=HealthStatus.OK)
         except Exception as e:
             return HealthResponse(status=HealthStatus.ERROR, message=f"Health check failed: {str(e)}")

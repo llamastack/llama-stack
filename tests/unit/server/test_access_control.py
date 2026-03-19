@@ -561,6 +561,66 @@ def test_condition_reprs(condition):
     assert condition == str(parse_condition(condition))
 
 
+def test_regex_resource_matching():
+    """Test regex pattern matching for resources"""
+    from llama_stack.core.access_control.access_control import matches_resource
+
+    # Test exact match (backward compatibility)
+    assert matches_resource("model::llama-3-1b", "model::llama-3-1b")
+
+    # Test wildcard (backward compatibility)
+    assert matches_resource("model::*", "model::llama-3-1b")
+
+    # Test regex patterns
+    assert matches_resource("regex:model::(llama|mistral)-.*", "model::llama-3-1b")
+    assert matches_resource("regex:model::(llama|mistral)-.*", "model::mistral-7b")
+    assert matches_resource("regex:model::llama-3\\.\\d+b", "model::llama-3.1b")
+    assert matches_resource("regex:model::.*-\\d+b$", "model::llama-3-1b")
+
+    # Test that regex doesn't match when it shouldn't
+    assert not matches_resource("regex:model::llama-3$", "model::llama-3-1b")
+    assert not matches_resource("regex:model::mistral-.*", "model::llama-3-1b")
+
+
+def test_access_policy_with_regex():
+    """Test access policy with regex resource patterns"""
+    config = """
+    - permit:
+        actions: [read]
+        resource: regex:model::(llama|mistral)-.*
+      when: user with developer in roles
+    - permit:
+        actions: [read]
+        resource: regex:model::.*-3\\.\\d+-.*
+      when: user with user in roles
+    """
+    policy = TypeAdapter(list[AccessRule]).validate_python(yaml.safe_load(config))
+
+    # Developer can access both llama and mistral models
+    llama_model = ModelWithOwner(
+        identifier="llama-3-1b",
+        provider_id="test",
+        model_type=ModelType.llm,
+    )
+    mistral_model = ModelWithOwner(
+        identifier="mistral-7b",
+        provider_id="test",
+        model_type=ModelType.llm,
+    )
+
+    assert is_action_allowed(policy, "read", llama_model, User("dev-user", {"roles": ["developer"]}))
+    assert is_action_allowed(policy, "read", mistral_model, User("dev-user", {"roles": ["developer"]}))
+
+    # Regular user can only access llama-3.x models
+    llama_3_2_model = ModelWithOwner(
+        identifier="llama-3.2-8b",
+        provider_id="test",
+        model_type=ModelType.llm,
+    )
+    assert is_action_allowed(policy, "read", llama_3_2_model, User("regular-user", {"roles": ["user"]}))
+    assert not is_action_allowed(policy, "read", mistral_model, User("regular-user", {"roles": ["user"]}))
+
+
 @pytest.fixture
 def restricted_user():
     """User with limited access."""
@@ -734,3 +794,26 @@ class TestModelListingRBACBypass:
         model_ids = [m.identifier for m in result.data]
         # Restricted user should see no models (no ownership, not admin)
         assert len(model_ids) == 0
+
+
+def test_invalid_regex_pattern_in_access_policy_logs_warning(caplog):
+    """Test that invalid regex patterns in access_policy log a warning and don't crash"""
+    import logging  # allow-direct-logging
+
+    from llama_stack.core.access_control.access_control import matches_resource
+
+    # Test various invalid regex patterns
+    invalid_patterns = [
+        "regex:**",  # Invalid: ** is not valid regex
+        "regex:(?P<invalid",  # Invalid: unclosed group
+        "regex:[z-a]",  # Invalid: bad character range
+    ]
+
+    with caplog.at_level(logging.WARNING):
+        for pattern in invalid_patterns:
+            # Should not crash, should return False (no match)
+            result = matches_resource(pattern, "model::test/model-1")
+            assert result is False
+
+    # Check that warnings were logged
+    assert "Invalid regex pattern in access_policy" in caplog.text

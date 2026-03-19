@@ -103,8 +103,8 @@ def get_distribution_template() -> DistributionTemplate:
             BuildProvider(provider_type="remote::pgvector"),
         ],
         "safety": [BuildProvider(provider_type="inline::llama-guard")],
-        "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "eval": [BuildProvider(provider_type="inline::meta-reference")],
+        "agents": [BuildProvider(provider_type="inline::builtin")],
+        "eval": [BuildProvider(provider_type="inline::builtin")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),
             BuildProvider(provider_type="inline::localfs"),
@@ -117,7 +117,7 @@ def get_distribution_template() -> DistributionTemplate:
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
-            BuildProvider(provider_type="inline::rag-runtime"),
+            BuildProvider(provider_type="inline::file-search"),
             BuildProvider(provider_type="remote::model-context-protocol"),
         ],
     }
@@ -154,8 +154,8 @@ def get_distribution_template() -> DistributionTemplate:
             provider_id="tavily-search",
         ),
         ToolGroupInput(
-            toolgroup_id="builtin::rag",
-            provider_id="rag-runtime",
+            toolgroup_id="builtin::file_search",
+            provider_id="file-search",
         ),
     ]
 
@@ -222,32 +222,32 @@ def get_distribution_template() -> DistributionTemplate:
 
     default_benchmarks = [
         BenchmarkInput(
-            benchmark_id="meta-reference-simpleqa",
+            benchmark_id="builtin-simpleqa",
             dataset_id="simpleqa",
             scoring_functions=["llm-as-judge::405b-simpleqa"],
         ),
         BenchmarkInput(
-            benchmark_id="meta-reference-mmlu-cot",
+            benchmark_id="builtin-mmlu-cot",
             dataset_id="mmlu_cot",
             scoring_functions=["basic::regex_parser_multiple_choice_answer"],
         ),
         BenchmarkInput(
-            benchmark_id="meta-reference-gpqa-cot",
+            benchmark_id="builtin-gpqa-cot",
             dataset_id="gpqa_cot",
             scoring_functions=["basic::regex_parser_multiple_choice_answer"],
         ),
         BenchmarkInput(
-            benchmark_id="meta-reference-math-500",
+            benchmark_id="builtin-math-500",
             dataset_id="math_500",
             scoring_functions=["basic::regex_parser_math_response"],
         ),
         BenchmarkInput(
-            benchmark_id="meta-reference-ifeval",
+            benchmark_id="builtin-ifeval",
             dataset_id="ifeval",
             scoring_functions=["basic::ifeval"],
         ),
         BenchmarkInput(
-            benchmark_id="meta-reference-docvqa",
+            benchmark_id="builtin-docvqa",
             dataset_id="docvqa",
             scoring_functions=["basic::docvqa"],
         ),

@@ -1,0 +1,241 @@
+from __future__ import annotations
+from inspect import getfullargspec
+import json
+import pprint
+import re  # noqa: F401
+{{#vendorExtensions.x-py-other-imports}}
+{{{.}}}
+{{/vendorExtensions.x-py-other-imports}}
+{{#vendorExtensions.x-py-model-imports}}
+{{{.}}}
+{{/vendorExtensions.x-py-model-imports}}
+from typing import Any, TYPE_CHECKING
+from typing_extensions import Literal, Self
+from pydantic import Field
+from {{packageName}}.lib._utils import pascal_to_snake_case
+
+{{#lambda.uppercase}}{{{classname}}}{{/lambda.uppercase}}_ANY_OF_SCHEMAS = [{{#anyOf}}"{{.}}"{{^-last}}, {{/-last}}{{/anyOf}}]
+
+class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}):
+    """
+    {{{description}}}{{^description}}{{{classname}}}{{/description}}
+    """
+
+{{#composedSchemas.anyOf}}
+    # data type: {{{dataType}}}
+    {{vendorExtensions.x-py-name}}: {{{vendorExtensions.x-py-typing}}}
+{{/composedSchemas.anyOf}}
+    if TYPE_CHECKING:
+        actual_instance: {{#anyOf}}{{{.}}}{{^-last}} | {{/-last}}{{/anyOf}} | None = None
+    else:
+        actual_instance: Any = None
+    any_of_schemas: set[str] = { {{#anyOf}}"{{.}}"{{^-last}}, {{/-last}}{{/anyOf}} }
+
+    model_config = {
+        "validate_assignment": True,
+        "protected_namespaces": (),
+    }
+{{#discriminator}}
+
+    discriminator_value_class_map: dict[str, str] = {
+{{#children}}
+        '{{^vendorExtensions.x-discriminator-value}}{{name}}{{/vendorExtensions.x-discriminator-value}}{{#vendorExtensions.x-discriminator-value}}{{{vendorExtensions.x-discriminator-value}}}{{/vendorExtensions.x-discriminator-value}}': '{{{classname}}}'{{^-last}},{{/-last}}
+{{/children}}
+    }
+{{/discriminator}}
+
+    def __init__(self, *args, **kwargs) -> None:
+        if args:
+            if len(args) > 1:
+                raise ValueError("If a position argument is used, only 1 is allowed to set `actual_instance`")
+            if kwargs:
+                raise ValueError("If a position argument is used, keyword arguments cannot be used.")
+            super().__init__(actual_instance=args[0])
+        else:
+            super().__init__(**kwargs)
+
+    def __getattr__(self, name: str):
+        """Proxy attribute access to actual_instance for transparency."""
+        # Avoid infinite recursion for private attributes and model fields
+        if name.startswith('_') or name in ('actual_instance', 'any_of_schemas', 'model_config', 'model_fields'):
+            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+        actual = super().__getattribute__('actual_instance')
+        if actual is None:
+            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}' (actual_instance is None)")
+
+        return getattr(actual, name)
+
+{{>partial_model_wrapper_methods}}
+
+    @field_validator('actual_instance')
+    def actual_instance_must_validate_anyof(cls, v):
+        {{#isNullable}}
+        if v is None:
+            return v
+
+        {{/isNullable}}
+        instance = {{{classname}}}.model_construct()
+        error_messages = []
+        {{#composedSchemas.anyOf}}
+        # validate data type: {{{dataType}}}
+        {{#isContainer}}
+        try:
+            # For lists, we need to validate each item and potentially construct models from dicts
+            # This ensures default values are applied when users pass plain dicts
+            if isinstance(v, list):
+                # Extract the item type from the dataType (e.g., "List[Foo]" -> "Foo")
+                type_str = "{{{dataType}}}"
+                match_result = re.match(r'List\[(.+)\]', type_str)
+                if match_result:
+                    item_type_name = match_result.group(1)
+                    # Check if item_type_name is a primitive type (object, str, int, etc.)
+                    # These don't have corresponding model classes to import
+                    primitive_types = {'object', 'str', 'int', 'float', 'bool', 'Any'}
+                    if item_type_name in primitive_types:
+                        # For primitives, just use the list as-is
+                        instance.{{vendorExtensions.x-py-name}} = v
+                    else:
+                        # Manually construct each item using from_dict to ensure actual_instance is set
+                        import importlib
+                        module_name = pascal_to_snake_case(item_type_name)
+                        item_module = importlib.import_module('{{packageName}}.models.' + module_name)
+                        item_class = getattr(item_module, item_type_name)
+                        validated_items = []
+                        for item in v:
+                            if isinstance(item, dict):
+                                validated_items.append(item_class.from_dict(item))
+                            else:
+                                # Already a model instance
+                                validated_items.append(item)
+                        # Return the validated list directly to avoid re-triggering validation
+                        return validated_items
+                else:
+                    instance.{{vendorExtensions.x-py-name}} = v
+            else:
+                instance.{{vendorExtensions.x-py-name}} = v
+            return v
+        except (ValidationError, ValueError) as e:
+            error_messages.append(str(e))
+        {{/isContainer}}
+        {{^isContainer}}
+        {{#isPrimitiveType}}
+        try:
+            instance.{{vendorExtensions.x-py-name}} = v
+            return v
+        except (ValidationError, ValueError) as e:
+            error_messages.append(str(e))
+        {{/isPrimitiveType}}
+        {{^isPrimitiveType}}
+        if not isinstance(v, {{{dataType}}}):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `{{{dataType}}}`")
+        else:
+            return v
+
+        {{/isPrimitiveType}}
+        {{/isContainer}}
+        {{/composedSchemas.anyOf}}
+        if error_messages:
+            # no match
+            raise ValueError("No match found when setting the actual_instance in {{{classname}}} with anyOf schemas: {{#anyOf}}{{{.}}}{{^-last}}, {{/-last}}{{/anyOf}}. Details: " + ", ".join(error_messages))
+        else:
+            return v
+
+    @classmethod
+    def from_dict(cls, obj: dict[str, Any] | list | str | Any) -> Self:
+        # Handle primitives and lists directly - don't double-serialize them
+        if isinstance(obj, (str, int, float, bool, type(None), list)):
+            # For non-dict content, bypass from_json and use actual_instance_must_validate_anyof
+            instance = cls.model_construct()
+            instance.actual_instance = cls.actual_instance_must_validate_anyof(obj)
+            return instance
+        return cls.from_json(json.dumps(obj))
+
+    @classmethod
+    def from_json(cls, json_str: str) -> Self:
+        """Returns the object represented by the json string"""
+        instance = cls.model_construct()
+        {{#isNullable}}
+        if json_str is None:
+            return instance
+
+        {{/isNullable}}
+        error_messages = []
+        {{#composedSchemas.anyOf}}
+        {{#isContainer}}
+        # deserialize data into {{{dataType}}}
+        try:
+            _data = json.loads(json_str)
+            # Extract the item type from the dataType (e.g., "List[Foo]" -> "Foo")
+            _type_str = "{{{dataType}}}"
+            _match_result = re.match(r'List\[(.+)\]', _type_str)
+            if _match_result and isinstance(_data, list):
+                _item_type_name = _match_result.group(1)
+                # Check if item_type_name is a primitive type
+                _primitive_types = {'object', 'str', 'int', 'float', 'bool', 'Any'}
+                if _item_type_name in _primitive_types:
+                    # For primitives, just use the list as-is
+                    instance.{{vendorExtensions.x-py-name}} = _data
+                    instance.actual_instance = _data
+                else:
+                    # Manually construct each item using from_dict to ensure actual_instance is set
+                    import importlib
+                    _module_name = pascal_to_snake_case(_item_type_name)
+                    _item_module = importlib.import_module('{{packageName}}.models.' + _module_name)
+                    _item_class = getattr(_item_module, _item_type_name)
+                    _validated_items = []
+                    for _item in _data:
+                        if isinstance(_item, dict):
+                            _validated_items.append(_item_class.from_dict(_item))
+                        else:
+                            # Already a model instance
+                            _validated_items.append(_item)
+                    instance.{{vendorExtensions.x-py-name}} = _validated_items
+                    instance.actual_instance = _validated_items
+            else:
+                instance.{{vendorExtensions.x-py-name}} = _data
+                instance.actual_instance = _data
+            return instance
+        except (ValidationError, ValueError) as e:
+            error_messages.append(str(e))
+        {{/isContainer}}
+        {{^isContainer}}
+        {{#isPrimitiveType}}
+        # deserialize data into {{{dataType}}}
+        try:
+            # validation
+            instance.{{vendorExtensions.x-py-name}} = json.loads(json_str)
+            # assign value to actual_instance
+            instance.actual_instance = instance.{{vendorExtensions.x-py-name}}
+            return instance
+        except (ValidationError, ValueError) as e:
+            error_messages.append(str(e))
+        {{/isPrimitiveType}}
+        {{^isPrimitiveType}}
+        # {{vendorExtensions.x-py-name}}: {{{vendorExtensions.x-py-typing}}}
+        try:
+            instance.actual_instance = {{{dataType}}}.from_json(json_str)
+            return instance
+        except (ValidationError, ValueError) as e:
+             error_messages.append(str(e))
+        {{/isPrimitiveType}}
+        {{/isContainer}}
+        {{/composedSchemas.anyOf}}
+
+        if error_messages:
+            # no match
+            raise ValueError("No match found when deserializing the JSON string into {{{classname}}} with anyOf schemas: {{#anyOf}}{{{.}}}{{^-last}}, {{/-last}}{{/anyOf}}. Details: " + ", ".join(error_messages))
+        else:
+            return instance
+
+    def to_dict(self) -> dict[str, Any] | {{#anyOf}}{{.}}{{^-last}} | {{/-last}}{{/anyOf}} | None:
+        """Returns the dict representation of the actual instance"""
+        if self.actual_instance is None:
+            return None
+
+        if hasattr(self.actual_instance, "to_dict") and callable(self.actual_instance.to_dict):
+            return self.actual_instance.to_dict()
+        else:
+            return self.actual_instance
+
+{{>partial_model_postponed_imports}}

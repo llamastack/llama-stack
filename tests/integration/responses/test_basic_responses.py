@@ -22,9 +22,17 @@ def provider_from_model(client_with_models, text_model_id):
     return providers[provider_id]
 
 
+def skip_if_provider_isnt_vllm(client_with_models, text_model_id):
+    provider = provider_from_model(client_with_models, text_model_id)
+    if provider.provider_type != "remote::vllm":
+        pytest.skip(
+            f"Model {text_model_id} hosted by {provider.provider_type} doesn't support vllm extra_body parameters."
+        )
+
+
 def skip_if_chat_completions_logprobs_not_supported(client_with_models, text_model_id):
     provider_type = provider_from_model(client_with_models, text_model_id).provider_type
-    if provider_type in ("remote::ollama",):
+    if provider_type in ("remote::ollama", "remote::watsonx"):
         pytest.skip(f"Model {text_model_id} hosted by {provider_type} doesn't support /v1/chat/completions logprobs.")
 
 
@@ -201,6 +209,8 @@ def test_response_non_streaming_multi_turn(responses_client, text_model_id, case
 
 @pytest.mark.parametrize("case", image_test_cases)
 def test_response_non_streaming_image(responses_client, text_model_id, case):
+    if text_model_id.startswith("watsonx/"):
+        pytest.skip("WatsonX text model does not support vision/image inputs")
     response = responses_client.responses.create(
         model=text_model_id,
         input=case.input,
@@ -212,6 +222,8 @@ def test_response_non_streaming_image(responses_client, text_model_id, case):
 
 @pytest.mark.parametrize("case", multi_turn_image_test_cases)
 def test_response_non_streaming_multi_turn_image(responses_client, text_model_id, case):
+    if text_model_id.startswith("watsonx/"):
+        pytest.skip("WatsonX text model does not support vision/image inputs")
     previous_response_id = None
     for turn_input, turn_expected in case.turns:
         response = responses_client.responses.create(
@@ -243,7 +255,7 @@ def test_include_logprobs_non_streaming(client_with_models, text_model_id):
     assert len(response_w_o_logprobs.output) == 1
     message_outputs = [output for output in response_w_o_logprobs.output if output.type == "message"]
     assert len(message_outputs) == 1, f"Expected one message output, got {len(message_outputs)}"
-    assert message_outputs[0].content[0].logprobs is None, "Expected no logprobs in the returned response"
+    assert message_outputs[0].content[0].logprobs == [], "Expected no logprobs in the returned response"
 
     # Create a response with include["message.output_text.logprobs"]
     response_with_logprobs = client_with_models.responses.create(
@@ -296,7 +308,7 @@ def test_include_logprobs_streaming(client_with_models, text_model_id):
                 f"Expected logprobs in the returned chunk ({chunk.type=}), but none were returned"
             )
         elif chunk.type == "response.content_part.done":
-            assert chunk.part.logprobs is None, f"Expected no logprobs in the returned chunk ({chunk.type=})"
+            assert chunk.part.logprobs == [], f"Expected no logprobs in the returned chunk ({chunk.type=})"
 
 
 def test_include_logprobs_with_web_search(client_with_models, text_model_id):
@@ -372,3 +384,18 @@ def test_include_logprobs_with_function_tools(client_with_models, text_model_id)
     assert response.output[0].status == "completed"
     message_outputs = [output for output in response.output if output.type == "message"]
     assert len(message_outputs) == 0, f"Expected no message output, got {len(message_outputs)}"
+
+
+def test_response_extra_body_guided_choice(client_with_models, text_model_id):
+    """Test that extra_body parameters pass through the responses API to the backend (see #3777)."""
+    skip_if_provider_isnt_vllm(client_with_models, text_model_id)
+
+    response = client_with_models.responses.create(
+        model=text_model_id,
+        input="I am feeling really sad today.",
+        stream=False,
+        extra_body={"structured_outputs": {"choice": ["joy", "sadness"]}},
+    )
+    assert len(response.output) > 0
+    output_text = response.output_text.strip()
+    assert output_text in ["joy", "sadness"]

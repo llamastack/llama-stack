@@ -15,6 +15,9 @@ from llama_stack.distributions.template import DistributionTemplate, RunConfigSe
 from llama_stack.providers.inline.inference.sentence_transformers import (
     SentenceTransformersInferenceConfig,
 )
+from llama_stack.providers.inline.inference.transformers.config import (
+    TransformersInferenceConfig,
+)
 from llama_stack.providers.remote.vector_io.chroma import ChromaVectorIOConfig
 from llama_stack_api import ModelType
 
@@ -24,6 +27,7 @@ def get_distribution_template() -> DistributionTemplate:
         "inference": [
             BuildProvider(provider_type="remote::tgi"),
             BuildProvider(provider_type="inline::sentence-transformers"),
+            BuildProvider(provider_type="inline::transformers"),
         ],
         "vector_io": [
             BuildProvider(provider_type="inline::faiss"),
@@ -31,8 +35,8 @@ def get_distribution_template() -> DistributionTemplate:
             BuildProvider(provider_type="remote::pgvector"),
         ],
         "safety": [BuildProvider(provider_type="inline::llama-guard")],
-        "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "eval": [BuildProvider(provider_type="inline::meta-reference")],
+        "agents": [BuildProvider(provider_type="inline::builtin")],
+        "eval": [BuildProvider(provider_type="inline::builtin")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),
             BuildProvider(provider_type="inline::localfs"),
@@ -45,7 +49,7 @@ def get_distribution_template() -> DistributionTemplate:
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
-            BuildProvider(provider_type="inline::rag-runtime"),
+            BuildProvider(provider_type="inline::file-search"),
         ],
     }
     name = "dell"
@@ -67,6 +71,11 @@ def get_distribution_template() -> DistributionTemplate:
         provider_id="sentence-transformers",
         provider_type="inline::sentence-transformers",
         config=SentenceTransformersInferenceConfig.sample_run_config(),
+    )
+    reranker_provider = Provider(
+        provider_id="transformers",
+        provider_type="inline::transformers",
+        config=TransformersInferenceConfig.sample_run_config(),
     )
     chromadb_provider = Provider(
         provider_id="chromadb",
@@ -93,14 +102,19 @@ def get_distribution_template() -> DistributionTemplate:
             "embedding_dimension": 768,
         },
     )
+    reranker_model = ModelInput(
+        model_id="Qwen/Qwen3-Reranker-0.6B",
+        provider_id="transformers",
+        model_type=ModelType.rerank,
+    )
     default_tool_groups = [
         ToolGroupInput(
             toolgroup_id="builtin::websearch",
             provider_id="brave-search",
         ),
         ToolGroupInput(
-            toolgroup_id="builtin::rag",
-            provider_id="rag-runtime",
+            toolgroup_id="builtin::file_search",
+            provider_id="file-search",
         ),
     ]
 
@@ -113,10 +127,10 @@ def get_distribution_template() -> DistributionTemplate:
         run_configs={
             "config.yaml": RunConfigSettings(
                 provider_overrides={
-                    "inference": [inference_provider, embedding_provider],
+                    "inference": [inference_provider, embedding_provider, reranker_provider],
                     "vector_io": [chromadb_provider],
                 },
-                default_models=[inference_model, embedding_model],
+                default_models=[inference_model, embedding_model, reranker_model],
                 default_tool_groups=default_tool_groups,
             ),
             "run-with-safety.yaml": RunConfigSettings(
@@ -125,10 +139,11 @@ def get_distribution_template() -> DistributionTemplate:
                         inference_provider,
                         safety_inference_provider,
                         embedding_provider,
+                        reranker_provider,
                     ],
                     "vector_io": [chromadb_provider],
                 },
-                default_models=[inference_model, safety_model, embedding_model],
+                default_models=[inference_model, safety_model, embedding_model, reranker_model],
                 default_shields=[ShieldInput(shield_id="${env.SAFETY_MODEL}")],
                 default_tool_groups=default_tool_groups,
             ),

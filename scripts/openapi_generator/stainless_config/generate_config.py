@@ -23,6 +23,7 @@ SECTION_ORDER = [
     "client_settings",
     "environments",
     "pagination",
+    "streaming",
     "settings",
     "openapi",
     "readme",
@@ -113,6 +114,13 @@ PAGINATION = [
         },
     },
 ]
+
+STREAMING = {
+    "on_event": [
+        {"data_starts_with": "[DONE]", "handle": "done"},
+        {"kind": "fallthrough", "handle": "yield", "error_property": "error"},
+    ]
+}
 
 SETTINGS = {
     "license": "MIT",
@@ -507,30 +515,6 @@ ALL_RESOURCES = {
     },
     "alpha": {
         "subresources": {
-            "post_training": {
-                "models": {
-                    "algorithm_config": "AlgorithmConfig",
-                    "post_training_job": "PostTrainingJob",
-                    "list_post_training_jobs_response": "ListPostTrainingJobsResponse",
-                },
-                "methods": {
-                    "preference_optimize": "post /v1alpha/post-training/preference-optimize",
-                    "supervised_fine_tune": "post /v1alpha/post-training/supervised-fine-tune",
-                },
-                "subresources": {
-                    "job": {
-                        "methods": {
-                            "artifacts": "get /v1alpha/post-training/jobs/{job_uuid}/artifacts",
-                            "cancel": "post /v1alpha/post-training/jobs/{job_uuid}/cancel",
-                            "status": "get /v1alpha/post-training/jobs/{job_uuid}/status",
-                            "list": {
-                                "paginated": False,
-                                "endpoint": "get /v1alpha/post-training/jobs",
-                            },
-                        }
-                    }
-                },
-            },
             "benchmarks": {
                 "models": {
                     "benchmark": "Benchmark",
@@ -708,6 +692,7 @@ class StainlessConfig:
     client_settings: dict[str, Any]
     environments: dict[str, Any]
     pagination: list[dict[str, Any]]
+    streaming: dict[str, Any]
     settings: dict[str, Any]
     openapi: dict[str, Any]
     readme: dict[str, Any]
@@ -723,6 +708,7 @@ class StainlessConfig:
             client_settings=CLIENT_SETTINGS,
             environments=ENVIRONMENTS,
             pagination=PAGINATION,
+            streaming=STREAMING,
             settings=SETTINGS,
             openapi=OPENAPI,
             readme=README,

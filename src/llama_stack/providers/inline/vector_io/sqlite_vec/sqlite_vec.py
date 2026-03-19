@@ -9,24 +9,59 @@ import json
 import re
 import sqlite3
 import struct
-from typing import Any
+import threading
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
-import sqlite_vec  # type: ignore[import-untyped]
-from numpy.typing import NDArray
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+_numpy: Any = None
+_numpy_lock = threading.Lock()
+
+
+def _get_numpy() -> Any:
+    global _numpy
+    if _numpy is not None:
+        return _numpy
+    with _numpy_lock:
+        if _numpy is not None:
+            return _numpy
+        import numpy
+
+        _numpy = numpy
+        return _numpy
+
+
+_sqlite_vec: Any = None
+_sqlite_vec_lock = threading.Lock()
+
+
+def _get_sqlite_vec() -> Any:
+    global _sqlite_vec
+    if _sqlite_vec is not None:
+        return _sqlite_vec
+    with _sqlite_vec_lock:
+        if _sqlite_vec is not None:
+            return _sqlite_vec
+        import sqlite_vec  # type: ignore[import-untyped]
+
+        _sqlite_vec = sqlite_vec
+        return _sqlite_vec
+
 
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
     RERANKER_TYPE_RRF,
+    ChunkForDeletion,
     EmbeddingIndex,
     VectorStoreWithIndex,
 )
 from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
+from llama_stack.providers.utils.vector_io.filters import ComparisonFilter, CompoundFilter, Filter
 from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 from llama_stack_api import (
-    ChunkForDeletion,
     DeleteChunksRequest,
     EmbeddedChunk,
     Files,
@@ -42,6 +77,15 @@ from llama_stack_api import (
 from llama_stack_api.internal.kvstore import KVStore
 
 logger = get_logger(name=__name__, category="vector_io")
+
+_SQL_OPS: dict[str, str] = {
+    "eq": "=",
+    "ne": "!=",
+    "gt": ">",
+    "gte": ">=",
+    "lt": "<",
+    "lte": "<=",
+}
 
 # Specifying search mode is dependent on the VectorIO provider.
 VECTOR_SEARCH = "vector"
@@ -66,7 +110,7 @@ def _create_sqlite_connection(db_path: str):
     """Create a SQLite connection with sqlite_vec extension loaded."""
     connection = sqlite3.connect(db_path)
     connection.enable_load_extension(True)
-    sqlite_vec.load(connection)
+    _get_sqlite_vec().load(connection)
     connection.enable_load_extension(False)
     return connection
 
@@ -155,6 +199,7 @@ class SQLiteVecIndex(EmbeddingIndex):
         Also inserts chunk content into FTS table for keyword search support.
         """
         chunks = embedded_chunks  # EmbeddedChunk now inherits from Chunk
+        np = _get_numpy()
         embeddings = np.array([ec.embedding for ec in embedded_chunks], dtype=np.float32)
         assert all(isinstance(chunk.content, str) for chunk in chunks), "SQLiteVecIndex only supports text chunks"
 
@@ -208,25 +253,98 @@ class SQLiteVecIndex(EmbeddingIndex):
         # Run batch insertion in a background thread
         await asyncio.to_thread(_execute_all_batch_inserts)
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    def _translate_filters(self, filters: Filter | None) -> tuple[str, list[Any]]:
+        """Translate OpenAI-compatible filters to SQL WHERE clause with parameters.
+
+        Args:
+            filters: The filter to translate (ComparisonFilter or CompoundFilter)
+
+        Returns:
+            A tuple of (where_clause, parameters) where where_clause is a SQL condition string
+            and parameters is a list of values to be bound to the query.
+        """
+        if filters is None:
+            return "", []
+
+        return self._translate_single_filter(filters)
+
+    def _translate_single_filter(self, filter_obj: Filter) -> tuple[str, list[Any]]:
+        """Translate a single filter to SQL."""
+        if isinstance(filter_obj, ComparisonFilter):
+            return self._translate_comparison_filter(filter_obj)
+        elif isinstance(filter_obj, CompoundFilter):
+            return self._translate_compound_filter(filter_obj)
+        else:
+            raise ValueError(f"Unknown filter type: {type(filter_obj)}")
+
+    def _translate_comparison_filter(self, filter_obj: ComparisonFilter) -> tuple[str, list[Any]]:
+        """Translate a comparison filter to SQL WHERE clause."""
+        key, value, op_type = filter_obj.key, filter_obj.value, filter_obj.type
+        json_path = f"$.metadata.{key}"
+        expr = f"JSON_EXTRACT(m.chunk, '{json_path}')"
+
+        if op_type in _SQL_OPS:
+            return f"{expr} {_SQL_OPS[op_type]} ?", [value]
+        elif op_type == "in":
+            if not isinstance(value, list):
+                raise ValueError(f"'in' filter requires a list value, got {type(value)}")
+            placeholders = ", ".join("?" * len(value))
+            return f"{expr} IN ({placeholders})", value
+        elif op_type == "nin":
+            if not isinstance(value, list):
+                raise ValueError(f"'nin' filter requires a list value, got {type(value)}")
+            placeholders = ", ".join("?" * len(value))
+            return f"{expr} NOT IN ({placeholders})", value
+        else:
+            raise ValueError(f"Unknown comparison operator: {op_type}")
+
+    def _translate_compound_filter(self, filter_obj: CompoundFilter) -> tuple[str, list[Any]]:
+        """Translate a compound filter (and/or) to SQL WHERE clause."""
+        if not filter_obj.filters:
+            return "", []
+
+        clauses = []
+        params: list[Any] = []
+
+        for sub_filter in filter_obj.filters:
+            clause, sub_params = self._translate_single_filter(sub_filter)
+            if clause:
+                clauses.append(f"({clause})")
+                params.extend(sub_params)
+
+        if not clauses:
+            return "", []
+
+        operator = " AND " if filter_obj.type == "and" else " OR "
+        return operator.join(clauses), params
+
+    async def query_vector(
+        self, embedding: "NDArray", k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         """
         Performs vector-based search using a virtual table for vector similarity.
+        Optionally filters results based on metadata using SQL WHERE clauses.
         """
+        # Translate filters to SQL WHERE clause
+        filter_clause, filter_params = self._translate_filters(filters)
 
         def _execute_query():
             connection = _create_sqlite_connection(self.db_path)
             cur = connection.cursor()
             try:
-                emb_list = embedding.tolist() if isinstance(embedding, np.ndarray) else list(embedding)
+                emb_list = embedding.tolist() if isinstance(embedding, _get_numpy().ndarray) else list(embedding)
                 emb_blob = serialize_vector(emb_list)
+
+                # Build query with optional filter clause
                 query_sql = f"""
                     SELECT m.id, m.chunk, v.distance
                     FROM [{self.vector_table}] AS v
                     JOIN [{self.metadata_table}] AS m ON m.id = v.id
                     WHERE v.embedding MATCH ? AND k = ?
+                    {"AND (" + filter_clause + ")" if filter_clause else ""}
                     ORDER BY v.distance;
                 """
-                cur.execute(query_sql, (emb_blob, k))
+                cur.execute(query_sql, (emb_blob, k, *filter_params))
                 return cur.fetchall()
             finally:
                 cur.close()
@@ -249,24 +367,31 @@ class SQLiteVecIndex(EmbeddingIndex):
             scores.append(score)
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_keyword(
+        self, query_string: str, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         """
         Performs keyword-based search using SQLite FTS5 for relevance-ranked full-text search.
+        Optionally filters results based on metadata using SQL WHERE clauses.
         """
+        # Translate filters to SQL WHERE clause
+        filter_clause, filter_params = self._translate_filters(filters)
 
         def _execute_query():
             connection = _create_sqlite_connection(self.db_path)
             cur = connection.cursor()
             try:
+                # Build query with optional filter clause
                 query_sql = f"""
                     SELECT DISTINCT m.id, m.chunk, bm25([{self.fts_table}]) AS score
                     FROM [{self.fts_table}] AS f
                     JOIN [{self.metadata_table}] AS m ON m.id = f.id
                     WHERE f.content MATCH ?
+                    {"AND (" + filter_clause + ")" if filter_clause else ""}
                     ORDER BY score ASC
                     LIMIT ?;
                 """
-                cur.execute(query_sql, (query_string, k))
+                cur.execute(query_sql, (query_string, *filter_params, k))
                 return cur.fetchall()
             finally:
                 cur.close()
@@ -293,15 +418,17 @@ class SQLiteVecIndex(EmbeddingIndex):
 
     async def query_hybrid(
         self,
-        embedding: NDArray,
+        embedding: "NDArray",
         query_string: str,
         k: int,
         score_threshold: float,
         reranker_type: str = RERANKER_TYPE_RRF,
         reranker_params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         """
         Hybrid search using a configurable re-ranking strategy.
+        Optionally filters results based on metadata using SQL WHERE clauses.
 
         Args:
             embedding: The query embedding vector
@@ -310,6 +437,7 @@ class SQLiteVecIndex(EmbeddingIndex):
             score_threshold: Minimum similarity score threshold
             reranker_type: Type of reranker to use ("rrf" or "weighted")
             reranker_params: Parameters for the reranker
+            filters: Optional metadata filters to apply to results
 
         Returns:
             QueryChunksResponse with combined results
@@ -317,9 +445,9 @@ class SQLiteVecIndex(EmbeddingIndex):
         if reranker_params is None:
             reranker_params = {}
 
-        # Get results from both search methods
-        vector_response = await self.query_vector(embedding, k, score_threshold)
-        keyword_response = await self.query_keyword(query_string, k, score_threshold)
+        # Get results from both search methods, passing filters to each
+        vector_response = await self.query_vector(embedding, k, score_threshold, filters)
+        keyword_response = await self.query_keyword(query_string, k, score_threshold, filters)
 
         # Convert responses to score dictionaries using chunk_id (EmbeddedChunk inherits from Chunk)
         vector_scores = {
@@ -482,6 +610,7 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
         index = await self._get_and_cache_vector_store_index(request.vector_store_id)
         if not index:
             raise VectorStoreNotFoundError(request.vector_store_id)
+
         return await index.query_chunks(request)
 
     async def delete_chunks(self, request: DeleteChunksRequest) -> None:

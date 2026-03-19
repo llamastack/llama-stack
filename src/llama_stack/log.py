@@ -48,9 +48,9 @@ CATEGORIES = [
     "vector_io",
     "tool_runtime",
     "cli",
-    "post_training",
     "scoring",
     "tests",
+    "telemetry",
     "connectors",
 ]
 UNCATEGORIZED = "uncategorized"

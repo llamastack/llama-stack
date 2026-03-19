@@ -31,8 +31,8 @@ providers:
     config:
       excluded_categories: []
   agents:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       persistence:
         agent_state:
@@ -44,8 +44,8 @@ providers:
           max_write_queue_size: 10000
           num_writers: 4
   eval:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       kvstore:
         namespace: eval
@@ -83,12 +83,12 @@ providers:
     config:
       api_key: ${env.TAVILY_SEARCH_API_KEY:=}
       max_results: 3
-  - provider_id: rag-runtime
-    provider_type: inline::rag-runtime
+  - provider_id: file-search
+    provider_type: inline::file-search
   - provider_id: model-context-protocol
     provider_type: remote::model-context-protocol
   files:
-  - provider_id: meta-reference-files
+  - provider_id: builtin-files
     provider_type: inline::localfs
     config:
       storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/watsonx/files}
@@ -131,7 +131,7 @@ registered_resources:
   tool_groups:
   - toolgroup_id: builtin::websearch
     provider_id: tavily-search
-  - toolgroup_id: builtin::rag
-    provider_id: rag-runtime
+  - toolgroup_id: builtin::file_search
+    provider_id: file-search
 server:
   port: 8321

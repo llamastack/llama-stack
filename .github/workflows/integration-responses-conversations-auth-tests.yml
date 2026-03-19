@@ -21,6 +21,10 @@ on:
       - 'requirements.txt'
       - '.github/workflows/integration-responses-conversations-auth-tests.yml' # This workflow
       - 'scripts/integration-responses-conversations-auth-tests.sh'
+  merge_group:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
@@ -103,7 +107,7 @@ jobs:
             - agents
           providers:
             files:
-              - provider_id: meta-reference-files
+              - provider_id: builtin-files
                 provider_type: inline::localfs
                 config:
                   storage_dir: $run_dir/files
@@ -127,8 +131,8 @@ jobs:
                 provider_type: inline::rag-runtime
                 config: {}
             agents:
-              - provider_id: meta-reference
-                provider_type: inline::meta-reference
+              - provider_id: builtin
+                provider_type: inline::builtin
                 config:
                   persistence:
                     agent_state:

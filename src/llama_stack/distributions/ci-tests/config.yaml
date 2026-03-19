@@ -8,7 +8,6 @@ apis:
 - file_processors
 - files
 - inference
-- post_training
 - safety
 - scoring
 - tool_runtime
@@ -85,6 +84,12 @@ providers:
     config:
       base_url: https://api.sambanova.ai/v1
       api_key: ${env.SAMBANOVA_API_KEY:=}
+  - provider_id: ${env.WATSONX_API_KEY:+watsonx}
+    provider_type: remote::watsonx
+    config:
+      base_url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
+      api_key: ${env.WATSONX_API_KEY:=}
+      project_id: ${env.WATSONX_PROJECT_ID:=}
   - provider_id: ${env.AZURE_API_KEY:+azure}
     provider_type: remote::azure
     config:
@@ -94,6 +99,14 @@ providers:
       api_type: ${env.AZURE_API_TYPE:=}
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
+  - provider_id: transformers
+    provider_type: inline::transformers
+  - provider_id: ${env.WATSONX_API_KEY:+watsonx}
+    provider_type: remote::watsonx
+    config:
+      base_url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
+      api_key: ${env.WATSONX_API_KEY:=}
+      project_id: ${env.WATSONX_PROJECT_ID:=}
   vector_io:
   - provider_id: faiss
     provider_type: inline::faiss
@@ -135,6 +148,7 @@ providers:
         type: HNSW
         m: 16
         ef_construction: 64
+        ef_search: 40
       persistence:
         namespace: vector_io::pgvector
         backend: kv_default
@@ -162,7 +176,7 @@ providers:
         namespace: vector_io::elasticsearch
         backend: kv_default
   files:
-  - provider_id: meta-reference-files
+  - provider_id: builtin-files
     provider_type: inline::localfs
     config:
       storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/ci-tests/files}
@@ -180,8 +194,8 @@ providers:
   - provider_id: code-scanner
     provider_type: inline::code-scanner
   agents:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       persistence:
         agent_state:
@@ -192,14 +206,9 @@ providers:
           backend: sql_default
           max_write_queue_size: 10000
           num_writers: 4
-  post_training:
-  - provider_id: torchtune-cpu
-    provider_type: inline::torchtune-cpu
-    config:
-      checkpoint_format: meta
   eval:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       kvstore:
         namespace: eval
@@ -237,8 +246,8 @@ providers:
     config:
       api_key: ${env.TAVILY_SEARCH_API_KEY:=}
       max_results: 3
-  - provider_id: rag-runtime
-    provider_type: inline::rag-runtime
+  - provider_id: file-search
+    provider_type: inline::file-search
   - provider_id: model-context-protocol
     provider_type: remote::model-context-protocol
   batches:
@@ -276,11 +285,15 @@ storage:
       backend: kv_default
 registered_resources:
   models:
-  - metadata:
-      description: OpenAI GPT-OSS 20B on Bedrock (us-west-2)
-    model_id: openai.gpt-oss-20b-1:0
-    provider_id: bedrock
-    provider_model_id: openai.gpt-oss-20b-1:0
+  - metadata: {}
+    model_id: azure/gpt-4o
+    provider_id: ${env.AZURE_API_KEY:+azure}
+    provider_model_id: gpt-4o
+    model_type: llm
+  - metadata: {}
+    model_id: watsonx/meta-llama/llama-3-3-70b-instruct
+    provider_id: ${env.WATSONX_API_KEY:+watsonx}
+    provider_model_id: meta-llama/llama-3-3-70b-instruct
     model_type: llm
   shields:
   - shield_id: llama-guard
@@ -296,22 +309,34 @@ registered_resources:
   tool_groups:
   - toolgroup_id: builtin::websearch
     provider_id: tavily-search
-  - toolgroup_id: builtin::rag
-    provider_id: rag-runtime
+  - toolgroup_id: builtin::file_search
+    provider_id: file-search
 server:
   port: 8321
+  auth:
+    provider_config:
+      type: ${env.AUTH_PROVIDER:+oauth2_token}
+      audience: ${env.AUTH_AUDIENCE:=llama-stack}
+      issuer: ${env.AUTH_ISSUER:=}
+      jwks:
+        uri: ${env.AUTH_JWKS_URI:=}
+        key_recheck_period: ${env.AUTH_JWKS_RECHECK_PERIOD:=3600}
+      verify_tls: ${env.AUTH_VERIFY_TLS:=true}
 vector_stores:
   default_provider_id: faiss
   default_embedding_model:
     provider_id: sentence-transformers
     model_id: nomic-ai/nomic-embed-text-v1.5
+  default_reranker_model:
+    provider_id: transformers
+    model_id: Qwen/Qwen3-Reranker-0.6B
   file_search_params:
-    header_template: 'knowledge_search tool found {num_chunks} chunks:
+    header_template: 'file_search tool found {num_chunks} chunks:
 
-      BEGIN of knowledge_search tool results.
+      BEGIN of file_search tool results.
 
       '
-    footer_template: 'END of knowledge_search tool results.
+    footer_template: 'END of file_search tool results.
 
       '
   context_prompt_params:

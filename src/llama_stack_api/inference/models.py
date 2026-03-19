@@ -13,7 +13,7 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 from enum import Enum, StrEnum
 from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing_extensions import TypedDict
 
 from llama_stack_api.common.content_types import InterleavedContent
@@ -371,8 +371,8 @@ class OpenAISystemMessageParam(BaseModel):
 class OpenAIChatCompletionToolCallFunction(BaseModel):
     """Function call details for OpenAI-compatible tool calls."""
 
-    name: str | None = Field(default=None, description="Name of the function to call.")
-    arguments: str | None = Field(default=None, description="Arguments to pass to the function as a JSON string.")
+    name: str = Field(..., description="Name of the function to call.")
+    arguments: str = Field(..., description="Arguments to pass to the function as a JSON string.")
 
 
 @json_schema_type
@@ -390,6 +390,8 @@ class OpenAIChatCompletionToolCall(BaseModel):
 @json_schema_type
 class OpenAIAssistantMessageParam(BaseModel):
     """A message containing the model's (assistant) response in an OpenAI-compatible chat completion request."""
+
+    model_config = ConfigDict(extra="allow")
 
     role: Literal["assistant"] = Field(
         default="assistant", description="Must be 'assistant' to identify this as the model's response."
@@ -576,10 +578,14 @@ class OpenAIChoiceLogprobs(BaseModel):
     """The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response."""
 
     content: list[OpenAITokenLogProb] | None = Field(
-        default=None, description="The log probabilities for the tokens in the message."
+        default=None,
+        json_schema_extra=remove_null_from_anyof,
+        description="The log probabilities for the tokens in the message.",
     )
     refusal: list[OpenAITokenLogProb] | None = Field(
-        default=None, description="The log probabilities for the refusal tokens."
+        default=None,
+        json_schema_extra=remove_null_from_anyof,
+        description="The log probabilities for the refusal tokens.",
     )
 
 
@@ -589,9 +595,15 @@ class OpenAIChoiceDelta(BaseModel):
 
     content: str | None = Field(default=None, description="The content of the delta.")
     refusal: str | None = Field(default=None, description="The refusal of the delta.")
-    role: str | None = Field(default=None, description="The role of the delta.")
+    role: Literal["developer", "system", "user", "assistant", "tool"] | None = Field(
+        default=None,
+        json_schema_extra=remove_null_from_anyof,
+        description="The role of the delta.",
+    )
     tool_calls: list[OpenAIChatCompletionToolCall] | None = Field(
-        default=None, description="The tool calls of the delta."
+        default=None,
+        json_schema_extra=remove_null_from_anyof,
+        description="The tool calls of the delta.",
     )
     reasoning_content: str | None = Field(
         default=None, description="The reasoning content from the model (for o1/o3 models)."
@@ -613,7 +625,9 @@ class OpenAIChunkChoice(BaseModel):
     )
     index: int = Field(..., ge=0, description="The index of the choice.")
     logprobs: OpenAIChoiceLogprobs | None = Field(
-        default=None, description="The log probabilities for the tokens in the message."
+        default=None,
+        json_schema_extra=remove_null_from_anyof,
+        description="The log probabilities for the tokens in the message.",
     )
 
 
@@ -652,7 +666,9 @@ class OpenAIChoice(BaseModel):
     finish_reason: OpenAIFinishReason = Field(..., description="The reason the model stopped generating.")
     index: int = Field(..., ge=0, description="The index of the choice.")
     logprobs: OpenAIChoiceLogprobs | None = Field(
-        default=None, description="The log probabilities for the tokens in the message."
+        default=None,
+        json_schema_extra=remove_null_from_anyof,
+        description="The log probabilities for the tokens in the message.",
     )
 
 
@@ -693,6 +709,9 @@ class OpenAIChatCompletion(BaseModel):
     created: int = Field(..., ge=0, description="The Unix timestamp in seconds when the chat completion was created.")
     model: str = Field(..., description="The model that was used to generate the chat completion.")
     service_tier: str | None = Field(default=None, description="The service tier that was used for this response.")
+    system_fingerprint: str | None = Field(
+        default=None, json_schema_extra=remove_null_from_anyof, description="System fingerprint for this completion."
+    )
     usage: OpenAIChatCompletionUsage | None = Field(
         default=None,
         json_schema_extra=remove_null_from_anyof,
@@ -710,6 +729,11 @@ class OpenAIChatCompletionChunk(BaseModel):
     created: int = Field(..., ge=0, description="The Unix timestamp in seconds when the chat completion was created.")
     model: str = Field(..., description="The model that was used to generate the chat completion.")
     service_tier: str | None = Field(default=None, description="The service tier that was used for this response.")
+    system_fingerprint: str | None = Field(
+        default=None,
+        json_schema_extra=remove_null_from_anyof,
+        description="System fingerprint for this completion chunk.",
+    )
     usage: OpenAIChatCompletionUsage | None = Field(
         default=None,
         json_schema_extra=remove_null_from_anyof,
@@ -892,7 +916,9 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     temperature: float | None = Field(default=None, ge=0.0, le=2.0, description="The temperature to use.")
     tool_choice: str | dict[str, Any] | None = Field(default=None, description="The tool choice to use.")
     tools: list[dict[str, Any]] | None = Field(default=None, description="The tools to use.")
-    top_logprobs: int | None = Field(default=None, ge=0, description="The top log probabilities to use.")
+    top_logprobs: int | None = Field(
+        default=None, ge=0, le=20, description="The number of most likely tokens to return at each position."
+    )
     top_p: float | None = Field(default=None, ge=0.0, le=1.0, description="The top p to use.")
     user: str | None = Field(default=None, description="The user to use.")
     safety_identifier: str | None = Field(

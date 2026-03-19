@@ -15,13 +15,13 @@ The `llamastack/distribution-watsonx` distribution consists of the following pro
 
 | API | Provider(s) |
 |-----|-------------|
-| agents | `inline::meta-reference` |
+| agents | `inline::builtin` |
 | datasetio | `remote::huggingface`, `inline::localfs` |
-| eval | `inline::meta-reference` |
+| eval | `inline::builtin` |
 | inference | `remote::watsonx`, `inline::sentence-transformers` |
 | safety | `inline::llama-guard` |
 | scoring | `inline::basic`, `inline::llm-as-judge`, `inline::braintrust` |
-| tool_runtime | `remote::brave-search`, `remote::tavily-search`, `inline::rag-runtime`, `remote::model-context-protocol` |
+| tool_runtime | `remote::brave-search`, `remote::tavily-search`, `inline::file-search`, `remote::model-context-protocol` |
 | vector_io | `inline::faiss` |
 
 

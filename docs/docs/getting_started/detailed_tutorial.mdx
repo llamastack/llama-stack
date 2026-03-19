@@ -547,9 +547,9 @@ uv run python rag_agent.py
 
 ```{dropdown} 👋 Click here to see the sample output
     user> what is torchtune
-    inference> [knowledge_search(query='TorchTune')]
-    tool_execution> Tool:knowledge_search Args:{'query': 'TorchTune'}
-    tool_execution> Tool:knowledge_search Response:[TextContentItem(text='knowledge_search tool found 5 chunks:\nBEGIN of knowledge_search tool results.\n', type='text'), TextContentItem(text='Result 1:\nDocument_id:num-1\nContent:  conversational data, :func:`~torchtune.datasets.chat_dataset` seems to be a good fit. ..., type='text'), TextContentItem(text='END of knowledge_search tool results.\n', type='text')]
+    inference> [file_search(query='TorchTune')]
+    tool_execution> Tool:file_search Args:{'query': 'TorchTune'}
+    tool_execution> Tool:file_search Response:[TextContentItem(text='file_search tool found 5 chunks:\nBEGIN of file_search tool results.\n', type='text'), TextContentItem(text='Result 1:\nDocument_id:num-1\nContent:  conversational data, :func:`~torchtune.datasets.chat_dataset` seems to be a good fit. ..., type='text'), TextContentItem(text='END of file_search tool results.\n', type='text')]
     inference> Here is a high-level overview of the text:
 
     **LoRA Finetuning with PyTorch Tune**

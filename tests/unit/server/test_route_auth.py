@@ -493,3 +493,88 @@ async def test_mixed_rules_with_and_without_conditions(admin_user, regular_user)
     assert not middleware._is_route_allowed("/v1/chat/completions", None)
     assert not middleware._is_route_allowed("/v1/chat/completions", admin_user)
     assert not middleware._is_route_allowed("/v1/chat/completions", regular_user)
+
+
+async def test_regex_path_matching():
+    """Test regex pattern matching for routes"""
+    route_policy = []
+    middleware = RouteAuthorizationMiddleware(None, route_policy)
+
+    # Test exact match (backward compatibility)
+    assert middleware._route_matches("/v1/chat/completions", "/v1/chat/completions")
+
+    # Test wildcard (backward compatibility)
+    assert middleware._route_matches("/v1/files/upload", "/v1/files*")
+    assert middleware._route_matches("/anything", "*")
+
+    # Test regex patterns
+    assert middleware._route_matches("/v1/chat/completions", "regex:/v1/(chat|inference)/.*")
+    assert middleware._route_matches("/v1/inference/run", "regex:/v1/(chat|inference)/.*")
+    assert middleware._route_matches("/v1/models/list", "regex:/v1/models/.*")
+    assert middleware._route_matches("/v1/files/123", r"regex:/v1/files/\d+")
+
+    # Test that regex doesn't match when it shouldn't
+    assert not middleware._route_matches("/v1/other/endpoint", "regex:/v1/(chat|inference)/.*")
+    assert not middleware._route_matches("/v2/chat/completions", "regex:/v1/chat/.*")
+
+    # Test list of patterns including regex
+    assert middleware._route_matches("/v1/chat/completions", ["/v1/models*", "regex:/v1/(chat|inference)/.*"])
+
+
+async def test_route_policy_with_regex(developer_user, regular_user):
+    """Test route authorization with regex patterns"""
+    route_policy = [
+        RouteAccessRule(
+            permit=RouteScope(paths="regex:/v1/(chat|inference)/.*"),
+            when="user with developer in roles",
+            description="Developers can access chat and inference endpoints",
+        ),
+        RouteAccessRule(
+            permit=RouteScope(paths=r"regex:/v1/files/\d+"),
+            when="user with user in roles",
+            description="Regular users can access specific file IDs",
+        ),
+    ]
+
+    middleware = RouteAuthorizationMiddleware(None, route_policy)
+
+    # Developer can access chat and inference endpoints
+    assert middleware._is_route_allowed("/v1/chat/completions", developer_user)
+    assert middleware._is_route_allowed("/v1/inference/run", developer_user)
+
+    # Developer cannot access file endpoints (not in their policy)
+    assert not middleware._is_route_allowed("/v1/files/123", developer_user)
+
+    # Regular user can access numbered file IDs
+    assert middleware._is_route_allowed("/v1/files/123", regular_user)
+    assert middleware._is_route_allowed("/v1/files/456", regular_user)
+
+    # Regular user cannot access non-numeric file paths
+    assert not middleware._is_route_allowed("/v1/files/upload", regular_user)
+
+    # Regular user cannot access chat endpoints
+    assert not middleware._is_route_allowed("/v1/chat/completions", regular_user)
+
+
+async def test_invalid_regex_pattern_logs_warning(caplog):
+    """Test that invalid regex patterns log a warning and don't crash"""
+    import logging  # allow-direct-logging
+
+    route_policy = []
+    middleware = RouteAuthorizationMiddleware(None, route_policy)
+
+    # Test various invalid regex patterns
+    invalid_patterns = [
+        "regex:**",  # Invalid: ** is not valid regex
+        "regex:(?P<invalid",  # Invalid: unclosed group
+        "regex:[z-a]",  # Invalid: bad character range
+    ]
+
+    with caplog.at_level(logging.WARNING):
+        for pattern in invalid_patterns:
+            # Should not crash, should return False (no match)
+            result = middleware._route_matches("/v1/chat/completions", pattern)
+            assert result is False
+
+    # Check that warnings were logged
+    assert "Invalid regex pattern in route_policy" in caplog.text

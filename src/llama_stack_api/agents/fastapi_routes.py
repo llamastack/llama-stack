@@ -17,11 +17,11 @@ import logging  # allow-direct-logging
 from collections.abc import AsyncIterator
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query, Request, Response
+from fastapi import APIRouter, Body, Depends, Path, Query
 from fastapi.responses import StreamingResponse
-from fastapi.routing import APIRoute
 from pydantic import BaseModel
 
+from llama_stack_api.common.errors import OpenAIErrorResponse
 from llama_stack_api.common.responses import Order
 from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
@@ -30,9 +30,11 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseObject,
 )
 from llama_stack_api.router_utils import (
+    ExceptionTranslatingRoute,
     create_path_dependency,
     create_query_dependency,
     standard_responses,
+    try_translate_to_http_exception,
 )
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
@@ -73,10 +75,10 @@ async def sse_generator(event_gen):
         raise  # Re-raise to maintain proper cancellation semantics
     except Exception as e:
         logger.exception("Error in SSE generator")
-        http_exc = _try_translate_to_http_exception(e)
+        http_exc = try_translate_to_http_exception(e)
         status_code = http_exc.status_code if http_exc else 500
         detail = http_exc.detail if http_exc else "Internal server error: An unexpected error occurred."
-        yield create_sse_event({"error": {"status_code": status_code, "message": detail}})
+        yield create_sse_event(OpenAIErrorResponse.from_message(detail, code=str(status_code)).to_dict())
 
 
 # Automatically generate dependency functions from Pydantic models
@@ -118,55 +120,6 @@ async def get_list_response_input_items_request(
     )
 
 
-def _try_translate_to_http_exception(exc: Exception) -> HTTPException | None:
-    """Try to translate an exception to an HTTPException.
-
-    Returns an HTTPException for known exception types (HTTPException,
-    ValueError, and exceptions with a ``status_code`` attribute such as
-    LlamaStackError subclasses).  Returns ``None`` for unknown types so
-    the caller can decide whether to re-raise the original exception.
-
-    The full ``translate_exception`` pipeline lives in ``llama_stack.core``
-    which ``llama_stack_api`` must not import, so we duplicate the minimal
-    logic required here.
-    """
-    if isinstance(exc, HTTPException):
-        return exc
-    # LlamaStackError subclasses carry their own status_code
-    status_code = getattr(exc, "status_code", None)
-    if isinstance(status_code, int):
-        return HTTPException(status_code=status_code, detail=str(exc))
-    if isinstance(exc, ValueError):
-        return HTTPException(status_code=400, detail=str(exc) or "Invalid value")
-    return None
-
-
-class _ExceptionTranslatingRoute(APIRoute):
-    """Route class that converts known exception types to HTTPException.
-
-    ValueError and LlamaStackError (which carry a ``status_code``) are
-    translated to the appropriate HTTPException so that FastAPI's built-in
-    handler returns a proper JSON error response.  All other exceptions
-    are left untouched so they can propagate to the server's global
-    ``Exception`` handler registered via ``app.exception_handler(Exception)``.
-    """
-
-    def get_route_handler(self):
-        original = super().get_route_handler()
-
-        async def handler(request: Request) -> Response:
-            try:
-                resp: Response = await original(request)
-            except Exception as exc:
-                http_exc = _try_translate_to_http_exception(exc)
-                if http_exc is not None:
-                    raise http_exc from exc
-                raise
-            return resp
-
-        return handler
-
-
 def _preserve_context_for_sse(event_gen):
     # StreamingResponse runs in a different task, losing request contextvars.
     # create_task inside context.run captures the context at task creation.
@@ -202,7 +155,7 @@ def create_router(impl: Agents) -> APIRouter:
         prefix=f"/{LLAMA_STACK_API_V1}",
         tags=["Agents"],
         responses=standard_responses,
-        route_class=_ExceptionTranslatingRoute,
+        route_class=ExceptionTranslatingRoute,
     )
 
     @router.get(
