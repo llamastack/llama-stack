@@ -1,1 +1,1 @@
-See [AGENTS.md](AGENTS.md) for guidelines on working with this codebase.
+See @AGENTS.md for guidelines on working with this codebase.
