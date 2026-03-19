@@ -154,14 +154,36 @@ jobs:
             core.setOutput('head_sha', headSha);
             core.setOutput('is_fork_pr', headRepo !== `${context.repo.owner}/${context.repo.repo}`);
 
-      - name: Checkout PR branch
-        if: steps.pr-info.outputs.skip != 'true'
+      - name: Preserve artifacts before checkout
+        if: steps.pr-info.outputs.skip != 'true' && steps.pr-info.outputs.is_fork_pr != 'true'
+        run: mv recordings-temp /tmp/recordings-temp 2>/dev/null || true
+
+      - name: Checkout PR branch (same-repo)
+        if: steps.pr-info.outputs.skip != 'true' && steps.pr-info.outputs.is_fork_pr != 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ steps.pr-info.outputs.head_repo }}
           ref: ${{ steps.pr-info.outputs.head_ref }}
           fetch-depth: 0
           token: ${{ github.token }}
+
+      - name: Restore artifacts after checkout
+        if: steps.pr-info.outputs.skip != 'true' && steps.pr-info.outputs.is_fork_pr != 'true'
+        run: mv /tmp/recordings-temp recordings-temp 2>/dev/null || true
+
+      - name: Checkout PR branch (fork)
+        if: steps.pr-info.outputs.skip != 'true' && steps.pr-info.outputs.is_fork_pr == 'true'
+        env:
+          # RELEASE_PAT has repo scope, which allows cloning and pushing to fork
+          # PR branches when maintainerCanModify is enabled. github.token can't do this.
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+          HEAD_REPO: ${{ steps.pr-info.outputs.head_repo }}
+          HEAD_REF: ${{ steps.pr-info.outputs.head_ref }}
+        run: |
+          # Move artifacts out of the way before cloning, then restore after.
+          mv recordings-temp /tmp/recordings-temp 2>/dev/null || true
+          git clone --depth 1 --branch "${HEAD_REF}" "https://x-access-token:${GH_TOKEN}@github.com/${HEAD_REPO}.git" .
+          mv /tmp/recordings-temp recordings-temp 2>/dev/null || true
 
       - name: Copy recordings to repo
         if: steps.pr-info.outputs.skip != 'true'
@@ -186,7 +208,7 @@ jobs:
       - name: Commit and push recordings
         if: steps.pr-info.outputs.skip != 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.pr-info.outputs.is_fork_pr == 'true' && secrets.RELEASE_PAT || github.token }}
           PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}
           HEAD_REPO: ${{ steps.pr-info.outputs.head_repo }}
           HEAD_REF: ${{ steps.pr-info.outputs.head_ref }}
