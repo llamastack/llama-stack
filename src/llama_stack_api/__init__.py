@@ -53,6 +53,7 @@ from .admin import (
 # Import all public API symbols
 from .agents import (
     Agents,
+    CancelResponseRequest,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -587,6 +588,7 @@ __all__ = [
     "Agents",
     "AggregationFunctionType",
     # Agents Request Models
+    "CancelResponseRequest",
     "CreateResponseRequest",
     "DeleteResponseRequest",
     "ListResponseInputItemsRequest",

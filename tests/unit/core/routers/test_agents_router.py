@@ -13,6 +13,7 @@ from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
 from llama_stack.core.server.server import global_exception_handler
 from llama_stack_api import Agents, Api
 from llama_stack_api.agents.models import (
+    CancelResponseRequest,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -397,6 +398,55 @@ def test_delete_response_maps_value_error_to_400():
 
     assert resp.status_code == 400
     assert "not found" in resp.json()["detail"].lower()
+
+
+async def test_cancel_response_returns_cancelled_object():
+    """Test POST /v1/responses/{response_id}/cancel returns cancelled response."""
+    app = FastAPI()
+    impl = AsyncMock(spec=Agents)
+
+    expected_response = OpenAIResponseObject(
+        id="resp_123",
+        created_at=1234567890,
+        model="test-model",
+        status="cancelled",
+        output=[],
+        store=True,
+    )
+    impl.cancel_openai_response.return_value = expected_response
+
+    router = build_fastapi_router(Api.agents, impl)
+    assert router is not None
+    app.include_router(router)
+
+    cancel_endpoint = next(
+        r.endpoint for r in router.routes if getattr(r, "path", None) == "/v1/responses/{response_id}/cancel"
+    )
+
+    request = CancelResponseRequest(response_id="resp_123")
+    response = await cancel_endpoint(request)
+
+    assert response.id == "resp_123"
+    assert response.status == "cancelled"
+    impl.cancel_openai_response.assert_awaited_once()
+
+
+def test_cancel_response_maps_invalid_parameter_error_to_400():
+    """Cancel on a completed response returns HTTP 400."""
+    app = FastAPI()
+    app.add_exception_handler(Exception, global_exception_handler)
+    impl = AsyncMock(spec=Agents)
+    impl.cancel_openai_response.side_effect = ValueError("cannot be cancelled")
+
+    router = build_fastapi_router(Api.agents, impl)
+    assert router is not None
+    app.include_router(router)
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.post("/v1/responses/resp_completed/cancel")
+
+    assert resp.status_code == 400
+    assert "cannot be cancelled" in resp.json()["detail"].lower()
 
 
 def test_request_validation_error_passes_through_route_class():

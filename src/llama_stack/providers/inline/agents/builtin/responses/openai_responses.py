@@ -1112,6 +1112,20 @@ class OpenAIResponsesImpl:
 
                 yield stream_chunk
 
+    async def cancel_openai_response(self, response_id: str) -> OpenAIResponseObject:
+        existing = await self.responses_store.get_response_object(response_id)
+
+        # Idempotent: already cancelled, just return
+        if existing.status == "cancelled":
+            return existing.to_response_object()
+
+        if existing.status not in ("queued", "in_progress"):
+            raise ValueError(f"Response {response_id} cannot be cancelled: current status is '{existing.status}'")
+
+        existing.status = "cancelled"
+        await self.responses_store.update_response_object(existing)
+        return existing.to_response_object()
+
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
         return await self.responses_store.delete_response_object(response_id)
 

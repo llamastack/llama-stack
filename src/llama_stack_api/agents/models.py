@@ -245,6 +245,14 @@ class ListResponseInputItemsRequest(BaseModel):
     order: Order | None = Field(default=Order.desc, description="The order to return the input items in.")
 
 
+class CancelResponseRequest(BaseModel):
+    """Request model for canceling a response that is in progress."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    response_id: str = Field(..., min_length=1, description="The ID of the response to cancel.")
+
+
 class DeleteResponseRequest(BaseModel):
     """Request model for deleting a response."""
 

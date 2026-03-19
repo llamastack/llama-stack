@@ -7,6 +7,7 @@
 import time
 
 import pytest
+from openai import BadRequestError, NotFoundError
 
 from .streaming_assertions import StreamingValidator
 
@@ -579,6 +580,66 @@ class TestOpenAIResponses:
 
         assert response2.id.startswith("resp_")
         assert response2.parallel_tool_calls is False
+
+    def test_cancel_completed_response_raises_bad_request(self, openai_client, text_model_id):
+        """Test that cancelling a completed response returns 400 BadRequestError."""
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="Say hello",
+            stream=False,
+        )
+        assert response.status == "completed"
+
+        with pytest.raises(BadRequestError) as exc_info:
+            openai_client.responses.cancel(response.id)
+
+        assert exc_info.value.status_code == 400
+        assert "cannot be cancelled" in str(exc_info.value).lower()
+
+    def test_cancel_nonexistent_response_raises_not_found(self, openai_client):
+        """Test that cancelling a nonexistent response returns 404 NotFoundError."""
+        with pytest.raises(NotFoundError):
+            openai_client.responses.cancel("resp_nonexistent_cancel_test")
+
+    def test_cancel_already_cancelled_is_idempotent(self, openai_client, text_model_id):
+        """Test that cancelling an already-cancelled background response is idempotent."""
+        # Create a background response (starts as queued)
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="Say hello",
+            background=True,
+        )
+        assert response.status == "queued"
+
+        # Cancel it
+        cancelled = openai_client.responses.cancel(response.id)
+        assert cancelled.status == "cancelled"
+
+        # Cancel again — should succeed without error (idempotent)
+        cancelled_again = openai_client.responses.cancel(response.id)
+        assert cancelled_again.status == "cancelled"
+        assert cancelled_again.id == response.id
+
+    def test_cancel_background_response(self, openai_client, text_model_id):
+        """Test cancelling a background response.
+
+        Note: There is a race between the cancel request and the background
+        worker picking up the response. The cancel API itself should succeed,
+        but the worker may have already moved the response to in_progress or
+        completed before the cancel takes effect. We verify the cancel call
+        succeeds and returns cancelled status.
+        """
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="Write a very long essay about the history of computing.",
+            background=True,
+        )
+        assert response.status == "queued"
+
+        # Cancel it — the cancel call itself should return cancelled status
+        cancelled = openai_client.responses.cancel(response.id)
+        assert cancelled.status == "cancelled"
+        assert cancelled.id == response.id
 
     def test_openai_response_background_returns_queued(self, openai_client, text_model_id):
         """Test that background=True returns immediately with queued status."""
