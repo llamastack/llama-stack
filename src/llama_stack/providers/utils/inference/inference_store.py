@@ -6,14 +6,18 @@
 import asyncio
 from typing import Any, NamedTuple
 
-from opentelemetry import context as otel_context
 from sqlalchemy.exc import IntegrityError
 
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.storage.datatypes import InferenceStoreReference, StorageBackendType
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import _SQLSTORE_BACKENDS, sqlstore_impl
-from llama_stack.core.task import activate_otel_context, capture_otel_context, create_task_with_detached_otel_context
+from llama_stack.core.task import (
+    RequestContext,
+    activate_request_context,
+    capture_request_context,
+    create_detached_background_task,
+)
 from llama_stack.log import get_logger
 from llama_stack_api import (
     ListOpenAIChatCompletionResponse,
@@ -30,7 +34,7 @@ logger = get_logger(name=__name__, category="inference")
 class _WriteItem(NamedTuple):
     completion: OpenAIChatCompletion
     messages: list[OpenAIMessageParam]
-    otel_context: otel_context.Context
+    request_context: RequestContext
 
 
 class InferenceStore:
@@ -107,7 +111,7 @@ class InferenceStore:
 
         if not self._worker_tasks:
             for _ in range(self._num_writers):
-                task = create_task_with_detached_otel_context(self._worker_loop())
+                task = create_detached_background_task(self._worker_loop())
                 self._worker_tasks.append(task)
 
     async def store_chat_completion(
@@ -117,7 +121,7 @@ class InferenceStore:
             await self._ensure_workers_started()
             if self._queue is None:
                 raise ValueError("Inference store is not initialized")
-            item = _WriteItem(chat_completion, input_messages, capture_otel_context())
+            item = _WriteItem(chat_completion, input_messages, capture_request_context())
             try:
                 self._queue.put_nowait(item)
             except asyncio.QueueFull:
@@ -136,7 +140,7 @@ class InferenceStore:
             except asyncio.CancelledError:
                 break
             try:
-                with activate_otel_context(item.otel_context):
+                with activate_request_context(item.request_context):
                     await self._write_chat_completion(item.completion, item.messages)
             except Exception as e:  # noqa: BLE001
                 logger.error(f"Error writing chat completion: {e}")

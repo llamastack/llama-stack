@@ -14,23 +14,14 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExporter, SpanExportResult
 
-from llama_stack.core.task import capture_otel_context, create_task_with_detached_otel_context
+from llama_stack.core.datatypes import User
+from llama_stack.core.request_headers import PROVIDER_DATA_VAR, get_authenticated_user
+from llama_stack.core.task import capture_request_context, create_detached_background_task
 from llama_stack.providers.inline.agents.builtin.responses.openai_responses import (
     OpenAIResponsesImpl,
     _BackgroundWorkItem,
 )
 from llama_stack_api import OpenAIResponseError, OpenAIResponseObject
-
-
-class _CollectingExporter(SpanExporter):
-    """Collects finished spans in memory for test assertions."""
-
-    def __init__(self):
-        self.spans = []
-
-    def export(self, spans):
-        self.spans.extend(spans)
-        return SpanExportResult.SUCCESS
 
 
 class TestBackgroundFieldInResponseObject:
@@ -184,14 +175,19 @@ def _make_responses_impl():
     )
 
 
-class TestResponsesOtelContextPropagation:
-    """Verify that OTel trace context flows correctly through the background worker queue.
+class _CollectingExporter(SpanExporter):
+    """Collects finished spans in memory for test assertions."""
 
-    The responses worker runs a full multi-step loop (_run_background_response_loop)
-    containing status updates, LLM calls, tool execution, and DB writes. All of
-    these operations must be attributed to the originating request's trace, not
-    to whichever request first spawned the worker.
-    """
+    def __init__(self):
+        self.spans = []
+
+    def export(self, spans):
+        self.spans.extend(spans)
+        return SpanExportResult.SUCCESS
+
+
+class TestResponsesOtelContextPropagation:
+    """Verify that OTel trace context flows correctly through the background worker queue."""
 
     async def test_worker_attributes_work_to_correct_request_trace(self):
         """Each queued response is processed under its originating request's trace context."""
@@ -207,16 +203,16 @@ class TestResponsesOtelContextPropagation:
                 await asyncio.sleep(0)
 
         with patch.object(impl, "_run_background_response_loop", side_effect=mock_response_loop):
-            worker_task = create_task_with_detached_otel_context(impl._background_worker())
+            worker_task = create_detached_background_task(impl._background_worker())
 
             with tracer.start_as_current_span("request-A"):
                 impl._background_queue.put_nowait(
-                    _BackgroundWorkItem(otel_context=capture_otel_context(), kwargs=dict(response_id="resp-A"))
+                    _BackgroundWorkItem(request_context=capture_request_context(), kwargs=dict(response_id="resp-A"))
                 )
 
             with tracer.start_as_current_span("request-B"):
                 impl._background_queue.put_nowait(
-                    _BackgroundWorkItem(otel_context=capture_otel_context(), kwargs=dict(response_id="resp-B"))
+                    _BackgroundWorkItem(request_context=capture_request_context(), kwargs=dict(response_id="resp-B"))
                 )
 
             await impl._background_queue.join()
@@ -235,16 +231,11 @@ class TestResponsesOtelContextPropagation:
         process_b_trace = spans_by_name["process-resp-B"].context.trace_id
 
         assert request_a_trace != request_b_trace, "Requests should have distinct traces"
-
         assert process_a_trace == request_a_trace, "Response processing for resp-A should be in request-A's trace"
         assert process_b_trace == request_b_trace, "Response processing for resp-B should be in request-B's trace"
 
     async def test_worker_does_not_leak_context_between_items(self):
-        """After processing one item, the worker returns to a clean context.
-
-        This ensures that if item A's processing sets some OTel state, it
-        doesn't bleed into item B's processing.
-        """
+        """After processing one item, the worker returns to a clean OTel context."""
         exporter = _CollectingExporter()
         provider = TracerProvider()
         provider.add_span_processor(SimpleSpanProcessor(exporter))
@@ -255,24 +246,22 @@ class TestResponsesOtelContextPropagation:
 
         async def mock_response_loop(**kwargs):
             rid = kwargs["response_id"]
-            # The parent span has ended by this point, but the context still
-            # carries its trace_id. Child spans inherit this trace_id.
             span_ctx = trace.get_current_span().get_span_context()
             trace_ids_during_processing[rid] = span_ctx.trace_id if span_ctx.trace_id != 0 else None
             with tracer.start_as_current_span(f"work-{rid}"):
                 await asyncio.sleep(0)
 
         with patch.object(impl, "_run_background_response_loop", side_effect=mock_response_loop):
-            worker_task = create_task_with_detached_otel_context(impl._background_worker())
+            worker_task = create_detached_background_task(impl._background_worker())
 
             with tracer.start_as_current_span("req-1"):
                 impl._background_queue.put_nowait(
-                    _BackgroundWorkItem(otel_context=capture_otel_context(), kwargs=dict(response_id="r1"))
+                    _BackgroundWorkItem(request_context=capture_request_context(), kwargs=dict(response_id="r1"))
                 )
 
             with tracer.start_as_current_span("req-2"):
                 impl._background_queue.put_nowait(
-                    _BackgroundWorkItem(otel_context=capture_otel_context(), kwargs=dict(response_id="r2"))
+                    _BackgroundWorkItem(request_context=capture_request_context(), kwargs=dict(response_id="r2"))
                 )
 
             await impl._background_queue.join()
@@ -301,6 +290,7 @@ class TestResponsesOtelContextPropagation:
         tracer = provider.get_tracer("test")
 
         impl = _make_responses_impl()
+
         mock_response = OpenAIResponseObject(
             id="resp-err",
             created_at=1234567890,
@@ -327,12 +317,12 @@ class TestResponsesOtelContextPropagation:
             raise RuntimeError("simulated failure")
 
         with patch.object(impl, "_run_background_response_loop", side_effect=failing_loop):
-            worker_task = create_task_with_detached_otel_context(impl._background_worker())
+            worker_task = create_detached_background_task(impl._background_worker())
 
             with tracer.start_as_current_span("failing-request"):
                 request_trace = trace.get_current_span().get_span_context().trace_id
                 impl._background_queue.put_nowait(
-                    _BackgroundWorkItem(otel_context=capture_otel_context(), kwargs=dict(response_id="resp-err"))
+                    _BackgroundWorkItem(request_context=capture_request_context(), kwargs=dict(response_id="resp-err"))
                 )
 
             await impl._background_queue.join()
@@ -345,3 +335,146 @@ class TestResponsesOtelContextPropagation:
         assert len(error_update_trace_ids) > 0, "Error handler should have made DB updates"
         for tid in error_update_trace_ids:
             assert tid == request_trace, "Error handler DB writes should be in the failing request's trace"
+
+
+def _set_authenticated_user(user: User | None):
+    """Simulate what ProviderDataMiddleware does for each request."""
+    if user:
+        PROVIDER_DATA_VAR.set({"__authenticated_user": user})
+    else:
+        PROVIDER_DATA_VAR.set(None)
+
+
+class TestResponsesProviderDataPropagation:
+    """Verify that PROVIDER_DATA_VAR flows correctly through the background worker queue.
+
+    The responses worker processes the full response loop (LLM calls, tool execution,
+    DB writes). All operations inside the worker must run with the originating
+    request's auth identity, not whichever request first spawned the worker.
+    """
+
+    async def test_worker_runs_under_correct_user_identity(self):
+        """Each queued response is processed under its originating user's identity."""
+        impl = _make_responses_impl()
+
+        alice = User(principal="alice", attributes={"roles": ["user"]})
+        bob = User(principal="bob", attributes={"roles": ["user"]})
+
+        observed_users: dict[str, User | None] = {}
+
+        async def mock_response_loop(**kwargs):
+            observed_users[kwargs["response_id"]] = get_authenticated_user()
+
+        with patch.object(impl, "_run_background_response_loop", side_effect=mock_response_loop):
+            worker_task = create_detached_background_task(impl._background_worker())
+
+            _set_authenticated_user(alice)
+            impl._background_queue.put_nowait(
+                _BackgroundWorkItem(request_context=capture_request_context(), kwargs=dict(response_id="resp-alice"))
+            )
+
+            _set_authenticated_user(bob)
+            impl._background_queue.put_nowait(
+                _BackgroundWorkItem(request_context=capture_request_context(), kwargs=dict(response_id="resp-bob"))
+            )
+
+            await impl._background_queue.join()
+            worker_task.cancel()
+            try:
+                await worker_task
+            except asyncio.CancelledError:
+                pass
+
+        _set_authenticated_user(None)
+
+        assert observed_users["resp-alice"] is not None, "Alice's request should have a user"
+        assert observed_users["resp-bob"] is not None, "Bob's request should have a user"
+        assert observed_users["resp-alice"].principal == "alice", "Alice's response should run as alice"
+        assert observed_users["resp-bob"].principal == "bob", "Bob's response should run as bob"
+
+    async def test_worker_does_not_leak_identity_between_items(self):
+        """After processing one item, the worker returns to a clean state."""
+        impl = _make_responses_impl()
+
+        alice = User(principal="alice", attributes={"roles": ["user"]})
+
+        user_after_processing: list[User | None] = []
+
+        async def mock_response_loop(**kwargs):
+            user_after_processing.append(get_authenticated_user())
+
+        with patch.object(impl, "_run_background_response_loop", side_effect=mock_response_loop):
+            worker_task = create_detached_background_task(impl._background_worker())
+
+            # First item: enqueued by Alice
+            _set_authenticated_user(alice)
+            impl._background_queue.put_nowait(
+                _BackgroundWorkItem(request_context=capture_request_context(), kwargs=dict(response_id="resp-1"))
+            )
+
+            # Second item: enqueued with no user (anonymous)
+            _set_authenticated_user(None)
+            impl._background_queue.put_nowait(
+                _BackgroundWorkItem(request_context=capture_request_context(), kwargs=dict(response_id="resp-2"))
+            )
+
+            await impl._background_queue.join()
+            worker_task.cancel()
+            try:
+                await worker_task
+            except asyncio.CancelledError:
+                pass
+
+        assert user_after_processing[0] is not None, "First item should run as alice"
+        assert user_after_processing[0].principal == "alice"
+        assert user_after_processing[1] is None, "Second item should run as anonymous — alice's identity must not leak"
+
+    async def test_error_handler_runs_under_correct_identity(self):
+        """When processing fails, error-handling DB writes use the correct user."""
+        impl = _make_responses_impl()
+
+        bob = User(principal="bob", attributes={"roles": ["user"]})
+
+        mock_response = OpenAIResponseObject(
+            id="resp-err",
+            created_at=1234567890,
+            model="test-model",
+            status="in_progress",
+            output=[],
+            store=True,
+        )
+        impl.responses_store.get_response_object = AsyncMock(return_value=mock_response)
+
+        error_handler_users: list[User | None] = []
+        original_update = impl.responses_store.update_response_object
+
+        async def tracking_update(obj):
+            error_handler_users.append(get_authenticated_user())
+            return await original_update(obj)
+
+        impl.responses_store.update_response_object = tracking_update
+
+        async def failing_loop(**kwargs):
+            raise RuntimeError("simulated failure")
+
+        with patch.object(impl, "_run_background_response_loop", side_effect=failing_loop):
+            worker_task = create_detached_background_task(impl._background_worker())
+
+            _set_authenticated_user(bob)
+            impl._background_queue.put_nowait(
+                _BackgroundWorkItem(request_context=capture_request_context(), kwargs=dict(response_id="resp-err"))
+            )
+
+            await impl._background_queue.join()
+            worker_task.cancel()
+            try:
+                await worker_task
+            except asyncio.CancelledError:
+                pass
+
+        _set_authenticated_user(None)
+
+        assert len(error_handler_users) > 0, "Error handler should have made DB updates"
+        for user in error_handler_users:
+            assert user is not None, "Error handler should have a user identity"
+            assert user.principal == "bob", "Error handler should run as bob, not the worker's inherited identity"
