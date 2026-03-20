@@ -9,10 +9,13 @@ import re
 import time
 import uuid
 from collections.abc import AsyncIterator
+from dataclasses import dataclass, field
 
+from opentelemetry import context as otel_context
 from pydantic import BaseModel, TypeAdapter
 
 from llama_stack.core.conversations.validation import CONVERSATION_ID_PATTERN
+from llama_stack.core.task import activate_otel_context, capture_otel_context, create_task_with_detached_otel_context
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
@@ -82,6 +85,14 @@ BACKGROUND_QUEUE_MAX_SIZE = 100
 BACKGROUND_NUM_WORKERS = 10
 
 
+@dataclass
+class _BackgroundWorkItem:
+    """Typed queue item for background response processing."""
+
+    otel_context: otel_context.Context
+    kwargs: dict = field(default_factory=dict)
+
+
 class OpenAIResponsePreviousResponseWithInputItems(BaseModel):
     input_items: ListOpenAIResponseInputItem
     response: OpenAIResponseObject
@@ -118,7 +129,7 @@ class OpenAIResponsesImpl:
         self.prompts_api = prompts_api
         self.files_api = files_api
         self.connectors_api = connectors_api
-        self._background_queue: asyncio.Queue = asyncio.Queue(maxsize=BACKGROUND_QUEUE_MAX_SIZE)
+        self._background_queue: asyncio.Queue[_BackgroundWorkItem] = asyncio.Queue(maxsize=BACKGROUND_QUEUE_MAX_SIZE)
         self._background_worker_tasks: set[asyncio.Task] = set()
 
     async def initialize(self) -> None:
@@ -133,7 +144,7 @@ class OpenAIResponsesImpl:
     async def _ensure_workers_started(self) -> None:
         """Start background workers in the current event loop if not already running."""
         for _ in range(BACKGROUND_NUM_WORKERS - len(self._background_worker_tasks)):
-            task = asyncio.create_task(self._background_worker())
+            task = create_task_with_detached_otel_context(self._background_worker())
             self._background_worker_tasks.add(task)
             task.add_done_callback(self._background_worker_tasks.discard)
 
@@ -146,48 +157,49 @@ class OpenAIResponsesImpl:
     async def _background_worker(self) -> None:
         """Worker coroutine that pulls items from the queue and processes them."""
         while True:
-            kwargs = await self._background_queue.get()
-            try:
-                await asyncio.wait_for(
-                    self._run_background_response_loop(**kwargs),
-                    timeout=BACKGROUND_RESPONSE_TIMEOUT_SECONDS,
-                )
-            except TimeoutError:
-                response_id = kwargs["response_id"]
-                logger.exception(
-                    f"Background response {response_id} timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s"
-                )
+            item = await self._background_queue.get()
+            with activate_otel_context(item.otel_context):
                 try:
-                    existing = await self.responses_store.get_response_object(response_id)
-                    existing.status = "failed"
-                    existing.error = OpenAIResponseError(
-                        code="processing_error",
-                        message=f"Background response timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s",
+                    await asyncio.wait_for(
+                        self._run_background_response_loop(**item.kwargs),
+                        timeout=BACKGROUND_RESPONSE_TIMEOUT_SECONDS,
                     )
-                    await self.responses_store.update_response_object(existing)
-                except Exception:
+                except TimeoutError:
+                    response_id = item.kwargs["response_id"]
                     logger.exception(
-                        f"Failed to update response {response_id} with timeout status. "
-                        "Client polling this response will not see the failure."
+                        f"Background response {response_id} timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s"
                     )
-            except Exception as e:
-                response_id = kwargs["response_id"]
-                logger.exception(f"Error processing background response {response_id}")
-                try:
-                    existing = await self.responses_store.get_response_object(response_id)
-                    existing.status = "failed"
-                    existing.error = OpenAIResponseError(
-                        code="processing_error",
-                        message=str(e),
-                    )
-                    await self.responses_store.update_response_object(existing)
-                except Exception:
-                    logger.exception(
-                        f"Failed to update response {response_id} with error status. "
-                        "Client polling this response will not see the failure."
-                    )
-            finally:
-                self._background_queue.task_done()
+                    try:
+                        existing = await self.responses_store.get_response_object(response_id)
+                        existing.status = "failed"
+                        existing.error = OpenAIResponseError(
+                            code="processing_error",
+                            message=f"Background response timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s",
+                        )
+                        await self.responses_store.update_response_object(existing)
+                    except Exception:
+                        logger.exception(
+                            f"Failed to update response {response_id} with timeout status. "
+                            "Client polling this response will not see the failure."
+                        )
+                except Exception as e:
+                    response_id = item.kwargs["response_id"]
+                    logger.exception(f"Error processing background response {response_id}")
+                    try:
+                        existing = await self.responses_store.get_response_object(response_id)
+                        existing.status = "failed"
+                        existing.error = OpenAIResponseError(
+                            code="processing_error",
+                            message=str(e),
+                        )
+                        await self.responses_store.update_response_object(existing)
+                    except Exception:
+                        logger.exception(
+                            f"Failed to update response {response_id} with error status. "
+                            "Client polling this response will not see the failure."
+                        )
+                finally:
+                    self._background_queue.task_done()
 
     async def _prepend_previous_response(
         self,
@@ -820,33 +832,36 @@ class OpenAIResponsesImpl:
         # Enqueue work item for background workers. Raises QueueFull if at capacity.
         try:
             self._background_queue.put_nowait(
-                dict(
-                    response_id=response_id,
-                    input=input,
-                    model=model,
-                    prompt=prompt,
-                    instructions=instructions,
-                    previous_response_id=previous_response_id,
-                    conversation=conversation,
-                    store=store,
-                    temperature=temperature,
-                    frequency_penalty=frequency_penalty,
-                    text=text,
-                    tool_choice=tool_choice,
-                    tools=tools,
-                    include=include,
-                    max_infer_iters=max_infer_iters,
-                    guardrail_ids=guardrail_ids,
-                    parallel_tool_calls=parallel_tool_calls,
-                    max_tool_calls=max_tool_calls,
-                    reasoning=reasoning,
-                    max_output_tokens=max_output_tokens,
-                    safety_identifier=safety_identifier,
-                    service_tier=service_tier,
-                    metadata=metadata,
-                    truncation=truncation,
-                    presence_penalty=presence_penalty,
-                    extra_body=extra_body,
+                _BackgroundWorkItem(
+                    otel_context=capture_otel_context(),
+                    kwargs=dict(
+                        response_id=response_id,
+                        input=input,
+                        model=model,
+                        prompt=prompt,
+                        instructions=instructions,
+                        previous_response_id=previous_response_id,
+                        conversation=conversation,
+                        store=store,
+                        temperature=temperature,
+                        frequency_penalty=frequency_penalty,
+                        text=text,
+                        tool_choice=tool_choice,
+                        tools=tools,
+                        include=include,
+                        max_infer_iters=max_infer_iters,
+                        guardrail_ids=guardrail_ids,
+                        parallel_tool_calls=parallel_tool_calls,
+                        max_tool_calls=max_tool_calls,
+                        reasoning=reasoning,
+                        max_output_tokens=max_output_tokens,
+                        safety_identifier=safety_identifier,
+                        service_tier=service_tier,
+                        metadata=metadata,
+                        truncation=truncation,
+                        presence_penalty=presence_penalty,
+                        extra_body=extra_body,
+                    ),
                 )
             )
         except asyncio.QueueFull:
