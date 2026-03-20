@@ -17,13 +17,12 @@ uv pip install -e .
 source .venv/bin/activate
 ```
 
-```{note}
-If you are making changes to Llama Stack, it is essential that you use Python 3.12 as shown above.
+**Note:** If you are making changes to Llama Stack, it is essential that you use Python 3.12 as shown above.
 Llama Stack can work with Python 3.13 but the pre-commit hooks used to validate code changes only work with Python 3.12.
 If you don't specify a Python version, `uv` will automatically select a Python version according to the `requires-python`
 section of the `pyproject.toml`, which is fine for running Llama Stack but not for committing changes.
 For more info, see the [uv docs around Python versions](https://docs.astral.sh/uv/concepts/python-versions/).
-```
+
 
 Note that you can create a dotenv file `.env` that includes necessary environment variables:
 ```
@@ -74,8 +73,8 @@ or invoke mypy directly with all optional dependencies:
 uv run --group dev --group type_checking mypy
 ```
 
-```{caution}
-Before pushing your changes, make sure that the pre-commit hooks have passed successfully.
+```
+**Caution:** Before pushing your changes, make sure that the pre-commit hooks have passed successfully.
 ```
 
 ## Issues and Pull Requests
@@ -141,11 +140,10 @@ Please avoid picking up too many issues at once. This helps you stay focused and
 
 Please keep pull requests (PRs) small and focused. If you have a large set of changes, consider splitting them into logically grouped, smaller PRs to facilitate review and testing.
 
-```{tip}
-As a general guideline:
+**Tip:** As a general guideline:
 - Experienced contributors should try to keep no more than 5 open PRs at a time.
 - New contributors are encouraged to have only one open PR at a time until they're familiar with the codebase and process.
-```
+
 
 **Handling Pull Request Reviews**
 
