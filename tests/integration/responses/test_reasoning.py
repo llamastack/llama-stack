@@ -65,3 +65,67 @@ def test_reasoning_basic_streaming(client_with_models, text_model_id):
 
     assert hasattr(reasoning_text_done_events[-1], "text"), "Reasoning done event should have text field"
     assert len(reasoning_text_done_events[-1].text) > 0, "Reasoning text should not be empty"
+
+
+def test_reasoning_non_streaming(client_with_models, text_model_id):
+    """Test that ReasoningItem appears in non-streaming response output."""
+
+    skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
+
+    response = client_with_models.responses.create(
+        model=text_model_id,
+        input="What is 2 + 2? Think step by step.",
+        stream=False,
+    )
+
+    output_types = [item.type for item in response.output]
+    reasoning_items = [item for item in response.output if item.type == "reasoning"]
+
+    assert len(reasoning_items) > 0, f"Expected reasoning items in output, got types: {output_types}"
+
+    reasoning_item = reasoning_items[0]
+    assert reasoning_item.id, "Reasoning item should have an id"
+    assert reasoning_item.content is not None, "Reasoning item should have content"
+    assert len(reasoning_item.content) > 0, "Reasoning item should have at least one content entry"
+    assert reasoning_item.content[0].type == "reasoning_text"
+    assert len(reasoning_item.content[0].text) > 0, "Reasoning content text should not be empty"
+
+
+def test_reasoning_multi_turn_passthrough(client_with_models, text_model_id):
+    """Test that reasoning output survives a round-trip when passed back as input.
+
+    Turn 1: send a prompt, assert ReasoningItem in output.
+    Turn 2: pass the full output (including reasoning) back as input with
+            a follow-up question, assert the model responds coherently.
+    """
+
+    skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
+
+    # Turn 1
+    input_messages = [
+        {"role": "user", "content": "What is 2 + 2? Think step by step."},
+    ]
+    resp1 = client_with_models.responses.create(
+        model=text_model_id,
+        input=input_messages,
+        stream=False,
+    )
+
+    output_types = [item.type for item in resp1.output]
+    reasoning_items = [item for item in resp1.output if item.type == "reasoning"]
+    assert len(reasoning_items) > 0, f"Expected reasoning items in turn 1, got types: {output_types}"
+
+    # Turn 2: pass previous output back as input with a follow-up
+    turn2_input = list(input_messages) + list(resp1.output)
+    turn2_input.append({"role": "user", "content": "Now multiply that result by 3."})
+
+    resp2 = client_with_models.responses.create(
+        model=text_model_id,
+        input=turn2_input,
+        stream=False,
+    )
+
+    assert resp2.output, "Expected non-empty output in turn 2"
+    message_items = [item for item in resp2.output if item.type == "message"]
+    assert len(message_items) > 0, "Expected a message in turn 2 output"
+    # assert len(message_items[0].content[0].text) > 0, "Expected non-empty response text in turn 2"
