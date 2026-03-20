@@ -1,7 +1,7 @@
 ---
 slug: open-responses-openai-compatibility
 title: "Llama Stack Achieves 100% Open Responses Compliance: Enterprise-Grade OpenAI Compatibility for Your Infrastructure"
-authors: [farceo, cdoern]
+authors: [Francisco Javier Arceo, Charlie Doern]
 tags: [openai-compatibility, open-responses, enterprise, mcp, connectors]
 date: 2026-03-20
 ---
