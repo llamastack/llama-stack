@@ -1352,6 +1352,28 @@ class StreamingResponseOrchestrator:
                     )
 
             if tool_response_message:
+                # Run guardrails on server-side tool output before feeding it back
+                # to the model. Without this check, indirect prompt injection via
+                # MCP or built-in tool results would bypass safety shields entirely
+                # (see https://github.com/meta-llama/llama-stack/issues/5036).
+                if self.guardrail_ids:
+                    tool_content = tool_response_message.content
+                    if isinstance(tool_content, str):
+                        tool_output_text = tool_content
+                    elif isinstance(tool_content, list):
+                        tool_output_text = " ".join(getattr(part, "text", str(part)) for part in tool_content)
+                    else:
+                        tool_output_text = str(tool_content)
+
+                    violation_message = await run_guardrails(self.safety_api, tool_output_text, self.guardrail_ids)
+                    if violation_message:
+                        logger.info(
+                            f"Tool output guardrail violation from '{tool_call.function.name}': {violation_message}"
+                        )
+                        yield await self._create_refusal_response(violation_message)
+                        self.violation_detected = True
+                        return
+
                 next_turn_messages.append(tool_response_message)
 
             # Track number of calls made to built-in and mcp tools
