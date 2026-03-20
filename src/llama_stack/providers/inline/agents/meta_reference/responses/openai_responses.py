@@ -12,6 +12,16 @@ from collections.abc import AsyncIterator
 
 from pydantic import BaseModel, TypeAdapter
 
+<<<<<<< HEAD:src/llama_stack/providers/inline/agents/meta_reference/responses/openai_responses.py
+=======
+from llama_stack.core.conversations.validation import CONVERSATION_ID_PATTERN
+from llama_stack.core.task import (
+    RequestContext,
+    activate_request_context,
+    capture_request_context,
+    create_detached_background_task,
+)
+>>>>>>> 9b86ce80 (fix: provider_data_var context leak (#5227)):src/llama_stack/providers/inline/agents/builtin/responses/openai_responses.py
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
@@ -80,6 +90,17 @@ BACKGROUND_QUEUE_MAX_SIZE = 100
 BACKGROUND_NUM_WORKERS = 10
 
 
+<<<<<<< HEAD:src/llama_stack/providers/inline/agents/meta_reference/responses/openai_responses.py
+=======
+@dataclass
+class _BackgroundWorkItem:
+    """Typed queue item that pairs business kwargs with the originating request context."""
+
+    request_context: RequestContext
+    kwargs: dict = field(default_factory=dict)
+
+
+>>>>>>> 9b86ce80 (fix: provider_data_var context leak (#5227)):src/llama_stack/providers/inline/agents/builtin/responses/openai_responses.py
 class OpenAIResponsePreviousResponseWithInputItems(BaseModel):
     input_items: ListOpenAIResponseInputItem
     response: OpenAIResponseObject
@@ -131,7 +152,11 @@ class OpenAIResponsesImpl:
     async def _ensure_workers_started(self) -> None:
         """Start background workers in the current event loop if not already running."""
         for _ in range(BACKGROUND_NUM_WORKERS - len(self._background_worker_tasks)):
+<<<<<<< HEAD:src/llama_stack/providers/inline/agents/meta_reference/responses/openai_responses.py
             task = asyncio.create_task(self._background_worker())
+=======
+            task = create_detached_background_task(self._background_worker())
+>>>>>>> 9b86ce80 (fix: provider_data_var context leak (#5227)):src/llama_stack/providers/inline/agents/builtin/responses/openai_responses.py
             self._background_worker_tasks.add(task)
             task.add_done_callback(self._background_worker_tasks.discard)
 
@@ -144,6 +169,7 @@ class OpenAIResponsesImpl:
     async def _background_worker(self) -> None:
         """Worker coroutine that pulls items from the queue and processes them."""
         while True:
+<<<<<<< HEAD:src/llama_stack/providers/inline/agents/meta_reference/responses/openai_responses.py
             kwargs = await self._background_queue.get()
             try:
                 await asyncio.wait_for(
@@ -155,6 +181,10 @@ class OpenAIResponsesImpl:
                 logger.exception(
                     f"Background response {response_id} timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s"
                 )
+=======
+            item = await self._background_queue.get()
+            with activate_request_context(item.request_context):
+>>>>>>> 9b86ce80 (fix: provider_data_var context leak (#5227)):src/llama_stack/providers/inline/agents/builtin/responses/openai_responses.py
                 try:
                     existing = await self.responses_store.get_response_object(response_id)
                     existing.status = "failed"
@@ -812,6 +842,7 @@ class OpenAIResponsesImpl:
         # Enqueue work item for background workers. Raises QueueFull if at capacity.
         try:
             self._background_queue.put_nowait(
+<<<<<<< HEAD:src/llama_stack/providers/inline/agents/meta_reference/responses/openai_responses.py
                 dict(
                     response_id=response_id,
                     input=input,
@@ -839,6 +870,38 @@ class OpenAIResponsesImpl:
                     truncation=truncation,
                     presence_penalty=presence_penalty,
                     extra_body=extra_body,
+=======
+                _BackgroundWorkItem(
+                    request_context=capture_request_context(),
+                    kwargs=dict(
+                        response_id=response_id,
+                        input=input,
+                        model=model,
+                        prompt=prompt,
+                        instructions=instructions,
+                        previous_response_id=previous_response_id,
+                        conversation=conversation,
+                        store=store,
+                        temperature=temperature,
+                        frequency_penalty=frequency_penalty,
+                        text=text,
+                        tool_choice=tool_choice,
+                        tools=tools,
+                        include=include,
+                        max_infer_iters=max_infer_iters,
+                        guardrail_ids=guardrail_ids,
+                        parallel_tool_calls=parallel_tool_calls,
+                        max_tool_calls=max_tool_calls,
+                        reasoning=reasoning,
+                        max_output_tokens=max_output_tokens,
+                        safety_identifier=safety_identifier,
+                        service_tier=service_tier,
+                        metadata=metadata,
+                        truncation=truncation,
+                        presence_penalty=presence_penalty,
+                        extra_body=extra_body,
+                    ),
+>>>>>>> 9b86ce80 (fix: provider_data_var context leak (#5227)):src/llama_stack/providers/inline/agents/builtin/responses/openai_responses.py
                 )
             )
         except asyncio.QueueFull:

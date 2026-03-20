@@ -12,6 +12,15 @@ from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.storage.datatypes import InferenceStoreReference, StorageBackendType
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import _SQLSTORE_BACKENDS, sqlstore_impl
+<<<<<<< HEAD
+=======
+from llama_stack.core.task import (
+    RequestContext,
+    activate_request_context,
+    capture_request_context,
+    create_detached_background_task,
+)
+>>>>>>> 9b86ce80 (fix: provider_data_var context leak (#5227))
 from llama_stack.log import get_logger
 from llama_stack_api import (
     ListOpenAIChatCompletionResponse,
@@ -25,6 +34,15 @@ from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
 logger = get_logger(name=__name__, category="inference")
 
 
+<<<<<<< HEAD
+=======
+class _WriteItem(NamedTuple):
+    completion: OpenAIChatCompletion
+    messages: list[OpenAIMessageParam]
+    request_context: RequestContext
+
+
+>>>>>>> 9b86ce80 (fix: provider_data_var context leak (#5227))
 class InferenceStore:
     def __init__(
         self,
@@ -100,7 +118,11 @@ class InferenceStore:
         if not self._worker_tasks:
             loop = asyncio.get_running_loop()
             for _ in range(self._num_writers):
+<<<<<<< HEAD
                 task = loop.create_task(self._worker_loop())
+=======
+                task = create_detached_background_task(self._worker_loop())
+>>>>>>> 9b86ce80 (fix: provider_data_var context leak (#5227))
                 self._worker_tasks.append(task)
 
     async def store_chat_completion(
@@ -110,6 +132,10 @@ class InferenceStore:
             await self._ensure_workers_started()
             if self._queue is None:
                 raise ValueError("Inference store is not initialized")
+<<<<<<< HEAD
+=======
+            item = _WriteItem(chat_completion, input_messages, capture_request_context())
+>>>>>>> 9b86ce80 (fix: provider_data_var context leak (#5227))
             try:
                 self._queue.put_nowait((chat_completion, input_messages))
             except asyncio.QueueFull:
@@ -129,7 +155,12 @@ class InferenceStore:
                 break
             chat_completion, input_messages = item
             try:
+<<<<<<< HEAD
                 await self._write_chat_completion(chat_completion, input_messages)
+=======
+                with activate_request_context(item.request_context):
+                    await self._write_chat_completion(item.completion, item.messages)
+>>>>>>> 9b86ce80 (fix: provider_data_var context leak (#5227))
             except Exception as e:  # noqa: BLE001
                 logger.error(f"Error writing chat completion: {e}")
             finally:
