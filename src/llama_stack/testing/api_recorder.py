@@ -191,7 +191,9 @@ def normalize_inference_request(method: str, url: str, headers: dict[str, Any], 
 
 def normalize_tool_request(provider_name: str, tool_name: str, kwargs: dict[str, Any]) -> str:
     """Create a normalized hash of the tool request for consistent matching."""
+    test_id = get_test_context()
     normalized = {
+        "test_id": test_id,
         "provider": provider_name,
         "tool_name": tool_name,
         "kwargs": kwargs,
