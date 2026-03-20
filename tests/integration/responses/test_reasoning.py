@@ -67,12 +67,12 @@ def test_reasoning_basic_streaming(client_with_models, text_model_id):
     assert len(reasoning_text_done_events[-1].text) > 0, "Reasoning text should not be empty"
 
 
-def test_reasoning_non_streaming(client_with_models, text_model_id):
+def test_reasoning_non_streaming(openai_client, client_with_models, text_model_id):
     """Test that ReasoningItem appears in non-streaming response output."""
 
     skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
 
-    response = client_with_models.responses.create(
+    response = openai_client.responses.create(
         model=text_model_id,
         input="What is 2 + 2? Think step by step.",
         stream=False,
@@ -91,7 +91,7 @@ def test_reasoning_non_streaming(client_with_models, text_model_id):
     assert len(reasoning_item.content[0].text) > 0, "Reasoning content text should not be empty"
 
 
-def test_reasoning_multi_turn_passthrough(client_with_models, text_model_id):
+def test_reasoning_multi_turn_passthrough(openai_client, client_with_models, text_model_id):
     """Test that reasoning output survives a round-trip when passed back as input.
 
     Turn 1: send a prompt, assert ReasoningItem in output.
@@ -105,7 +105,7 @@ def test_reasoning_multi_turn_passthrough(client_with_models, text_model_id):
     input_messages = [
         {"role": "user", "content": "What is 2 + 2? Think step by step."},
     ]
-    resp1 = client_with_models.responses.create(
+    resp1 = openai_client.responses.create(
         model=text_model_id,
         input=input_messages,
         stream=False,
@@ -119,7 +119,7 @@ def test_reasoning_multi_turn_passthrough(client_with_models, text_model_id):
     turn2_input = list(input_messages) + list(resp1.output)
     turn2_input.append({"role": "user", "content": "Now multiply that result by 3."})
 
-    resp2 = client_with_models.responses.create(
+    resp2 = openai_client.responses.create(
         model=text_model_id,
         input=turn2_input,
         stream=False,
