@@ -184,7 +184,7 @@ from openai import OpenAI
 client = OpenAI(base_url="http://localhost:8321/v1", api_key="none")
 
 response = client.responses.create(
-    model="ollama/llama3.2:3b", input="Write a haiku about open source."
+    model="ollama/gpt-oss:20b", input="Write a haiku about open source."
 )
 print(response.output_text)
 ```
