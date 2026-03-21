@@ -171,7 +171,10 @@ Whether you're prototyping locally or deploying at scale, Llama Stack makes it e
 ```bash
 # Install and start a local server
 pip install llama-stack
-llama-stack run --template local-mac
+ollama serve 
+ollama run gpt-oss:20b
+export OLLAMA_URL=http://localhost:11434/v1
+llama-stack run starter
 ```
 
 ```python
