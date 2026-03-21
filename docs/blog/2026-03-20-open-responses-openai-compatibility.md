@@ -264,6 +264,6 @@ Ready to get started?
 - **🚀 [Getting Started](https://llamastack.github.io/docs/getting_started/)**: Quick setup tutorials
 - **🔧 [OpenAI Implementation Guide](https://llamastack.github.io/docs/providers/openai)**: Detailed compatibility examples
 - **🔌 [MCP Integration](https://llamastack.github.io/docs/building_applications/)**: Tool ecosystem and connector guides
-- **💬 [Community](https://github.com/meta-llama/llama-stack)**: Join discussions and contribute
+- **💬 [Community](https://github.com/llamastack/llama-stack)**: Join discussions and contribute
 
 The future of AI infrastructure is open, interoperable, and under your control. Welcome to Llama Stack.
