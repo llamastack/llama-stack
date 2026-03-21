@@ -193,7 +193,7 @@ print(response.output_text)
 ```bash
 # Deploy with your preferred infrastructure
 # Docker, Kubernetes, or bare metal — your choice
-docker run -p 8321:8321 llamastack/llama-stack:latest
+docker run -p 8321:8321 llamastack/distribution-starter:latest
 ```
 
 ## Framework Ecosystem Compatibility
