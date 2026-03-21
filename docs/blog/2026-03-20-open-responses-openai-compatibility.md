@@ -6,7 +6,7 @@ tags: [openai-compatibility, open-responses, enterprise, mcp, connectors]
 date: 2026-03-20
 ---
 
-We're excited to share that Llama Stack has achieved **100% compliance with the Open Responses specification** and been officially recognized as part of the [Open Responses community](https://github.com/openresponses/openresponses/pull/29). This milestone represents more than just compatibility—it's about bringing enterprise-grade AI capabilities to your own infrastructure with the familiarity of OpenAI APIs.
+We're excited to share that Llama Stack has achieved **100% compliance with the Open Responses specification** and been officially recognized as part of the [Open Responses community](https://github.com/openresponses/openresponses/pull/29). This milestone represents more than just compatibility: it's about bringing enterprise-grade AI capabilities to your own infrastructure with the familiarity of OpenAI APIs.
 
 With comprehensive support for Files, Vector Stores, Conversations, Prompts, Chat Completions, the full Responses API, plus powerful extensions like MCP tool integration and Connectors, Llama Stack offers something unique in the AI infrastructure landscape: a SaaS-like experience that runs entirely on your terms.
 
