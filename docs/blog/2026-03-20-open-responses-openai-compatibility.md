@@ -141,7 +141,7 @@ Connectors provide a configuration-driven approach to integrating external servi
 ## The Value Proposition: SaaS Experience, Your Infrastructure
 
 ### **Data Sovereignty & Security**
-In regulated industries—finance, healthcare, government—sending sensitive documents to external APIs isn't an option. Llama Stack runs entirely on your infrastructure:
+For regulated industries like finance, healthcare, and government, sending sensitive documents to external APIs isn't an option. Llama Stack solves this by running entirely on your infrastructure:
 
 - **Documents never leave your environment**: RAG pipelines, vector storage, and model inference all happen locally
 - **Compliance-ready**: Meet HIPAA, SOC 2, GDPR, and other regulatory requirements
