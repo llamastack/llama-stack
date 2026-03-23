@@ -29,6 +29,10 @@ Upload, manage, and process documents with the same interface you'd use with Ope
 
 ```python
 # Works identically with OpenAI or Llama Stack clients
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:8321/v1/", api_key="none")
+
 file = client.files.create(file=open("document.pdf", "rb"), purpose="assistants")
 
 # List and manage files
@@ -83,7 +87,7 @@ completion = client.chat.completions.create(
 
 # Advanced responses with tool orchestration (e.g., with Fireworks)
 response = client.responses.create(
-    model="meta-llama/Llama-3.2-3B-Instruct",
+    model="ollama/gpt-oss:20b",
     input="What documents mention our pricing strategy?",
     tools=[{"type": "file_search"}],
 )
@@ -101,7 +105,7 @@ prompt = client.prompts.create(
 
 # Reference prompts in responses — compatible with OpenAI's pattern
 response = client.responses.create(
-    model="ollama/llama3.2:3b",
+    model="ollama/gpt-oss:20b",
     input=[{"role": "user", "content": "Review our Q1 report"}],
     prompt={
         "id": prompt.prompt_id,
@@ -121,7 +125,7 @@ Leverage the Model Context Protocol to connect to any MCP server and dynamically
 ```python
 # Connect to MCP servers for dynamic tool discovery
 response = client.responses.create(
-    model="ollama/llama3.2:3b",
+    model="ollama/gpt-oss:20b",
     input="What parks are in Rhode Island, and are there upcoming events?",
     tools=[
         {
@@ -159,7 +163,7 @@ Break free from vendor-specific models:
 
 ```python
 # Same API, different models — swap without code changes
-for model in ["ollama/llama3.2:3b", "ollama/llama3.3:70b", "your-org/custom-model"]:
+for model in ["ollama/gpt-oss:20b", "ollama/llama3.2:3b", "your-org/custom-model"]:
     response = client.chat.completions.create(model=model, messages=messages)
 ```
 
@@ -173,12 +177,14 @@ Whether you're prototyping locally or deploying at scale, Llama Stack makes it e
 uv venv --python 3.12 --seed
 source .venv/bin/activate
 uv pip install -U llama-stack
+uv run llama stack list-deps starter | xargs -L1 uv pip install
 
 # Start Ollama and pull a model
 ollama serve
 ollama run gpt-oss:20b
 
 # Launch Llama Stack with the starter distribution
+
 OLLAMA_URL=http://localhost:11434/v1 uv run llama stack run starter
 ```
 
