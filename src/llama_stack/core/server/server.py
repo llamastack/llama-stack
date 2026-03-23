@@ -6,30 +6,21 @@
 
 import asyncio
 import concurrent.futures
-import functools
-import inspect
-import json
-import logging  # allow-direct-logging
 import os
 import sys
 import traceback
 import warnings
-from collections.abc import Callable
 from contextlib import asynccontextmanager
 from importlib.metadata import version as parse_version
 from pathlib import Path
-from typing import Annotated, Any, get_origin
 
 import httpx
-import rich.pretty
 import yaml
-from fastapi import Body, FastAPI, HTTPException, Request, Response
-from fastapi import Path as FastapiPath
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse
 from openai import BadRequestError
-from pydantic import BaseModel
 
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import (
@@ -39,14 +30,11 @@ from llama_stack.core.datatypes import (
 )
 from llama_stack.core.distribution import builtin_automatically_routed_apis
 from llama_stack.core.exceptions import translate_exception
-from llama_stack.core.external import load_external_apis
 from llama_stack.core.request_headers import (
-    PROVIDER_DATA_VAR,
     request_provider_data_context,
     user_from_scope,
 )
 from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
-from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
     cast_distro_name_to_string,
@@ -54,9 +42,8 @@ from llama_stack.core.stack import (
 )
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
-from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger
-from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
+from llama_stack_api import Api, ConflictError, ResourceNotFoundError
 from llama_stack_api.common.errors import OpenAIErrorResponse
 
 from .auth import AuthenticationMiddleware, RouteAuthorizationMiddleware
@@ -75,15 +62,6 @@ def warn_with_traceback(message, category, filename, lineno, file=None, line=Non
 
 if os.environ.get("LLAMA_STACK_TRACE_WARNINGS"):
     warnings.showwarning = warn_with_traceback
-
-
-def create_sse_event(data: Any) -> str:
-    if isinstance(data, BaseModel):
-        data = data.model_dump_json()
-    else:
-        data = json.dumps(data)
-
-    return f"data: {data}\n\n"
 
 
 async def global_exception_handler(request: Request, exc: Exception):
@@ -130,123 +108,6 @@ async def lifespan(app: StackApp):
     yield
     logger.info("Shutting down")
     await app.stack.shutdown()
-
-
-def is_streaming_request(func_name: str, request: Request, **kwargs):
-    # TODO: pass the api method and punt it to the Protocol definition directly
-    # If there's a stream parameter at top level, use it
-    if "stream" in kwargs:
-        return kwargs["stream"]
-
-    # If there's a stream parameter inside a "params" parameter, e.g. openai_chat_completion() use it
-    if "params" in kwargs:
-        params = kwargs["params"]
-        if hasattr(params, "stream"):
-            return params.stream
-
-    return False
-
-
-async def maybe_await(value):
-    if inspect.iscoroutine(value):
-        return await value
-    return value
-
-
-async def sse_generator(event_gen_coroutine):
-    event_gen = None
-    try:
-        event_gen = await event_gen_coroutine
-        async for item in event_gen:
-            yield create_sse_event(item)
-    except asyncio.CancelledError:
-        logger.info("Generator cancelled")
-        if event_gen:
-            await event_gen.aclose()
-    except Exception as e:
-        logger.exception("Error in sse_generator")
-        yield create_sse_event(OpenAIErrorResponse.from_message(translate_exception(e)).to_dict())
-
-
-async def log_request_pre_validation(request: Request):
-    if request.method in ("POST", "PUT", "PATCH"):
-        try:
-            body_bytes = await request.body()
-            if body_bytes:
-                try:
-                    parsed_body = json.loads(body_bytes.decode())
-                    log_output = rich.pretty.pretty_repr(parsed_body)
-                except (json.JSONDecodeError, UnicodeDecodeError):
-                    log_output = repr(body_bytes)
-                logger.debug(f"Incoming raw request body for {request.method} {request.url.path}:\n{log_output}")
-            else:
-                logger.debug(f"Incoming {request.method} {request.url.path} request with empty body.")
-        except Exception as e:
-            logger.warning(f"Could not read or log request body for {request.method} {request.url.path}: {e}")
-
-
-def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
-    @functools.wraps(func)
-    async def route_handler(request: Request, **kwargs):
-        await log_request_pre_validation(request)
-
-        is_streaming = is_streaming_request(func.__name__, request, **kwargs)
-
-        try:
-            if is_streaming:
-                # Preserve context vars across async generator boundaries
-                context_vars = [PROVIDER_DATA_VAR]
-                if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"):
-                    from llama_stack.core.testing_context import TEST_CONTEXT
-
-                    context_vars.append(TEST_CONTEXT)
-                gen = preserve_contexts_async_generator(sse_generator(func(**kwargs)), context_vars)
-                return StreamingResponse(gen, media_type="text/event-stream")
-            else:
-                value = func(**kwargs)
-                result = await maybe_await(value)
-                if isinstance(result, PaginatedResponse) and result.url is None:
-                    result.url = route
-
-                if method.upper() == "DELETE" and result is None:
-                    return Response(status_code=httpx.codes.NO_CONTENT)
-
-                return result
-        except Exception as e:
-            if logger.isEnabledFor(logging.INFO):
-                logger.exception(f"Error executing endpoint {route=} {method=}")
-            else:
-                logger.error(f"Error executing endpoint {route=} {method=}: {str(e)}")
-            raise translate_exception(e) from e
-
-    sig = inspect.signature(func)
-
-    new_params = [inspect.Parameter("request", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=Request)]
-    new_params.extend(sig.parameters.values())
-
-    path_params = extract_path_params(route)
-    if method == "post":
-        # Annotate parameters that are in the path with Path(...) and others with Body(...),
-        # but preserve existing File() and Form() annotations for multipart form data
-        new_params = (
-            [new_params[0]]
-            + [
-                (
-                    param.replace(annotation=Annotated[param.annotation, FastapiPath(..., title=param.name)])
-                    if param.name in path_params
-                    else (
-                        param  # Keep original annotation if it's already an Annotated type
-                        if get_origin(param.annotation) is Annotated
-                        else param.replace(annotation=Annotated[param.annotation, Body(..., embed=True)])
-                    )
-                )
-                for param in new_params[1:]
-            ]
-        )
-
-    route_handler.__signature__ = sig.replace(parameters=new_params)
-
-    return route_handler
 
 
 class ClientVersionMiddleware:
@@ -414,10 +275,6 @@ def create_app() -> StackApp:
         if cors_config:
             app.add_middleware(CORSMiddleware, **cors_config.model_dump())
 
-    # Load external APIs if configured
-    external_apis = load_external_apis(config)
-    all_routes = get_all_api_routes(external_apis)
-
     if config.apis:
         apis_to_serve = set(config.apis)
     else:
@@ -438,41 +295,11 @@ def create_app() -> StackApp:
 
     for api_str in apis_to_serve:
         api = Api(api_str)
-
-        # Try to discover and use a router factory from the API package
         impl = impls[api]
         router = build_fastapi_router(api, impl)
         if router:
             app.include_router(router)
-            logger.debug(f"Registered FastAPIrouter for {api} API")
-            continue
-
-        # Fall back to old webmethod-based route discovery until the migration is complete
-        impl = impls[api]
-
-        routes = all_routes[api]
-        for route, _ in routes:
-            if not hasattr(impl, route.name):
-                # ideally this should be a typing violation already
-                raise ValueError(f"Could not find method {route.name} on {impl}!")
-
-            impl_method = getattr(impl, route.name)
-            # Filter out HEAD method since it's automatically handled by FastAPI for GET routes
-            available_methods = [m for m in route.methods if m != "HEAD"]
-            if not available_methods:
-                raise ValueError(f"No methods found for {route.name} on {impl}")
-            method = available_methods[0]
-            logger.debug(f"{method} {route.path}")
-
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._fields")
-                getattr(app, method.lower())(route.path, response_model=None)(
-                    create_dynamic_typed_route(
-                        impl_method,
-                        method.lower(),
-                        route.path,
-                    )
-                )
+            logger.debug(f"Registered FastAPI router for {api} API")
 
     logger.debug(f"serving APIs: {apis_to_serve}")
 
@@ -496,14 +323,6 @@ def _log_run_config(run_config: StackConfig):
     safe_config = redact_sensitive_fields(run_config.model_dump(mode="json"))
     clean_config = remove_disabled_providers(safe_config)
     logger.info(yaml.dump(clean_config, indent=2))
-
-
-def extract_path_params(route: str) -> list[str]:
-    segments = route.split("/")
-    params = [seg[1:-1] for seg in segments if seg.startswith("{") and seg.endswith("}")]
-    # to handle path params like {param:path}
-    params = [param.split(":")[0] for param in params]
-    return params
 
 
 def remove_disabled_providers(obj):
