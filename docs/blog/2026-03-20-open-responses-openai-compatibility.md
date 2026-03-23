@@ -169,12 +169,17 @@ Whether you're prototyping locally or deploying at scale, Llama Stack makes it e
 
 ### **Local Development**
 ```bash
-# Install and start a local server
-pip install llama-stack
-ollama serve 
+# Set up your environment
+uv venv --python 3.12 --seed
+source .venv/bin/activate
+uv pip install -U llama-stack
+
+# Start Ollama and pull a model
+ollama serve
 ollama run gpt-oss:20b
-export OLLAMA_URL=http://localhost:11434/v1
-llama-stack run starter
+
+# Launch Llama Stack with the starter distribution
+OLLAMA_URL=http://localhost:11434/v1 uv run llama stack run starter
 ```
 
 ```python
