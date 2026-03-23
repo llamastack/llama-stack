@@ -26,6 +26,7 @@ from llama_stack_api import (
     GetShieldRequest,
     ListBenchmarksRequest,
     ListToolDefsResponse,
+    ListToolsRequest,
     Model,
     ModelNotFoundError,
     ModelType,
@@ -797,6 +798,6 @@ async def test_tool_groups_routing_table_exception_handling(cached_disk_dist_reg
         mcp_endpoint=URL(uri="http://localhost:8479/foo/bar"),
     )
 
-    tools = await table.list_tools(toolgroup_id="test-toolgroup-exceptions")
+    tools = await table.list_tools(ListToolsRequest(toolgroup_id="test-toolgroup-exceptions"))
 
     assert len(tools.data) == 0
