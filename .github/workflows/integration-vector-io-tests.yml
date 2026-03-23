@@ -186,7 +186,7 @@ jobs:
           ELASTICSEARCH_URL: ${{ matrix.vector-io-provider == 'remote::elasticsearch' && 'http://localhost:9200' || '' }}
         run: |
           uv run --no-sync \
-            pytest -sv --stack-config="files=inline::localfs,inference=inline::sentence-transformers,vector_io=${{ matrix.vector-io-provider }}" \
+            pytest -sv --stack-config="files=inline::localfs,inference=inline::sentence-transformers?trust_remote_code=true,vector_io=${{ matrix.vector-io-provider }}" \
             tests/integration/vector_io
 
       - name: Check Storage and Memory Available After Tests
@@ -217,7 +217,7 @@ jobs:
 
       - name: Upload all logs to artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: vector-io-logs-${{ github.run_id }}-${{ github.run_attempt }}-${{ env.SANITIZED_PROVIDER }}-${{ matrix.python-version }}
           path: |
