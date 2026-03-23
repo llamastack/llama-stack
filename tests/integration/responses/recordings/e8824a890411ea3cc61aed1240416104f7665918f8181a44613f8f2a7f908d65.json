@@ -1,0 +1,352 @@
+{
+  "test_id": "tests/integration/responses/test_structured_output.py::test_json_schema_float_types[client_with_models-txt=bedrock/openai.gpt-oss-20b]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Generate product info for a laptop priced at $999.99"
+        }
+      ],
+      "response_format": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "ProductPrice",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "product_name": {
+                "type": "string"
+              },
+              "price": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "product_name",
+              "price"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      }
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-e8824a890411",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "KaPwDSDNyYdpV7wfCd1ICMQv2hUANz6wFYxrbhCutntJqoDrNKOieMDgTcAqlLfbQGEB34Q8l8RBELp6ks7xcmhrXmqiiIJ8gt00HgasrtdEsAWT0pL"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-e8824a890411",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "We need to generate product info for a laptop priced at $999.99. The user didn't specify much else. So we should produce a marketing-friendly product description that includes key specs, features, design, performance, battery life, display, connectivity, target audience, etc. Format can be like:\n\n- Product name\n- Headline\n- Price\n- Key specs table\n- Feature highlights\n"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "I9Sn0RSI2gQ715dHIEphFQNbr2ws44Iv6zh7D3iKLP6juBHGQwWEN9EK2S8yocSZNrBcnBxxwgYBrSI3aYHqNFTahVFVVKj3Fk6FJvuypXy1JSBUTTwmXWzZv8v"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-e8824a890411",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "- Detailed description\n- Why choose this laptop\n- Specs\n\nAlso maybe an image placeholder. They might want bullet points. Could request dynamic formatting.\n\nWe need to keep the price $999.99. Should provide a realistic but generic set"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "RR9rxJzYHQxssXoT2I23EOvzuwykceWOOgN5I7GyHjyOhSnDkdnf3Z"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-e8824a890411",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " of specs: 15.6\" Full HD display, Intel Core i7-1250U, 8GB RAM, 512GB NVMe SSD, integrated Intel Iris Xe graphics, backlit keyboard, 60Whr battery, Wi-Fi 6, Bluetooth "
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "AhXyLRXT0JJkAqBB3oywAOKdZyGPudaU9NVjgyCInuJMasMwG11xSvXlwyyGNxGI3NATdB188rbTl0XQ"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-e8824a890411",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "5.2, USB-C, USB-A, HDMI, 2-year warranty. Or similar.\n\nTry to make it appealing: new ultrabook class, portable, developer-friendly. Let's do brand name \"S"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "ZecPsHuqMu8H8GY10rc17iiVB88HgmhM6vhFVhHp2REh"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-e8824a890411",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "ageTech Pro\". Provide bullet points.\n\nWe can provide a product content with sections: Overview, Features, Specs, Availability.\n\nAlso mention shipping details maybe. Also mention warranty.\n\nAlso mention alternative: might mention sleek"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "iMvhSVplkO0aDvLfDlqOTsgPYNUtb5g075L6WGxTGlHaxmWa2TYBzXfJsP4B1RFCDopJosH2kIOrwuCpp758C2lvrwT5sPeu"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-e8824a890411",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " design, aluminum chassis, 360-degree hinge, OS pre-installed: Windows 11 Home. Also mention optional upgrades: 16GB RAM.\n\nTime to produce final answer."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "HrCzXqmlu93KC2NpvcxycW76JRHZrdco4aivbWq3hYGPe8Me"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-e8824a890411",
+          "choices": [
+            {
+              "delta": {
+                "content": "**S{",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "mgIKsswjYNFagDSufVQZOYMRieDrxZFLHxIzEEaWfG3amFMmGI3Bc4HaBBri1dbI4goVnAQGzKQ4ULApyypbzrRYkCmU7V4KSRuQL1bWW0Ae7hv5WYvSpG"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-e8824a890411",
+          "choices": [
+            {
+              "delta": {
+                "content": "  \"product_name\": \"SageTech Pro 15 \u2013 Ultra\u2011Portable Laptop\",  \"price\": 999.99 }",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "1HCWvoZapMSvpigAmogkWNdaLXnbu52pdXw77RFhpM7wlqV2aYIc4l6RBYzhaubSeHzhw2uKSUATIH0vCAki"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-e8824a890411",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "ojpmXpXC1B1NSdsm9gx3VUdRUMPSWtfYdNfGPxQgXbf62Udj5TAZFlNOaXeFKfJYUYl"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-e8824a890411",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 344,
+            "prompt_tokens": 77,
+            "total_tokens": 421,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 32
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

@@ -1,0 +1,273 @@
+{
+  "test_id": "tests/integration/responses/test_openai_responses.py::TestOpenAIResponses::test_openai_response_with_service_tier[txt=bedrock/openai.gpt-oss-20b-priority]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the speed of light?"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "service_tier": "priority"
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-5858b8ca7bef",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "HxZ8vjEgAmuxS2VdaUfK90aufEOlweZMyR02nniJ0YTN"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "priority",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-5858b8ca7bef",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "The user question: \"What is the speed of light?\" It's a straightforward physics question. They likely want the known value: approximately 299,792,458 meters per second in vacuum. Consider providing context: c =3.00e8 m/s, etc. Also mention units, mention that"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "ZOTK21tbB1WAqMxie2O4wTJpMQWi3qvc6XV7zGwr0Jw8o5eLkjrStMBWMPmWSk4Dho92L4qZGd8TJ0iOhA8C5R4JHu6YwvIoUVlnUb3InxzycBtgjq4yPJpvd"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "priority",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-5858b8ca7bef",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " it is invariant in vacuum, etc. Provide possible use cases. Could mention also speed of light in other media. But the direct answer: 299,792,458 m/s. Let's answer succinctly."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "uTfnymAhKilBO7SNGF0Bx6wS8fhQMws4jrfIOyalGhTclmyCb12o8hfC6vwwK"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "priority",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-5858b8ca7bef",
+          "choices": [
+            {
+              "delta": {
+                "content": "The speed",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "DS7D3Ck8wK2aZkDeXXlpdLF0wt0FC3cPJdN1Qwuhm64uVKum4WP6fYlTzrDdwoPUOpaNfzFjM93GCTS7vq"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "priority",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-5858b8ca7bef",
+          "choices": [
+            {
+              "delta": {
+                "content": " of light in a vacuum is a fundamental constant given by\n\n\\[\nc \\;=\\; 299\\,792\\,458 \\text{ metres per second } \\;\\;(\u22483.00\\times10^{8}\\,\\text{m/s}).\n\\]\n\nThis value is exactly defined by",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "bhxwdYZqIMpHcFhFM4TR7UKOrrBx3yDU3p9DiqgpNLEE83F9A697OvHn6xOOkLFcOomULfHt7WGYbQFVuqo9pwJ6K2w"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "priority",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-5858b8ca7bef",
+          "choices": [
+            {
+              "delta": {
+                "content": " the SI, and it is the same in all inertial reference frames (no matter the observer\u2019s motion). In other media (air, water, glass, etc.) the light slows down by the medium\u2019s",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "5HYNWeihqhVIfyqG3q27NHiSKqIQclJeUSjfvowRM4e9EIgRkB0PanJ1VKhGdiyj"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "priority",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-5858b8ca7bef",
+          "choices": [
+            {
+              "delta": {
+                "content": " refractive index, but in free space the speed is the constant shown above.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "cxYvQwHKYF3kc2xXeyUkU3JQUNJ9dpqim85VFE5wrJbUfXVlH7u5FyedrOnoX7HcbjtL5V9Sf7zugsxPk99RMt8yqxL5PQa2M"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "priority",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-5858b8ca7bef",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "ipX6fY7EPMShxQvQNR8FbYY98140S6p5nvD"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "priority",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-5858b8ca7bef",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "priority",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 232,
+            "prompt_tokens": 72,
+            "total_tokens": 304,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 32
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

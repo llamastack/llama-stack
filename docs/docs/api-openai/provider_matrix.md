@@ -22,7 +22,7 @@ inference provider, based on integration test results.
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
 | azure | 101 | 101 | 0 | 86% |
-| bedrock | 25 | 25 | 0 | 21% |
+| bedrock | 103 | 103 | 0 | 87% |
 | openai | 118 | 118 | 0 | 100% |
 | vllm | 1 | 1 | 0 | 1% |
 | watsonx | 56 | 56 | 0 | 48% |
@@ -69,13 +69,13 @@ Models, endpoints, and versions used during test recordings.
 
 | Feature | azure | bedrock | openai | vllm | watsonx |
 | --- | --- | --- | --- | --- | --- |
-| file search filter by category | ✅ | — | ✅ | — | ⏭️ |
-| file search filter by date range | ✅ | — | ✅ | — | ⏭️ |
-| file search filter by region | ✅ | — | ✅ | — | ⏭️ |
-| file search filter compound and | ✅ | — | ✅ | — | ⏭️ |
-| file search filter compound or | ✅ | — | ✅ | — | ⏭️ |
-| file search streaming events | ✅ | — | ✅ | — | ⏭️ |
-| text format | ✅ | — | ✅ | — | ✅ |
+| file search filter by category | ✅ | ✅ | ✅ | — | ⏭️ |
+| file search filter by date range | ✅ | ✅ | ✅ | — | ⏭️ |
+| file search filter by region | ✅ | ✅ | ✅ | — | ⏭️ |
+| file search filter compound and | ✅ | ✅ | ✅ | — | ⏭️ |
+| file search filter compound or | ✅ | ✅ | ✅ | — | ⏭️ |
+| file search streaming events | ✅ | ✅ | ✅ | — | ⏭️ |
+| text format | ✅ | ✅ | ✅ | — | ✅ |
 
 ## Mcp Authentication
 
@@ -88,49 +88,49 @@ Models, endpoints, and versions used during test recordings.
 
 | Feature | azure | bedrock | openai | vllm | watsonx |
 | --- | --- | --- | --- | --- | --- |
-| background false is synchronous | ✅ | — | ✅ | — | ✅ |
-| background returns queued | ✅ | — | ✅ | — | ✅ |
-| incomplete details length | ✅ | — | ✅ | — | ✅ |
-| incomplete details length streaming | ✅ | — | ✅ | — | ✅ |
-| incomplete details max iterations exceeded | ✅ | — | ✅ | — | ✅ |
-| incomplete details max iterations exceeded streaming | ✅ | — | ✅ | — | ✅ |
-| incomplete details null when completed | ✅ | — | ✅ | — | ✅ |
-| reasoning effort | ⏭️ | — | ✅ | — | ⏭️ |
-| reasoning effort streaming | ⏭️ | — | ✅ | — | ⏭️ |
-| streaming includes usage | ✅ | — | ✅ | — | ✅ |
-| streaming invalid base64 image failure code is spec compliant | ✅ | — | ✅ | — | ⏭️ |
-| with max output tokens | ✅ | — | ✅ | — | ⏭️ |
-| with parallel tool calls and previous response | ✅ | — | ✅ | — | ✅ |
-| with parallel tool calls disabled | ✅ | — | ✅ | — | ⏭️ |
-| with parallel tool calls disabled streaming | ✅ | — | ✅ | — | ⏭️ |
-| with parallel tool calls enabled | ✅ | — | ✅ | — | ⏭️ |
-| with prompt cache key | ✅ | — | ✅ | — | ✅ |
-| with prompt cache key and previous response | ✅ | — | ✅ | — | ✅ |
-| with prompt cache key streaming | ✅ | — | ✅ | — | ✅ |
-| with safety identifier | ✅ | — | ✅ | — | ✅ |
-| with safety identifier and previous response | ✅ | — | ✅ | — | ✅ |
-| with safety identifier streaming | ✅ | — | ✅ | — | ✅ |
-| with service tier | ⏭️ | — | ✅ | — | ⏭️ |
-| with service tier and previous response | ⏭️ | — | ✅ | — | ⏭️ |
-| with service tier auto | ⏭️ | — | ✅ | — | ⏭️ |
-| with service tier auto and previous response | ⏭️ | — | ✅ | — | ⏭️ |
-| with service tier auto streaming | ⏭️ | — | ✅ | — | ⏭️ |
-| with service tier flex | ⏭️ | — | ✅ | — | ⏭️ |
-| with service tier flex streaming | ⏭️ | — | ✅ | — | ⏭️ |
-| with service tier streaming | ⏭️ | — | ✅ | — | ⏭️ |
-| with small max output tokens | ✅ | — | ✅ | — | ⏭️ |
-| with stream options and previous response | ✅ | — | ✅ | — | ✅ |
-| with stream options includes usage | ✅ | — | ✅ | — | ✅ |
-| with stream options non streaming | ✅ | — | ✅ | — | ✅ |
-| with top logprobs | ✅ | — | ✅ | — | ✅ |
-| with top logprobs and previous response | ✅ | — | ✅ | — | ✅ |
-| with top logprobs streaming | ✅ | — | ✅ | — | ✅ |
-| with top p | ✅ | — | ✅ | — | ✅ |
-| with top p and previous response | ✅ | — | ✅ | — | ✅ |
-| with top p streaming | ✅ | — | ✅ | — | ✅ |
-| with truncation and previous response | ✅ | — | ✅ | — | ✅ |
-| with truncation disabled | ✅ | — | ✅ | — | ✅ |
-| with truncation disabled streaming | ✅ | — | ✅ | — | ✅ |
+| background false is synchronous | ✅ | ✅ | ✅ | — | ✅ |
+| background returns queued | ✅ | ✅ | ✅ | — | ✅ |
+| incomplete details length | ✅ | ✅ | ✅ | — | ✅ |
+| incomplete details length streaming | ✅ | ✅ | ✅ | — | ✅ |
+| incomplete details max iterations exceeded | ✅ | ✅ | ✅ | — | ✅ |
+| incomplete details max iterations exceeded streaming | ✅ | ✅ | ✅ | — | ✅ |
+| incomplete details null when completed | ✅ | ✅ | ✅ | — | ✅ |
+| reasoning effort | ⏭️ | ⏭️ | ✅ | — | ⏭️ |
+| reasoning effort streaming | ⏭️ | ⏭️ | ✅ | — | ⏭️ |
+| streaming includes usage | ✅ | ✅ | ✅ | — | ✅ |
+| streaming invalid base64 image failure code is spec compliant | ✅ | ✅ | ✅ | — | ⏭️ |
+| with max output tokens | ✅ | ✅ | ✅ | — | ⏭️ |
+| with parallel tool calls and previous response | ✅ | ✅ | ✅ | — | ✅ |
+| with parallel tool calls disabled | ✅ | ✅ | ✅ | — | ⏭️ |
+| with parallel tool calls disabled streaming | ✅ | ✅ | ✅ | — | ⏭️ |
+| with parallel tool calls enabled | ✅ | ✅ | ✅ | — | ⏭️ |
+| with prompt cache key | ✅ | ✅ | ✅ | — | ✅ |
+| with prompt cache key and previous response | ✅ | ✅ | ✅ | — | ✅ |
+| with prompt cache key streaming | ✅ | ✅ | ✅ | — | ✅ |
+| with safety identifier | ✅ | ✅ | ✅ | — | ✅ |
+| with safety identifier and previous response | ✅ | ✅ | ✅ | — | ✅ |
+| with safety identifier streaming | ✅ | ✅ | ✅ | — | ✅ |
+| with service tier | ⏭️ | ✅ | ✅ | — | ⏭️ |
+| with service tier and previous response | ⏭️ | ✅ | ✅ | — | ⏭️ |
+| with service tier auto | ⏭️ | ✅ | ✅ | — | ⏭️ |
+| with service tier auto and previous response | ⏭️ | ✅ | ✅ | — | ⏭️ |
+| with service tier auto streaming | ⏭️ | ✅ | ✅ | — | ⏭️ |
+| with service tier flex | ⏭️ | ✅ | ✅ | — | ⏭️ |
+| with service tier flex streaming | ⏭️ | ✅ | ✅ | — | ⏭️ |
+| with service tier streaming | ⏭️ | ✅ | ✅ | — | ⏭️ |
+| with small max output tokens | ✅ | ✅ | ✅ | — | ⏭️ |
+| with stream options and previous response | ✅ | ✅ | ✅ | — | ✅ |
+| with stream options includes usage | ✅ | ✅ | ✅ | — | ✅ |
+| with stream options non streaming | ✅ | ✅ | ✅ | — | ✅ |
+| with top logprobs | ✅ | ✅ | ✅ | — | ✅ |
+| with top logprobs and previous response | ✅ | ✅ | ✅ | — | ✅ |
+| with top logprobs streaming | ✅ | ⏭️ | ✅ | — | ✅ |
+| with top p | ✅ | ✅ | ✅ | — | ✅ |
+| with top p and previous response | ✅ | ✅ | ✅ | — | ✅ |
+| with top p streaming | ✅ | ✅ | ✅ | — | ✅ |
+| with truncation and previous response | ✅ | ✅ | ✅ | — | ✅ |
+| with truncation disabled | ✅ | ✅ | ✅ | — | ✅ |
+| with truncation disabled streaming | ✅ | ✅ | ✅ | — | ✅ |
 
 ## Prompt Templates
 
@@ -174,43 +174,43 @@ Models, endpoints, and versions used during test recordings.
 
 | Feature | azure | bedrock | openai | vllm | watsonx |
 | --- | --- | --- | --- | --- | --- |
-| json schema array of integers | ✅ | — | ✅ | — | ✅ |
-| json schema array of objects | ✅ | — | ✅ | — | ✅ |
-| json schema array of strings | ✅ | — | ✅ | — | ⏭️ |
-| json schema boolean types | ✅ | — | ✅ | — | ⏭️ |
-| json schema float types | ✅ | — | ✅ | — | ⏭️ |
-| json schema integer types | ✅ | — | ✅ | — | ⏭️ |
-| json schema mixed types structures | ✅ | — | ✅ | — | ✅ |
-| json schema nested objects | ✅ | — | ✅ | — | ✅ |
-| json schema string types | ✅ | — | ✅ | — | ✅ |
+| json schema array of integers | ✅ | ✅ | ✅ | — | ✅ |
+| json schema array of objects | ✅ | ✅ | ✅ | — | ✅ |
+| json schema array of strings | ✅ | ✅ | ✅ | — | ⏭️ |
+| json schema boolean types | ✅ | ✅ | ✅ | — | ⏭️ |
+| json schema float types | ✅ | ✅ | ✅ | — | ⏭️ |
+| json schema integer types | ✅ | ✅ | ✅ | — | ⏭️ |
+| json schema mixed types structures | ✅ | ✅ | ✅ | — | ✅ |
+| json schema nested objects | ✅ | ✅ | ✅ | — | ✅ |
+| json schema string types | ✅ | ✅ | ✅ | — | ✅ |
 
 ## Tool Responses
 
 | Feature | azure | bedrock | openai | vllm | watsonx |
 | --- | --- | --- | --- | --- | --- |
-| connector resolution mcp tool | ✅ | — | ✅ | — | — |
-| function call ordering 1 | ✅ | — | ✅ | — | — |
-| function call ordering 2 | ✅ | — | ✅ | — | — |
-| function call output list file | ✅ | — | ✅ | — | — |
-| function call output list image | ✅ | — | ✅ | — | — |
-| function call output list text | ✅ | — | ✅ | — | — |
-| function call output list text multi block | ✅ | — | ✅ | — | — |
-| max tool calls with function tools | ✅ | — | ✅ | — | — |
-| max tool calls with mcp tools | ✅ | — | ✅ | — | — |
-| mcp tool approval | ✅ | — | ✅ | — | — |
-| multi turn streaming web search | ✅ | — | ✅ | — | — |
-| non streaming custom tool | ✅ | — | ✅ | — | — |
-| non streaming file search | ✅ | — | ✅ | — | — |
-| non streaming file search empty vector store | ✅ | — | ✅ | — | — |
-| non streaming mcp tool | ✅ | — | ✅ | — | — |
-| non streaming multi turn tool execution | ✅ | — | ✅ | — | — |
-| non streaming web search | ✅ | — | ✅ | — | — |
-| parallel tool calls with function tools | ✅ | — | ✅ | — | — |
-| parallel tool calls with mcp tools | ✅ | — | ✅ | — | — |
-| sequential file search | ✅ | — | ✅ | — | — |
-| sequential mcp tool | ✅ | — | ✅ | — | — |
-| streaming multi turn tool execution | ✅ | — | ✅ | — | — |
-| streaming web search | ✅ | — | ✅ | — | — |
+| connector resolution mcp tool | ✅ | ✅ | ✅ | — | — |
+| function call ordering 1 | ✅ | ✅ | ✅ | — | — |
+| function call ordering 2 | ✅ | ✅ | ✅ | — | — |
+| function call output list file | ✅ | ✅ | ✅ | — | — |
+| function call output list image | ✅ | ⏭️ | ✅ | — | — |
+| function call output list text | ✅ | ✅ | ✅ | — | — |
+| function call output list text multi block | ✅ | ✅ | ✅ | — | — |
+| max tool calls with function tools | ✅ | ✅ | ✅ | — | — |
+| max tool calls with mcp tools | ✅ | ✅ | ✅ | — | — |
+| mcp tool approval | ✅ | ✅ | ✅ | — | — |
+| multi turn streaming web search | ✅ | ✅ | ✅ | — | — |
+| non streaming custom tool | ✅ | ✅ | ✅ | — | — |
+| non streaming file search | ✅ | ✅ | ✅ | — | — |
+| non streaming file search empty vector store | ✅ | ✅ | ✅ | — | — |
+| non streaming mcp tool | ✅ | ✅ | ✅ | — | — |
+| non streaming multi turn tool execution | ✅ | ✅ | ✅ | — | — |
+| non streaming web search | ✅ | ✅ | ✅ | — | — |
+| parallel tool calls with function tools | ✅ | ✅ | ✅ | — | — |
+| parallel tool calls with mcp tools | ✅ | ✅ | ✅ | — | — |
+| sequential file search | ✅ | ✅ | ✅ | — | — |
+| sequential mcp tool | ✅ | ✅ | ✅ | — | — |
+| streaming multi turn tool execution | ✅ | ✅ | ✅ | — | — |
+| streaming web search | ✅ | ✅ | ✅ | — | — |
 
 ---
 

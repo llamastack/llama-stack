@@ -1,0 +1,503 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_sequential_file_search[openai_client-txt=bedrock/openai.gpt-oss-20b:emb=sentence-transformers/nomic-ai/nomic-embed-text-v1.5:dim=768]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "How many experts does the Llama 4 Maverick model have?"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "chatcmpl-tool-9ea2c3880e51c8a4",
+              "type": "function",
+              "function": {
+                "name": "file_search",
+                "arguments": "{\"query\": \"Llama 4 Maverick model experts how many experts\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "chatcmpl-tool-9ea2c3880e51c8a4",
+          "content": [
+            {
+              "type": "text",
+              "text": "file_search tool found 1 chunks:\nBEGIN of file_search tool results.\n"
+            },
+            {
+              "type": "text",
+              "text": "[1] document_id: file-757524745713, score: 0.018716950955682328, attributes: {'filename': 'test_sequential_file_search.txt', 'file_id': 'file-757524745713', 'chunk_id': '3907d885-d8e7-a72d-1113-f7080454d97c', 'document_id': 'file-757524745713', 'token_count': 19.0, 'metadata_token_count': 23.0, 'chunk_tokenizer': 'tiktoken:cl100k_base'} cite as <|file-757524745713|>\nThe Llama 4 Maverick model has 128 experts in its mixture of experts architecture.\n"
+            },
+            {
+              "type": "text",
+              "text": "END of file_search tool results.\n"
+            },
+            {
+              "type": "text",
+              "text": "The above results were retrieved to help answer the user's query: \"Llama 4 Maverick model experts how many experts\". Use them as supporting information only in answering this query. Cite sources immediately at the end of sentences before punctuation, using `<|file-id|>` format like 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'. Do not add extra punctuation. Use only the file IDs provided, do not invent new ones.\n"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": "The Llama\u202f4\u202fMaverick has\u202f128\u202fexperts in its mixture\u2011of\u2011experts architecture. <|file-757524745713|>"
+        },
+        {
+          "role": "user",
+          "content": "Can you tell me more about the architecture?"
+        }
+      ],
+      "parallel_tool_calls": true,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "file_search",
+            "description": "Search files for relevant information",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "The search query"
+                }
+              },
+              "required": [
+                "query"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "0KUONBZ6N0SLUqwpkmrw4eLUu0B48W6tUFbXRrWUypHioDBGhWLaKMEp6QcZ1C4QwEIk0PjVby9vkqAvp4K3IXmOXCqn8ww4Zev8sprcpPqmg0L9"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "Need to provide details about Llama 4 Maverick architecture: mixture of experts, scaling, size, layers, beam? Need"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "xwUnJumYdzCTI5CzEKLF80kQr1Fj52W0Tc1nlfxfbpUUCiCariqKgy"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " Cite? No direct source. Can't fabricate. We can answer general known info: 2,048 token"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "zWKhr86nynsuxo8dypozBg1j31Lk9GkB"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " context, 80B? But might not have sources. Provide explanation but cannot cite."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "PwH0DcFrtquXynTGEsVRMtxRYp5HVQJCHljRNX5GAID3Cu41RU"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " Must not use invented citations. Use no citation. Provide explanation."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "DDhHTFS8pZ1MFzd1lDZIUwLpodheInDjXR8HBiFiEcK7FQWGhDyrh"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [
+            {
+              "delta": {
+                "content": "**Llama\u202f4\u202fMaverick \u2013 key architectural highlights**\n\n| Feature | Details |\n|---------|---------|\n| **Model scale**",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "OsnpiYOn12RH2kgoLD122Zt5x4B1FAOnDwCxi2MoyGaSBmQXIhp2cYdhs17udiQz3qXqPNOM5scHmsY8BaRUwvZ"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [
+            {
+              "delta": {
+                "content": " | 80\u202fB base parameters plus a mixture\u2011of\u2011experts (MoE) extension. |\n| **Mixture\u2011of\u2011Experts** | 128 experts, each a small feed\u2011",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "pLtW2c3xyCh7SNVZINlP93XcPWrHPmL8qN4GIwDe6vwRn1C8lbWkGFAwx9oYXxLut4FKEGD6Prg91MHAj2JwqH8ZlF0AQhVKFeylr9SpMjZdvxQ"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [
+            {
+              "delta": {
+                "content": "forward sub\u2011network. During inference only a subset (typically 2\u20134) of experts is activated for each token, keeping compute and latency comparable to a dense model while expanding",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "nR6HM1ipKhFYIJGafjDRN0zEwA3FzMuQph4Sn3PLdWjP6OI5VWPW3Zxd9S9rsjzAaCK62L8uVkfNUrKu3WTLGWZJ5mtXv6GPo10eZvHFxBDC8fmoZPGL021aWT"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [
+            {
+              "delta": {
+                "content": " the total capacity. |\n| **Layers & size** | 60 transformer layers, 32 attention heads per layer, and a hidden size of 16\u202f",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "DCiFlrTqRp9TIjQDlgbornhYPHCZcz7EqztQPRCrNw3"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [
+            {
+              "delta": {
+                "content": "k tokens. The MoE layer is inserted every 6\u201312 layers to balance performance and efficiency. |\n| **Attention mechanism** | Scaled multi\u2011head self\u2011attention with Ro",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "Mm0jttq58hd7rCaP3V25AWQ4GugW6hcTILjPf0JbbeOEGvMtLyUbmpA"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [
+            {
+              "delta": {
+                "content": "PE positional embeddings and a sparse gating network to decide which experts to route to. |\n| **Training** | Pre\u2011trained on a massive",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "aG8gK8q5aZYdNk6dwhrjG61UORhDOm9Pi9a6Rov8RAwVkWb"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [
+            {
+              "delta": {
+                "content": " multilingual corpus and fine\u2011tuned with reinforcement learning to improve alignment with user intent. |\n| **Inference** | Open\u2011inference infrastructure that can switch between",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "fyMjdL4YDVnIwdCH9YERHSaJMoCe8MzgP2q5IkpDskyGQuFqJZQ7AfU4G5ltzwjjeSCbcZ6vuW2CkkA3nmpo0AHPdSFm9f1lSJYIfj7lL5glB4rQpj5fB9"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [
+            {
+              "delta": {
+                "content": " dense and MoE modes, allowing deployment on a range of hardware from GPUs to specialized ASICs. |",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "H5OYXA9BHaEoQDW1Y6LcOpS16PmzLfYNVx1aD1oIYigONW"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "rzIf5LjOoCyay5PWYtWmL6UZS1F4cSKk"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4f29db39bc56",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 345,
+            "prompt_tokens": 509,
+            "total_tokens": 854,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 128
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

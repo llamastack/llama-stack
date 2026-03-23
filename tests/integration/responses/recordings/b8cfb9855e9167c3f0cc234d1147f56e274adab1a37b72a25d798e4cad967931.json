@@ -1,0 +1,216 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_non_streaming_web_search[client_with_models-txt=bedrock/openai.gpt-oss-20b-web_search_2025_08_26_type]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the latest version of Python?"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "chatcmpl-tool-8c86330eb97396af",
+              "type": "function",
+              "function": {
+                "name": "web_search",
+                "arguments": "{\"query\":\"latest python version 2026\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "chatcmpl-tool-8c86330eb97396af",
+          "content": "{\"query\": \"latest python version 2026\", \"top_k\": [{\"url\": \"https://www.reddit.com/r/archlinux/comments/1q3o9ri/latest_python_upgrade_313_314_on_jan_3_2026/\", \"title\": \"Latest Python upgrade (3.13 -> 3.14) on Jan, 3 2026 (!!)\", \"content\": \"Python 3.14.3 and 3.13.12 are now available! r/Python. \\u2022 2mo ago. Python 3.14.3 and 3.13.12 are now available!\", \"score\": 0.99861145, \"raw_content\": null}, {\"url\": \"https://www.youtube.com/watch?v=8RHIuO0SRqw\", \"title\": \"How to Install Latest Python Version on Windows 11 (2026)\", \"content\": \"Learn how to install the latest Python version on Windows 11 and start coding like a pro! This step-by-step tutorial shows you how to\", \"score\": 0.99821776, \"raw_content\": null}, {\"url\": \"https://devguide.python.org/versions/\", \"title\": \"Status of Python versions\", \"content\": \"The main branch is currently the future Python 3.15, and is the only branch that accepts new features. The latest release for each Python version ... 2026-10-01.\", \"score\": 0.99589807, \"raw_content\": null}, {\"url\": \"https://www.youtube.com/watch?v=xOWFYISmgEE\", \"title\": \"How to Install Python 3.14.3 on Windows 10/11 [ 2026 ...\", \"content\": \"How to Install Python 3.14.3 on Windows 10/11 [ 2026 Update ] Python Demo Programs. 13K views \\u00b7 1 month ago. #Python3 #windows11\", \"score\": 0.9939964, \"raw_content\": null}, {\"url\": \"https://endoflife.date/python\", \"title\": \"Python\", \"content\": \"Python. lang. Last updated on 04 March 2026. Python logo. Python is an interpreted, ... Python 3.8 was the last version to support Windows 7. More information is available on the Python website.\", \"score\": 0.99390244, \"raw_content\": null}]}"
+        }
+      ],
+      "parallel_tool_calls": true,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "web_search",
+            "description": "Search the web for information",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "The query to search for"
+                }
+              },
+              "required": [
+                "query"
+              ]
+            }
+          }
+        }
+      ],
+      "service_tier": "default"
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-b8cfb9855e91",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "cMk5Xj719lrRWXDr68j0Q9o7h5w9a7vcEgYuspB50KMPRj79rlst7CGiD3WRJcFXLSa2rwWXVk2PVtIlDIMlQUpgD7KItu0IDxCHqqCiPz"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-b8cfb9855e91",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "We need latest Python version. According to sources: Python 3.14.3 available. Search better. Let's open devguide."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "REeBo7q60vDnND1WmaGzLGlYHzfKxFMmYOXdIO4WL7WYGxkJ0yUxD01Z7stQ1dGYDpjahLYEW8QQjXzzJ3VJdYgSDbZxCX1K6WD1OHg8kokNza6cg61aiHUcxerPtzah"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-b8cfb9855e91",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": [
+                  {
+                    "index": 0,
+                    "id": "chatcmpl-tool-8649c8450b325a46",
+                    "function": {
+                      "arguments": "{\"query\":\"Python 3.14.3 release date\"}",
+                      "name": "web_searchjson"
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "41d2i7aAKesBHVUP8jh7koulP9C0UI3ErbNW8uPQ5sf6CIrzdMK7OAXnOph5hjJm2ZGefExfQHb7l3V4f1A8bkTHJUrM9aILZh59gMQw7AN8bjFUpkzkMOECXz"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-b8cfb9855e91",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "8KLknRNSJrfT5B9bP9Ya6a12fiyCv1IkSeQHwy9pNgL6n6B1LAdoALELudQKEq65si6Uz9RX"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-b8cfb9855e91",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 57,
+            "prompt_tokens": 683,
+            "total_tokens": 740,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 128
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

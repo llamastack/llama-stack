@@ -1,0 +1,1447 @@
+{
+  "test_id": "tests/integration/responses/test_openai_responses.py::TestOpenAIResponses::test_openai_response_with_service_tier_streaming[txt=bedrock/openai.gpt-oss-20b-default]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the speed of sound?"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "service_tier": "default"
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "ij72y8YjFfx6yC088CMmIykEsIB9MITKko"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "We need to answer the question: \"What is the speed of sound?\" Likely expectation: speed of sound in air"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "USC6OmlJU6KEysCCygY5yFwmK51gd6iBUMhabYOINiEaLxFpUC34ogDPRcCcolkuxxvFNyoY0AjSQ8Q68Tz1QZESzsN9YXbD2Nto"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " at standard conditions ~343 m/s at 20\u00b0C, but depends"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "CpTpmsKh29zlQVhXjxPHLYCVYVLpDWYJx5gXncanLdiZVxTu4Ied8XE2kqkxUGUDWUSeZW6GnHmhyfG9j"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " on temperature, altitude, humidity, medium. The answer: speed depends on medium,"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "3QRITkgHRm33ObOhLpqxf88YP5NnnK0WYrnm9PBcuKjHfJ4gSGZTvGQl78gG8bQQ6hEW9cpkdqkELxDuB3BLZAysq0kyrtw7ggvLIDo3RtDyI9QxgQrOlynJc"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " temperature, pressure, humidity. In air at 20\u00b0C, ~343 m/s (~767 mph)."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "H3fs0vaHcG3zEFIsZLys0gbnIvcrqCQij8NwuRuuYYKH0o0yHkGFt02CvxxfviPxzk0iIJrGr7KlZJuRBv7HbDm9dpqF52MOFaI07r0xhkqCvafTYQIX1"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " Also give approximate formulas for air: c ="
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "U6dX9xtZnlaMuSdKbHkZvnxGwChD80J7ZzYV6ZamyVJAbxmECtbEOa02HJy1a9n5ekn37HvqPkIsB1qk"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " 331.3 + 0.606 * T"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "yZpHH8lTSzfiXmDFpYYtHP6YoSjCcARqkf38"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " (in \u00b0C) m/s. For water at 20"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "K6q7oANOrmDg2JKUbMSnHypndWNRl6NXVRKjYBgQ6GewZ"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "\u00b0C, ~1482 m/s. Use also mention ideal gas and"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "aWPSxWGsyBwtPIHDKAOfEvGrDExrLZaVoETT1xaUBgykvU8mo1VhCHJJt7c"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " temperature dependence. Provide explanation.\n\nWe could also"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "BjCCJ6mllcEMyGp2lkYKHYmhxszS8CQgWyNgVvTPY2x1FWcuKahG4D"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " mention relativistic or typical values. The question is simple: \"What is the speed of sound?\" Provide context. Provide range of speeds"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "MgabpD7LvmjUX0vCb9DIwUVJTtAzyzmSJRCm779fsBkzkyWdQjMt27y4faO9BYdORSgVKlXzLu1kTkTqQgni0uG"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": ": in solids e.g., steel ~5,960 m"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "KzAfP4TQBtl40lEOyFonvev94plMg05ZX3IDzNDugbnwEzmAB7uyMG6xvTC2QEqoEoaC2pqGRjJdcmUZ47sucqEHUhHu"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "/s. In liquids e.g., water ~1480 m/s. In air, depends on temperature: ~343 m/s at 20\u00b0C. Provide formula's explanation"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "H18UpQwxzu34rcWCWm1Bi8sPIN13ZkQoKr99km7HwVkLUD07LIHNPl7X8Gm23a4G19FRYPf5RfKa"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": ". Also mention frequency dependence? No. Provide official approximate value as"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "dphGKuuW5qUCKuR8AhhSn0mzSbABqVRAQLcqtjXudtnlMTWAHjGZti0AWAWQ8guGd7kG5271sNG7ZuOGnNl2AvUzhz8sOLN8DDqqpCoA"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " ~343 m/s.\n\nAlternatively, answer \"Approximately 343 m/s in dry air at 20\u00b0C\". Provide full explanation"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "m7xzoJ8FzaULwAb5lQ676sXQf9LL31mvyZStpGIWCAbJvVUK8pQ0LUuQOE8AkK6JTo2KCMiJPQXbukHCwpYS3vG50EQp7"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": ".\n\nThus the answer: c = sqrt(gamma"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "63GDoU2C1VwIwrexyYCwE17KA4UexiBHqyZObpSQNS5QfBuCt3zqxHSr"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " * R * T / M). Provide formula, typical values, showing that it's around 340 m"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "Lqz7n8BXhJONFai2z28MoA9lVQ9JNDSrwcPg2"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "/s in air. Also mention that at 0\u00b0C it's about 331 m"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "3NEsKl9ngIIIJyt0IT8WLB4E0l8c7VPXBPY0Mk"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "/s, at 100\u00b0C it's about 370 m/s. Provide also in knots mph.\n\nType answer."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "YVwf9TrNOmU39Z2MH7gp8bGIBfDTPHVK"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "**",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "dP5RRRXmwVYAPp3r1xgi0nbGbnBW52zK1JxbLsU39wiDzU6DQ0SGSLfqshuITNEcY9P8AIO14SP4WbHjkFoXVOYiZuvsezl1cRIvPzhbi"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "Short answer:**  \nIn dry air at 20\u202f\u00b0C (68\u202f\u00b0F) the speed of sound is about **343\u202fm\u202fs\u207b\u00b9",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "1WpJiwqiS80W7N1GDohjI3peqZ5uZTGlfT9gTMGBpyvnlCfdQNCvYsQsUT8doGdqGmmLKh7OQomMBWKB3Mq5JmjxBwwpgz2VqpA7GwJTjrH9nKt4Jqsu"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "** (\u2248\u202f767\u202fmph or 1,125\u202fft\u202f",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "ASYAJsKRwGBp7bv3GonayTjMMJcAwTzGux8teeBIyGm5ZtgKvfSY2xAdB4HjJoBU3YG7DlnYKMUz2m01MLtcsPNkGVRM5kOpo3AokKjSY77w5DPBbZa3LZSh58GN3"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "s\u207b\u00b9).\n\n---\n\n## Why does it vary?\n\nThe speed of sound depends on two things:\n\n",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "3vunIiiYHjgN5ewkA1AuAd7kMfeEoZWXUJUrGdu8LNh5qZDkvkM013ufp4gvxW86W60pPX8nRBPTWHiR3ZhSd"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "1. **The medium** (air, water, steel, etc.).  \n2. **The conditions** (",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "MWcIHwMuh0Zy5GmXdsQn0LW5ERZoHQYf5OXsN6mfgwmLz4cCidlj7izAUUrXEK3I7jEhxPDUOchlFHbbPapwRDi69lXc"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "temperature, pressure, humidity, composition).\n\n### Air\n\nFor an ideal gas the speed",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "JbwW3NUoEIBTRT1j0nHZ28zvueDJo6KgI7lcXdapO4sjjb7a8AdD8wegOpbKmXM0zABiwtIqPlVtpqAu3vll3bfwxsJZEx06MZwAZr5s3XsQCdlMXpiGdo"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": " of sound is\n\n\\[\nc = \\sqrt{\\gamma \\frac{R_{\\mathrm{specific}}\\,T",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "MUawcEYM2j1zPgr1fhz5VvVOLnj8EB6XudakI8AwLbCYNRvsLHH9ANnSwZ2P7A5bSccs2PGH1mVHKHGMgiEzG8PFD1BiudFFT5kOVMViQXozafho8N3lrSZ6"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "}{M}}\n\\]\n\nwhere  \n- \\( \\gamma \\) = ratio of specific heats (\\(",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "deEJOkeu3Lh3tfrcAo4k8dwgh6gbHytbMn2w6MgXrHQAI7Ssb1j2K6Q4LpLqnMLtUCIpDnX619jv6JWSflZUmh9JXaOCWxyqNdQy6FU"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "C_p/C_v \\approx 1.4\\) for air)  \n- \\( R_{\\mathrm{specific}}",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "YDacRNFRBOfgqLempSNvLdSk7xY7fqtS1IxqbD0"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": " \\) = specific gas constant for dry air",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "EB9n5Axi8MnBhhgvPOPjENHzgQsN7svGNnxIUt7MBmTw09UgE854CfFaEokabkv5bqfLp3zstkrjSuPN7zbr0mi7d8UVEZTRUxxbYIBM9T"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": " (~\u202f287\u202fJ\u202fkg\u207b\u00b9\u202fK\u207b\u00b9)  \n- \\( T \\) = absolute temperature (K)  \n- \\( M \\) = molar mass",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "RZa2ZMEq6GGriohv0Muw13bK3IpQWzewqY49Gs"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": " of air (~\u202f0.029\u202fkg\u202fmol\u207b\u00b9)\n\nSimplifying, the",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "O1eA9AbA34HLUTNb9Ujs2UePj4s2S0U9d7CZ7Ve4BGOKprb6JgYtgDSA999V07Y79jAaJmG2NGMe5YjbaXxz74qFo"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": " common rule\u2011of\u2011thumb linear approximation is:\n\n\\[\nc \\;(\\",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "5ohotxuhZxooseFYUqTuZI07sAE6XOcVOefJwZ8rU8jq9r69rjC4H9TsVZ0g3RLFm97zruV6ZwY96lhT9XlWcT0DvjY9m9P"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "text{m\u202fs}^{-1}) \\approx 331.3 \\;+\\; 0.606 \\times T_{\\!",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "2sOe57VWAp5Umqyk1OqubVBNRd9vXFZDtB4L3QrgZIiLJi7hFiaF7Cq0FeGWP56VorgDv8jNObsLwqRJC62LXiP3JBFpn7KQWujR3n"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "^\\circ\\mathrm{C}}\n\\]\n\n| Temperature (\u00b0C) | Speed (m\u202fs\u207b\u00b9)",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "o6Qpihf2Ia42as126jVPiaQ1sOwH8HHukCwGlnJqgXtyh5dVRYTW9fExjgusrLf7CXL5QZKcNZJ0BXLZDhu2iupwyEw6pBRwhjKBO9fJG5HxnEdbuByak7JqAvvLqc"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": " |\n|------------------|--------------|\n| 0                | 331.0 |\n| 10               | 342.7 |\n| 20               | 354.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "48WaDnVHEDITmizKG5SUaKh3Co6bnsHbPPZIidpUHBykKzJYwHvQA4mbcwFSpMfPbw1kBnvqDKr2WjMUn42pwcH4E7GY1J71b5IArmIXXw2l4s"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "4 |\n| 30               | 365.4 |\n| 40               | 376.8 |\n| 100              | 369.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "tChZmOJIhlrtt4K6UPPBK9R4ory2AfxfYIjykAX8YZAQjUvvpenxlHmJhZ1eHRpq55pO7nWuGzENTEczg"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "4 (after accounting for air density changes; much of the increase is offset",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "v8yfJi7OHjObpVkihA84h1VDscO7YsfCogMgG5nagboTqFeaqA0zBQTPFx"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": " by the drop in density) |\n\n**Humidity** (wet air) increases the speed slightly\u2014about",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "FS2yTVD6OIqygXmVxZTnRnBLgXYi9SxUYJgtsxznRNeokQBe1zHjFK9CfSBibdyuGndUExXIB3maJkz2wAx9vCfjxAMb2iz"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": " 1\u202fm\u202fs\u207b\u00b9 at 100\u202f% relative humidity\u2014but the effect is modest.\n\n**Altitude**: As",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "iOSyK5MTBLbz5fgfACY0SNgsK2efQWuOcSEji3nD7oBiSFkSffZK4HZcyTAPDE5FBzCYIVESp7kKEfRLZDkAvPBOO8MftB8OJI082HD0PHg"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": " you go higher, air pressure drops, the density decreases, and the speed of sound actually *in",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "Kg7d1PdlvPog0ZNfZdp5mCBuGViChXkpKlmww4Wtzrm2uXF7UWbUb9Gy6Aek7Ho2UY"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "creases* a little (because the gas is less compressible), but the drop in density dominates for",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "a9c3fjCQJtnf38UE1tUYHRlfnc39r0IHvvsc2ero95fIpgQ9ILus4bmLr5b3ItzwKZVlb18ArQ"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": " most practical sounds\u2014so everyday propagation in the atmosphere is roughly 343",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "stf2CWnXu5KOg8nY3M7SWeXV1FSoPuZ5bNC6Ck9czCteShdtAhnyBQOPj05iqiBskOlGpkaqRRKYbzaI3Ta36kXNk9abDUJil4Dkqu4JeYVPwUlc1v0ULFskgLPtORqP"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "\u202fm\u202fs\u207b\u00b9 near sea level at 20\u202f\u00b0C.\n\n---\n\n## Other media\n\n| Medium | Typical speed of sound |\n|--------|------------------------|\n| Air, ",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "NgvrROEHom4uhl7QLtelp8UyZleMpkXtQCuga9wWuvp6CG4J5xsgYzeZG6hXxiuhwu7jjqMLHgR2O61aroNKlbXDRCA568HGvHcd9uwQWU3G1FIkMcS7jgj"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "20\u202f\u00b0C | 343\u202fm\u202fs\u207b\u00b9 |\n| Water, 20\u202f\u00b0C | \u2248\u202f148",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "jkx3LMXFGMdZMqsCURsdtyyxt5jatmx8x"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "0\u202fm\u202fs\u207b\u00b9 |\n| Salt water (avg 27\u202f\u00b0C) | \u2248\u202f",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "V99GbKDVqcDHhjlomh7SExFWDq2ixulO7CSPVM413vZU2EvaUCMqiPntU6r"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "1494\u202fm\u202fs\u207b\u00b9 |\n| Steel (typical) | \u2248\u202f5960\u202fm\u202fs\u207b\u00b9 |\n\n---\n\n",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "4givjGiudGAtxVt6Y5okH8a4YE45ynKSMFBSODRz6Tg9KO1UD06HiZOUXKXQdmtOK5gZ2fB5P9EIqEpkp02VSttgkmKE4Td5pm3qRckXCHRNbQBpwNQB8X5SOLeX"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": "## In practice\n\nFor most day\u2011to\u2011day measurements, you can use **343\u202fm\u202fs\u207b\u00b9** as the",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "9isoBVC4MtQXDsyceNEEKW41z7U1FXijkvAECChJhaeL3NYPDL2vxzPIHZgCluxYqBnNxOujWVeVX2yMyrxzPHo63I"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": " reference speed of sound in air. Engineers and physicists will refine the value based",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "AQlqgyD81byp5wGvF0aQdF5TzisjF14VrdDqZShzLDm2BRtLrst8kV67T74lbPwZesZpcan0zdjTN"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": " on the exact temperature, pressure, humidity,",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "yn4cvH8ErdI3hsAMlorgQ8cMzYwjvRaYDUeWGJnewXBc0G3GHaDEg0"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": " and gas composition of their measurement environment.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "PGXYMcS4wVrDjnHdi8dILl781SyLlEMMqnUH5vDtGY4sUYP2nSozaD8LjTkn"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "4eUacWWYF9lEU9V1stquYKRx8xPXXKRaw90VTP2Q9UIi92wL"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-7d68a9c55945",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 993,
+            "prompt_tokens": 72,
+            "total_tokens": 1065,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": null
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

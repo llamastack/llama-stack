@@ -1,0 +1,172 @@
+{
+  "test_id": "tests/integration/responses/test_openai_responses.py::TestOpenAIResponses::test_openai_response_with_stream_options_and_previous_response[txt=bedrock/openai.gpt-oss-20b]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is 3+3?"
+        },
+        {
+          "role": "assistant",
+          "content": "3\u202f+\u202f3\u202f=\u202f6"
+        },
+        {
+          "role": "user",
+          "content": "What is 5+5?"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true,
+        "include_obfuscation": true
+      }
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-25da3513b72c",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "mo5Kn0ygNtHPP7kEhIWxqukDQYDJalMIZo2AMGzVnnqfng2lAwMI1QXfkNXUIjr8DBSiJPq4Zr0bB20p5LTeTO8m8g9kdXm8PdqKV9qwUZe9hCZ21"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-25da3513b72c",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "User asking straightforward addition: 5+5 = 10. Return that."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "ZPYQQfhV2czF7EGCYB6YPeYkq1zoy9EXpz1Chi0mi4ZjjBwz4PFf5nBapZJf3il56n4zv9bn9YQYkdXCbKlOmgn0etw8sAi5sgsR4LKS"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-25da3513b72c",
+          "choices": [
+            {
+              "delta": {
+                "content": "5\u202f+\u202f5\u202f=\u202f10",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "NNhWo94PXjQuBAmkPIW7bUeunMHNgvVhhC6c7Yzmt9H7KRJfDASVFF6pmXMPO9DdWU9p4wzAxOAi6LlZ0pzQaLrsmEDXLAyUu"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-25da3513b72c",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "iFkdlO4HNPnKfYULJl2ayhIwlKt2hSbVjBrsTcR4izO4U75HANnksSE6Sb6MfzhfRuJNg8qR6Oyjry1TY7L2Cup9TsEleeL0SUwtRkLUGWZ6buTwwTzr9mXBd4r1eGl"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-25da3513b72c",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 35,
+            "prompt_tokens": 98,
+            "total_tokens": 133,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 48
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

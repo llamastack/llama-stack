@@ -1,0 +1,342 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_non_streaming_web_search[openai_client-txt=bedrock/openai.gpt-oss-20b-web_search_2025_08_26_type]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the latest version of Python?"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "chatcmpl-tool-a531f1aafb9d6074",
+              "type": "function",
+              "function": {
+                "name": "web_search",
+                "arguments": "{\"query\":\"latest Python version 2026\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "chatcmpl-tool-a531f1aafb9d6074",
+          "content": "{\"query\": \"latest Python version 2026\", \"top_k\": [{\"url\": \"https://www.youtube.com/watch?v=8RHIuO0SRqw\", \"title\": \"How to Install Latest Python Version on Windows 11 (2026)\", \"content\": \"Learn how to install the latest Python version on Windows 11 and start coding like a pro! This step-by-step tutorial shows you how to\", \"score\": 0.9986853, \"raw_content\": null}, {\"url\": \"https://www.reddit.com/r/archlinux/comments/1q3o9ri/latest_python_upgrade_313_314_on_jan_3_2026/\", \"title\": \"Latest Python upgrade (3.13 -> 3.14) on Jan, 3 2026 (!!)\", \"content\": \"Python 3.14.3 and 3.13.12 are now available! r/Python. \\u2022 2mo ago. Python 3.14.3 and 3.13.12 are now available!\", \"score\": 0.9980882, \"raw_content\": null}, {\"url\": \"https://devguide.python.org/versions/\", \"title\": \"Status of Python versions\", \"content\": \"The main branch is currently the future Python 3.15, and is the only branch that accepts new features. The latest release for each Python version ... 2026-10-01.\", \"score\": 0.99694854, \"raw_content\": null}, {\"url\": \"https://www.youtube.com/watch?v=xOWFYISmgEE\", \"title\": \"How to Install Python 3.14.3 on Windows 10/11 [ 2026 ...\", \"content\": \"How to Install Python 3.14.3 on Windows 10/11 [ 2026 Update ] Python Demo Programs. 13K views \\u00b7 1 month ago. #Python3 #windows11\", \"score\": 0.992597, \"raw_content\": null}, {\"url\": \"https://www.python.org/downloads/source/\", \"title\": \"Python Source Releases\", \"content\": \"Python 3.12.13 - March 3, 2026 \\u00b7 Python 3.10.20 - March 3, 2026 \\u00b7 Python 3.11.15 - March 3, 2026 \\u00b7 Python 3.13.12 - Feb. 3, 2026 \\u00b7 Python 3.14.3 - Feb. 3, 2026.\", \"score\": 0.99014014, \"raw_content\": null}]}"
+        }
+      ],
+      "parallel_tool_calls": true,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "web_search",
+            "description": "Search the web for information",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "The query to search for"
+                }
+              },
+              "required": [
+                "query"
+              ]
+            }
+          }
+        }
+      ],
+      "service_tier": "default"
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-bc843840743c",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "sx0AgsFKCi0OVOr22xBTcc2ttMZqgtjnbNtO9KZgtpLX5k6Egau7CgCMyaEcuRSyVrRDUp9GFPa3NsScu8DW5PNvaaw1OR5uPYtx6Sb7OPDP3ZFTeqz"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-bc843840743c",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "Search results show that the latest Python releases as of March 2026 are 3.14.3 (Feb 3 2026) and 3.13.12 (Feb 3 2026). The python.org site is authoritative. So answer: latest stable"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "Nn809w7rj5c57VYvv1iftoz3Ju6ZwgAoExB8Bvq"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-bc843840743c",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " minor release is Python 3.14.3. Mention that 3.15 will be next development. Provide version details."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "oOoW9cNqcbzo6H3iSxLhE4hNYuUSMW4cBgGcU3tRMC5KwHLj2P8zC6rirVuxREbUhjxCRHeaDaiyqS1MrXs7rdpqgyjd1IDZBZ9anPCFw7956hKQGDEVat"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-bc843840743c",
+          "choices": [
+            {
+              "delta": {
+                "content": "**Python\u202f3.14.3\u202f(December\u202f2025 \u2013 currently the latest stable release)**  \n\n| Version | Release date | Notes |\n|---------|--------------|-------|\n| **Python\u202f3.14.3** | February\u202f3,\u202f2026 | Current latest",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "Z9M2C7TWvcKJSuxpIVKPKDXJvpkCpbmnD1iH24I432Rt1Zyc3ih50hHNZxM7P7SyHoTtL2"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-bc843840743c",
+          "choices": [
+            {
+              "delta": {
+                "content": " *stable* release on the main branch; includes security fixes and bug\u2011fixes over 3.14.2 |\n| **Python\u202f3.13.12** | February\u202f3,\u202f2026 | Latest secure point\u2011release of the 3.13 line |\n| **Python\u202f3.12.13** | March\u202f3,\u202f2026 | Latest 3.12 point\u2011",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "1wQMnLwHRohF35CL3EYktdViflGaYus3i0Oui2FCzfJbUySEmbEDsn4lcXmrCPwEfxyiNI9U5XVgNMDWrcz43cSkaFQbRPxGFNFznkVwf8X9lKgocV8s"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-bc843840743c",
+          "choices": [
+            {
+              "delta": {
+                "content": "release |\n| **Python\u202f3.11.15** | March\u202f3,\u202f2026 | Latest 3.11 point\u2011release |\n| **Python\u202f3.10.20** | March\u202f3,\u202f2026 | Latest 3.10 point\u2011release |\n\n> **Why 3.14.3?**  \n> The Python 3.14 series is the current \u201cstable\u201d branch. Each new point release includes security updates, bug fixes, and occasionally deprecation warnings. Version\u202f",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "s0gvfiMsiCOnSoFegNWRfpwDpw6lwNYsNjxUlJEYECZKSjD1MHzClJP472n48whqwTEPaIdo539wZEZOr8on9b5fEUAaMNbbOzIfjgZ6cfHlZO5OZrnO"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-bc843840743c",
+          "choices": [
+            {
+              "delta": {
+                "content": "3.14.3 is the most recent as of March\u202f2026.\n\n> **What\u2019s next?**  \n> Python\u202f3.15 is the next expected major release and is still in development. Once it becomes stable, the above list will be updated.\n\nTo download or see the full release notes, visit the official Python download page",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "YQbmq5q5Kjcv8z0OY5LCIuMKHWZwhxPpLhyGY0PHlOaUf4OlBa"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-bc843840743c",
+          "choices": [
+            {
+              "delta": {
+                "content": ":  \n<https://www.python.org/downloads/>  \n\nIf you need a particular minor version for compatibility (e.g., 3.12, 3.13), the releases above provide the latest point\u2011releases for those series.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "ksvr6ithWRMQwVWTaXXe9M6tQdiDYif66G7EDHBaRQh6qr56KoyN"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-bc843840743c",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "FHQHz5l1iOohTqrMTy77NxFeVHfD7TorbdRM87ZKX6lG3QzTeMvhVSRLLaRZUcXHg49tZHETScHDB8hsCArS7Lv6d6uFGeovZ6ciZpmcKjaVPLJj"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-bc843840743c",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 456,
+            "prompt_tokens": 736,
+            "total_tokens": 1192,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 64
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

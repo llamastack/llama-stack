@@ -1,0 +1,953 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_streaming_multi_turn_tool_execution[openai_client-txt=bedrock/openai.gpt-oss-20b-user_permissions_workflow]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Help me with this security check: First, get the user ID for 'charlie', then get the permissions for that user ID, and finally check if that user can access 'secret_file.txt'. Stream your progress as you work through each step. Return only one tool call per step. Summarize the final result with a single 'yes' or 'no' response."
+        }
+      ],
+      "parallel_tool_calls": true,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_user_id",
+            "description": "\n        Get the user ID for a given username. This ID is needed for other operations.\n\n        :param username: The username to look up\n        :return: The user ID for the username\n        ",
+            "parameters": {
+              "properties": {
+                "username": {
+                  "title": "Username",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "username"
+              ],
+              "title": "get_user_idArguments",
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "function",
+          "function": {
+            "name": "get_user_permissions",
+            "description": "\n        Get the permissions for a user ID. Requires a valid user ID from get_user_id.\n\n        :param user_id: The user ID to check permissions for\n        :return: The permissions for the user\n        ",
+            "parameters": {
+              "properties": {
+                "user_id": {
+                  "title": "User Id",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "user_id"
+              ],
+              "title": "get_user_permissionsArguments",
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "function",
+          "function": {
+            "name": "check_file_access",
+            "description": "\n        Check if a user can access a specific file. Requires a valid user ID.\n\n        :param user_id: The user ID to check access for\n        :param filename: The filename to check access to\n        :return: Whether the user can access the file (yes/no)\n        ",
+            "parameters": {
+              "properties": {
+                "user_id": {
+                  "title": "User Id",
+                  "type": "string"
+                },
+                "filename": {
+                  "title": "Filename",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "user_id",
+                "filename"
+              ],
+              "title": "check_file_accessArguments",
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "function",
+          "function": {
+            "name": "get_experiment_id",
+            "description": "\n        Get the experiment ID for a given experiment name. This ID is needed to get results.\n\n        :param experiment_name: The name of the experiment\n        :return: The experiment ID\n        ",
+            "parameters": {
+              "properties": {
+                "experiment_name": {
+                  "title": "Experiment Name",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "experiment_name"
+              ],
+              "title": "get_experiment_idArguments",
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "function",
+          "function": {
+            "name": "get_experiment_results",
+            "description": "\n        Get the results for an experiment ID. Requires a valid experiment ID from get_experiment_id.\n\n        :param experiment_id: The experiment ID to get results for\n        :return: The experiment results\n        ",
+            "parameters": {
+              "properties": {
+                "experiment_id": {
+                  "title": "Experiment Id",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "experiment_id"
+              ],
+              "title": "get_experiment_resultsArguments",
+              "type": "object"
+            }
+          }
+        }
+      ]
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "VHyD9hPl485KPa8nhmDHRPQuXDwuOVplWMDdC7OuNcIhDny57h5MUMe0G8Ielxn5iGSkPQ3yqUFXIxZzrw3n3c7j2FT"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "We need to use the functions step by step. Sequence: get_user_id, get_user_permissions, check_file_access. After each we output progress? The instruction says: \"Stream your progress as you work through each step. Return only one tool call per step.\" So we must output one tool call, wait for the tool response, then proceed.\n\nSo"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "wLc7hjvTFoPenWpLP7EM2X9Cfq92TQbI"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " first step: call get_user_id with username 'charlie'. Then after response, we log a message. Then call get_user_permissions with user_id obtained. Wait for response. Then call check_file_access with user_id and filename. After each we should maybe print intermediate explanation.\n\n"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "UPSmpKrBGjK9KapHDDPdtuPerLn46bZLpFO8oAVXzeS5DUcQwiGuaJxwcGzgrvG21jtFrOSziXAuJaedmOlCcCfGnYnBKNpbU3l7P5Pswwg318YSf4JqtRer"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "But the final answer must be a single 'yes' or 'no'. So we need to output lines: first call for get_user_id, we output the tool call. Then once tool returns, we respond with maybe something like \"Got user ID: X.\" But must obey instruction \"Return only one tool call per step.\" That suggests that"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "TCcciaypFXhmxw7H5Ki5F1EaqX7809LhWLGj9sMCKuT2r6bjnjhDNeFizDbQ5nM7ka"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " after each step we must output only the tool call, no other text. But the user said \"Stream your progress as you work through each step.\" That implies we can output something like:\n\nUser ID: ...\nPermissions: ....\nAccess: yes/no\n\nBut the tool call must be"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "IkFEGYJdZRMpViTxsNhx0zt80irFKVM2r3rO8PeWGMkwH0paaEE9P4wtcJkT2FzD0nZJQPgCecnZeybY69qCwf9"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " separate. Maybe we need to output tool call, then wait for its result. Typically we demonstrate with sequence:\n\nAssistant: (call get_user_id)\nThen tool response, assistant: (call get_user_permissions)\nThen tool response, assistant: (call check_file_access)\nThen tool response, assistant:"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "PoHfUQmhKiP2EXuvxU6v9YSSQzesJIeiaipcfLrDIQm7EvUpUMV6qzmyc9kppnkZXfQ8mBoZzFHGdw6z8OILB97qSZnM93tY7zR4hykD1XE9oYv2KhJTJl5yxyy"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " final answer yes/no.\n\nWe should avoid any other output between tool calls? But maybe we can add textual explanations after each tool response. The instruction: \"Return only one tool call per step.\" That might apply to output, not to the content post. Perhaps we can provide explanation after the tool"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "kjMKQ6yWz3FBAAkUJtrSpEL1l8tdkJj1nHN"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " response, but we need to adhere to the \"tool call per step\" rule maybe meaning each step must have only one tool call. So we can do:\n\nStep 1: call get_user_id. (tool call)\n\nAfter response, step 2: call get_user_permissions.\n\nBut"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "10PmtSYj1oob4vKcgU55KK8ZJoaq2tBW9HdV5682IFjxCKKNbaPlUwEx0"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " we might need to show progress as we go. So after tool response we can annotate.\n\nThus the interaction:\n\nAssistant: calling get_user_id -> output tool call.\n\nWait for tool.\n\nTool response.\n\nAssistant: Received user ID: X."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "Xxcuo5bHZbY4a9dXvONwi2BuW2h9wdEyht1dkvnKXLpKHsH25PYjToNue26FJghqBwjME3U4yccDAHjkhAjRed5ggDFf"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " (makes note)\n\nNow fetch permissions.\n\nAssistant: calling get_user_permissions -> output tool call.\n\nWait.\n\nTool response.\n\nAssistant: Received permissions... Now check file access.\n\nAssistant: calling check_file_access -> output tool call.\n\nWait.\n\nTool response.\n\nAssistant: final answer.\n\nHence we only produce the"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "3tG6AJjPTwu0GDKoP4bG0HbZCGLordSMMiBJaMPQvyRgztUAj6e4eQNkG"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " tool call lines separated. The rest can be text.\n\nIn this environment, I can only produce a single assistant message. But we need to simulate tool calls. ChatGPT behaviour we need to output the first"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "kIO6VHEYgVqRJprYiPk9HTwvKMN95v1hInzq13in481WkslE6XfNkiQ"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " tool call. Then the tool response is given automatically. Then we then produce next tool call in subsequent assistant messages. But this is all in one conversation, we can produce multiple look like:\n\nAssistant: (tool call) get_user_id\n\nTool"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "gFopG7GpCRinT5ISHhfLJnOlHkJIa4qWSXVEGH6GBXkJpBtP1Z9tqVQFiKS5PMVAfQ"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": ": {user_id: ...}\n\nAssistant: (tool call) get_user_permissions\n\nTool: {permissions: ...}\n\nAssistant: (tool call) check_file_access\n\nTool: {\"access\": \"yes\"}\n\nAssistant: final yes\n\nBut as ChatGPT we produce only one message? But we may produce multiple assistant messages interleaved with tool calls."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "Q7ko4he2BsPpslexbm7JmssCePRYWkfTg5njsApmm6RzbqhcQgYTtSbMsv"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " That is typical for tool usage in OpenAI. In this environment, to follow the instructions we will need to produce each step sequentially, with tool calls and messages. Let's produce first tool call get_user_id.\n\nThus I will produce:\n\n``"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "gqOzmLCdg87A99wPQCEgP8DdgmZqAUOup1zHznR5wAOIkhUx2jZubzs8CZQS0JheD6HJ5"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "`\n{\n  \"name\": \"functions.get_user_id\",\n  \"arguments\": \"{\\\"username\\\": \\\"charlie\\\"}\"\n}\n```\n\nThat is the correct tool call format.\n\nThen we wait for tool response. But in this chat I need to produce the next step after presumably seeing a tool response"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "Foy5TnTkSGT6oSHjIwenagiGpaLOcA6j6zeFtVeMH6zjtMMMvx4kWG9Zk"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": ". But we can't see the response. But as ChatGPT we would respond with next step.\n\nBut in the context of a single assistant message containing multiple calls? I think we can produce them one after another as separate top-level"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "0y5KOhFX7lcmVKiFDS7b3ePDcRvjcwPT2DcId1ZNWkuyWskY9Qvk0pdsFdj9OxZHrGoZ5lpM"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " elements in the same response. The 'OpenAI' format typically splits. But I think the instruction requires we produce each call separately per step, but we can do it all.\n\nThe priority"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "GBAED8O1852zBuo1NRGbtuELO5qbLWGuDdDhnt6Jg1XdJVsXRo3qO5EpiSngemWQgy1aiQBNgKysEzB6ItG9hqwX8dKVNsRbXI5NNkVDFlaQicJsXl"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": ": final answer must be a single yes/no. So after all tool calls, we produce 'yes' or 'no'.\n\nThus final assistant message may include multiple tool calls and the final answer. But we might risk confusion. However, the instructions say \"Return only one tool call per step.\" That suggests each step uses one tool call. The answer may consist"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "F0RTDFA7OdslkeeRjzON27aZJmPXQ1wI8qaaI6Mjb9FE73Ae2s"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " of multiple messages: tool call, then tool response, then text, etc. But we as ChatGPT can't spontaneously give tool response, only request. But we can write the tool calls sequentially.\n\nThus I propose: produce first tool call. Then wait.\n\nBut since we can't actually wait"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "esejsXolDqPIB3hLx1m9UY2pqOpwpN7GAlAp998i285ZDEHfoZ9hDqxDaNsEAnk7VO6MJ0cqiuYr56hUqGj8xROwJrLTF"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": ", we need to adapt. In this environment, we might simulate by writing the calls one after another: get_user_id, get_user_permissions, check_file_access, then final answer. That might be acceptable.\n\nGiven that the user will see that we had tool calls. An example expected"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "3QJGYHBfvZ7XoZmBc8f7tptNSdOJDnjWAKoeYAQEKR2Drv18MpLHqIlIOlFWDhmnb5CCxVulNClwcvcdwTBBYk5ksJjx73peiYztpWsBV"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " output:\n\n```\n{\n  \"name\":\"functions.get_user_id\",\n  \"arguments\":\"{\\\"username\\\":\\\"charlie\\\"}\"\n}\n```\n\nThen the tool returns: e.g., { \"user_id\":\"12345\" }\n\nThen we output:\n\n```\n{\n  \"name\":\"functions.get_user_permissions\",\n  \"arguments\":\"{\\\"user_id\\\":\\\"12345\\\"}\"\n}\n```\n\nTool returns: { \"permissions\":\""
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "GKoU9aCs72ItPbXIBrWOFJEYjaJDFBAvdp5gjNEB"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "full\" }\n\nThen:\n\n```\n{\n  \"name\":\"functions.check_file_access\",\n  \"arguments\":\"{\\\"user_id\\\":\\\"12345\\\", \\\"filename\\\":\\\"secret_file.txt\\\"}\"\n}\n```\n\nTool returns: { \"access\":\"yes\" }\n\nFinally:\n\n```\nyes\n```\n\nBut the tool call format presumably must be"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "fmXJsijBTwlrKrLTQZ8hGASzEkj8AHIbyhb3FBB0DOoqNGjcrm21QlCReOpJk7bSM8HmQocx9zdqYnn7oAe6ZnLfVwMyFMJtpXqEqU31Ok2nHHcDZvy310D"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " JSON string with name and arguments. After each tool call we might need to produce a response format. The instructions started say: \"Return only one tool call per step.\" So indeed we produce tool calls, not textual explanation in between. But to stream progress we may need textual explanation but maybe"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "0VGZgRfSaHy1N3Dw5b7W7pgnsCqZe3WnYSsrkHyrnLJCRu"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " to keep it simple: we output nothing else except tool calls and final yes/no.\n\nThus:\n\nAssistant step 1:\n\n{\n\"name\":\"functions.get_user_id\",\n\"arguments\":\"{\\\"username\\\":\\\"charlie\\\"}\"\n}\n\nThen waiting.\n\nThen tool response: e.g., {\"user_id\":\"c123\"}\n\nThen"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "hqjh57FdZVe2qJ9AlNaNJ4Mj5KA8jr6lV8N3RffbeDQYj12OHSkrLpN1DjzyZ8FcMt1VBxHmDpcGUr"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " assistant step 2 calls get_user_permissions with that ID.\n\nWe can produce those lines sequentially, but we need to handle the fact that tool responses aren't shown in the message to the actual user. However, it's okay.\n\nThus we will output them sequential"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "lCuc7KUQES9icj3glUb0sjfomKZgr4t03lekVRhV4939OrecFdUJGsKi5DdI1bBmVXjhCqjY32zPn8aSK7fVS5pYniKD"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "ly, with no extra text. The final answer will be just 'yes' or 'no'.\n\nLet's produce that."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "LEnlfM9oGYVQ9JHByCrXuI9RN25y3V3DcC9c6G11RVjlC41SH"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": [
+                  {
+                    "index": 0,
+                    "id": "chatcmpl-tool-9b736be4afa4b2e9",
+                    "function": {
+                      "arguments": "{\"username\":\"charlie\"}",
+                      "name": "get_user_id"
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "Ex9FxWDmAL1MYGOn8vcPd2EshPre0y84wCyOw39DPI4gMShK06LHT27AB"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "veLGFfhY3PpcBWligFdqjbbqvYbHhuXB1JBdgSoHmZU0TjrnxmLIXJD1540M8jYbbn"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-82508ac4f3ad",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 1444,
+            "prompt_tokens": 543,
+            "total_tokens": 1987,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 512
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

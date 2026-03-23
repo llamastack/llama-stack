@@ -1,0 +1,326 @@
+{
+  "test_id": "tests/integration/responses/test_structured_output.py::test_json_schema_boolean_types[openai_client-txt=bedrock/openai.gpt-oss-20b]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Generate a user profile for Alice who is active with verified email"
+        }
+      ],
+      "response_format": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "UserStatus",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "username": {
+                "type": "string"
+              },
+              "is_active": {
+                "type": "boolean"
+              },
+              "email_verified": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "username",
+              "is_active",
+              "email_verified"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      }
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-71c2066c00aa",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "YusgVZSh4Nho7eENPnKBLdXeDJGcIKlXgwPY1W6AKgKt7xNLntdfHZMAG6tFQQ9lB31HxgIme7kJuSJsryslnWBwLf8hzPq5DWaCK1ndWTUFZvjUlKQisx9Wu"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-71c2066c00aa",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "The user asks: \"Generate a user profile for Alice who is active with verified email\". They want a user profile presumably for some system. We should produce a plausible profile: username, email verified status, activity metrics, maybe role, preferences, etc. We should output as a structured profile. The user didn't specify the format, so we can choose a JSON, or a textual list."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "tZFJSvg40wCFf6wYuETnzcu65FJkoopUkVVOaCKRCJPgyG3n5E"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-71c2066c00aa",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " Maybe provide a table. The \"active with verified email\" hint means that we should emphasize that their email is verified and they are active. Perhaps include last login, posts, etc.\n\nLet's produce"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "30ODiyZM2VC40GLQqt8FcbZw8eAlGF60o41cDsAhQCyDlOVNjR5"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-71c2066c00aa",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " a detailed user profile: Name, Username, Email, Email verified: yes, status active, last login date, number of posts, community engagement, etc. Provide personal details optional. Provide preferences: maybe language, timezone. And include privacy"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "EFc1sltaMcOysvhWOxFsLZBQMU2eEL3YsAtzPQdMrn0apOa7sDsLGThPZuLwCjWu5BNrwnAFLPE0gcuurmCgTXYIzFcW67zOGJGNlTemvZWcCge87a1vlx"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-71c2066c00aa",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " settings maybe. The user just asked to generate. So output accordingly. Shouldn't overly assume environment. We can create like:\n\nUser Profile:\n- ID: ...\n-"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "YCLl2pkhfS94HTNR6u6U1rJ9fQCP4ymST4DsiG0hn8cnFF9IdWbe454XVxZkj7jClkI1iiA3hwRcuVxOMKCyIafiR7MnGx0M1HK6gZ7H4BXUw71K1"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-71c2066c00aa",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " Username: alice123\n- Email: alice@example.com (verified)\n- Account status: Active\n- Last login: ...\n- Activity: posts, likes, etc.\n\nAdd more realistic details: Age group, interests. In addition,"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "uf8Qvax1ZyRBHRNEQdMjMgYUoM3DL0DRlbs9sqRjUGkVzF5oFLTzAC7tvjYC2fTnRDRuC42l1KZrX5p0tPFKMexFLfzW00FnuZ4QQ5pjJxPHelv0hB4"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-71c2066c00aa",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " we could include a small biography.\n\nLet's produce."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "fQcVBd0pHV0wQUVqt8ALFL9IM41fup1JIfPCGn3b9FVTZHVwUoxCdB0CyiRbifO0OVpL8YoSdHeWFK2a1sNAGDUp27I15Sb0C"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-71c2066c00aa",
+          "choices": [
+            {
+              "delta": {
+                "content": "{\"username\":\"alice123\",\"is_active\":true,\"email_verified\":true\n  \t}",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "pKNBRx2HtazCdAp8Q7meCvjWDsLceDwCf3jcZVKg8osulUQJCdffrtk3r2CI2hViZcMawvETqJpYXNlouAAHulAlbf8mfqgLGbJlWytEdyk26iSb8KPQl"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-71c2066c00aa",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "GN7BNusQn9fZMYF16yTJ3y8899ADoOj5aSnipRVQQmyvEHEHSIF2J4sx6M9h0hFBxKN"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-71c2066c00aa",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 286,
+            "prompt_tokens": 77,
+            "total_tokens": 363,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": null
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

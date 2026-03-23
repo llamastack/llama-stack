@@ -1,0 +1,266 @@
+{
+  "test_id": "tests/integration/responses/test_structured_output.py::test_json_schema_nested_objects[openai_client-txt=bedrock/openai.gpt-oss-20b]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Generate an employee record for Susan (ID 1001) in Engineering department managed by Frank"
+        }
+      ],
+      "response_format": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "EmployeeRecord",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "employee": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "employee_id": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "name",
+                  "employee_id"
+                ],
+                "additionalProperties": false
+              },
+              "department": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "manager": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "manager"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "employee",
+              "department"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      }
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-b4bf49666c4c",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "fVKxJvuhP4UAXnucu73doLNh9szlUMR11vkJc94HTo03j3tqis2to9acrDMAqxQrBjzCNooTa0rcgniZhVnZclcCjBwUvJxSjF14lbg0lXg"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-b4bf49666c4c",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "We need to generate an employee record. Likely fields: Name, ID, Department, Manager, maybe others. Provide in suitable format. They didn't specify format but likely JSON or table. We'll generate JSON record. Include ID 1001, name Susan, department Engineering"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "UUEuxnZ3D4dA1EuFcOGle0Bz8inGC2C8RU2CKnARhe9aIWRlDCjvuJzPgzTH1fpWn33TATEXFV2lfwVOxbkjCm7UQvqYL7DGXGvdt7rvwoQj8eZ8ivFcrjciMR9Wbf5v"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-b4bf49666c4c",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": ", manager Frank, other typical fields: title/role, hire date, email, etc. Provide a record. Ensure correct."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "Zw1LXp6VGV2zmbn2AACehxRrXDatgUA8ptWfrvmWVb5FhZ8"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-b4bf49666c4c",
+          "choices": [
+            {
+              "delta": {
+                "content": "**Employee Record \u2013{\"employee\": {\"name\":\"Susan\",\"employee_id\":1001},\"department\":{\"name",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "QPp6BVjPbsXvZ4LHDVpTGvHZUfFleBs1TtGmrkAvPa1BOcBpnC10w2GyCVCjwVSLmOAzFK2SPgTIVFVv"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-b4bf49666c4c",
+          "choices": [
+            {
+              "delta": {
+                "content": "\":\"Engineering\",\"manager\":\"Frank\"} }",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "Sa0dS3oUcjj7S93ejIRfM04TgcYcFVrFkP3nJm3JkjJeoNiHvgWV3a9RwaQkj8GgEkWOGLVyiquRI1UA"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-b4bf49666c4c",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "mJe7wUfGCHhhBeRTdtjohb4DZmyZ5Wb7cdFHGcadxwIrgPlkave5v0t7WesuBQVsVhqtkiAYRnymmMuZq1WyUFgLQH1Lv6KiDCKm9PdJtJe"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-b4bf49666c4c",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 120,
+            "prompt_tokens": 83,
+            "total_tokens": 203,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 32
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

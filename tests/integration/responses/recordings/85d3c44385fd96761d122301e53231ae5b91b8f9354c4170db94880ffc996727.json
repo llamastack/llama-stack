@@ -1,0 +1,172 @@
+{
+  "test_id": "tests/integration/responses/test_openai_responses.py::TestOpenAIResponses::test_openai_response_with_service_tier_and_previous_response[txt=bedrock/openai.gpt-oss-20b-priority]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is 8+8?"
+        },
+        {
+          "role": "assistant",
+          "content": "8\u202f+\u202f8 equals 16."
+        },
+        {
+          "role": "user",
+          "content": "What is 9+9?"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "service_tier": "priority"
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-85d3c44385fd",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "fenq33B8rDxrRo8Hb7SByOsMPGJ6IKwnloXroXKPGGdQU8XKNpfJNVFHKe6plKZ3B1Niy4L38kyB5Swq3bsc4W5IbC3YLDMmedUvIpXUoRN5amBMxau76Tz"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "priority",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-85d3c44385fd",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "User asks \"What is 9+9?\" It's straightforward: 18."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "adNfOJFsXUFu76J9ZrTUaLiMeZlGw0UgwAlqrQ8xlAAk8ePOWipHaDYCj0lCWOWqIeci0lytJb3tN8rDEnD8fRaljFox6twbB43yCH29AmTZFbyPebTwa1V"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "priority",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-85d3c44385fd",
+          "choices": [
+            {
+              "delta": {
+                "content": "9\u202f+\u202f9 = **18**.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "GMPONBGWZvJium6QT4mHekxXDwKsMPBHNTXf6LyPBzeJpCx3wdvw3mDfZpVn6UaUUH1YHWd06eZMuyIqtWWhA4JAKShTPxLaatEjwTB4PYdZw9JCI"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "priority",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-85d3c44385fd",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "tdPqSkiwNEM62F5EQox4AzLImPhWrVq8KN1jyF9ZfIoyoELcUW2ZvCrP4syt2SQs264mzfA3DW0nn4AgNPwCByBocuORYkfup4gIKpCuw9Gq0FV4p"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "priority",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-85d3c44385fd",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "priority",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 36,
+            "prompt_tokens": 98,
+            "total_tokens": 134,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 48
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

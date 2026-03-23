@@ -1,0 +1,539 @@
+{
+  "test_id": "tests/integration/responses/test_file_search.py::test_response_file_search_streaming_events[openai_client-txt=bedrock/openai.gpt-oss-20b]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What are the marketing updates?"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "chatcmpl-tool-b2ea9cf1218f49c6",
+              "type": "function",
+              "function": {
+                "name": "file_search",
+                "arguments": "{\"query\":\"marketing updates\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "chatcmpl-tool-b2ea9cf1218f49c6",
+          "content": [
+            {
+              "type": "text",
+              "text": "file_search tool found 4 chunks:\nBEGIN of file_search tool results.\n"
+            },
+            {
+              "type": "text",
+              "text": "[1] document_id: file-530504802569, score: 0.003063032207454625, attributes: {'region': 'us', 'category': 'engineering', 'date': 1680307200.0, 'filename': 'us_engineering_q2.txt', 'file_id': 'file-530504802569', 'chunk_id': '084e15ad-480a-eae8-9242-391c53854867', 'document_id': 'file-530504802569', 'token_count': 18.0, 'metadata_token_count': 44.0, 'chunk_tokenizer': 'tiktoken:cl100k_base'} cite as <|file-530504802569|>\nUS technical updates for Q2 2023. New features deployed in the US region.\n"
+            },
+            {
+              "type": "text",
+              "text": "[2] document_id: file-530504802568, score: 0.00301975206110427, attributes: {'region': 'us', 'category': 'marketing', 'date': 1672531200.0, 'filename': 'us_marketing_q1.txt', 'file_id': 'file-530504802568', 'chunk_id': 'a40d303b-40f6-42c8-a616-7a6276329426', 'document_id': 'file-530504802568', 'token_count': 21.0, 'metadata_token_count': 44.0, 'chunk_tokenizer': 'tiktoken:cl100k_base'} cite as <|file-530504802568|>\nUS promotional campaigns for Q1 2023. Revenue increased by 15% in the US region.\n"
+            },
+            {
+              "type": "text",
+              "text": "[3] document_id: file-530504802570, score: 0.002866717244815973, attributes: {'region': 'eu', 'category': 'marketing', 'date': 1672531200.0, 'filename': 'eu_marketing_q1.txt', 'file_id': 'file-530504802570', 'chunk_id': 'a1b887d4-0741-1542-6e7d-0e156f032a31', 'document_id': 'file-530504802570', 'token_count': 17.0, 'metadata_token_count': 44.0, 'chunk_tokenizer': 'tiktoken:cl100k_base'} cite as <|file-530504802570|>\nEuropean advertising campaign results for Q1 2023. Strong growth in EU markets.\n"
+            },
+            {
+              "type": "text",
+              "text": "[4] document_id: file-530504802571, score: 0.001959742740704529, attributes: {'region': 'asia', 'category': 'sales', 'date': 1688169600.0, 'filename': 'asia_sales_q3.txt', 'file_id': 'file-530504802571', 'chunk_id': 'fc497e92-16bb-9869-2360-de27e3da396f', 'document_id': 'file-530504802571', 'token_count': 17.0, 'metadata_token_count': 43.0, 'chunk_tokenizer': 'tiktoken:cl100k_base'} cite as <|file-530504802571|>\nAsia Pacific revenue figures for Q3 2023. Record breaking quarter in Asia.\n"
+            },
+            {
+              "type": "text",
+              "text": "END of file_search tool results.\n"
+            },
+            {
+              "type": "text",
+              "text": "The above results were retrieved to help answer the user's query: \"marketing updates\". Use them as supporting information only in answering this query. Cite sources immediately at the end of sentences before punctuation, using `<|file-id|>` format like 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'. Do not add extra punctuation. Use only the file IDs provided, do not invent new ones.\n"
+            }
+          ]
+        }
+      ],
+      "parallel_tool_calls": true,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "file_search",
+            "description": "Search files for relevant information",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "The search query"
+                }
+              },
+              "required": [
+                "query"
+              ]
+            }
+          }
+        }
+      ],
+      "service_tier": "default"
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "8ZkJMoGugssIYhzPracJHjCYIUTaj8nwAtoz4FV18KIzy6xpWFHxGRjhPuu4Ihjfyz90eqSsBSPyeW3HL7LxWm27SgWEc3k1th6AaWj5jQlAqPfBypaikwAH60G"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "We need to answer \"What are the marketing updates?\" Use these search results. There are marketing category files: US and EU. Provide marketing updates. Provide info: US promotional campaigns Q1 2023 revenue increased 15% in US. EU advertising campaign"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "HZINlLZu6mCTKMdQh7iOs8vjT0z5lKDTJ1B7uS5IgIQkm1p2wZSpDSxVFqqHIPYnzA7xhFL9E4mD5S62re04xsCgO5zvZFVeQRJomdttIKQHHHKVrpTmbWaZsTz2V"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " results Q1 2023 strong growth in EU markets. Maybe mention Q2 technical updates but that's engineering. The question ask marketing updates. Maybe mention next quarter? But only references are Q1. Could say:"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "9nULQNyNQHLgZiT3Y8lW63GDPgwPIfh99WXYswpp9H9cS2SYPhvmKmvAD7HVNUW6BynuwIgNDDE"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " \"US promotional campaigns for Q1 2023, revenue increased by 15%\". \"European advertising campaign results for Q1 2023, strong growth\". Could also maybe note that the US and EU marketing updates are from Q1 2023. Provide citations. Use the IDs: file-530504802568 for US marketing,"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "4ZRoCmpW9uQ5yslPIVidJpMr1cqaS0k7QU3VJGAX4EJOrZPMPUB1kapCDbHioFGVG8zPyFrp3PwuHjBWqli4hoUQzrqiVpfZAvPeD0llgELnhG"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " file-530504802570 for EU marketing. Cite each sentence.\n\nMention that US promotional campaigns were effective, increased revenue 15%, etc. European had strong growth.\n\nMake sure no extra punctuation. Use citations before punctuation like: \"This increased revenue 15% in the US"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "pxRdAKiaos8I4cwIFLDm33yhgPXjcLMbehv3CBA5vvB1OudSwYnkDiZDyfYRBZse94EnGenO2fFMcASRWbCVDP"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " region <|file-530504802568|>.\" Wait to include punctuation after. But instruction: \"Cite sources immediately at the end of sentences before punctuation.\" So end of sentence before punctuation: \"This increased revenue 15% in the US region <|file-530504802568|>.\" Then punctuation after? It says"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "vUbFslt3ZavcrSz1WBr2woj9SiE6Y1IgvZZ0qED6s4P8avvL1DhMpxmDAWZyUi2pBl5NeB5gZcejvXZAOsy1TioEBWma1pu0mHDThmCkQ7nd7nsO2ijsS6Pdg"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": ": \"Use citations immediately at the end of sentences before punctuation\". That means you place the citation just before the period or comma. E.g., \"This increased revenue 15% in the US region <|file-530504802568|>.\" That is correct. Avoid extra punctuation after citation? The punctuation is"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "5UEC59DhAFYuUh9TlCbCOyjbwslwa1teLje89L2J0N116yztLxYveyMlFIJesoIrQ483dOXC8"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " after the citation, it's part of the sentence end. So okay.\n\nFor EU: \"European advertising campaign results for Q1 2023 show strong growth in EU markets <|file-530504802570|>.\" Also mention.\n\nAlso mention that these are Q1 202"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "yejZeGsripdRAEHChpHDqUeCYmTophnvZHtAbR4Y6rAUIn88wOO9B2swyTKQYpRv0bsFj3gi64Q5R40bV1QFHEXULn9y3S9Ph328mhMOBxN3AmGJyj4BtoyE2"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "3 marketing updates. Provide context: These updates refer to Q1 2023. That could be a separate sentence: \"These marketing updates cover Q1 2023 activities <|file-530504802568|> <|file-530504802570"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "WazaNa8cwjksTw91fvXSIYmH62q7P7m9xsgOa6iGHsorBVoNVIsQ8w3e3Xs75rbcVmniFxXS0FOJBl217mJP4rlHNP9BSRI2"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "|>.\" But maybe combine. Use minimal.\n\nWe can state: \"In Q1 2023, the US saw a 15% revenue increase from promotional campaigns <|file-530504802568|>.\" \"In the EU, the advertising campaigns delivered strong growth in EU markets"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "PvxVRM8T2HeJbXtlPyuFrNFP3E5DdcQf9qlHJqhQQhx2IXfF2kB1uupnJOjwKhmjrJi4MZbsJQaslQHgfFgawvQ0IzZG6fu7H93E3PHQJ"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " <|file-530504802570|>.\" That is likely enough.\n\nBut question: \"What are the marketing updates?\" Provide as bullet list or paragraph. Use citations. No extra punctuation beyond required.\n\nLet's do paragraph with two sentences. Use citations. Ensure no extra punctuation. Provide sources.\n\nEnsure not to add extraneous punctuation like semicolons. Use full stops"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "SCU6JnR8cO5zj3cGQ5JCzv6VbJstv3uhHieT2hg2vJ7kZaUkGFdyGGc2xUgb81HLq8qGEQzi7OYWMLcGfZdwpn9d20eaFo0d9Z8SKIj43yUwDjK7g66"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": ".\n\nOk."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "UYfSZ7xw388E8DAJYIiW9QlxTvCzoMNtEWqCv8Nej0GEGI0zP9z1o"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": "In Q1\u202f2023 the US marketing team ran promotional campaigns that lifted revenue by\u202f15\u202f% in the region <|file-530504802568|>. In the same quarter the EU advertising efforts delivered strong growth across European",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "2f1chf19KJiDFb8khhGiXnewsjV4D7VYpO9sOmRXtgGiXeWnLO81HyKF6kHhluBwC0NqPWnPHFHTFfUd"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": " markets <|file-530504802570|>.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "3zI9gfld7TBgefDQ8txRdYh9ctN9fpBfIH9Anku4g5cNwli59cuHnr6cl8zPmmM5zD"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "oanMy3GoFZPqOwY7QjwUPHFN03TGyNzXeS9mckpWkf8gjgkNkbxq9RSqijesJfPQ9nOeCBmLza6OBMcpCLCaI0Fr2nSJGhJ1Dg2cIuS9TWvOTRJ6BKfCLbGlq3osN"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-22e48e9004f0",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 668,
+            "prompt_tokens": 980,
+            "total_tokens": 1648,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": null
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

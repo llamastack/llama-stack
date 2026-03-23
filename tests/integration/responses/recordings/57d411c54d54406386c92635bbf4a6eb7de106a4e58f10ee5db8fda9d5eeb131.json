@@ -1,0 +1,533 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_multi_turn_streaming_web_search[openai_client-txt=bedrock/openai.gpt-oss-20b]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the latest Python version?"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "chatcmpl-tool-b0e723e3b1b14328",
+              "type": "function",
+              "function": {
+                "name": "web_search",
+                "arguments": "{\"query\":\"latest stable Python version March 2026\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "chatcmpl-tool-b0e723e3b1b14328",
+          "content": "{\"query\": \"latest stable Python version March 2026\", \"top_k\": [{\"url\": \"https://www.python.org/downloads/source/\", \"title\": \"Python Source Releases\", \"content\": \"Stable Releases \\u00b7 Python 3.12.13 - March 3, 2026 \\u00b7 Python 3.10.20 - March 3, 2026 \\u00b7 Python 3.11.15 - March 3, 2026 \\u00b7 Python 3.13.12 - Feb. 3, 2026 \\u00b7 Python 3.14.3 -\", \"score\": 0.8539252, \"raw_content\": null}, {\"url\": \"https://blog.python.org/2026/03/python-31213-31115-31020/\", \"title\": \"Python 3.12.13, 3.11.15 and 3.10.20 are now available!\", \"content\": \"Python 3.12.13, 3.11.15 and 3.10.20 are now available! Thomas Wouters / March 3, 2026. releases \\u00b7 Python Releases For Your Security! New security releases\", \"score\": 0.8025714, \"raw_content\": null}, {\"url\": \"https://www.python.org/doc/versions/\", \"title\": \"Python documentation by version\", \"content\": \"Python 3.11.15, released on 3 March 2026 \\u00b7 Python 3.11.14, released on 9 October 2025 \\u00b7 Python 3.11.13, released on 3 June 2025 \\u00b7 Python 3.11.12, released on 8\", \"score\": 0.77137923, \"raw_content\": null}, {\"url\": \"https://www.reddit.com/r/archlinux/comments/1q3o9ri/latest_python_upgrade_313_314_on_jan_3_2026/\", \"title\": \"Latest Python upgrade (3.13 -> 3.14) on Jan, 3 2026 (!!) : r/archlinux\", \"content\": \"Latest Python upgrade details for Arch Linux. Python 3.14 release date and features. Current stable version of Python. Django latest version\", \"score\": 0.7533401, \"raw_content\": null}, {\"url\": \"https://www.python.org/downloads/\", \"title\": \"Download Python - Python.org\", \"content\": \"Python 3.11.15 March 3, 2026 Download Release notes \\u00b7 Python 3.11.14 Oct. 9, 2025 Download Release notes \\u00b7 Python 3.11.13 June 3, 2025 Download Release notes\", \"score\": 0.72698855, \"raw_content\": null}]}"
+        }
+      ],
+      "parallel_tool_calls": true,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "web_search",
+            "description": "Search the web for information",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "The query to search for"
+                }
+              },
+              "required": [
+                "query"
+              ]
+            }
+          }
+        }
+      ],
+      "service_tier": "default"
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "QMncLwVgeHdInM07HmXe7nvA8FSp4o1v1uLQrl4uRzFOGBTs4puz1hKLSofuGCH7RHHi3JsTqIeNCS2onVlTr0ykvmDSx6ddrpCSUExNuF6cHZd6UpKUINY3DOJ"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "The web search returned some results. Latest stable Python version: As of March 2026, Python 3.12.13 is stable. There's also 3.13.12 released Feb 3, 2026, and 3.14.3 (but that might be preview or dev"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "jR9nnObGbSa0UbMKGRPoBJ2FDmRqQXDSWRns8WSMj4qho0EY7MTf9bUJTK7nhURmEhGmTsFwirsI"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "? Actually 3.14 might have a stable release or may be preview. Usually 3.14 stable may come in October 2024. But the search shows 3.14.3 maybe stable? But "
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "O2xVW2bT6f92ecY2UAEOcYFkkz2IrydTQYGgLKw"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "3.13 and 3.14 are pre-1 year releases. Usually the stable release cycles: 3.12 stable cycle, 3.13 etc. As of March 2026, 3.12.13 is stable. So I'd answer: Python 3.12.13 is"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "PDv1JDGACLxcPAdcbrPb4oVmw6gIFw4g2Lm99XxKRrQWxnXdoE0XfAipxsRCdKcJ8lgEWkIOkFfg2SN4urXpGxcKIyKdbJNRNqRyRiiJusb"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " the latest stable release. I'd also mention 3.13.12 as newer but not yet stable? Wait research says python.org shows \"Python 3.13 Alpha\" maybe? But search"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "7gAwxCE1RfkTxHhL0vuvDsfGd70Qq4ClZbA98R3DPxKI3EztqLkOAtMku1sN"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " shows 3.13.12 (looks like stable release? Wait 3.13 only just launched). But stable releases list: The \"source releases\" page lists 3.12.13, 3.11.15 etc. It might"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "TbMahUWWq4wVV4sJeoasZ6Kg7BlBAYqN7Uj603eyX2Lyv4pfLEBntNIZmfQDUbmAXlAOIAoGBJseyE965BDxkwxC7bWB22naw0ByLdO2z2SjzXGkE"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " not list 3.13 because it's not stable? Wait 3.13.12 could be a release from 3.13? I'd need to verify. The search result shows 3.13.12 with Feb. 3, 2026 maybe the official release? Actually 3.13 stable release occurs around"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "VqQKSr41k5QpphFSPvZSrsIS3NZl1tjQjpVnedAjscmfm1aBOn9T3cQP8805vbbdHcF6M5KT4cIzF7I0IL3uqAX5rn3602I7qZ3d2Np599UmAc9mnMpVbgDdf"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " Oct 2025? Wait 3.13 stable may be around Oct? Let's check official canonical: 3.13 stable release expected 2025-10-03? But maybe it's earlier. But the search: \"Python 3.13.12"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "LWpgNVB58JD3s6LGTJooJyEmZyh0kOXZMgR2vHbiYKiXqeZweE1KU0W4gypz3FklLbK0h0SshKjbHI8uxAqNnxkNBpLYZNEhSVKU5II3wbknQ2coIIITU7yLp"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " - Feb. 3, 2026\" implies after 3.13.12. Usually Python releases series 3.13 got a stable release 3.13.0 in Oct 2025, then patch releases 3.13.1 etc. So 3.13.12 is patch. So"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "r6QyZGwc9H5rJlyBn3plmVy4Y3SaJXrKIHjDqO8tVYvvAbu0jg4J66gPXtxH664eZ"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " 3.13.12 is stable. So actually 3.13 series is stable. So the latest stable release would be 3.13.12. Are there 3.14? Search: 3.14.3 - maybe stable release? But Python 3.14 might not be stable until 2026? Actually Python 3.14 stable was planned"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "YYpjXhv9rv2lCRoSN0oU5CWRSG8eehdz8OjehSvUggTS9h"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " for March 2026? Wait 3.14 stable could be scheduled for 2026. But the search shows 3.14.3 - maybe an alpha? That might be \"3.14.0a3\" maybe incorrectly as 3.14.3? No \"3"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "n0UiT3U5I2NLFjd4uymezIpmyTkaaDVO9Lhx10SLECWzeTdZA75eIT0cHWDCodUYNHd"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": ".14.3\" could be a patch release after 3.14.0? Let's confirm.\n\nLet's do a quick web search again for \"Python 3.14.3 stable release\"."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "GuC8s5F4cgIYJaN1rCOANdKOQUCA06NbHG4G6a"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": [
+                  {
+                    "index": 0,
+                    "id": "chatcmpl-tool-aee72ebf479cac42",
+                    "function": {
+                      "arguments": "{\"query\":\"",
+                      "name": "web_search"
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "MzPdjqh88KcYEGiT7V2jy4Bk4Tn0sB8pgi4pVVwIKcAVvrU4U"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": [
+                  {
+                    "index": 0,
+                    "id": null,
+                    "function": {
+                      "arguments": "Python 3.14.3 stable release\",\"top_k\":5}",
+                      "name": null
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "R5GTne9t7z2LgNq6VbiJpiesG30CqsIp6cYfm5Dbww8IUKAITIT4FD8AGUk6oUzdPnsWdkhWHIF7VjHFUNNSZfMkeOPdM0PsJGW"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "9MIQPSPbftTfhgov1KrMMZFNmrYYCE5gvIX7oWhmA6Eo7YfW2Rjxg8aI0gYOvnSYU8tswDIEOyOMzovvqn8ArlEf6g9H1KjIMRz7X0DwxHRkMZ0re8JwfDb17krSJUP9"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-57d411c54d54",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 656,
+            "prompt_tokens": 795,
+            "total_tokens": 1451,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 64
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

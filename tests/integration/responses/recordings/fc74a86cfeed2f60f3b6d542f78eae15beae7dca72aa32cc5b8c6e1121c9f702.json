@@ -1,0 +1,434 @@
+{
+  "test_id": "tests/integration/responses/test_structured_output.py::test_json_schema_nested_objects[client_with_models-txt=bedrock/openai.gpt-oss-20b]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Generate an employee record for Susan (ID 1001) in Engineering department managed by Frank"
+        }
+      ],
+      "response_format": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "EmployeeRecord",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "employee": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "employee_id": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "name",
+                  "employee_id"
+                ],
+                "additionalProperties": false
+              },
+              "department": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "manager": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "manager"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "employee",
+              "department"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      }
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-fc74a86cfeed",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "nTvbVG2jT3PY17ilm5vLan9oQId8yvejsuEa5ByPfq1g87SRqCfFgtgR0HIUzhxdmu9uRaLF8XqHAZ2bqjVgcXGHUswrpOWEsb"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-fc74a86cfeed",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "The user wants an employee record for Susan (ID 1001) in Engineering department managed by Frank. They didn't specify format. Probably a structured record: Name, ID, Department, Manager, maybe Title, Biography, contact email, phone, date hired, etc. Should be something like:\n\n```\nEmployee Record: Susan\n...\n"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "FY5wI1LZsA9ZFYCXXSBGLAQSiKvepA3tZxz8G6GZ4chZX87hNUNA1sSA7bnYRh5ycJzhnDJyVnQZ7ZdDe3ijodZnH4YNd3p5Lp"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-fc74a86cfeed",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "```\n\nWe need to respond. Maybe include developer-friendly format: JSON, or simple text. Provide names and details: Susan (some last name?), e.g., \"Susan Lee\" etc. Let's assume first name only?"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "sE4AVHiuYEiQVoYW3ssfFrfeUjbkcUbAwQJDKFKgGTFJKD5hB9dfNGOWatTogIpYsHmlXUKQbdh8rzIra9UpOD6Y2aC4uj9B"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-fc74a86cfeed",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " But \"Susan\" is given. They didn't give last name. We can assume Susan plus maybe last name \"Smith\". Provide fields: ID, Name, Department, Manager, Title, Email, Phone, Hire Date... Provide with sample data.\n\nSince they didn't specify format, we can give a neatly formatted record. For example:\n\n```\nName:"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "VhKYnbHjxrdMPvjwhEyzX3ljkhgQFF26Nqv9eqe1u4moEIowFP3lLouJyCMUSgygpB"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-fc74a86cfeed",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " Susan [LastName]\nID: 1001\nDepartment: Engineering\nManager: Frank [LastName]\nTitle: Software Engineer\n...\n```\n\nBut to avoid guesswork, we could use \"Susan\" as first name, we can assign last name \"Doe\". Similarly for Frank, maybe \"Frank Johnson.\" Provide a"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "15SjR1nVFrTSk9bwotIyyY2KICA94Q5i5W9bqb2XSZfN0vKzo6gA14H7Tvcga9VqHScGFWd8V9YzcQV8WTiGZrpmkFXHb7SGHImbGMWO7wpPa6Y"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-fc74a86cfeed",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " bit of context. Provide a short bio. Provide contact details: email, phone.\n\nAlternatively, could supply JSON:\n\n```\n{\n  \"id\": 1001,\n  \"first_name\": \"Susan\",\n  \"last_name\": \"Smith\",\n  \"department\": \"Engineering\",\n  \"manager\": {\n      \"id\": 2001,\n      \"name\": \"Frank Johnson\",\n      \"department\": \"Engineering\"\n  },\n"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "hy8NbeR6rGuG4FjU0nMdIUT3IxhevA8NLJ6v4W679OTny7uwLq6KUEh1z"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-fc74a86cfeed",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "  \"title\": \"Senior Software Engineer\",\n  ...\n}\n```\n\nProbably we should respond with a sample record in plain text and also provide a JSON representation.\n\nThe user: \"Generate an employee record for Susan (ID 1001) in Engineering department managed by Frank\". So we can interpret that as an employee record: so essentially they'd want data"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "xMeotEkKuMYBjGFktkyaar60pERoNVHBmQBkeHcRsEpEoOF1HRpXTtNkecdA0slIcjWW"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-fc74a86cfeed",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " for Susan.\n\nI'll respond with a text record and a JSON record. Use placeholders for details we don't know.\n\nWould user want hidden actual email? It's best to say \"susan.smith@example.com\". Provide phone number: \"555-1234\". I'd"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "QUB3j5079dHBwiFKo49Dgve3wRmwsnvczZtlo6t7RmEG09gPqxyGkVE6oHTpO8MRwF7U3mgND4pA9nvBIPk1AUOLeWHCcpa5KEdieaWBq4KiHOm9tLgpgo1q5DEJkB"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-fc74a86cfeed",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " describe hire date: e.g., \"2020-06-15\".\n\nAlright, let's compose.\n\nWe can also mention that Frank is Susan's manager and his ID or name.\n\nI'll produce the record."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "UzoVEfydPBt0XniRRw970X6GtuPM4O7kZnznhYNOrtNdUxuSBcrJmejtHbqrWsrqKR7Od3qt"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-fc74a86cfeed",
+          "choices": [
+            {
+              "delta": {
+                "content": "{\"employee\":{\n  \"name\":\"Susan Smith\",\n",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "56yTzsNLL0e9b6cRO4TxEwAnDPAip650JCagQwaOUgCSCb3BwXIoSPkdGHbXkBhDfkjjAN0rgsCGuJ2EY9q6Bhz80u6ypO2zdMf63XHprcb1rgv"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-fc74a86cfeed",
+          "choices": [
+            {
+              "delta": {
+                "content": "  \"employee_id\":1001\n  },\"department\":{\n  \"name\":\"Engineering\",\n  \"manager\":\"Frank Johnson\"\n  }   \n}",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "EkP7mM7gRP6b5JViftohHH5qLOcgdIsL8tSfKIPTddblg"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-fc74a86cfeed",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "7BwloghxER7Zvva7o9oSnt5CRDV8wIVnXr6CweYimijlu5ERCWIvXR6wR5Tb"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-fc74a86cfeed",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 547,
+            "prompt_tokens": 83,
+            "total_tokens": 630,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 32
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

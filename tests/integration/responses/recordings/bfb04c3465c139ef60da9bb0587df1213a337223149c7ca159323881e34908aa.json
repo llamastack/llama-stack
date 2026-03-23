@@ -1,0 +1,24 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_multi_turn_streaming_web_search[openai_client-txt=bedrock/openai.gpt-oss-20b]",
+  "request": {
+    "test_id": "tests/integration/responses/test_tool_responses.py::test_response_multi_turn_streaming_web_search[openai_client-txt=bedrock/openai.gpt-oss-20b]",
+    "provider": "tavily",
+    "tool_name": "web_search",
+    "kwargs": {
+      "query": "latest stable Python version March 2026"
+    }
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.tools.models.ToolInvocationResult",
+      "__data__": {
+        "content": "{\"query\": \"latest stable Python version March 2026\", \"top_k\": [{\"url\": \"https://www.python.org/downloads/source/\", \"title\": \"Python Source Releases\", \"content\": \"Stable Releases \\u00b7 Python 3.12.13 - March 3, 2026 \\u00b7 Python 3.10.20 - March 3, 2026 \\u00b7 Python 3.11.15 - March 3, 2026 \\u00b7 Python 3.13.12 - Feb. 3, 2026 \\u00b7 Python 3.14.3 -\", \"score\": 0.8539252, \"raw_content\": null}, {\"url\": \"https://blog.python.org/2026/03/python-31213-31115-31020/\", \"title\": \"Python 3.12.13, 3.11.15 and 3.10.20 are now available!\", \"content\": \"Python 3.12.13, 3.11.15 and 3.10.20 are now available! Thomas Wouters / March 3, 2026. releases \\u00b7 Python Releases For Your Security! New security releases\", \"score\": 0.8025714, \"raw_content\": null}, {\"url\": \"https://www.python.org/doc/versions/\", \"title\": \"Python documentation by version\", \"content\": \"Python 3.11.15, released on 3 March 2026 \\u00b7 Python 3.11.14, released on 9 October 2025 \\u00b7 Python 3.11.13, released on 3 June 2025 \\u00b7 Python 3.11.12, released on 8\", \"score\": 0.77137923, \"raw_content\": null}, {\"url\": \"https://www.reddit.com/r/archlinux/comments/1q3o9ri/latest_python_upgrade_313_314_on_jan_3_2026/\", \"title\": \"Latest Python upgrade (3.13 -> 3.14) on Jan, 3 2026 (!!) : r/archlinux\", \"content\": \"Latest Python upgrade details for Arch Linux. Python 3.14 release date and features. Current stable version of Python. Django latest version\", \"score\": 0.7533401, \"raw_content\": null}, {\"url\": \"https://www.python.org/downloads/\", \"title\": \"Download Python - Python.org\", \"content\": \"Python 3.11.15 March 3, 2026 Download Release notes \\u00b7 Python 3.11.14 Oct. 9, 2025 Download Release notes \\u00b7 Python 3.11.13 June 3, 2025 Download Release notes\", \"score\": 0.72698855, \"raw_content\": null}]}",
+        "error_message": null,
+        "error_code": null,
+        "metadata": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

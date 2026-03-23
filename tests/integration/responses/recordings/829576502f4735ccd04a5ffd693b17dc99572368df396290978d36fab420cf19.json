@@ -1,0 +1,261 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_streaming_web_search[openai_client-txt=bedrock/openai.gpt-oss-20b-llama_experts]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "How many experts does the Llama 4 Maverick model have?"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "chatcmpl-tool-abeb0c53f5821a5a",
+              "type": "function",
+              "function": {
+                "name": "web_search",
+                "arguments": "{\"query\":\"Llama 4 Maverick experts number\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "chatcmpl-tool-abeb0c53f5821a5a",
+          "content": "{\"query\": \"Llama 4 Maverick experts number\", \"top_k\": [{\"url\": \"https://www.youtube.com/watch?v=_xTA17bKjF4\", \"title\": \"Llama 4 Maverick - Everything You Need To Know - YouTube\", \"content\": \"... Llama 4 #Maverick, a 17-billion-parameter model utilizing a mixture-of-experts (MoE) architecture with 128 experts. This design enables Maverick\", \"score\": 0.826278, \"raw_content\": null}, {\"url\": \"https://openrouter.ai/meta-llama/llama-4-maverick\", \"title\": \"Llama 4 Maverick - API Pricing & Providers - OpenRouter\", \"content\": \"# Meta: Llama 4 Maverick. ### meta-llama/llama-4-maverick. Llama 4 Maverick 17B Instruct (128E) is a high-capacity multimodal language model from Meta, built on a mixture-of-experts (MoE) architecture with 128 experts and 17 billion active parameters per forward pass (400B total). Maverick features early fusion for native multimodality and a 1 million token context window. Released on April 5, 2025 under the Llama 4 Community License, Maverick is suited for research and commercial applications requiring advanced multimodal understanding and high model throughput. ## Providers for Llama 4 Maverick. ### OpenRouter routes requests to the best providers that are able to handle your prompt size and parameters, with fallbacks to maximize uptime. ## Performance for Llama 4 Maverick. ## Effective Pricing for Llama 4 Maverick. ## Apps using Llama 4 Maverick. ## Recent activity on Llama 4 Maverick. ## Uptime stats for Llama 4 Maverick. ### Uptime stats for Llama 4 Maverickacross all providers. ## Sample code and API for Llama 4 Maverick.\", \"score\": 0.7742597, \"raw_content\": null}, {\"url\": \"https://www.mindstudio.ai/models/llama-4-maverick-17b-128e-instruct/\", \"title\": \"Llama 4 Maverick \\u2014 AI Model | MindStudio\", \"content\": \"Llama 4 Maverick is a high-performance multimodal model with 17 billion active parameters, supporting 12 languages and offering industry-leading image and text understanding. Start Building with Llama 4 Maverick View All Models. Llama 4 Maverick is a multimodal mixture-of-experts model developed by Meta, released in early 2025. ## What Llama 4 Maverick supports. What is the context window for Llama 4 Maverick? Llama 4 Maverick supports a context window of 130,000 tokens, which allows it to process long documents, extended conversations, or large inputs in a single request. How many parameters does Llama 4 Maverick have? What languages does Llama 4 Maverick support? Community reception of Llama 4 Maverick has been mixed, with some users expressing disappointment in the model's real-world performance relative to expectations set by benchmark results. The Llama 3.1 instruction tuned text only models (8B, 70B, 405B) are optimized for multilingual dialogue use cases and outperform many of the available open source and closed chat models on common industry benchmarks.\", \"score\": 0.5063723, \"raw_content\": null}, {\"url\": \"https://iren.com/resources/blog/llama-4-what-you-need-to-know\", \"title\": \"Llama 4: What You Need to Know - IREN\", \"content\": \"Multimodal inputs increase token count and model depth per query, making high-throughput inference impractical without high-bandwidth memory and fast interconnects \\u2014 especially at large context lengths. Running Llama 4 at scale requires more than just powerful GPUs, it demands thoughtful infrastructure design across compute, memory and networking. Llama 4 Scout can run on a single NVIDIA H100 for basic use with quantization, but production deployments, especially with long context or multimodal workloads, require 4\\u20138x H100 or 2\\u20134x H200 configurations. While operational on a single NVIDIA H100 host (8x H100 GPUs) for dev workloads, Llama 4 Maverick\\u2019s 400B parameter footprint and 128-expert MoE architecture benefit from 8x H200 or multi-node H100 or H200 deployments. IREN\\u2019s AI data centers are engineered for power-dense compute: high-bandwidth networking, precision power and cooling, and ultra-fast interconnects, ideal for long-context inference, multimodal pipelines, and distributed MoE models. Whether you're running exploratory workloads or scaling to 100x users, IREN\\u2019s AI data centers gives you the power and control to deploy Llama 4 at production scale.\", \"score\": 0.47548413, \"raw_content\": null}, {\"url\": \"https://www.ibm.com/new/announcements/meta-llama-4-maverick-and-llama-4-scout-now-available-in-watsonx-ai\", \"title\": \"Meta Llama 4 Maverick and Llama 4 Scout now available in watsonx ...\", \"content\": \"# Meta Llama 4 Maverick and Llama 4 Scout now available in watsonx.ai. **IBM is excited to announce the addition of Meta\\u2019s latest generation of open models, Llama 4, to** **watsonx.ai****.** Llama 4 Scout and Llama 4 Maverick, the first mixture of experts (MoE) models released by Meta, provide frontier multimodal performance, high speeds, low cost, and industry leading context length. With the introduction of these latest offerings from Meta, IBM now supports a total of 13 Meta models in the expansive library of \\u00a0foundation models available in watsonx.ai. Trained on 40 trillion tokens of data, Llama 4 Scout offers performance rivalling or exceeding that of models with significantly larger active parameter counts while keeping costs and latency low. ## Llama 4 models on IBM watsonx. Developers and businesses can select their preferred Llama 4 model from the extensive catalog of foundation models on IBM watsonx.ai, then fine-tune, distill and deploy it across cloud, on-premises, or edge environments of their choice. Start using Llama 4 models on watsonx.ai today. Start using Llama 4 models on watsonx.ai today.\", \"score\": 0.37325934, \"raw_content\": null}]}"
+        }
+      ],
+      "parallel_tool_calls": true,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "web_search",
+            "description": "Search the web for information",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "The query to search for"
+                }
+              },
+              "required": [
+                "query"
+              ]
+            }
+          }
+        }
+      ],
+      "service_tier": "default"
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-829576502f47",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "3VjgyMUwtJ3va9UTDxLJm8Fkz4LVgsXkeMC20XAMvTZ1zfm0V51RJpCjXci"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-829576502f47",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "The user asks: \"How many experts does the Llama 4 Maverick model have?\" We need answer: 128 experts. Provide concise answer. Possibly mention 128 experts in the"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "FrikFwjfPvRcFCZRJBspLuH8lMQ9p4jTcvVQspXSzwdp82aGeV6p8f6DO5p06uK5ZGcHiRpZ"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-829576502f47",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " mixture-of-experts architecture. Provide source."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "HFSgYnoAHCSa8rWJ3wKOlqzImUZGygmfIsh4aZfMtZIQVS3XcHhly993n"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-829576502f47",
+          "choices": [
+            {
+              "delta": {
+                "content": "The Llama\u202f4\u202fMaverick model uses a mixture\u2011of\u2011experts (MoE) architecture with **128 experts**.\\n\\nSource",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "41FXaI33RzfE3KVRT1mZOQnefkKbSxw0T4RTxEqD99Opo"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-829576502f47",
+          "choices": [
+            {
+              "delta": {
+                "content": ": Meta\u2019s official description of Llama\u202f4\u202fMaverick lists a 17\u2011B active\u2011parameter model built with 128 experts.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "haHwHz6AvHILzIRVheWbf1i55kCew0iKdpIqi9vAsrTcwz4UYVdNwNQQ5U7Pbizujg5DqgpxK9jjP6XbGVognmcPjfHt"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-829576502f47",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "N6eEHWq4wvfw8eMw7p1BhMP8WLoiTe7Ko8MEaSwGUx9nnIztaMd7PAK3psbMP5bwJxNJBGfrVAyG6NI01RRcioewkmu9Ckk24nrWNtWn5Kozk348V"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-829576502f47",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 119,
+            "prompt_tokens": 1594,
+            "total_tokens": 1713,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 64
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

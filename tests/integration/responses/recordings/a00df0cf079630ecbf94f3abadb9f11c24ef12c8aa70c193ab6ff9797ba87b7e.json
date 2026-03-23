@@ -1,0 +1,261 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_streaming_web_search[openai_client-txt=bedrock/openai.gpt-oss-20b-web_search_2025_08_26_type]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the latest version of Python?"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "chatcmpl-tool-9ff8bfb34831d09f",
+              "type": "function",
+              "function": {
+                "name": "web_search",
+                "arguments": "{\"query\":\"latest stable python release 2026\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "chatcmpl-tool-9ff8bfb34831d09f",
+          "content": "{\"query\": \"latest stable python release 2026\", \"top_k\": [{\"url\": \"https://www.reddit.com/r/archlinux/comments/1q3o9ri/latest_python_upgrade_313_314_on_jan_3_2026/\", \"title\": \"Latest Python upgrade (3.13 -> 3.14) on Jan, 3 2026 (!!)\", \"content\": \"Latest Python upgrade details for Arch Linux. Python 3.14 release date and features. Current stable version of Python. Django latest version\", \"score\": 0.9996513, \"raw_content\": null}, {\"url\": \"https://medium.com/@gautsoni/python-3-14-in-2026-whats-new-what-s-faster-and-when-you-ll-actually-feel-it-with-code-4b2b5a62c9fd\", \"title\": \"Python 3.14 in 2026: What's New, What's Faster, and When ...\", \"content\": \"As of Feb 3, 2026, the latest maintenance release is Python 3.14.3. (And yes \\u2014 your day-to-day \\u201cvibe coding\\u201d setup still probably isn't\", \"score\": 0.997917, \"raw_content\": null}, {\"url\": \"https://www.python.org/downloads/source/\", \"title\": \"Python Source Releases\", \"content\": \"Stable Releases \\u00b7 Python 3.12.13 - March 3, 2026 \\u00b7 Python 3.10.20 - March 3, 2026 \\u00b7 Python 3.11.15 - March 3, 2026 \\u00b7 Python 3.13.12 - Feb. 3, 2026 \\u00b7 Python 3.14.3 -\", \"score\": 0.9969246, \"raw_content\": null}, {\"url\": \"https://devguide.python.org/versions/\", \"title\": \"Status of Python versions\", \"content\": \"The main branch is currently the future Python 3.15, and is the only branch that accepts new features. The latest release for each Python version ... 2026-10-01.\", \"score\": 0.9951703, \"raw_content\": null}, {\"url\": \"https://realpython.com/python-news-march-2026/\", \"title\": \"Python Gains frozendict and Other Python News for March ...\", \"content\": \"Python 3.15.0a6 shipped on February 11, continuing the alpha series toward the May 5 beta freeze. This release includes several accepted PEPs\", \"score\": 0.99298817, \"raw_content\": null}]}"
+        }
+      ],
+      "parallel_tool_calls": true,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "web_search",
+            "description": "Search the web for information",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "The query to search for"
+                }
+              },
+              "required": [
+                "query"
+              ]
+            }
+          }
+        }
+      ],
+      "service_tier": "default"
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-a00df0cf0796",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "UObGceyfEnt626a3NKf3HVPkHhx5EMZZVRPEt4WjYVl5oKKb5S7qWXo74gk0K1fAYwBsno0eTIZN50HgLCnR6o6CJ3Wk"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-a00df0cf0796",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "We need answer: \"What is the latest version of Python?\" According to search results: None but result shows Python 3.14.3 and also 3.12.13 on March 3, 2026. That might be the latest stable as of March 2026. Python 3.13.12"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "hlXrHMxchGuKqi1HQNjxR2ZsiWM2DgcDx6wTZgtiV2F1080D1BpOXqn94EkKPqpNhulpyM"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-a00df0cf0796",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " Feb 3 2026. 3.14.3 likely latest stable. The question no context. So answer: Python 3.14.3 (stable). Let's deliver."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "0vSH5EcVpOcl33pIqLBqE8ezrGa2cNPs07p7oLWN4M2MzT2Cj44pqXacNSjtuvxk6IoWUOs"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-a00df0cf0796",
+          "choices": [
+            {
+              "delta": {
+                "content": "The most recent **stable release of Python is\u202f3.14.3**.  \nIt was published on",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "wMJXYkP3IrOw0q5aHjlsx0iK9q6ctnVBTj"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-a00df0cf0796",
+          "choices": [
+            {
+              "delta": {
+                "content": "\u202fFebruary\u202f3\u202f2026 and is the current official version one can download from the Python website.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "m3VAg2aqD9AlKRV0nQJkBWhOiRICmTVXdEvaIdgEidjCMhFnE3bGjXX1J0GOf6APduAUP6ERRt66Rsix3ZkXKyhwEf1zRDW4Wrg0qnwD0D4ES"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-a00df0cf0796",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "WWwU3bgLrzIpIsM4Znkizdv11gnJWIeZkRfw0hkOJxktMLH3Z4Eg4YzOdfMvD48aR6QxHUQtriC66ibQ5QOYNe0iaDbxeT1RrFVfZ2ldglFqEg6Wy"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-a00df0cf0796",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 157,
+            "prompt_tokens": 754,
+            "total_tokens": 911,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 128
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

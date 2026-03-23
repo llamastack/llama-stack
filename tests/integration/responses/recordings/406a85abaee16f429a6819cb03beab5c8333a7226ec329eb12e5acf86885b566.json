@@ -1,0 +1,281 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_non_streaming_file_search[openai_client-txt=bedrock/openai.gpt-oss-20b:emb=sentence-transformers/nomic-ai/nomic-embed-text-v1.5:dim=768-llama_experts_pdf]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "How many experts does the Llama 4 Maverick model have?"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "chatcmpl-tool-ae18e8623c24420d",
+              "type": "function",
+              "function": {
+                "name": "file_search",
+                "arguments": "{\"query\":\"Llama 4 Maverick experts\\\"\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "chatcmpl-tool-ae18e8623c24420d",
+          "content": [
+            {
+              "type": "text",
+              "text": "file_search tool found 2 chunks:\nBEGIN of file_search tool results.\n"
+            },
+            {
+              "type": "text",
+              "text": "[1] document_id: file-984968035, score: 0.006569440234292927, attributes: {'filename': 'llama_stack_and_models.pdf', 'file_id': 'file-984968035', 'chunk_id': 'c3556aea-3b73-0278-aa16-ebbdb4c18b18', 'document_id': 'file-984968035', 'token_count': 98.0, 'metadata_token_count': 22.0, 'chunk_tokenizer': 'tiktoken:cl100k_base'} cite as <|file-984968035|>\n,  \nhardware\n \nvendors,\n \nand\n \nAI-focused\n \ncompanies)\n \nthat\n \noffer\n \ntailored\n \ninfrastructure,\n \nsoftware,\n \nand\n \nservices\n \nfor\n \ndeploying\n \nLlama\n \nmodels.\n  \nLlama  4  Maverick  \n Llama  4  Maverick  is  a  Mixture-of-Experts  (MoE)  model  with  17  billion  active  parameters  and  128  experts.   \n"
+            },
+            {
+              "type": "text",
+              "text": "[2] document_id: file-984968035, score: 0.0033561325979639314, attributes: {'filename': 'llama_stack_and_models.pdf', 'file_id': 'file-984968035', 'chunk_id': '16d99c69-8323-27ce-3bd7-7b51dcac2735', 'document_id': 'file-984968035', 'token_count': 498.0, 'metadata_token_count': 22.0, 'chunk_tokenizer': 'tiktoken:cl100k_base'} cite as <|file-984968035|>\nLlama  Stack  \nLlama  Stack  Overview  \nLlama  Stack  standardizes  the  core  building  blocks  that  simplify  AI  application  development.  It  codifies  best  \npractices\n \nacross\n \nthe\n \nLlama\n \necosystem.\n \nMore\n \nspecifically,\n \nit\n \nprovides\n  \u25cf  Unified  API  layer  for  Inference,  RAG,  Agents,  Tools,  Safety,  Evals,  and  Telemetry.  \u25cf  Plugin  architecture  to  support  the  rich  ecosystem  of  different  API  implementations  in  various  \nenvironments,\n \nincluding\n \nlocal\n \ndevelopment,\n \non-premises,\n \ncloud,\n \nand\n \nmobile.\n \u25cf  Prepackaged  verified  distributions  which  offer  a  one-stop  solution  for  developers  to  get  started  quickly  \nand\n \nreliably\n \nin\n \nany\n \nenvironment.\n \u25cf  Multiple  developer  interfaces  like  CLI  and  SDKs  for  Python,  Typescript,  iOS,  and  Android.  \u25cf  Standalone  applications  as  examples  for  how  to  build  production-grade  AI  applications  with  Llama  \nStack.\n \nLlama  Stack  Benefits  \n\u25cf  Flexible  Options:  Developers  can  choose  their  preferred  infrastructure  without  changing  APIs  and  enjoy  \nflexible\n \ndeployment\n \nchoices.\n \u25cf  Consistent  Experience:  With  its  unified  APIs,  Llama  Stack  makes  it  easier  to  build,  test,  and  deploy  AI  \napplications\n \nwith\n \nconsistent\n \napplication\n \nbehavior.\n \u25cf  Robust  Ecosystem:  Llama  Stack  is  already  integrated  with  distribution  partners  (cloud  providers,  \nhardware\n \nvendors,\n \nand\n \nAI-focused\n \ncompanies)\n \nthat\n \noffer\n \ntailored\n \ninfrastructure,\n \nsoftware,\n \nand\n \nservices\n \nfor\n \ndeploying\n \nLlama\n \nmodels.\n  \nLlama  4  Maverick  \n Llama  4  Maverick  is  a  Mixture-of-Experts  (MoE)  model  with  17  billion  active  parameters  and  128  experts.   \n"
+            },
+            {
+              "type": "text",
+              "text": "END of file_search tool results.\n"
+            },
+            {
+              "type": "text",
+              "text": "The above results were retrieved to help answer the user's query: \"Llama 4 Maverick experts\"\". Use them as supporting information only in answering this query. Cite sources immediately at the end of sentences before punctuation, using `<|file-id|>` format like 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'. Do not add extra punctuation. Use only the file IDs provided, do not invent new ones.\n"
+            }
+          ]
+        }
+      ],
+      "parallel_tool_calls": true,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "file_search",
+            "description": "Search files for relevant information",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "The search query"
+                }
+              },
+              "required": [
+                "query"
+              ]
+            }
+          }
+        }
+      ],
+      "service_tier": "default"
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-406a85abaee1",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "1KrEzkYctPoYDHfLqVZDwc5lEbI5uhvJYqj7mUeBqX1UJwyWsfgROMUIPe5eCoHIhv0HkqBiwOmJTiVwguAi"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-406a85abaee1",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "Need to answer: \"How many experts does the Llama 4 Maverick model have?\" We have source: 128 experts. Should cite. Use <|file-984968035|"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "5dCLDQ0jaeXLwSv7RZcEyPshPB06QKzB1lWxDFVtkmFiGH8InsZnf9Omdm9OlkxvC946HpgoVehW"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-406a85abaee1",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "66hjkEqLsoa1WQyLJIozeOavxKcTFul5KPChHBpQ3NayffMUfFzBUX6euU7otxtHqWOgjMnzFeZi5U5IkqSNFxChsIFAwEgk0nwA7NqIYdhBPvTqfQ4NZEBWRtKu"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-406a85abaee1",
+          "choices": [
+            {
+              "delta": {
+                "content": "The Llama\u202f4\u202fMaverick model includes 128 experts\u202f<",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "2qq8nRSZd5Y4fIAhevgGB6zRf40GpKzYCSapN"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-406a85abaee1",
+          "choices": [
+            {
+              "delta": {
+                "content": "|file-984968035|>.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "Pwv6Cyo8POVGj3lAmflqa6edp17RoZhWRR84H4FTh1zAg8CXwXrNfSNPJCFxoDrgWUNvgTTfshEw"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-406a85abaee1",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "D9JLN8P4KUHWE2bMIpICU2ZyqXpJa5TKQVvEFYzx24ivhWjZqluVl71EQ1VkByg3CerQmkipqFbHNH4fqbByS1eTgs8"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-406a85abaee1",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 74,
+            "prompt_tokens": 1155,
+            "total_tokens": 1229,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 112
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

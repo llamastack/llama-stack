@@ -1,0 +1,272 @@
+{
+  "test_id": "tests/integration/responses/test_openai_responses.py::TestOpenAIResponses::test_openai_response_with_truncation_disabled_streaming[txt=bedrock/openai.gpt-oss-20b]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the smallest continent?"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      }
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-1eb01404e1b7",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "oNcp1xrL698uRIP2KUk78YaJm1hViY7ajzZ9itLYVQkVpntPkmAzrIBLmICNjOMlwXQAl8RkCUYb5Ex8oI2qZ3HgKXSwcoI"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-1eb01404e1b7",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "The user asks: \"What is the smallest continent?\" I should provide answer: Australia (or Oceania, but conventional: Australia). Provide explanation. Probably want to mention the continent with smallest land area: Australia (including mainland Australia"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "Cci2SKBYw7nDEgeiXoX0vm6JFfY4oAReh0IrpOUPIxqSMRH5dEMJog5ATA5Wn0U6s8c0GRQ6HgBb99EuZszdYrOocKVOnkeuqvoUu1dT352KkzPjFNlQeZHC"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-1eb01404e1b7",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": ", New Zealand, Pacific islands). It's smallest by area.\n\nSo answer: Australia. Provide some details: area about 7.7 million km\u00b2; population; etc.\n\nJust plain answer."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "J4b6aGRXpA44SaZQHQWenReKX0JdpZne0kdlMMXXOSYIhW8V4zxGO8b1d12Ac2lKEHuZOC6keBIYO5L"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-1eb01404e1b7",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "D0XbMj7A7APslr64k2h3kd96yEGmJPQf9"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-1eb01404e1b7",
+          "choices": [
+            {
+              "delta": {
+                "content": "The smallest continent by land area is **Australia**.\n\n- **Area**: about 7.7 million square kilometres (\u22482.9\u202fmillion square miles).  \n- **Composition**: The continent is typically defined as the mainland of Australia itself, plus the island of Tasmania and the smaller islands",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "41pC2msxzYXxEALjPs9Nxu2BPKAcUSU8N0yL5kZhGMu1Z7Jby2Eq04POMMCXSssoIBkZ6SNWhJ3gmixEBcpcZfds3WUstnCeJpRem7QLZKv31oSB7M"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-1eb01404e1b7",
+          "choices": [
+            {
+              "delta": {
+                "content": " that are part of the Australian continent (New\u202fZealand, New\u202fCaledonia, Fiji, etc., are usually grouped under the broader region of Oceania, but they are not part of the continental landmass).\n- **Comparison**: For perspective, the next",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "bswGAKddHRFEQSfIaMpZtCkNYB3AjHZKYkiWNwUijbvJR"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-1eb01404e1b7",
+          "choices": [
+            {
+              "delta": {
+                "content": " smallest continent, Antarctica, covers roughly 14\u202fmillion km\u00b2, almost twice the size of Australia.\n\nTherefore, Australia is considered the smallest continent in the world.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "0PVSR7nN1hQ3mBDd5WsNztjnQshoSymIiHah1"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-1eb01404e1b7",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "MuL3o6ZCgdaK13Q0zRb8JNyv2teFhf9kc7GS4t5rG7NUXc2poDWMEs6WpCCSdBUUPQgmBAeyVTn5ZApgxGIuRflhqEOsNVTBGpE7otl0hGUYn2jL8MDFc4"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-1eb01404e1b7",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 244,
+            "prompt_tokens": 71,
+            "total_tokens": 315,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 32
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}
