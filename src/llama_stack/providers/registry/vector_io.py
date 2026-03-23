@@ -13,7 +13,7 @@ from llama_stack_api import (
 )
 
 # Common dependencies for all vector IO providers that support document processing
-DEFAULT_VECTOR_IO_DEPS = ["chardet", "pypdf"]
+DEFAULT_VECTOR_IO_DEPS = ["chardet", "pypdf>=6.7.2"]
 
 
 def available_providers() -> list[ProviderSpec]:
