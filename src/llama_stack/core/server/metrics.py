@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import asyncio
 import re
 import time
 
@@ -188,6 +189,9 @@ class RequestMetricsMiddleware:
         try:
             await self.app(scope, receive, send_wrapper)
             status = "success" if status_code < 400 else "error"
+        except asyncio.CancelledError:
+            status = "error"
+            raise
         except Exception:
             status = "error"
             raise
