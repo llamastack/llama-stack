@@ -6,28 +6,32 @@
 {{/poetry1}}
 name = "{{{packageName}}}"
 version = "{{{packageVersion}}}"
-description = "{{{appName}}}"
+description = "Python client SDK for Llama Stack - AI development framework"
 {{#poetry1}}
-authors = ["{{infoName}}{{^infoName}}OpenAPI Generator Community{{/infoName}} <{{infoEmail}}{{^infoEmail}}team@openapitools.org{{/infoEmail}}>"]
+authors = ["Meta Llama Team <llama-oss@meta.com>"]
 {{/poetry1}}
 {{^poetry1}}
 authors = [
-  {name = "{{infoName}}{{^infoName}}OpenAPI Generator Community{{/infoName}}",email = "{{infoEmail}}{{^infoEmail}}team@openapitools.org{{/infoEmail}}"},
+  {name = "Meta Llama Team", email = "llama-oss@meta.com"},
 ]
 {{/poetry1}}
-{{#licenseInfo}}
-{{#poetry1}}
-license = "{{{licenseInfo}}}"
-{{/poetry1}}
-{{^poetry1}}
-license = { text = "{{{licenseInfo}}}" }
-{{/poetry1}}
-{{/licenseInfo}}
+license = { text = "MIT" }
 readme = "README.md"
 {{#poetry1}}
-repository = "https://{{{gitHost}}}/{{{gitUserId}}}/{{{gitRepoId}}}"
+repository = "https://github.com/llamastack/llama-stack"
 {{/poetry1}}
-keywords = ["OpenAPI", "OpenAPI-Generator", "{{{appName}}}"]
+keywords = ["llama", "llama-stack", "ai", "ml", "openai", "inference", "agents"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 {{#poetry1}}
 include = ["{{packageName}}/py.typed"]
 
@@ -81,7 +85,10 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://{{{gitHost}}}/{{{gitUserId}}}/{{{gitRepoId}}}"
+Homepage = "https://llamastack.github.io"
+Documentation = "https://llamastack.github.io/docs"
+Repository = "https://github.com/llamastack/llama-stack"
+"Bug Tracker" = "https://github.com/llamastack/llama-stack/issues"
 
 {{/poetry1}}
 {{^poetry1}}
