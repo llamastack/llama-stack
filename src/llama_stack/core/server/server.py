@@ -30,11 +30,13 @@ from llama_stack.core.datatypes import (
 )
 from llama_stack.core.distribution import builtin_automatically_routed_apis
 from llama_stack.core.exceptions import translate_exception
+from llama_stack.core.external import load_external_apis
 from llama_stack.core.request_headers import (
     request_provider_data_context,
     user_from_scope,
 )
 from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
+from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
     cast_distro_name_to_string,
@@ -275,6 +277,10 @@ def create_app() -> StackApp:
         if cors_config:
             app.add_middleware(CORSMiddleware, **cors_config.model_dump())
 
+    # Load external APIs if configured
+    external_apis = load_external_apis(config)
+    all_routes = get_all_api_routes(external_apis)
+
     if config.apis:
         apis_to_serve = set(config.apis)
     else:
@@ -300,6 +306,24 @@ def create_app() -> StackApp:
         if router:
             app.include_router(router)
             logger.debug(f"Registered FastAPI router for {api} API")
+            continue
+
+        # Fall back to @webmethod-based route discovery for external APIs
+        routes = all_routes.get(api, [])
+        for route, _ in routes:
+            if not hasattr(impl, route.name):
+                raise ValueError(f"Could not find method {route.name} on {impl}!")
+
+            impl_method = getattr(impl, route.name)
+            available_methods = [m for m in route.methods if m != "HEAD"]
+            if not available_methods:
+                raise ValueError(f"No methods found for {route.name} on {impl}")
+            method = available_methods[0]
+            logger.debug(f"{method} {route.path}")
+
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._fields")
+                getattr(app, method.lower())(route.path, response_model=None)(impl_method)
 
     logger.debug(f"serving APIs: {apis_to_serve}")
 
