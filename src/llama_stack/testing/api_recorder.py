@@ -78,11 +78,31 @@ def _normalize_numeric_literal_strings(value: str) -> str:
     return _FLOAT_IN_STRING_PATTERN.sub(_replace, value)
 
 
-def _normalize_body_for_hash(value: Any, exclude_stream_options: bool = False, *, _is_root: bool = True) -> Any:
-    """Recursively normalize a JSON-like value to improve hash stability."""
+_TOOL_CALL_ID_PATTERN = re.compile(r"^call_[a-zA-Z0-9]+$")
+
+
+def _normalize_body_for_hash(
+    value: Any, exclude_stream_options: bool = False, *, _is_root: bool = True, _key: str = ""
+) -> Any:
+    """Recursively normalize a JSON-like value to improve hash stability.
+
+    Handles several sources of non-determinism across code versions:
+    - max_tokens: None and 0 are treated as equivalent (removed)
+    - tool_choice: None and "auto" are treated as equivalent (removed)
+    - Message content: single-element [{type: text, text: X}] is collapsed to "X"
+    - Tool call IDs: random per invocation, replaced with a stable placeholder
+    """
 
     if isinstance(value, dict):
-        normalized = {key: _normalize_body_for_hash(item, _is_root=False) for key, item in value.items()}
+        normalized = {}
+        for key, item in value.items():
+            # Treat max_tokens=None and max_tokens=0 as equivalent by dropping both
+            if key == "max_tokens" and (item is None or item == 0):
+                continue
+            # Treat tool_choice=None and tool_choice="auto" as equivalent by dropping both
+            if key == "tool_choice" and (item is None or item == "auto"):
+                continue
+            normalized[key] = _normalize_body_for_hash(item, _is_root=False, _key=key)
         if exclude_stream_options and "stream_options" in normalized:
             del normalized["stream_options"]
         # Strip provider-config values that differ between record (real creds)
@@ -96,12 +116,27 @@ def _normalize_body_for_hash(value: Any, exclude_stream_options: bool = False, *
                     extra.pop("project_id", None)
         return normalized
     if isinstance(value, list):
-        return [_normalize_body_for_hash(item) for item in value]
+        normalized_list = [_normalize_body_for_hash(item, _is_root=False, _key=_key) for item in value]
+        # Normalize single-element text content arrays to plain strings:
+        # [{"type": "text", "text": "X"}] -> "X"
+        if (
+            _key == "content"
+            and len(normalized_list) == 1
+            and isinstance(normalized_list[0], dict)
+            and normalized_list[0].get("type") in ("text", "input_text")
+            and "text" in normalized_list[0]
+            and len(normalized_list[0]) == 2
+        ):
+            return normalized_list[0]["text"]
+        return normalized_list
     if isinstance(value, tuple):
-        return tuple(_normalize_body_for_hash(item) for item in value)
+        return tuple(_normalize_body_for_hash(item, _is_root=False, _key=_key) for item in value)
     if isinstance(value, float):
         return round(value, 5)
     if isinstance(value, str):
+        # Normalize tool call IDs to a stable placeholder
+        if _key in ("id", "tool_call_id") and _TOOL_CALL_ID_PATTERN.match(value):
+            return "__normalized_tool_call_id__"
         return _normalize_numeric_literal_strings(value)
     return value
 

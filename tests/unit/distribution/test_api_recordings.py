@@ -16,6 +16,7 @@ from openai import AsyncOpenAI, NotFoundError
 from llama_stack.testing.api_recorder import (
     APIRecordingMode,
     ResponseStorage,
+    _normalize_body_for_hash,
     api_recording,
     normalize_inference_request,
 )
@@ -422,3 +423,124 @@ class TestExceptionRecordingReplay:
                     )
 
                 assert str(exc_info.value) == "Legacy formatted error"
+
+
+class TestNormalizeBodyForHash:
+    """Test _normalize_body_for_hash normalizations for hash stability."""
+
+    def test_max_tokens_none_and_zero_are_equivalent(self):
+        body_none = {"model": "m", "max_tokens": None, "messages": []}
+        body_zero = {"model": "m", "max_tokens": 0, "messages": []}
+        body_absent = {"model": "m", "messages": []}
+        assert _normalize_body_for_hash(body_none) == _normalize_body_for_hash(body_zero)
+        assert _normalize_body_for_hash(body_none) == _normalize_body_for_hash(body_absent)
+
+    def test_max_tokens_nonzero_preserved(self):
+        body_with = {"model": "m", "max_tokens": 100, "messages": []}
+        body_without = {"model": "m", "messages": []}
+        assert _normalize_body_for_hash(body_with) != _normalize_body_for_hash(body_without)
+
+    def test_tool_choice_none_and_auto_are_equivalent(self):
+        body_none = {"model": "m", "tool_choice": None}
+        body_auto = {"model": "m", "tool_choice": "auto"}
+        body_absent = {"model": "m"}
+        assert _normalize_body_for_hash(body_none) == _normalize_body_for_hash(body_auto)
+        assert _normalize_body_for_hash(body_none) == _normalize_body_for_hash(body_absent)
+
+    def test_tool_choice_explicit_value_preserved(self):
+        body_required = {"model": "m", "tool_choice": "required"}
+        body_absent = {"model": "m"}
+        assert _normalize_body_for_hash(body_required) != _normalize_body_for_hash(body_absent)
+
+    def test_single_text_content_normalized_to_string(self):
+        body_list = {"messages": [{"role": "user", "content": [{"type": "text", "text": "hello"}]}]}
+        body_str = {"messages": [{"role": "user", "content": "hello"}]}
+        assert _normalize_body_for_hash(body_list) == _normalize_body_for_hash(body_str)
+
+    def test_single_input_text_content_normalized_to_string(self):
+        body_list = {"messages": [{"role": "user", "content": [{"type": "input_text", "text": "hello"}]}]}
+        body_str = {"messages": [{"role": "user", "content": "hello"}]}
+        assert _normalize_body_for_hash(body_list) == _normalize_body_for_hash(body_str)
+
+    def test_multi_element_content_list_preserved(self):
+        body = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "hello"},
+                        {"type": "text", "text": "world"},
+                    ],
+                }
+            ]
+        }
+        result = _normalize_body_for_hash(body)
+        assert isinstance(result["messages"][0]["content"], list)
+
+    def test_tool_call_ids_normalized(self):
+        body_a = {
+            "messages": [
+                {
+                    "role": "assistant",
+                    "tool_calls": [
+                        {"id": "call_abc123", "type": "function", "function": {"name": "f", "arguments": "{}"}}
+                    ],
+                }
+            ]
+        }
+        body_b = {
+            "messages": [
+                {
+                    "role": "assistant",
+                    "tool_calls": [
+                        {"id": "call_xyz789", "type": "function", "function": {"name": "f", "arguments": "{}"}}
+                    ],
+                }
+            ]
+        }
+        assert _normalize_body_for_hash(body_a) == _normalize_body_for_hash(body_b)
+
+    def test_tool_call_id_reference_normalized(self):
+        body_a = {"messages": [{"role": "tool", "tool_call_id": "call_abc123", "content": "result"}]}
+        body_b = {"messages": [{"role": "tool", "tool_call_id": "call_xyz789", "content": "result"}]}
+        assert _normalize_body_for_hash(body_a) == _normalize_body_for_hash(body_b)
+
+    def test_non_tool_call_ids_not_normalized(self):
+        body_a = {"messages": [{"role": "user", "content": "hello"}], "id": "msg_123"}
+        body_b = {"messages": [{"role": "user", "content": "hello"}], "id": "msg_456"}
+        assert _normalize_body_for_hash(body_a) != _normalize_body_for_hash(body_b)
+
+    def test_combined_normalizations_produce_stable_hash(self):
+        body_v1 = {
+            "model": "llama3.2:3b",
+            "max_tokens": 0,
+            "tool_choice": "auto",
+            "messages": [
+                {"role": "user", "content": [{"type": "text", "text": "Say hi"}]},
+                {
+                    "role": "assistant",
+                    "tool_calls": [
+                        {"id": "call_aaa111", "type": "function", "function": {"name": "greet", "arguments": "{}"}}
+                    ],
+                },
+                {"role": "tool", "tool_call_id": "call_aaa111", "content": "Hello!"},
+            ],
+        }
+        body_v2 = {
+            "model": "llama3.2:3b",
+            "max_tokens": None,
+            "tool_choice": None,
+            "messages": [
+                {"role": "user", "content": "Say hi"},
+                {
+                    "role": "assistant",
+                    "tool_calls": [
+                        {"id": "call_zzz999", "type": "function", "function": {"name": "greet", "arguments": "{}"}}
+                    ],
+                },
+                {"role": "tool", "tool_call_id": "call_zzz999", "content": "Hello!"},
+            ],
+        }
+        hash1 = normalize_inference_request("POST", "http://test/v1/chat/completions", {}, body_v1)
+        hash2 = normalize_inference_request("POST", "http://test/v1/chat/completions", {}, body_v2)
+        assert hash1 == hash2
