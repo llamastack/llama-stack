@@ -27,7 +27,7 @@ from llama_stack.providers.utils.inference.openai_compat import (
     prepare_openai_completion_params,
 )
 from llama_stack.providers.utils.inference.prompt_adapter import localize_image_content
-from llama_stack.providers.utils.inference.stream_utils import _normalize_tool_call_arguments
+from llama_stack.providers.utils.inference.stream_utils import _patch_otel_choice_buffer
 from llama_stack_api import (
     Model,
     ModelType,
@@ -45,6 +45,9 @@ from llama_stack_api import (
 )
 
 logger = get_logger(name=__name__, category="providers::utils")
+
+# TODO: Remove this once https://github.com/open-telemetry/opentelemetry-python-contrib/issues/4344 is fixed.
+_patch_otel_choice_buffer()
 
 
 class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
@@ -307,7 +310,6 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
             async def _gen():
                 async for chunk in resp:
-                    _normalize_tool_call_arguments(chunk)
                     if new_id:
                         chunk.id = new_id
                     yield chunk

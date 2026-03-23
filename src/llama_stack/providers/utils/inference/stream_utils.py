@@ -11,23 +11,26 @@ from llama_stack.log import get_logger
 log = get_logger(name=__name__, category="providers::utils")
 
 
-def _normalize_tool_call_arguments(chunk) -> None:
-    """Normalize ``arguments=None`` to ``""`` on tool-call delta chunks.
+def _patch_otel_choice_buffer():
+    """Patch OTEL's ChoiceBuffer to handle ``arguments=None`` before it
+    reaches ``"".join()`` in cleanup.
 
-    The OpenAI streaming spec always sends ``arguments=""`` on the first
-    tool-call delta, but some providers (vLLM, TGI, etc.) send ``None``.
-    Third-party stream wrappers such as opentelemetry-instrumentation-openai-v2
-    assume the spec format and crash on ``None``.  Normalizing here keeps
-    every downstream consumer safe.
+    TODO: Remove this once https://github.com/open-telemetry/opentelemetry-python-contrib/issues/4344 is fixed.
     """
-    for choice in getattr(chunk, "choices", None) or []:
-        delta = getattr(choice, "delta", None)
-        if delta is None:
-            continue
-        for tc in getattr(delta, "tool_calls", None) or []:
-            func = getattr(tc, "function", None)
-            if func is not None and func.arguments is None:
-                func.arguments = ""
+    try:
+        from opentelemetry.instrumentation.openai_v2.patch import ChoiceBuffer  # type: ignore[import-not-found]
+    except ImportError:
+        return
+
+    _original = ChoiceBuffer.append_tool_call
+
+    def _safe_append(self, tool_call):
+        func = getattr(tool_call, "function", None)
+        if func is not None and func.arguments is None:
+            func.arguments = ""
+        _original(self, tool_call)
+
+    ChoiceBuffer.append_tool_call = _safe_append
 
 
 async def wrap_async_stream[T](stream: AsyncIterator[T]) -> AsyncIterator[T]:
@@ -36,7 +39,6 @@ async def wrap_async_stream[T](stream: AsyncIterator[T]) -> AsyncIterator[T]:
     """
     try:
         async for item in stream:
-            _normalize_tool_call_arguments(item)
             yield item
     except Exception as e:
         log.error(f"Error in wrapped async stream: {e}")
