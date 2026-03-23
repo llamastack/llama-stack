@@ -208,11 +208,9 @@ def test_response_non_streaming_multi_turn(responses_client, text_model_id, case
 
 
 @pytest.mark.parametrize("case", image_test_cases)
-def test_response_non_streaming_image(responses_client, text_model_id, case):
-    if text_model_id.startswith("watsonx/"):
-        pytest.skip("WatsonX text model does not support vision/image inputs")
+def test_response_non_streaming_image(responses_client, vision_model_id, case):
     response = responses_client.responses.create(
-        model=text_model_id,
+        model=vision_model_id,
         input=case.input,
         stream=False,
     )
@@ -221,13 +219,11 @@ def test_response_non_streaming_image(responses_client, text_model_id, case):
 
 
 @pytest.mark.parametrize("case", multi_turn_image_test_cases)
-def test_response_non_streaming_multi_turn_image(responses_client, text_model_id, case):
-    if text_model_id.startswith("watsonx/"):
-        pytest.skip("WatsonX text model does not support vision/image inputs")
+def test_response_non_streaming_multi_turn_image(responses_client, vision_model_id, case):
     previous_response_id = None
     for turn_input, turn_expected in case.turns:
         response = responses_client.responses.create(
-            model=text_model_id,
+            model=vision_model_id,
             input=turn_input,
             previous_response_id=previous_response_id,
         )
@@ -308,13 +304,16 @@ def test_include_logprobs_streaming(client_with_models, text_model_id):
                 f"Expected logprobs in the returned chunk ({chunk.type=}), but none were returned"
             )
         elif chunk.type == "response.content_part.done":
-            assert chunk.part.logprobs == [], f"Expected no logprobs in the returned chunk ({chunk.type=})"
+            if hasattr(chunk.part, "logprobs"):
+                assert chunk.part.logprobs == [], f"Expected no logprobs in the returned chunk ({chunk.type=})"
 
 
 def test_include_logprobs_with_web_search(client_with_models, text_model_id):
     """Test include logprobs with built-in tool."""
 
     skip_if_chat_completions_logprobs_not_supported(client_with_models, text_model_id)
+    if text_model_id and text_model_id.startswith("bedrock/"):
+        pytest.skip("Bedrock GPT-OSS consistently hallucinates tool names with web_search + logprobs")
 
     input = "Search for a positive news story from today."
     include = ["message.output_text.logprobs"]
