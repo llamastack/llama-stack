@@ -91,6 +91,17 @@ This workflow:
 **Supported providers:** `ollama` (auto), `gpt`, `azure`, `bedrock` (manual trigger)
 
 
+### Architecture Context
+
+The test infrastructure lives in two places:
+
+- **Test fixtures and conftest**: `tests/integration/conftest.py` sets up the `llama_stack_client` fixture, which is either a real HTTP client (server mode) or an in-process library client.
+- **API Recorder**: `src/llama_stack/testing/api_recorder.py` implements the record/replay engine. It monkey-patches `OpenAI` client methods to intercept all API calls.
+- **Recording storage**: `tests/integration/recordings/` contains cached API responses organized by provider and test.
+- **Recording management scripts**: `scripts/cleanup_recordings.py`, `scripts/diagnose_recordings.py`, and `scripts/normalize_recordings.py` help manage recordings.
+
+For a complete system architecture overview, see [ARCHITECTURE.md](../ARCHITECTURE.md).
+
 ### Next Steps
 
 - [Integration Testing Guide](integration/README.md) - Detailed usage and configuration

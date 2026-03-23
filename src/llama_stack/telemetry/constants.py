@@ -49,3 +49,11 @@ VECTOR_CHUNKS_PROCESSED_TOTAL = f"{VECTOR_IO_PREFIX}.chunks_processed_total"
 # Vector operation durations
 VECTOR_INSERT_DURATION = f"{VECTOR_IO_PREFIX}.insert_duration_seconds"
 VECTOR_RETRIEVAL_DURATION = f"{VECTOR_IO_PREFIX}.retrieval_duration_seconds"
+
+# Request Metrics
+# These constants define the names for OpenTelemetry metrics tracking API gateway request-level operations
+REQUEST_PREFIX = f"{llama_stack_prefix}.request"
+
+REQUESTS_TOTAL = f"{REQUEST_PREFIX}s_total"
+REQUEST_DURATION_SECONDS = f"{REQUEST_PREFIX}_duration_seconds"
+CONCURRENT_REQUESTS = f"{llama_stack_prefix}.concurrent_requests"

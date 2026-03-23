@@ -293,3 +293,44 @@ TS_CLIENT_PATH=~/.cache/llama-stack-client-typescript scripts/integration-tests.
 TypeScript tests run immediately after Python tests pass, using the same replay fixtures. The mapping between Python suites/setups and TypeScript test files is defined in `tests/integration/client-typescript/suites.json`.
 
 If `TS_CLIENT_PATH` is unset, TypeScript tests are skipped entirely.
+
+## Directory Structure
+
+```
+integration/
+  admin/               # Admin API tests
+  agents/              # Agent orchestration tests
+  batches/             # Batch processing tests
+  client-typescript/   # TypeScript SDK replay tests
+  common/              # Shared test utilities and recording storage
+  conversations/       # Conversation persistence tests
+  datasets/            # Dataset management tests
+  eval/                # Evaluation tests
+  files/               # File management tests
+  fixtures/            # Test fixtures and data
+  inference/           # Inference API tests (chat completion, embeddings, vision)
+  inspect/             # Inspect API tests
+  post_training/       # Post-training tests
+  providers/           # Provider-specific tests
+  recordings/          # Cached API responses for replay mode
+  responses/           # OpenAI Responses API tests
+  safety/              # Safety API tests
+  scoring/             # Scoring tests
+  telemetry/           # Telemetry tests
+  test_cases/          # Shared test case definitions
+  tool_runtime/        # Tool runtime tests
+  tools/               # Tool integration tests
+  vector_io/           # Vector I/O tests
+  conftest.py          # Main conftest (client setup, recording mode, fixtures)
+  suites.py            # Suite/setup definitions
+  ci_matrix.json       # CI test matrix configuration
+```
+
+## Recording System Internals
+
+The record/replay system is implemented in `src/llama_stack/testing/api_recorder.py`. Key implementation details:
+
+- **Request hashing**: Each API call is matched to a recording by hashing its parameters (method name, model, messages, etc.). This allows replay even when test execution order changes.
+- **Deterministic IDs**: During replay, resource IDs (files, vector stores, etc.) are generated deterministically using counters, so tests produce the same IDs across runs.
+- **Storage format**: Recordings are stored as JSON files in provider-specific directories. An SQLite index maps request hashes to response files.
+- **Streaming**: Streamed responses are recorded as complete sequences of chunks, then replayed chunk-by-chunk to faithfully reproduce streaming behavior.
