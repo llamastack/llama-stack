@@ -71,6 +71,7 @@ from llama_stack_api import (
     Scoring,
     ScoringFunctions,
     Shields,
+    ToolGroupNotFoundError,
     VectorIO,
 )
 from llama_stack_api.datasets import RegisterDatasetRequest
@@ -293,7 +294,7 @@ async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, An
         # indexes (_index_tools) which are empty after a restart.
         try:
             await tool_groups_impl.unregister_toolgroup(toolgroup_id)
-        except Exception:
+        except ToolGroupNotFoundError:
             pass
 
         logger.info(f"Auto-registering tool group '{toolgroup_id}' with provider '{provider.provider_id}'")
