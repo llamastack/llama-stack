@@ -11,11 +11,15 @@ import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 
-from opentelemetry import context as otel_context
 from pydantic import BaseModel, TypeAdapter
 
 from llama_stack.core.conversations.validation import CONVERSATION_ID_PATTERN
-from llama_stack.core.task import activate_otel_context, capture_otel_context, create_task_with_detached_otel_context
+from llama_stack.core.task import (
+    RequestContext,
+    activate_request_context,
+    capture_request_context,
+    create_detached_background_task,
+)
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
@@ -87,9 +91,9 @@ BACKGROUND_NUM_WORKERS = 10
 
 @dataclass
 class _BackgroundWorkItem:
-    """Typed queue item for background response processing."""
+    """Typed queue item that pairs business kwargs with the originating request context."""
 
-    otel_context: otel_context.Context
+    request_context: RequestContext
     kwargs: dict = field(default_factory=dict)
 
 
@@ -144,7 +148,7 @@ class OpenAIResponsesImpl:
     async def _ensure_workers_started(self) -> None:
         """Start background workers in the current event loop if not already running."""
         for _ in range(BACKGROUND_NUM_WORKERS - len(self._background_worker_tasks)):
-            task = create_task_with_detached_otel_context(self._background_worker())
+            task = create_detached_background_task(self._background_worker())
             self._background_worker_tasks.add(task)
             task.add_done_callback(self._background_worker_tasks.discard)
 
@@ -158,7 +162,7 @@ class OpenAIResponsesImpl:
         """Worker coroutine that pulls items from the queue and processes them."""
         while True:
             item = await self._background_queue.get()
-            with activate_otel_context(item.otel_context):
+            with activate_request_context(item.request_context):
                 try:
                     await asyncio.wait_for(
                         self._run_background_response_loop(**item.kwargs),
@@ -833,7 +837,7 @@ class OpenAIResponsesImpl:
         try:
             self._background_queue.put_nowait(
                 _BackgroundWorkItem(
-                    otel_context=capture_otel_context(),
+                    request_context=capture_request_context(),
                     kwargs=dict(
                         response_id=response_id,
                         input=input,

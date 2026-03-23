@@ -11,10 +11,12 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExporter, SpanExportResult
 
+from llama_stack.core.request_headers import PROVIDER_DATA_VAR
 from llama_stack.core.task import (
-    activate_otel_context,
-    capture_otel_context,
-    create_task_with_detached_otel_context,
+    RequestContext,
+    activate_request_context,
+    capture_request_context,
+    create_detached_background_task,
 )
 
 
@@ -36,7 +38,7 @@ async def test_detached_task_runs_coroutine():
     async def work():
         result.append("done")
 
-    task = create_task_with_detached_otel_context(work())
+    task = create_detached_background_task(work())
     await task
     assert result == ["done"]
 
@@ -55,7 +57,7 @@ async def test_detached_task_clears_otel_context():
         parent_ctx = otel_context.get_current()
         parent_span = trace.get_current_span()
 
-        task = create_task_with_detached_otel_context(capture_context())
+        task = create_detached_background_task(capture_context())
         await task
 
         assert not captured_span["inner"].is_recording()
@@ -63,20 +65,45 @@ async def test_detached_task_clears_otel_context():
         assert otel_context.get_current() == parent_ctx
 
 
+async def test_detached_task_clears_provider_data():
+    """The task should run with PROVIDER_DATA_VAR cleared."""
+    captured = {}
+    token = PROVIDER_DATA_VAR.set({"__authenticated_user": "alice"})
+
+    async def capture_provider():
+        captured["value"] = PROVIDER_DATA_VAR.get()
+
+    try:
+        task = create_detached_background_task(capture_provider())
+        await task
+
+        assert captured["value"] is None, "Background task should not inherit PROVIDER_DATA_VAR"
+        assert PROVIDER_DATA_VAR.get() == {"__authenticated_user": "alice"}, "Caller's context should be unaffected"
+    finally:
+        PROVIDER_DATA_VAR.reset(token)
+
+
 async def test_detached_task_restores_caller_context():
-    """The calling coroutine's OTel context is not affected by creating a detached task."""
+    """The calling coroutine's context is not affected by creating a detached task."""
     provider = TracerProvider()
     tracer = provider.get_tracer("test")
 
-    with tracer.start_as_current_span("parent-span"):
-        before = otel_context.get_current()
-        create_task_with_detached_otel_context(asyncio.sleep(0))
-        after = otel_context.get_current()
-        assert before == after
+    token = PROVIDER_DATA_VAR.set({"__authenticated_user": "bob"})
+    try:
+        with tracer.start_as_current_span("parent-span"):
+            otel_before = otel_context.get_current()
+            provider_before = PROVIDER_DATA_VAR.get()
+
+            create_detached_background_task(asyncio.sleep(0))
+
+            assert otel_context.get_current() == otel_before
+            assert PROVIDER_DATA_VAR.get() == provider_before
+    finally:
+        PROVIDER_DATA_VAR.reset(token)
 
 
 async def test_detached_task_produces_independent_trace():
-    """Spans created inside a detached task belong to a separate trace, not the parent's."""
+    """Spans created inside a detached task belong to a separate trace."""
     exporter = _CollectingExporter()
     provider = TracerProvider()
     provider.add_span_processor(SimpleSpanProcessor(exporter))
@@ -87,7 +114,7 @@ async def test_detached_task_produces_independent_trace():
             await asyncio.sleep(0)
 
     with tracer.start_as_current_span("http-request"):
-        task = create_task_with_detached_otel_context(background_work())
+        task = create_detached_background_task(background_work())
         await task
 
     provider.force_flush()
@@ -96,10 +123,8 @@ async def test_detached_task_produces_independent_trace():
     request_span = span_by_name["http-request"]
     bg_span = span_by_name["background-db-write"]
 
-    assert request_span.context.trace_id != bg_span.context.trace_id, (
-        "Background span should belong to a different trace than the request"
-    )
-    assert bg_span.parent is None, "Background span should be a root span with no parent"
+    assert request_span.context.trace_id != bg_span.context.trace_id
+    assert bg_span.parent is None
 
 
 async def test_normal_child_task_shares_trace():
@@ -128,39 +153,6 @@ async def test_normal_child_task_shares_trace():
     )
 
 
-async def test_capture_and_attach_otel_context():
-    """capture_otel_context snapshots the current context; activate_otel_context re-activates it."""
-    exporter = _CollectingExporter()
-    provider = TracerProvider()
-    provider.add_span_processor(SimpleSpanProcessor(exporter))
-    tracer = provider.get_tracer("test")
-
-    with tracer.start_as_current_span("request"):
-        ctx = capture_otel_context()
-        request_trace_id = trace.get_current_span().get_span_context().trace_id
-
-    with activate_otel_context(ctx):
-        with tracer.start_as_current_span("reattached-work"):
-            reattached_trace_id = trace.get_current_span().get_span_context().trace_id
-
-    assert request_trace_id == reattached_trace_id, "Work done under attached context should share the original trace"
-
-
-async def test_attached_context_restores_on_exit():
-    """activate_otel_context restores the previous context when the block exits."""
-    provider = TracerProvider()
-    tracer = provider.get_tracer("test")
-
-    with tracer.start_as_current_span("outer"):
-        outer_ctx = otel_context.get_current()
-
-        inner_ctx = otel_context.Context()
-        with activate_otel_context(inner_ctx):
-            assert otel_context.get_current() == inner_ctx
-
-        assert otel_context.get_current() == outer_ctx
-
-
 async def test_context_through_queue_pattern():
     """End-to-end: context captured at enqueue time is correctly attached in a detached worker.
 
@@ -175,20 +167,24 @@ async def test_context_through_queue_pattern():
     provider.add_span_processor(SimpleSpanProcessor(exporter))
     tracer = provider.get_tracer("test")
 
-    queue: asyncio.Queue[tuple[str, otel_context.Context]] = asyncio.Queue()
+    queue: asyncio.Queue[tuple[str, RequestContext]] = asyncio.Queue()
 
     async def worker():
         item, ctx = await queue.get()
-        with activate_otel_context(ctx):
+        with activate_request_context(ctx):
             with tracer.start_as_current_span(f"db-write-{item}"):
                 await asyncio.sleep(0)
         queue.task_done()
 
-    with tracer.start_as_current_span("http-request-A"):
-        ctx_a = capture_otel_context()
-        await queue.put(("A", ctx_a))
+    token = PROVIDER_DATA_VAR.set({"user": "A"})
+    try:
+        with tracer.start_as_current_span("http-request-A"):
+            ctx_a = capture_request_context()
+            await queue.put(("A", ctx_a))
+    finally:
+        PROVIDER_DATA_VAR.reset(token)
 
-    worker_task = create_task_with_detached_otel_context(worker())
+    worker_task = create_detached_background_task(worker())
     await worker_task
     await queue.join()
 
@@ -203,36 +199,87 @@ async def test_context_through_queue_pattern():
     )
 
 
-async def test_context_through_queue_no_cross_contamination():
-    """Two requests enqueue work; each DB write is attributed to its own request trace.
-
-    This is the key property: workers don't permanently inherit any single
-    request's context, and each queued item carries the correct context.
-    """
+async def test_capture_and_activate_request_context():
+    """capture_request_context snapshots both OTel and provider data; activate restores both."""
     exporter = _CollectingExporter()
     provider = TracerProvider()
     provider.add_span_processor(SimpleSpanProcessor(exporter))
     tracer = provider.get_tracer("test")
 
-    queue: asyncio.Queue[tuple[str, otel_context.Context]] = asyncio.Queue()
+    token = PROVIDER_DATA_VAR.set({"__authenticated_user": "charlie"})
+    try:
+        with tracer.start_as_current_span("request"):
+            ctx = capture_request_context()
+            request_trace_id = trace.get_current_span().get_span_context().trace_id
+
+        assert isinstance(ctx, RequestContext)
+        assert ctx.provider_data == {"__authenticated_user": "charlie"}
+
+        # After span ends, activate context and verify OTel trace is restored
+        with activate_request_context(ctx):
+            with tracer.start_as_current_span("reattached-work"):
+                reattached_trace_id = trace.get_current_span().get_span_context().trace_id
+            assert PROVIDER_DATA_VAR.get() == {"__authenticated_user": "charlie"}
+
+        assert request_trace_id == reattached_trace_id
+    finally:
+        PROVIDER_DATA_VAR.reset(token)
+
+
+async def test_activate_restores_on_exit():
+    """activate_request_context restores the previous context when the block exits."""
+    provider = TracerProvider()
+    tracer = provider.get_tracer("test")
+
+    token = PROVIDER_DATA_VAR.set({"__authenticated_user": "outer_user"})
+    try:
+        with tracer.start_as_current_span("outer"):
+            outer_otel = otel_context.get_current()
+
+            inner_ctx = RequestContext(
+                otel_ctx=otel_context.Context(),
+                provider_data={"__authenticated_user": "inner_user"},
+            )
+            with activate_request_context(inner_ctx):
+                assert PROVIDER_DATA_VAR.get() == {"__authenticated_user": "inner_user"}
+
+            assert PROVIDER_DATA_VAR.get() == {"__authenticated_user": "outer_user"}
+            assert otel_context.get_current() == outer_otel
+    finally:
+        PROVIDER_DATA_VAR.reset(token)
+
+
+async def test_context_through_queue_no_cross_contamination():
+    """Two requests enqueue work; each item's context is correctly propagated."""
+    exporter = _CollectingExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    tracer = provider.get_tracer("test")
+
+    queue: asyncio.Queue[tuple[str, RequestContext]] = asyncio.Queue()
     processed = asyncio.Event()
 
     async def worker():
         for _ in range(2):
-            item, ctx = await queue.get()
-            with activate_otel_context(ctx):
-                with tracer.start_as_current_span(f"db-write-{item}"):
+            label, ctx = await queue.get()
+            with activate_request_context(ctx):
+                assert PROVIDER_DATA_VAR.get() == {"user": label}
+                with tracer.start_as_current_span(f"db-write-{label}"):
                     await asyncio.sleep(0)
             queue.task_done()
         processed.set()
 
-    worker_task = create_task_with_detached_otel_context(worker())
+    worker_task = create_detached_background_task(worker())
 
+    token_a = PROVIDER_DATA_VAR.set({"user": "A"})
     with tracer.start_as_current_span("request-A"):
-        await queue.put(("A", capture_otel_context()))
+        await queue.put(("A", capture_request_context()))
+    PROVIDER_DATA_VAR.reset(token_a)
 
+    token_b = PROVIDER_DATA_VAR.set({"user": "B"})
     with tracer.start_as_current_span("request-B"):
-        await queue.put(("B", capture_otel_context()))
+        await queue.put(("B", capture_request_context()))
+    PROVIDER_DATA_VAR.reset(token_b)
 
     await processed.wait()
     await worker_task
@@ -245,6 +292,6 @@ async def test_context_through_queue_no_cross_contamination():
     write_a = span_by_name["db-write-A"]
     write_b = span_by_name["db-write-B"]
 
-    assert write_a.context.trace_id == request_a.context.trace_id, "Write A should be in request A's trace"
-    assert write_b.context.trace_id == request_b.context.trace_id, "Write B should be in request B's trace"
-    assert request_a.context.trace_id != request_b.context.trace_id, "Request A and B should have different traces"
+    assert write_a.context.trace_id == request_a.context.trace_id
+    assert write_b.context.trace_id == request_b.context.trace_id
+    assert request_a.context.trace_id != request_b.context.trace_id
