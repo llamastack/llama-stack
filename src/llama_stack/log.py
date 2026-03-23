@@ -202,14 +202,22 @@ def _extract_event_message(_, __, event_dict):
         return event_dict
 
     # Keys managed by structlog / ProcessorFormatter internals that should
-    # not appear in the rendered message.
+    # not appear in the rendered key=value pairs.
     internal_keys = {
         "event",
         "_record",
         "_from_structlog",
+        "logger",
+        "level",
+        "timestamp",
     }
 
     event = event_dict.get("event", "")
+
+    # Prepend logger_name:lineno like the old stdlib format
+    record = event_dict.get("_record")
+    if record:
+        event = f"{record.name}:{record.lineno} {event}"
 
     extra_parts = []
     for key, value in sorted(event_dict.items()):
@@ -344,8 +352,8 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
         # Rich handle the actual display.
         console_formatter = structlog.stdlib.ProcessorFormatter(
             processors=[
-                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
                 _extract_event_message,
+                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
                 structlog.dev.ConsoleRenderer(colors=False, pad_event=0),
             ],
             foreign_pre_chain=shared_processors,
@@ -367,8 +375,8 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
     if log_file:
         file_formatter = structlog.stdlib.ProcessorFormatter(
             processors=[
-                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
                 _extract_event_message,
+                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
                 structlog.dev.ConsoleRenderer(colors=False, pad_event=0),
             ],
             foreign_pre_chain=shared_processors,
