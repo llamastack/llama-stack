@@ -84,12 +84,6 @@ providers:
     config:
       base_url: https://api.sambanova.ai/v1
       api_key: ${env.SAMBANOVA_API_KEY:=}
-  - provider_id: ${env.WATSONX_API_KEY:+watsonx}
-    provider_type: remote::watsonx
-    config:
-      base_url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
-      api_key: ${env.WATSONX_API_KEY:=}
-      project_id: ${env.WATSONX_PROJECT_ID:=}
   - provider_id: ${env.AZURE_API_KEY:+azure}
     provider_type: remote::azure
     config:
@@ -99,6 +93,8 @@ providers:
       api_type: ${env.AZURE_API_TYPE:=}
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
+    config:
+      trust_remote_code: false
   - provider_id: transformers
     provider_type: inline::transformers
   vector_io:
@@ -168,6 +164,18 @@ providers:
       elasticsearch_api_key: ${env.ELASTICSEARCH_API_KEY:=}
       persistence:
         namespace: vector_io::elasticsearch
+        backend: kv_default
+  - provider_id: ${env.INFINISPAN_URL:+infinispan}
+    provider_type: remote::infinispan
+    config:
+      url: ${env.INFINISPAN_URL:=http://localhost:11222}
+      username: ${env.INFINISPAN_USERNAME:=admin}
+      password: ${env.INFINISPAN_PASSWORD:=}
+      use_https: false
+      auth_mechanism: digest
+      verify_tls: true
+      persistence:
+        namespace: vector_io::infinispan
         backend: kv_default
   files:
   - provider_id: builtin-files
@@ -290,11 +298,6 @@ registered_resources:
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups:
-  - toolgroup_id: builtin::websearch
-    provider_id: tavily-search
-  - toolgroup_id: builtin::file_search
-    provider_id: file-search
 server:
   port: 8321
 vector_stores:
