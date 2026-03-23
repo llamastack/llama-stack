@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import warnings
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any, Literal, Self
@@ -699,7 +700,20 @@ class RegisteredResources(BaseModel):
     datasets: list[DatasetInput] = Field(default_factory=list)
     scoring_fns: list[ScoringFnInput] = Field(default_factory=list)
     benchmarks: list[BenchmarkInput] = Field(default_factory=list)
-    tool_groups: list[ToolGroupInput] = Field(default_factory=list)
+    tool_groups: list[ToolGroupInput] = Field(default_factory=list, deprecated=True)
+
+    @model_validator(mode="after")
+    def _warn_deprecated_tool_groups(self) -> Self:
+        if self.tool_groups:
+            warnings.warn(
+                "'registered_resources.tool_groups' is deprecated and will be removed in a future release. "
+                "Built-in tool groups are now auto-registered based on configured tool_runtime providers. "
+                "Please remove 'tool_groups' from your configuration.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            self.tool_groups = []
+        return self
 
 
 class ServerConfig(BaseModel):

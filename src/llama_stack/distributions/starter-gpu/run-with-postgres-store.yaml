@@ -84,12 +84,6 @@ providers:
     config:
       base_url: https://api.sambanova.ai/v1
       api_key: ${env.SAMBANOVA_API_KEY:=}
-  - provider_id: ${env.WATSONX_API_KEY:+watsonx}
-    provider_type: remote::watsonx
-    config:
-      base_url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
-      api_key: ${env.WATSONX_API_KEY:=}
-      project_id: ${env.WATSONX_PROJECT_ID:=}
   - provider_id: ${env.AZURE_API_KEY:+azure}
     provider_type: remote::azure
     config:
@@ -305,11 +299,6 @@ registered_resources:
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups:
-  - toolgroup_id: builtin::websearch
-    provider_id: tavily-search
-  - toolgroup_id: builtin::file_search
-    provider_id: file-search
 server:
   port: 8321
 vector_stores:

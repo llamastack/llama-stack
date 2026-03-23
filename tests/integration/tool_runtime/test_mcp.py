@@ -20,40 +20,13 @@ def mcp_server():
 
 
 def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
+    """Test MCP tool invocation through the Responses/Agent API.
+
+    MCP tools are passed directly as tool definitions to the Agent;
+    the ToolGroups and ToolRuntime APIs are internal and not exposed over HTTP.
+    """
     test_toolgroup_id = MCP_TOOLGROUP_ID
     uri = mcp_server["server_url"]
-
-    # registering should not raise an error anymore even if you don't specify the auth token
-    try:
-        llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
-    except Exception:
-        pass
-
-    llama_stack_client.toolgroups.register(
-        toolgroup_id=test_toolgroup_id,
-        provider_id="model-context-protocol",
-        mcp_endpoint=dict(uri=uri),
-    )
-
-    # Use the dedicated authorization parameter (no more provider_data headers)
-    # This tests direct tool_runtime.invoke_tool API calls
-    tools_list = llama_stack_client.tool_runtime.list_tools(
-        tool_group_id=test_toolgroup_id,
-        authorization=AUTH_TOKEN,  # Use dedicated authorization parameter
-    )
-    assert len(tools_list) == 2
-    assert {t.name for t in tools_list} == {"greet_everyone", "get_boiling_point"}
-
-    # Invoke tool with authorization parameter
-    response = llama_stack_client.tool_runtime.invoke_tool(
-        tool_name="greet_everyone",
-        kwargs=dict(url="https://www.google.com"),
-        authorization=AUTH_TOKEN,  # Use dedicated authorization parameter
-    )
-    content = response.content
-    assert len(content) == 1
-    assert content[0].type == "text"
-    assert content[0].text == "Hello, world!"
 
     print(f"Using model: {text_model_id}")
     tool_defs = [
@@ -62,7 +35,7 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
             "server_url": uri,
             "server_label": test_toolgroup_id,
             "require_approval": "never",
-            "allowed_tools": [tool.name for tool in tools_list],
+            "allowed_tools": ["greet_everyone", "get_boiling_point"],
             "authorization": AUTH_TOKEN,
         }
     ]
