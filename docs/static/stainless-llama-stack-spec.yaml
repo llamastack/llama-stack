@@ -2089,8 +2089,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
       tags:
-      - Tool Groups
-      summary: List Tools
+      - Tools
+      summary: List tools with optional tool group filter.
       description: List tools with optional tool group filter.
       operationId: list_tools_v1_tools_get
       parameters:
@@ -2101,7 +2101,9 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
+          description: The ID of the tool group to filter tools by.
           title: Toolgroup Id
+        description: The ID of the tool group to filter tools by.
   /v1/vector-io/insert:
     post:
       responses:
@@ -13241,6 +13243,16 @@ components:
       - toolgroup_id
       - provider_id
       title: ToolGroupInput
+    ListToolsRequest:
+      description: Request model for listing tools.
+      properties:
+        toolgroup_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The ID of the tool group to filter tools by.
+          nullable: true
+      title: ListToolsRequest
     Api:
       description: Enumeration of all available APIs in the Llama Stack system.
       enum:

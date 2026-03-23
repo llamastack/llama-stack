@@ -9946,6 +9946,16 @@ components:
       - toolgroup_id
       - provider_id
       title: ToolGroupInput
+    ListToolsRequest:
+      description: Request model for listing tools.
+      properties:
+        toolgroup_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The ID of the tool group to filter tools by.
+          nullable: true
+      title: ListToolsRequest
     Api:
       description: Enumeration of all available APIs in the Llama Stack system.
       enum:
