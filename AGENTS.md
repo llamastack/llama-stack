@@ -118,3 +118,27 @@ Search for existing examples: `grep -r "deprecation_warning" src/llama_stack/pro
 Search the codebase for existing examples of the same pattern first.
 Use `grep` to find how deprecation, validation, configuration, or aliasing is already
 handled elsewhere.
+
+## Keeping Documentation Up to Date
+
+When making code changes, check whether the following documentation needs updating:
+
+- `ARCHITECTURE.md` — system overview, request flow, provider architecture, API layer,
+  storage, configuration, and test recording system
+- Module-level `README.md` files in key directories:
+  - `src/llama_stack/README.md`, `src/llama_stack/core/README.md`
+  - `src/llama_stack/core/server/README.md`, `src/llama_stack/core/storage/README.md`
+  - `src/llama_stack/core/routing_tables/README.md`
+  - `src/llama_stack/providers/README.md`, `src/llama_stack/providers/inline/README.md`
+  - `src/llama_stack/providers/remote/README.md`, `src/llama_stack/providers/registry/README.md`
+  - `src/llama_stack/providers/utils/README.md`, `src/llama_stack/providers/utils/inference/README.md`
+  - `src/llama_stack/providers/inline/agents/README.md`
+  - `src/llama_stack/providers/inline/tool_runtime/README.md`
+  - `src/llama_stack/providers/remote/inference/README.md`
+  - `src/llama_stack/distributions/README.md`
+  - `scripts/README.md`
+- `tests/README.md`, `tests/unit/README.md`, `tests/integration/README.md`
+
+These files help LLMs and new contributors navigate the codebase. If your change
+adds, removes, or renames modules, providers, APIs, or storage backends, update
+the relevant documentation to stay in sync.
