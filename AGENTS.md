@@ -67,7 +67,6 @@ tests/
   Recordings are JSON files in `tests/integration/*/recordings/`. When modifying code
   that changes request bodies sent to providers, recordings may need to be re-recorded.
 - Run pre-commit checks: `uv run pre-commit run --all-files`
-- When adding a new API parameter, add unit test cases covering the new parameter.
 
 ## Provider Architecture
 
@@ -109,6 +108,7 @@ When modifying or extending APIs:
 2. Thread it through the provider protocol and implementation
 3. Update affected distribution configs if needed
 4. Regenerate specs and docs
+5. Add unit test cases covering the new parameter
 
 ### Adding a deprecated alias for a renamed provider
 Use the existing `deprecation_warning` field on `InlineProviderSpec` or `RemoteProviderSpec`.
