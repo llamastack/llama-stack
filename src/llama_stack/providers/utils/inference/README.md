@@ -14,7 +14,7 @@ inference/
   embedding_mixin.py   # Embedding-specific utilities
   stream_utils.py      # Streaming response helpers
   inference_store.py   # InferenceStore for persisting chat completion logs
-  litellm_openai_mixin.py  # LiteLLM-based OpenAI mixin (legacy, used by WatsonX)
+  http_client.py       # HTTP client utilities
 ```
 
 ## OpenAIMixin (`openai_mixin.py`)

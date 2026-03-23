@@ -1,6 +1,6 @@
 # Llama Stack Architecture
 
-This document describes the internal architecture of Llama Stack for contributors and AI agents working with the codebase. For user-facing documentation, see [llamastack.ai](https://llamastack.ai/). For contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+This document describes the internal architecture of Llama Stack for contributors and AI agents working with the codebase. For user-facing documentation, see [llamastack.github.io](https://llamastack.github.io/). For contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## System Overview
 
@@ -10,6 +10,7 @@ The codebase is split into two packages:
 
 - **`llama-stack-api`** (`src/llama_stack_api/`) -- Lightweight package containing API protocol definitions (Python `Protocol` classes), Pydantic data types, and provider spec definitions. No server code, no provider implementations. Third-party providers depend only on this.
 - **`llama-stack`** (`src/llama_stack/`) -- The server implementation: provider resolution, routing, storage, CLI, and all built-in providers.
+- **`llama-stack-ui`** (`src/llama_stack_ui/`) -- Optional web UI for the chat playground and admin. Built with Next.js.
 
 ## Request Flow
 
@@ -63,8 +64,8 @@ External Service or Local Computation
 Provider
   |
   |-- InlineProviderSpec    (runs in-process)
-  |     provider_type: "inline::meta-reference"
-  |     module: "llama_stack.providers.inline.inference.meta_reference"
+  |     provider_type: "inline::builtin"
+  |     module: "llama_stack.providers.inline.inference.builtin"
   |
   |-- RemoteProviderSpec    (adapts an external service)
         provider_type: "remote::ollama"
@@ -209,7 +210,7 @@ Key features:
 
 ### Distributions
 
-`src/llama_stack/distributions/` contains pre-built configurations (e.g., `starter`, `meta-reference-gpu`). Each distribution directory has:
+A distribution is a pre-built configuration that bundles specific providers for a target environment. Think of it like Kubernetes distributions (AKS, EKS, GKE): the core API stays the same, but each distribution wires different backends. `src/llama_stack/distributions/` contains these configurations (e.g., `starter`, `dell`, `nvidia`). Each distribution directory has:
 - `config.yaml` -- the run config
 - Templates and codegen support via `template.py`
 

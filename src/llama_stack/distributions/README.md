@@ -22,7 +22,7 @@ distributions/
 
 ## What Is a Distribution
 
-A distribution is a `config.yaml` file that defines a complete Llama Stack deployment: which APIs to serve, which providers to use for each API, how storage is configured, and what models/shields/datasets to register at startup.
+A distribution is a pre-built configuration that bundles specific providers for a target environment, similar to how Kubernetes has distributions like AKS, EKS, and GKE. The core API stays the same, but each distribution wires different backends. Concretely, it is a `config.yaml` file that defines which APIs to serve, which providers to use for each API, how storage is configured, and what models/shields/datasets to register at startup.
 
 Example from `starter/config.yaml`:
 ```yaml

@@ -7,7 +7,7 @@ Shared utilities used across multiple providers.
 ```
 utils/
   inference/           # Inference utilities (OpenAI mixin, model registry, prompt adapter)
-  bedrock/             # AWS Bedrock-specific utilities (session management)
+  bedrock/             # AWS Bedrock-specific utilities (should be moved into the bedrock provider)
   common/              # Common utilities shared across provider types
   datasetio/           # Dataset I/O utilities
   files/               # File handling utilities

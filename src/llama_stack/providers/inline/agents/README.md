@@ -1,15 +1,15 @@
-# agents (inline provider)
+# agents / responses (inline provider)
 
-The `meta-reference` agents provider implements the Agents API and the OpenAI Responses API.
+The `builtin` agents provider implements the OpenAI Responses API. This directory is being renamed from `agents` to `responses` (see PR #5195).
 
 ## Directory Structure
 
 ```
 agents/
-  meta_reference/
+  builtin/
     __init__.py        # Provider factory (get_provider_impl)
-    agents.py          # Core agent orchestration logic
-    config.py          # MetaReferenceAgentsConfig
+    agents.py          # Core orchestration logic
+    config.py          # BuiltinAgentsImplConfig
     safety.py          # Safety checking integration
     responses/         # OpenAI Responses API implementation
       __init__.py
