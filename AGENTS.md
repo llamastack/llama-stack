@@ -2,6 +2,7 @@
 
 This file provides guidance for AI coding agents working on this codebase.
 It complements [CONTRIBUTING.md](CONTRIBUTING.md) with agent-specific instructions.
+Human contributors should follow the conventions in CONTRIBUTING.md.
 
 ## Project Overview
 
@@ -61,11 +62,12 @@ tests/
 
 ## Testing
 
-- Unit tests: `uv run pytest tests/unit/ -x --tb=short`
-- Integration tests use a recording/replay system. Recordings are JSON files in
-  `tests/integration/*/recordings/`. When modifying code that changes request bodies
-  sent to providers, recordings may need to be re-recorded.
+- Unit tests: `./scripts/unit-tests.sh` or `uv run pytest tests/unit/ -x --tb=short`
+- Integration tests: `./scripts/integration-tests.sh` with recording/replay system.
+  Recordings are JSON files in `tests/integration/*/recordings/`. When modifying code
+  that changes request bodies sent to providers, recordings may need to be re-recorded.
 - Run pre-commit checks: `uv run pre-commit run --all-files`
+- When adding a new API parameter, add unit test cases covering the new parameter.
 
 ## Provider Architecture
 
