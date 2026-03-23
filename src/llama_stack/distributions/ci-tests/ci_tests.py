@@ -45,6 +45,15 @@ def get_distribution_template() -> DistributionTemplate:
         model_type=ModelType.llm,
     )
 
+    # Bedrock model must be pre-registered because the recording system cannot
+    # replay model-list discovery calls against the Bedrock endpoint in CI.
+    bedrock_model = ModelInput(
+        model_id="bedrock/openai.gpt-oss-20b",
+        provider_id="${env.AWS_BEARER_TOKEN_BEDROCK:+bedrock}",
+        provider_model_id="openai.gpt-oss-20b",
+        model_type=ModelType.llm,
+    )
+
     # Add conditional authentication config (disabled by default for CI tests)
     # This tests the conditional auth provider feature and provides a template for users
     # To enable: export AUTH_PROVIDER=enabled and configure the auth env vars
@@ -86,6 +95,7 @@ def get_distribution_template() -> DistributionTemplate:
             run_config.default_models = []
         run_config.default_models.append(azure_model)
         run_config.default_models.append(watsonx_model)
+        run_config.default_models.append(bedrock_model)
 
         # Add WatsonX inference provider
         run_config.provider_overrides["inference"].append(watsonx_provider)
