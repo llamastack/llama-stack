@@ -25,25 +25,6 @@ def available_providers() -> list[ProviderSpec]:
                 "numpy",
                 "scikit-learn",
                 "scipy",
-                "nltk",
-                "sentencepiece",
-                "transformers",
-            ],
-            module="llama_stack.providers.inline.tool_runtime.file_search",
-            config_class="llama_stack.providers.inline.tool_runtime.file_search.config.FileSearchToolRuntimeConfig",
-            api_dependencies=[Api.vector_io, Api.inference, Api.files],
-            description="File search tool runtime for document ingestion, chunking, and semantic search.",
-        ),
-        # Deprecated alias for backward compatibility
-        InlineProviderSpec(
-            api=Api.tool_runtime,
-            provider_type="inline::rag-runtime",
-            pip_packages=DEFAULT_VECTOR_IO_DEPS
-            + [
-                "tqdm",
-                "numpy",
-                "scikit-learn",
-                "scipy",
                 "nltk>=3.9.3",
                 "sentencepiece",
                 "transformers",
@@ -51,8 +32,8 @@ def available_providers() -> list[ProviderSpec]:
             module="llama_stack.providers.inline.tool_runtime.file_search",
             config_class="llama_stack.providers.inline.tool_runtime.file_search.config.FileSearchToolRuntimeConfig",
             api_dependencies=[Api.vector_io, Api.inference, Api.files],
-            description="Deprecated: Use inline::file-search instead.",
-            deprecation_warning="Please use the `inline::file-search` provider instead.",
+            toolgroup_id="builtin::file_search",
+            description="File search tool runtime for document ingestion, chunking, and semantic search.",
         ),
         RemoteProviderSpec(
             api=Api.tool_runtime,
@@ -62,6 +43,7 @@ def available_providers() -> list[ProviderSpec]:
             config_class="llama_stack.providers.remote.tool_runtime.brave_search.config.BraveSearchToolConfig",
             pip_packages=["requests"],
             provider_data_validator="llama_stack.providers.remote.tool_runtime.brave_search.BraveSearchToolProviderDataValidator",
+            toolgroup_id="builtin::websearch",
             description="Brave Search tool for web search capabilities with privacy-focused results.",
         ),
         RemoteProviderSpec(
@@ -72,6 +54,7 @@ def available_providers() -> list[ProviderSpec]:
             config_class="llama_stack.providers.remote.tool_runtime.bing_search.config.BingSearchToolConfig",
             pip_packages=["requests"],
             provider_data_validator="llama_stack.providers.remote.tool_runtime.bing_search.BingSearchToolProviderDataValidator",
+            toolgroup_id="builtin::websearch",
             description="Bing Search tool for web search capabilities using Microsoft's search engine.",
         ),
         RemoteProviderSpec(
@@ -82,6 +65,7 @@ def available_providers() -> list[ProviderSpec]:
             config_class="llama_stack.providers.remote.tool_runtime.tavily_search.config.TavilySearchToolConfig",
             pip_packages=["requests"],
             provider_data_validator="llama_stack.providers.remote.tool_runtime.tavily_search.TavilySearchToolProviderDataValidator",
+            toolgroup_id="builtin::websearch",
             description="Tavily Search tool for AI-optimized web search with structured results.",
         ),
         RemoteProviderSpec(
@@ -92,6 +76,7 @@ def available_providers() -> list[ProviderSpec]:
             config_class="llama_stack.providers.remote.tool_runtime.wolfram_alpha.config.WolframAlphaToolConfig",
             pip_packages=["requests"],
             provider_data_validator="llama_stack.providers.remote.tool_runtime.wolfram_alpha.WolframAlphaToolProviderDataValidator",
+            toolgroup_id="builtin::wolfram_alpha",
             description="Wolfram Alpha tool for computational knowledge and mathematical calculations.",
         ),
         RemoteProviderSpec(

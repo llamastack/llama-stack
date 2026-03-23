@@ -45,3 +45,30 @@ open htmlcov/index.html  # macOS
 xdg-open htmlcov/index.html  # Linux
 start htmlcov/index.html  # Windows
 ```
+
+### Directory Structure
+
+```
+unit/
+  cli/                 # CLI command tests
+  conversations/       # Conversation service tests
+  core/                # Core server and routing tests
+  distribution/        # Distribution config tests
+  files/               # File handling tests
+  models/              # Model metadata tests
+  prompts/             # Prompt service tests
+  providers/           # Provider-specific unit tests
+  rag/                 # RAG pipeline tests
+  registry/            # Provider registry tests
+  server/              # Server endpoint tests
+  tools/               # Tool runtime tests
+  utils/               # Utility function tests
+  conftest.py          # Shared test fixtures
+  fixtures.py          # Test data factories
+```
+
+### Writing Unit Tests
+
+Unit tests should be fast and isolated. Prefer "fakes" (lightweight in-memory implementations) over mocks. Mocks are brittle and don't catch real integration issues.
+
+For async tests, the test suite uses `--asyncio-mode=auto`, so you can write `async def test_*` functions directly without decorators.

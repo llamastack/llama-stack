@@ -7,44 +7,67 @@
 import asyncio
 from collections.abc import Coroutine
 from contextlib import contextmanager
+from dataclasses import dataclass
 from typing import Any
 
 from opentelemetry import context as otel_context
 
+from llama_stack.core.request_headers import PROVIDER_DATA_VAR
 
-def create_task_with_detached_otel_context(coro: Coroutine[Any, Any, Any]) -> asyncio.Task[Any]:
-    """Create an asyncio task that does not inherit the current OpenTelemetry trace context.
 
-    asyncio.create_task copies all contextvars at creation time, which causes
-    fire-and-forget or long-lived background tasks to be attributed to whatever
-    request happened to spawn them. This inflates trace durations and bundles
-    unrelated DB operations under the wrong trace.
+@dataclass
+class RequestContext:
+    """Snapshot of request-scoped state for propagation through background queues.
 
-    This helper temporarily clears the OTel context before creating the task,
-    then immediately restores it so the calling coroutine is unaffected.
+    Background workers are long-lived asyncio tasks whose contextvars are frozen
+    at creation time.  Capturing both the OTel trace context and the provider /
+    auth data at *enqueue* time and re-activating them per work-item ensures:
+
+    * Each DB write is attributed to the correct request trace (OTel).
+    * Each DB write is stamped with the correct user identity (PROVIDER_DATA_VAR).
     """
-    token = otel_context.attach(otel_context.Context())
-    try:
-        task = asyncio.create_task(coro)
-    finally:
-        otel_context.detach(token)
-    return task
+
+    otel_ctx: otel_context.Context
+    provider_data: Any
 
 
-def capture_otel_context() -> otel_context.Context:
-    """Snapshot the current OTel context for later use in a different task."""
-    return otel_context.get_current()
+def capture_request_context() -> RequestContext:
+    """Snapshot the current request-scoped context for later use in a worker."""
+    return RequestContext(
+        otel_ctx=otel_context.get_current(),
+        provider_data=PROVIDER_DATA_VAR.get(),
+    )
 
 
 @contextmanager
-def activate_otel_context(ctx: otel_context.Context):
-    """Temporarily activate a previously captured OTel context.
+def activate_request_context(ctx: RequestContext):
+    """Temporarily restore a previously captured request context.
 
     Use this in worker loops that run with a detached (empty) context to
-    attribute work back to the originating request's trace.
+    attribute work back to the originating request.
     """
-    token = otel_context.attach(ctx)
+    otel_token = otel_context.attach(ctx.otel_ctx)
+    provider_token = PROVIDER_DATA_VAR.set(ctx.provider_data)
     try:
         yield
     finally:
-        otel_context.detach(token)
+        PROVIDER_DATA_VAR.reset(provider_token)
+        otel_context.detach(otel_token)
+
+
+def create_detached_background_task(coro: Coroutine[Any, Any, Any]) -> asyncio.Task[Any]:
+    """Create an asyncio task that does not inherit request-scoped context.
+
+    asyncio.create_task copies all contextvars at creation time, which causes
+    long-lived background workers to permanently inherit the spawning request's
+    OTel trace and auth identity.  This helper temporarily clears both before
+    creating the task, then immediately restores them so the caller is unaffected.
+    """
+    otel_token = otel_context.attach(otel_context.Context())
+    provider_token = PROVIDER_DATA_VAR.set(None)
+    try:
+        task = asyncio.create_task(coro)
+    finally:
+        PROVIDER_DATA_VAR.reset(provider_token)
+        otel_context.detach(otel_token)
+    return task

@@ -221,37 +221,6 @@ ALL_RESOURCES = {
             "version_info": "VersionInfo",
         }
     },
-    "toolgroups": {
-        "models": {
-            "tool_group": "ToolGroup",
-            "list_tool_groups_response": "ListToolGroupsResponse",
-        },
-        "methods": {
-            "register": "post /v1/toolgroups",
-            "get": "get /v1/toolgroups/{toolgroup_id}",
-            "list": "get /v1/toolgroups",
-            "unregister": "delete /v1/toolgroups/{toolgroup_id}",
-        },
-    },
-    "tools": {
-        "methods": {
-            "get": "get /v1/tools/{tool_name}",
-            "list": {"paginated": False, "endpoint": "get /v1/tools"},
-        }
-    },
-    "tool_runtime": {
-        "models": {
-            "tool_def": "ToolDef",
-            "tool_invocation_result": "ToolInvocationResult",
-        },
-        "methods": {
-            "list_tools": {
-                "paginated": False,
-                "endpoint": "get /v1/tool-runtime/list-tools",
-            },
-            "invoke_tool": "post /v1/tool-runtime/invoke",
-        },
-    },
     "responses": {
         "models": {
             "response_object_stream": "OpenAIResponseObjectStream",
