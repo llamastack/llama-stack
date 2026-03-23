@@ -398,14 +398,14 @@ jobs:
 
       - name: Upload artifacts (local)
         if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local'
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: Packages-${{ matrix.package }}
           path: ${{ matrix.path }}/dist/*
 
       - name: Upload artifacts (external)
         if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: Packages-${{ matrix.package }}
           path: external-repo/dist/*
@@ -832,7 +832,7 @@ jobs:
           exit 1
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: .
           file: containers/Containerfile
