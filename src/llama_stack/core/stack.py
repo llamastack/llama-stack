@@ -851,6 +851,9 @@ def run_config_from_dynamic_config_spec(
 
     The list should be of the form "api=provider", e.g. "inference=fireworks". If you have
     multiple pairs, separate them with commas or semicolons, e.g. "inference=fireworks,safety=llama-guard,agents=builtin"
+
+    You can optionally specify config parameters using URL query parameter syntax,
+    e.g. "inference=inline::sentence-transformers?trust_remote_code=true&max_seq_length=512"
     """
 
     api_providers = dynamic_config_spec.replace(";", ",").split(",")
@@ -863,7 +866,23 @@ def run_config_from_dynamic_config_spec(
             raise ValueError(
                 f"Failed to parse provider spec '{api_provider}'. Expected format: api=provider (e.g. inference=fireworks)"
             )
-        api_str, provider = api_provider.split("=")
+        api_str, provider_with_params = api_provider.split("=", 1)
+
+        # Parse provider name and optional config parameters
+        # Format: provider_name?param1=value1&param2=value2
+        if "?" in provider_with_params:
+            provider, params_str = provider_with_params.split("?", 1)
+            config_overrides = {}
+            # Parse key=value pairs separated by &
+            # Values are kept as strings and Pydantic will handle type conversion
+            for param in params_str.split("&"):
+                if "=" in param:
+                    key, value = param.split("=", 1)
+                    config_overrides[key] = value
+        else:
+            provider = provider_with_params
+            config_overrides = {}
+
         try:
             api = Api(api_str)
         except ValueError:
@@ -886,6 +905,9 @@ def run_config_from_dynamic_config_spec(
         # call method "sample_run_config" on the provider spec config class
         provider_config_type = instantiate_class_type(provider_spec.config_class)
         provider_config = replace_env_vars(provider_config_type.sample_run_config(__distro_dir__=str(distro_dir)))
+
+        # Apply config overrides
+        provider_config.update(config_overrides)
 
         provider_configs_by_api.setdefault(api_str, []).append(
             Provider(
