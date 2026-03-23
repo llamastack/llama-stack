@@ -36,6 +36,7 @@ def skip_if_provider_doesnt_support_openai_vector_stores(client_with_models):
             "remote::qdrant",
             "remote::weaviate",
             "remote::elasticsearch",
+            "remote::infinispan",
         ]:
             return
 
@@ -76,6 +77,7 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(
             "remote::qdrant",
             "remote::weaviate",
             "remote::elasticsearch",
+            "remote::infinispan",
         ],
         "keyword": [
             "inline::milvus",
@@ -87,6 +89,7 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(
             "remote::weaviate",
             "remote::chromadb",
             "remote::elasticsearch",
+            "remote::infinispan",
         ],
         "hybrid": [
             "inline::milvus",
@@ -98,6 +101,7 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(
             "remote::weaviate",
             "remote::chromadb",
             "remote::elasticsearch",
+            "remote::infinispan",
         ],
     }
 
