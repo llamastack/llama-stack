@@ -231,6 +231,7 @@ jobs:
           fi
 
       - name: Commit and push recordings
+        id: commit
         if: steps.pr-info.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ steps.pr-info.outputs.is_fork_pr == 'true' && secrets.RELEASE_PAT || github.token }}
@@ -247,6 +248,7 @@ jobs:
           # Check if there are recording changes
           if [[ -z $(git status --porcelain tests/integration/recordings/ tests/integration/*/recordings/) ]]; then
             echo "No recording changes to commit"
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -268,19 +270,22 @@ jobs:
               echo "Maintainer can modify - pushing to fork PR branch"
               git push "https://x-access-token:${GH_TOKEN}@github.com/${HEAD_REPO}.git" "HEAD:${HEAD_REF}"
               echo "Successfully pushed recordings to fork PR"
+              echo "pushed=true" >> "$GITHUB_OUTPUT"
             else
               echo "::warning::Cannot push to fork PR: 'Allow edits from maintainers' is not enabled"
               echo "::warning::Contributor needs to check 'Allow edits from maintainers' when creating the PR"
+              echo "pushed=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi
           else
             echo "Pushing to same-repo PR branch: $HEAD_REF"
             git push origin "HEAD:${HEAD_REF}"
             echo "Successfully pushed recordings"
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Comment on PR
-        if: steps.pr-info.outputs.skip != 'true'
+        if: steps.commit.outputs.pushed == 'true'
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}

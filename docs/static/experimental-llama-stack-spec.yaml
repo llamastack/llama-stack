@@ -6328,52 +6328,56 @@ components:
       title: TextContentItem
       description: A text content item
     ToolInvocationResult:
+      description: Result of a tool invocation.
       properties:
         content:
           anyOf:
           - type: string
-          - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem-Output'
-              title: ImageContentItem-Output
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
             - $ref: '#/components/schemas/TextContentItem'
               title: TextContentItem
-            discriminator:
-              propertyName: type
-              mapping:
-                image: '#/components/schemas/ImageContentItem-Output'
-                text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Output | TextContentItem
+            title: ImageContentItem | TextContentItem
           - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
               oneOf:
-              - $ref: '#/components/schemas/ImageContentItem-Output'
-                title: ImageContentItem-Output
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
               - $ref: '#/components/schemas/TextContentItem'
                 title: TextContentItem
-              discriminator:
-                propertyName: type
-                mapping:
-                  image: '#/components/schemas/ImageContentItem-Output'
-                  text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Output | TextContentItem
+              title: ImageContentItem | TextContentItem
             type: array
-            title: list[ImageContentItem-Output | TextContentItem]
+            title: list[ImageContentItem | TextContentItem]
           - type: 'null'
-          title: string | list[ImageContentItem-Output | TextContentItem]
+          title: string | list[ImageContentItem | TextContentItem]
+          nullable: true
         error_message:
           anyOf:
           - type: string
           - type: 'null'
+          nullable: true
         error_code:
           anyOf:
           - type: integer
           - type: 'null'
+          nullable: true
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          nullable: true
       title: ToolInvocationResult
-      description: Result of a tool invocation.
     URL:
       properties:
         uri:
@@ -6427,52 +6431,55 @@ components:
       title: ListToolDefsResponse
       description: Response containing a list of tool definitions.
     ToolGroup:
+      description: A group of related tools managed together.
       properties:
         identifier:
-          type: string
-          title: Identifier
           description: Unique identifier for this resource in llama stack
+          title: Identifier
+          type: string
         provider_resource_id:
           anyOf:
           - type: string
           - type: 'null'
           description: Unique identifier for this resource in the provider
+          nullable: true
         provider_id:
-          type: string
-          title: Provider Id
           description: ID of the provider that owns this resource
-        type:
+          title: Provider Id
           type: string
+        type:
           const: tool_group
-          title: Type
           default: tool_group
+          title: Type
+          type: string
         mcp_endpoint:
           anyOf:
           - $ref: '#/components/schemas/URL'
             title: URL
           - type: 'null'
+          nullable: true
           title: URL
         args:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          nullable: true
       required:
       - identifier
       - provider_id
       title: ToolGroup
-      description: A group of related tools managed together.
     ListToolGroupsResponse:
+      description: Response containing a list of tool groups.
       properties:
         data:
           items:
             $ref: '#/components/schemas/ToolGroup'
-          type: array
           title: Data
+          type: array
       required:
       - data
       title: ListToolGroupsResponse
-      description: Response containing a list of tool groups.
     Chunk:
       properties:
         content:
@@ -9879,6 +9886,12 @@ components:
           description: Notes whether this provider is an external provider.
           title: Is External
           type: boolean
+        toolgroup_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: For tool_runtime providers, the built-in tool group ID this provider serves (e.g. 'builtin::websearch').
+          nullable: true
         deps__:
           items:
             type: string
@@ -9952,6 +9965,12 @@ components:
           description: Notes whether this provider is an external provider.
           title: Is External
           type: boolean
+        toolgroup_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: For tool_runtime providers, the built-in tool group ID this provider serves (e.g. 'builtin::websearch').
+          nullable: true
         deps__:
           items:
             type: string
@@ -10042,6 +10061,12 @@ components:
           description: Notes whether this provider is an external provider.
           title: Is External
           type: boolean
+        toolgroup_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: For tool_runtime providers, the built-in tool group ID this provider serves (e.g. 'builtin::websearch').
+          nullable: true
         deps__:
           items:
             type: string
