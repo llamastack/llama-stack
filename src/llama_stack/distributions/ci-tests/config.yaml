@@ -171,6 +171,18 @@ providers:
       persistence:
         namespace: vector_io::elasticsearch
         backend: kv_default
+  - provider_id: ${env.INFINISPAN_URL:+infinispan}
+    provider_type: remote::infinispan
+    config:
+      url: ${env.INFINISPAN_URL:=http://localhost:11222}
+      username: ${env.INFINISPAN_USERNAME:=admin}
+      password: ${env.INFINISPAN_PASSWORD:=}
+      use_https: false
+      auth_mechanism: digest
+      verify_tls: true
+      persistence:
+        namespace: vector_io::infinispan
+        backend: kv_default
   files:
   - provider_id: builtin-files
     provider_type: inline::localfs
@@ -290,6 +302,11 @@ registered_resources:
     model_id: watsonx/meta-llama/llama-3-3-70b-instruct
     provider_id: ${env.WATSONX_API_KEY:+watsonx}
     provider_model_id: meta-llama/llama-3-3-70b-instruct
+    model_type: llm
+  - metadata: {}
+    model_id: bedrock/openai.gpt-oss-20b
+    provider_id: ${env.AWS_BEARER_TOKEN_BEDROCK:+bedrock}
+    provider_model_id: openai.gpt-oss-20b
     model_type: llm
   shields:
   - shield_id: llama-guard

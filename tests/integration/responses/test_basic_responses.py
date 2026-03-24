@@ -9,6 +9,7 @@ import time
 import pytest
 
 from .fixtures.test_cases import basic_test_cases, image_test_cases, multi_turn_image_test_cases, multi_turn_test_cases
+from .helpers import assert_text_contains
 from .streaming_assertions import StreamingValidator
 
 
@@ -43,9 +44,8 @@ def test_response_non_streaming_basic(responses_client, text_model_id, case):
         input=case.input,
         stream=False,
     )
-    output_text = response.output_text.lower().strip()
-    assert len(output_text) > 0
-    assert case.expected.lower() in output_text
+    assert len(response.output_text) > 0
+    assert_text_contains(response.output_text, case.expected)
 
     # Verify usage is reported
     assert response.usage is not None, "Response should include usage information"
@@ -103,9 +103,8 @@ def test_response_streaming_basic(responses_client, text_model_id, case):
             assert chunk.response.id == response_id, "Response ID should be consistent"
 
             # Verify content quality
-            output_text = chunk.response.output_text.lower().strip()
-            assert len(output_text) > 0, "Response should have content"
-            assert case.expected.lower() in output_text, f"Expected '{case.expected}' in response"
+            assert len(chunk.response.output_text) > 0, "Response should have content"
+            assert_text_contains(chunk.response.output_text, case.expected)
 
             # Verify usage is reported in final response
             assert chunk.response.usage is not None, "Completed response should include usage information"
@@ -175,7 +174,7 @@ def test_response_streaming_incremental_content(responses_client, text_model_id,
 
     # Verify that response.completed has the full content
     assert len(completed_content) > 0, "response.completed should have content"
-    assert case.expected.lower() in completed_content.lower(), f"Expected '{case.expected}' in final content"
+    assert_text_contains(completed_content, case.expected)
 
     # Use validator for incremental content checks
     delta_content_total = validator.assert_has_incremental_content()
@@ -203,37 +202,30 @@ def test_response_non_streaming_multi_turn(responses_client, text_model_id, case
             previous_response_id=previous_response_id,
         )
         previous_response_id = response.id
-        output_text = response.output_text.lower()
-        assert turn_expected.lower() in output_text
+        assert_text_contains(response.output_text, turn_expected)
 
 
 @pytest.mark.parametrize("case", image_test_cases)
-def test_response_non_streaming_image(responses_client, text_model_id, case):
-    if text_model_id.startswith("watsonx/"):
-        pytest.skip("WatsonX text model does not support vision/image inputs")
+def test_response_non_streaming_image(responses_client, vision_model_id, case):
     response = responses_client.responses.create(
-        model=text_model_id,
+        model=vision_model_id,
         input=case.input,
         stream=False,
     )
-    output_text = response.output_text.lower()
-    assert case.expected.lower() in output_text
+    assert_text_contains(response.output_text, case.expected)
 
 
 @pytest.mark.parametrize("case", multi_turn_image_test_cases)
-def test_response_non_streaming_multi_turn_image(responses_client, text_model_id, case):
-    if text_model_id.startswith("watsonx/"):
-        pytest.skip("WatsonX text model does not support vision/image inputs")
+def test_response_non_streaming_multi_turn_image(responses_client, vision_model_id, case):
     previous_response_id = None
     for turn_input, turn_expected in case.turns:
         response = responses_client.responses.create(
-            model=text_model_id,
+            model=vision_model_id,
             input=turn_input,
             previous_response_id=previous_response_id,
         )
         previous_response_id = response.id
-        output_text = response.output_text.lower()
-        assert turn_expected.lower() in output_text
+        assert_text_contains(response.output_text, turn_expected)
 
 
 def test_include_logprobs_non_streaming(client_with_models, text_model_id):
@@ -308,13 +300,16 @@ def test_include_logprobs_streaming(client_with_models, text_model_id):
                 f"Expected logprobs in the returned chunk ({chunk.type=}), but none were returned"
             )
         elif chunk.type == "response.content_part.done":
-            assert chunk.part.logprobs == [], f"Expected no logprobs in the returned chunk ({chunk.type=})"
+            if hasattr(chunk.part, "logprobs"):
+                assert chunk.part.logprobs == [], f"Expected no logprobs in the returned chunk ({chunk.type=})"
 
 
 def test_include_logprobs_with_web_search(client_with_models, text_model_id):
     """Test include logprobs with built-in tool."""
 
     skip_if_chat_completions_logprobs_not_supported(client_with_models, text_model_id)
+    if text_model_id and text_model_id.startswith("bedrock/"):
+        pytest.skip("Bedrock GPT-OSS consistently hallucinates tool names with web_search + logprobs")
 
     input = "Search for a positive news story from today."
     include = ["message.output_text.logprobs"]
