@@ -24,7 +24,6 @@ The `llamastack/distribution-passthrough` distribution consists of the following
 | tool_runtime | `remote::brave-search`, `remote::tavily-search`, `remote::wolfram-alpha`, `inline::file-search`, `remote::model-context-protocol` |
 | vector_io | `inline::faiss`, `remote::chromadb`, `remote::pgvector` |
 
-
 ### Environment Variables
 
 The following environment variables can be configured:
@@ -37,5 +36,5 @@ The following environment variables can be configured:
 
 The following models are available by default:
 
-- `llama3.1-8b-instruct `
-- `llama3.2-11b-vision-instruct `
+- `llama3.1-8b-instruct`
+- `llama3.2-11b-vision-instruct`

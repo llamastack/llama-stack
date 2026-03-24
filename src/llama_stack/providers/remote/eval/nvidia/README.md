@@ -1,6 +1,5 @@
 # NVIDIA NeMo Evaluator Eval Provider
 
-
 ## Overview
 
 For the first integration, Benchmarks are mapped to Evaluation Configs on in the NeMo Evaluator. The full evaluation config object is provided as part of the meta-data. The `dataset_id` and `scoring_functions` are not used.
@@ -12,6 +11,7 @@ Below are a few examples of how to register a benchmark, which in turn will crea
 ```
 POST /eval/benchmarks
 ```
+
 ```json
 {
   "benchmark_id": "mmlu",
@@ -28,6 +28,7 @@ POST /eval/benchmarks
 ```
 POST /eval/benchmarks
 ```
+
 ```json
 {
   "benchmark_id": "my-custom-benchmark",
@@ -71,6 +72,7 @@ POST /eval/benchmarks
 ```
 POST /eval/benchmarks/{benchmark_id}/jobs
 ```
+
 ```json
 {
   "benchmark_id": "my-custom-benchmark",
@@ -89,6 +91,7 @@ POST /eval/benchmarks/{benchmark_id}/jobs
 ```
 
 Response example:
+
 ```json
 {
     "job_id": "eval-1234",
@@ -97,11 +100,13 @@ Response example:
 ```
 
 ### Example for getting the status of a job
+
 ```
 GET /eval/benchmarks/{benchmark_id}/jobs/{job_id}
 ```
 
 Response example:
+
 ```json
 {
   "job_id": "eval-1234",
@@ -110,14 +115,17 @@ Response example:
 ```
 
 ### Example for cancelling a job
+
 ```
 POST /eval/benchmarks/{benchmark_id}/jobs/{job_id}/cancel
 ```
 
 ### Example for getting the results
+
 ```
 GET /eval/benchmarks/{benchmark_id}/results
 ```
+
 ```json
 {
   "generations": [],

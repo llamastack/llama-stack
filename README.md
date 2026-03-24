@@ -10,7 +10,6 @@
 
 [**Quick Start**](https://llamastack.github.io/docs/getting_started/quickstart) | [**Documentation**](https://llamastack.github.io/docs) | [**Colab Notebook**](./docs/getting_started.ipynb) | [**Discord**](https://discord.gg/llama-stack)
 
-
 ### 🚀 One-Line Installer 🚀
 
 To try Llama Stack locally, run:
@@ -47,6 +46,7 @@ Llama Stack defines and standardizes the core building blocks that simplify AI a
 For more information, see the [Benefits of Llama Stack](https://llamastack.github.io/docs/latest/concepts/architecture#benefits-of-llama-stack) documentation.
 
 ### API Providers
+
 Here is a list of the various API providers and available distributions that can help developers get started easily with Llama Stack.
 Please checkout for [full list](https://llamastack.github.io/docs/providers)
 
@@ -101,17 +101,17 @@ For full documentation on the Llama Stack distributions see the [Distributions O
 
 Please checkout our [Documentation](https://llamastack.github.io/docs) page for more details.
 
-* CLI references
-    * [llama (server-side) CLI Reference](https://llamastack.github.io/docs/references/llama_cli_reference): Guide for using the `llama` CLI to work with Llama models (download, study prompts), and building/starting a Llama Stack distribution.
-    * [llama (client-side) CLI Reference](https://llamastack.github.io/docs/references/llama_stack_client_cli_reference): Guide for using the `llama-stack-client` CLI, which allows you to query information about the distribution.
-* Getting Started
-    * [Quick guide to start a Llama Stack server](https://llamastack.github.io/docs/getting_started/quickstart).
-    * [Jupyter notebook](./docs/getting_started.ipynb) to walk-through how to use simple text and vision inference llama_stack_client APIs
-    * The complete Llama Stack lesson [Colab notebook](https://colab.research.google.com/drive/1dtVmxotBsI4cGZQNsJRYPrLiDeT0Wnwt) of the new [Llama 3.2 course on Deeplearning.ai](https://learn.deeplearning.ai/courses/introducing-multimodal-llama-3-2/lesson/8/llama-stack).
-    * A [Zero-to-Hero Guide](https://github.com/meta-llama/llama-stack/tree/main/docs/zero_to_hero_guide) that guide you through all the key components of llama stack with code samples.
-* [Contributing](CONTRIBUTING.md)
-    * [Adding a new API Provider](https://llamastack.github.io/docs/contributing/new_api_provider) to walk-through how to add a new API provider.
-    * [Release Process](RELEASE_PROCESS.md) for information about release schedules and versioning.
+- CLI references
+  - [llama (server-side) CLI Reference](https://llamastack.github.io/docs/references/llama_cli_reference): Guide for using the `llama` CLI to work with Llama models (download, study prompts), and building/starting a Llama Stack distribution.
+  - [llama (client-side) CLI Reference](https://llamastack.github.io/docs/references/llama_stack_client_cli_reference): Guide for using the `llama-stack-client` CLI, which allows you to query information about the distribution.
+- Getting Started
+  - [Quick guide to start a Llama Stack server](https://llamastack.github.io/docs/getting_started/quickstart).
+  - [Jupyter notebook](./docs/getting_started.ipynb) to walk-through how to use simple text and vision inference llama_stack_client APIs
+  - The complete Llama Stack lesson [Colab notebook](https://colab.research.google.com/drive/1dtVmxotBsI4cGZQNsJRYPrLiDeT0Wnwt) of the new [Llama 3.2 course on Deeplearning.ai](https://learn.deeplearning.ai/courses/introducing-multimodal-llama-3-2/lesson/8/llama-stack).
+  - A [Zero-to-Hero Guide](https://github.com/meta-llama/llama-stack/tree/main/docs/zero_to_hero_guide) that guide you through all the key components of llama stack with code samples.
+- [Contributing](CONTRIBUTING.md)
+  - [Adding a new API Provider](https://llamastack.github.io/docs/contributing/new_api_provider) to walk-through how to add a new API provider.
+  - [Release Process](RELEASE_PROCESS.md) for information about release schedules and versioning.
 
 ### Llama Stack Client SDKs
 
@@ -136,6 +136,7 @@ We hold regular community calls to discuss the latest developments and get feedb
 - Time: 09:00 AM PST (check the [Community Event on Discord](https://discord.com/events/1257833999603335178/1413266296748900513) for the latest details)
 
 ## 🌟 GitHub Star History
+
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=meta-llama/llama-stack&type=Date)](https://www.star-history.com/#meta-llama/llama-stack&Date)

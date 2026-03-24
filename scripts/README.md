@@ -33,22 +33,26 @@ scripts/
 ## Common Operations
 
 ### Regenerate distribution configs
+
 ```bash
 uv run python scripts/distro_codegen.py
 ```
 
 ### Regenerate provider registry
+
 ```bash
 uv run python scripts/provider_codegen.py
 ```
 
 ### Run tests
+
 ```bash
 ./scripts/unit-tests.sh
 ./scripts/integration-tests.sh --stack-config starter
 ```
 
 ### Manage test recordings
+
 ```bash
 # Clean up orphaned recordings
 uv run python scripts/cleanup_recordings.py
@@ -59,6 +63,7 @@ uv run python scripts/normalize_recordings.py
 ```
 
 ### Remote test recording (via GitHub Actions)
+
 ```bash
 ./scripts/github/schedule-record-workflow.sh --test-subdirs "inference,agents"
 ```

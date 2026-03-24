@@ -13,6 +13,7 @@ uv run --group test \
 ## Configuration Options
 
 You can see all options with:
+
 ```bash
 cd tests/integration
 
@@ -21,6 +22,7 @@ pytest --help
 ```
 
 Here are the most important options:
+
 - `--stack-config`: specify the stack config to use. You have four ways to point to a stack:
   - **`server:<config>`** - automatically start a server with the given config (e.g., `server:starter`). This provides one-step testing by auto-starting the server if the port is available, or reusing an existing server if already running.
   - **`server:<config>:<port>`** - same as above but with a custom port (e.g., `server:starter:8322`)
@@ -30,6 +32,7 @@ Here are the most important options:
 - `--env`: set environment variables, e.g. --env KEY=value. this is a utility option to set environment variables required by various providers.
 
 Model parameters can be influenced by the following options:
+
 - `--text-model`: comma-separated list of text models.
 - `--vision-model`: comma-separated list of vision models.
 - `--embedding-model`: comma-separated list of embedding models.
@@ -102,9 +105,7 @@ OLLAMA_URL=http://localhost:11434 \
 
 The library client constructs the Stack "in-process" instead of using a server. This is useful during the iterative development process since you don't need to constantly start and stop servers.
 
-
 You can do this by simply using `--stack-config=starter` instead of `--stack-config=server:starter`.
-
 
 ### Using ad-hoc distributions
 
@@ -131,25 +132,33 @@ pytest -s -v tests/integration/vector_io/ \
 The testing system supports four modes controlled by environment variables:
 
 ### REPLAY Mode (Default)
+
 Uses cached responses instead of making API calls:
+
 ```bash
 pytest tests/integration/
 ```
 
 ### RECORD-IF-MISSING Mode (Recommended for adding new tests)
+
 Records only when no recording exists, otherwise replays. This is the preferred mode for iterative development:
+
 ```bash
 pytest tests/integration/inference/test_new_feature.py --inference-mode=record-if-missing
 ```
 
 ### RECORD Mode
+
 **Force-records all API interactions**, overwriting existing recordings. Use with caution as this will re-record everything:
+
 ```bash
 pytest tests/integration/inference/test_new_feature.py --inference-mode=record
 ```
 
 ### LIVE Mode
+
 Tests make real API calls (not recorded):
+
 ```bash
 pytest tests/integration/ --inference-mode=live
 ```
@@ -159,6 +168,7 @@ By default, the recording directory is `tests/integration/recordings`. You can o
 ## Managing Recordings
 
 ### Viewing Recordings
+
 ```bash
 # See what's recorded
 sqlite3 recordings/index.sqlite "SELECT endpoint, model, timestamp FROM recordings;"
@@ -172,15 +182,18 @@ cat recordings/responses/abc123.json | jq '.'
 #### Automated Re-recording (Recommended)
 
 When you open a PR with new or modified tests, the recording workflow automatically:
+
 1. Detects missing test recordings
 2. Records them using ollama (no API keys needed)
 3. Commits the recordings back to your PR
 
 The workflow uses two steps for security:
+
 - Step 1: Runs tests with read-only permissions and uploads recordings as artifacts
 - Step 2: Commits recordings from artifacts (only runs trusted base repo code with write permissions)
 
 **For PR authors:**
+
 - Just open a PR with test changes - that's it!
 - Works for both same-repo and fork PRs (if "Allow edits from maintainers" is enabled)
 - Recording commits trigger tests again in replay mode to validate the recordings work
@@ -188,11 +201,13 @@ The workflow uses two steps for security:
 **For maintainers** - recording with providers requiring API keys (gpt, azure, bedrock):
 
 Via GitHub UI:
+
 1. Go to **Actions** → **Integration Tests (Record)**
 2. Click **Run workflow**
 3. Enter PR number and providers: `gpt,azure`
 
 Via GitHub CLI:
+
 ```bash
 # Record for a specific PR with multiple providers
 gh workflow run record-integration-tests.yml \
@@ -215,6 +230,7 @@ gh workflow run record-integration-tests.yml \
 ```
 
 **Available providers:**
+
 - `ollama` - No API keys (auto-runs on PRs)
 - `gpt` - OpenAI (requires `OPENAI_API_KEY` secret)
 - `azure` - Azure OpenAI (requires `AZURE_API_KEY`, `AZURE_API_BASE` secrets)
@@ -224,18 +240,24 @@ gh workflow run record-integration-tests.yml \
 Note: `vllm` is not yet supported in this recording workflow (not in the provider matrix).
 
 **Adding new providers:**
+
 1. Add a new entry to the `provider` matrix in `.github/workflows/record-integration-tests.yml`:
+
    ```yaml
    - setup: your-provider
      suite: responses
    ```
+
 2. Add the provider's API key env var in the `Run and record tests` step:
+
    ```yaml
    YOUR_PROVIDER_API_KEY: ${{ matrix.provider.setup == 'your-provider' && secrets.YOUR_PROVIDER_API_KEY || '' }}
    ```
+
 3. Add the GitHub secret in repo settings
 
 #### Local Re-recording
+
 ```bash
 # Re-record specific tests
 pytest -s -v --stack-config=server:starter tests/integration/inference/test_modified.py --inference-mode=record
@@ -246,6 +268,7 @@ Note that when re-recording tests, you must use a Stack pointing to a server (i.
 ## Writing Tests
 
 ### Basic Test Pattern
+
 ```python
 def test_basic_chat_completion(llama_stack_client, text_model_id):
     response = llama_stack_client.chat.completions.create(
@@ -260,6 +283,7 @@ def test_basic_chat_completion(llama_stack_client, text_model_id):
 ```
 
 ### Provider-Specific Tests
+
 ```python
 def test_asymmetric_embeddings(llama_stack_client, embedding_model_id):
     if embedding_model_id not in MODELS_SUPPORTING_TASK_TYPE:

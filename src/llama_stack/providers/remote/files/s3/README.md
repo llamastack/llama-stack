@@ -211,11 +211,13 @@ config:
 ```
 
 ### Using OCI Object Storage with S3 Compatibility
+
 [Official Object Storage Amazon S3 Compatibility API Documentation](https://docs.oracle.com/en-us/iaas/Content/Object/Tasks/s3compatibleapi.htm)
 
 OCI Object Storage can be utilized through the OCI S3 Compatibility API. Simply Update the `config.yaml` and set the env-vars as below.
 
 #### config.yaml
+
 ```yaml
 provider_type: remote::s3
 config:
@@ -228,7 +230,9 @@ config:
     table_name: files_metadata
     backend: sql_default
 ```
+
 #### .env
+
 ```
 AWS_ACCESS_KEY_ID=OCI_ACCESS_KEY
 AWS_SECRET_ACCESS_KEY=OCI_SECRET_KEY
@@ -237,7 +241,6 @@ S3_ENDPOINT_URL=https://<namespace>.compat.objectstorage.<region>.oci.customer-o
 AWS_REQUEST_CHECKSUM_CALCULATION=when_required
 AWS_RESPONSE_CHECKSUM_VALIDATION=when_required
 ```
-
 
 ## Monitoring and Logging
 

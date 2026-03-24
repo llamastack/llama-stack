@@ -12,14 +12,11 @@ self
 
 The `llamastack/distribution-tgi` distribution consists of the following provider configurations.
 
-
-| **API**         	| **Inference** 	| **Agents**     	| **Memory**                                       	| **Safety**     	|
-|-----------------	|---------------	|----------------	|--------------------------------------------------	|----------------	|
-| **Provider(s)** 	| remote::tgi   	| builtin 	| builtin, remote::pgvector, remote::chroma 	| builtin 	|
-
+| **API**          | **Inference**  | **Agents**      | **Memory**                                        | **Safety**      |
+|----------------- |--------------- |---------------- |-------------------------------------------------- |---------------- |
+| **Provider(s)**  | remote::tgi    | builtin  | builtin, remote::pgvector, remote::chroma  | builtin  |
 
 The only difference vs. the `tgi` distribution is that it runs the Dell-TGI server for inference.
-
 
 ### Start the Distribution (Single Node GPU)
 
@@ -34,6 +31,7 @@ $ docker compose up
 ```
 
 The script will first start up TGI server, then start up Llama Stack distribution server hooking up to the remote TGI provider for inference. You should be able to see the following outputs --
+
 ```
 [text-generation-inference] | 2024-10-15T18:56:33.810397Z  INFO text_generation_router::server: router/src/server.rs:1813: Using config Some(Llama)
 [text-generation-inference] | 2024-10-15T18:56:33.810448Z  WARN text_generation_router::server: router/src/server.rs:1960: Invalid hostname, defaulting to 0.0.0.0
@@ -45,6 +43,7 @@ INFO:     Uvicorn running on http://[::]:8321 (Press CTRL+C to quit)
 ```
 
 To kill the server
+
 ```
 docker compose down
 ```
@@ -52,6 +51,7 @@ docker compose down
 ### (Alternative) Dell-TGI server + llama stack run (Single Node GPU)
 
 #### Start Dell-TGI server locally
+
 ```
 docker run -it --pull always --shm-size 1g -p 80:80 --gpus 4 \
 -e NUM_SHARD=4
@@ -61,7 +61,6 @@ docker run -it --pull always --shm-size 1g -p 80:80 --gpus 4 \
 registry.dell.huggingface.co/enterprise-dell-inference-meta-llama-meta-llama-3.1-8b-instruct
 ```
 
-
 #### Start Llama Stack server pointing to TGI server
 
 ```
@@ -69,6 +68,7 @@ docker run --pull always --network host -it -p 8321:8321 -v ./config.yaml:/root/
 ```
 
 Make sure in you `config.yaml` file, you inference provider is pointing to the correct TGI server endpoint. E.g.
+
 ```
 inference:
   - provider_id: tgi0

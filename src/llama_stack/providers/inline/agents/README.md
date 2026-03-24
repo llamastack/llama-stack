@@ -32,6 +32,7 @@ This provider handles:
 ## Dependencies
 
 This provider depends on:
+
 - `Api.inference` -- for LLM calls
 - `Api.safety` -- for input/output safety checks
 - `Api.tool_runtime` -- for executing tool calls

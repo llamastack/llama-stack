@@ -331,6 +331,7 @@ The pattern here — a self-improving agent that benchmarks and rewrites its own
 - **Multiple research agents** with different vector stores, each self-improving independently and specializing in a different knowledge domain
 
 To learn more:
+
 - [Responses API documentation](/docs/building_applications/responses_vs_agents)
 - [Conversations API documentation](/docs/api-openai/conformance#conversations)
 - [OpenAI API compatibility](/docs/api-openai)

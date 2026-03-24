@@ -1,6 +1,7 @@
 # iOS SDK
 
 We offer both remote and on-device use of Llama Stack in Swift via a single SDK [llama-stack-client-swift](https://github.com/meta-llama/llama-stack-client-swift/) that contains two components:
+
 1. LlamaStackClient for remote
 2. Local Inference for on-device
 
@@ -75,14 +76,12 @@ We're working on making LocalInference easier to set up. For now, you'll need t
 
 We now support models quantized using SpinQuant and QAT-LoRA which offer a significant performance boost (demo app on iPhone 13 Pro):
 
-
 | Llama 3.2 1B | Tokens / Second (total) |  | Time-to-First-Token (sec) |  |
 | :---- | :---- | :---- | :---- | :---- |
 |  | Haiku | Paragraph | Haiku | Paragraph |
 | BF16 | 2.2 | 2.5 | 2.3 | 1.9 |
 | QAT+LoRA | 7.1 | 3.3 | 0.37 | 0.24 |
 | SpinQuant | 10.1 | 5.2 | 0.2 | 0.2 |
-
 
 ### Using LocalInference
 
@@ -96,7 +95,7 @@ We now support models quantized using SpinQuant and QAT-LoRA which offer a signi
   }
 ```
 
-2. Before making any inference calls, load your model from your bundle:
+1. Before making any inference calls, load your model from your bundle:
 
 ```swift
 let mainBundle = Bundle.main
@@ -107,7 +106,7 @@ inferenceService.loadModel(
 )
 ```
 
-3. Make inference calls (or agents calls) as you normally would with LlamaStack:
+1. Make inference calls (or agents calls) as you normally would with LlamaStack:
 
 ```
 for await chunk in try await agentsService.initAndCreateTurn(

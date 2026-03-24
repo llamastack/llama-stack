@@ -24,8 +24,6 @@ The `llamastack/distribution-watsonx` distribution consists of the following pro
 | tool_runtime | `remote::brave-search`, `remote::tavily-search`, `inline::file-search`, `remote::model-context-protocol` |
 | vector_io | `inline::faiss` |
 
-
-
 ### Environment Variables
 
 The following environment variables can be configured:
@@ -48,11 +46,9 @@ The following models are available by default:
 - `meta-llama/llama-3-2-90b-vision-instruct (aliases: meta-llama/Llama-3.2-90B-Vision-Instruct)`
 - `meta-llama/llama-guard-3-11b-vision (aliases: meta-llama/Llama-Guard-3-11B-Vision)`
 
-
 ### Prerequisite: API Keys
 
 Make sure you have access to a watsonx API Key. You can get one by referring [watsonx.ai](https://www.ibm.com/docs/en/masv-and-l/maximo-manage/continuous-delivery?topic=setup-create-watsonx-api-key).
-
 
 ## Running Llama Stack with watsonx
 

@@ -1,4 +1,5 @@
 # Contributing to Llama Stack
+
 We want to make contributing to this project as easy and transparent as
 possible.
 
@@ -23,8 +24,8 @@ If you don't specify a Python version, `uv` will automatically select a Python v
 section of the `pyproject.toml`, which is fine for running Llama Stack but not for committing changes.
 For more info, see the [uv docs around Python versions](https://docs.astral.sh/uv/concepts/python-versions/).
 
-
 Note that you can create a dotenv file `.env` that includes necessary environment variables:
+
 ```
 LLAMA_STACK_BASE_URL=http://localhost:8321
 LLAMA_STACK_CLIENT_LOG=debug
@@ -35,6 +36,7 @@ BRAVE_SEARCH_API_KEY=
 ```
 
 And then use this dotenv file when running client SDK tests via the following:
+
 ```bash
 uv run --env-file .env -- pytest -v tests/integration/conversations/test_openai_conversations.py --setup=gpt
 ```
@@ -84,6 +86,7 @@ We actively welcome your pull requests. However, please read the following. This
 If in doubt, please open a [issue](https://github.com/llamastack/llama-stack/issues).
 
 ### Issues
+
 We use GitHub issues to track public bugs. Please ensure your description is
 clear and has sufficient instructions to be able to reproduce the issue.
 
@@ -92,6 +95,7 @@ disclosure of security bugs. In those cases, please go through the process
 outlined on that page and do not file a public issue.
 
 ### Contributor License Agreement ("CLA")
+
 In order to accept your pull request, we need you to submit a CLA. You only need
 to do this once to work on any of Meta's open source projects.
 
@@ -137,13 +141,12 @@ Please avoid picking up too many issues at once. This helps you stay focused and
 6. Ensure your pull request follows the [conventional commits format](https://www.conventionalcommits.org/en/v1.0.0/).
 7. Ensure your pull request follows the [coding style](#coding-style).
 
-
 Please keep pull requests (PRs) small and focused. If you have a large set of changes, consider splitting them into logically grouped, smaller PRs to facilitate review and testing.
 
 **Tip:** As a general guideline:
+
 - Experienced contributors should try to keep no more than 5 open PRs at a time.
 - New contributors are encouraged to have only one open PR at a time until they're familiar with the codebase and process.
-
 
 **Handling Pull Request Reviews**
 
@@ -169,6 +172,7 @@ Your Test Plan should include:
 2. **Execution output**: Include the actual output from running your test script. This proves your implementation works and gives reviewers a clear picture of the expected behavior.
 
 This practice:
+
 - Validates that your implementation works end-to-end
 - Provides reviewers with reproducible verification steps
 - Serves as documentation for the new API behavior
@@ -192,27 +196,28 @@ This process helps ensure that new providers are well-designed, avoid duplicatio
 
 ### Coding Style
 
-* Comments should provide meaningful insights into the code. Avoid filler comments that simply
+- Comments should provide meaningful insights into the code. Avoid filler comments that simply
   describe the next step, as they create unnecessary clutter, same goes for docstrings.
-* Prefer comments to clarify surprising behavior and/or relationships between parts of the code
+- Prefer comments to clarify surprising behavior and/or relationships between parts of the code
   rather than explain what the next line of code does.
-* Catching exceptions, prefer using a specific exception type rather than a broad catch-all like
+- Catching exceptions, prefer using a specific exception type rather than a broad catch-all like
   `Exception`.
-* Error messages should be prefixed with "Failed to ..."
-* 4 spaces for indentation rather than tab
-* When using `# noqa` to suppress a style or linter warning, include a comment explaining the
+- Error messages should be prefixed with "Failed to ..."
+- 4 spaces for indentation rather than tab
+- When using `# noqa` to suppress a style or linter warning, include a comment explaining the
   justification for bypassing the check.
-* When using `# type: ignore` to suppress a mypy warning, include a comment explaining the
+- When using `# type: ignore` to suppress a mypy warning, include a comment explaining the
   justification for bypassing the check.
-* Don't use unicode characters in the codebase. ASCII-only is preferred for compatibility or
+- Don't use unicode characters in the codebase. ASCII-only is preferred for compatibility or
   readability reasons.
-* Providers configuration class should be Pydantic Field class. It should have a `description` field
+- Providers configuration class should be Pydantic Field class. It should have a `description` field
   that describes the configuration. These descriptions will be used to generate the provider
   documentation.
-* When possible, use keyword arguments only when calling functions.
-* Llama Stack utilizes [custom Exception classes](llama_stack/apis/common/errors.py) for certain Resources that should be used where applicable.
+- When possible, use keyword arguments only when calling functions.
+- Llama Stack utilizes [custom Exception classes](llama_stack/apis/common/errors.py) for certain Resources that should be used where applicable.
 
 ### License
+
 By contributing to Llama, you agree that your contributions will be licensed
 under the LICENSE file in the root directory of this source tree.
 
@@ -225,6 +230,7 @@ Some tips about common tasks you work on while contributing to Llama Stack:
 When installing dependencies for a distribution, you can use `llama stack list-deps` to view and install the required packages.
 
 Example:
+
 ```bash
 cd work/
 git clone https://github.com/llamastack/llama-stack.git

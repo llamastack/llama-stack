@@ -72,11 +72,13 @@ Several changes to achieve full OpenAI API conformance:
 - **`encoding_format` is now an enum**: Only `"float"` or `"base64"` allowed
 
 **Before (accepted):**
+
 ```python
 request = {"model": "test", "input": "hello", "dimensions": None}
 ```
 
 **After (ValidationError):**
+
 ```python
 # Must omit the field entirely, not set to null
 request = {"model": "test", "input": "hello"}
@@ -93,6 +95,7 @@ request = {"model": "test", "input": "hello"}
 The Safety API has been migrated to FastAPI routers. Safety providers now receive request objects instead of individual parameters:
 
 **Before:**
+
 ```python
 async def run_shield(
     self, shield_id: str, messages: list, params: dict
@@ -100,6 +103,7 @@ async def run_shield(
 ```
 
 **After:**
+
 ```python
 async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse: ...
 ```
@@ -143,12 +147,14 @@ These changes include backward compatibility. The old behavior continues to work
 The `image_name` field in `StackConfig` has been renamed to `distro_name` to better reflect its purpose.
 
 **Before:**
+
 ```yaml
 version: 2
 image_name: my-stack
 ```
 
 **After:**
+
 ```yaml
 version: 2
 distro_name: my-stack
@@ -167,11 +173,13 @@ distro_name: my-stack
 The Eval API now uses request objects. Old-style parameter calling is deprecated but supported:
 
 **New style (preferred):**
+
 ```python
 await eval.run_eval(RunEvalRequest(benchmark_id="...", benchmark_config=...))
 ```
 
 **Old style (deprecated):**
+
 ```python
 await eval.run_eval(
     benchmark_id="...", benchmark_config=...
@@ -191,6 +199,7 @@ await eval.run_eval(
 The `tls_verify` field is deprecated in favor of the new `network.tls.verify` configuration:
 
 **Before:**
+
 ```yaml
 providers:
   inference:
@@ -201,6 +210,7 @@ providers:
 ```
 
 **After:**
+
 ```yaml
 providers:
   inference:
@@ -256,6 +266,7 @@ connectors:
 ```
 
 API endpoints:
+
 - `GET /v1alpha/connectors` - List all connectors
 - `GET /v1alpha/connectors/{connector_id}` - Get connector details
 - `GET /v1alpha/connectors/{connector_id}/tools/{tool_name}` - Get tool info
@@ -322,6 +333,7 @@ results = await client.vector_stores.search(
 ### Response API Enhancements
 
 - **`reasoning.effort` parameter** ([#4633](https://github.com/meta-llama/llama-stack/pull/4633)) - *Nehanth Narendrula*: Control reasoning token usage
+
   ```python
   response = client.responses.create(
       model="openai/gpt-5",
@@ -354,6 +366,7 @@ results = await client.vector_stores.search(
 ### Library Client Improvements
 
 - **Shutdown functionality** ([#4642](https://github.com/meta-llama/llama-stack/pull/4642)) - *Sergey Yedrikov (Red Hat)*: Proper cleanup for `LlamaStackAsLibraryClient` and `AsyncLlamaStackAsLibraryClient`
+
   ```python
   async with AsyncLlamaStackAsLibraryClient(config_path) as client:
       # Use client
@@ -425,18 +438,23 @@ Several providers have been updated to handle legacy data formats:
 Complete these steps before upgrading to 0.5:
 
 1. **Search for post-training API calls** in your codebase:
+
    ```bash
    grep -r "post-training/job" .
    ```
+
    Update any matches to use the new path format: `/post-training/jobs/{job_uuid}/...`
 
 2. **Search for null values in embeddings requests**:
+
    ```bash
    grep -rE '"(dimensions|user)":\s*null' .
    ```
+
    Remove these fields entirely instead of setting them to `null`.
 
 3. **If using `inline::meta-reference` provider**, update your config:
+
    ```yaml
    # Before
    provider_type: inline::meta-reference
@@ -447,6 +465,7 @@ Complete these steps before upgrading to 0.5:
    ```
 
 4. **If you have custom safety providers**, update method signatures:
+
    ```python
    # Before
    async def run_shield(
@@ -459,6 +478,7 @@ Complete these steps before upgrading to 0.5:
    ```
 
 5. **If using `required_scope` for endpoint auth**, migrate to new YAML config:
+
    ```yaml
    server:
      auth:

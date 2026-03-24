@@ -8,12 +8,14 @@ You have two ways to install Llama Stack:
 
 1. **Install as a package**:
    You can install the repository directly from [PyPI](https://pypi.org/project/llama-stack/) by running the following command:
+
    ```bash
    pip install llama-stack
    ```
 
 2. **Install from source**:
    If you prefer to install from the source code, follow these steps:
+
    ```bash
     mkdir -p ~/local
     cd ~/local
@@ -32,6 +34,7 @@ You first need to have models downloaded locally. We recommend using the [Huggin
 ### Install Hugging Face CLI
 
 First, install the Hugging Face CLI:
+
 ```bash
 pip install huggingface_hub[cli]
 ```
@@ -55,11 +58,14 @@ huggingface-cli download meta-llama/Prompt-Guard-86M --local-dir ~/.llama/Prompt
 ```
 
 **Important:** You need to authenticate with Hugging Face to download models. You can do this by:
+
 1. Getting your token from [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
 2. Running `huggingface-cli login` and entering your token
+
 ## List the downloaded models
 
 To list the downloaded models, you can use the Hugging Face CLI:
+
 ```bash
 # List all downloaded models in your local cache
 huggingface-cli scan-cache

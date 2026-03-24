@@ -3,6 +3,7 @@
 This provider enables running inference using NVIDIA NIM.
 
 ## Features
+
 - Endpoints for completions, chat completions, and embeddings for registered models
 
 ## Getting Started
