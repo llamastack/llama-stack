@@ -8,6 +8,19 @@ import time
 
 from langchain_openai import ChatOpenAI
 
+from ..helpers import assert_text_contains, normalize_text
+
+__all__ = [
+    "assert_text_contains",
+    "normalize_text",
+    "new_vector_store",
+    "upload_file",
+    "wait_for_file_attachment",
+    "setup_mcp_tools",
+    "extract_text_content",
+    "langchain_chat",
+]
+
 
 def new_vector_store(openai_client, name, embedding_model, embedding_dimension):
     """Create a new vector store, cleaning up any existing one with the same name."""
