@@ -14,6 +14,8 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class ElasticsearchVectorIOConfig(BaseModel):
+    """Configuration for the Elasticsearch vector I/O provider."""
+
     elasticsearch_api_key: str | None = Field(description="The API key for the Elasticsearch instance", default=None)
     elasticsearch_url: str | None = Field(description="The URL of the Elasticsearch instance", default="localhost:9200")
     persistence: KVStoreReference | None = Field(

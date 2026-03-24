@@ -18,6 +18,8 @@ log = get_logger(name=__name__, category="providers::utils")
 
 
 class MongoDBKVStoreImpl(KVStore):
+    """MongoDB-backed key-value store implementation."""
+
     def __init__(self, config: MongoDBKVStoreConfig):
         self.config = config
         self.conn: AsyncMongoClient | None = None

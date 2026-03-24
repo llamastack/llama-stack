@@ -14,6 +14,8 @@ from llama_stack_api import json_schema_type
 
 
 class NVIDIAProviderDataValidator(BaseModel):
+    """Validates provider-specific request data for NVIDIA inference."""
+
     nvidia_api_key: SecretStr | None = Field(
         default=None,
         description="API key for NVIDIA NIM models",

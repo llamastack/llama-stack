@@ -70,6 +70,8 @@ def _get_iam_token(api_key: str) -> str:
 
 
 class WatsonXInferenceAdapter(OpenAIMixin):
+    """Inference adapter for IBM WatsonX AI platform."""
+
     _model_cache: dict[str, Model] = {}
 
     provider_data_api_key_field: str = "watsonx_api_key"

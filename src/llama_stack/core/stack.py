@@ -100,6 +100,8 @@ class LlamaStack(
     Conversations,
     Connectors,
 ):
+    """Composite protocol combining all Llama Stack API interfaces."""
+
     pass
 
 
@@ -213,6 +215,12 @@ async def invoke_with_optional_request(method: Any) -> Any:
 
 
 async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
+    """Register all resources defined in the run configuration with their respective providers.
+
+    Args:
+        run_config: The stack run configuration containing registered_resources.
+        impls: Dictionary mapping APIs to their provider implementations.
+    """
     for rsrc, api, register_method, list_method, request_class in RESOURCES:
         objects = getattr(run_config.registered_resources, rsrc)
         if api not in impls:
@@ -430,6 +438,15 @@ async def _validate_rewrite_query_model(rewrite_query_model: QualifiedModel, imp
 
 
 async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict[Api, Any]):
+    """Validate that the configured default shield exists among registered shields.
+
+    Args:
+        safety_config: Optional safety configuration with a default_shield_id.
+        impls: Dictionary mapping APIs to their provider implementations.
+
+    Raises:
+        ValueError: If the default shield ID is not found among registered shields.
+    """
     if safety_config is None or safety_config.default_shield_id is None:
         return
 
@@ -454,6 +471,8 @@ async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict
 
 
 class EnvVarError(Exception):
+    """Raised when a required environment variable is not set or empty."""
+
     def __init__(self, var_name: str, path: str = ""):
         self.var_name = var_name
         self.path = path
@@ -466,6 +485,18 @@ class EnvVarError(Exception):
 
 
 def replace_env_vars(config: Any, path: str = "") -> Any:
+    """Recursively replace environment variable references in a configuration object.
+
+    Args:
+        config: Configuration value (dict, list, str, or other) to process.
+        path: Dot-separated path for error reporting.
+
+    Returns:
+        The configuration with all environment variable references resolved.
+
+    Raises:
+        EnvVarError: If a required environment variable is not set.
+    """
     if isinstance(config, dict):
         # Special handling for auth provider_config with conditional type field
         # This allows auth to be enabled/disabled via environment variables
@@ -705,6 +736,8 @@ def _initialize_storage(run_config: StackConfig):
 
 
 class Stack:
+    """Manages the lifecycle of a Llama Stack instance, including initialization, registry refresh, and shutdown."""
+
     def __init__(self, run_config: StackConfig, provider_registry: ProviderRegistry | None = None):
         self.run_config = run_config
         self.provider_registry = provider_registry
@@ -815,6 +848,11 @@ class Stack:
 
 
 async def refresh_registry_once(impls: dict[Api, Any]):
+    """Refresh all routing table registries once by calling their refresh methods.
+
+    Args:
+        impls: Dictionary mapping APIs to their provider implementations.
+    """
     logger.debug("refreshing registry")
     routing_tables = [v for v in impls.values() if isinstance(v, CommonRoutingTableImpl)]
     for routing_table in routing_tables:
@@ -822,6 +860,11 @@ async def refresh_registry_once(impls: dict[Api, Any]):
 
 
 async def refresh_registry_task(impls: dict[Api, Any]):
+    """Background task that periodically refreshes routing table registries.
+
+    Args:
+        impls: Dictionary mapping APIs to their provider implementations.
+    """
     logger.info("starting registry refresh task")
     while True:
         await refresh_registry_once(impls)
@@ -830,6 +873,17 @@ async def refresh_registry_task(impls: dict[Api, Any]):
 
 
 def get_stack_run_config_from_distro(distro: str) -> StackConfig:
+    """Load a StackConfig from a named distribution's bundled config.yaml.
+
+    Args:
+        distro: Name of the distribution (e.g., 'starter', 'ci-tests').
+
+    Returns:
+        A validated StackConfig loaded from the distribution's config file.
+
+    Raises:
+        ValueError: If the distribution is not found.
+    """
     distro_path = importlib.resources.files("llama_stack") / f"distributions/{distro}/config.yaml"
 
     with importlib.resources.as_file(distro_path) as path:

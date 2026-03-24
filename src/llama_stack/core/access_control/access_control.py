@@ -25,6 +25,15 @@ logger = get_logger(name=__name__, category="core::auth")
 
 
 def matches_resource(resource_scope: str, actual_resource: str) -> bool:
+    """Check if a resource scope pattern matches an actual resource identifier.
+
+    Args:
+        resource_scope: A scope pattern (exact match, wildcard with ::*, or regex: prefix).
+        actual_resource: The qualified resource identifier to match against.
+
+    Returns:
+        True if the resource matches the scope pattern.
+    """
     if resource_scope == actual_resource:
         return True
     if resource_scope.startswith("regex:"):
@@ -43,6 +52,17 @@ def matches_scope(
     resource: str,
     user: str | None,
 ) -> bool:
+    """Check if a scope matches the given action, resource, and user principal.
+
+    Args:
+        scope: The access control scope to check against.
+        action: The action being performed.
+        resource: The qualified resource identifier.
+        user: The user principal, or None.
+
+    Returns:
+        True if the scope matches all provided criteria.
+    """
     if scope.resource and not matches_resource(scope.resource, resource):
         return False
     if scope.principal and scope.principal != user:
@@ -51,6 +71,14 @@ def matches_scope(
 
 
 def as_list(obj: Any) -> list[Any]:
+    """Wrap a value in a list if it is not already a list.
+
+    Args:
+        obj: A value or list of values.
+
+    Returns:
+        The value wrapped in a list, or the original list.
+    """
     if isinstance(obj, list):
         return obj
     return [obj]
@@ -61,6 +89,16 @@ def matches_conditions(
     resource: ProtectedResource,
     user: User,
 ) -> bool:
+    """Check if all conditions in a list are satisfied for the given resource and user.
+
+    Args:
+        conditions: List of conditions that must all match.
+        resource: The protected resource being accessed.
+        user: The user attempting access.
+
+    Returns:
+        True if all conditions match, False if any condition fails.
+    """
     for condition in conditions:
         # must match all conditions
         if not condition.matches(resource, user):
@@ -69,6 +107,11 @@ def matches_conditions(
 
 
 def default_policy() -> list[AccessRule]:
+    """Return the default access control policy for backwards compatibility.
+
+    Returns:
+        A list of AccessRules that permit all actions when user attributes match resource owner attributes.
+    """
     # for backwards compatibility, if no rules are provided, assume
     # full access subject to previous attribute matching rules
     return [
@@ -95,6 +138,17 @@ def is_action_allowed(
     resource: ProtectedResource,
     user: User | None,
 ) -> bool:
+    """Evaluate access control policy to determine if an action is allowed.
+
+    Args:
+        policy: List of access rules to evaluate in order.
+        action: The action being attempted.
+        resource: The protected resource being accessed.
+        user: The authenticated user, or None if authentication is disabled.
+
+    Returns:
+        True if the action is allowed, False otherwise.
+    """
     qualified_resource_id = f"{resource.type}::{resource.identifier}"
     decision = False
     reason = ""
@@ -155,6 +209,8 @@ def is_action_allowed(
 
 
 class AccessDeniedError(RuntimeError):
+    """Raised when a user is denied access to perform an action on a resource."""
+
     def __init__(self, action: str | None = None, resource: ProtectedResource | None = None, user: User | None = None):
         self.action = action
         self.resource = resource

@@ -23,6 +23,8 @@ from .models import (
 
 
 class DatasetStore(Protocol):
+    """Protocol for storing and retrieving dataset definitions."""
+
     def get_dataset(self, dataset_id: str) -> Dataset: ...
 
 

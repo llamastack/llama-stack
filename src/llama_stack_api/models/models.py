@@ -34,6 +34,8 @@ class ModelType(StrEnum):
 
 
 class CommonModelFields(BaseModel):
+    """Common fields shared across model creation and retrieval."""
+
     metadata: dict[str, Any] = Field(
         default_factory=dict,
         description="Any additional metadata for this model",
@@ -80,6 +82,8 @@ class Model(CommonModelFields, Resource):
 
 
 class ModelInput(CommonModelFields):
+    """Input model for registering a new model."""
+
     model_id: str
     provider_id: str | None = None
     provider_model_id: str | None = None

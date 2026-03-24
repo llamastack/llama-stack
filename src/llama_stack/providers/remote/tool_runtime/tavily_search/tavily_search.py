@@ -24,6 +24,8 @@ from .config import TavilySearchToolConfig
 
 
 class TavilySearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRequestProviderData):
+    """Tool runtime for performing AI-optimized web searches using the Tavily API."""
+
     def __init__(self, config: TavilySearchToolConfig):
         self.config = config
 

@@ -8,21 +8,29 @@ from typing import Protocol
 
 
 class User(Protocol):
+    """Protocol for user identity with principal and attribute information."""
+
     principal: str
     attributes: dict[str, list[str]] | None
 
 
 class ProtectedResource(Protocol):
+    """Protocol for resources subject to access control."""
+
     type: str
     identifier: str
     owner: User | None
 
 
 class Condition(Protocol):
+    """Protocol for access control conditions that evaluate resource-user relationships."""
+
     def matches(self, resource: ProtectedResource, user: User) -> bool: ...
 
 
 class UserInOwnersList:
+    """Condition that checks if the user has any matching attribute values in the resource owner's attribute list."""
+
     def __init__(self, name: str):
         self.name = name
 
@@ -54,6 +62,8 @@ class UserInOwnersList:
 
 
 class UserNotInOwnersList(UserInOwnersList):
+    """Condition that checks if the user does NOT have matching attribute values in the resource owner's attribute list."""
+
     def __init__(self, name: str):
         super().__init__(name)
 
@@ -65,6 +75,8 @@ class UserNotInOwnersList(UserInOwnersList):
 
 
 class UserWithValueInList:
+    """Condition that checks if the user has a specific value in a named attribute list."""
+
     def __init__(self, name: str, value: str):
         self.name = name
         self.value = value
@@ -80,6 +92,8 @@ class UserWithValueInList:
 
 
 class UserWithValueNotInList(UserWithValueInList):
+    """Condition that checks if the user does NOT have a specific value in a named attribute list."""
+
     def __init__(self, name: str, value: str):
         super().__init__(name, value)
 
@@ -91,6 +105,8 @@ class UserWithValueNotInList(UserWithValueInList):
 
 
 class UserIsOwner:
+    """Condition that checks if the user is the owner of the resource."""
+
     def matches(self, resource: ProtectedResource, user: User) -> bool:
         return resource.owner.principal == user.principal if resource.owner else False
 
@@ -99,6 +115,8 @@ class UserIsOwner:
 
 
 class UserIsNotOwner:
+    """Condition that checks if the user is NOT the owner of the resource."""
+
     def matches(self, resource: ProtectedResource, user: User) -> bool:
         return not resource.owner or resource.owner.principal != user.principal
 
@@ -107,6 +125,8 @@ class UserIsNotOwner:
 
 
 class ResourceIsUnowned:
+    """Condition that checks if the resource has no owner."""
+
     def matches(self, resource: ProtectedResource, user: User) -> bool:
         return not resource.owner
 
@@ -115,6 +135,17 @@ class ResourceIsUnowned:
 
 
 def parse_condition(condition: str) -> Condition:
+    """Parse a condition string into a Condition object.
+
+    Args:
+        condition: A natural language condition string (e.g., 'user is owner', 'user in owners roles').
+
+    Returns:
+        A Condition instance matching the parsed expression.
+
+    Raises:
+        ValueError: If the condition string is not recognized.
+    """
     words = condition.split()
     match words:
         case ["user", "is", "owner"]:
@@ -136,4 +167,12 @@ def parse_condition(condition: str) -> Condition:
 
 
 def parse_conditions(conditions: list[str]) -> list[Condition]:
+    """Parse a list of condition strings into Condition objects.
+
+    Args:
+        conditions: List of natural language condition strings.
+
+    Returns:
+        List of corresponding Condition instances.
+    """
     return [parse_condition(c) for c in conditions]

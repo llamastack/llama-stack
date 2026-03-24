@@ -13,12 +13,16 @@ log = get_logger(name=__name__, category="agents::builtin")
 
 
 class SafetyException(Exception):  # noqa: N818
+    """Raised when a safety shield detects a policy violation."""
+
     def __init__(self, violation: SafetyViolation):
         self.violation = violation
         super().__init__(violation.user_message)
 
 
 class ShieldRunnerMixin:
+    """Mixin for running input and output safety shields on messages."""
+
     def __init__(
         self,
         safety_api: Safety,
