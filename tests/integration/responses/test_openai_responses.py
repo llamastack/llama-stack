@@ -672,9 +672,9 @@ class TestOpenAIResponses:
         assert response.status == "queued"
         response_id = response.id
 
-        # Give it a moment to potentially start processing
-        time.sleep(0.5)
-
+        # Cancel immediately - in replay mode, if we wait, the background worker
+        # will pick up the task, fail (no recording), and transition to 'failed'
+        # before we can cancel it. Cancel immediately to win the race.
         # Cancel the response
         cancelled = openai_client.responses.cancel(response_id=response_id)
 
