@@ -21,9 +21,9 @@ inference provider, based on integration test results.
 
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
-| azure | 101 | 101 | 0 | 86% |
+| azure | 102 | 102 | 0 | 86% |
 | bedrock | 25 | 25 | 0 | 21% |
-| openai | 118 | 118 | 0 | 100% |
+| openai | 119 | 119 | 0 | 100% |
 | vllm | 1 | 1 | 0 | 1% |
 | watsonx | 56 | 56 | 0 | 47% |
 
@@ -86,58 +86,11 @@ Models, endpoints, and versions used during test recordings.
 
 ## Openai Responses
 
-<<<<<<< HEAD
-| Feature | azure | openai | vllm | watsonx |
-| --- | --- | --- | --- | --- |
-| background false is synchronous | ✅ | ✅ | — | ✅ |
-| background returns queued | ✅ | ✅ | — | ✅ |
-| cancel completed response fails | ✅ | ✅ | — | ⏭️ |
-| incomplete details length | ✅ | ✅ | — | ✅ |
-| incomplete details length streaming | ✅ | ✅ | — | ✅ |
-| incomplete details max iterations exceeded | ✅ | ✅ | — | ✅ |
-| incomplete details max iterations exceeded streaming | ✅ | ✅ | — | ✅ |
-| incomplete details null when completed | ✅ | ✅ | — | ✅ |
-| reasoning effort | ⏭️ | ✅ | — | ⏭️ |
-| reasoning effort streaming | ⏭️ | ✅ | — | ⏭️ |
-| streaming includes usage | ✅ | ✅ | — | ✅ |
-| streaming invalid base64 image failure code is spec compliant | ✅ | ✅ | — | ⏭️ |
-| with max output tokens | ✅ | ✅ | — | ⏭️ |
-| with parallel tool calls and previous response | ✅ | ✅ | — | ✅ |
-| with parallel tool calls disabled | ✅ | ✅ | — | ⏭️ |
-| with parallel tool calls disabled streaming | ✅ | ✅ | — | ⏭️ |
-| with parallel tool calls enabled | ✅ | ✅ | — | ⏭️ |
-| with prompt cache key | ✅ | ✅ | — | ✅ |
-| with prompt cache key and previous response | ✅ | ✅ | — | ✅ |
-| with prompt cache key streaming | ✅ | ✅ | — | ✅ |
-| with safety identifier | ✅ | ✅ | — | ✅ |
-| with safety identifier and previous response | ✅ | ✅ | — | ✅ |
-| with safety identifier streaming | ✅ | ✅ | — | ✅ |
-| with service tier | ⏭️ | ✅ | — | ⏭️ |
-| with service tier and previous response | ⏭️ | ✅ | — | ⏭️ |
-| with service tier auto | ⏭️ | ✅ | — | ⏭️ |
-| with service tier auto and previous response | ⏭️ | ✅ | — | ⏭️ |
-| with service tier auto streaming | ⏭️ | ✅ | — | ⏭️ |
-| with service tier flex | ⏭️ | ✅ | — | ⏭️ |
-| with service tier flex streaming | ⏭️ | ✅ | — | ⏭️ |
-| with service tier streaming | ⏭️ | ✅ | — | ⏭️ |
-| with small max output tokens | ✅ | ✅ | — | ⏭️ |
-| with stream options and previous response | ✅ | ✅ | — | ✅ |
-| with stream options includes usage | ✅ | ✅ | — | ✅ |
-| with stream options non streaming | ✅ | ✅ | — | ✅ |
-| with top logprobs | ✅ | ✅ | — | ✅ |
-| with top logprobs and previous response | ✅ | ✅ | — | ✅ |
-| with top logprobs streaming | ✅ | ✅ | — | ✅ |
-| with top p | ✅ | ✅ | — | ✅ |
-| with top p and previous response | ✅ | ✅ | — | ✅ |
-| with top p streaming | ✅ | ✅ | — | ✅ |
-| with truncation and previous response | ✅ | ✅ | — | ✅ |
-| with truncation disabled | ✅ | ✅ | — | ✅ |
-| with truncation disabled streaming | ✅ | ✅ | — | ✅ |
-=======
 | Feature | azure | bedrock | openai | vllm | watsonx |
 | --- | --- | --- | --- | --- | --- |
 | background false is synchronous | ✅ | — | ✅ | — | ✅ |
 | background returns queued | ✅ | — | ✅ | — | ✅ |
+| cancel completed response fails | ✅ | — | ✅ | — | ⏭️ |
 | incomplete details length | ✅ | — | ✅ | — | ✅ |
 | incomplete details length streaming | ✅ | — | ✅ | — | ✅ |
 | incomplete details max iterations exceeded | ✅ | — | ✅ | — | ✅ |
@@ -179,7 +132,6 @@ Models, endpoints, and versions used during test recordings.
 | with truncation and previous response | ✅ | — | ✅ | — | ✅ |
 | with truncation disabled | ✅ | — | ✅ | — | ✅ |
 | with truncation disabled streaming | ✅ | — | ✅ | — | ✅ |
->>>>>>> 2cc1f670b (feat: add Bedrock to responses CI suite with recordings (#5254))
 
 ## Prompt Templates
 
