@@ -39,6 +39,7 @@ from llama_stack.providers.remote.tool_runtime.brave_search.config import BraveS
 from llama_stack.providers.remote.tool_runtime.tavily_search.config import TavilySearchToolConfig
 from llama_stack.providers.remote.vector_io.chroma.config import ChromaVectorIOConfig
 from llama_stack.providers.remote.vector_io.elasticsearch.config import ElasticsearchVectorIOConfig
+from llama_stack.providers.remote.vector_io.infinispan.config import InfinispanVectorIOConfig
 from llama_stack.providers.remote.vector_io.pgvector.config import (
     PGVectorVectorIOConfig,
 )
@@ -132,6 +133,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="remote::qdrant"),
             BuildProvider(provider_type="remote::weaviate"),
             BuildProvider(provider_type="remote::elasticsearch"),
+            BuildProvider(provider_type="remote::infinispan"),
         ],
         "files": [BuildProvider(provider_type="inline::localfs")],
         "file_processors": [BuildProvider(provider_type="inline::pypdf")],
@@ -251,6 +253,11 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                     elasticsearch_url="${env.ELASTICSEARCH_URL:=localhost:9200}",
                     elasticsearch_api_key="${env.ELASTICSEARCH_API_KEY:=}",
                 ),
+            ),
+            Provider(
+                provider_id="${env.INFINISPAN_URL:+infinispan}",
+                provider_type="remote::infinispan",
+                config=InfinispanVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
             ),
         ],
         "files": [files_provider],
