@@ -179,7 +179,7 @@ For additional security, you can add a bucket policy:
 }
 ```
 
-## Features
+## Implementation Details
 
 ### Metadata Persistence
 
