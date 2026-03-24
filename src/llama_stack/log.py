@@ -142,8 +142,20 @@ def parse_environment_config(env_config: str) -> dict[str, int]:
 
 
 def strip_rich_markup(text):
-    """Remove Rich markup tags like [dim], [bold magenta], etc."""
-    return re.sub(r"\[/?[a-zA-Z0-9 _#=,]+\]", "", text)
+    """Remove Rich markup tags like [dim], [bold magenta], etc.
+
+    Preserves structlog level indicators like [info], [warning], [error]
+    which use a similar bracket syntax but are not Rich markup.
+    """
+    _LOG_LEVELS = {"debug", "info", "warning", "error", "critical", "exception"}
+
+    def _replace(match):
+        content = match.group(1).strip()
+        if content in _LOG_LEVELS:
+            return match.group(0)
+        return ""
+
+    return re.sub(r"\[/?([a-zA-Z0-9 _#=,]+)\]", _replace, text)
 
 
 class CustomRichHandler(RichHandler):
@@ -214,19 +226,23 @@ def _extract_event_message(_, __, event_dict):
 
     event = event_dict.get("event", "")
 
-    # Prepend logger_name:lineno like the old stdlib format
+    # Prepend logger_name:lineno like the old stdlib format and remove the
+    # logger key so ConsoleRenderer doesn't duplicate the logger name.
     record = event_dict.get("_record")
     if record:
         event = f"{record.name}:{record.lineno} {event}"
+    event_dict.pop("logger", None)
 
+    extra_keys = [key for key in event_dict if key not in internal_keys]
     extra_parts = []
-    for key, value in sorted(event_dict.items()):
-        if key in internal_keys:
-            continue
-        extra_parts.append(f"{key}={value}")
+    for key in sorted(extra_keys):
+        extra_parts.append(f"{key}={event_dict.pop(key)}")
 
     if extra_parts:
-        event_dict["event"] = f"{event} [{', '.join(extra_parts)}]"
+        event_dict["event"] = f"{event}   {' '.join(extra_parts)}"
+    else:
+        event_dict["event"] = event
+
     return event_dict
 
 
@@ -377,7 +393,7 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
             processors=[
                 _extract_event_message,
                 structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-                structlog.dev.ConsoleRenderer(colors=False, pad_event=0),
+                structlog.dev.ConsoleRenderer(colors=False, pad_event=0, pad_level=False),
             ],
             foreign_pre_chain=shared_processors,
         )
