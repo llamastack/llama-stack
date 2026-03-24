@@ -316,6 +316,11 @@ registered_resources:
     provider_id: ${env.WATSONX_API_KEY:+watsonx}
     provider_model_id: meta-llama/llama-3-3-70b-instruct
     model_type: llm
+  - metadata: {}
+    model_id: bedrock/openai.gpt-oss-20b
+    provider_id: ${env.AWS_BEARER_TOKEN_BEDROCK:+bedrock}
+    provider_model_id: openai.gpt-oss-20b
+    model_type: llm
   shields:
   - shield_id: llama-guard
     provider_id: ${env.SAFETY_MODEL:+llama-guard}
