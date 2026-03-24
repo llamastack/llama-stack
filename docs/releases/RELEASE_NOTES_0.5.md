@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD036 -->
 # Llama Stack 0.5 Release Notes
 
 **Release Date:** February 2026

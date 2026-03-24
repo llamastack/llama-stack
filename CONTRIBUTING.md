@@ -101,7 +101,7 @@ to do this once to work on any of Meta's open source projects.
 
 Complete your CLA here: <https://code.facebook.com/cla>
 
-**I'd like to contribute!**
+### I'd like to contribute
 
 If you are new to the project, start by looking at the issues tagged with "good first issue". If you're interested
 leave a comment on the issue and a triager will assign it to you.
@@ -112,26 +112,26 @@ Please avoid picking up too many issues at once. This helps you stay focused and
 - Before taking an issue, check if it’s already assigned or being actively discussed.
 - If you’re blocked or can’t continue with an issue, feel free to unassign yourself or leave a comment so others can step in.
 
-**I have a bug!**
+### I have a bug
 
 1. Search the issue tracker for similar issues.
 2. If you don't have steps to reproduce, open a "discussion-type" issue.
 3. If you have steps to reproduce, open a "bug-type" issue.
 
-**I have an idea for a feature!**
+### I have an idea for a feature
 
 1. Open a "discussion-type" issue.
 
-**I've implemented a feature!**
+### I've implemented a feature
 
 1. If there is an issue for the feature, open a pull request.
 2. If there is no issue, open a "discussion-type" issue and link to your branch.
 
-**I have a question!**
+### I have a question
 
 1. Open a "discussion-type" issue or use [Discord](https://discord.gg/llama-stack).
 
-**Opening a Pull Request**
+### Opening a Pull Request
 
 1. Fork the repo and create your branch from `main`.
 2. If you've changed APIs, update the documentation.
@@ -148,7 +148,7 @@ Please keep pull requests (PRs) small and focused. If you have a large set of ch
 - Experienced contributors should try to keep no more than 5 open PRs at a time.
 - New contributors are encouraged to have only one open PR at a time until they're familiar with the codebase and process.
 
-**Handling Pull Request Reviews**
+### Handling Pull Request Reviews
 
 To ensure a smooth review process for both reviewers and contributors, please follow these guidelines:
 

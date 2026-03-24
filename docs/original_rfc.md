@@ -1,5 +1,6 @@
 # The Llama Stack API
 
+<!-- markdownlint-disable-next-line MD036 -->
 *Originally authored Jul 23, 2024*
 
 **Authors:**
