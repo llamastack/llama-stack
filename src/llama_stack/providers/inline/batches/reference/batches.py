@@ -330,9 +330,9 @@ class ReferenceBatchesImpl(Batches):
                 # batch processing is async. once cancelling, only allow "cancelled" status updates
                 if batch.status == "cancelling" and updates.get("status") != "cancelled":
                     logger.info(
-                        "Skipping status update for cancelled batch : attempted",
+                        "Skipping status update for cancelled batch",
                         batch_id=batch_id,
-                        updates_get_status=updates.get("status"),
+                        attempted_status=updates.get("status"),
                     )
                     return
 

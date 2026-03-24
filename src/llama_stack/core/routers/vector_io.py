@@ -167,12 +167,11 @@ class VectorIORouter(VectorIO):
     ) -> None:
         doc_ids = [chunk.document_id for chunk in request.chunks[:3]]
         logger.debug(
-            "VectorIORouter.insert_chunks: , chunks, ttl_seconds=, chunk_ids",
+            "VectorIORouter.insert_chunks",
             vector_store_id=request.vector_store_id,
-            chunks_count=len(request.chunks),
+            chunk_count=len(request.chunks),
             ttl_seconds=request.ttl_seconds,
             doc_ids=doc_ids,
-            and_more_if_len_request_chunks_3_else=" and more..." if len(request.chunks) > 3 else "",
         )
         start_time = time.perf_counter()
         num_chunks = len(request.chunks)

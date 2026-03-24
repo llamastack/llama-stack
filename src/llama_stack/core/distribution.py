@@ -151,10 +151,11 @@ def get_provider_registry(
             # that users will need to use external providers for this API.
             registry[api] = {}
             logger.error(
-                "Failed to import external API : . Could not populate the in-tree provider(s) registry for . \nInstall the API package to load any in-tree providers for this API.",
-                name=name,
+                "Failed to import external API, could not populate in-tree provider registry. "
+                "Install the API package to load any in-tree providers for this API.",
+                api_name=name,
+                api=api.name,
                 error=str(e),
-                name_1=api.name,
             )
 
     # Check if config has external providers

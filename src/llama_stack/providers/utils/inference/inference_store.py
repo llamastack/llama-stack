@@ -127,8 +127,8 @@ class InferenceStore:
                 self._queue.put_nowait(item)
             except asyncio.QueueFull:
                 logger.warning(
-                    "Write queue full; adding chat completion id",
-                    getattr_chat_completion_id_unknown=getattr(chat_completion, "id", "<unknown>"),
+                    "Write queue full, waiting to add chat completion",
+                    completion_id=getattr(chat_completion, "id", "<unknown>"),
                 )
                 await self._queue.put(item)
         else:
