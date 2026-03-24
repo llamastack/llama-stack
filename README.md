@@ -146,5 +146,5 @@ We hold regular community calls to discuss the latest developments and get feedb
 Thanks to all of our amazing contributors!
 
 <a href="https://github.com/meta-llama/llama-stack/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=meta-llama/llama-stack" />
+  <img src="https://contrib.rocks/image?repo=meta-llama/llama-stack" alt="Llama Stack contributors" />
 </a>
