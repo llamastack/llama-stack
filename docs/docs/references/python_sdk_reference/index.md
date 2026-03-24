@@ -222,7 +222,7 @@ Methods:
 
 **This API is deprecated and will be removed in a future version.**
 
-Use the OpenAI-compatible [Vector Stores API](#vectorstores) instead:
+Use the OpenAI-compatible Vector Stores API instead:
 
 - Instead of `client.vector_io.insert()`, use `client.vector_stores.files.create()` and `client.vector_stores.files.chunks.create()`
 - Instead of `client.vector_io.query()`, use `client.vector_stores.search()`
@@ -250,7 +250,7 @@ Methods:
 
 **This API is deprecated and will be removed in a future version.**
 
-Use the OpenAI-compatible [Vector Stores API](#vectorstores) instead:
+Use the OpenAI-compatible Vector Stores API instead:
 
 - Instead of `client.vector_dbs.register()`, use `client.vector_stores.create()`
 - Instead of `client.vector_dbs.list()`, use `client.vector_stores.list()`
