@@ -147,11 +147,11 @@ def strip_rich_markup(text):
     Preserves structlog level indicators like [info], [warning], [error]
     which use a similar bracket syntax but are not Rich markup.
     """
-    _LOG_LEVELS = {"debug", "info", "warning", "error", "critical", "exception"}
+    log_levels = {"debug", "info", "warning", "error", "critical", "exception"}
 
     def _replace(match):
         content = match.group(1).strip()
-        if content in _LOG_LEVELS:
+        if content in log_levels:
             return match.group(0)
         return ""
 

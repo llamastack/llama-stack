@@ -12,6 +12,7 @@ from llama_stack_api import (
     URL,
     ListToolDefsResponse,
     ListToolGroupsResponse,
+    ListToolsRequest,
     ToolDef,
     ToolGroup,
     ToolGroupNotFoundError,
@@ -49,9 +50,8 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
             routing_key = self.tool_to_toolgroup[routing_key]
         return await super().get_provider_impl(routing_key, provider_id)
 
-    async def list_tools(
-        self, toolgroup_id: str | None = None, authorization: str | None = None
-    ) -> ListToolDefsResponse:
+    async def list_tools(self, request: ListToolsRequest, authorization: str | None = None) -> ListToolDefsResponse:
+        toolgroup_id = request.toolgroup_id
         if toolgroup_id:
             if group_id := parse_toolgroup_from_toolgroup_name_pair(toolgroup_id):
                 toolgroup_id = group_id
