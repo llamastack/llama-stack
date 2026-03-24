@@ -64,7 +64,7 @@ response = client.chat.completions.create(
 print(f"Response: {response.choices[0].message.content}")
 ```
 
-### Tool Calling Example ###
+### Tool Calling Example
 
 The following example shows how to do tool calling for an NVIDIA NIM.
 
