@@ -13,7 +13,7 @@ def available_providers() -> list[ProviderSpec]:
         InlineProviderSpec(
             api=Api.eval,
             provider_type="inline::builtin",
-            pip_packages=["tree_sitter", "pythainlp", "langdetect", "emoji", "nltk>=3.9.3"],
+            pip_packages=["tree_sitter", "pythainlp", "langdetect", "emoji", "nltk>=3.9.4"],
             module="llama_stack.providers.inline.eval.builtin",
             config_class="llama_stack.providers.inline.eval.builtin.BuiltinEvalConfig",
             api_dependencies=[
