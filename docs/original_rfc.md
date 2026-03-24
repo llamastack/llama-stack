@@ -52,7 +52,7 @@ Note that as of today, in the OSS world, such a “loop” is often coded explic
 1. The model reasons once again (using all the messages above) and decides to send a final response "In 2023, Denver Nuggets played against the Miami Heat in the NBA finals." to the executor
 1. The executor returns the response directly to the user (since there is no tool call to be executed.)
 
-The sequence diagram that details the steps is [here](https://github.com/meta-llama/llama-agentic-system/blob/main/docs/sequence-diagram.md).
+The sequence diagram that details the steps is in the [agentic system docs](https://github.com/meta-llama/llama-agentic-system/blob/main/docs/sequence-diagram.md).
 
 * /memory_banks - to support creating multiple repositories of data that can be available for agentic systems
 * /agentic_system - to support creating and running agentic systems. The sub-APIs support the creation and management of the steps, turns, and sessions within agentic applications.

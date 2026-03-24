@@ -95,4 +95,4 @@ curl -X POST http://localhost:8321/v1/chat/completions \
 
 ```
 
-Notice, the model name must be prefixed with the `provider_id` in order for the request to route properly! In this example, we are just utilizing the `/chat/completions` route in the Inference API. The starter distribution has a large amount of APIs and ready to use providers baked in. Example API requests, similar to the one above, for other APIs can be found [here](https://llamastack.github.io/docs/api/llama-stack-specification) Take it for a spin and see what you can do with Llama Stack!
+Notice, the model name must be prefixed with the `provider_id` in order for the request to route properly! In this example, we are just utilizing the `/chat/completions` route in the Inference API. The starter distribution has a large amount of APIs and ready to use providers baked in. Example API requests, similar to the one above, for other APIs can be found in the [Llama Stack API specification](https://llamastack.github.io/docs/api/llama-stack-specification). Take it for a spin and see what you can do with Llama Stack!

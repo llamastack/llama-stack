@@ -50,7 +50,7 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
    ```
 
    **Note**:
-     - The supported models for llama stack for now is listed in [here](https://github.com/meta-llama/llama-stack/blob/main/llama_stack/providers/remote/inference/ollama/models.py)
+     - The supported models for llama stack for now is listed in the [Ollama models file](https://github.com/meta-llama/llama-stack/blob/main/llama_stack/providers/remote/inference/ollama/models.py)
      - `keepalive -1m` is used so that ollama continues to keep the model in memory indefinitely. Otherwise, ollama frees up memory and you would have to run `ollama run` again.
 
 ---
