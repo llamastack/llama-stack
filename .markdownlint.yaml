@@ -15,32 +15,32 @@ MD060: false
 
 # --- Rules disabled due to existing violations (to be fixed incrementally) ---
 
-# Heading levels should only increment by one level at a time
+# Heading levels should only increment by one level at a time (10 violations)
 MD001: false
 
-# Heading style should be consistent (atx vs atx_closed)
+# Heading style should be consistent (1 violation)
 MD003: false
 
-# No duplicate heading text in the same document
+# No duplicate heading text in the same document (1 violation)
 MD024: false
 
-# Single top-level heading per document
+# Single top-level heading per document (3 violations)
 MD025: false
 
-# Emphasis used instead of a heading
+# Emphasis used instead of a heading (19 violations)
 MD036: false
 
-# Fenced code blocks should have a language specified
+# Fenced code blocks should have a language specified (66 violations)
 MD040: false
 
-# Images should have alt text
+# Images should have alt text (1 violation)
 MD045: false
 
-# Link fragments should be valid
+# Link fragments should be valid (2 violations)
 MD051: false
 
-# Table pipes should have consistent leading/trailing style
+# Table pipes should have consistent leading/trailing style (4 violations)
 MD055: false
 
-# Link text should be descriptive (not "here" or "link")
+# Link text should be descriptive (4 violations)
 MD059: false
