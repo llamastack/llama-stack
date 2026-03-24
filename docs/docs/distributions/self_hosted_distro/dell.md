@@ -27,7 +27,7 @@ The `llamastack/distribution-dell` distribution consists of the following provid
 
 You can use this distribution if you have GPUs and want to run an independent TGI or Dell Enterprise Hub container for running inference.
 
-### Environment Variables
+## Environment Variables
 
 The following environment variables can be configured:
 

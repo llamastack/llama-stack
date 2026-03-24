@@ -18,7 +18,7 @@ The `llamastack/distribution-nvidia` distribution consists of the following prov
 | tool_runtime | `inline::file-search` |
 | vector_io | `inline::faiss` |
 
-### Environment Variables
+## Environment Variables
 
 The following environment variables can be configured:
 

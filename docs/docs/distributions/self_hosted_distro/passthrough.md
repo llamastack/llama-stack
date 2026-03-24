@@ -24,7 +24,7 @@ The `llamastack/distribution-passthrough` distribution consists of the following
 | tool_runtime | `remote::brave-search`, `remote::tavily-search`, `remote::wolfram-alpha`, `inline::file-search`, `remote::model-context-protocol` |
 | vector_io | `inline::faiss`, `remote::chromadb`, `remote::pgvector` |
 
-### Environment Variables
+## Environment Variables
 
 The following environment variables can be configured:
 
@@ -32,7 +32,7 @@ The following environment variables can be configured:
 - `PASSTHROUGH_API_KEY`: Passthrough API Key (default: ``)
 - `PASSTHROUGH_URL`: Passthrough URL (default: ``)
 
-### Models
+## Models
 
 The following models are available by default:
 

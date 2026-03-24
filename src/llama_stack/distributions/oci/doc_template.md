@@ -7,7 +7,7 @@ The `llamastack/distribution-{{ name }}` distribution consists of the following 
 
 {{ providers_table }}{% if run_config_env_vars %}
 
-### Environment Variables
+## Environment Variables
 
 The following environment variables can be configured:
 {% for var, (default_value, description) in run_config_env_vars.items() %}
@@ -17,7 +17,7 @@ The following environment variables can be configured:
 {% endif %}
 {% if default_models %}
 
-### Models
+## Models
 
 The following models are available by default:
 {% for model in default_models %}

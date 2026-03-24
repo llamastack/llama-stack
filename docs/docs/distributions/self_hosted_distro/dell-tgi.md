@@ -18,7 +18,7 @@ The `llamastack/distribution-tgi` distribution consists of the following provide
 
 The only difference vs. the `tgi` distribution is that it runs the Dell-TGI server for inference.
 
-### Start the Distribution (Single Node GPU)
+## Start the Distribution (Single Node GPU)
 
 > [!NOTE]
 > This assumes you have access to GPU to start a TGI server with access to your GPU.
@@ -48,9 +48,9 @@ To kill the server
 docker compose down
 ```
 
-### (Alternative) Dell-TGI server + llama stack run (Single Node GPU)
+## (Alternative) Dell-TGI server + llama stack run (Single Node GPU)
 
-#### Start Dell-TGI server locally
+### Start Dell-TGI server locally
 
 ```
 docker run -it --pull always --shm-size 1g -p 80:80 --gpus 4 \
@@ -61,7 +61,7 @@ docker run -it --pull always --shm-size 1g -p 80:80 --gpus 4 \
 registry.dell.huggingface.co/enterprise-dell-inference-meta-llama-meta-llama-3.1-8b-instruct
 ```
 
-#### Start Llama Stack server pointing to TGI server
+### Start Llama Stack server pointing to TGI server
 
 ```
 docker run --pull always --network host -it -p 8321:8321 -v ./config.yaml:/root/my-config.yaml --gpus=all llamastack/distribution-tgi --yaml_config /root/my-config.yaml

@@ -18,7 +18,7 @@ The `llamastack/distribution-{{ name }}` distribution consists of the following 
 You can use this distribution if you have GPUs and want to run an independent TGI or Dell Enterprise Hub container for running inference.
 {% if run_config_env_vars %}
 
-### Environment Variables
+## Environment Variables
 
 The following environment variables can be configured:
 {% for var, (default_value, description) in run_config_env_vars.items() %}

@@ -18,7 +18,7 @@ The `llamastack/distribution-oci` distribution consists of the following provide
 | tool_runtime | `remote::brave-search`, `remote::tavily-search`, `inline::file-search`, `remote::model-context-protocol` |
 | vector_io | `inline::faiss`, `remote::chromadb`, `remote::pgvector` |
 
-### Environment Variables
+## Environment Variables
 
 The following environment variables can be configured:
 

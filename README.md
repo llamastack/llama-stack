@@ -10,7 +10,7 @@
 
 [**Quick Start**](https://llamastack.github.io/docs/getting_started/quickstart) | [**Documentation**](https://llamastack.github.io/docs) | [**Colab Notebook**](./docs/getting_started.ipynb) | [**Discord**](https://discord.gg/llama-stack)
 
-### 🚀 One-Line Installer 🚀
+## 🚀 One-Line Installer 🚀
 
 To try Llama Stack locally, run:
 
@@ -18,7 +18,7 @@ To try Llama Stack locally, run:
 curl -LsSf https://github.com/llamastack/llama-stack/raw/main/scripts/install.sh | bash
 ```
 
-### Overview
+## Overview
 
 Llama Stack defines and standardizes the core building blocks that simplify AI application development. It provides a unified set of APIs with implementations from leading service providers. More specifically, it provides:
 
@@ -37,7 +37,7 @@ Llama Stack defines and standardizes the core building blocks that simplify AI a
   />
 </div>
 
-#### Llama Stack Benefits
+### Llama Stack Benefits
 
 - **Flexibility**: Developers can choose their preferred infrastructure without changing APIs and enjoy flexible deployment choices.
 - **Consistent Experience**: With its unified APIs, Llama Stack makes it easier to build, test, and deploy AI applications with consistent application behavior.
@@ -45,7 +45,7 @@ Llama Stack defines and standardizes the core building blocks that simplify AI a
 
 For more information, see the [Benefits of Llama Stack](https://llamastack.github.io/docs/latest/concepts/architecture#benefits-of-llama-stack) documentation.
 
-### API Providers
+## API Providers
 
 Here is a list of the various API providers and available distributions that can help developers get started easily with Llama Stack.
 Please checkout for [full list](https://llamastack.github.io/docs/providers)
@@ -82,7 +82,7 @@ Please checkout for [full list](https://llamastack.github.io/docs/providers)
 
 > **Note**: Additional providers are available through external packages. See [External Providers](https://llamastack.github.io/docs/providers/external) documentation.
 
-### Distributions
+## Distributions
 
 A Llama Stack Distribution (or "distro") is a pre-configured bundle of provider implementations for each API component. Distributions make it easy to get started with a specific deployment scenario. For example, you can begin with a local setup of Ollama and seamlessly transition to production, with fireworks, without changing your application code.
 Here are some of the distributions we support:
@@ -97,7 +97,7 @@ Here are some of the distributions we support:
 
 For full documentation on the Llama Stack distributions see the [Distributions Overview](https://llamastack.github.io/docs/distributions) page.
 
-### Documentation
+## Documentation
 
 Please checkout our [Documentation](https://llamastack.github.io/docs) page for more details.
 
@@ -113,7 +113,7 @@ Please checkout our [Documentation](https://llamastack.github.io/docs) page for 
   - [Adding a new API Provider](https://llamastack.github.io/docs/contributing/new_api_provider) to walk-through how to add a new API provider.
   - [Release Process](RELEASE_PROCESS.md) for information about release schedules and versioning.
 
-### Llama Stack Client SDKs
+## Llama Stack Client SDKs
 
 Check out our client SDKs for connecting to a Llama Stack server in your preferred language.
 
