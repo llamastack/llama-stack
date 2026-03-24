@@ -11,7 +11,6 @@ authors:
 tags: [introduction, how-to]
 date: 2026-01-30
 ---
-# How to Get Started with Llama Stack
 
 There is no shortage of GenAI hosted services like OpenAI, Gemini, and Bedrock. Often, these services require tailoring your GenAI application directly to them, requiring developers to consider things that have nothing to do with their applications. Llama Stack is an open source project aiming to standardize and offer a set of APIs for AI applications that stay the same, regardless of the backend services being provided via those APIs.
 
