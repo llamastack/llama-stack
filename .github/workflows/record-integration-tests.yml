@@ -190,7 +190,7 @@ jobs:
           - setup: azure
             suite: responses
           - setup: bedrock
-            suite: responses
+            suite: bedrock-responses
           - setup: watsonx
             suite: responses
     steps:
