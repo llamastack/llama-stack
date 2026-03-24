@@ -1,0 +1,46 @@
+# Enable all rules by default
+default: true
+
+# Disable line length limit - URLs, badges, and tables often exceed any reasonable limit
+MD013: false
+
+# Allow inline HTML - project uses <details>, <summary>, and other HTML in markdown
+MD033: false
+
+# Don't require first line to be a top-level heading - generated reports and some docs don't follow this
+MD041: false
+
+# Disable table column style - cosmetic pipe alignment, not auto-fixable, 300+ existing violations
+MD060: false
+
+# --- Rules disabled due to existing violations (to be fixed incrementally) ---
+
+# Heading levels should only increment by one level at a time
+MD001: false
+
+# Heading style should be consistent (atx vs atx_closed)
+MD003: false
+
+# No duplicate heading text in the same document
+MD024: false
+
+# Single top-level heading per document
+MD025: false
+
+# Emphasis used instead of a heading
+MD036: false
+
+# Fenced code blocks should have a language specified
+MD040: false
+
+# Images should have alt text
+MD045: false
+
+# Link fragments should be valid
+MD051: false
+
+# Table pipes should have consistent leading/trailing style
+MD055: false
+
+# Link text should be descriptive (not "here" or "link")
+MD059: false
