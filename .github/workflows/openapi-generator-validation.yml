@@ -218,8 +218,9 @@ jobs:
       - name: Install generated SDK
         run: |
           echo "Installing OpenAPI-generated SDK (llama_stack_client)..."
-          # Install from the SDK directory without changing working directory
-          # This ensures dependencies are properly resolved in the parent venv
+          # First uninstall any existing llama-stack-client to avoid conflicts
+          uv pip uninstall -y llama-stack-client || true
+          # Then install our generated SDK fresh with all dependencies
           uv pip install -e client-sdks/openapi/sdks/python
 
           echo "Verifying installation..."
