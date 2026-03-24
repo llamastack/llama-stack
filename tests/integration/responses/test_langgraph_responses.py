@@ -11,13 +11,13 @@ from typing import Annotated, TypedDict
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langgraph.graph import END, StateGraph
 
-from .helpers import extract_text_content, langchain_chat
+from .helpers import extract_text_content
 
 
-def test_langgraph_basic(responses_client, text_model_id):
+def test_langgraph_basic(responses_client, langchain_chat):
     """Test langgraph basic request compatibility with Responses."""
 
-    chat = langchain_chat(responses_client, text_model_id)
+    chat = langchain_chat()
 
     # Define state
     class State(TypedDict):
@@ -66,10 +66,10 @@ def test_langgraph_basic(responses_client, text_model_id):
     assert "paris" in content.lower()
 
 
-def test_langgraph_multi_node(responses_client, text_model_id):
+def test_langgraph_multi_node(responses_client, langchain_chat):
     """Test langgraph multiple nodes with Responses."""
 
-    chat = langchain_chat(responses_client, text_model_id)
+    chat = langchain_chat()
 
     # Define state
     class State(TypedDict):
@@ -122,10 +122,10 @@ def test_langgraph_multi_node(responses_client, text_model_id):
         assert response_id.startswith("resp_"), f"Response {i} ID should start with 'resp_'. Got: {response_id}"
 
 
-def test_langgraph_multi_turn(responses_client, text_model_id):
+def test_langgraph_multi_turn(responses_client, langchain_chat):
     """Test langgraph multi-turn with Responses."""
 
-    chat = langchain_chat(responses_client, text_model_id, use_previous_response_id=True)
+    chat = langchain_chat(use_previous_response_id=True)
 
     # Define state
     class State(TypedDict):

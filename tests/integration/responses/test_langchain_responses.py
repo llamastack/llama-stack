@@ -8,13 +8,13 @@
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 
-from .helpers import extract_text_content, langchain_chat
+from .helpers import extract_text_content
 
 
-def test_langchain_basic(responses_client, text_model_id):
+def test_langchain_basic(responses_client, langchain_chat):
     """Test langchain basic request compatibility with Responses."""
 
-    chat = langchain_chat(responses_client, text_model_id)
+    chat = langchain_chat()
 
     # Simple question
     messages = [HumanMessage(content="What is the capital of France?")]
@@ -44,10 +44,10 @@ def test_langchain_basic(responses_client, text_model_id):
     assert content == retrieved_response.output_text
 
 
-def test_langchain_chain(responses_client, text_model_id):
+def test_langchain_chain(responses_client, langchain_chat):
     """Test langchain chaining with Responses"""
 
-    chat = langchain_chat(responses_client, text_model_id)
+    chat = langchain_chat()
 
     # Create a chain with prompt template
     prompt = ChatPromptTemplate.from_messages(
@@ -78,17 +78,19 @@ def test_langchain_chain(responses_client, text_model_id):
 
     # Extract content and validate
     content = extract_text_content(response.content)
-    assert all(country in content.lower() for country in ["russia", "canada", "china"])
+    assert all(country in content.lower() for country in ["russia", "canada"])
+    # Response varies depending on model
+    assert any(country in content.lower() for country in ["china", "united states"])
 
     # Call the Responses API directly and verify consistency with langchain's response
     retrieved_response = responses_client.responses.retrieve(response_id=response.id)
     assert content == retrieved_response.output_text
 
 
-def test_langchain_streaming(responses_client, text_model_id):
+def test_langchain_streaming(responses_client, langchain_chat):
     """Test langchain streaming with Responses"""
 
-    chat = langchain_chat(responses_client, text_model_id)
+    chat = langchain_chat()
 
     messages = [HumanMessage(content="Count from 1 to 10.")]
 
@@ -125,7 +127,7 @@ def test_langchain_streaming(responses_client, text_model_id):
     assert all(str(i) in full_content for i in range(1, 11))
 
 
-def test_langchain_multi_turn(responses_client, text_model_id):
+def test_langchain_multi_turn(responses_client, langchain_chat):
     """Test langchain multi-turn with Responses
 
     It seems counter-intuitive to pass the conversation history for multi-turn, but my
@@ -135,7 +137,7 @@ def test_langchain_multi_turn(responses_client, text_model_id):
     includes the latest input and previous_response_id in the Responses API request.
     """
 
-    chat = langchain_chat(responses_client, text_model_id, use_previous_response_id=True)
+    chat = langchain_chat(use_previous_response_id=True)
 
     # Maintain conversation history
     conversation = []
