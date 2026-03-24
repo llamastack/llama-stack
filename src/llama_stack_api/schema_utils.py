@@ -61,7 +61,7 @@ class SchemaInfo:
 _json_schema_types: dict[type, SchemaInfo] = {}
 
 
-def json_schema_type(cls):
+def json_schema_type[T](cls: type[T]) -> type[T]:
     """
     Decorator to mark a Pydantic model for top-level component registration.
 
@@ -71,9 +71,9 @@ def json_schema_type(cls):
     This provides control over schema registration to avoid unnecessary indirection
     for simple one-off types while keeping complex reusable types as components.
     """
-    cls._llama_stack_schema_type = True
+    cls._llama_stack_schema_type = True  # type: ignore[attr-defined]
     schema_name = getattr(cls, "__name__", f"Anonymous_{id(cls)}")
-    cls._llama_stack_schema_name = schema_name
+    cls._llama_stack_schema_name = schema_name  # type: ignore[attr-defined]
     _json_schema_types.setdefault(cls, SchemaInfo(name=schema_name, type=cls, source="json_schema_type"))
     return cls
 
@@ -83,7 +83,7 @@ _registered_schemas: dict[Any, SchemaInfo] = {}
 _dynamic_schema_types: dict[type, SchemaInfo] = {}
 
 
-def register_schema(schema_type, name: str | None = None):
+def register_schema[T](schema_type: T, name: str | None = None) -> T:
     """
     Register a schema type for top-level component registration.
 
