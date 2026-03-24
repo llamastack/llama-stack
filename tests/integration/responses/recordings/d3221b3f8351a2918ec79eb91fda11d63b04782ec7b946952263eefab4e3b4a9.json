@@ -1,0 +1,24 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_multi_turn_streaming_web_search[openai_client-txt=openai/gpt-4o]",
+  "request": {
+    "test_id": "tests/integration/responses/test_tool_responses.py::test_response_multi_turn_streaming_web_search[openai_client-txt=openai/gpt-4o]",
+    "provider": "tavily",
+    "tool_name": "web_search",
+    "kwargs": {
+      "query": "latest Python version"
+    }
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.tools.ToolInvocationResult",
+      "__data__": {
+        "content": "{\"query\": \"latest Python version\", \"top_k\": [{\"url\": \"https://www.liquidweb.com/blog/latest-python-version/\", \"title\": \"The latest Python version: Python 3.14 - Liquid Web\", \"content\": \"The latest major version, Python 3.14 was officially released on October 7, 2025. Let's explore the key features of Python's current version, how to download\", \"score\": 0.99983, \"raw_content\": null}, {\"url\": \"https://devguide.python.org/versions/\", \"title\": \"Status of Python versions - Python Developer's Guide\", \"content\": \"The main branch is currently the future Python 3.15, and is the only branch that accepts new features. The latest release for each Python version can be found\", \"score\": 0.99793327, \"raw_content\": null}, {\"url\": \"https://www.geeksforgeeks.org/python/download-and-install-python-3-latest-version/\", \"title\": \"Download and Install Python 3 Latest Version - GeeksforGeeks\", \"content\": \"Open your browser and visit the Python download page: python.org/downloads. Select the latest Python 3 version, such as Python 3.13.1 (\", \"score\": 0.9890976, \"raw_content\": null}, {\"url\": \"https://www.python.org/doc/versions/\", \"title\": \"Python documentation by version\", \"content\": \"Python 3.11.15, released on 3 March 2026 \\u00b7 Python 3.11.14, released on 9 October 2025 \\u00b7 Python 3.11.13, released on 3 June 2025 \\u00b7 Python 3.11.12, released on 8\", \"score\": 0.98421544, \"raw_content\": null}, {\"url\": \"https://www.python.org/\", \"title\": \"Welcome to Python.org\", \"content\": \"Download. Python source code and installers are available for download for all versions! Latest: Python 3.14.3. Docs.\", \"score\": 0.98215127, \"raw_content\": null}]}",
+        "error_message": null,
+        "error_code": null,
+        "metadata": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
