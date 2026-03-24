@@ -219,10 +219,8 @@ jobs:
         working-directory: client-sdks/openapi/sdks/python
         run: |
           echo "Installing OpenAPI-generated SDK (llama_stack_client)..."
-          # Install dependencies first to ensure they're available
-          uv pip install pydantic httpx python-dateutil typing-extensions
-          # Then install the SDK in editable mode
-          uv pip install -e . --no-deps
+          # Use uv pip install without --no-deps to ensure all dependencies are properly installed
+          uv pip install -e . --force-reinstall
 
           echo "Verifying installation..."
           python -c "import llama_stack_client; print(f'Installed: {llama_stack_client.__name__}')"
