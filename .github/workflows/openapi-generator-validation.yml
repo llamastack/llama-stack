@@ -216,11 +216,11 @@ jobs:
           find sdks/python -type f -name "*.py" | head -20
 
       - name: Install generated SDK
-        working-directory: client-sdks/openapi/sdks/python
         run: |
           echo "Installing OpenAPI-generated SDK (llama_stack_client)..."
-          # Use uv pip install without --no-deps to ensure all dependencies are properly installed
-          uv pip install -e . --force-reinstall
+          # Install from the SDK directory without changing working directory
+          # This ensures dependencies are properly resolved in the parent venv
+          uv pip install -e client-sdks/openapi/sdks/python
 
           echo "Verifying installation..."
           python -c "import llama_stack_client; print(f'Installed: {llama_stack_client.__name__}')"
