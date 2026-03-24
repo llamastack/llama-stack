@@ -23,7 +23,7 @@ The only difference vs. the `tgi` distribution is that it runs the Dell-TGI serv
 > [!NOTE]
 > This assumes you have access to GPU to start a TGI server with access to your GPU.
 
-```
+```bash
 $ cd distributions/dell-tgi/
 $ ls
 compose.yaml  README.md  config.yaml
@@ -32,7 +32,7 @@ $ docker compose up
 
 The script will first start up TGI server, then start up Llama Stack distribution server hooking up to the remote TGI provider for inference. You should be able to see the following outputs --
 
-```
+```text
 [text-generation-inference] | 2024-10-15T18:56:33.810397Z  INFO text_generation_router::server: router/src/server.rs:1813: Using config Some(Llama)
 [text-generation-inference] | 2024-10-15T18:56:33.810448Z  WARN text_generation_router::server: router/src/server.rs:1960: Invalid hostname, defaulting to 0.0.0.0
 [text-generation-inference] | 2024-10-15T18:56:33.864143Z  INFO text_generation_router::server: router/src/server.rs:2353: Connected
@@ -44,7 +44,7 @@ INFO:     Uvicorn running on http://[::]:8321 (Press CTRL+C to quit)
 
 To kill the server
 
-```
+```bash
 docker compose down
 ```
 
@@ -52,7 +52,7 @@ docker compose down
 
 ### Start Dell-TGI server locally
 
-```
+```bash
 docker run -it --pull always --shm-size 1g -p 80:80 --gpus 4 \
 -e NUM_SHARD=4
 -e MAX_BATCH_PREFILL_TOKENS=32768 \
@@ -63,13 +63,13 @@ registry.dell.huggingface.co/enterprise-dell-inference-meta-llama-meta-llama-3.1
 
 ### Start Llama Stack server pointing to TGI server
 
-```
+```bash
 docker run --pull always --network host -it -p 8321:8321 -v ./config.yaml:/root/my-config.yaml --gpus=all llamastack/distribution-tgi --yaml_config /root/my-config.yaml
 ```
 
 Make sure in you `config.yaml` file, you inference provider is pointing to the correct TGI server endpoint. E.g.
 
-```
+```yaml
 inference:
   - provider_id: tgi0
     provider_type: remote::tgi

@@ -27,7 +27,7 @@ The key files in the app are `ExampleLlamaStackLocalInference.kt`, `ExampleLlama
 
 Add the following dependency in your `build.gradle.kts` file:
 
-```
+```kotlin
 dependencies {
  implementation("com.llama.llamastack:llama-stack-client-kotlin:0.2.2")
 }
@@ -48,7 +48,7 @@ Include the ExecuTorch library by:
 3. Run `sh download-prebuilt-et-lib.sh` to create an `app/libs` directory and download the `executorch.aar` in that path. This generates an ExecuTorch library for the XNNPACK delegate.
 4. Add the `executorch.aar` dependency in your `build.gradle.kts` file:
 
-```
+```kotlin
 dependencies {
   ...
   implementation(files("libs/executorch.aar"))
@@ -66,7 +66,7 @@ Breaking down the demo app, this section will show the core pieces that are used
 
 Start a Llama Stack server on localhost. Here is an example of how you can do this using the firework.ai distribution:
 
-```
+```bash
 uv venv starter --python 3.12
 source starter/bin/activate  # On Windows: starter\Scripts\activate
 pip install --no-cache llama-stack==0.2.2
@@ -93,7 +93,7 @@ A client serves as the primary interface for interacting with a specific inferen
 <tr>
 <td>
 
-```
+```kotlin
 client = LlamaStackClientLocalClient
                     .builder()
                     .modelPath(modelPath)
@@ -105,7 +105,7 @@ client = LlamaStackClientLocalClient
 </td>
 <td>
 
-```
+```kotlin
 // remoteURL is a string like "http://localhost:5050"
 client = LlamaStackClientOkHttpClient
                 .builder()
@@ -121,7 +121,7 @@ client = LlamaStackClientOkHttpClient
 
 With the Kotlin Library managing all the major operational logic, there are minimal to no changes when running simple chat inference for local or remote:
 
-```
+```kotlin
 val result = client!!.inference().chatCompletion(
             InferenceChatCompletionParams.builder()
                 .modelId(modelName)
@@ -135,7 +135,7 @@ var response = result.asChatCompletionResponse().completionMessage().content().s
 
 [Remote only] For inference with a streaming response:
 
-```
+```kotlin
 val result = client!!.inference().chatCompletionStreaming(
             InferenceChatCompletionParams.builder()
                 .modelId(modelName)
@@ -162,7 +162,7 @@ You must complete the following steps:
 1. Clone the repo (`git clone https://github.com/meta-llama/llama-stack-client-kotlin.git -b latest-release`)
 2. Port the appropriate ExecuTorch libraries over into your Llama Stack Kotlin library environment.
 
-```
+```bash
 cd llama-stack-client-kotlin-client-local
 sh download-prebuilt-et-lib.sh --unzip
 ```
@@ -173,7 +173,7 @@ Now you will notice that the `jni/` , `libs/`, and `AndroidManifest.xml` files f
 
 If you’d like to contribute to the Kotlin library via development, debug, or add play around with the library with various print statements, run the following command in your terminal under the llama-stack-client-kotlin directory.
 
-```
+```bash
 sh build-libs.sh
 ```
 
@@ -185,7 +185,7 @@ Copy the .jar files over to the lib directory in your Android app. At the same t
 
 Currently we provide additional properties support with local inferencing. In order to get the tokens/sec metric for each inference call, add the following code in your Android app after you run your chatCompletion inference function. The Reference app has this implementation as well:
 
-```
+```kotlin
 var tps = (result.asChatCompletionResponse()._additionalProperties()["tps"] as JsonNumber).value as Float
 ```
 

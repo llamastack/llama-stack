@@ -108,7 +108,7 @@ inferenceService.loadModel(
 
 1. Make inference calls (or agents calls) as you normally would with LlamaStack:
 
-```
+```swift
 for await chunk in try await agentsService.initAndCreateTurn(
     messages: [
     .UserMessage(Components.Schemas.UserMessage(
@@ -124,7 +124,7 @@ If you receive errors like "missing package product" or "invalid checksum", try 
 
 (Opt+Click) Product > Clean Build Folder Immediately
 
-```
+```bash
 rm -rf \
   ~/Library/org.swift.swiftpm \
   ~/Library/Caches/org.swift.swiftpm \

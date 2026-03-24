@@ -58,7 +58,7 @@ For development or on-premises deployments, follow [this doc](https://docs.oracl
 
 Ensure your OCI user or instance has the following policy statements:
 
-```
+```text
 Allow group <group_name> to use generative-ai-inference-endpoints in compartment <compartment_name>
 Allow group <group_name> to manage generative-ai-inference-endpoints in compartment <compartment_name>
 ```

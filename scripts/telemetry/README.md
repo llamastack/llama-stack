@@ -4,7 +4,7 @@ This directory contains configuration files and a setup script to deploy a full 
 
 ## Architecture
 
-```
+```text
 ┌──────────────┐
 │  Llama Stack │──┐
 │  Server      │  │  OTLP     ┌───────────────────┐   scrape    ┌──────────────┐

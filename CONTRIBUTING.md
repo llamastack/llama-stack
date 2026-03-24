@@ -26,7 +26,7 @@ For more info, see the [uv docs around Python versions](https://docs.astral.sh/u
 
 Note that you can create a dotenv file `.env` that includes necessary environment variables:
 
-```
+```text
 LLAMA_STACK_BASE_URL=http://localhost:8321
 LLAMA_STACK_CLIENT_LOG=debug
 LLAMA_STACK_PORT=8321
@@ -75,7 +75,7 @@ or invoke mypy directly with all optional dependencies:
 uv run --group dev --group type_checking mypy
 ```
 
-```
+```text
 **Caution:** Before pushing your changes, make sure that the pre-commit hooks have passed successfully.
 ```
 

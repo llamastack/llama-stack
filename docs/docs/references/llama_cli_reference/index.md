@@ -36,11 +36,11 @@ For downloading models, we recommend using the [Hugging Face CLI](https://huggin
 
 ### Sample Usage
 
-```
+```bash
 llama --help
 ```
 
-```
+```text
 usage: llama [-h] {stack} ...
 
 Welcome to the Llama CLI

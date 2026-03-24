@@ -71,7 +71,7 @@ Show available providers on distribution endpoint
 llama-stack-client providers list
 ```
 
-```
+```text
 +-----------+----------------+-----------------+
 | API       | Provider ID    | Provider Type   |
 +===========+================+=================+
@@ -169,7 +169,7 @@ Show available llama models at distribution endpoint
 llama-stack-client models list
 ```
 
-```
+```text
 Available Models
 
 ┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━┓
@@ -189,7 +189,7 @@ Show details of a specific model at the distribution endpoint
 llama-stack-client models get Llama3.1-8B-Instruct
 ```
 
-```
+```text
 +----------------------+----------------------+----------------------------------------------------------+---------------+
 | identifier           | llama_model          | metadata                                                 | provider_id   |
 +======================+======================+==========================================================+===============+
@@ -242,7 +242,7 @@ Show available safety shields on distribution endpoint
 llama-stack-client shields list
 ```
 
-```
+```text
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ identifier                       ┃ provider_alias                                                        ┃ params                ┃ provider_id                        ┃
 ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
@@ -373,7 +373,7 @@ Show available llama toolgroups at distribution endpoint
 llama-stack-client toolgroups list
 ```
 
-```
+```text
 +---------------------------+------------------+------+---------------+
 | identifier                | provider_id      | args | mcp_endpoint  |
 +===========================+==================+======+===============+
@@ -481,7 +481,7 @@ Show available scoring functions on distribution endpoint
 llama-stack-client scoring_functions list
 ```
 
-```
+```text
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
 ┃ identifier                                 ┃ provider_id  ┃ description                                                   ┃ type             ┃
 ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━┩

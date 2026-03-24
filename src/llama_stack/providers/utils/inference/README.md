@@ -4,7 +4,7 @@ Shared utilities for inference providers: the OpenAI mixin, model registry, prom
 
 ## Directory Structure
 
-```
+```text
 inference/
   __init__.py
   openai_mixin.py      # OpenAIMixin: standard OpenAI-compatible endpoint implementations

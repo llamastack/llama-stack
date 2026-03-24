@@ -4,7 +4,7 @@ Pre-built distribution configurations that wire together specific providers for 
 
 ## Directory Structure
 
-```
+```text
 distributions/
   starter/             # General-purpose distribution with many providers enabled
   ci-tests/            # Minimal distribution for CI testing

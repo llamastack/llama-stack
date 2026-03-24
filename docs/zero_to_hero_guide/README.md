@@ -268,7 +268,7 @@ uv run --with llama-stack-client python test_llama_stack.py
 
 **Expected Output:**
 
-```
+```text
 The moon glows softly in the midnight sky,
 A beacon of wonder, as it catches the eye.
 ```

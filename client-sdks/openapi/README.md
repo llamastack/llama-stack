@@ -53,7 +53,7 @@ The `make sdk` target runs the full pipeline and will automatically check for re
 
 ## How it Works
 
-```
+```text
 merge_stainless_config.py  ->  build_hierarchy.py  ->  openapi-generator  ->  patch_hierarchy.py
 ```
 

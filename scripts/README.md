@@ -4,7 +4,7 @@ Build, codegen, and CI utility scripts.
 
 ## Directory Structure
 
-```
+```text
 scripts/
   github/                      # GitHub Actions workflow scripts
     schedule-record-workflow.sh # Trigger remote test recording via GitHub Actions

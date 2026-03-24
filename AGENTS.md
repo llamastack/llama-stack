@@ -13,7 +13,7 @@ a provider architecture.
 
 ## Repository Layout
 
-```
+```text
 src/llama_stack/              # Server implementation
   core/                       # Request routing, server, storage
   providers/

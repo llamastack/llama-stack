@@ -4,7 +4,7 @@ FastAPI server implementation for Llama Stack.
 
 ## Directory Structure
 
-```
+```text
 server/
   __init__.py
   server.py                    # Main FastAPI app, route dispatch, SSE streaming, lifespan

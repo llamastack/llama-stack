@@ -320,7 +320,7 @@ If `TS_CLIENT_PATH` is unset, TypeScript tests are skipped entirely.
 
 ## Directory Structure
 
-```
+```text
 integration/
   admin/               # Admin API tests
   agents/              # Agent orchestration tests

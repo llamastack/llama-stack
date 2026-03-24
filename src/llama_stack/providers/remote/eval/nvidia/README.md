@@ -8,7 +8,7 @@ Below are a few examples of how to register a benchmark, which in turn will crea
 
 ### Example for register an academic benchmark
 
-```
+```text
 POST /eval/benchmarks
 ```
 
@@ -25,7 +25,7 @@ POST /eval/benchmarks
 
 ### Example for register a custom evaluation
 
-```
+```text
 POST /eval/benchmarks
 ```
 
@@ -69,7 +69,7 @@ POST /eval/benchmarks
 
 ### Example for triggering a benchmark/custom evaluation
 
-```
+```text
 POST /eval/benchmarks/{benchmark_id}/jobs
 ```
 
@@ -101,7 +101,7 @@ Response example:
 
 ### Example for getting the status of a job
 
-```
+```text
 GET /eval/benchmarks/{benchmark_id}/jobs/{job_id}
 ```
 
@@ -116,13 +116,13 @@ Response example:
 
 ### Example for cancelling a job
 
-```
+```text
 POST /eval/benchmarks/{benchmark_id}/jobs/{job_id}/cancel
 ```
 
 ### Example for getting the results
 
-```
+```text
 GET /eval/benchmarks/{benchmark_id}/results
 ```
 

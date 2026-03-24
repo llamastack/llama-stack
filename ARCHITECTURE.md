@@ -14,7 +14,7 @@ The codebase is split into two packages:
 
 ## Request Flow
 
-```
+```text
 Client (llama-stack-client SDK or raw HTTP)
   |
   v
@@ -60,7 +60,7 @@ External Service or Local Computation
 
 ### Provider Types
 
-```
+```text
 Provider
   |
   |-- InlineProviderSpec    (runs in-process)
@@ -97,7 +97,7 @@ At startup, `resolve_impls()` in `core/resolver.py`:
 
 Many APIs use automatic routing. For example, `Api.inference` is paired with `Api.models`:
 
-```
+```text
 Api.models (RoutingTable)  <-->  Api.inference (Router)
   |                                |
   |-- ModelsRoutingTable           |-- InferenceRouter
@@ -261,7 +261,7 @@ For more details, see `tests/README.md` and `tests/integration/README.md`.
 
 ## Directory Map
 
-```
+```text
 src/
   llama_stack_api/          # API definitions package (separate pip package)
     inference.py            # Inference protocol

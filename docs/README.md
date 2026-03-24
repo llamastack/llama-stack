@@ -27,7 +27,7 @@ To import Python code (or any code files) with syntax highlighting, use this syn
 ```python file=./demo_script.py title="demo_script.py"
 ```
 
-```
+```text
 
 This automatically imports the file content and displays it as a formatted code block with Python syntax highlighting.
 
