@@ -257,24 +257,13 @@ def pytest_generate_tests(metafunc):
         providers = None
         if config_str and "=" in config_str:
             run_config = run_config_from_dynamic_config_spec(config_str)
-            # Use provider_type (e.g., "remote::pgvector") instead of provider_id (e.g., "pgvector")
-            # because tests check against full provider type names
-            providers = [p.provider_type for p in run_config.providers.get("vector_io", [])]
+            providers = [p.provider_id for p in run_config.providers.get("vector_io", [])]
         if providers is None:
             inference_mode = os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE")
-            # Use full provider type names to match parametrization format
             providers = (
-                [
-                    "inline::faiss",
-                    "inline::sqlite-vec",
-                    "inline::milvus",
-                    "remote::chromadb",
-                    "remote::pgvector",
-                    "remote::weaviate",
-                    "remote::qdrant",
-                ]
+                ["faiss", "sqlite-vec", "milvus", "chromadb", "pgvector", "weaviate", "qdrant"]
                 if inference_mode == "live"
-                else ["inline::faiss", "inline::sqlite-vec"]
+                else ["faiss", "sqlite-vec"]
             )
         metafunc.parametrize("vector_io_provider_id", providers, ids=[f"vector_io={p}" for p in providers])
 
@@ -423,13 +412,9 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 
 
 def get_vector_io_provider_ids(client):
-    """Get all available vector_io provider types.
-
-    Returns full provider type names (e.g., "remote::pgvector", "inline::faiss")
-    to match the parametrization format used by pytest_generate_tests.
-    """
+    """Get all available vector_io provider IDs."""
     providers = [p for p in client.providers.list() if p.api == "vector_io"]
-    return [p.provider_type for p in providers]
+    return [p.provider_id for p in providers]
 
 
 def vector_provider_wrapper(func):
