@@ -35,7 +35,6 @@ from .schema_utils import (  # noqa: I001
     json_schema_type,
     register_dynamic_schema_type,
     register_schema,
-    webmethod,
 )
 from .admin import (
     Admin,
@@ -1100,7 +1099,6 @@ __all__ = [
     "VectorStoresProtocolPrivate",
     "VersionInfo",
     "ViolationLevel",
-    "webmethod",
     "WebMethod",
     "WebSearchToolTypes",
     "WeightedRanker",

@@ -9,6 +9,9 @@
 This module auto-discovers FastAPI routers from llama_stack_api packages.
 Each API package that has a `fastapi_routes` submodule with a `create_router`
 factory is automatically registered.
+
+External APIs can also provide a `create_router` function in their module
+(the same module that provides `available_providers`).
 """
 
 import importlib
@@ -18,7 +21,7 @@ from typing import Any, cast
 from fastapi import APIRouter
 from fastapi.routing import APIRoute
 
-from llama_stack_api.datatypes import Api
+from llama_stack_api.datatypes import Api, ExternalApiSpec
 
 # Api enum values that don't match their package name in llama_stack_api
 _API_TO_PACKAGE: dict[str, str] = {
@@ -52,6 +55,24 @@ def _discover_router_factories() -> dict[str, Callable[[Any], APIRouter]]:
 
 # Auto-discovered router factories, keyed by Api enum value
 _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = _discover_router_factories()
+
+
+def register_external_api_routers(external_apis: dict[Api, ExternalApiSpec]) -> None:
+    """Register router factories from external API modules.
+
+    External APIs can provide a `create_router(impl) -> APIRouter` function
+    in their module to define FastAPI routes.
+    """
+    for api, api_spec in external_apis.items():
+        if api.value in _ROUTER_FACTORIES:
+            continue
+        try:
+            module = importlib.import_module(api_spec.module)
+            create_router = getattr(module, "create_router", None)
+            if create_router is not None:
+                _ROUTER_FACTORIES[api.value] = create_router
+        except (ImportError, ModuleNotFoundError):
+            pass
 
 
 def build_fastapi_router(api: "Api", impl: Any) -> APIRouter | None:

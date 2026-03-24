@@ -4,21 +4,16 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import inspect
 import re
 from collections.abc import Callable
 from typing import Any
 
-from aiohttp import hdrs
-from starlette.routing import Route
-
-from llama_stack.core.resolver import api_protocol_map
 from llama_stack.core.server.fastapi_router_registry import (
     _ROUTER_FACTORIES,
     build_fastapi_router,
     get_router_routes,
 )
-from llama_stack_api import Api, ExternalApiSpec, WebMethod
+from llama_stack_api import Api, WebMethod
 from llama_stack_api.router_utils import PUBLIC_ROUTE_KEY
 
 EndpointFunc = Callable[..., Any]
@@ -41,45 +36,7 @@ def _convert_path_to_regex(path: str) -> str:
     return f"^{pattern}$"
 
 
-def get_all_api_routes(
-    external_apis: dict[Api, ExternalApiSpec] | None = None,
-) -> dict[Api, list[tuple[Route, WebMethod]]]:
-    """Get all API routes from webmethod-based protocols.
-
-    Used for external APIs that define routes via @webmethod decorators
-    rather than FastAPI routers.
-    """
-    apis = {}
-
-    protocols = api_protocol_map(external_apis)
-    for api, protocol in protocols.items():
-        routes = []
-        protocol_methods = inspect.getmembers(protocol, predicate=inspect.isfunction)
-
-        for name, method in protocol_methods:
-            webmethods = getattr(method, "__webmethods__", [])
-            if not webmethods:
-                continue
-
-            for webmethod in webmethods:
-                path = f"/{webmethod.level}/{webmethod.route.lstrip('/')}"
-                if webmethod.method == hdrs.METH_GET:
-                    http_method = hdrs.METH_GET
-                elif webmethod.method == hdrs.METH_DELETE:
-                    http_method = hdrs.METH_DELETE
-                else:
-                    http_method = hdrs.METH_POST
-                routes.append(
-                    (Route(path=path, methods=[http_method], name=name, endpoint=None), webmethod)  # type: ignore[arg-type]
-                )
-
-        apis[api] = routes
-
-    return apis
-
-
-def initialize_route_impls(impls, external_apis: dict[Api, ExternalApiSpec] | None = None) -> RouteImpls:
-    api_to_routes = get_all_api_routes(external_apis)
+def initialize_route_impls(impls) -> RouteImpls:
     route_impls: RouteImpls = {}
 
     for api_name in _ROUTER_FACTORIES.keys():
@@ -114,27 +71,6 @@ def initialize_route_impls(impls, external_apis: dict[Api, ExternalApiSpec] | No
                     route.path,
                     webmethod,
                 )
-
-    # Process routes from external APIs using @webmethod decorators
-    for api, api_routes in api_to_routes.items():
-        if api.value in _ROUTER_FACTORIES:
-            continue
-        if api not in impls:
-            continue
-        for legacy_route, webmethod in api_routes:
-            impl = impls[api]
-            func = getattr(impl, legacy_route.name)
-            available_methods = [m for m in (legacy_route.methods or []) if m != "HEAD"]
-            if not available_methods:
-                continue
-            method = available_methods[0].lower()
-            if method not in route_impls:
-                route_impls[method] = {}
-            route_impls[method][_convert_path_to_regex(legacy_route.path)] = (
-                func,
-                legacy_route.path,
-                webmethod,
-            )
 
     return route_impls
 

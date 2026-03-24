@@ -156,54 +156,6 @@ class WebMethod:
 CallableT = TypeVar("CallableT", bound=Callable[..., Any])
 
 
-def webmethod(
-    route: str | None = None,
-    method: str | None = None,
-    level: str | None = None,
-    public: bool | None = False,
-    request_examples: list[Any] | None = None,
-    response_examples: list[Any] | None = None,
-    raw_bytes_request_body: bool | None = False,
-    descriptive_name: str | None = None,
-    deprecated: bool | None = False,
-    require_authentication: bool | None = True,
-) -> Callable[[CallableT], CallableT]:
-    """
-    Decorator that supplies additional metadata to an endpoint operation function.
-
-    :param route: The URL path pattern associated with this operation which path parameters are substituted into.
-    :param public: True if the operation can be invoked without prior authentication.
-    :param request_examples: Sample requests that the operation might take. Pass a list of objects, not JSON.
-    :param response_examples: Sample responses that the operation might produce. Pass a list of objects, not JSON.
-    :param require_authentication: Whether this endpoint requires authentication (default True).
-    """
-
-    def wrap(func: CallableT) -> CallableT:
-        webmethod_obj = WebMethod(
-            route=route,
-            method=method,
-            level=level,
-            public=public or False,
-            request_examples=request_examples,
-            response_examples=response_examples,
-            raw_bytes_request_body=raw_bytes_request_body,
-            descriptive_name=descriptive_name,
-            deprecated=deprecated,
-            require_authentication=require_authentication if require_authentication is not None else True,
-        )
-
-        # Store all webmethods in a list to support multiple decorators
-        if not hasattr(func, "__webmethods__"):
-            func.__webmethods__ = []  # type: ignore
-        func.__webmethods__.append(webmethod_obj)  # type: ignore
-
-        # Keep the last one as __webmethod__ for backwards compatibility
-        func.__webmethod__ = webmethod_obj  # type: ignore
-        return func
-
-    return wrap
-
-
 def remove_null_from_anyof(schema: dict, *, add_nullable: bool = False) -> None:
     """Remove null type from anyOf and optionally add nullable flag.
 
