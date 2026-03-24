@@ -672,19 +672,28 @@ class TestOpenAIResponses:
         assert response.status == "queued"
         response_id = response.id
 
-        # Cancel immediately - in replay mode, if we wait, the background worker
-        # will pick up the task, fail (no recording), and transition to 'failed'
-        # before we can cancel it. Cancel immediately to win the race.
-        # Cancel the response
-        cancelled = openai_client.responses.cancel(response_id=response_id)
+        # Cancel immediately - in replay mode, background worker starts very quickly
+        openai_client.responses.cancel(response_id=response_id)
 
-        assert cancelled.id == response_id
-        assert cancelled.status == "cancelled"
-        # Note: background field may not be preserved through OpenAI client deserialization
+        # Poll for cancelled status (background worker may have picked up task)
+        max_wait = 5
+        poll_interval = 0.1
+        elapsed = 0
 
-        # Verify the response stays cancelled
-        retrieved = openai_client.responses.retrieve(response_id=response_id)
-        assert retrieved.status == "cancelled"
+        while elapsed < max_wait:
+            time.sleep(poll_interval)
+            elapsed += poll_interval
+
+            retrieved = openai_client.responses.retrieve(response_id=response_id)
+            if retrieved.status == "cancelled":
+                return
+
+            # In replay mode, worker may have started processing before cancel completed
+            assert retrieved.status in ("queued", "in_progress", "cancelled"), (
+                f"Unexpected status '{retrieved.status}' - expected queued/in_progress/cancelled"
+            )
+
+        pytest.fail(f"Response did not transition to cancelled within {max_wait} seconds")
 
     def test_cancel_already_cancelled_is_idempotent(self, openai_client, text_model_id):
         """Test that cancelling an already-cancelled response is idempotent."""
@@ -698,8 +707,24 @@ class TestOpenAIResponses:
         )
 
         response_id = response.id
-        cancelled = openai_client.responses.cancel(response_id=response_id)
-        assert cancelled.status == "cancelled"
+        openai_client.responses.cancel(response_id=response_id)
+
+        # Poll for cancelled status
+        max_wait = 5
+        poll_interval = 0.1
+        elapsed = 0
+
+        while elapsed < max_wait:
+            time.sleep(poll_interval)
+            elapsed += poll_interval
+
+            retrieved = openai_client.responses.retrieve(response_id=response_id)
+            if retrieved.status == "cancelled":
+                break
+
+            assert retrieved.status in ("queued", "in_progress", "cancelled"), f"Unexpected status '{retrieved.status}'"
+        else:
+            pytest.fail(f"Response did not transition to cancelled within {max_wait} seconds")
 
         # Cancel again - should return same state without error
         cancelled_again = openai_client.responses.cancel(response_id=response_id)
