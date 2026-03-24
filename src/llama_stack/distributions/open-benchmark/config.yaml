@@ -253,10 +253,5 @@ registered_resources:
     - basic::docvqa
     metadata: {}
     benchmark_id: builtin-docvqa
-  tool_groups:
-  - toolgroup_id: builtin::websearch
-    provider_id: tavily-search
-  - toolgroup_id: builtin::file_search
-    provider_id: file-search
 server:
   port: 8321

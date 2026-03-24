@@ -21,6 +21,8 @@ providers:
       url: ${env.DEH_SAFETY_URL}
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
+    config:
+      trust_remote_code: false
   - provider_id: transformers
     provider_type: inline::transformers
   vector_io:
@@ -142,10 +144,5 @@ registered_resources:
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups:
-  - toolgroup_id: builtin::websearch
-    provider_id: brave-search
-  - toolgroup_id: builtin::file_search
-    provider_id: file-search
 server:
   port: 8321

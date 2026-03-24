@@ -127,8 +127,8 @@ jobs:
                     namespace: vector_io::faiss
                     backend: kv_default
             tool_runtime:
-              - provider_id: rag-runtime
-                provider_type: inline::rag-runtime
+              - provider_id: file-search
+                provider_type: inline::file-search
                 config: {}
             agents:
               - provider_id: builtin
