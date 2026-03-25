@@ -23,9 +23,15 @@ docs/notebooks/nvidia/tool_calling/sample_data/
 pyrightconfig.json
 venv/
 pytest-report.xml
+.pytest_cache/
 .coverage
+htmlcov/
 .python-version
-server.log
+.mypy_cache/
+*.log
+*.swp
+*.swo
+*.tsbuildinfo
 .claude/
 docs/.docusaurus/
 docs/node_modules/
