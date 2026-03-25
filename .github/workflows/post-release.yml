@@ -93,7 +93,7 @@ jobs:
             echo "next_dev_tag=${NEXT_DEV_TAG}"
             echo "next_fallback=${NEXT_FALLBACK}"
             echo "release_branch=${RELEASE_BRANCH}"
-          } >> $GITHUB_OUTPUT
+          } >> "$GITHUB_OUTPUT"
 
           echo "Release version: ${VERSION}"
           echo "Next dev tag: ${NEXT_DEV_TAG}"

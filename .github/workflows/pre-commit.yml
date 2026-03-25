@@ -78,7 +78,7 @@ jobs:
           set +e
           pre-commit run --show-diff-on-failure --color=always --all-files 2>&1 | tee /tmp/precommit.log
           status=${PIPESTATUS[0]}
-          echo "status=$status" >> $GITHUB_OUTPUT
+          echo "status=$status" >> "$GITHUB_OUTPUT"
           exit 0
         env:
           SKIP: no-commit-to-branch,mypy

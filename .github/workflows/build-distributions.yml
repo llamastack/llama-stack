@@ -44,7 +44,7 @@ jobs:
             # Extract version from tag (e.g., v0.2.12 -> 0.2.12)
             version="${GITHUB_REF#refs/tags/v}"
           fi
-          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Building for version: $version"
 
       - name: Set platforms
@@ -55,7 +55,7 @@ jobs:
           else
             platforms="linux/amd64,linux/arm64"
           fi
-          echo "platforms=$platforms" >> $GITHUB_OUTPUT
+          echo "platforms=$platforms" >> "$GITHUB_OUTPUT"
           echo "Building for platforms: $platforms"
 
       - name: Generate Distribution List
@@ -72,7 +72,7 @@ jobs:
               grep -v '^__pycache__$' | \
               jq -R -s -c 'split("\n") | map(select(length > 0))')
           fi
-          echo "distros=$distros" >> $GITHUB_OUTPUT
+          echo "distros=$distros" >> "$GITHUB_OUTPUT"
           echo "Building distributions: $distros"
 
   build:
@@ -103,14 +103,14 @@ jobs:
           echo "Requested platforms: ${PLATFORMS}"
 
           # Build arguments
-          BUILD_ARGS="--build-arg INSTALL_MODE=pypi --build-arg DISTRO_NAME=${DISTRO_NAME}"
+          BUILD_ARGS=(--build-arg "INSTALL_MODE=pypi" --build-arg "DISTRO_NAME=${DISTRO_NAME}")
 
           # Add UV index configuration if available (for release branches)
           if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
-            BUILD_ARGS="${BUILD_ARGS} --build-arg UV_EXTRA_INDEX_URL=${UV_EXTRA_INDEX_URL}"
+            BUILD_ARGS+=(--build-arg "UV_EXTRA_INDEX_URL=${UV_EXTRA_INDEX_URL}")
           fi
           if [ -n "${UV_INDEX_STRATEGY:-}" ]; then
-            BUILD_ARGS="${BUILD_ARGS} --build-arg UV_INDEX_STRATEGY=${UV_INDEX_STRATEGY}"
+            BUILD_ARGS+=(--build-arg "UV_INDEX_STRATEGY=${UV_INDEX_STRATEGY}")
           fi
 
           # Build for native platform only (--load only works for single platform)
@@ -119,7 +119,7 @@ jobs:
             --platform linux/amd64 \
             --load \
             -f containers/Containerfile \
-            ${BUILD_ARGS} \
+            "${BUILD_ARGS[@]}" \
             --tag "${LOCAL_IMAGE_NAME}" \
             .
 

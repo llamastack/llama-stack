@@ -86,7 +86,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           PR_DATA=$(gh pr view ${{ inputs.pr_number }} --repo ${{ github.repository }} --json headRefName,headRepository,headRefOid,baseRefName,baseRefOid,headRepositoryOwner,title)
-          echo "pr_data=$PR_DATA" >> $GITHUB_OUTPUT
+          echo "pr_data=$PR_DATA" >> "$GITHUB_OUTPUT"
 
       - name: Compute branch names
         id: compute
@@ -149,7 +149,7 @@ jobs:
             echo "pr_base_ref=${BASE_REF}"
             echo "pr_title=${PR_TITLE}"
             echo "is_fork_pr=${IS_FORK_PR}"
-          } >> $GITHUB_OUTPUT
+          } >> "$GITHUB_OUTPUT"
 
   preview:
     needs: compute-branch

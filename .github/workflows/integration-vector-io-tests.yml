@@ -227,7 +227,7 @@ jobs:
       - name: Create sanitized provider name
         if: ${{ always() }}
         run: |
-          echo "SANITIZED_PROVIDER=$(echo "${{ matrix.vector-io-provider }}" | tr ':' '_')" >> $GITHUB_ENV
+          echo "SANITIZED_PROVIDER=$(echo "${{ matrix.vector-io-provider }}" | tr ':' '_')" >> "$GITHUB_ENV"
 
       - name: Write ChromaDB logs to file
         if: ${{ always() && matrix.vector-io-provider == 'remote::chromadb' }}

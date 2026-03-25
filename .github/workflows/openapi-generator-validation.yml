@@ -97,7 +97,7 @@ jobs:
             MATRIX='{"os":["ubuntu-latest","macos-latest"]}'
           fi
 
-          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
           echo "Testing on platforms: $MATRIX"
 
   validate-sdk-generation:
