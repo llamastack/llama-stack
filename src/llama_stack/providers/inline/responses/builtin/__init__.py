@@ -8,17 +8,17 @@ from typing import Any
 
 from llama_stack.core.datatypes import AccessRule, Api
 
-from .config import BuiltinAgentsImplConfig
+from .config import BuiltinResponsesImplConfig
 
 
 async def get_provider_impl(
-    config: BuiltinAgentsImplConfig,
+    config: BuiltinResponsesImplConfig,
     deps: dict[Api, Any],
     policy: list[AccessRule],
 ):
-    from .agents import BuiltinAgentsImpl
+    from .impl import BuiltinResponsesImpl
 
-    impl = BuiltinAgentsImpl(
+    impl = BuiltinResponsesImpl(
         config,
         deps[Api.inference],
         deps[Api.vector_io],

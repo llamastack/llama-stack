@@ -18,7 +18,6 @@ from fastapi.routing import APIRoute
 
 from llama_stack_api import (
     admin,
-    agents,
     batches,
     connectors,
     conversations,
@@ -29,6 +28,7 @@ from llama_stack_api import (
     models,
     prompts,
     providers,
+    responses,
     safety,
     shields,
     tools,
@@ -40,7 +40,7 @@ from llama_stack_api.datatypes import Api
 # Add new APIs here as they are migrated to the router system
 _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "admin": admin.fastapi_routes.create_router,
-    "agents": agents.fastapi_routes.create_router,
+    "responses": responses.fastapi_routes.create_router,
     "batches": batches.fastapi_routes.create_router,
     "connectors": connectors.fastapi_routes.create_router,
     "conversations": conversations.fastapi_routes.create_router,
