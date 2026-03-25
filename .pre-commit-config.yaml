@@ -31,6 +31,21 @@ repos:
     -   id: check-symlinks
     -   id: check-toml
 
+-   repo: https://github.com/rhysd/actionlint
+    rev: v1.7.11
+    hooks:
+    -   id: actionlint
+        args:
+          - -ignore=always evaluated to true
+          - -ignore=potentially untrusted
+          - -ignore=SC2086
+          - -ignore=SC2034
+          - -ignore=SC2129
+          - -ignore=SC2012
+          - -ignore=SC2046
+          - -ignore=SC2001
+          - -ignore=SC2170
+
 -   repo: https://github.com/compilerla/conventional-pre-commit
     rev: v3.6.0
     hooks:
