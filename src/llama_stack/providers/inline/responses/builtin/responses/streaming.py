@@ -74,6 +74,7 @@ from llama_stack_api import (
     OpenAIResponseObjectStreamResponseOutputItemAdded,
     OpenAIResponseObjectStreamResponseOutputItemDone,
     OpenAIResponseObjectStreamResponseOutputTextDelta,
+    OpenAIResponseObjectStreamResponseOutputTextDone,
     OpenAIResponseObjectStreamResponseReasoningTextDelta,
     OpenAIResponseObjectStreamResponseReasoningTextDone,
     OpenAIResponseObjectStreamResponseRefusalDelta,
@@ -1145,9 +1146,19 @@ class StreamingResponseOrchestrator:
                 sequence_number=self.sequence_number,
             )
 
-        # Emit content_part.done event if text content was streamed (before content gets cleared)
+        # Emit output_text.done and content_part.done events if text content was streamed
         if content_part_emitted:
             final_text = "".join(chat_response_content)
+            # Emit output_text.done with the final accumulated text (per OpenAI protocol)
+            self.sequence_number += 1
+            yield OpenAIResponseObjectStreamResponseOutputTextDone(
+                content_index=content_index,
+                text=final_text,
+                item_id=message_item_id,
+                output_index=message_output_index,
+                sequence_number=self.sequence_number,
+                logprobs=chat_response_logprobs if chat_response_logprobs else [],
+            )
             self.sequence_number += 1
             yield OpenAIResponseObjectStreamResponseContentPartDone(
                 content_index=content_index,

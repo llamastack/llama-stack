@@ -928,6 +928,7 @@ class OpenAIResponseObjectStreamResponseOutputTextDone(BaseModel):
     :param item_id: Unique identifier of the completed output item
     :param output_index: Index position of the item in the output list
     :param sequence_number: Sequential number for ordering streaming events
+    :param logprobs: Token log probability details for the completed text
     :param type: Event type identifier, always "response.output_text.done"
     """
 
@@ -936,6 +937,7 @@ class OpenAIResponseObjectStreamResponseOutputTextDone(BaseModel):
     item_id: str
     output_index: int
     sequence_number: int
+    logprobs: list[OpenAITokenLogProb] | None = None
     type: Literal["response.output_text.done"] = "response.output_text.done"
 
 
