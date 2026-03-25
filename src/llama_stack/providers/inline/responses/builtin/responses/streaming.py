@@ -690,6 +690,7 @@ class StreamingResponseOrchestrator:
             logger.debug(f"Choice message tool_calls: {choice.message.tool_calls}")
 
             if choice.message.tool_calls and self.ctx.response_tools:
+                should_remove_assistant_msg = False
                 for tool_call in choice.message.tool_calls:
                     if is_function_tool_call(tool_call, self.ctx.response_tools):
                         function_tool_calls.append(tool_call)
@@ -718,13 +719,15 @@ class StreamingResponseOrchestrator:
                                     non_function_tool_calls.append(tool_call)
                                 else:
                                     logger.info(f"Approval denied for {tool_call.id} on {tool_call.function.name}")
-                                    next_turn_messages.pop()
+                                    should_remove_assistant_msg = True
                             else:
                                 logger.info(f"Requesting approval for {tool_call.id} on {tool_call.function.name}")
                                 approvals.append(tool_call)
-                                next_turn_messages.pop()
+                                should_remove_assistant_msg = True
                         else:
                             non_function_tool_calls.append(tool_call)
+                if should_remove_assistant_msg:
+                    next_turn_messages.pop()
 
         return function_tool_calls, non_function_tool_calls, approvals, next_turn_messages
 
