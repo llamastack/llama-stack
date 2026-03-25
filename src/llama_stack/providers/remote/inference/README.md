@@ -4,7 +4,7 @@ Remote inference provider adapters that connect to external AI services.
 
 ## Directory Structure
 
-```
+```text
 inference/
   anthropic/           # Anthropic Claude models
   azure/               # Azure OpenAI Service

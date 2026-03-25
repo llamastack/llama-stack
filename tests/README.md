@@ -10,6 +10,7 @@ Both have their place. For unit tests, it is important to create minimal mocks a
 ### Record-replay for integration tests
 
 Testing AI applications end-to-end creates some challenges:
+
 - **API costs** accumulate quickly during development and CI
 - **Non-deterministic responses** make tests unreliable
 - **Multiple providers** require testing the same logic across different APIs
@@ -17,6 +18,7 @@ Testing AI applications end-to-end creates some challenges:
 Our solution: **Record real API responses once, replay them for fast, deterministic tests.** This is better than mocking because AI APIs have complex response structures and streaming behavior. Mocks can miss edge cases that real APIs exhibit. A single test can exercise underlying APIs in multiple complex ways making it really hard to mock.
 
 This gives you:
+
 - Cost control - No repeated API calls during development
 - Speed - Instant test execution with cached responses
 - Reliability - Consistent results regardless of external service state
@@ -25,6 +27,7 @@ This gives you:
 ### Testing Quick Start
 
 You can run the unit tests with:
+
 ```bash
 uv run --group unit pytest -sv tests/unit/
 ```
@@ -41,6 +44,7 @@ For running integration tests, you must provide a few things:
 - Any API keys you need to use should be set in the environment, or can be passed in with the --env option.
 
 You can run the integration tests in replay mode with:
+
 ```bash
 # Run all tests with existing recordings
   uv run --group test \
@@ -83,13 +87,13 @@ gh workflow run record-integration-tests.yml -f pr_number=1234 -f subdirs="agent
 ```
 
 This workflow:
+
 - Runs in GitHub Actions - no local Ollama setup required
 - Auto-triggers on PRs that change tests or source code
 - Works from forks (auto-pushes if "Allow edits from maintainers" is enabled, otherwise uploads artifacts)
 - Commits recordings back to your branch
 
 **Supported providers:** `ollama` (auto), `gpt`, `azure`, `bedrock` (manual trigger)
-
 
 ### Architecture Context
 

@@ -4,7 +4,7 @@ The `builtin` agents provider implements the OpenAI Responses API. This director
 
 ## Directory Structure
 
-```
+```text
 agents/
   builtin/
     __init__.py        # Provider factory (get_provider_impl)
@@ -32,6 +32,7 @@ This provider handles:
 ## Dependencies
 
 This provider depends on:
+
 - `Api.inference` -- for LLM calls
 - `Api.safety` -- for input/output safety checks
 - `Api.tool_runtime` -- for executing tool calls
