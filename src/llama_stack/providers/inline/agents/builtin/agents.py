@@ -6,10 +6,13 @@
 
 from collections.abc import AsyncIterator
 
+from opentelemetry import metrics
+
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.storage.kvstore import InmemoryKVStoreImpl, kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
+from llama_stack.telemetry.constants import RESPONSES_PARAMETER_USAGE_TOTAL
 from llama_stack_api import (
     Agents,
     Connectors,
@@ -37,6 +40,23 @@ from .config import BuiltinAgentsImplConfig
 from .responses.openai_responses import OpenAIResponsesImpl
 
 logger = get_logger(name=__name__, category="agents::builtin")
+
+_meter = metrics.get_meter("llama_stack.responses", version="1.0.0")
+
+_parameter_usage_total = _meter.create_counter(
+    name=RESPONSES_PARAMETER_USAGE_TOTAL,
+    description="Tracks which optional parameters are explicitly provided in Responses API calls",
+    unit="1",
+)
+
+_REQUIRED_FIELDS = {"input", "model"}
+
+
+def _record_parameter_usage(request: CreateResponseRequest, operation: str) -> None:
+    """Record which optional parameters were explicitly provided in the request."""
+    declared_fields = set(request.model_fields.keys())
+    for field_name in (request.model_fields_set & declared_fields) - _REQUIRED_FIELDS:
+        _parameter_usage_total.add(1, {"operation": operation, "parameter": field_name})
 
 
 class BuiltinAgentsImpl(Agents):
@@ -110,6 +130,7 @@ class BuiltinAgentsImpl(Agents):
         Returns either a single response object (non-streaming) or an async iterator
         yielding response stream events (streaming).
         """
+        _record_parameter_usage(request, operation="create_response")
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
         result = await self.openai_responses_impl.create_openai_response(
             input=request.input,

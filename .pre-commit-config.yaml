@@ -3,7 +3,6 @@ minimum_pre_commit_version: 4.4.0
 x-uv-dependency: &uv-dependency "uv==0.9.15"
 default_language_version:
     python: python3.12
-    node: "22"
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
@@ -292,6 +291,14 @@ repos:
               exit 1;
             }
             exit 0
+
+# markdownlint must run after distro-codegen and provider-codegen which generate markdown files
+-   repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.48.0
+    hooks:
+    -   id: markdownlint
+        args: ['--fix']
+        language_version: "22.22.1"
 
 ci:
     autofix_commit_msg: 🎨 [pre-commit.ci] Auto format from pre-commit.com hooks

@@ -13,7 +13,7 @@ a provider architecture.
 
 ## Repository Layout
 
-```
+```text
 src/llama_stack/              # Server implementation
   core/                       # Request routing, server, storage
   providers/
@@ -75,6 +75,7 @@ tests/
 
 Each provider implements a protocol (e.g., `Inference`, `Responses`, `VectorIO`) and is
 registered in `src/llama_stack/providers/registry/`. Provider specs include:
+
 - `provider_type`: e.g., `remote::openai`, `inline::builtin`
 - `module`: Python module path
 - `config_class`: Pydantic config class path
@@ -89,15 +90,18 @@ these generate the provider documentation automatically.
 
 Distribution YAML files in `src/llama_stack/distributions/` are partially auto-generated.
 After changing provider configs, run:
+
 ```bash
 uv run ./scripts/distro_codegen.py
 uv run ./scripts/provider_codegen.py
 ```
+
 Do not edit generated files in `docs/docs/providers/` manually.
 
 ## API Changes
 
 When modifying or extending APIs:
+
 1. Update models in `src/llama_stack_api/`
 2. Regenerate OpenAPI specs: `uv run ./scripts/run_openapi_generator.sh`
 3. Check for breaking changes — the pre-commit hook `Check API spec for breaking changes`
@@ -107,6 +111,7 @@ When modifying or extending APIs:
 ## Common Patterns
 
 ### Adding a new parameter to an existing API
+
 1. Add the field to the Pydantic model in `src/llama_stack_api/`
 2. Thread it through the provider protocol and implementation
 3. Update affected distribution configs if needed
@@ -114,10 +119,12 @@ When modifying or extending APIs:
 5. Add unit test cases covering the new parameter
 
 ### Adding a deprecated alias for a renamed provider
+
 Use the existing `deprecation_warning` field on `InlineProviderSpec` or `RemoteProviderSpec`.
 Search for existing examples: `grep -r "deprecation_warning" src/llama_stack/providers/registry/`
 
 ### Before adding any new pattern
+
 Search the codebase for existing examples of the same pattern first.
 Use `grep` to find how deprecation, validation, configuration, or aliasing is already
 handled elsewhere.
