@@ -4,7 +4,7 @@ Server core for Llama Stack: routing, provider resolution, storage, and the Fast
 
 ## Directory Structure
 
-```
+```text
 core/
   server/              # FastAPI server, auth middleware, quota middleware
   routers/             # API-specific routers (inference, safety, eval, etc.)

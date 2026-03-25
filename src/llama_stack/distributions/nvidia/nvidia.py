@@ -20,7 +20,7 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         "inference": [BuildProvider(provider_type="remote::nvidia")],
         "vector_io": [BuildProvider(provider_type="inline::faiss")],
         "safety": [BuildProvider(provider_type="remote::nvidia")],
-        "agents": [BuildProvider(provider_type="inline::builtin")],
+        "responses": [BuildProvider(provider_type="inline::builtin")],
         "eval": [BuildProvider(provider_type="remote::nvidia")],
         "datasetio": [
             BuildProvider(provider_type="inline::localfs"),

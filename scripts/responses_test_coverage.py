@@ -31,7 +31,7 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = ROOT / "tests" / "integration" / "responses"
 OPENAI_SPEC = ROOT / "docs" / "static" / "openai-spec-2.3.0.yml"
-AGENTS_ROUTES = ROOT / "src" / "llama_stack_api" / "agents" / "fastapi_routes.py"
+AGENTS_ROUTES = ROOT / "src" / "llama_stack_api" / "responses" / "fastapi_routes.py"
 CONVERSATIONS_ROUTES = ROOT / "src" / "llama_stack_api" / "conversations" / "fastapi_routes.py"
 
 
