@@ -697,10 +697,12 @@ class StreamingResponseOrchestrator:
             logger.debug("Choice message tool_calls", tool_calls=choice.message.tool_calls)
 
             if choice.message.tool_calls and self.ctx.response_tools:
-                should_pop_assistant_message = False
+                executed_tool_calls: list = []
+                has_deferred_or_denied = False
                 for tool_call in choice.message.tool_calls:
                     if is_function_tool_call(tool_call, self.ctx.response_tools):
                         function_tool_calls.append(tool_call)
+                        executed_tool_calls.append(tool_call)
                     elif (
                         tool_call.function
                         and tool_call.function.name not in _SERVER_SIDE_BUILTIN_TOOL_NAMES
@@ -715,6 +717,7 @@ class StreamingResponseOrchestrator:
                             name=tool_call.function.name,
                         )
                         function_tool_calls.append(tool_call)
+                        executed_tool_calls.append(tool_call)
                     else:
                         if self._approval_required(tool_call.function.name):
                             approval_response = self.ctx.approval_response(
@@ -726,17 +729,25 @@ class StreamingResponseOrchestrator:
                                         "Approval granted for on", id=tool_call.id, name=tool_call.function.name
                                     )
                                     non_function_tool_calls.append(tool_call)
+                                    executed_tool_calls.append(tool_call)
                                 else:
                                     logger.info(f"Approval denied for {tool_call.id} on {tool_call.function.name}")
-                                    should_pop_assistant_message = True
+                                    has_deferred_or_denied = True
                             else:
                                 logger.info("Requesting approval for on", id=tool_call.id, name=tool_call.function.name)
                                 approvals.append(tool_call)
-                                should_pop_assistant_message = True
+                                has_deferred_or_denied = True
                         else:
                             non_function_tool_calls.append(tool_call)
-                if should_pop_assistant_message:
-                    next_turn_messages.pop()
+                            executed_tool_calls.append(tool_call)
+                if has_deferred_or_denied:
+                    if executed_tool_calls:
+                        next_turn_messages[-1] = OpenAIAssistantMessageParam(
+                            content=choice.message.content,
+                            tool_calls=executed_tool_calls,
+                        )
+                    else:
+                        next_turn_messages.pop()
 
         return function_tool_calls, non_function_tool_calls, approvals, next_turn_messages
 
