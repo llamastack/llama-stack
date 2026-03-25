@@ -692,7 +692,7 @@ def convert_gemini_stream_chunk_to_openai(
         choices=choices,
         created=created,
         model=model,
-        usage=extract_usage(chunk),
+        usage=None,  # Usage is emitted in a separate final chunk (see _stream_chat_completion)
     )
 
 

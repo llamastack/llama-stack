@@ -305,10 +305,26 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             new_id = f"cltsd-{uuid.uuid4()}" if self.overwrite_completion_id else None
 
             async def _gen():
+                # Buffer usage and only attach it to the final chunk.
+                # Some providers (e.g. Gemini) return usage in every streaming chunk,
+                # violating the OpenAI spec which expects usage only in the last chunk.
+                # We strip usage from intermediate chunks and re-attach the latest
+                # usage to the final chunk before yielding it. Fix for #5122
+                last_usage = None
+                prev_chunk = None
                 async for chunk in resp:
                     if new_id:
                         chunk.id = new_id
-                    yield chunk
+                    if getattr(chunk, "usage", None) is not None:
+                        last_usage = chunk.usage
+                        chunk.usage = None
+                    if prev_chunk is not None:
+                        yield prev_chunk
+                    prev_chunk = chunk
+                # Yield the final chunk with the buffered usage attached
+                if prev_chunk is not None:
+                    prev_chunk.usage = last_usage
+                    yield prev_chunk
 
             return _gen()
         else:
