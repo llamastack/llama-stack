@@ -321,7 +321,7 @@ async def convert_response_input_to_chat_messages(
                 reasoning = _get_preceding_reasoning(input, i)
                 msg = OpenAIAssistantMessageParam(tool_calls=[tool_call])
                 if reasoning:
-                    msg.reasoning = reasoning
+                    msg.reasoning_content = reasoning
                 messages.append(msg)
                 if input_item.call_id in tool_call_results:
                     messages.extend(tool_call_results[input_item.call_id])
@@ -338,7 +338,7 @@ async def convert_response_input_to_chat_messages(
                 reasoning = _get_preceding_reasoning(input, i)
                 msg = OpenAIAssistantMessageParam(tool_calls=[tool_call])
                 if reasoning:
-                    msg.reasoning = reasoning
+                    msg.reasoning_content = reasoning
                 messages.append(msg)
                 # Output can be None, use empty string as fallback
                 output_content = input_item.output if input_item.output is not None else ""
@@ -387,7 +387,7 @@ async def convert_response_input_to_chat_messages(
                 if input_item.role == "assistant":
                     reasoning = _get_preceding_reasoning(input, i)
                     if reasoning:
-                        kwargs["reasoning"] = reasoning
+                        kwargs["reasoning_content"] = reasoning
                 # Dynamic message type call - different message types have different content expectations
                 messages.append(message_type(content=content))  # type: ignore[call-arg,arg-type]
             else:

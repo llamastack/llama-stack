@@ -537,7 +537,12 @@ class StreamingResponseOrchestrator:
                     presence_penalty=self.presence_penalty,
                     **(self.extra_body or {}),
                 )
-                completion_result = await self.inference_api.openai_chat_completion(params)
+                # Use reasoning-aware method when reasoning is explicitly requested
+                # with a non-"none" effort level
+                if self.reasoning and self.reasoning.effort and self.reasoning.effort != "none":
+                    completion_result = await self.inference_api.openai_chat_completions_with_reasoning(params)
+                else:
+                    completion_result = await self.inference_api.openai_chat_completion(params)
 
                 # Process streaming chunks and build complete response
                 completion_result_data = None
@@ -565,7 +570,6 @@ class StreamingResponseOrchestrator:
                     # Update service_tier with actual value from provider response
                     # This is especially important when "auto" was used as input
                     self.service_tier = completion_result_data.service_tier
-
                 current_response = self._build_chat_completion(completion_result_data)
                 (
                     function_tool_calls,
@@ -583,13 +587,16 @@ class StreamingResponseOrchestrator:
                 # Reasoning is independent of the response type — whether the assistant
                 # response is a tool call or a content message, reasoning (if present)
                 # is added to output_messages before processing choices.
-                # how `completion_result_data.reasoning` gets populated is provider-specific (e.g. Ollama/vLLM emit a separate
-                # reasoning field on chunks, Gemini sends <think> tags in content — not yet handled).
-                if completion_result_data.reasoning:
+                # The reasoning_content field is populated by the provider via
+                # openai_chat_completions_with_reasoning, which maps provider-specific
+                # reasoning fields to the standard reasoning_content attribute.
+                if completion_result_data.reasoning_content:
                     reasoning_item = OpenAIResponseOutputMessageReasoningItem(
                         id=f"rs_{uuid.uuid4().hex}",
                         summary=[],
-                        content=[OpenAIResponseOutputMessageReasoningContent(text=completion_result_data.reasoning)],
+                        content=[
+                            OpenAIResponseOutputMessageReasoningContent(text=completion_result_data.reasoning_content)
+                        ],
                         status="completed",
                     )
                     output_messages.append(reasoning_item)
@@ -703,8 +710,8 @@ class StreamingResponseOrchestrator:
                 content=choice.message.content,
                 tool_calls=choice.message.tool_calls,
             )
-            if getattr(choice.message, "reasoning", None):
-                message.reasoning = choice.message.reasoning
+            if getattr(choice.message, "reasoning_content", None):
+                message.reasoning_content = choice.message.reasoning_content
             next_turn_messages.append(message)
             logger.debug("Choice message content", content=choice.message.content)
             logger.debug("Choice message tool_calls", tool_calls=choice.message.tool_calls)
@@ -1037,10 +1044,12 @@ class StreamingResponseOrchestrator:
                 if chunk_choice.finish_reason:
                     chunk_finish_reason = chunk_choice.finish_reason
 
-                # Handle reasoning content if present (non-standard field for o1/o3 models)
-                if hasattr(chunk_choice.delta, "reasoning") and chunk_choice.delta.reasoning:
+                # Handle reasoning content if present.
+                # When openai_chat_completions_with_reasoning is used, the provider
+                # maps reasoning outputs it receives to the `reasoning_content` on the delta.
+                if getattr(chunk_choice.delta, "reasoning_content", None):
                     async for event in self._handle_reasoning_content_chunk(
-                        reasoning_content=chunk_choice.delta.reasoning,
+                        reasoning_content=chunk_choice.delta.reasoning_content,
                         reasoning_part_emitted=reasoning_part_emitted,
                         reasoning_content_index=reasoning_content_index,
                         message_item_id=message_item_id,
@@ -1052,7 +1061,7 @@ class StreamingResponseOrchestrator:
                         else:
                             yield event
                     reasoning_part_emitted = True
-                    reasoning_text_accumulated.append(chunk_choice.delta.reasoning)
+                    reasoning_text_accumulated.append(chunk_choice.delta.reasoning_content)
 
                 # Handle refusal content if present
                 if chunk_choice.delta.refusal:
@@ -1260,7 +1269,7 @@ class StreamingResponseOrchestrator:
             content_part_emitted=content_part_emitted,
             logprobs=chat_response_logprobs if chat_response_logprobs else None,
             service_tier=chunk_service_tier,
-            reasoning="".join(reasoning_text_accumulated) if reasoning_text_accumulated else None,
+            reasoning_content="".join(reasoning_text_accumulated) if reasoning_text_accumulated else None,
         )
 
     def _build_chat_completion(self, result: ChatCompletionResult) -> OpenAIChatCompletion:
@@ -1276,8 +1285,8 @@ class StreamingResponseOrchestrator:
             content=result.content_text,
             tool_calls=tool_calls,
         )
-        if result.reasoning:
-            assistant_message.reasoning = result.reasoning
+        if result.reasoning_content:
+            assistant_message.reasoning_content = result.reasoning_content
         return OpenAIChatCompletion(
             id=result.response_id,
             choices=[

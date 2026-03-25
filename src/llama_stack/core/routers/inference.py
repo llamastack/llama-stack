@@ -267,6 +267,29 @@ class InferenceRouter(Inference):
 
         return response
 
+    async def openai_chat_completions_with_reasoning(
+        self,
+        params: OpenAIChatCompletionRequestWithExtraBody,
+    ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
+        """Called by the Responses layer when a user requests reasoning.
+
+        Routes to the provider's reasoning-aware CC implementation, which
+        handles mapping reasoning fields to/from the provider's format.
+        If the provider doesn't support reasoning, raises an error.
+        """
+        provider, provider_resource_id = await self._get_model_provider(params.model, ModelType.llm)
+        params.model = provider_resource_id
+        # Not all providers implement openai_chat_completions_with_reasoning.
+        # If the provider doesn't support it, raise a clear error rather than
+        # silently falling back — the user explicitly requested reasoning.
+        try:
+            return await provider.openai_chat_completions_with_reasoning(params)
+        except (NotImplementedError, AttributeError):
+            raise ValueError(
+                f"Provider {provider.__class__.__name__} does not support reasoning in chat completions. "
+                "Either use a provider that supports reasoning (e.g. vLLM, Ollama) or remove the reasoning parameter."
+            )
+
     async def openai_embeddings(
         self,
         params: Annotated[OpenAIEmbeddingsRequestWithExtraBody, Body(...)],

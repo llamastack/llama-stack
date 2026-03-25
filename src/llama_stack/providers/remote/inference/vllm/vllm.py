@@ -17,6 +17,7 @@ from llama_stack_api import (
     HealthStatus,
     Model,
     ModelType,
+    OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionContentPartImageParam,
@@ -111,6 +112,58 @@ class VLLMInferenceAdapter(OpenAIMixin):
             params.max_tokens = self.config.max_tokens
 
         return await super().openai_chat_completion(params)
+
+    def _prepare_reasoning_params(self, params: OpenAIChatCompletionRequestWithExtraBody) -> None:
+        """Adapt CC request params to match what vLLM expects for reasoning.
+
+        No-op for now. Override if vLLM needs specific param adjustments,
+        e.g. mapping effort levels or moving params to extra_body.
+        """
+        pass
+
+    async def openai_chat_completions_with_reasoning(
+        self,
+        params: OpenAIChatCompletionRequestWithExtraBody,
+    ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
+        """Chat completion with reasoning support for vLLM.
+
+        Maps reasoning fields between LlamaStack's internal format
+        (reasoning_content) and whatever field name vLLM's CC endpoint
+        expects/returns. Update the mapping below if vLLM changes
+        its reasoning field name.
+        """
+        params = params.model_copy()
+
+        # Adapt CC request params to vLLM's reasoning format
+        self._prepare_reasoning_params(params)
+
+        # Populate vLLM's expected reasoning field on assistant messages
+        for msg in params.messages:
+            if isinstance(msg, OpenAIAssistantMessageParam) and msg.reasoning_content:
+                msg.reasoning = msg.reasoning_content
+                msg.reasoning_content = None
+
+        result = await self.openai_chat_completion(params)
+
+        # After receiving chunks: extract reasoning from whichever field
+        # vLLM used, and set it as reasoning_content for the Responses layer
+        if params.stream:
+
+            async def _map_reasoning():
+                async for chunk in result:
+                    for choice in chunk.choices or []:
+                        reasoning = getattr(choice.delta, "reasoning", None) or getattr(
+                            choice.delta, "reasoning_content", None
+                        )
+                        if reasoning:
+                            choice.delta.reasoning_content = reasoning
+                    yield chunk
+
+            return _map_reasoning()
+        else:
+            # Non-streaming reasoning is not tested — the Responses
+            # layer always uses stream=True (streaming.py:518).
+            raise NotImplementedError("Non-streaming reasoning is not yet supported for vLLM")
 
     def construct_model_from_identifier(self, identifier: str) -> Model:
         # vLLM's /v1/models response does not expose a model task/type field, so classify by name.

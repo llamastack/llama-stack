@@ -450,6 +450,7 @@ class OpenAIResponseReasoning(BaseModel):
     """
 
     effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = None
+    summary: Literal["auto", "concise", "detailed"] | None = None
 
 
 # Must match type Literals of OpenAIResponseInputToolWebSearch below

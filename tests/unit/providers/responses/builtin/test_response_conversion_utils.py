@@ -528,7 +528,7 @@ class TestReasoningSupportInConversion:
         # assistant with reasoning attached
         assert isinstance(result[1], OpenAIAssistantMessageParam)
         assert result[1].tool_calls[0].function.name == "get_weather"
-        assert result[1].reasoning == "Need to call get_weather for Tokyo."
+        assert result[1].reasoning_content == "Need to call get_weather for Tokyo."
         # tool result
         assert isinstance(result[2], OpenAIToolMessageParam)
         assert result[2].tool_call_id == "call_abc"
@@ -579,7 +579,7 @@ class TestReasoningSupportInConversion:
         assert result[0].content == "Hi !"
         # assistant with reasoning from look-back
         assert isinstance(result[1], OpenAIAssistantMessageParam)
-        assert result[1].reasoning == 'The user says "Hi !". We respond politely.'
+        assert result[1].reasoning_content == 'The user says "Hi !". We respond politely.'
 
     async def test_mcp_tool_call_reasoning_lookback(self):
         """ReasoningItem before an McpCall should attach reasoning to the assistant message.
@@ -728,7 +728,7 @@ class TestReasoningSupportInConversion:
 
         # [1] assistant with greeting reasoning
         assert isinstance(result[1], OpenAIAssistantMessageParam)
-        assert result[1].reasoning == "Friendly greeting back."
+        assert result[1].reasoning_content == "Friendly greeting back."
 
         # [2] user
         assert isinstance(result[2], OpenAIUserMessageParam)
@@ -738,7 +738,7 @@ class TestReasoningSupportInConversion:
         assert isinstance(result[3], OpenAIAssistantMessageParam)
         assert result[3].tool_calls is not None
         assert result[3].tool_calls[0].function.name == "search_tiktoken_documentation"
-        assert result[3].reasoning == "We need to use the provided tool functions. First search."
+        assert result[3].reasoning_content == "We need to use the provided tool functions. First search."
 
         # [4] tool result for search
         assert isinstance(result[4], OpenAIToolMessageParam)
@@ -749,7 +749,7 @@ class TestReasoningSupportInConversion:
         assert isinstance(result[5], OpenAIAssistantMessageParam)
         assert result[5].tool_calls is not None
         assert result[5].tool_calls[0].function.name == "fetch_tiktoken_documentation"
-        assert result[5].reasoning == "Now fetch overview."
+        assert result[5].reasoning_content == "Now fetch overview."
 
         # [6] tool result for fetch
         assert isinstance(result[6], OpenAIToolMessageParam)
@@ -758,7 +758,7 @@ class TestReasoningSupportInConversion:
 
         # [7] assistant content message with reasoning
         assert isinstance(result[7], OpenAIAssistantMessageParam)
-        assert result[7].reasoning == "We need to produce brief overview."
+        assert result[7].reasoning_content == "We need to produce brief overview."
 
         # [8] user
         assert isinstance(result[8], OpenAIUserMessageParam)

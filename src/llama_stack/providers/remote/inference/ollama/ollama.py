@@ -6,6 +6,7 @@
 
 
 import asyncio
+from collections.abc import AsyncIterator
 
 from ollama import AsyncClient as AsyncOllamaClient
 
@@ -16,6 +17,10 @@ from llama_stack_api import (
     HealthResponse,
     HealthStatus,
     Model,
+    OpenAIAssistantMessageParam,
+    OpenAIChatCompletion,
+    OpenAIChatCompletionChunk,
+    OpenAIChatCompletionRequestWithExtraBody,
     UnsupportedModelError,
 )
 
@@ -71,6 +76,63 @@ class OllamaInferenceAdapter(OpenAIMixin):
 
     def get_base_url(self):
         return str(self.config.base_url)
+
+    def _prepare_reasoning_params(self, params: OpenAIChatCompletionRequestWithExtraBody) -> None:
+        """Adapt CC request params to match what Ollama expects for reasoning.
+
+        Each provider may need different param adjustments. For Ollama:
+        - If reasoning_effort is not set, default to "none" so Ollama
+          doesn't apply its own default (medium).
+
+        Override this in other providers if they need different mapping,
+        e.g. converting effort levels to boolean flags.
+        """
+        if params.reasoning_effort is None:
+            params.reasoning_effort = "none"
+
+    async def openai_chat_completions_with_reasoning(
+        self,
+        params: OpenAIChatCompletionRequestWithExtraBody,
+    ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
+        """Chat completion with reasoning support for Ollama.
+
+        Maps reasoning fields between LlamaStack's internal format
+        (reasoning_content) and whatever field name Ollama's CC endpoint
+        expects/returns. Update the mapping below if Ollama changes
+        its reasoning field name.
+        """
+        params = params.model_copy()
+
+        # Adapt CC request params to Ollama's reasoning format
+        self._prepare_reasoning_params(params)
+
+        # Populate Ollama's expected reasoning field on assistant messages
+        for msg in params.messages:
+            if isinstance(msg, OpenAIAssistantMessageParam) and msg.reasoning_content:
+                msg.reasoning = msg.reasoning_content
+                msg.reasoning_content = None
+
+        result = await self.openai_chat_completion(params)
+
+        # After receiving chunks: extract reasoning from whichever field
+        # Ollama used, and set it as reasoning_content for the Responses layer
+        if params.stream:
+
+            async def _map_reasoning():
+                async for chunk in result:
+                    for choice in chunk.choices or []:
+                        reasoning = getattr(choice.delta, "reasoning", None) or getattr(
+                            choice.delta, "reasoning_content", None
+                        )
+                        if reasoning:
+                            choice.delta.reasoning_content = reasoning
+                    yield chunk
+
+            return _map_reasoning()
+        else:
+            # Non-streaming reasoning is not tested — the Responses
+            # layer always uses stream=True (streaming.py:518).
+            raise NotImplementedError("Non-streaming reasoning is not yet supported for Ollama")
 
     async def initialize(self) -> None:
         logger.info("checking connectivity to Ollama", base_url=self.config.base_url)

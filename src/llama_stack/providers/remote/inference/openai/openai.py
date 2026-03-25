@@ -31,6 +31,12 @@ class OpenAIInferenceAdapter(OpenAIMixin):
         "text-embedding-3-large": {"embedding_dimension": 3072, "context_length": 8192},
     }
 
+    async def openai_chat_completions_with_reasoning(self, params):
+        raise NotImplementedError(
+            "OpenAI provider does not support reasoning via chat completions. "
+            "OpenAI reasoning is only available through their native Responses API."
+        )
+
     def get_base_url(self) -> str:
         """
         Get the OpenAI API base URL.
