@@ -71,7 +71,7 @@ jobs:
             fi
 
             # Extract filename for storage
-            filename=$(basename $(dirname "$config_path"))
+            filename=$(basename "$(dirname "$config_path")")
             echo "  - $filename (from $config_path)"
 
             git show origin/main:"$config_path" > "/tmp/main_configs/${filename}.yaml"
@@ -471,7 +471,7 @@ jobs:
               continue
             fi
 
-            filename=$(basename $(dirname "$config_path"))
+            filename=$(basename "$(dirname "$config_path")")
             echo "  - $filename (from $config_path)"
 
             git show "$RELEASE_TAG:$config_path" > "/tmp/release_configs/${filename}.yaml" 2>/dev/null || true
