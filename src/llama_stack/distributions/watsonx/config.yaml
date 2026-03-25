@@ -1,11 +1,11 @@
 version: 2
 distro_name: watsonx
 apis:
-- agents
 - datasetio
 - eval
 - files
 - inference
+- responses
 - safety
 - scoring
 - tool_runtime
@@ -30,7 +30,7 @@ providers:
     provider_type: inline::llama-guard
     config:
       excluded_categories: []
-  agents:
+  responses:
   - provider_id: builtin
     provider_type: inline::builtin
     config:

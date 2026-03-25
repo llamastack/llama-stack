@@ -43,7 +43,7 @@ def nvidia_eval_setup():
     datasets_api = MagicMock()
     scoring_api = MagicMock()
     inference_api = MagicMock()
-    agents_api = MagicMock()
+    responses_api = MagicMock()
 
     config = NVIDIAEvalConfig(
         evaluator_url=os.environ["NVIDIA_EVALUATOR_URL"],
@@ -55,7 +55,7 @@ def nvidia_eval_setup():
         datasets_api=datasets_api,
         scoring_api=scoring_api,
         inference_api=inference_api,
-        agents_api=agents_api,
+        responses_api=responses_api,
     )
 
     # Mock the HTTP request methods
@@ -71,7 +71,7 @@ def nvidia_eval_setup():
             "datasets_api": datasets_api,
             "scoring_api": scoring_api,
             "inference_api": inference_api,
-            "agents_api": agents_api,
+            "responses_api": responses_api,
         }
 
 

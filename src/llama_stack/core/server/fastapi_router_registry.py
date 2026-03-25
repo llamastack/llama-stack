@@ -6,9 +6,9 @@
 
 """Router utilities for FastAPI routers.
 
-This module auto-discovers FastAPI routers from llama_stack_api packages.
-Each API package that has a `fastapi_routes` submodule with a `create_router`
-factory is automatically registered.
+This module registers FastAPI routers from llama_stack_api packages.
+Each API that has a `fastapi_routes` submodule with a `create_router`
+factory is explicitly listed here.
 
 External APIs can also provide a `create_router` function in their module
 (the same module that provides `available_providers`).
@@ -21,40 +21,58 @@ from typing import Any, cast
 from fastapi import APIRouter
 from fastapi.routing import APIRoute
 
+from llama_stack_api import (
+    admin,
+    batches,
+    benchmarks,
+    connectors,
+    conversations,
+    datasetio,
+    datasets,
+    eval,
+    file_processors,
+    files,
+    inference,
+    inspect_api,
+    models,
+    prompts,
+    providers,
+    responses,
+    safety,
+    scoring,
+    scoring_functions,
+    shields,
+    tools,
+    vector_io,
+)
 from llama_stack_api.datatypes import Api, ExternalApiSpec
 
-# Api enum values that don't match their package name in llama_stack_api
-_API_TO_PACKAGE: dict[str, str] = {
-    "inspect": "inspect_api",
-    "tool_groups": "tools",
+# Router factories for APIs that have FastAPI routers
+# Add new APIs here as they are migrated to the router system
+_ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
+    "admin": admin.fastapi_routes.create_router,
+    "responses": responses.fastapi_routes.create_router,
+    "batches": batches.fastapi_routes.create_router,
+    "benchmarks": benchmarks.fastapi_routes.create_router,
+    "connectors": connectors.fastapi_routes.create_router,
+    "conversations": conversations.fastapi_routes.create_router,
+    "datasetio": datasetio.fastapi_routes.create_router,
+    "datasets": datasets.fastapi_routes.create_router,
+    "eval": eval.fastapi_routes.create_router,
+    "file_processors": file_processors.fastapi_routes.create_router,
+    "files": files.fastapi_routes.create_router,
+    "inference": inference.fastapi_routes.create_router,
+    "inspect": inspect_api.fastapi_routes.create_router,
+    "models": models.fastapi_routes.create_router,
+    "prompts": prompts.fastapi_routes.create_router,
+    "providers": providers.fastapi_routes.create_router,
+    "safety": safety.fastapi_routes.create_router,
+    "scoring": scoring.fastapi_routes.create_router,
+    "scoring_functions": scoring_functions.fastapi_routes.create_router,
+    "shields": shields.fastapi_routes.create_router,
+    "tool_groups": tools.fastapi_routes.create_router,
+    "vector_io": vector_io.fastapi_routes.create_router,
 }
-
-
-def _discover_router_factories() -> dict[str, Callable[[Any], APIRouter]]:
-    """Auto-discover router factories from llama_stack_api packages.
-
-    For each Api enum value, try to import
-    `llama_stack_api.<package>.fastapi_routes.create_router`.
-    APIs without a fastapi_routes module (e.g. vector_stores, tool_runtime)
-    are silently skipped.
-    """
-    factories: dict[str, Callable[[Any], APIRouter]] = {}
-    for api in Api:
-        package_name = _API_TO_PACKAGE.get(api.value, api.value)
-        module_path = f"llama_stack_api.{package_name}.fastapi_routes"
-        try:
-            module = importlib.import_module(module_path)
-            create_router = getattr(module, "create_router", None)
-            if create_router is not None:
-                factories[api.value] = create_router
-        except (ImportError, ModuleNotFoundError):
-            # This API doesn't have a fastapi_routes module (e.g. vector_stores)
-            pass
-    return factories
-
-
-# Auto-discovered router factories, keyed by Api enum value
-_ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = _discover_router_factories()
 
 
 def register_external_api_routers(external_apis: dict[Api, ExternalApiSpec]) -> None:

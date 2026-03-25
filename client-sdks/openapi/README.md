@@ -5,6 +5,7 @@ Alternative SDK generation using [OpenAPI Generator](https://github.com/OpenAPIT
 ## Prerequisites
 
 ### Java 11+
+
 openapi-generator-cli requires Java 11 or higher.
 
 ```bash
@@ -18,7 +19,7 @@ sudo dnf install java-11-openjdk
 
 ### OpenAPI Generator CLI
 
-For more installation options, see: https://openapi-generator.tech/docs/installation
+For more installation options, see: <https://openapi-generator.tech/docs/installation>
 
 ```bash
 # macOS
@@ -52,7 +53,7 @@ The `make sdk` target runs the full pipeline and will automatically check for re
 
 ## How it Works
 
-```
+```text
 merge_stainless_config.py  ->  build_hierarchy.py  ->  openapi-generator  ->  patch_hierarchy.py
 ```
 
@@ -62,6 +63,7 @@ merge_stainless_config.py  ->  build_hierarchy.py  ->  openapi-generator  ->  pa
 4. **`patch_hierarchy.py`** patches the generated API classes to wire up parent-child relationships, enabling nested access like `client.chat.completions.create(...)`.
 
 **Generated files (git-ignored):**
+
 - `openapi.yml` - Enriched OpenAPI specification
 - `openapi-hierarchical.yml` - Processed spec with hierarchy tags
 - `api-hierarchy.yml` - Hierarchy data for post-generation patching
