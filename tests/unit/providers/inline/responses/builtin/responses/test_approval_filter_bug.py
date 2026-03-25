@@ -14,8 +14,8 @@ See: https://github.com/meta-llama/llama-stack/issues/5287
 
 from unittest.mock import AsyncMock, MagicMock
 
-from llama_stack.providers.inline.agents.builtin.responses.streaming import StreamingResponseOrchestrator
-from llama_stack.providers.inline.agents.builtin.responses.types import ChatCompletionContext, ToolContext
+from llama_stack.providers.inline.responses.builtin.responses.streaming import StreamingResponseOrchestrator
+from llama_stack.providers.inline.responses.builtin.responses.types import ChatCompletionContext, ToolContext
 from llama_stack_api.openai_responses import (
     ApprovalFilter,
     OpenAIResponseInputToolMCP,

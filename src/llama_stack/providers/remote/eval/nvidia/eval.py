@@ -9,7 +9,6 @@ import httpx
 
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 from llama_stack_api import (
-    Agents,
     Benchmark,
     BenchmarksProtocolPrivate,
     DatasetIO,
@@ -23,6 +22,7 @@ from llama_stack_api import (
     JobResultRequest,
     JobStatus,
     JobStatusRequest,
+    Responses,
     RunEvalRequest,
     Scoring,
     ScoringResult,
@@ -45,14 +45,14 @@ class NVIDIAEvalImpl(
         datasets_api: Datasets,
         scoring_api: Scoring,
         inference_api: Inference,
-        agents_api: Agents,
+        responses_api: Responses,
     ) -> None:
         self.config = config
         self.datasetio_api = datasetio_api
         self.datasets_api = datasets_api
         self.scoring_api = scoring_api
         self.inference_api = inference_api
-        self.agents_api = agents_api
+        self.responses_api = responses_api
 
         ModelRegistryHelper.__init__(self)
         self._client: httpx.AsyncClient | None = None
