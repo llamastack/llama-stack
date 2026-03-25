@@ -14,7 +14,7 @@ These tests verify that:
 3. Custom log levels from config.yaml are respected
 """
 
-import logging
+import logging  # allow-direct-logging
 import os
 import tempfile
 from pathlib import Path
@@ -79,11 +79,7 @@ class TestLoggingConfiguration:
         # Act
         setup_logging(category_levels)
 
-        # Assert - get loggers and verify they exist and have correct level
-        core_logger = logging.getLogger("llama_stack.core.test")
-        server_logger = logging.getLogger("llama_stack.core.server")
-
-        # Loggers should be configured (have handlers)
+        # Assert - loggers should be configured (have handlers)
         assert len(logging.root.handlers) > 0
 
     def test_setup_logging_with_no_config(self):
@@ -92,7 +88,6 @@ class TestLoggingConfiguration:
         setup_logging()
 
         # Assert - loggers should still be created
-        logger = logging.getLogger("llama_stack.test")
         assert len(logging.root.handlers) > 0
 
     @patch("llama_stack.core.server.server.setup_logging")
