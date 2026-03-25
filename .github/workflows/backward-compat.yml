@@ -95,11 +95,13 @@ jobs:
       - name: Check for breaking change acknowledgment
         id: check_ack
         if: steps.test_configs.outputs.failed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           echo "Breaking changes detected. Checking for acknowledgment..."
 
           # Check PR title for '!:' marker (conventional commits)
-          PR_TITLE="${{ github.event.pull_request.title }}"
           if [[ "$PR_TITLE" =~ ^[a-z]+\!: ]]; then
             echo "✓ Breaking change acknowledged in PR title"
             echo "acknowledged=true" >> $GITHUB_OUTPUT
@@ -115,8 +117,6 @@ jobs:
 
           echo "✗ Breaking change NOT acknowledged"
           echo "acknowledged=false" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ github.token }}
 
       - name: Evaluate results
         if: always()
@@ -187,11 +187,13 @@ jobs:
       - name: Check for breaking change acknowledgment
         id: check_ack
         if: steps.test_integration.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           echo "Integration tests failed. Checking for acknowledgment..."
 
           # Check PR title for '!:' marker (conventional commits)
-          PR_TITLE="${{ github.event.pull_request.title }}"
           if [[ "$PR_TITLE" =~ ^[a-z]+\!: ]]; then
             echo "✓ Breaking change acknowledged in PR title"
             echo "acknowledged=true" >> $GITHUB_OUTPUT
@@ -207,8 +209,6 @@ jobs:
 
           echo "✗ Breaking change NOT acknowledged"
           echo "acknowledged=false" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ github.token }}
 
       - name: Evaluate integration test results
         if: always()

@@ -100,21 +100,23 @@ jobs:
 
       - name: Commit changes for dependabot PRs
         if: github.actor == 'dependabot[bot]'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           if ! git diff --exit-code || [ -n "$(git ls-files --others --exclude-standard)" ]; then
             git config --local user.email "github-actions[bot]@users.noreply.github.com"
             git config --local user.name "github-actions[bot]"
 
             # Ensure we're on the correct branch
-            git checkout -B ${{ github.head_ref }}
+            git checkout -B "$HEAD_REF"
             git add -A
             git commit -m "Apply pre-commit fixes"
 
             # Pull latest changes from the PR branch and rebase our commit on top
-            git pull --rebase origin ${{ github.head_ref }}
+            git pull --rebase origin "$HEAD_REF"
 
             # Push to the PR branch
-            git push origin ${{ github.head_ref }}
+            git push origin "$HEAD_REF"
             echo "Pre-commit fixes committed and pushed"
           else
             echo "No changes to commit"
