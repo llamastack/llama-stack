@@ -4,9 +4,9 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-"""Pydantic models for Agents API requests and responses.
+"""Pydantic models for Responses API requests and responses.
 
-This module defines the request and response models for the Agents API
+This module defines the request and response models for the Responses API
 using Pydantic with Field descriptions for OpenAPI schema generation.
 """
 

@@ -104,7 +104,7 @@ jobs:
             - inference
             - vector_io
             - tool_runtime
-            - agents
+            - responses
           providers:
             files:
               - provider_id: builtin-files
@@ -130,13 +130,13 @@ jobs:
               - provider_id: file-search
                 provider_type: inline::file-search
                 config: {}
-            agents:
+            responses:
               - provider_id: builtin
                 provider_type: inline::builtin
                 config:
                   persistence:
                     agent_state:
-                      namespace: agents
+                      namespace: responses
                       backend: kv_default
                     responses:
                       table_name: responses

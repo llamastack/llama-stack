@@ -16,7 +16,7 @@ from llama_stack_api import (
 def available_providers() -> list[ProviderSpec]:
     return [
         InlineProviderSpec(
-            api=Api.agents,
+            api=Api.responses,
             provider_type="inline::builtin",
             pip_packages=[
                 "matplotlib",
@@ -27,8 +27,8 @@ def available_providers() -> list[ProviderSpec]:
                 "mcp>=1.23.0",
             ]
             + kvstore_dependencies(),  # TODO make this dynamic based on the kvstore config
-            module="llama_stack.providers.inline.agents.builtin",
-            config_class="llama_stack.providers.inline.agents.builtin.BuiltinAgentsImplConfig",
+            module="llama_stack.providers.inline.responses.builtin",
+            config_class="llama_stack.providers.inline.responses.builtin.BuiltinResponsesImplConfig",
             api_dependencies=[
                 Api.inference,
                 Api.vector_io,
