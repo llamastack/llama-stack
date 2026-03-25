@@ -4,7 +4,7 @@ Provider spec declarations. Each file defines which providers are available for 
 
 ## Directory Structure
 
-```
+```text
 registry/
   __init__.py
   agents.py            # Agent providers (inline::meta-reference)

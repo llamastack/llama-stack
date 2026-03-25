@@ -14,7 +14,7 @@ The codebase is split into two packages:
 
 ## Request Flow
 
-```
+```text
 Client (llama-stack-client SDK or raw HTTP)
   |
   v
@@ -60,7 +60,7 @@ External Service or Local Computation
 
 ### Provider Types
 
-```
+```text
 Provider
   |
   |-- InlineProviderSpec    (runs in-process)
@@ -73,6 +73,7 @@ Provider
 ```
 
 Each provider spec declares:
+
 - `api` -- which API it implements (e.g., `Api.inference`)
 - `provider_type` -- unique identifier like `"remote::openai"`
 - `module` -- Python module with a `get_adapter_impl()` or `get_provider_impl()` function
@@ -96,7 +97,7 @@ At startup, `resolve_impls()` in `core/resolver.py`:
 
 Many APIs use automatic routing. For example, `Api.inference` is paired with `Api.models`:
 
-```
+```text
 Api.models (RoutingTable)  <-->  Api.inference (Router)
   |                                |
   |-- ModelsRoutingTable           |-- InferenceRouter
@@ -204,6 +205,7 @@ storage:
 ```
 
 Key features:
+
 - **Environment variable substitution**: `${env.VAR_NAME:=default}` syntax for config values.
 - **Conditional providers**: `${env.API_KEY:+provider_id}` syntax enables a provider only when a variable is set.
 - **Multiple providers per API**: e.g., both `ollama` and `openai` can serve inference, each handling different models.
@@ -211,6 +213,7 @@ Key features:
 ### Distributions
 
 A distribution is a pre-built configuration that bundles specific providers for a target environment. Think of it like Kubernetes distributions (AKS, EKS, GKE): the core API stays the same, but each distribution wires different backends. `src/llama_stack/distributions/` contains these configurations (e.g., `starter`, `dell`, `nvidia`). Each distribution directory has:
+
 - `config.yaml` -- the run config
 - Templates and codegen support via `template.py`
 
@@ -258,7 +261,7 @@ For more details, see `tests/README.md` and `tests/integration/README.md`.
 
 ## Directory Map
 
-```
+```text
 src/
   llama_stack_api/          # API definitions package (separate pip package)
     inference.py            # Inference protocol
