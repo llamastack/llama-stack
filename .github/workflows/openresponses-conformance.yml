@@ -149,7 +149,7 @@ jobs:
             echo ""
           } >> $GITHUB_STEP_SUMMARY
 
-          if [ "${{ steps.check-recordings.outputs.recordings_count }}" -eq 0 ]; then
+          if [ "${{ steps.check-recordings.outputs.recordings_count }}" = "0" ]; then
             {
               echo "### No Recordings Found"
               echo ""
