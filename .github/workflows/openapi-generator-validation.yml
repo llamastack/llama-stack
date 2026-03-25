@@ -153,7 +153,7 @@ jobs:
           echo "$VERSION_OUTPUT"
 
           # Extract version string
-          VERSION=$(echo "$VERSION_OUTPUT" | sed 's/SDK version: //')
+          VERSION="${VERSION_OUTPUT#SDK version: }"
 
           # Check version is at least 5 characters (e.g., "0.5.0")
           if [ ${#VERSION} -lt 5 ]; then
