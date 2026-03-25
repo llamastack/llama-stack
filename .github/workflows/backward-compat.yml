@@ -78,7 +78,7 @@ jobs:
           done <<< "$CONFIG_PATHS"
 
           echo ""
-          echo "Extracted $(ls /tmp/main_configs/*.yaml | wc -l) config files"
+          echo "Extracted $(find /tmp/main_configs -name '*.yaml' | wc -l) config files"
 
       - name: Test all configs from main
         id: test_configs
@@ -478,7 +478,7 @@ jobs:
           done <<< "$CONFIG_PATHS"
 
           echo ""
-          echo "Extracted $(ls /tmp/release_configs/*.yaml 2>/dev/null | wc -l) config files"
+          echo "Extracted $(find /tmp/release_configs -name '*.yaml' 2>/dev/null | wc -l) config files"
           echo "has_configs=true" >> $GITHUB_OUTPUT
 
       - name: Test against release configs (PR branch)

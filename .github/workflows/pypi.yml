@@ -709,14 +709,14 @@ jobs:
               exit 1
             fi
             # Extract and publish from the tarball
-            TARBALL=$(ls ./dist/*.tgz | head -1)
+            TARBALL=$(find ./dist -name '*.tgz' | head -1)
             npm publish "$TARBALL" --access public
           else
             echo "DRY RUN: Verifying npm package (not publishing)"
             echo "Package tarball:"
-            ls -la dist/*.tgz
+            find dist -name '*.tgz' -exec ls -la {} +
             # Verify the tarball is valid
-            TARBALL=$(ls ./dist/*.tgz | head -1)
+            TARBALL=$(find ./dist -name '*.tgz' | head -1)
             tar -tzf "$TARBALL" 2>/dev/null | head -20 || true
             echo "... (truncated)"
           fi
