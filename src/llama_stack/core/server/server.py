@@ -344,14 +344,11 @@ def create_app() -> StackApp:
         if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
             logger_config = LoggingConfig(**cfg)
 
-        # Fix for RHAIENG-3150: Call setup_logging() to properly configure logging in each worker process.
-        # This ensures that custom log levels from config.yaml are applied correctly, and that all
-        # llama_stack.* loggers are configured (not just uvicorn loggers).
+        # Configure logging in each worker process
         if logger_config:
             category_levels = parse_yaml_config(logger_config)
             setup_logging(category_levels)
         else:
-            # Even without custom config, call setup_logging() to ensure proper initialization
             setup_logging()
 
         logger = get_logger(name=__name__, category="core::server", config=logger_config)
