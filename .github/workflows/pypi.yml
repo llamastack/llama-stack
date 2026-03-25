@@ -621,17 +621,23 @@ jobs:
 
           # Determine target registry
           if [ "$EVENT" == "release" ]; then
-            echo "url=https://upload.pypi.org/legacy/" >> $GITHUB_OUTPUT
-            echo "target=pypi.org" >> $GITHUB_OUTPUT
-            echo "is_production=true" >> $GITHUB_OUTPUT
+            {
+              echo "url=https://upload.pypi.org/legacy/"
+              echo "target=pypi.org"
+              echo "is_production=true"
+            } >> $GITHUB_OUTPUT
           elif [ "$DRY_RUN" == "off" ]; then
-            echo "url=https://upload.pypi.org/legacy/" >> $GITHUB_OUTPUT
-            echo "target=pypi.org" >> $GITHUB_OUTPUT
-            echo "is_production=true" >> $GITHUB_OUTPUT
+            {
+              echo "url=https://upload.pypi.org/legacy/"
+              echo "target=pypi.org"
+              echo "is_production=true"
+            } >> $GITHUB_OUTPUT
           else
-            echo "url=https://test.pypi.org/legacy/" >> $GITHUB_OUTPUT
-            echo "target=test.pypi.org" >> $GITHUB_OUTPUT
-            echo "is_production=false" >> $GITHUB_OUTPUT
+            {
+              echo "url=https://test.pypi.org/legacy/"
+              echo "target=test.pypi.org"
+              echo "is_production=false"
+            } >> $GITHUB_OUTPUT
           fi
 
       - name: Sign artifacts with Sigstore (production only)
@@ -803,14 +809,18 @@ jobs:
           EVENT="${{ github.event_name }}"
 
           if [ "$EVENT" == "release" ] || [ "$DRY_RUN" == "off" ]; then
-            echo "install_mode=pypi" >> $GITHUB_OUTPUT
-            echo "tags=${IMAGE}:${VERSION},${IMAGE}:latest" >> $GITHUB_OUTPUT
-            echo "version_arg=PYPI_VERSION=${VERSION}" >> $GITHUB_OUTPUT
+            {
+              echo "install_mode=pypi"
+              echo "tags=${IMAGE}:${VERSION},${IMAGE}:latest"
+              echo "version_arg=PYPI_VERSION=${VERSION}"
+            } >> $GITHUB_OUTPUT
             echo "Publishing production image: ${IMAGE}:${VERSION} + latest"
           else
-            echo "install_mode=test-pypi" >> $GITHUB_OUTPUT
-            echo "tags=${IMAGE}:test-${VERSION}" >> $GITHUB_OUTPUT
-            echo "version_arg=TEST_PYPI_VERSION=${VERSION}" >> $GITHUB_OUTPUT
+            {
+              echo "install_mode=test-pypi"
+              echo "tags=${IMAGE}:test-${VERSION}"
+              echo "version_arg=TEST_PYPI_VERSION=${VERSION}"
+            } >> $GITHUB_OUTPUT
             echo "Publishing test image: ${IMAGE}:test-${VERSION}"
           fi
 

@@ -127,12 +127,14 @@ jobs:
             PROVIDERS="ollama"
           fi
 
-          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
-          echo "pr_head_ref=${HEAD_REF}" >> $GITHUB_OUTPUT
-          echo "pr_head_sha=${HEAD_SHA}" >> $GITHUB_OUTPUT
-          echo "pr_head_repo=${HEAD_REPO}" >> $GITHUB_OUTPUT
-          echo "is_fork_pr=${IS_FORK_PR}" >> $GITHUB_OUTPUT
-          echo "providers_to_run=${PROVIDERS}" >> $GITHUB_OUTPUT
+          {
+            echo "pr_number=${PR_NUMBER}"
+            echo "pr_head_ref=${HEAD_REF}"
+            echo "pr_head_sha=${HEAD_SHA}"
+            echo "pr_head_repo=${HEAD_REPO}"
+            echo "is_fork_pr=${IS_FORK_PR}"
+            echo "providers_to_run=${PROVIDERS}"
+          } >> $GITHUB_OUTPUT
 
           echo "Recording for PR #${PR_NUMBER}"
           echo "  Branch: ${HEAD_REF}"

@@ -138,16 +138,18 @@ jobs:
             IS_FORK_PR="false"
           fi
 
-          echo "preview_branch=${PREVIEW_BRANCH}" >> $GITHUB_OUTPUT
-          echo "base_branch=${BASE_BRANCH}" >> $GITHUB_OUTPUT
-          echo "merge_branch=${PREVIEW_BRANCH}" >> $GITHUB_OUTPUT
-          echo "pr_head_repo=${HEAD_REPO}" >> $GITHUB_OUTPUT
-          echo "pr_head_ref=${BRANCH_NAME}" >> $GITHUB_OUTPUT
-          echo "pr_head_sha=${HEAD_SHA}" >> $GITHUB_OUTPUT
-          echo "pr_base_sha=${BASE_SHA}" >> $GITHUB_OUTPUT
-          echo "pr_base_ref=${BASE_REF}" >> $GITHUB_OUTPUT
-          echo "pr_title=${PR_TITLE}" >> $GITHUB_OUTPUT
-          echo "is_fork_pr=${IS_FORK_PR}" >> $GITHUB_OUTPUT
+          {
+            echo "preview_branch=${PREVIEW_BRANCH}"
+            echo "base_branch=${BASE_BRANCH}"
+            echo "merge_branch=${PREVIEW_BRANCH}"
+            echo "pr_head_repo=${HEAD_REPO}"
+            echo "pr_head_ref=${BRANCH_NAME}"
+            echo "pr_head_sha=${HEAD_SHA}"
+            echo "pr_base_sha=${BASE_SHA}"
+            echo "pr_base_ref=${BASE_REF}"
+            echo "pr_title=${PR_TITLE}"
+            echo "is_fork_pr=${IS_FORK_PR}"
+          } >> $GITHUB_OUTPUT
 
   preview:
     needs: compute-branch
