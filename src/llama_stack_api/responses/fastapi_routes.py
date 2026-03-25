@@ -4,9 +4,9 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-"""FastAPI router for the Agents API.
+"""FastAPI router for the Responses API.
 
-This module defines the FastAPI router for the Agents API using standard
+This module defines the FastAPI router for the Responses API using standard
 FastAPI route decorators.
 """
 
@@ -38,7 +38,7 @@ from llama_stack_api.router_utils import (
 )
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
-from .api import Agents
+from .api import Responses
 from .models import (
     CreateResponseRequest,
     DeleteResponseRequest,
@@ -142,18 +142,18 @@ def _preserve_context_for_sse(event_gen):
     return wrapper()
 
 
-def create_router(impl: Agents) -> APIRouter:
-    """Create a FastAPI router for the Agents API.
+def create_router(impl: Responses) -> APIRouter:
+    """Create a FastAPI router for the Responses API.
 
     Args:
-        impl: The Agents implementation instance
+        impl: The Responses implementation instance
 
     Returns:
-        APIRouter configured for the Agents API
+        APIRouter configured for the Responses API
     """
     router = APIRouter(
         prefix=f"/{LLAMA_STACK_API_V1}",
-        tags=["Agents"],
+        tags=["Responses"],
         responses=standard_responses,
         route_class=ExceptionTranslatingRoute,
     )
