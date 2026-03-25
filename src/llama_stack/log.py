@@ -63,6 +63,16 @@ _category_levels: dict[str, int] = dict.fromkeys(CATEGORIES, DEFAULT_LOG_LEVEL)
 _logger_categories: dict[str, str] = {}
 
 
+def _reset_logging_state() -> None:
+    """Reset module-level logging state. For use in tests only."""
+    global _category_levels, _logger_categories
+    _category_levels.clear()
+    _category_levels.update(dict.fromkeys(CATEGORIES, DEFAULT_LOG_LEVEL))
+    _logger_categories.clear()
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+
+
 def config_to_category_levels(category: str, level: str):
     """
     Helper function to be called either by environment parsing or yaml parsing to go from a list of categories and levels to a dictionary ready to be

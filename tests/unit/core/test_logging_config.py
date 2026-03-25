@@ -23,7 +23,15 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-from llama_stack.log import LoggingConfig, parse_yaml_config, setup_logging
+from llama_stack.log import LoggingConfig, _reset_logging_state, parse_yaml_config, setup_logging
+
+
+@pytest.fixture(autouse=True)
+def _clean_logging_state():
+    """Reset logging state before and after each test to prevent leakage."""
+    _reset_logging_state()
+    yield
+    _reset_logging_state()
 
 
 class TestLoggingConfiguration:
