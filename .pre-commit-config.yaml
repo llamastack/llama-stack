@@ -36,7 +36,6 @@ repos:
     hooks:
     -   id: actionlint
         args:
-          - -ignore=always evaluated to true
           - -ignore=potentially untrusted
           - -ignore=SC2086
           - -ignore=SC2034

@@ -54,7 +54,7 @@ jobs:
           LLAMA_STACK_LOGGING=all=CRITICAL llama stack list-deps tests/external/config.yaml | xargs -L1 uv pip install
 
       - name: Start Llama Stack server in background
-        if: ${{ matrix.image-type }} == 'venv'
+        if: matrix.image-type == 'venv'
         env:
           INFERENCE_MODEL: "meta-llama/Llama-3.2-3B-Instruct"
           LLAMA_STACK_LOG_FILE: "server.log"
