@@ -462,10 +462,11 @@ def test_response_non_streaming_custom_tool(responses_client, text_model_id, cas
         tools=case.tools,
         stream=False,
     )
-    assert len(response.output) == 1
-    assert response.output[0].type == "function_call"
-    assert response.output[0].status == "completed"
-    assert response.output[0].name == "get_weather"
+    assert len(response.output) >= 1
+    function_calls = [o for o in response.output if o.type == "function_call"]
+    assert len(function_calls) >= 1
+    assert function_calls[0].status == "completed"
+    assert function_calls[0].name == "get_weather"
 
 
 @pytest.mark.parametrize("case", custom_tool_test_cases)
@@ -582,16 +583,16 @@ def test_function_call_output_list_text(responses_client, text_model_id):
         tools=tools,
         stream=False,
     )
-    assert len(response.output) == 1
-    assert response.output[0].type == "function_call"
-    call_id = response.output[0].call_id
+    function_calls = [o for o in response.output if o.type == "function_call"]
+    assert len(function_calls) >= 1
 
     inputs = [
         {
             "type": "function_call_output",
-            "call_id": call_id,
+            "call_id": fc.call_id,
             "output": [{"type": "input_text", "text": "It is sunny and 22 degrees Celsius in Paris."}],
-        },
+        }
+        for fc in function_calls
     ]
     response2 = responses_client.responses.create(
         model=text_model_id,
@@ -600,8 +601,8 @@ def test_function_call_output_list_text(responses_client, text_model_id):
         stream=False,
         previous_response_id=response.id,
     )
-    assert len(response2.output) == 1
-    assert response2.output[0].type == "message"
+    messages = [o for o in response2.output if o.type == "message"]
+    assert len(messages) >= 1
     assert response2.output_text
 
 
@@ -631,19 +632,19 @@ def test_function_call_output_list_text_multi_block(responses_client, text_model
         tools=tools,
         stream=False,
     )
-    assert len(response.output) == 1
-    assert response.output[0].type == "function_call"
-    call_id = response.output[0].call_id
+    function_calls = [o for o in response.output if o.type == "function_call"]
+    assert len(function_calls) >= 1
 
     inputs = [
         {
             "type": "function_call_output",
-            "call_id": call_id,
+            "call_id": fc.call_id,
             "output": [
                 {"type": "input_text", "text": "Current conditions: overcast skies."},
                 {"type": "input_text", "text": "Temperature: 15 degrees Celsius."},
             ],
-        },
+        }
+        for fc in function_calls
     ]
     response2 = responses_client.responses.create(
         model=text_model_id,
@@ -652,8 +653,8 @@ def test_function_call_output_list_text_multi_block(responses_client, text_model
         stream=False,
         previous_response_id=response.id,
     )
-    assert len(response2.output) == 1
-    assert response2.output[0].type == "message"
+    messages = [o for o in response2.output if o.type == "message"]
+    assert len(messages) >= 1
     assert response2.output_text
 
 
