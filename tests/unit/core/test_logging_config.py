@@ -5,8 +5,8 @@
 # the root directory of this source tree.
 
 """
-Regression tests for RHAIENG-3150: Custom config causes llamastack application
-logs to not be displayed, only uvicorn logs shown.
+Regression tests: ensure logging behaves consistently whether the server
+is started via `llama stack run` or directly via `uvicorn create_app`.
 
 These tests verify that:
 1. setup_logging() is called when creating the app
@@ -100,8 +100,8 @@ class TestLoggingConfiguration:
     @patch("llama_stack.core.server.server.setup_logging")
     def test_create_app_calls_setup_logging_with_config(self, mock_setup_logging):
         """
-        Regression test for RHAIENG-3150: Verify that create_app() calls
-        setup_logging() when logging_config is present in config file.
+        Verify that create_app() calls setup_logging() when
+        logging_config is present in config file.
         """
         # Arrange - create a temporary config file with logging_config
         config_data = {
@@ -152,8 +152,8 @@ class TestLoggingConfiguration:
     @patch("llama_stack.core.server.server.setup_logging")
     def test_create_app_calls_setup_logging_without_config(self, mock_setup_logging):
         """
-        Regression test for RHAIENG-3150: Verify that create_app() calls
-        setup_logging() even when logging_config is NOT present in config file.
+        Verify that create_app() calls setup_logging() even when
+        logging_config is NOT present in config file.
         """
         # Arrange - create a temporary config file WITHOUT logging_config
         config_data = {
