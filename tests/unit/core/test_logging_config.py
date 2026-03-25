@@ -17,8 +17,7 @@ These tests verify that:
 import logging  # allow-direct-logging
 import os
 import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import yaml
@@ -224,7 +223,7 @@ class TestLoggingConfigIntegration:
     def test_custom_log_levels_are_applied(self):
         """Test that custom log levels from config are actually applied to loggers"""
         # Arrange
-        from llama_stack.log import CATEGORIES, get_logger
+        from llama_stack.log import get_logger
 
         category_levels = {
             "core": logging.DEBUG,
