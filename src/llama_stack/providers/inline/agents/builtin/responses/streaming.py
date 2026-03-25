@@ -1557,10 +1557,10 @@ class StreamingResponseOrchestrator:
             return True
         if mcp_server.require_approval == "never":
             return False
-        if isinstance(mcp_server, ApprovalFilter):
-            if mcp_server.always and tool_name in mcp_server.always:
+        if isinstance(mcp_server.require_approval, ApprovalFilter):
+            if mcp_server.require_approval.always and tool_name in mcp_server.require_approval.always:
                 return True
-            if mcp_server.never and tool_name in mcp_server.never:
+            if mcp_server.require_approval.never and tool_name in mcp_server.require_approval.never:
                 return False
         return True
 
