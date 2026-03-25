@@ -1,0 +1,14 @@
+# Enable all rules by default
+default: true
+
+# Disable line length limit - URLs, badges, and tables often exceed any reasonable limit
+MD013: false
+
+# Allow inline HTML - project uses <details>, <summary>, and other HTML in markdown
+MD033: false
+
+# Don't require first line to be a top-level heading - generated reports and some docs don't follow this
+MD041: false
+
+# Disable table column style - cosmetic pipe alignment, not auto-fixable, 300+ existing violations
+MD060: false

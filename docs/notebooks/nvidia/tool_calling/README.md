@@ -44,11 +44,9 @@ To follow this tutorial, you will need at least two NVIDIA GPUs, which will be a
 - **Fine-tuning:** One GPU for fine-tuning the `llama-3.2-1b-instruct` model using NeMo Customizer.
 - **Inference:** One GPU for deploying the `llama-3.2-1b-instruct` NIM for inference.
 
-
 `NOTE`: Notebook [4_adding_safety_guardrails](./4_adding_safety_guardrails.ipynb) asks the user to use one GPU for deploying the `llama-3.1-nemoguard-8b-content-safety` NIM to add content safety guardrails to user input. This will re-use the GPU that was previously used for finetuning in notebook 2.
 
 Refer to the [platform prerequisites and installation guide](https://docs.nvidia.com/nemo/microservices/latest/get-started/platform-prereq.html) to deploy NeMo Microservices.
-
 
 ### Deploy `llama-3.2-1b-instruct` NIM
 
@@ -117,5 +115,6 @@ Navigate to the [data preparation](./1_data_preparation.ipynb) tutorial to get s
 ### Limitations with Tool Calling
 
 If you decide to use your own dataset or implement a different data preparation approach:
+
 - There may be a response delay issue in tool calling due to incomplete type info. Tool calls might take over 30 seconds if descriptions for `array` types lack `items` specifications, or if descriptions for `object` types lack `properties` specifications. As a workaround, make sure to include these details (`items` for `array`, `properties` for `object`) in tool descriptions.
 - Response Freezing in Tool Calling (Too Many Parameters): Tool calls will freeze the NIM if a tool description includes a function with more than 8 parameters. As a workaround, ensure functions defined in tool descriptions use 8 or fewer parameters. If this does occur, it requires the NIM to be restarted. This will be resolved in the next NIM release.

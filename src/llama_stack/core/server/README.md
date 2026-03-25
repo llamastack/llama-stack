@@ -4,7 +4,7 @@ FastAPI server implementation for Llama Stack.
 
 ## Directory Structure
 
-```
+```text
 server/
   __init__.py
   server.py                    # Main FastAPI app, route dispatch, SSE streaming, lifespan
@@ -26,6 +26,7 @@ server/
 ### Route Registration
 
 Routes come from two sources:
+
 - **Legacy `@webmethod` routes**: Discovered by `get_all_api_routes()` in `routes.py`, which inspects protocol methods for `@webmethod` decorators.
 - **FastAPI router routes**: Registered via `fastapi_router_registry.py` for APIs that have been migrated to native FastAPI routers.
 

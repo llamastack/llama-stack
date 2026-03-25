@@ -29,7 +29,6 @@ curl -LsSf https://github.com/llamastack/llama-stack/raw/main/scripts/install.sh
 - **Multiple developer interfaces** — CLI and SDKs for Python, Typescript, iOS, and Android.
 - **Standalone applications** as examples for production-grade AI apps with Llama Stack.
 
-
 ## API Providers & Distributions
 
 Here is a list of the various API providers and available distributions. See the [full list](https://llamastack.github.io/docs/providers) for details, including [External Providers](https://llamastack.github.io/docs/providers/external).
@@ -87,10 +86,10 @@ Full docs at [llamastack.github.io/docs](https://llamastack.github.io/docs). Exa
 
 |  **Language** |  **Client SDK** | **Package** |
 | :----: | :----: | :----: |
-| Python |  [llama-stack-client-python](https://github.com/meta-llama/llama-stack-client-python) | [![PyPI version](https://img.shields.io/pypi/v/llama_stack_client.svg)](https://pypi.org/project/llama_stack_client/)
-| Swift  | [llama-stack-client-swift](https://github.com/meta-llama/llama-stack-client-swift) | [![Swift Package Index](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmeta-llama%2Fllama-stack-client-swift%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/meta-llama/llama-stack-client-swift)
-| Typescript   | [llama-stack-client-typescript](https://github.com/meta-llama/llama-stack-client-typescript) | [![NPM version](https://img.shields.io/npm/v/llama-stack-client.svg)](https://npmjs.org/package/llama-stack-client)
-| Kotlin | [llama-stack-client-kotlin](https://github.com/meta-llama/llama-stack-client-kotlin) | [![Maven version](https://img.shields.io/maven-central/v/com.llama.llamastack/llama-stack-client-kotlin)](https://central.sonatype.com/artifact/com.llama.llamastack/llama-stack-client-kotlin)
+| Python |  [llama-stack-client-python](https://github.com/meta-llama/llama-stack-client-python) | [![PyPI version](https://img.shields.io/pypi/v/llama_stack_client.svg)](https://pypi.org/project/llama_stack_client/) |
+| Swift  | [llama-stack-client-swift](https://github.com/meta-llama/llama-stack-client-swift) | [![Swift Package Index](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmeta-llama%2Fllama-stack-client-swift%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/meta-llama/llama-stack-client-swift) |
+| Typescript   | [llama-stack-client-typescript](https://github.com/meta-llama/llama-stack-client-typescript) | [![NPM version](https://img.shields.io/npm/v/llama-stack-client.svg)](https://npmjs.org/package/llama-stack-client) |
+| Kotlin | [llama-stack-client-kotlin](https://github.com/meta-llama/llama-stack-client-kotlin) | [![Maven version](https://img.shields.io/maven-central/v/com.llama.llamastack/llama-stack-client-kotlin)](https://central.sonatype.com/artifact/com.llama.llamastack/llama-stack-client-kotlin) |
 
 > **Note**: We are considering a transition from Stainless to OpenAPI Generator for SDK generation ([#4609](https://github.com/llamastack/llama-stack/issues/4609)). The `client-sdks/openapi/` directory contains the new tooling for local SDK generation.
 
@@ -103,5 +102,5 @@ We hold regular community calls every Thursday at 09:00 AM PST — see the [Comm
 Thanks to all our amazing contributors!
 
 <a href="https://github.com/meta-llama/llama-stack/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=meta-llama/llama-stack" />
+  <img src="https://contrib.rocks/image?repo=meta-llama/llama-stack" alt="Llama Stack contributors" />
 </a>

@@ -9,6 +9,7 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
 > If you'd prefer not to set up a local server, explore our notebook on [tool calling with the Together API](Tool_Calling101_Using_Together_Llama_Stack_Server.ipynb). This notebook will show you how to leverage together.ai's Llama Stack Server API, allowing you to get started with Llama Stack without the need for a locally built and running server.
 
 ## Table of Contents
+
 - [Llama Stack: from Zero to Hero](#llama-stack-from-zero-to-hero)
   - [Table of Contents](#table-of-contents)
   - [Setup ollama](#setup-ollama)
@@ -36,16 +37,20 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
 
 3. **Start ollama server**:
    Open the terminal and run:
+
    ```bash
    ollama serve
    ```
+
 4. **Run the model**:
    Open the terminal and run:
+
    ```bash
    ollama run llama3.2:3b-instruct-fp16 --keepalive -1m
    ```
+
    **Note**:
-     - The supported models for llama stack for now is listed in [here](https://github.com/meta-llama/llama-stack/blob/main/llama_stack/providers/remote/inference/ollama/models.py)
+     - The supported models for llama stack for now is listed in the [Ollama models file](https://github.com/meta-llama/llama-stack/blob/main/llama_stack/providers/remote/inference/ollama/models.py)
      - `keepalive -1m` is used so that ollama continues to keep the model in memory indefinitely. Otherwise, ollama frees up memory and you would have to run `ollama run` again.
 
 ---
@@ -54,6 +59,7 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
 
 1. **Install uv**:
    Install [uv](https://docs.astral.sh/uv/) for managing dependencies:
+
    ```bash
    # macOS and Linux
    curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -64,12 +70,14 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
 
 2. **Install ChromaDB**:
    Install `chromadb` using `uv`:
+
    ```bash
    uv pip install chromadb
    ```
 
 3. **Run ChromaDB**:
    Start the ChromaDB server:
+
    ```bash
    chroma run --host localhost --port 8000 --path ./my_chroma_data
    ```
@@ -79,16 +87,19 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
 ## Build, Configure, and Run Llama Stack
 
 1. **Install dependencies**:
+
    ```bash
    llama stack list-deps starter | xargs -L1 uv pip install
    ```
 
 2. **Start the distribution**:
+
    ```bash
    llama stack run starter
    ```
 
 3. **Set the ENV variables by exporting them to the terminal**:
+
    ```bash
    export OLLAMA_URL="http://localhost:11434"
    export LLAMA_STACK_PORT=8321
@@ -96,8 +107,9 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
    export SAFETY_MODEL="meta-llama/Llama-Guard-3-1B"
    ```
 
-3. **Run the Llama Stack**:
+4. **Run the Llama Stack**:
    Run the stack using uv:
+
    ```bash
    INFERENCE_MODEL=$INFERENCE_MODEL \
    SAFETY_MODEL=$SAFETY_MODEL \
@@ -105,27 +117,37 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
    uv run --with llama-stack llama stack run starter \
       --port $LLAMA_STACK_PORT
    ```
+
    Note: Every time you run a new model with `ollama run`, you will need to restart the llama stack. Otherwise it won't see the new model.
 
 The server will start and listen on `http://localhost:8321`.
 
 ---
+
 ## Test with `llama-stack-client` CLI
+
 After setting up the server, open a new terminal window and configure the llama-stack-client.
 
 1. Configure the CLI to point to the llama-stack server.
+
    ```bash
    uv run --with llama-stack-client llama-stack-client configure --endpoint http://localhost:8321
    ```
+
    **Expected Output:**
+
    ```bash
    Done! You can now use the Llama Stack Client CLI with endpoint http://localhost:8321
    ```
+
 2. Test the CLI by running inference:
+
    ```bash
    uv run --with llama-stack-client llama-stack-client inference chat-completion --message "Write me a 2-sentence poem about the moon"
    ```
+
    **Expected Output:**
+
    ```bash
    OpenAIChatCompletion(
       id='chatcmpl-950',
@@ -186,6 +208,7 @@ EOF
 You can check the available models with the command `uv run --with llama-stack-client llama-stack-client models list`.
 
 **Expected Output:**
+
 ```json
 {
     ...
@@ -201,6 +224,7 @@ You can check the available models with the command `uv run --with llama-stack-c
 You can also interact with the Llama Stack server using a simple Python script. Below is an example:
 
 ### 1. Create Python Script (`test_llama_stack.py`)
+
 ```bash
 touch test_llama_stack.py
 ```
@@ -243,7 +267,8 @@ uv run --with llama-stack-client python test_llama_stack.py
 ```
 
 **Expected Output:**
-```
+
+```text
 The moon glows softly in the midnight sky,
 A beacon of wonder, as it catches the eye.
 ```
@@ -257,6 +282,7 @@ This command initializes the model to interact with your local Llama Stack insta
 ## Next Steps
 
 **Explore Other Guides**: Dive deeper into specific topics by following these guides:
+
 - [Understanding Distribution](https://llamastack.github.io/latest/concepts/index.html#distributions)
 - [Inference 101](00_Inference101.ipynb)
 - [Local and Cloud Model Toggling 101](01_Local_Cloud_Inference101.ipynb)
@@ -267,16 +293,15 @@ This command initializes the model to interact with your local Llama Stack insta
 - [Using Safety API in Conversation](06_Safety101.ipynb)
 - [Agents API: Explain Components](07_Agents101.ipynb)
 
-
 **Explore Client SDKs**: Utilize our client SDKs for various languages to integrate Llama Stack into your applications:
-  - [Python SDK](https://github.com/meta-llama/llama-stack-client-python)
-  - [Node SDK](https://github.com/meta-llama/llama-stack-client-node)
-  - [Swift SDK](https://github.com/meta-llama/llama-stack-client-swift)
-  - [Kotlin SDK](https://github.com/meta-llama/llama-stack-client-kotlin)
+
+- [Python SDK](https://github.com/meta-llama/llama-stack-client-python)
+- [Node SDK](https://github.com/meta-llama/llama-stack-client-node)
+- [Swift SDK](https://github.com/meta-llama/llama-stack-client-swift)
+- [Kotlin SDK](https://github.com/meta-llama/llama-stack-client-kotlin)
 
 **Advanced Configuration**: Learn how to customize your Llama Stack distribution by referring to the [Building a Llama Stack Distribution](https://llamastack.github.io/latest/distributions/building_distro.html) guide.
 
 **Explore Example Apps**: Check out [llama-stack-apps](https://github.com/meta-llama/llama-stack-apps/tree/main/examples) for example applications built using Llama Stack.
-
 
 ---

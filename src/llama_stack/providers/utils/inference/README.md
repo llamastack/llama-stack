@@ -4,7 +4,7 @@ Shared utilities for inference providers: the OpenAI mixin, model registry, prom
 
 ## Directory Structure
 
-```
+```text
 inference/
   __init__.py
   openai_mixin.py      # OpenAIMixin: standard OpenAI-compatible endpoint implementations
@@ -20,11 +20,13 @@ inference/
 ## OpenAIMixin (`openai_mixin.py`)
 
 The central utility class. Provides implementations of:
+
 - `openai_chat_completion()` -- Chat completions via `AsyncOpenAI`
 - `openai_completion()` -- Text completions via `AsyncOpenAI`
 - `openai_embeddings()` -- Embedding generation via `AsyncOpenAI`
 
 Customizable via class attributes:
+
 - `overwrite_completion_id` -- Replace response IDs with internal IDs
 - `download_images` -- Download and base64-encode images for providers that need it
 - `supports_stream_options` -- Disable stream_options for providers that don't support it
@@ -38,6 +40,7 @@ Maps between Llama Stack model identifiers and provider-specific model IDs. Each
 ## Prompt Adapter (`prompt_adapter.py`)
 
 Handles format conversion between Llama Stack's message types and provider-specific formats. Key functions:
+
 - `localize_image_content()` -- Downloads remote images and converts to base64
 - Tool call formatting for different provider conventions
 

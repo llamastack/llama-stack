@@ -42,6 +42,7 @@ uv pip install llama-stack-api
 ## Dependencies
 
 Minimal dependencies:
+
 - `pydantic>=2.11.9` - For data validation and serialization
 - `jsonschema` - For JSON schema utilities
 
@@ -83,6 +84,7 @@ my_provider_spec = InlineProviderSpec(
 ## Relationship to llama-stack
 
 The main `llama-stack` package depends on `llama-stack-api` and provides:
+
 - Full server implementation
 - Built-in provider implementations
 - CLI tools for running and managing stacks
