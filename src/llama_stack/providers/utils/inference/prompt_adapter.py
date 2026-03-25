@@ -47,8 +47,15 @@ def interleaved_content_as_str(
         return _process(content)
 
 
+_image_cache: dict[str, tuple[bytes, str]] = {}
+
+
 async def localize_image_content(uri: str) -> tuple[bytes, str] | None:
     if uri.startswith("http"):
+        cached = _image_cache.get(uri)
+        if cached is not None:
+            return cached
+
         async with httpx.AsyncClient() as client:
             r = await client.get(uri)
             content = r.content
@@ -58,7 +65,9 @@ async def localize_image_content(uri: str) -> tuple[bytes, str] | None:
             else:
                 format = "png"
 
-        return content, format
+        result = (content, format)
+        _image_cache[uri] = result
+        return result
     elif uri.startswith("data"):
         # data:image/{format};base64,{data}
         match = re.match(r"data:image/(\w+);base64,(.+)", uri)
