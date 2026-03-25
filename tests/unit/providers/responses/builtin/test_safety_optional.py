@@ -20,8 +20,8 @@ from llama_stack.core.datatypes import Api
 from llama_stack.core.storage.datatypes import KVStoreReference, ResponsesStoreReference
 from llama_stack.providers.inline.responses.builtin import get_provider_impl
 from llama_stack.providers.inline.responses.builtin.config import (
-    ResponsesPersistenceConfig,
     BuiltinResponsesImplConfig,
+    ResponsesPersistenceConfig,
 )
 from llama_stack.providers.inline.responses.builtin.responses.utils import (
     run_guardrails,
