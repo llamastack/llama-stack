@@ -12,15 +12,15 @@ from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.storage.datatypes import KVStoreReference, ResponsesStoreReference
 
 
-class AgentPersistenceConfig(BaseModel):
-    """Nested persistence configuration for agents."""
+class ResponsesPersistenceConfig(BaseModel):
+    """Nested persistence configuration for the responses provider."""
 
     agent_state: KVStoreReference
     responses: ResponsesStoreReference
 
 
 class BuiltinResponsesImplConfig(BaseModel):
-    persistence: AgentPersistenceConfig
+    persistence: ResponsesPersistenceConfig
     vector_stores_config: VectorStoresConfig | None = Field(
         default=None,
         description="Configuration for vector store prompt templates and behavior",

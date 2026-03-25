@@ -16,6 +16,7 @@ As of release 0.2.14, Llama Stack provides comprehensive file operations and Vec
 ## Quick Start
 
 ### 1. Upload File
+
 ```python
 file_info = await client.files.upload(
     file=open("document.pdf", "rb"), purpose="assistants"
@@ -23,11 +24,13 @@ file_info = await client.files.upload(
 ```
 
 ### 2. Create Vector Store
+
 ```python
 vector_store = client.vector_stores.create(name="my_docs")
 ```
 
 ### 3. Attach File
+
 ```python
 await client.vector_stores.files.create(
     vector_store_id=vector_store.id, file_id=file_info.id
@@ -35,6 +38,7 @@ await client.vector_stores.files.create(
 ```
 
 ### 4. Search
+
 ```python
 results = await client.vector_stores.search(
     vector_store_id=vector_store.id, query="What is the main topic?", max_num_results=5

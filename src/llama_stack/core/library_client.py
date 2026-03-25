@@ -433,7 +433,8 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         if hasattr(options, "extra_json") and options.extra_json:
             body |= options.extra_json
 
-        matched_func, path_params, route_path, webmethod = find_matching_route(options.method, path, self.route_impls)
+        matched_func, path_params, route_path, _ = find_matching_route(options.method, path, self.route_impls)
+
         body |= path_params
 
         # Pass through params that aren't already handled as path params
@@ -498,7 +499,8 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         path = options.url
         body = options.params or {}
         body |= options.json_data or {}
-        func, path_params, route_path, webmethod = find_matching_route(options.method, path, self.route_impls)
+        func, path_params, route_path, _ = find_matching_route(options.method, path, self.route_impls)
+
         body |= path_params
 
         # Prepare body for the function call (handles both Pydantic and traditional params)

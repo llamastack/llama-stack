@@ -20,7 +20,7 @@ from llama_stack.core.datatypes import Api
 from llama_stack.core.storage.datatypes import KVStoreReference, ResponsesStoreReference
 from llama_stack.providers.inline.responses.builtin import get_provider_impl
 from llama_stack.providers.inline.responses.builtin.config import (
-    AgentPersistenceConfig,
+    ResponsesPersistenceConfig,
     BuiltinResponsesImplConfig,
 )
 from llama_stack.providers.inline.responses.builtin.responses.utils import (
@@ -31,7 +31,7 @@ from llama_stack.providers.inline.responses.builtin.responses.utils import (
 @pytest.fixture
 def mock_persistence_config():
     """Create a mock persistence configuration."""
-    return AgentPersistenceConfig(
+    return ResponsesPersistenceConfig(
         agent_state=KVStoreReference(
             backend="kv_default",
             namespace="agents",

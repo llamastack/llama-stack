@@ -510,6 +510,7 @@ from .shields import (
 from .tools import (
     ListToolDefsResponse,
     ListToolGroupsResponse,
+    ListToolsRequest,
     SpecialToolGroup,
     ToolDef,
     ToolGroup,
@@ -766,6 +767,7 @@ __all__ = [
     "ListShieldsResponse",
     "ListToolDefsResponse",
     "ListToolGroupsResponse",
+    "ListToolsRequest",
     "ListToolsResponse",
     "LogProbConfig",
     "MAX_PAGINATION_LIMIT",

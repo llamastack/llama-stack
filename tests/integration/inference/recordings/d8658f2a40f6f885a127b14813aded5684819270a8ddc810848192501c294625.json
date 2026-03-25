@@ -1,0 +1,77 @@
+{
+  "test_id": "tests/integration/inference/test_tools_with_schemas.py::TestMCPToolsInChatCompletion::test_mcp_tools_in_inference[txt=vllm/Qwen/Qwen3-0.6B]",
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Calculate 5 + 3"
+        }
+      ],
+      "max_tokens": 4096,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "calculate",
+            "description": "Perform a calculation on two numbers.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number",
+                  "description": "First operand"
+                },
+                "y": {
+                  "type": "number",
+                  "description": "Second operand"
+                },
+                "operation": {
+                  "type": "string",
+                  "description": "The operation to perform",
+                  "enum": [
+                    "add",
+                    "sub",
+                    "mul",
+                    "div"
+                  ]
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "operation"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": null,
+    "is_streaming": false,
+    "is_exception": true,
+    "exception_data": {
+      "category": "provider_sdk",
+      "provider": "openai",
+      "type": "BadRequestError",
+      "message": "Error code: 400 - {'error': {'message': \"You passed 894 input characters and requested 4096 output tokens. However, the model's context length is only 4096 tokens, resulting in a maximum input length of 0 tokens (at most 0 characters). Please reduce the length of the input prompt. (parameter=input_text, value=894)\", 'type': 'BadRequestError', 'param': 'input_text', 'code': 400}}",
+      "status_code": 400,
+      "body": {
+        "message": "You passed 894 input characters and requested 4096 output tokens. However, the model's context length is only 4096 tokens, resulting in a maximum input length of 0 tokens (at most 0 characters). Please reduce the length of the input prompt. (parameter=input_text, value=894)",
+        "type": "BadRequestError",
+        "param": "input_text",
+        "code": 400
+      }
+    },
+    "exception_message": "Error code: 400 - {'error': {'message': \"You passed 894 input characters and requested 4096 output tokens. However, the model's context length is only 4096 tokens, resulting in a maximum input length of 0 tokens (at most 0 characters). Please reduce the length of the input prompt. (parameter=input_text, value=894)\", 'type': 'BadRequestError', 'param': 'input_text', 'code': 400}}"
+  },
+  "id_normalization_mapping": {}
+}

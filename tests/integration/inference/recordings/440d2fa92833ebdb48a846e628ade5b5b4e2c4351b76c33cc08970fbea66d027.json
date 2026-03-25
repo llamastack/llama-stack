@@ -1,0 +1,110 @@
+{
+  "test_id": "tests/integration/inference/test_tools_with_schemas.py::TestMCPToolsInChatCompletion::test_mcp_tools_in_inference[txt=vllm/Qwen/Qwen3-0.6B]",
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Calculate 5 + 3"
+        }
+      ],
+      "max_tokens": 256,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "calculate",
+            "description": "Perform a calculation on two numbers.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number",
+                  "description": "First operand"
+                },
+                "y": {
+                  "type": "number",
+                  "description": "Second operand"
+                },
+                "operation": {
+                  "type": "string",
+                  "description": "The operation to perform",
+                  "enum": [
+                    "add",
+                    "sub",
+                    "mul",
+                    "div"
+                  ]
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "operation"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-440d2fa92833",
+        "choices": [
+          {
+            "finish_reason": "tool_calls",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, the user wants to calculate 5 plus 3. Let me check the tools provided. There's a function called calculate that takes x, y, and operation. The operation can be add, subtract, multiply, or divide. Since the user is asking for addition, I need to set the operation to \"add\". The parameters required are x and y, which are 5 and 3 respectively. I don't see any other parameters needed here. So, I'll call the calculate function with x=5, y=3, operation=\"add\".\n</think>\n\n",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [
+                {
+                  "id": "chatcmpl-tool-abab3e46615eb503",
+                  "function": {
+                    "arguments": "{\"x\": 5, \"y\": 3, \"operation\": \"add\"}",
+                    "name": "calculate"
+                  },
+                  "type": "function"
+                }
+              ],
+              "reasoning": null
+            },
+            "stop_reason": null,
+            "token_ids": null
+          }
+        ],
+        "created": 0,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 149,
+          "prompt_tokens": 214,
+          "total_tokens": 363,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
