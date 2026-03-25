@@ -10,7 +10,7 @@ We're excited to share that Llama Stack has achieved **100% compliance with the 
 
 With comprehensive support for Files, Vector Stores, Search, Conversations, Prompts, Chat Completions, the full Responses API, plus powerful extensions like MCP tool integration, Tool Calling, and Connectors, Llama Stack offers something unique in the AI infrastructure landscape: a SaaS-like experience that runs entirely on your terms.
 
-{/* truncate */}
+{/*truncate*/}
 
 ## Recognition by the Open Responses Community
 
@@ -25,6 +25,7 @@ Llama Stack delivers comprehensive feature parity across multiple API surfaces, 
 > **A note on model IDs:** The model ID you pass depends on the inference provider backing your Llama Stack server. For example, with Ollama you'd use `ollama/llama3.2:3b`, while with Fireworks or Together you'd use the HuggingFace-style `meta-llama/Llama-3.2-3B-Instruct`. The API calls are identical either way.
 
 ### **Files API** - OpenAI-Compatible Document Management
+
 Upload, manage, and process documents with the same interface you'd use with OpenAI:
 
 ```python
@@ -41,6 +42,7 @@ content = client.files.content(file.id)
 ```
 
 ### **Vector Stores API** - RAG Without Vendor Lock-in
+
 Build retrieval-augmented generation applications using the full Vector Stores API:
 
 ```python
@@ -57,6 +59,7 @@ results = client.vector_stores.search(
 ```
 
 ### **Conversations API** - Persistent Context Management
+
 Manage conversation state and continuity across interactions:
 
 ```python
@@ -77,6 +80,7 @@ items = client.conversations.items.list(conversation_id=conversation.id)
 ```
 
 ### **Chat Completions & Responses** - Simple Chat to Agentic Workflows
+
 From straightforward inference to multi-tool orchestration:
 
 ```python
@@ -94,6 +98,7 @@ response = client.responses.create(
 ```
 
 ### **Prompts API** - Programmatic Prompt Management
+
 Llama Stack extends OpenAI compatibility with full programmatic prompt management. With OpenAI, prompts are created through their admin portal and referenced by ID in the Responses API. Llama Stack provides the same referencing pattern, plus a complete CRUD API for creating and managing prompts programmatically:
 
 ```python
@@ -124,6 +129,7 @@ response = client.responses.create(
 This gives you the best of both worlds: compatibility with OpenAI's prompt referencing pattern in the Responses API, plus the ability to manage prompts as code rather than through a web interface.
 
 ### **MCP Integration** - Extensible Tool Ecosystem
+
 Leverage the Model Context Protocol to connect to any MCP server and dynamically discover tools:
 
 ```python
@@ -144,11 +150,13 @@ response = client.responses.create(
 MCP tools support per-request authorization, allowed tool filtering, and automatic session management. Connect to databases, APIs, and internal services through the growing ecosystem of standard MCP servers—no custom integration work required.
 
 ### **Connectors** - Declarative Service Integration
+
 Connectors provide a configuration-driven approach to integrating external services with your Llama Stack deployment. Define your data sources and services in your stack configuration, and they're automatically available as tools for your agents to use.
 
 ## The Value Proposition: SaaS Experience, Your Infrastructure
 
 ### **Data Sovereignty & Security**
+
 For regulated industries like finance, healthcare, and government, sending sensitive documents to external APIs isn't an option. Llama Stack solves this by running entirely on your infrastructure:
 
 - **Documents never leave your environment**: RAG pipelines, vector storage, and model inference all happen locally
@@ -156,6 +164,7 @@ For regulated industries like finance, healthcare, and government, sending sensi
 - **Audit trails**: Full visibility into data processing and model decisions
 
 ### **Cost Control & Predictability**
+
 Unlike consumption-based pricing models, Llama Stack offers:
 
 - **Fixed infrastructure costs**: Pay for compute, not tokens
@@ -163,6 +172,7 @@ Unlike consumption-based pricing models, Llama Stack offers:
 - **Efficient resource utilization**: Choose the right model size for your use case
 
 ### **Model Freedom**
+
 Break free from vendor-specific models:
 
 ```python
@@ -176,6 +186,7 @@ for model in ["ollama/gpt-oss:20b", "ollama/llama3.2:3b", "your-org/custom-model
 Whether you're prototyping locally or deploying at scale, Llama Stack makes it easy:
 
 ### **Local Development**
+
 ```bash
 # Set up your environment
 uv venv --python 3.12 --seed
@@ -205,6 +216,7 @@ print(response.output_text)
 ```
 
 ### **Production Deployment**
+
 ```bash
 # Deploy with your preferred infrastructure
 # Docker, Kubernetes, or bare metal — your choice
@@ -216,6 +228,7 @@ docker run -p 8321:8321 llamastack/distribution-starter:latest
 One of Llama Stack's biggest advantages is **drop-in compatibility** with existing tooling:
 
 ### **Direct OpenAI Client**
+
 ```python
 from openai import OpenAI
 
@@ -224,6 +237,7 @@ client = OpenAI(base_url="http://your-llama-stack/v1", api_key="none")
 ```
 
 ### **LangChain Integration**
+
 ```python
 from langchain_openai import ChatOpenAI
 
@@ -236,6 +250,7 @@ llm = ChatOpenAI(
 ```
 
 ### **Native Llama Stack Client**
+
 ```python
 from llama_stack_client import LlamaStackClient
 
