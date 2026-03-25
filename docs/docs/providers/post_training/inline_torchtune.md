@@ -17,4 +17,3 @@ TorchTune-based post-training provider for fine-tuning and optimizing models usi
 checkpoint_format: meta
 
 ```
-
