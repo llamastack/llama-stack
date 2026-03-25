@@ -14,7 +14,6 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
 from llama_stack.telemetry.constants import RESPONSES_PARAMETER_USAGE_TOTAL
 from llama_stack_api import (
-    Agents,
     Connectors,
     Conversations,
     CreateResponseRequest,
@@ -29,6 +28,7 @@ from llama_stack_api import (
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
     Prompts,
+    Responses,
     RetrieveResponseRequest,
     Safety,
     ToolGroups,
@@ -36,7 +36,7 @@ from llama_stack_api import (
     VectorIO,
 )
 
-from .config import BuiltinAgentsImplConfig
+from .config import BuiltinResponsesImplConfig
 from .responses.openai_responses import OpenAIResponsesImpl
 
 logger = get_logger(name=__name__, category="agents::builtin")
@@ -59,10 +59,10 @@ def _record_parameter_usage(request: CreateResponseRequest, operation: str) -> N
         _parameter_usage_total.add(1, {"operation": operation, "parameter": field_name})
 
 
-class BuiltinAgentsImpl(Agents):
+class BuiltinResponsesImpl(Responses):
     def __init__(
         self,
-        config: BuiltinAgentsImplConfig,
+        config: BuiltinResponsesImplConfig,
         inference_api: Inference,
         vector_io_api: VectorIO,
         safety_api: Safety | None,
