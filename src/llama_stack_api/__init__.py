@@ -51,7 +51,7 @@ from .admin import (
 )
 
 # Import all public API symbols
-from .agents import (
+from .responses import (
     Agents,
     CreateResponseRequest,
     DeleteResponseRequest,
