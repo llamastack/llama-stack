@@ -42,8 +42,7 @@ class WatsonXInferenceAdapter(OpenAIMixin):
 
     def __init__(self, config: WatsonXConfig):
         super().__init__(config=config)
-        self._iam_token: str | None = None
-        self._iam_token_expiry: float = 0
+        self._iam_token_cache: dict[str, tuple[str, float]] = {}
         self._model_specs_cache: list[dict[str, Any]] | None = None
 
     def get_base_url(self) -> str:
@@ -62,10 +61,16 @@ class WatsonXInferenceAdapter(OpenAIMixin):
         client sends the key as ``Authorization: Bearer <token>``, but WatsonX requires
         an IAM token obtained by exchanging the API key with IBM's IAM service.
 
+        The token cache is keyed by the API key so that per-request credentials
+        (passed via provider_data) do not leak across requests.
+
         Returns the cached token if still valid (with 60 s buffer).
         """
-        if self._iam_token and time.time() < self._iam_token_expiry - 60:
-            return self._iam_token
+        cached = self._iam_token_cache.get(api_key)
+        if cached:
+            token, expiry = cached
+            if time.time() < expiry - 60:
+                return token
 
         try:
             async with httpx.AsyncClient() as http_client:
@@ -77,9 +82,10 @@ class WatsonXInferenceAdapter(OpenAIMixin):
                 )
                 resp.raise_for_status()
                 data = resp.json()
-                self._iam_token = data["access_token"]
-                self._iam_token_expiry = data.get("expiration", time.time() + 3600)
-                return self._iam_token
+                token = data["access_token"]
+                expiry = data.get("expiration", time.time() + 3600)
+                self._iam_token_cache[api_key] = (token, expiry)
+                return token
         except Exception as e:
             logger.warning(f"IAM token exchange failed ({e}), using API key directly")
             return api_key
@@ -112,7 +118,8 @@ class WatsonXInferenceAdapter(OpenAIMixin):
         # Fast path: reuse cached IAM token (no network I/O).
         # _ensure_client() must be awaited before the first call to pre-populate the token.
         api_key = self._get_api_key_or_raise()
-        iam_token = self._iam_token if self._iam_token and time.time() < self._iam_token_expiry - 60 else api_key
+        cached = self._iam_token_cache.get(api_key)
+        iam_token = cached[0] if cached and time.time() < cached[1] - 60 else api_key
 
         extra_params = self.get_extra_client_params()
         extra_params["http_client"] = DefaultAsyncHttpxClient(verify=self.shared_ssl_context)
