@@ -2456,6 +2456,45 @@ async def test_function_tool_strict_false_included(openai_responses_impl, mock_i
     assert tool_function["strict"] is False, "strict field should be False"
 
 
+async def test_function_tool_type_field_excluded_from_function_dict(openai_responses_impl, mock_inference_api):
+    """Test that the 'type' field from the input tool is excluded from the function dict.
+
+    The function dict inside ChatCompletionToolParam should only contain function-specific
+    fields (name, description, parameters, strict) and not the top-level 'type' field,
+    which belongs on the outer tool param.
+    """
+    input_text = "What is the weather?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream=False,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                type="function",
+                name="get_weather",
+                description="Get weather information",
+                parameters={"type": "object", "properties": {"location": {"type": "string"}}, "required": ["location"]},
+            )
+        ],
+    )
+
+    assert mock_inference_api.openai_chat_completion.call_count == 1
+    params = mock_inference_api.openai_chat_completion.call_args[0][0]
+
+    assert len(params.tools) == 1
+    # The outer tool param should have type="function"
+    assert params.tools[0]["type"] == "function"
+    # The inner function dict should NOT contain 'type'
+    tool_function = params.tools[0]["function"]
+    assert "type" not in tool_function, "The input tool 'type' field should be excluded from the function dict"
+    assert tool_function["name"] == "get_weather"
+    assert tool_function["description"] == "Get weather information"
+
+
 async def test_create_openai_response_with_truncation_disabled_streaming(
     openai_responses_impl, mock_inference_api, mock_responses_store
 ):
