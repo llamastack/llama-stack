@@ -25,6 +25,20 @@
 #
 #    Note: Token owner must have publish access to llama-stack-client on npm
 #
+# 2. DOCKERHUB_USERNAME - DockerHub username
+#    Purpose: Authenticate with DockerHub to push distribution images
+#
+# 3. DOCKERHUB_TOKEN - DockerHub access token
+#    Purpose: Authenticate with DockerHub to push distribution images
+#
+#    How to create:
+#    - Log in to https://hub.docker.com/
+#    - Account Settings > Security > New Access Token
+#    - Select access permission: Read & Write
+#
+#    Add to repo: Settings > Secrets and variables > Actions > New repository secret
+#    Names: DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
+#
 # =============================================================================
 # WORKFLOW INPUTS (workflow_dispatch)
 # =============================================================================
@@ -41,7 +55,15 @@
 #   - llama-stack-only: Build only llama-stack and llama-stack-api
 #   - clients-only: Build only client packages
 #
-# client_ref: Git ref for client repos (default: main)
+# client_ref: Git ref for client repos. Auto-detected from branch:
+#   - On release-X.Y.x branches or vX.Y.Z tags: uses matching release-X.Y.x
+#   - Otherwise: defaults to main
+#   - Explicit value overrides auto-detection
+#
+# docker_only: Skip package build/test/publish; only build and push Docker
+#   images. Use this to retry Docker publishing after a run where packages
+#   published successfully but image builds failed. Requires "version" to be
+#   set to the already-published version.
 #
 # =============================================================================
 
@@ -93,6 +115,11 @@ on:
         required: false
         type: string
         default: 'main'
+      docker_only:
+        description: 'Skip package build/publish; only build and push Docker images (requires version)'
+        required: false
+        type: boolean
+        default: false
 
 env:
   LC_ALL: en_US.UTF-8
@@ -105,9 +132,59 @@ permissions:
   contents: read
 
 jobs:
+  # Compute version once, shared by all build jobs.
+  # This ensures external packages (client-python, client-typescript) get the
+  # same version as local packages during nightly/manual runs.
+  compute-version:
+    name: Compute version
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout local repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Compute package version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            # Use git describe to get version from nearest tag (e.g., v0.5.1-dev)
+            # Falls back to fallback_version in pyproject.toml if no tags are reachable
+            RAW=$(git describe --tags --match 'v*' --abbrev=0 2>/dev/null || echo "")
+            if [ -n "$RAW" ]; then
+              BASE="${RAW#v}"          # strip 'v' prefix
+              BASE="${BASE%-dev}"      # strip any -dev suffix from the tag
+            else
+              # Fallback: read from pyproject.toml (e.g., source tarballs without git history)
+              BASE=$(python3 -c "
+          import tomllib, pathlib
+          p = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
+          v = p.get('tool', {}).get('setuptools_scm', {}).get('fallback_version', '0.0.0.dev0')
+          print(v.split('.dev')[0])
+          ")
+            fi
+            DATE=$(date -u +%Y%m%d)
+            VERSION="${BASE}.dev${DATE}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Computed version: ${VERSION}"
+
   # Build and validate release artifacts
   build-package:
     name: Build ${{ matrix.package }}
+    if: inputs.docker_only != true
+    needs: compute-version
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -157,23 +234,51 @@ jobs:
       # === LOCAL PACKAGE STEPS ===
       - name: Checkout local repo
         if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local'
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0  # for setuptools-scm
 
       - name: Install dependent PRs if needed
         if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local'
-        uses: depends-on/depends-on-action@61cb3f4a0e2c8ae4b90c9448dc57c7ba9ca24c35 # main
+        uses: depends-on/depends-on-action@826c144163ac67bf08347590a5f81afd45da63ca # main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      # === DETERMINE CLIENT REF ===
+      # Use release branch from client repos when running on a release branch,
+      # unless client_ref is explicitly provided via workflow_dispatch.
+      - name: Determine client ref
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
+        id: client-ref
+        run: |
+          if [ -n "${{ inputs.client_ref }}" ] && [ "${{ inputs.client_ref }}" != "main" ]; then
+            # Explicit override from workflow_dispatch
+            echo "ref=${{ inputs.client_ref }}" >> $GITHUB_OUTPUT
+            echo "Using explicit client_ref: ${{ inputs.client_ref }}"
+          elif [[ "$GITHUB_REF" == refs/heads/release-* ]]; then
+            # Running on a release branch — use the same branch name in client repos
+            BRANCH="${GITHUB_REF#refs/heads/}"
+            echo "ref=$BRANCH" >> $GITHUB_OUTPUT
+            echo "Using release branch: $BRANCH"
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            # Running from a version tag — derive release branch (e.g., v0.5.1 -> release-0.5.x)
+            TAG="${GITHUB_REF#refs/tags/v}"
+            MAJOR_MINOR="${TAG%.*}"
+            BRANCH="release-${MAJOR_MINOR}.x"
+            echo "ref=$BRANCH" >> $GITHUB_OUTPUT
+            echo "Using derived release branch from tag: $BRANCH"
+          else
+            echo "ref=main" >> $GITHUB_OUTPUT
+            echo "Using default: main"
+          fi
 
       # === EXTERNAL PACKAGE STEPS ===
       - name: Checkout external repo
         if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ matrix.repo }}
-          ref: ${{ inputs.client_ref || 'main' }}
+          ref: ${{ steps.client-ref.outputs.ref }}
           path: external-repo
           fetch-depth: 0
 
@@ -186,7 +291,7 @@ jobs:
 
       - name: Install uv
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
-        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
 
       - name: Install build dependencies
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
@@ -199,31 +304,6 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
-
-      # === COMPUTE VERSION ===
-      # Since version tags live on release branches (not main), we compute
-      # the version explicitly rather than relying on setuptools-scm git inference.
-      - name: Compute package version
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local' && matrix.registry == 'pypi'
-        id: compute-version
-        run: |
-          if [ -n "${{ inputs.version }}" ]; then
-            VERSION="${{ inputs.version }}"
-          elif [ "${{ github.event_name }}" == "release" ]; then
-            VERSION="${GITHUB_REF#refs/tags/v}"
-          else
-            # Read base version from fallback_version in pyproject.toml
-            BASE=$(python3 -c "
-          import tomllib, pathlib
-          p = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
-          v = p.get('tool', {}).get('setuptools_scm', {}).get('fallback_version', '0.0.0.dev0')
-          print(v.split('.dev')[0])
-          ")
-            DATE=$(date -u +%Y%m%d)
-            VERSION="${BASE}.dev${DATE}"
-          fi
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "Computed version: ${VERSION}"
 
       # === LOCAL PYTHON PACKAGE BUILD ===
       - name: Check for missing package entries (llama-stack-api)
@@ -244,27 +324,20 @@ jobs:
         run: uv build --out-dir dist --no-build-isolation
         working-directory: ${{ matrix.path }}
         env:
-          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ steps.compute-version.outputs.version }}
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ needs.compute-version.outputs.version }}
 
       # === EXTERNAL PYTHON PACKAGE BUILD ===
       - name: Build external Python package
         if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
         working-directory: external-repo
         run: |
-          # Override version from tag or input
-          if [ -n "${{ inputs.version }}" ]; then
-            VERSION="${{ inputs.version }}"
-          elif [ "${{ github.event_name }}" == "release" ]; then
-            VERSION="${GITHUB_REF#refs/tags/v}"
-          fi
-          if [ -n "$VERSION" ]; then
-            echo "Setting version to $VERSION"
-            sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
-            # Also update __version__ in _version.py if it exists
-            VERSION_FILE=$(find . -name "_version.py" -path "*/llama_stack_client/*" | head -1)
-            if [ -n "$VERSION_FILE" ]; then
-              sed -i "s/__version__ = .*/__version__ = \"$VERSION\"/" "$VERSION_FILE"
-            fi
+          VERSION="${{ needs.compute-version.outputs.version }}"
+          echo "Setting version to $VERSION"
+          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+          # Also update __version__ in _version.py if it exists
+          VERSION_FILE=$(find . -name "_version.py" -path "*/llama_stack_client/*" | head -1)
+          if [ -n "$VERSION_FILE" ]; then
+            sed -i "s/__version__ = .*/__version__ = \"$VERSION\"/" "$VERSION_FILE"
           fi
           # Use python -m build for better compatibility
           uv pip install --system build
@@ -275,12 +348,12 @@ jobs:
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm'
         working-directory: external-repo
         run: |
-          # Override version from tag or input
-          if [ -n "${{ inputs.version }}" ]; then
-            npm version "${{ inputs.version }}" --no-git-tag-version
-          elif [ "${{ github.event_name }}" == "release" ]; then
-            npm version "${GITHUB_REF#refs/tags/v}" --no-git-tag-version
-          fi
+          VERSION="${{ needs.compute-version.outputs.version }}"
+          # Convert PEP 440 dev version to valid semver for npm
+          # e.g. 0.4.5.dev20260202 -> 0.4.5-dev.20260202
+          NPM_VERSION=$(echo "$VERSION" | sed 's/\.dev/-dev./')
+          echo "Setting version to $NPM_VERSION (from $VERSION)"
+          npm version "$NPM_VERSION" --no-git-tag-version
           npm install
           npm run build
 
@@ -346,10 +419,10 @@ jobs:
       matrix:
         python-version: ['3.12', '3.13']
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install uv
-        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -360,7 +433,7 @@ jobs:
 
       - name: Download llama-stack-api artifacts
         id: download-api
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: Packages-llama-stack-api
           path: dist-api
@@ -368,7 +441,7 @@ jobs:
 
       - name: Download llama-stack artifacts
         id: download-stack
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: Packages-llama-stack
           path: dist-stack
@@ -376,7 +449,7 @@ jobs:
 
       - name: Download llama-stack-client-python artifacts
         id: download-client-python
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: Packages-llama-stack-client-python
           path: dist-client-python
@@ -384,7 +457,7 @@ jobs:
 
       - name: Download llama-stack-client-typescript artifacts
         id: download-client-ts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: Packages-llama-stack-client-typescript
           path: dist-client-ts
@@ -519,7 +592,7 @@ jobs:
       - name: Download build artifacts
         if: steps.should-publish.outputs.skip != 'true'
         id: download
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: Packages-${{ matrix.package }}
           path: dist
@@ -567,7 +640,7 @@ jobs:
           matrix.registry == 'pypi' &&
           steps.check-artifacts.outputs.has_artifacts == 'true' &&
           steps.pypi-target.outputs.is_production == 'true'
-        uses: sigstore/gh-action-sigstore-python@f7ad0af51a5648d09a20d00370f0a91c3bdf8f84 # v3.0.1
+        uses: sigstore/gh-action-sigstore-python@a5caf349bc536fbef3668a10ed7f5cd309a4b53d # v3.2.0
         with:
           inputs: >-
             ./dist/*.tar.gz
@@ -644,6 +717,129 @@ jobs:
             ls -la dist/*.tgz
             # Verify the tarball is valid
             TARBALL=$(ls ./dist/*.tgz | head -1)
-            tar -tzf "$TARBALL" | head -20
+            tar -tzf "$TARBALL" 2>/dev/null | head -20 || true
             echo "... (truncated)"
           fi
+
+  # ==========================================================================
+  # Docker Image Publishing
+  # ==========================================================================
+  # Builds and pushes distribution Docker images to DockerHub after packages
+  # are published to PyPI. CPU distros are built for linux/amd64 and
+  # linux/arm64. GPU distros are built for linux/amd64 only.
+  #
+  # Images are pushed to: llamastack/distribution-<distro>:<tag>
+  #   - Production (release or dry_run=off): tagged with VERSION and "latest"
+  #   - Test (test-pypi or schedule): tagged with "test-VERSION"
+  publish-docker-images:
+    name: Publish Docker ${{ matrix.distro }}
+    if: |
+      always() &&
+      needs.compute-version.result == 'success' &&
+      (needs.publish-packages.result == 'success' || needs.publish-packages.result == 'skipped') &&
+      github.repository_owner == 'llamastack' &&
+      (inputs.dry_run || 'test-pypi') != 'build-only' &&
+      (inputs.packages || 'all') != 'clients-only' && (
+        github.event_name == 'workflow_dispatch' ||
+        github.event.action == 'published' ||
+        github.event_name == 'schedule'
+      )
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    needs: [publish-packages, compute-version]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # CPU distributions — multi-arch (amd64 + arm64)
+          - distro: starter
+            platforms: linux/amd64,linux/arm64
+          - distro: postgres-demo
+            platforms: linux/amd64,linux/arm64
+          - distro: dell
+            platforms: linux/amd64,linux/arm64
+          # GPU distributions — amd64 only
+          - distro: starter-gpu
+            platforms: linux/amd64
+
+    steps:
+      - name: Free disk space
+        run: |
+          echo "Disk space before cleanup:"
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          docker system prune -af --volumes
+          echo "Disk space after cleanup:"
+          df -h
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up QEMU for multi-arch builds
+        if: contains(matrix.platforms, 'arm64')
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Determine image tags and build args
+        id: meta
+        run: |
+          VERSION="${{ needs.compute-version.outputs.version }}"
+          DISTRO="${{ matrix.distro }}"
+          IMAGE="llamastack/distribution-${DISTRO}"
+
+          DRY_RUN="${{ inputs.dry_run }}"
+          EVENT="${{ github.event_name }}"
+
+          if [ "$EVENT" == "release" ] || [ "$DRY_RUN" == "off" ]; then
+            echo "install_mode=pypi" >> $GITHUB_OUTPUT
+            echo "tags=${IMAGE}:${VERSION},${IMAGE}:latest" >> $GITHUB_OUTPUT
+            echo "version_arg=PYPI_VERSION=${VERSION}" >> $GITHUB_OUTPUT
+            echo "Publishing production image: ${IMAGE}:${VERSION} + latest"
+          else
+            echo "install_mode=test-pypi" >> $GITHUB_OUTPUT
+            echo "tags=${IMAGE}:test-${VERSION}" >> $GITHUB_OUTPUT
+            echo "version_arg=TEST_PYPI_VERSION=${VERSION}" >> $GITHUB_OUTPUT
+            echo "Publishing test image: ${IMAGE}:test-${VERSION}"
+          fi
+
+      - name: Wait for package on test PyPI
+        if: steps.meta.outputs.install_mode == 'test-pypi'
+        run: |
+          VERSION="${{ needs.compute-version.outputs.version }}"
+          URL="https://test.pypi.org/pypi/llama-stack/${VERSION}/json"
+          echo "Polling ${URL} ..."
+          for i in $(seq 1 20); do
+            if curl -sf "$URL" -o /dev/null; then
+              echo "llama-stack==${VERSION} is available on test PyPI"
+              exit 0
+            fi
+            echo "Attempt ${i}/20: not yet available, waiting 30s..."
+            sleep 30
+          done
+          echo "::error::llama-stack==${VERSION} did not appear on test PyPI after 10 minutes"
+          exit 1
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          file: containers/Containerfile
+          platforms: ${{ matrix.platforms }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            DISTRO_NAME=${{ matrix.distro }}
+            INSTALL_MODE=${{ steps.meta.outputs.install_mode }}
+            ${{ steps.meta.outputs.version_arg }}
