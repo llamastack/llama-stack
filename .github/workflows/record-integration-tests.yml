@@ -31,7 +31,7 @@ on:
         description: 'Comma-separated list of providers to record'
         type: string
         required: false
-        default: 'gpt,azure,watsonx'
+        default: 'gpt,azure,watsonx,vertexai'
       suite:
         description: 'Test suite override (default: per-provider from matrix)'
         type: string
@@ -53,9 +53,11 @@ concurrency:
   cancel-in-progress: true
 
 # Read-only permissions - no write access
+# id-token: write is required for GCP Workload Identity Federation (OIDC token exchange)
 permissions:
   contents: read
   pull-requests: read
+  id-token: write
 
 jobs:
   # Compute PR information for both pull_request and workflow_dispatch
@@ -193,6 +195,8 @@ jobs:
             suite: bedrock-responses
           - setup: watsonx
             suite: responses
+          - setup: vertexai
+            suite: responses
     steps:
       - name: Check if provider should run
         id: should_run
@@ -220,6 +224,13 @@ jobs:
           ref: ${{ needs.compute-pr-info.outputs.pr_head_sha }}
           fetch-depth: 0
 
+      - name: Authenticate to Google Cloud (Vertex AI)
+        if: steps.should_run.outputs.run == 'true' && matrix.provider.setup == 'vertexai' && needs.compute-pr-info.outputs.is_fork_pr != 'true'
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ secrets.VERTEX_AI_PROJECT }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+
       # Note: Using full repo path with pinned SHA ensures actions are loaded from
       # a trusted commit, not from PR checkout. This is critical for security.
       - name: Setup test environment
@@ -245,6 +256,8 @@ jobs:
           TAVILY_SEARCH_API_KEY: ${{ contains(fromJSON('["gpt","azure"]'), matrix.provider.setup) && secrets.TAVILY_SEARCH_API_KEY || '' }}
           AWS_BEARER_TOKEN_BEDROCK: ${{ matrix.provider.setup == 'bedrock' && secrets.AWS_BEARER_TOKEN_BEDROCK || '' }}
           AWS_DEFAULT_REGION: ${{ matrix.provider.setup == 'bedrock' && 'us-west-2' || '' }}
+          VERTEX_AI_PROJECT: ${{ matrix.provider.setup == 'vertexai' && secrets.VERTEX_AI_PROJECT || '' }}
+          VERTEX_AI_LOCATION: ${{ matrix.provider.setup == 'vertexai' && 'global' || '' }}
         with:
           stack-config: 'server:ci-tests'
           setup: ${{ matrix.provider.setup }}
