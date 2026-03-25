@@ -135,10 +135,10 @@ class StackRun(Subcommand):
         # Set the config file in environment so create_app can find it
         os.environ["LLAMA_STACK_CONFIG"] = str(config_file)
 
-        # Fix for RHAIENG-3150: Pass None to uvicorn's log_config instead of LoggingConfig object.
-        # Uvicorn expects a dictConfig dict, file path, or None. Passing the Pydantic LoggingConfig
-        # object causes uvicorn to call logging.config.dictConfig() on it, which replaces the entire
-        # logging configuration with an incomplete one, silencing all llama_stack.* loggers.
+        # Fix for RHAIENG-3150: Do not pass log_config to uvicorn (previously passed LoggingConfig object).
+        # Uvicorn expects log_config to be a dictConfig dict, file path, or None. Passing the Pydantic
+        # LoggingConfig object causes uvicorn to call logging.config.dictConfig() on it, which replaces
+        # the entire logging configuration with an incomplete one, silencing all llama_stack.* loggers.
         # Instead, we let create_app() call setup_logging() to properly configure logging.
         uvicorn_config = {
             "factory": True,
@@ -146,7 +146,6 @@ class StackRun(Subcommand):
             "port": port,
             "lifespan": "on",
             "log_level": logger.getEffectiveLevel(),
-            "log_config": None,
             "workers": config.server.workers,
         }
 
