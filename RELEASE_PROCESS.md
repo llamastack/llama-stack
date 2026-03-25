@@ -15,6 +15,7 @@ Llama Stack follows [Semantic Versioning](https://semver.org/) with three releas
 ## Version Numbering
 
 Releases follow the `X.Y.Z` pattern:
+
 - **X (Major)**: Incremented for breaking changes or significant architectural updates
 - **Y (Minor)**: Incremented for new features and non-breaking enhancements
 - **Z (Patch)**: Incremented for bug fixes and minor improvements
@@ -22,6 +23,7 @@ Releases follow the `X.Y.Z` pattern:
 ### Release Candidates
 
 For minor and major releases, release candidates (RC) are published before the final release:
+
 - Format: `vX.Y.ZrcN` (e.g., `v0.4.0rc1`, `v0.4.0rc2`)
 - Python RC packages are published to test.pypi for community testing
 - Multiple RCs may be issued until the release is stable
@@ -44,6 +46,7 @@ For minor and major releases, release candidates (RC) are published before the f
 ### Release Criteria
 
 A version is released when:
+
 1. All issues in the corresponding milestone are completed, **OR**
 2. Remaining issues are moved to a future milestone with documented rationale
 
@@ -70,11 +73,13 @@ Each release has a designated **Release Owner** from the [CODEOWNERS](./CODEOWNE
 Testing requirements scale with release type:
 
 #### Patch Releases (Z-stream)
+
 - Rely primarily on automated CI tests
 - Quick turnaround for critical fixes
 - Manual verification only for specific fix validation
 
 #### Minor Releases (Y-stream)
+
 - Automated CI tests must pass
 - Manual feature testing for new functionality
 - Documentation verification
@@ -82,6 +87,7 @@ Testing requirements scale with release type:
 - Release candidates published for community validation
 
 #### Major Releases (X-stream)
+
 - Comprehensive automated test suite
 - Scheduled testing period with predefined test plans
 - Cross-provider compatibility testing
@@ -143,7 +149,7 @@ Each release includes:
 - **npm package**: `llama-stack-client`
 - **Docker images**: Distribution images on Docker Hub
 - **GitHub Release**: Tagged release with release notes
-- **Documentation**: Updated docs at https://llamastack.github.io
+- **Documentation**: Updated docs at <https://llamastack.github.io>
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for general contribution guidelines.
 
@@ -168,6 +174,7 @@ Llama Stack actively maintains the **last 2 stable minor releases**.
 ### Example
 
 If the current release is `v0.4.x`:
+
 - `v0.4.x` — Actively maintained (current)
 - `v0.3.x` — Maintained (bug fixes only)
 - `v0.2.x` and earlier — Unmaintained
@@ -198,6 +205,7 @@ The unified workflow (`.github/workflows/pypi.yml`) builds and publishes all pac
 ### Prepare release (`.github/workflows/prepare-release.yml`)
 
 Triggered via `workflow_dispatch`. Takes a version and release branch as input, then:
+
 - Updates `fallback_version` to the release version in both `pyproject.toml` files
 - Updates `llama-stack-client` pins to `==X.Y.Z`
 - Opens a PR to the release branch
@@ -205,6 +213,7 @@ Triggered via `workflow_dispatch`. Takes a version and release branch as input, 
 ### Post-release (`.github/workflows/post-release.yml`)
 
 Triggered automatically after the `pypi.yml` workflow succeeds for a release event. Handles:
+
 - **Dev tag**: Tags `main` with `vX.Y.(Z+1)-dev` so setuptools-scm can infer versions
 - **Fallback bump**: Commits `fallback_version` bump to the next `.dev0` directly to `main`
 - **npm lockfile**: Opens a PR to the release branch updating the UI lockfile
@@ -218,6 +227,7 @@ The nightly build (in `pypi.yml`) derives its base version from `git describe --
 ### 1. Remove the client pin problem
 
 The `llama-stack-client==X.Y.Z` pin in `pyproject.toml` can't be satisfied until the client is published, but the client is published in the same workflow run. Options:
+
 - Change the pin to `>=X.Y.Z` or `~=X.Y` so it doesn't require an exact match that doesn't exist yet
 - Remove the pin from the release branch entirely and let the workflow handle compatibility
 - Publish client packages first in a separate step, then update pins, then publish llama-stack
@@ -225,6 +235,7 @@ The `llama-stack-client==X.Y.Z` pin in `pyproject.toml` can't be satisfied until
 ### 2. Let setuptools-scm infer version from tags directly
 
 Right now the workflow computes the version separately and passes it via `SETUPTOOLS_SCM_PRETEND_VERSION`. With dev tags now on `main`, setuptools-scm can potentially infer versions natively, which would:
+
 - Eliminate the `compute-version` step entirely
 - Eliminate `fallback_version` management (no more bumping it post-release)
 - Make `uv build` work correctly locally without any env vars

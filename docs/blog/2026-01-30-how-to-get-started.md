@@ -11,7 +11,6 @@ authors:
 tags: [introduction, how-to]
 date: 2026-01-30
 ---
-# How to Get Started with Llama Stack
 
 There is no shortage of GenAI hosted services like OpenAI, Gemini, and Bedrock. Often, these services require tailoring your GenAI application directly to them, requiring developers to consider things that have nothing to do with their applications. Llama Stack is an open source project aiming to standardize and offer a set of APIs for AI applications that stay the same, regardless of the backend services being provided via those APIs.
 
@@ -83,6 +82,7 @@ export OLLAMA_URL=http://localhost:11434/v1
 uv run --with llama-stack llama stack run starter
 
 ```
+
 A sample chat completion request would look like this:
 
 ```bash
@@ -95,4 +95,4 @@ curl -X POST http://localhost:8321/v1/chat/completions \
 
 ```
 
-Notice, the model name must be prefixed with the `provider_id` in order for the request to route properly! In this example, we are just utilizing the `/chat/completions` route in the Inference API. The starter distribution has a large amount of APIs and ready to use providers baked in. Example API requests, similar to the one above, for other APIs can be found [here](https://llamastack.github.io/docs/api/llama-stack-specification) Take it for a spin and see what you can do with Llama Stack!
+Notice, the model name must be prefixed with the `provider_id` in order for the request to route properly! In this example, we are just utilizing the `/chat/completions` route in the Inference API. The starter distribution has a large amount of APIs and ready to use providers baked in. Example API requests, similar to the one above, for other APIs can be found in the [Llama Stack API specification](https://llamastack.github.io/docs/api/llama-stack-specification). Take it for a spin and see what you can do with Llama Stack!

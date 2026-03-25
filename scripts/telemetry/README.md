@@ -4,7 +4,7 @@ This directory contains configuration files and a setup script to deploy a full 
 
 ## Architecture
 
-```
+```text
 ┌──────────────┐
 │  Llama Stack │──┐
 │  Server      │  │  OTLP     ┌───────────────────┐   scrape    ┌──────────────┐
@@ -61,6 +61,7 @@ Run the setup script to start Jaeger, OTel Collector, Prometheus, and Grafana:
 ```
 
 This will:
+
 - Create a `llama-telemetry` container network
 - Start Jaeger, OTel Collector, Prometheus, and Grafana containers
 - Provision Grafana with a pre-built Llama Stack dashboard
@@ -148,6 +149,7 @@ sum(llama_stack_http_server_duration_milliseconds_count)
 #### Grafana dashboard
 
 A pre-provisioned **Llama Stack** dashboard is available in Grafana with panels for:
+
 - Prompt Tokens (input token usage by model)
 - Completion Tokens (output token usage by model)
 - P95 / P99 HTTP Server Duration
@@ -162,6 +164,7 @@ A pre-provisioned **Llama Stack** dashboard is available in Grafana with panels 
 ### Exporter examples
 
 **Local console (debugging):**
+
 ```bash
 OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true \
 OTEL_TRACES_EXPORTER=console \
@@ -170,6 +173,7 @@ opentelemetry-instrument python llama-stack-client.py
 ```
 
 **Send to Collector (recommended):**
+
 ```bash
 OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true \
 OTEL_TRACES_EXPORTER=otlp \
@@ -216,6 +220,7 @@ service:
 ```
 
 Use with:
+
 ```bash
 OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true \
 OTEL_TRACES_EXPORTER=otlp \

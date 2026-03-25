@@ -18,6 +18,7 @@ The Responses API supports the following tool types:
 ### ✅ Supported Fields & Features
 
 **Core Capabilities:**
+
 - **Dynamic Configuration**: Switch models, vector stores, and tools per request without pre-configuration
 - **Conversation Branching**: Use `previous_response_id` to branch conversations and explore different paths
 - **Rich Annotations**: Automatic file citations, URL citations, and container file citations

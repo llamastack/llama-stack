@@ -23,7 +23,7 @@ Any additional arguments are passed to pytest. For example, you can specify a te
 
 If you'd like to run for a non-default version of Python (currently 3.12), pass `PYTHON_VERSION` variable as follows:
 
-```
+```bash
 source .venv/bin/activate
 PYTHON_VERSION=3.13 ./scripts/unit-tests.sh
 ```
@@ -48,7 +48,7 @@ start htmlcov/index.html  # Windows
 
 ### Directory Structure
 
-```
+```text
 unit/
   cli/                 # CLI command tests
   conversations/       # Conversation service tests
