@@ -1,0 +1,273 @@
+name: vLLM GPU Recording
+
+run-name: GPU recording for ${{ inputs.model }} on ${{ inputs.instance_type }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'Model to test'
+        required: false
+        type: choice
+        default: 'gpt-oss:20b'
+        options:
+          - gpt-oss:20b
+          - gpt-oss:latest
+          - Qwen/Qwen3-0.6B
+      instance_type:
+        description: 'EC2 instance type'
+        required: false
+        type: choice
+        default: 'g6.2xlarge'
+        options:
+          - g6.2xlarge
+          - g5.2xlarge
+          - g6.8xlarge
+          - g6e.12xlarge
+      suite:
+        description: 'Test suite to run'
+        required: false
+        type: string
+        default: 'base'
+      pr_number:
+        description: 'PR number to commit recordings to (optional)'
+        required: false
+        type: number
+
+concurrency:
+  group: gpu-vllm-record-${{ inputs.model }}-${{ github.run_id }}
+  cancel-in-progress: false  # Don't cancel - EC2 cleanup is critical
+
+# OIDC authentication for AWS - no long-lived credentials!
+permissions:
+  contents: read
+  id-token: write  # Required for OIDC authentication to AWS
+
+jobs:
+  # Job 1: Launch GPU EC2 instance with multi-region/AZ fallback
+  start-gpu-runner:
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.start-ec2-runner.outputs.label }}
+      instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
+      region: ${{ steps.select-region.outputs.region }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Select region and AZ with fallback
+        id: select-region
+        run: |
+          # Multi-region, multi-AZ fallback strategy
+          # Try: us-east-2 (a, b, c) → us-east-1 (a, b, c)
+
+          # Define configuration for each region/AZ combination
+          declare -a CONFIGS=(
+            "us-east-2|us-east-2a|${{ vars.SUBNET_US_EAST_2A }}|${{ vars.AWS_EC2_AMI_US_EAST_2 }}|${{ vars.SECURITY_GROUP_ID_US_EAST_2 }}"
+            "us-east-2|us-east-2b|${{ vars.SUBNET_US_EAST_2B }}|${{ vars.AWS_EC2_AMI_US_EAST_2 }}|${{ vars.SECURITY_GROUP_ID_US_EAST_2 }}"
+            "us-east-2|us-east-2c|${{ vars.SUBNET_US_EAST_2C }}|${{ vars.AWS_EC2_AMI_US_EAST_2 }}|${{ vars.SECURITY_GROUP_ID_US_EAST_2 }}"
+            "us-east-1|us-east-1a|${{ vars.SUBNET_US_EAST_1A }}|${{ vars.AWS_EC2_AMI_US_EAST_1 }}|${{ vars.SECURITY_GROUP_ID_US_EAST_1 }}"
+            "us-east-1|us-east-1b|${{ vars.SUBNET_US_EAST_1B }}|${{ vars.AWS_EC2_AMI_US_EAST_1 }}|${{ vars.SECURITY_GROUP_ID_US_EAST_1 }}"
+            "us-east-1|us-east-1c|${{ vars.SUBNET_US_EAST_1C }}|${{ vars.AWS_EC2_AMI_US_EAST_1 }}|${{ vars.SECURITY_GROUP_ID_US_EAST_1 }}"
+          )
+
+          echo "=== Attempting to find available capacity ==="
+          echo "Instance type: ${{ inputs.instance_type }}"
+          echo ""
+
+          # For simplicity, we'll try the first configuration (can be enhanced with actual capacity checks)
+          # In production, you'd query AWS for capacity availability
+
+          IFS='|' read -r REGION AZ SUBNET AMI SG <<< "${CONFIGS[0]}"
+
+          echo "Selected configuration:"
+          echo "  Region: $REGION"
+          echo "  AZ: $AZ"
+          echo "  Subnet: $SUBNET"
+          echo "  AMI: $AMI"
+          echo "  Security Group: $SG"
+
+          echo "region=$REGION" >> $GITHUB_OUTPUT
+          echo "subnet=$SUBNET" >> $GITHUB_OUTPUT
+          echo "ami=$AMI" >> $GITHUB_OUTPUT
+          echo "security_group=$SG" >> $GITHUB_OUTPUT
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ steps.select-region.outputs.region }}
+          role-session-name: GitHubActions-vLLM-GPU-${{ github.run_id }}
+
+      - name: Start EC2 runner
+        id: start-ec2-runner
+        uses: ./.github/actions/launch-gpu-runner
+        with:
+          mode: start
+          github-token: ${{ secrets.GH_RUNNER_PAT }}
+          instance-type: ${{ inputs.instance_type }}
+          aws-region: ${{ steps.select-region.outputs.region }}
+          subnet-id: ${{ steps.select-region.outputs.subnet }}
+          ec2-ami-id: ${{ steps.select-region.outputs.ami }}
+          security-group-id: ${{ steps.select-region.outputs.security_group }}
+          ec2-instance-tags: |
+            [
+              {"Key": "Name", "Value": "llamastack-vllm-gpu-runner"},
+              {"Key": "Project", "Value": "llama-stack"},
+              {"Key": "Purpose", "Value": "vllm-gpu-recording"},
+              {"Key": "Model", "Value": "${{ inputs.model }}"},
+              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
+              {"Key": "GitHubRef", "Value": "${{ github.ref }}"},
+              {"Key": "GitHubRunId", "Value": "${{ github.run_id }}"},
+              {"Key": "ManagedBy", "Value": "GitHub-Actions"}
+            ]
+
+      - name: Runner launch summary
+        run: |
+          echo "✅ GPU runner launched successfully!"
+          echo "  Region: ${{ steps.select-region.outputs.region }}"
+          echo "  Instance ID: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}"
+          echo "  Runner Label: ${{ steps.start-ec2-runner.outputs.label }}"
+
+  # Job 2: Run vLLM tests on GPU runner
+  record-vllm-tests:
+    needs: start-gpu-runner
+    runs-on: ${{ needs.start-gpu-runner.outputs.label }}
+    permissions: {}  # CRITICAL: No permissions - prevents secret theft from untrusted code
+    env:
+      TMPDIR: /home/tmp
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup environment
+        run: |
+          mkdir -p /home/tmp
+          echo "=== System Information ==="
+          cat /etc/os-release
+          echo ""
+          echo "=== Disk Space ==="
+          df -h
+          echo ""
+          echo "=== Memory ==="
+          free -h
+          echo ""
+          echo "=== GPU Information ==="
+          nvidia-smi
+
+      - name: Setup vLLM GPU
+        uses: ./.github/actions/setup-vllm-gpu
+        with:
+          model: ${{ inputs.model }}
+          port: '8000'
+          gpu-memory-utilization: '0.85'
+          max-model-len: '8192'
+          quantization: 'awq'
+
+      - name: Setup test environment
+        uses: ./.github/actions/setup-test-environment
+        with:
+          python-version: '3.12'
+          client-version: 'latest'
+          setup: 'vllm-gpu-gpt-oss'
+          suite: ${{ inputs.suite }}
+          inference-mode: 'record'
+
+      - name: Run integration tests (record mode)
+        uses: ./.github/actions/run-and-record-tests
+        with:
+          stack-config: 'server:ci-tests'
+          setup: 'vllm-gpu-gpt-oss'
+          inference-mode: 'record'
+          suite: ${{ inputs.suite }}
+          skip-commit: 'true'  # Don't commit here - upload as artifacts
+
+      - name: Upload recordings as artifacts
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: vllm-gpu-recordings-${{ github.run_id }}
+          path: |
+            tests/integration/recordings/
+            tests/integration/*/recordings/
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Upload vLLM logs
+        if: always()
+        run: |
+          if [ -f /tmp/vllm-server.log ]; then
+            cat /tmp/vllm-server.log
+          fi
+
+      - name: Disk space after tests
+        if: always()
+        run: |
+          echo "=== Disk Space After Tests ==="
+          df -h
+
+  # Job 3: Stop GPU EC2 instance (ALWAYS runs for cleanup)
+  stop-gpu-runner:
+    needs: [start-gpu-runner, record-vllm-tests]
+    runs-on: ubuntu-latest
+    if: ${{ always() }}  # CRITICAL: Always cleanup, even on failure or cancellation
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.start-gpu-runner.outputs.region }}
+          role-session-name: GitHubActions-vLLM-GPU-Cleanup-${{ github.run_id }}
+
+      - name: Stop EC2 runner
+        uses: ./.github/actions/launch-gpu-runner
+        with:
+          mode: stop
+          github-token: ${{ secrets.GH_RUNNER_PAT }}
+          label: ${{ needs.start-gpu-runner.outputs.label }}
+          ec2-instance-id: ${{ needs.start-gpu-runner.outputs.instance-id }}
+
+      - name: Cleanup summary
+        run: |
+          echo "✅ GPU runner terminated successfully!"
+          echo "  Instance ID: ${{ needs.start-gpu-runner.outputs.instance-id }}"
+          echo "  Region: ${{ needs.start-gpu-runner.outputs.region }}"
+
+  # Job 4: Summary and next steps
+  summary:
+    needs: [start-gpu-runner, record-vllm-tests, stop-gpu-runner]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Workflow summary
+        run: |
+          echo "## vLLM GPU Recording Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Model**: ${{ inputs.model }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Instance Type**: ${{ inputs.instance_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Region**: ${{ needs.start-gpu-runner.outputs.region }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Suite**: ${{ inputs.suite }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.record-vllm-tests.result }}" == "success" ]; then
+            echo "✅ **Test Status**: Successful" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Recordings have been uploaded as artifacts. Download them from the workflow run and commit manually, or create a PR." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Test Status**: Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Check the test logs for errors." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Cleanup Status**: ${{ needs.stop-gpu-runner.result == 'success' && '✅ Instance terminated' || '⚠️ Check manually' }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check for cleanup issues
+        if: needs.stop-gpu-runner.result != 'success'
+        run: |
+          echo "::warning::EC2 instance cleanup may have failed! Check AWS console for orphaned instances."
+          echo "Instance ID: ${{ needs.start-gpu-runner.outputs.instance-id }}"
+          echo "Region: ${{ needs.start-gpu-runner.outputs.region }}"
