@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from llama_stack.providers.inline.agents.builtin.responses.utils import (
+from llama_stack.providers.inline.responses.builtin.responses.utils import (
     _extract_citations_from_text,
     convert_chat_choice_to_response_message,
     convert_response_content_to_chat_content,
