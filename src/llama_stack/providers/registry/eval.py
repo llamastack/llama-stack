@@ -21,7 +21,7 @@ def available_providers() -> list[ProviderSpec]:
                 Api.datasets,
                 Api.scoring,
                 Api.inference,
-                Api.agents,
+                Api.responses,
             ],
             description="Meta's reference implementation of evaluation tasks with support for multiple languages and evaluation metrics.",
         ),
@@ -40,7 +40,7 @@ def available_providers() -> list[ProviderSpec]:
                 Api.datasets,
                 Api.scoring,
                 Api.inference,
-                Api.agents,
+                Api.responses,
             ],
         ),
     ]
