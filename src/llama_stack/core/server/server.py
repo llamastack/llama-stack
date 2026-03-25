@@ -45,7 +45,7 @@ from llama_stack.core.request_headers import (
     request_provider_data_context,
     user_from_scope,
 )
-from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
+from llama_stack.core.server.fastapi_router_registry import _ROUTER_FACTORIES, build_fastapi_router
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
@@ -60,6 +60,7 @@ from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFo
 from llama_stack_api.common.errors import OpenAIErrorResponse
 
 from .auth import AuthenticationMiddleware, RouteAuthorizationMiddleware
+from .metrics import RequestMetricsMiddleware, build_route_to_api_map
 from .quota import QuotaMiddleware
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
@@ -435,6 +436,11 @@ def create_app() -> StackApp:
     apis_to_serve.add("prompts")
     apis_to_serve.add("conversations")
     apis_to_serve.add("connectors")
+
+    # Build route-to-API mapping and add request metrics middleware.
+    # Added last so it runs first (outermost), wrapping auth/quota/cors.
+    route_to_api = build_route_to_api_map(_ROUTER_FACTORIES, all_routes, impls)
+    app.add_middleware(RequestMetricsMiddleware, route_to_api=route_to_api)
 
     for api_str in apis_to_serve:
         api = Api(api_str)

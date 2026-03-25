@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 import asyncio
-from typing import Any
+from typing import Any, NamedTuple
 
 from sqlalchemy.exc import IntegrityError
 
@@ -12,6 +12,12 @@ from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.storage.datatypes import InferenceStoreReference, StorageBackendType
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import _SQLSTORE_BACKENDS, sqlstore_impl
+from llama_stack.core.task import (
+    RequestContext,
+    activate_request_context,
+    capture_request_context,
+    create_detached_background_task,
+)
 from llama_stack.log import get_logger
 from llama_stack_api import (
     ListOpenAIChatCompletionResponse,
@@ -23,6 +29,12 @@ from llama_stack_api import (
 from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
 
 logger = get_logger(name=__name__, category="inference")
+
+
+class _WriteItem(NamedTuple):
+    completion: OpenAIChatCompletion
+    messages: list[OpenAIMessageParam]
+    request_context: RequestContext
 
 
 class InferenceStore:
@@ -37,7 +49,7 @@ class InferenceStore:
         self.enable_write_queue = True
 
         # Async write queue and worker control
-        self._queue: asyncio.Queue[tuple[OpenAIChatCompletion, list[OpenAIMessageParam]]] | None = None
+        self._queue: asyncio.Queue[_WriteItem] | None = None
         self._worker_tasks: list[asyncio.Task[Any]] = []
         self._max_write_queue_size: int = reference.max_write_queue_size
         self._num_writers: int = max(1, reference.num_writers)
@@ -98,9 +110,8 @@ class InferenceStore:
             )
 
         if not self._worker_tasks:
-            loop = asyncio.get_running_loop()
             for _ in range(self._num_writers):
-                task = loop.create_task(self._worker_loop())
+                task = create_detached_background_task(self._worker_loop())
                 self._worker_tasks.append(task)
 
     async def store_chat_completion(
@@ -110,13 +121,14 @@ class InferenceStore:
             await self._ensure_workers_started()
             if self._queue is None:
                 raise ValueError("Inference store is not initialized")
+            item = _WriteItem(chat_completion, input_messages, capture_request_context())
             try:
-                self._queue.put_nowait((chat_completion, input_messages))
+                self._queue.put_nowait(item)
             except asyncio.QueueFull:
                 logger.warning(
                     f"Write queue full; adding chat completion id={getattr(chat_completion, 'id', '<unknown>')}"
                 )
-                await self._queue.put((chat_completion, input_messages))
+                await self._queue.put(item)
         else:
             await self._write_chat_completion(chat_completion, input_messages)
 
@@ -127,9 +139,9 @@ class InferenceStore:
                 item = await self._queue.get()
             except asyncio.CancelledError:
                 break
-            chat_completion, input_messages = item
             try:
-                await self._write_chat_completion(chat_completion, input_messages)
+                with activate_request_context(item.request_context):
+                    await self._write_chat_completion(item.completion, item.messages)
             except Exception as e:  # noqa: BLE001
                 logger.error(f"Error writing chat completion: {e}")
             finally:

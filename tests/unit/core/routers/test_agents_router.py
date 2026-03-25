@@ -7,10 +7,13 @@
 from unittest.mock import AsyncMock
 
 from fastapi import FastAPI
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 from starlette.testclient import TestClient
 
 from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
 from llama_stack.core.server.server import global_exception_handler
+from llama_stack.telemetry.constants import RESPONSES_PARAMETER_USAGE_TOTAL
 from llama_stack_api import Agents, Api
 from llama_stack_api.agents.models import (
     CreateResponseRequest,
@@ -498,3 +501,120 @@ def test_consecutive_value_errors_keep_connection_alive():
     resp2 = client.post("/v1/responses", json={"input": "hi", "model": "test", "stream": False})
     assert resp2.status_code == 400
     assert resp2.json()["detail"] == "bad request"
+
+
+def test_parameter_usage_records_only_explicitly_provided_params():
+    """_record_parameter_usage increments a counter for each optional parameter
+    that was explicitly provided in the request body (via model_fields_set),
+    and ignores required fields (input, model) and default-valued fields.
+    """
+    import llama_stack.providers.inline.agents.builtin.agents as agents_mod
+    from llama_stack.providers.inline.agents.builtin.agents import _record_parameter_usage
+
+    reader = InMemoryMetricReader()
+    provider = MeterProvider(metric_readers=[reader])
+
+    # Patch the module-level meter so our counter uses the in-memory reader
+    original_meter = agents_mod._meter
+    agents_mod._meter = provider.get_meter("test")
+    agents_mod._parameter_usage_total = agents_mod._meter.create_counter(
+        name=RESPONSES_PARAMETER_USAGE_TOTAL,
+        description="test counter",
+        unit="1",
+    )
+
+    try:
+        # Only temperature and tools are explicitly provided; stream/store get defaults
+        request = CreateResponseRequest(
+            input="hello",
+            model="test-model",
+            temperature=0.7,
+            tools=[],
+        )
+        _record_parameter_usage(request, operation="create_response")
+
+        metrics_data = reader.get_metrics_data()
+        resource_metrics = metrics_data.resource_metrics
+        assert len(resource_metrics) > 0
+
+        # Collect all data points as {(operation, parameter): sum}
+        param_counts: dict[tuple[str, str], int] = {}
+        for rm in resource_metrics:
+            for sm in rm.scope_metrics:
+                for metric in sm.metrics:
+                    if metric.name == RESPONSES_PARAMETER_USAGE_TOTAL:
+                        for dp in metric.data.data_points:
+                            key = (dp.attributes["operation"], dp.attributes["parameter"])
+                            param_counts[key] = dp.value
+
+        # temperature and tools were explicitly set
+        assert ("create_response", "temperature") in param_counts
+        assert ("create_response", "tools") in param_counts
+        # required fields should not appear
+        assert ("create_response", "input") not in param_counts
+        assert ("create_response", "model") not in param_counts
+        # fields with defaults that were NOT explicitly provided should not appear
+        assert ("create_response", "stream") not in param_counts
+        assert ("create_response", "store") not in param_counts
+    finally:
+        agents_mod._meter = original_meter
+        agents_mod._parameter_usage_total = original_meter.create_counter(
+            name=RESPONSES_PARAMETER_USAGE_TOTAL,
+            description="Tracks which optional parameters are explicitly provided in Responses API calls",
+            unit="1",
+        )
+
+
+def test_parameter_usage_ignores_extra_keys():
+    """_record_parameter_usage must not record arbitrary extra keys from the
+    request body.  CreateResponseRequest uses ConfigDict(extra="allow"), so
+    user-supplied extra keys end up in model_fields_set.  Without filtering,
+    this would cause unbounded Prometheus label cardinality.
+    """
+    import llama_stack.providers.inline.agents.builtin.agents as agents_mod
+    from llama_stack.providers.inline.agents.builtin.agents import _record_parameter_usage
+
+    reader = InMemoryMetricReader()
+    provider = MeterProvider(metric_readers=[reader])
+
+    original_meter = agents_mod._meter
+    agents_mod._meter = provider.get_meter("test")
+    agents_mod._parameter_usage_total = agents_mod._meter.create_counter(
+        name=RESPONSES_PARAMETER_USAGE_TOTAL,
+        description="test counter",
+        unit="1",
+    )
+
+    try:
+        # Include arbitrary extra keys that should NOT become metric labels
+        request = CreateResponseRequest(
+            input="hello",
+            model="test-model",
+            temperature=0.7,
+            random_extra_key="foo",
+            another_unknown="bar",
+        )
+        _record_parameter_usage(request, operation="create_response")
+
+        metrics_data = reader.get_metrics_data()
+        param_counts: dict[tuple[str, str], int] = {}
+        for rm in metrics_data.resource_metrics:
+            for sm in rm.scope_metrics:
+                for metric in sm.metrics:
+                    if metric.name == RESPONSES_PARAMETER_USAGE_TOTAL:
+                        for dp in metric.data.data_points:
+                            key = (dp.attributes["operation"], dp.attributes["parameter"])
+                            param_counts[key] = dp.value
+
+        # temperature is a declared field and was explicitly set
+        assert ("create_response", "temperature") in param_counts
+        # extra keys must NOT appear as metric labels
+        assert ("create_response", "random_extra_key") not in param_counts
+        assert ("create_response", "another_unknown") not in param_counts
+    finally:
+        agents_mod._meter = original_meter
+        agents_mod._parameter_usage_total = original_meter.create_counter(
+            name=RESPONSES_PARAMETER_USAGE_TOTAL,
+            description="Tracks which optional parameters are explicitly provided in Responses API calls",
+            unit="1",
+        )
