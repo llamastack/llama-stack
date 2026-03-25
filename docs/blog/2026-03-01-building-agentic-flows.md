@@ -25,7 +25,7 @@ A single `ResearchAgent` class that does two things:
 1. **Research** (agentic): Uses the Responses API `while True` loop with server-side `file_search` and client-side function tools (`read_local_file`, `index_document`, `list_local_files`). The agent decides what to search, discovers unindexed local files, reads them, indexes the relevant ones, and searches again with the enriched knowledge base.
 2. **Self-improvement** (deterministic): Every N calls to `research()`, the agent runs `evaluate_self()` to benchmark against test cases and `improve_self()` to rewrite its own system prompt. This is a fixed sequence — no LLM-driven tool selection, just the agent measuring and improving its own performance.
 
-```
+```text
 ┌──────────────────────────────────────────────────────────┐
 │  ResearchAgent                                           │
 │                                                          │
@@ -331,6 +331,7 @@ The pattern here — a self-improving agent that benchmarks and rewrites its own
 - **Multiple research agents** with different vector stores, each self-improving independently and specializing in a different knowledge domain
 
 To learn more:
+
 - [Responses API documentation](/docs/building_applications/responses_vs_agents)
 - [Conversations API documentation](/docs/api-openai/conformance#conversations)
 - [OpenAI API compatibility](/docs/api-openai)

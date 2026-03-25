@@ -4,7 +4,7 @@ All provider implementations for Llama Stack APIs.
 
 ## Directory Structure
 
-```
+```text
 providers/
   inline/              # In-process providers (run locally)
   remote/              # Remote service adapters (call external APIs)

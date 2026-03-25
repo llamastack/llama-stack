@@ -34,6 +34,7 @@ The starter distribution consists of the following provider configurations:
 The starter distribution includes a comprehensive set of inference providers:
 
 ### Hosted Providers
+
 - **[OpenAI](https://openai.com/api/)**: GPT-4, GPT-3.5, O1, O3, O4 models and text embeddings -
   provider ID: `openai` - reference documentation: [openai](../../providers/inference/remote_openai)
 - **[Fireworks](https://fireworks.ai/)**: Llama 3.1, 3.2, 3.3, 4 Scout, 4 Maverick models and
@@ -50,6 +51,7 @@ The starter distribution includes a comprehensive set of inference providers:
 - **[Bedrock](https://aws.amazon.com/bedrock/)**: AWS Bedrock models - provider ID: `bedrock` - reference documentation: [bedrock](../../providers/inference/remote_bedrock)
 
 ### Local/Remote Providers
+
 - **[Ollama](https://ollama.ai/)**: Local Ollama models - provider ID: `ollama` - reference documentation: [ollama](../../providers/inference/remote_ollama)
 - **[vLLM](https://docs.vllm.ai/en/latest/)**: Local or remote vLLM server - provider ID: `vllm` - reference documentation: [vllm](../../providers/inference/remote_vllm)
 - **[TGI](https://github.com/huggingface/text-generation-inference)**: Text Generation Inference server - Dell Enterprise Hub's custom TGI container too (use `DEH_URL`) - provider ID: `tgi` - reference documentation: [tgi](../../providers/inference/remote_tgi)
@@ -73,9 +75,11 @@ The starter distribution includes a comprehensive set of vector IO providers:
 The following environment variables can be configured:
 
 ### Server Configuration
+
 - `LLAMA_STACK_PORT`: Port for the Llama Stack distribution server (default: `8321`)
 
 ### API Keys for Hosted Providers
+
 - `OPENAI_API_KEY`: OpenAI API key
 - `FIREWORKS_API_KEY`: Fireworks API key
 - `TOGETHER_API_KEY`: Together API key
@@ -89,6 +93,7 @@ The following environment variables can be configured:
 - `HF_API_TOKEN`: HuggingFace API token
 
 ### Local Provider Configuration
+
 - `OLLAMA_URL`: Ollama server URL (default: `http://localhost:11434`)
 - `VLLM_URL`: vLLM server URL (default: `http://localhost:8000/v1`)
 - `VLLM_MAX_TOKENS`: vLLM max tokens (default: `4096`)
@@ -97,10 +102,12 @@ The following environment variables can be configured:
 - `TGI_URL`: TGI server URL
 
 ### Model Configuration
+
 - `INFERENCE_MODEL`: HuggingFace model for serverless inference
 - `INFERENCE_ENDPOINT_NAME`: HuggingFace endpoint name
 
 ### Vector Database Configuration
+
 - `SQLITE_STORE_DIR`: SQLite store directory (default: `~/.llama/distributions/starter`)
 - `ENABLE_SQLITE_VEC`: Enable SQLite vector provider
 - `ENABLE_CHROMADB`: Enable ChromaDB provider
@@ -113,6 +120,7 @@ The following environment variables can be configured:
 - `PGVECTOR_PASSWORD`: PGVector password
 
 ### Tool Configuration
+
 - `BRAVE_SEARCH_API_KEY`: Brave Search API key
 - `TAVILY_SEARCH_API_KEY`: Tavily Search API key
 
@@ -213,6 +221,7 @@ uv run --with llama-stack llama stack run starter::run-with-postgres-store.yaml
 Once the distribution is running, you can use any of the available models. Here are some examples:
 
 ### Using OpenAI Models
+
 ```bash
 llama-stack-client --endpoint http://localhost:8321 \
 inference chat-completion \
@@ -221,6 +230,7 @@ inference chat-completion \
 ```
 
 ### Using Fireworks Models
+
 ```bash
 llama-stack-client --endpoint http://localhost:8321 \
 inference chat-completion \
@@ -229,6 +239,7 @@ inference chat-completion \
 ```
 
 ### Using Local Ollama Models
+
 ```bash
 # First, make sure Ollama is running and you have a model
 ollama run llama3.2:3b

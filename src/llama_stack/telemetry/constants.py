@@ -57,3 +57,7 @@ REQUEST_PREFIX = f"{llama_stack_prefix}.request"
 REQUESTS_TOTAL = f"{REQUEST_PREFIX}s_total"
 REQUEST_DURATION_SECONDS = f"{REQUEST_PREFIX}_duration_seconds"
 CONCURRENT_REQUESTS = f"{llama_stack_prefix}.concurrent_requests"
+
+# Responses API Metrics
+RESPONSES_PREFIX = f"{llama_stack_prefix}.responses"
+RESPONSES_PARAMETER_USAGE_TOTAL = f"{RESPONSES_PREFIX}.parameter_usage_total"
