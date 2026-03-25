@@ -4,7 +4,7 @@ Storage backends for Llama Stack: key-value stores and SQL stores.
 
 ## Directory Structure
 
-```
+```text
 storage/
   kvstore/             # Key-value store backends
     __init__.py

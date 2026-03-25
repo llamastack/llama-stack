@@ -1,6 +1,6 @@
 # OpenResponses Conformance Gaps
 
-Tracked by: https://github.com/llamastack/llama-stack/issues/4818
+Tracked by: <https://github.com/llamastack/llama-stack/issues/4818>
 
 All 6 conformance tests currently fail at the **Zod schema validation step** —
 `responseResourceSchema.safeParse(rawData)` rejects the response before semantic
@@ -47,6 +47,7 @@ never forwards `temperature` or `top_p` to the response object even though they
 are available on the context (`self.ctx.temperature`, `self.ctx.top_p`).
 
 **Files:**
+
 - `src/llama_stack_api/openai_responses.py`
 - `src/llama_stack/providers/inline/agents/builtin/responses/streaming.py`
 

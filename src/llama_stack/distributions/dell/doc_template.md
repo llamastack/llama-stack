@@ -16,19 +16,18 @@ The `llamastack/distribution-{{ name }}` distribution consists of the following 
 {{ providers_table }}
 
 You can use this distribution if you have GPUs and want to run an independent TGI or Dell Enterprise Hub container for running inference.
-
 {% if run_config_env_vars %}
-### Environment Variables
+
+## Environment Variables
 
 The following environment variables can be configured:
-
 {% for var, (default_value, description) in run_config_env_vars.items() %}
+
 - `{{ var }}`: {{ description }} (default: `{{ default_value }}`)
 {% endfor %}
 {% endif %}
 
-
-## Setting up Inference server using Dell Enterprise Hub's custom TGI container.
+## Setting up Inference server using Dell Enterprise Hub's custom TGI container
 
 NOTE: This is a placeholder to run inference with TGI. This will be updated to use [Dell Enterprise Hub's containers](https://dell.huggingface.co/authenticated/models) once verified.
 
@@ -86,6 +85,7 @@ docker run --rm -it \
 ## Dell distribution relies on ChromaDB for vector database usage
 
 You can start a chroma-db easily using docker.
+
 ```bash
 # This is where the indices are persisted
 mkdir -p $HOME/chromadb
@@ -179,6 +179,7 @@ docker run -it \
 {% if run_configs %}
 Available run configurations for this distribution:
 {% for config in run_configs %}
+
 - `{{ config }}`
 {% endfor %}
 {% endif %}

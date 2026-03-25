@@ -4,7 +4,7 @@ Remote provider adapters that connect Llama Stack APIs to external services.
 
 ## Directory Structure
 
-```
+```text
 remote/
   inference/           # Remote inference adapters
     anthropic/         # Anthropic Claude
