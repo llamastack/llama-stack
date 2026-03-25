@@ -43,8 +43,8 @@ def _get_iam_token(api_key: str) -> str:
     WatsonX does not accept API keys directly for authentication. The AsyncOpenAI
     client sends the key as `Authorization: Bearer <token>`, but WatsonX requires
     an IAM token obtained by exchanging the API key with IBM's IAM service.
-    Previously LiteLLM handled this internally; with the direct OpenAI mixin we
-    perform the exchange ourselves.
+    The OpenAI mixin requires a bearer token, so we perform the IAM exchange
+    ourselves before creating the client.
     """
     global _iam_token, _iam_token_expiry
 
