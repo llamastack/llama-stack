@@ -238,12 +238,14 @@ def create_router(impl: Agents) -> APIRouter:
     @router.post(
         "/responses/{response_id}/cancel",
         response_model=OpenAIResponseObject,
-        summary="Cancel a response that is in progress.",
-        description="Cancel a response that is queued or in progress.",
+        summary="Cancel a background response that is in progress.",
+        description="Cancel a background response that is queued or in progress. Only responses created with background=true can be cancelled.",
         responses={
             200: {"description": "The updated response object with status 'cancelled'."},
             404: {"description": "Response not found."},
-            409: {"description": "Conflict: Cannot cancel response in terminal state."},
+            409: {
+                "description": "Conflict: Cannot cancel response (not a background response or already in terminal state)."
+            },
         },
     )
     async def cancel_openai_response(

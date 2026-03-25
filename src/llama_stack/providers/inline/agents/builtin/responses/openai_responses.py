@@ -995,12 +995,22 @@ class OpenAIResponsesImpl:
                     pass
 
         if result_response is not None:
+            # Check if response was cancelled before final update to avoid race condition
+            current = await self.responses_store.get_response_object(response_id)
+            if current.status == "cancelled":
+                logger.info(f"Background response {response_id} was cancelled before final update")
+                return
+
             result_response.background = True
             result_response.id = response_id  # Ensure we update the correct response
             await self.responses_store.update_response_object(result_response)
         else:
             # Something went wrong - mark as failed
             existing = await self.responses_store.get_response_object(response_id)
+            if existing.status == "cancelled":
+                logger.info(f"Background response {response_id} was cancelled before failure update")
+                return
+
             existing.status = "failed"
             existing.error = OpenAIResponseError(
                 code="processing_error",
@@ -1189,16 +1199,13 @@ class OpenAIResponsesImpl:
         # Get current response state
         response = await self.responses_store.get_response_object(response_id)
 
-        # Preserve the background field
-        was_background = response.background
+        # Only background responses can be cancelled
+        if not response.background:
+            raise ConflictError(f"Cannot cancel response '{response_id}': only background responses can be cancelled")
 
         # If already cancelled, return current state (idempotent)
         if response.status == "cancelled":
-            cancelled_response = response.to_response_object()
-            # Ensure background field is preserved
-            if was_background:
-                cancelled_response.background = was_background
-            return cancelled_response
+            return response.to_response_object()
 
         # Cannot cancel responses in terminal states
         if response.status in ["completed", "failed", "incomplete"]:
@@ -1216,12 +1223,7 @@ class OpenAIResponsesImpl:
                 # Note: task removal handled in worker's finally block
 
         # Return updated response
-        response_with_input = await self.responses_store.get_response_object(response_id)
-        cancelled_response = response_with_input.to_response_object()
-        # Ensure background field is preserved
-        if was_background:
-            cancelled_response.background = was_background
-        return cancelled_response
+        return response.to_response_object()
 
     async def _sync_response_to_conversation(
         self, conversation_id: str, input: str | list[OpenAIResponseInput] | None, output_items: list[ConversationItem]
