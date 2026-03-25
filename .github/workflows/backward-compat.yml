@@ -486,7 +486,6 @@ jobs:
         if: steps.get_release.outputs.has_release == 'true' && steps.extract_release_configs.outputs.has_configs == 'true'
         continue-on-error: true
         run: |
-          RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
           COMPAT_TEST_CONFIGS_DIR=/tmp/release_configs uv run pytest tests/backward_compat/test_run_config.py -v --tb=short
 
       - name: Checkout main branch to test baseline
@@ -504,7 +503,6 @@ jobs:
         if: steps.get_release.outputs.has_release == 'true' && steps.extract_release_configs.outputs.has_configs == 'true'
         continue-on-error: true
         run: |
-          RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
           COMPAT_TEST_CONFIGS_DIR=/tmp/release_configs uv run pytest tests/backward_compat/test_run_config.py -v --tb=short
 
       - name: Report results and post PR comment

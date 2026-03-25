@@ -83,7 +83,7 @@ jobs:
         if: matrix.vector-io-provider == 'remote::pgvector'
         run: |
           echo "Waiting for Postgres to be ready..."
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if docker exec pgvector pg_isready -U llamastack > /dev/null 2>&1; then
               echo "Postgres is ready!"
               break
@@ -110,7 +110,7 @@ jobs:
         if: matrix.vector-io-provider == 'remote::qdrant'
         run: |
           echo "Waiting for Qdrant to be ready..."
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if curl -s http://localhost:6333/collections | grep -q '"status":"ok"'; then
               echo "Qdrant is ready!"
               exit 0
@@ -125,7 +125,7 @@ jobs:
         if: matrix.vector-io-provider == 'remote::chromadb'
         run: |
           echo "Waiting for ChromaDB to be ready..."
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if curl -s http://localhost:8000/api/v2/heartbeat | grep -q "nanosecond heartbeat"; then
               echo "ChromaDB is ready!"
               exit 0
@@ -140,7 +140,7 @@ jobs:
         if: matrix.vector-io-provider == 'remote::weaviate'
         run: |
           echo "Waiting for Weaviate to be ready..."
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if curl -s http://localhost:8080 | grep -q "https://weaviate.io/developers/weaviate/current/"; then
               echo "Weaviate is ready!"
               exit 0
@@ -173,7 +173,7 @@ jobs:
         if: matrix.vector-io-provider == 'remote::infinispan'
         run: |
           echo "Waiting for Infinispan to be ready..."
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if curl -s -u admin:password http://localhost:11222/rest/v2/server | grep -q "version"; then
               echo "Infinispan is ready!"
               exit 0

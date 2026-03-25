@@ -37,7 +37,6 @@ repos:
     -   id: actionlint
         args:
           - -ignore=SC2086
-          - -ignore=SC2034
 
 -   repo: https://github.com/compilerla/conventional-pre-commit
     rev: v3.6.0
