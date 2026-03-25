@@ -20,7 +20,7 @@ from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.stack import cast_distro_name_to_string, replace_env_vars, run_config_from_dynamic_config_spec
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
-from llama_stack.log import LoggingConfig, get_logger
+from llama_stack.log import get_logger
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 
@@ -127,10 +127,6 @@ class StackRun(Subcommand):
         config_file = resolve_config_or_distro(str(config_file))
         with open(config_file) as fp:
             config_contents = yaml.safe_load(fp)
-            if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
-                logger_config = LoggingConfig(**cfg)
-            else:
-                logger_config = None
             config = StackConfig(**cast_distro_name_to_string(replace_env_vars(config_contents)))
 
         port = args.port or config.server.port
@@ -139,13 +135,18 @@ class StackRun(Subcommand):
         # Set the config file in environment so create_app can find it
         os.environ["LLAMA_STACK_CONFIG"] = str(config_file)
 
+        # Fix for RHAIENG-3150: Pass None to uvicorn's log_config instead of LoggingConfig object.
+        # Uvicorn expects a dictConfig dict, file path, or None. Passing the Pydantic LoggingConfig
+        # object causes uvicorn to call logging.config.dictConfig() on it, which replaces the entire
+        # logging configuration with an incomplete one, silencing all llama_stack.* loggers.
+        # Instead, we let create_app() call setup_logging() to properly configure logging.
         uvicorn_config = {
             "factory": True,
             "host": host,
             "port": port,
             "lifespan": "on",
             "log_level": logger.getEffectiveLevel(),
-            "log_config": logger_config,
+            "log_config": None,
             "workers": config.server.workers,
         }
 
