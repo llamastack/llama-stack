@@ -35,16 +35,6 @@ def get_distribution_template() -> DistributionTemplate:
         ],
         "safety": [BuildProvider(provider_type="inline::llama-guard")],
         "agents": [BuildProvider(provider_type="inline::builtin")],
-        "eval": [BuildProvider(provider_type="inline::builtin")],
-        "datasetio": [
-            BuildProvider(provider_type="remote::huggingface"),
-            BuildProvider(provider_type="inline::localfs"),
-        ],
-        "scoring": [
-            BuildProvider(provider_type="inline::basic"),
-            BuildProvider(provider_type="inline::llm-as-judge"),
-            BuildProvider(provider_type="inline::braintrust"),
-        ],
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),

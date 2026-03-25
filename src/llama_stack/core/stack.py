@@ -50,12 +50,8 @@ from llama_stack_api import (
     Agents,
     Api,
     Batches,
-    Benchmarks,
     Connectors,
     Conversations,
-    DatasetIO,
-    Datasets,
-    Eval,
     Files,
     Inference,
     Inspect,
@@ -63,18 +59,13 @@ from llama_stack_api import (
     ModelType,
     Prompts,
     Providers,
-    RegisterBenchmarkRequest,
     RegisterModelRequest,
-    RegisterScoringFunctionRequest,
     RegisterShieldRequest,
     Safety,
-    Scoring,
-    ScoringFunctions,
     Shields,
     ToolGroupNotFoundError,
     VectorIO,
 )
-from llama_stack_api.datasets import RegisterDatasetRequest
 
 logger = get_logger(name=__name__, category="core")
 
@@ -85,13 +76,7 @@ class LlamaStack(
     Agents,
     Batches,
     Safety,
-    Datasets,
     VectorIO,
-    Eval,
-    Benchmarks,
-    Scoring,
-    ScoringFunctions,
-    DatasetIO,
     Models,
     Shields,
     Inspect,
@@ -108,15 +93,6 @@ class LlamaStack(
 RESOURCES = [
     ("models", Api.models, "register_model", "list_models", RegisterModelRequest),
     ("shields", Api.shields, "register_shield", "list_shields", RegisterShieldRequest),
-    ("datasets", Api.datasets, "register_dataset", "list_datasets", RegisterDatasetRequest),
-    (
-        "scoring_fns",
-        Api.scoring_functions,
-        "register_scoring_function",
-        "list_scoring_functions",
-        RegisterScoringFunctionRequest,
-    ),
-    ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks", RegisterBenchmarkRequest),
     ("vector_stores", Api.vector_stores, "register_vector_store", "list_vector_stores", None),
 ]
 
@@ -131,9 +107,6 @@ RESOURCE_ID_FIELDS = [
     "vector_store_id",
     "model_id",
     "shield_id",
-    "dataset_id",
-    "scoring_fn_id",
-    "benchmark_id",
 ]
 
 

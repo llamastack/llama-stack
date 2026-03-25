@@ -13,7 +13,6 @@ from llama_stack.core.datatypes import (
     RoutableObject,
     RoutableObjectWithProvider,
     RoutedProtocol,
-    ScoringFnWithOwner,
 )
 from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.core.store import DistributionRegistry
@@ -39,12 +38,6 @@ async def register_object_with_provider(obj: RoutableObject, p: Any) -> Routable
         return await p.register_shield(obj)
     elif api == Api.vector_io:
         return await p.register_vector_store(obj)
-    elif api == Api.datasetio:
-        return await p.register_dataset(obj)
-    elif api == Api.scoring:
-        return await p.register_scoring_function(obj)
-    elif api == Api.eval:
-        return await p.register_benchmark(obj)
     elif api == Api.tool_runtime:
         return await p.register_toolgroup(obj)
     else:
@@ -59,12 +52,6 @@ async def unregister_object_from_provider(obj: RoutableObject, p: Any) -> None:
         return await p.unregister_model(obj.identifier)
     elif api == Api.safety:
         return await p.unregister_shield(obj.identifier)
-    elif api == Api.datasetio:
-        return await p.unregister_dataset(obj.identifier)
-    elif api == Api.eval:
-        return await p.unregister_benchmark(obj.identifier)
-    elif api == Api.scoring:
-        return await p.unregister_scoring_function(obj.identifier)
     elif api == Api.tool_runtime:
         return await p.unregister_toolgroup(obj.identifier)
     else:
@@ -106,14 +93,6 @@ class CommonRoutingTableImpl(RoutingTable):
                 p.shield_store = self
             elif api == Api.vector_io:
                 p.vector_store_store = self
-            elif api == Api.datasetio:
-                p.dataset_store = self
-            elif api == Api.scoring:
-                p.scoring_function_store = self
-                scoring_functions = await p.list_scoring_functions()
-                await add_objects(scoring_functions, pid, ScoringFnWithOwner)
-            elif api == Api.eval:
-                p.benchmark_store = self
             elif api == Api.tool_runtime:
                 p.tool_store = self
 
@@ -125,10 +104,7 @@ class CommonRoutingTableImpl(RoutingTable):
         pass
 
     async def get_provider_impl(self, routing_key: str, provider_id: str | None = None) -> Any:
-        from .benchmarks import BenchmarksRoutingTable
-        from .datasets import DatasetsRoutingTable
         from .models import ModelsRoutingTable
-        from .scoring_functions import ScoringFunctionsRoutingTable
         from .shields import ShieldsRoutingTable
         from .toolgroups import ToolGroupsRoutingTable
         from .vector_stores import VectorStoresRoutingTable
@@ -140,12 +116,6 @@ class CommonRoutingTableImpl(RoutingTable):
                 return ("Safety", "shield")
             elif isinstance(self, VectorStoresRoutingTable):
                 return ("VectorIO", "vector_store")
-            elif isinstance(self, DatasetsRoutingTable):
-                return ("DatasetIO", "dataset")
-            elif isinstance(self, ScoringFunctionsRoutingTable):
-                return ("Scoring", "scoring_function")
-            elif isinstance(self, BenchmarksRoutingTable):
-                return ("Eval", "benchmark")
             elif isinstance(self, ToolGroupsRoutingTable):
                 return ("ToolGroups", "tool_group")
             else:

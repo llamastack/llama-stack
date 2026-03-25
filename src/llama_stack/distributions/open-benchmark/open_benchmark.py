@@ -6,9 +6,7 @@
 
 
 from llama_stack.core.datatypes import (
-    BenchmarkInput,
     BuildProvider,
-    DatasetInput,
     ModelInput,
     Provider,
     ShieldInput,
@@ -31,7 +29,7 @@ from llama_stack.providers.remote.vector_io.pgvector.config import (
     PGVectorVectorIOConfig,
 )
 from llama_stack.providers.utils.inference.model_registry import ProviderModelEntry
-from llama_stack_api import DatasetPurpose, ModelType, URIDataSource
+from llama_stack_api import ModelType
 
 
 def get_inference_providers() -> tuple[list[Provider], dict[str, list[ProviderModelEntry]]]:
@@ -103,16 +101,6 @@ def get_distribution_template() -> DistributionTemplate:
         ],
         "safety": [BuildProvider(provider_type="inline::llama-guard")],
         "agents": [BuildProvider(provider_type="inline::builtin")],
-        "eval": [BuildProvider(provider_type="inline::builtin")],
-        "datasetio": [
-            BuildProvider(provider_type="remote::huggingface"),
-            BuildProvider(provider_type="inline::localfs"),
-        ],
-        "scoring": [
-            BuildProvider(provider_type="inline::basic"),
-            BuildProvider(provider_type="inline::llm-as-judge"),
-            BuildProvider(provider_type="inline::braintrust"),
-        ],
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
@@ -163,83 +151,6 @@ def get_distribution_template() -> DistributionTemplate:
         ),
     ]
 
-    default_datasets = [
-        DatasetInput(
-            dataset_id="simpleqa",
-            purpose=DatasetPurpose.eval_messages_answer,
-            source=URIDataSource(
-                uri="huggingface://datasets/llamastack/simpleqa?split=train",
-            ),
-        ),
-        DatasetInput(
-            dataset_id="mmlu_cot",
-            purpose=DatasetPurpose.eval_messages_answer,
-            source=URIDataSource(
-                uri="huggingface://datasets/llamastack/mmlu_cot?split=test&name=all",
-            ),
-        ),
-        DatasetInput(
-            dataset_id="gpqa_cot",
-            purpose=DatasetPurpose.eval_messages_answer,
-            source=URIDataSource(
-                uri="huggingface://datasets/llamastack/gpqa_0shot_cot?split=test&name=gpqa_main",
-            ),
-        ),
-        DatasetInput(
-            dataset_id="math_500",
-            purpose=DatasetPurpose.eval_messages_answer,
-            source=URIDataSource(
-                uri="huggingface://datasets/llamastack/math_500?split=test",
-            ),
-        ),
-        DatasetInput(
-            dataset_id="ifeval",
-            purpose=DatasetPurpose.eval_messages_answer,
-            source=URIDataSource(
-                uri="huggingface://datasets/llamastack/IfEval?split=train",
-            ),
-        ),
-        DatasetInput(
-            dataset_id="docvqa",
-            purpose=DatasetPurpose.eval_messages_answer,
-            source=URIDataSource(
-                uri="huggingface://datasets/llamastack/docvqa?split=val",
-            ),
-        ),
-    ]
-
-    default_benchmarks = [
-        BenchmarkInput(
-            benchmark_id="builtin-simpleqa",
-            dataset_id="simpleqa",
-            scoring_functions=["llm-as-judge::405b-simpleqa"],
-        ),
-        BenchmarkInput(
-            benchmark_id="builtin-mmlu-cot",
-            dataset_id="mmlu_cot",
-            scoring_functions=["basic::regex_parser_multiple_choice_answer"],
-        ),
-        BenchmarkInput(
-            benchmark_id="builtin-gpqa-cot",
-            dataset_id="gpqa_cot",
-            scoring_functions=["basic::regex_parser_multiple_choice_answer"],
-        ),
-        BenchmarkInput(
-            benchmark_id="builtin-math-500",
-            dataset_id="math_500",
-            scoring_functions=["basic::regex_parser_math_response"],
-        ),
-        BenchmarkInput(
-            benchmark_id="builtin-ifeval",
-            dataset_id="ifeval",
-            scoring_functions=["basic::ifeval"],
-        ),
-        BenchmarkInput(
-            benchmark_id="builtin-docvqa",
-            dataset_id="docvqa",
-            scoring_functions=["basic::docvqa"],
-        ),
-    ]
     return DistributionTemplate(
         name=name,
         distro_type="self_hosted",
@@ -256,8 +167,6 @@ def get_distribution_template() -> DistributionTemplate:
                 },
                 default_models=default_models,
                 default_shields=[ShieldInput(shield_id="meta-llama/Llama-Guard-3-8B")],
-                default_datasets=default_datasets,
-                default_benchmarks=default_benchmarks,
             ),
         },
         run_config_env_vars={

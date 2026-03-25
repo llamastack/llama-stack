@@ -21,22 +21,13 @@ from llama_stack.core.storage.datatypes import (
 from llama_stack.log import LoggingConfig
 from llama_stack_api import (
     Api,
-    Benchmark,
-    BenchmarkInput,
     ConnectorInput,
-    Dataset,
-    DatasetInput,
-    DatasetIO,
-    Eval,
     Inference,
     Model,
     ModelInput,
     ProviderSpec,
     Resource,
     Safety,
-    Scoring,
-    ScoringFn,
-    ScoringFnInput,
     Shield,
     ShieldInput,
     ToolGroup,
@@ -89,36 +80,18 @@ class VectorStoreWithOwner(VectorStore, ResourceWithOwner):
     pass
 
 
-class DatasetWithOwner(Dataset, ResourceWithOwner):
-    pass
-
-
-class ScoringFnWithOwner(ScoringFn, ResourceWithOwner):
-    pass
-
-
-class BenchmarkWithOwner(Benchmark, ResourceWithOwner):
-    pass
-
-
 class ToolGroupWithOwner(ToolGroup, ResourceWithOwner):
     pass
 
 
-RoutableObject = Model | Shield | VectorStore | Dataset | ScoringFn | Benchmark | ToolGroup
+RoutableObject = Model | Shield | VectorStore | ToolGroup
 
 RoutableObjectWithProvider = Annotated[
-    ModelWithOwner
-    | ShieldWithOwner
-    | VectorStoreWithOwner
-    | DatasetWithOwner
-    | ScoringFnWithOwner
-    | BenchmarkWithOwner
-    | ToolGroupWithOwner,
+    ModelWithOwner | ShieldWithOwner | VectorStoreWithOwner | ToolGroupWithOwner,
     Field(discriminator="type"),
 ]
 
-RoutedProtocol = Inference | Safety | VectorIO | DatasetIO | Scoring | Eval | ToolRuntime
+RoutedProtocol = Inference | Safety | VectorIO | ToolRuntime
 
 
 # Example: /inference, /safety
@@ -697,9 +670,6 @@ class RegisteredResources(BaseModel):
     models: list[ModelInput] = Field(default_factory=list)
     shields: list[ShieldInput] = Field(default_factory=list)
     vector_stores: list[VectorStoreInput] = Field(default_factory=list)
-    datasets: list[DatasetInput] = Field(default_factory=list)
-    scoring_fns: list[ScoringFnInput] = Field(default_factory=list)
-    benchmarks: list[BenchmarkInput] = Field(default_factory=list)
     tool_groups: list[ToolGroupInput] = Field(default_factory=list, deprecated=True)
 
     @model_validator(mode="after")

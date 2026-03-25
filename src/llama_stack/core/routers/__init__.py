@@ -23,10 +23,7 @@ async def get_routing_table_impl(
     dist_registry: DistributionRegistry,
     policy: list[AccessRule],
 ) -> Any:
-    from ..routing_tables.benchmarks import BenchmarksRoutingTable
-    from ..routing_tables.datasets import DatasetsRoutingTable
     from ..routing_tables.models import ModelsRoutingTable
-    from ..routing_tables.scoring_functions import ScoringFunctionsRoutingTable
     from ..routing_tables.shields import ShieldsRoutingTable
     from ..routing_tables.toolgroups import ToolGroupsRoutingTable
     from ..routing_tables.vector_stores import VectorStoresRoutingTable
@@ -34,9 +31,6 @@ async def get_routing_table_impl(
     api_to_tables = {
         "models": ModelsRoutingTable,
         "shields": ShieldsRoutingTable,
-        "datasets": DatasetsRoutingTable,
-        "scoring_functions": ScoringFunctionsRoutingTable,
-        "benchmarks": BenchmarksRoutingTable,
         "tool_groups": ToolGroupsRoutingTable,
         "vector_stores": VectorStoresRoutingTable,
     }
@@ -53,8 +47,6 @@ async def get_routing_table_impl(
 async def get_auto_router_impl(
     api: Api, routing_table: RoutingTable, deps: dict[str, Any], run_config: StackConfig, policy: list[AccessRule]
 ) -> Any:
-    from .datasets import DatasetIORouter
-    from .eval_scoring import EvalRouter, ScoringRouter
     from .inference import InferenceRouter
     from .safety import SafetyRouter
     from .tool_runtime import ToolRuntimeRouter
@@ -64,9 +56,6 @@ async def get_auto_router_impl(
         "vector_io": VectorIORouter,
         "inference": InferenceRouter,
         "safety": SafetyRouter,
-        "datasetio": DatasetIORouter,
-        "scoring": ScoringRouter,
-        "eval": EvalRouter,
         "tool_runtime": ToolRuntimeRouter,
     }
     if api.value not in api_to_routers:

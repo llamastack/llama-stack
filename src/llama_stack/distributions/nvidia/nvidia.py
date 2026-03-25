@@ -9,8 +9,6 @@ from pathlib import Path
 from llama_stack.core.datatypes import BuildProvider, ModelInput, Provider, ShieldInput
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
-from llama_stack.providers.remote.datasetio.nvidia import NvidiaDatasetIOConfig
-from llama_stack.providers.remote.eval.nvidia import NVIDIAEvalConfig
 from llama_stack.providers.remote.inference.nvidia import NVIDIAConfig
 from llama_stack.providers.remote.safety.nvidia import NVIDIASafetyConfig
 
@@ -21,12 +19,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         "vector_io": [BuildProvider(provider_type="inline::faiss")],
         "safety": [BuildProvider(provider_type="remote::nvidia")],
         "agents": [BuildProvider(provider_type="inline::builtin")],
-        "eval": [BuildProvider(provider_type="remote::nvidia")],
-        "datasetio": [
-            BuildProvider(provider_type="inline::localfs"),
-            BuildProvider(provider_type="remote::nvidia"),
-        ],
-        "scoring": [BuildProvider(provider_type="inline::basic")],
         "tool_runtime": [BuildProvider(provider_type="inline::file-search")],
         "files": [BuildProvider(provider_type="inline::localfs")],
     }
@@ -40,16 +32,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         provider_id="nvidia",
         provider_type="remote::nvidia",
         config=NVIDIASafetyConfig.sample_run_config(),
-    )
-    datasetio_provider = Provider(
-        provider_id="nvidia",
-        provider_type="remote::nvidia",
-        config=NvidiaDatasetIOConfig.sample_run_config(),
-    )
-    eval_provider = Provider(
-        provider_id="nvidia",
-        provider_type="remote::nvidia",
-        config=NVIDIAEvalConfig.sample_run_config(),
     )
     files_provider = Provider(
         provider_id="builtin-files",
@@ -68,7 +50,7 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
     return DistributionTemplate(
         name=name,
         distro_type="self_hosted",
-        description="Use NVIDIA NIM for running LLM inference, evaluation and safety",
+        description="Use NVIDIA NIM for running LLM inference and safety",
         container_image=None,
         template_path=Path(__file__).parent / "doc_template.md",
         providers=providers,
@@ -76,8 +58,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
             "config.yaml": RunConfigSettings(
                 provider_overrides={
                     "inference": [inference_provider],
-                    "datasetio": [datasetio_provider],
-                    "eval": [eval_provider],
                     "files": [files_provider],
                 },
             ),
@@ -87,7 +67,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
                         inference_provider,
                         safety_provider,
                     ],
-                    "eval": [eval_provider],
                     "files": [files_provider],
                 },
                 default_models=[inference_model, safety_model],
@@ -103,14 +82,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
                 "True",
                 "Whether to append the API version to the base_url",
             ),
-            "NVIDIA_DATASET_NAMESPACE": (
-                "default",
-                "NVIDIA Dataset Namespace",
-            ),
-            "NVIDIA_PROJECT_ID": (
-                "test-project",
-                "NVIDIA Project ID",
-            ),
             "GUARDRAILS_SERVICE_URL": (
                 "http://0.0.0.0:7331",
                 "URL for the NeMo Guardrails Service",
@@ -118,10 +89,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
             "NVIDIA_GUARDRAILS_CONFIG_ID": (
                 "self-check",
                 "NVIDIA Guardrail Configuration ID",
-            ),
-            "NVIDIA_EVALUATOR_URL": (
-                "http://0.0.0.0:7331",
-                "URL for the NeMo Evaluator Service",
             ),
             "INFERENCE_MODEL": (
                 "Llama3.1-8B-Instruct",
