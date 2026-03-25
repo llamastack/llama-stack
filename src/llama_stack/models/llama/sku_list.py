@@ -38,11 +38,7 @@ def resolve_model(descriptor: str) -> Model | None:
 
 
 def all_registered_models() -> list[Model]:
-    """Return the complete list of all registered Llama models across all families.
-
-    Returns:
-        A list of all known Model instances.
-    """
+    """Return the complete list of all registered Llama models across all families."""
     return (
         llama2_family()
         + llama3_family()
@@ -55,11 +51,7 @@ def all_registered_models() -> list[Model]:
 
 
 def llama2_family() -> list[Model]:
-    """Return all Llama 2 family models (base and instruct).
-
-    Returns:
-        A list of Llama 2 Model instances.
-    """
+    """Return all Llama 2 family models (base and instruct)."""
     return [
         *llama2_base_models(),
         *llama2_instruct_models(),
@@ -67,11 +59,7 @@ def llama2_family() -> list[Model]:
 
 
 def llama3_family() -> list[Model]:
-    """Return all Llama 3 family models (base and instruct).
-
-    Returns:
-        A list of Llama 3 Model instances.
-    """
+    """Return all Llama 3 family models (base and instruct)."""
     return [
         *llama3_base_models(),
         *llama3_instruct_models(),
@@ -79,11 +67,7 @@ def llama3_family() -> list[Model]:
 
 
 def llama3_1_family() -> list[Model]:
-    """Return all Llama 3.1 family models (base and instruct).
-
-    Returns:
-        A list of Llama 3.1 Model instances.
-    """
+    """Return all Llama 3.1 family models (base and instruct)."""
     return [
         *llama3_1_base_models(),
         *llama3_1_instruct_models(),
@@ -91,11 +75,7 @@ def llama3_1_family() -> list[Model]:
 
 
 def llama3_2_family() -> list[Model]:
-    """Return all Llama 3.2 family models (base and instruct).
-
-    Returns:
-        A list of Llama 3.2 Model instances.
-    """
+    """Return all Llama 3.2 family models (base and instruct)."""
     return [
         *llama3_2_base_models(),
         *llama3_2_instruct_models(),
@@ -103,22 +83,14 @@ def llama3_2_family() -> list[Model]:
 
 
 def llama3_3_family() -> list[Model]:
-    """Return all Llama 3.3 family models (instruct only).
-
-    Returns:
-        A list of Llama 3.3 Model instances.
-    """
+    """Return all Llama 3.3 family models (instruct only)."""
     return [
         *llama3_3_instruct_models(),
     ]
 
 
 def llama4_family() -> list[Model]:
-    """Return all Llama 4 family models (base and instruct).
-
-    Returns:
-        A list of Llama 4 Model instances.
-    """
+    """Return all Llama 4 family models (base and instruct)."""
     return [
         *llama4_base_models(),
         *llama4_instruct_models(),
@@ -126,11 +98,7 @@ def llama4_family() -> list[Model]:
 
 
 def llama4_base_models() -> list[Model]:
-    """Return Llama 4 base (pretrained) models.
-
-    Returns:
-        A list of Llama 4 base Model instances.
-    """
+    """Return Llama 4 base (pretrained) models."""
     return [
         Model(
             core_model_id=CoreModelId.llama4_scout_17b_16e,
@@ -150,11 +118,7 @@ def llama4_base_models() -> list[Model]:
 
 
 def llama4_instruct_models() -> list[Model]:
-    """Return Llama 4 instruct (fine-tuned) models including quantized variants.
-
-    Returns:
-        A list of Llama 4 instruct Model instances.
-    """
+    """Return Llama 4 instruct (fine-tuned) models including quantized variants."""
     return [
         Model(
             core_model_id=CoreModelId.llama4_scout_17b_16e_instruct,
@@ -183,11 +147,7 @@ def llama4_instruct_models() -> list[Model]:
 
 
 def llama2_base_models() -> list[Model]:
-    """Return Llama 2 base (pretrained) models.
-
-    Returns:
-        A list of Llama 2 base Model instances.
-    """
+    """Return Llama 2 base (pretrained) models."""
     return [
         Model(
             core_model_id=CoreModelId.llama2_7b,
@@ -247,11 +207,7 @@ def llama2_base_models() -> list[Model]:
 
 
 def llama3_base_models() -> list[Model]:
-    """Return Llama 3 base (pretrained) models.
-
-    Returns:
-        A list of Llama 3 base Model instances.
-    """
+    """Return Llama 3 base (pretrained) models."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_8b,
@@ -293,11 +249,7 @@ def llama3_base_models() -> list[Model]:
 
 
 def llama3_1_base_models() -> list[Model]:
-    """Return Llama 3.1 base (pretrained) models including quantized variants.
-
-    Returns:
-        A list of Llama 3.1 base Model instances.
-    """
+    """Return Llama 3.1 base (pretrained) models including quantized variants."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_1_8b,
@@ -396,11 +348,7 @@ def llama3_1_base_models() -> list[Model]:
 
 
 def llama3_2_base_models() -> list[Model]:
-    """Return Llama 3.2 base (pretrained) models including vision variants.
-
-    Returns:
-        A list of Llama 3.2 base Model instances.
-    """
+    """Return Llama 3.2 base (pretrained) models including vision variants."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_2_1b,
@@ -484,11 +432,7 @@ def llama3_2_base_models() -> list[Model]:
 
 
 def llama2_instruct_models() -> list[Model]:
-    """Return Llama 2 instruct (chat) models.
-
-    Returns:
-        A list of Llama 2 chat Model instances.
-    """
+    """Return Llama 2 instruct (chat) models."""
     return [
         Model(
             core_model_id=CoreModelId.llama2_7b_chat,
@@ -548,11 +492,7 @@ def llama2_instruct_models() -> list[Model]:
 
 
 def llama3_instruct_models() -> list[Model]:
-    """Return Llama 3 instruct models.
-
-    Returns:
-        A list of Llama 3 instruct Model instances.
-    """
+    """Return Llama 3 instruct models."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_8b_instruct,
@@ -594,11 +534,7 @@ def llama3_instruct_models() -> list[Model]:
 
 
 def llama3_1_instruct_models() -> list[Model]:
-    """Return Llama 3.1 instruct models including quantized variants.
-
-    Returns:
-        A list of Llama 3.1 instruct Model instances.
-    """
+    """Return Llama 3.1 instruct models including quantized variants."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_1_8b_instruct,
@@ -697,11 +633,7 @@ def llama3_1_instruct_models() -> list[Model]:
 
 
 def arch_args_1b() -> dict:
-    """Return the architecture arguments for 1B parameter Llama 3.2 models.
-
-    Returns:
-        A dictionary of model architecture hyperparameters.
-    """
+    """Return the architecture arguments for 1B parameter Llama 3.2 models."""
     return {
         "dim": 2048,
         "n_layers": 16,
@@ -717,11 +649,7 @@ def arch_args_1b() -> dict:
 
 
 def arch_args_3b() -> dict:
-    """Return the architecture arguments for 3B parameter Llama 3.2 models.
-
-    Returns:
-        A dictionary of model architecture hyperparameters.
-    """
+    """Return the architecture arguments for 3B parameter Llama 3.2 models."""
     return {
         "dim": 3072,
         "n_layers": 28,
@@ -737,11 +665,7 @@ def arch_args_3b() -> dict:
 
 
 def llama3_2_quantized_models() -> list[Model]:
-    """Return Llama 3.2 INT4 quantized instruct model variants.
-
-    Returns:
-        A list of quantized Llama 3.2 Model instances.
-    """
+    """Return Llama 3.2 INT4 quantized instruct model variants."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_2_1b_instruct,
@@ -811,11 +735,7 @@ def llama3_2_quantized_models() -> list[Model]:
 
 
 def llama3_2_instruct_models() -> list[Model]:
-    """Return Llama 3.2 instruct models including vision and quantized variants.
-
-    Returns:
-        A list of Llama 3.2 instruct Model instances.
-    """
+    """Return Llama 3.2 instruct models including vision and quantized variants."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_2_1b_instruct,
@@ -878,11 +798,7 @@ def llama3_2_instruct_models() -> list[Model]:
 
 
 def llama3_3_instruct_models() -> list[Model]:
-    """Return Llama 3.3 instruct models.
-
-    Returns:
-        A list of Llama 3.3 instruct Model instances.
-    """
+    """Return Llama 3.3 instruct models."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_3_70b_instruct,
@@ -907,11 +823,7 @@ def llama3_3_instruct_models() -> list[Model]:
 
 @lru_cache
 def safety_models() -> list[Model]:
-    """Return Llama Guard and other safety models.
-
-    Returns:
-        A list of safety-focused Model instances.
-    """
+    """Return Llama Guard and other safety models."""
     return [
         Model(
             core_model_id=CoreModelId.llama_guard_4_12b,

@@ -20,8 +20,9 @@ class ResponsesPersistenceConfig(BaseModel):
 
 
 class BuiltinResponsesImplConfig(BaseModel):
-    persistence: ResponsesPersistenceConfig
     """Configuration for the built-in responses with persistence and vector store settings."""
+
+    persistence: ResponsesPersistenceConfig
 
     vector_stores_config: VectorStoresConfig | None = Field(
         default=None,
