@@ -97,8 +97,12 @@ response = client.responses.create(
 Llama Stack extends OpenAI compatibility with full programmatic prompt management. With OpenAI, prompts are created through their admin portal and referenced by ID in the Responses API. Llama Stack provides the same referencing pattern, plus a complete CRUD API for creating and managing prompts programmatically:
 
 ```python
+from llama_stack_client import LlamaStackClient
+
+ls_client = LlamaStackClient()
+
 # Create reusable prompt templates with variables
-prompt = client.prompts.create(
+prompt = ls_client.prompts.create(
     prompt="You are a {{ role }} assistant. Analyze this: {{ content }}",
     variables=["role", "content"],
 )
