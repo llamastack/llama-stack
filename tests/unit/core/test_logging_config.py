@@ -235,3 +235,26 @@ class TestLoggingConfigIntegration:
         assert core_logger.logger.level == logging.DEBUG
         assert server_logger.logger.level == logging.WARNING
         assert router_logger.logger.level == logging.INFO
+
+    def test_setup_logging_updates_preexisting_loggers(self):
+        """
+        Regression test: loggers created before setup_logging() (e.g. at module
+        import time) must have their levels updated when setup_logging() is
+        called later with custom category levels.
+        """
+        from llama_stack.log import get_logger
+
+        # Arrange - reset to defaults, then create loggers BEFORE calling
+        # setup_logging with custom levels (simulates module-level imports)
+        setup_logging({"core": logging.INFO})
+        auth_logger = get_logger("test.preexisting.auth", category="core::auth")
+        server_logger = get_logger("test.preexisting.server", category="core::server")
+        assert auth_logger.logger.level == logging.INFO
+        assert server_logger.logger.level == logging.INFO
+
+        # Act - call setup_logging with custom levels, as create_app() does
+        setup_logging({"core": logging.DEBUG})
+
+        # Assert - pre-existing loggers must now reflect the updated level
+        assert auth_logger.logger.level == logging.DEBUG
+        assert server_logger.logger.level == logging.DEBUG
