@@ -9,13 +9,13 @@ import logging  # allow-direct-logging
 
 import pytest
 
-from llama_stack_api.agents.fastapi_routes import create_sse_event, sse_generator
+from llama_stack_api.responses.fastapi_routes import create_sse_event, sse_generator
 
 
 @pytest.fixture
 def suppress_sse_errors(caplog):
     """Suppress expected ERROR logs for tests that deliberately trigger SSE errors"""
-    caplog.set_level(logging.CRITICAL, logger="llama_stack_api.agents.fastapi_routes")
+    caplog.set_level(logging.CRITICAL, logger="llama_stack_api.responses.fastapi_routes")
 
 
 async def test_sse_generator_basic():
