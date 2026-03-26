@@ -140,15 +140,7 @@ RESOURCE_ID_FIELDS = [
 
 
 def is_request_model(t: Any) -> bool:
-    """Check if a type is a request model (Pydantic BaseModel).
-
-    Args:
-        t: The type to check
-
-    Returns:
-        True if the type is a Pydantic BaseModel subclass, False otherwise
-    """
-
+    """Check if a type is a request model (Pydantic BaseModel)."""
     return inspect.isclass(t) and issubclass(t, BaseModel)
 
 
@@ -157,20 +149,6 @@ async def invoke_with_optional_request(method: Any) -> Any:
 
     For APIs that use request models, this will create an empty request object.
     For backward compatibility, falls back to calling without arguments.
-
-    Uses get_type_hints() to resolve forward references (e.g., "ListBenchmarksRequest" -> actual class).
-
-    Handles methods with:
-    - No parameters: calls without arguments
-    - One or more request model parameters: creates empty instances for each
-    - Mixed parameters: creates request models, uses defaults for others
-    - Required non-request-model parameters without defaults: falls back to calling without arguments
-
-    Args:
-        method: The method to invoke
-
-    Returns:
-        The result of calling the method
     """
     try:
         hints = get_type_hints(method)
@@ -215,12 +193,7 @@ async def invoke_with_optional_request(method: Any) -> Any:
 
 
 async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
-    """Register all resources defined in the run configuration with their respective providers.
-
-    Args:
-        run_config: The stack run configuration containing registered_resources.
-        impls: Dictionary mapping APIs to their provider implementations.
-    """
+    """Register all resources defined in the run configuration with their respective providers."""
     for rsrc, api, register_method, list_method, request_class in RESOURCES:
         objects = getattr(run_config.registered_resources, rsrc)
         if api not in impls:
@@ -448,15 +421,7 @@ async def _validate_rewrite_query_model(rewrite_query_model: QualifiedModel, imp
 
 
 async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict[Api, Any]):
-    """Validate that the configured default shield exists among registered shields.
-
-    Args:
-        safety_config: Optional safety configuration with a default_shield_id.
-        impls: Dictionary mapping APIs to their provider implementations.
-
-    Raises:
-        ValueError: If the default shield ID is not found among registered shields.
-    """
+    """Validate that the configured default shield exists among registered shields."""
     if safety_config is None or safety_config.default_shield_id is None:
         return
 
@@ -495,18 +460,7 @@ class EnvVarError(Exception):
 
 
 def replace_env_vars(config: Any, path: str = "") -> Any:
-    """Recursively replace environment variable references in a configuration object.
-
-    Args:
-        config: Configuration value (dict, list, str, or other) to process.
-        path: Dot-separated path for error reporting.
-
-    Returns:
-        The configuration with all environment variable references resolved.
-
-    Raises:
-        EnvVarError: If a required environment variable is not set.
-    """
+    """Recursively replace environment variable references in a configuration object."""
     if isinstance(config, dict):
         # Special handling for auth provider_config with conditional type field
         # This allows auth to be enabled/disabled via environment variables
@@ -694,12 +648,7 @@ def cast_distro_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
 
 
 def add_internal_implementations(impls: dict[Api, Any], config: StackConfig, policy: list) -> None:
-    """Add internal implementations (inspect, providers, and admin) to the implementations dictionary.
-    Args:
-        impls: Dictionary of API implementations
-        config: Stack run configuration
-        policy: Access control policy rules
-    """
+    """Add internal implementations (inspect, providers, admin, etc.) to the implementations dictionary."""
     inspect_impl = DistributionInspectImpl(
         DistributionInspectConfig(config=config),
         deps=impls,
@@ -868,11 +817,7 @@ class Stack:
 
 
 async def refresh_registry_once(impls: dict[Api, Any]):
-    """Refresh all routing table registries once by calling their refresh methods.
-
-    Args:
-        impls: Dictionary mapping APIs to their provider implementations.
-    """
+    """Refresh all routing table registries once by calling their refresh methods."""
     logger.debug("refreshing registry")
     routing_tables = [v for v in impls.values() if isinstance(v, CommonRoutingTableImpl)]
     for routing_table in routing_tables:
@@ -880,11 +825,7 @@ async def refresh_registry_once(impls: dict[Api, Any]):
 
 
 async def refresh_registry_task(impls: dict[Api, Any]):
-    """Background task that periodically refreshes routing table registries.
-
-    Args:
-        impls: Dictionary mapping APIs to their provider implementations.
-    """
+    """Background task that periodically refreshes routing table registries."""
     logger.info("starting registry refresh task")
     while True:
         await refresh_registry_once(impls)
@@ -893,17 +834,7 @@ async def refresh_registry_task(impls: dict[Api, Any]):
 
 
 def get_stack_run_config_from_distro(distro: str) -> StackConfig:
-    """Load a StackConfig from a named distribution's bundled config.yaml.
-
-    Args:
-        distro: Name of the distribution (e.g., 'starter', 'ci-tests').
-
-    Returns:
-        A validated StackConfig loaded from the distribution's config file.
-
-    Raises:
-        ValueError: If the distribution is not found.
-    """
+    """Load a StackConfig from a named distribution's bundled config.yaml."""
     distro_path = importlib.resources.files("llama_stack") / f"distributions/{distro}/config.yaml"
 
     with importlib.resources.as_file(distro_path) as path:
