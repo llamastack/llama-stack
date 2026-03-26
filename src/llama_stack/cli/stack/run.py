@@ -130,7 +130,16 @@ class StackRun(Subcommand):
             config = StackConfig(**cast_distro_name_to_string(replace_env_vars(config_contents)))
 
         port = args.port or config.server.port
-        host = config.server.host or ["::", "0.0.0.0"]
+        workers = config.server.workers
+
+        # Dual-stack binding (IPv4+IPv6) depends on worker count:
+        # - workers>1: use "::" (creates single dual-stack socket)
+        # - workers=1: use "" (creates separate IPv4 and IPv6 sockets)
+        host = ""
+        if config.server.host:
+            host = config.server.host
+        elif workers and workers > 1:
+            host = "::"
 
         # Set the config file in environment so create_app can find it
         os.environ["LLAMA_STACK_CONFIG"] = str(config_file)
@@ -142,7 +151,7 @@ class StackRun(Subcommand):
             "port": port,
             "lifespan": "on",
             "log_level": logger.getEffectiveLevel(),
-            "workers": config.server.workers,
+            "workers": workers,
         }
 
         keyfile = config.server.tls_keyfile
@@ -173,6 +182,14 @@ class StackRun(Subcommand):
         # signal handling but this is quite intrusive and not worth the effort.
         try:
             uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)  # type: ignore[arg-type]
+        except OSError as e:
+            if e.errno in (97, 99):  # Address family not supported / Cannot assign requested address
+                logger.error(
+                    f"Failed to bind to {host}:{port}. "
+                    "If you're on an IPv4-only system, set 'server.host: \"0.0.0.0\"' in your config."
+                )
+                raise
+            raise
         except (KeyboardInterrupt, SystemExit):
             logger.info("Received interrupt signal, shutting down gracefully...")
 
