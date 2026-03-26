@@ -11,6 +11,7 @@ These APIs are fully tested, documented, and stable. They follow semantic versio
 [**Browse Stable APIs →**](./api/index.mdx)
 
 **Key Features:**
+
 - ✅ Backward compatibility guaranteed
 - ✅ Comprehensive testing and validation
 - ✅ Production-ready reliability
@@ -27,6 +28,7 @@ These APIs include v1alpha and v1beta endpoints that are feature-complete but ma
 [**Browse Experimental APIs →**](./api-experimental/index.mdx)
 
 **Key Features:**
+
 - 🧪 Latest features and capabilities
 - 🧪 May change based on user feedback
 - 🧪 Active development and iteration
@@ -43,6 +45,7 @@ These APIs are deprecated and will be removed in future versions. They are provi
 [**Browse Deprecated APIs →**](./api-deprecated/index.mdx)
 
 **Key Features:**
+
 - ⚠️ Will be removed in future versions
 - ⚠️ Migration guidance provided
 - ⚠️ Use for compatibility during transition

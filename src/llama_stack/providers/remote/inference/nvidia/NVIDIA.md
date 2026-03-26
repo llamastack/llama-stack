@@ -3,6 +3,7 @@
 This provider enables running inference using NVIDIA NIM.
 
 ## Features
+
 - Endpoints for completions, chat completions, and embeddings for registered models
 
 ## Getting Started
@@ -63,7 +64,7 @@ response = client.chat.completions.create(
 print(f"Response: {response.choices[0].message.content}")
 ```
 
-### Tool Calling Example ###
+### Tool Calling Example
 
 The following example shows how to do tool calling for an NVIDIA NIM.
 

@@ -1488,7 +1488,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
       tags:
-      - Agents
+      - Responses
       summary: List all responses.
       description: List all responses.
       operationId: list_openai_responses_v1_responses_get
@@ -1559,7 +1559,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
       tags:
-      - Agents
+      - Responses
       summary: Create a model response.
       description: Create a model response.
       operationId: create_openai_response_v1_responses_post
@@ -1591,7 +1591,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
       tags:
-      - Agents
+      - Responses
       summary: Get a model response.
       description: Get a model response.
       operationId: get_openai_response_v1_responses__response_id__get
@@ -1625,7 +1625,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
       tags:
-      - Agents
+      - Responses
       summary: Delete a response.
       description: Delete a response.
       operationId: delete_openai_response_v1_responses__response_id__delete
@@ -1660,7 +1660,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
       tags:
-      - Agents
+      - Responses
       summary: List input items.
       description: List input items.
       operationId: list_openai_response_input_items_v1_responses__response_id__input_items_get
@@ -13316,7 +13316,7 @@ components:
       - providers
       - inference
       - safety
-      - agents
+      - responses
       - batches
       - vector_io
       - datasetio
