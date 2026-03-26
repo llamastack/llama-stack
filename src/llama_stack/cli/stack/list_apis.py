@@ -10,6 +10,8 @@ from llama_stack.cli.subcommand import Subcommand
 
 
 class StackListApis(Subcommand):
+    """CLI subcommand to list all APIs in the Llama Stack implementation."""
+
     def __init__(self, subparsers: argparse._SubParsersAction):
         super().__init__()
         self.parser = subparsers.add_parser(

@@ -10,6 +10,8 @@ from .config import PassthroughImplConfig
 
 
 class PassthroughProviderDataValidator(BaseModel):
+    """Validator for passthrough provider data with optional URL and API key."""
+
     # Lives here because the framework resolves provider_data_validator by module path,
     # and the registry entry points to this package root.
     #

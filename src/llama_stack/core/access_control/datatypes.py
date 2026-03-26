@@ -13,6 +13,8 @@ from .conditions import parse_conditions
 
 
 class Action(StrEnum):
+    """CRUD actions for access control evaluation."""
+
     CREATE = "create"
     READ = "read"
     UPDATE = "update"
@@ -20,6 +22,8 @@ class Action(StrEnum):
 
 
 class Scope(BaseModel):
+    """Defines the scope of an access rule including optional principal, actions, and resource constraints."""
+
     principal: str | None = None
     actions: Action | list[Action]
     resource: str | None = None

@@ -14,6 +14,8 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class MilvusVectorIOConfig(BaseModel):
+    """Configuration for the remote Milvus vector I/O provider."""
+
     uri: str = Field(description="The URI of the Milvus server")
     token: str | None = Field(description="The token of the Milvus server")
     consistency_level: str = Field(description="The consistency level of the Milvus server", default="Strong")

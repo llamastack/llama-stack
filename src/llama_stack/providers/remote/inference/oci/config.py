@@ -14,6 +14,8 @@ from llama_stack_api import json_schema_type
 
 
 class OCIProviderDataValidator(BaseModel):
+    """Validates provider-specific request data for OCI inference."""
+
     oci_auth_type: str = Field(
         description="OCI authentication type (must be one of: instance_principal, config_file)",
     )
@@ -35,6 +37,8 @@ class OCIProviderDataValidator(BaseModel):
 
 @json_schema_type
 class OCIConfig(RemoteInferenceProviderConfig):
+    """Configuration for the Oracle Cloud Infrastructure inference provider."""
+
     oci_auth_type: str = Field(
         description="OCI authentication type (must be one of: instance_principal, config_file)",
         default_factory=lambda: os.getenv("OCI_AUTH_TYPE", "instance_principal"),

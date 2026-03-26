@@ -49,12 +49,22 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 # this is a helper to allow us to use async and non-async chroma clients interchangeably
 async def maybe_await(result):
+    """Await a coroutine if needed, otherwise return the value directly.
+
+    Args:
+        result: a coroutine or plain value
+
+    Returns:
+        The resolved value
+    """
     if asyncio.iscoroutine(result):
         return await result
     return result
 
 
 class ChromaIndex(EmbeddingIndex):
+    """Embedding index backed by a ChromaDB collection."""
+
     def __init__(self, client: ChromaClientType, collection, kvstore: KVStore | None = None):
         self.client = client
         self.collection = collection
@@ -230,6 +240,8 @@ class ChromaIndex(EmbeddingIndex):
 
 
 class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+    """Vector I/O adapter for remote ChromaDB instances."""
+
     def __init__(
         self,
         config: RemoteChromaVectorIOConfig | InlineChromaVectorIOConfig,

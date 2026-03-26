@@ -9,6 +9,11 @@ from llama_stack_api import Api, InlineProviderSpec, ProviderSpec
 
 
 def available_providers() -> list[ProviderSpec]:
+    """Return the list of available batch processing provider specifications.
+
+    Returns:
+        List of ProviderSpec objects describing available providers
+    """
     return [
         InlineProviderSpec(
             api=Api.batches,
