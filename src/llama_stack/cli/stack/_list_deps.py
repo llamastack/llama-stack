@@ -13,8 +13,11 @@ from termcolor import cprint
 
 from llama_stack.core.build import get_provider_dependencies
 from llama_stack.core.datatypes import StackConfig
+from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.stack import run_config_from_dynamic_config_spec
 from llama_stack.log import get_logger
+
+from .utils import add_dependent_providers
 
 TEMPLATES_PATH = Path(__file__).parent.parent.parent / "templates"
 
@@ -103,6 +106,16 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
         except ValueError as e:
             cprint(str(e), color="red", file=sys.stderr)
             sys.exit(1)
+        # Expand dependent providers (e.g. agents depends on inference, safety, etc.)
+        provider_registry = get_provider_registry()
+        requested_provider_types = list(
+            {provider.provider_type for providers in config.providers.values() for provider in providers}
+        )
+        add_dependent_providers(
+            provider_list=config.providers,
+            provider_registry=provider_registry,
+            requested_provider_types=requested_provider_types,
+        )
 
     normal_deps, special_deps, external_provider_dependencies = get_provider_dependencies(config)
     normal_deps += SERVER_DEPENDENCIES

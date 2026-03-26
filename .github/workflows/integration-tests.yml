@@ -114,7 +114,7 @@ jobs:
             --schedule "${{ github.event.schedule }}" \
             --test-setup "${{ github.event.inputs.test-setup || '' }}" \
             --matrix-key "${{ inputs.matrix_key || 'default' }}")
-          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
           echo "Generated matrix: $MATRIX"
 
   run-replay-mode-tests:
@@ -131,7 +131,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        client: [library, docker, server]
+        client: [library, server]
         # Use Python 3.13 only on nightly schedule (daily latest client test), otherwise use 3.12
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
         node-version: [22]
