@@ -784,14 +784,18 @@ class TestOpenAIResponses:
         cancelled = openai_client.responses.cancel(response_id=response_id)
         assert cancelled.status == "cancelled"
 
-        # Wait a bit to ensure it doesn't complete
-        time.sleep(3)
+        # Poll to verify it stays cancelled and doesn't complete
+        max_wait = 5
+        poll_interval = 0.5
+        elapsed = 0
 
-        # Verify it's still cancelled (not completed)
-        retrieved = openai_client.responses.retrieve(response_id=response_id)
-        assert retrieved.status == "cancelled"
-        # Output should be empty since processing was cancelled
-        assert len(retrieved.output) == 0
+        while elapsed < max_wait:
+            time.sleep(poll_interval)
+            elapsed += poll_interval
+
+            retrieved = openai_client.responses.retrieve(response_id=response_id)
+            assert retrieved.status == "cancelled", f"Expected 'cancelled' but got '{retrieved.status}'"
+            assert len(retrieved.output) == 0
 
     def _skip_service_tier_for_unsupported(self, text_model_id):
         if text_model_id.startswith("azure/"):

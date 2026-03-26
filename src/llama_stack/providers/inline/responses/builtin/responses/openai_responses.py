@@ -28,6 +28,7 @@ from llama_stack.providers.utils.responses.responses_store import (
 from llama_stack.providers.utils.tools.mcp import MCPSessionManager
 from llama_stack_api import (
     AddItemsRequest,
+    ConflictError,
     Connectors,
     ConversationItem,
     Conversations,
@@ -1194,8 +1195,6 @@ class OpenAIResponsesImpl:
             ResponseNotFoundError: If the response doesn't exist (automatically from store)
             ConflictError: If the response is already in a terminal state
         """
-        from llama_stack_api import ConflictError
-
         # Get current response state
         response = await self.responses_store.get_response_object(response_id)
 
@@ -1222,8 +1221,9 @@ class OpenAIResponsesImpl:
                 task.cancel()
                 # Note: task removal handled in worker's finally block
 
-        # Return updated response
-        return response.to_response_object()
+        # Re-fetch from store to return the persisted state
+        updated = await self.responses_store.get_response_object(response_id)
+        return updated.to_response_object()
 
     async def _sync_response_to_conversation(
         self, conversation_id: str, input: str | list[OpenAIResponseInput] | None, output_items: list[ConversationItem]
