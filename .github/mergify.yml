@@ -3,8 +3,6 @@ queue_rules:
   merge_method: squash
   update_method: merge
   batch_size: 5
-  queue_branch_merge_method: none
-  speculative_checks: 2
 
 pull_request_rules:
 - name: ping author on conflicts and add 'needs-rebase' label
