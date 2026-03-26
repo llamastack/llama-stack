@@ -43,7 +43,7 @@ jobs:
               grep '\.x$' | \
               sed 's|^[[:space:]]*origin/||' | \
               sort -V | \
-              tail -2 | \
+              tail -3 | \
               jq -R -s -c 'split("\n") | map(select(length > 0) | ltrimstr(" ") | rtrimstr(" "))')
           fi
 
