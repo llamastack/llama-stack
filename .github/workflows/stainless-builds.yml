@@ -86,7 +86,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           PR_DATA=$(gh pr view ${{ inputs.pr_number }} --repo ${{ github.repository }} --json headRefName,headRepository,headRefOid,baseRefName,baseRefOid,headRepositoryOwner,title)
-          echo "pr_data=$PR_DATA" >> $GITHUB_OUTPUT
+          echo "pr_data=$PR_DATA" >> "$GITHUB_OUTPUT"
 
       - name: Compute branch names
         id: compute
@@ -95,6 +95,7 @@ jobs:
         # allows command substitution via backticks or $() in PR titles.
         env:
           PR_TITLE_FROM_EVENT: ${{ github.event.pull_request.title }}
+          HEAD_REF_FROM_EVENT: ${{ github.event.pull_request.head.ref }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             # Extract from fetched PR data (jq -r safely handles special characters)
@@ -110,7 +111,7 @@ jobs:
           else
             # Use pull_request_target event data
             HEAD_REPO="${{ github.event.pull_request.head.repo.full_name }}"
-            BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+            BRANCH_NAME="$HEAD_REF_FROM_EVENT"
             FORK_OWNER="${{ github.event.pull_request.head.repo.owner.login }}"
             HEAD_SHA="${{ github.event.pull_request.head.sha }}"
             BASE_SHA="${{ github.event.pull_request.base.sha }}"
@@ -137,16 +138,18 @@ jobs:
             IS_FORK_PR="false"
           fi
 
-          echo "preview_branch=${PREVIEW_BRANCH}" >> $GITHUB_OUTPUT
-          echo "base_branch=${BASE_BRANCH}" >> $GITHUB_OUTPUT
-          echo "merge_branch=${PREVIEW_BRANCH}" >> $GITHUB_OUTPUT
-          echo "pr_head_repo=${HEAD_REPO}" >> $GITHUB_OUTPUT
-          echo "pr_head_ref=${BRANCH_NAME}" >> $GITHUB_OUTPUT
-          echo "pr_head_sha=${HEAD_SHA}" >> $GITHUB_OUTPUT
-          echo "pr_base_sha=${BASE_SHA}" >> $GITHUB_OUTPUT
-          echo "pr_base_ref=${BASE_REF}" >> $GITHUB_OUTPUT
-          echo "pr_title=${PR_TITLE}" >> $GITHUB_OUTPUT
-          echo "is_fork_pr=${IS_FORK_PR}" >> $GITHUB_OUTPUT
+          {
+            echo "preview_branch=${PREVIEW_BRANCH}"
+            echo "base_branch=${BASE_BRANCH}"
+            echo "merge_branch=${PREVIEW_BRANCH}"
+            echo "pr_head_repo=${HEAD_REPO}"
+            echo "pr_head_ref=${BRANCH_NAME}"
+            echo "pr_head_sha=${HEAD_SHA}"
+            echo "pr_base_sha=${BASE_SHA}"
+            echo "pr_base_ref=${BASE_REF}"
+            echo "pr_title=${PR_TITLE}"
+            echo "is_fork_pr=${IS_FORK_PR}"
+          } >> "$GITHUB_OUTPUT"
 
   preview:
     needs: compute-branch
