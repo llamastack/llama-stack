@@ -25,7 +25,6 @@ from llama_stack.log import get_logger
 from llama_stack_api import (
     LLAMA_STACK_API_V1ALPHA,
     Admin,
-    Agents,
     Api,
     Batches,
     Benchmarks,
@@ -48,6 +47,7 @@ from llama_stack_api import (
     ProviderSpec,
     RemoteProviderConfig,
     RemoteProviderSpec,
+    Responses,
     Safety,
     Scoring,
     ScoringFunctions,
@@ -83,7 +83,7 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
     protocols = {
         Api.admin: Admin,
         Api.providers: ProvidersAPI,
-        Api.agents: Agents,
+        Api.responses: Responses,
         Api.inference: Inference,
         Api.inspect: Inspect,
         Api.batches: Batches,
