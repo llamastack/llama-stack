@@ -49,6 +49,15 @@ class TestArguments:
 
 
 class TestDelegation:
+    def _mock_provider_registry(self):
+        """Return a mock registry that accepts test provider types."""
+        from llama_stack.core.datatypes import Api
+
+        return {
+            Api.inference: {"fireworks": MagicMock()},
+            Api.safety: {"llama-guard": MagicMock()},
+        }
+
     def test_providers_calls_dynamic_config_spec(self, stack_list_deps: StackListDeps):
         mock_config = MagicMock()
         mock_config.external_apis_dir = None
@@ -58,6 +67,13 @@ class TestDelegation:
                 "llama_stack.cli.stack._list_deps.run_config_from_dynamic_config_spec",
                 return_value=mock_config,
             ) as mock_fn,
+            patch(
+                "llama_stack.cli.stack._list_deps.get_provider_registry",
+                return_value=self._mock_provider_registry(),
+            ),
+            patch(
+                "llama_stack.cli.stack._list_deps.add_dependent_providers",
+            ),
             patch(
                 "llama_stack.cli.stack._list_deps.get_provider_dependencies",
                 return_value=([], [], []),
@@ -80,6 +96,13 @@ class TestDelegation:
                 "llama_stack.cli.stack._list_deps.run_config_from_dynamic_config_spec",
                 return_value=mock_config,
             ) as mock_fn,
+            patch(
+                "llama_stack.cli.stack._list_deps.get_provider_registry",
+                return_value=self._mock_provider_registry(),
+            ),
+            patch(
+                "llama_stack.cli.stack._list_deps.add_dependent_providers",
+            ),
             patch(
                 "llama_stack.cli.stack._list_deps.get_provider_dependencies",
                 return_value=([], [], []),
@@ -122,6 +145,14 @@ class TestErrorPropagation:
 
 
 class TestOutput:
+    def _mock_provider_registry(self):
+        """Return a mock registry that accepts test provider types."""
+        from llama_stack.core.datatypes import Api
+
+        return {
+            Api.inference: {"fireworks": MagicMock()},
+        }
+
     def test_normal_deps_printed(self, stack_list_deps: StackListDeps, capsys):
         mock_config = MagicMock()
         mock_config.external_apis_dir = None
@@ -130,6 +161,13 @@ class TestOutput:
             patch(
                 "llama_stack.cli.stack._list_deps.run_config_from_dynamic_config_spec",
                 return_value=mock_config,
+            ),
+            patch(
+                "llama_stack.cli.stack._list_deps.get_provider_registry",
+                return_value=self._mock_provider_registry(),
+            ),
+            patch(
+                "llama_stack.cli.stack._list_deps.add_dependent_providers",
             ),
             patch(
                 "llama_stack.cli.stack._list_deps.get_provider_dependencies",
@@ -151,6 +189,13 @@ class TestOutput:
             patch(
                 "llama_stack.cli.stack._list_deps.run_config_from_dynamic_config_spec",
                 return_value=mock_config,
+            ),
+            patch(
+                "llama_stack.cli.stack._list_deps.get_provider_registry",
+                return_value=self._mock_provider_registry(),
+            ),
+            patch(
+                "llama_stack.cli.stack._list_deps.add_dependent_providers",
             ),
             patch(
                 "llama_stack.cli.stack._list_deps.get_provider_dependencies",

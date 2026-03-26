@@ -30,6 +30,11 @@ repos:
     -   id: check-symlinks
     -   id: check-toml
 
+-   repo: https://github.com/rhysd/actionlint
+    rev: v1.7.11
+    hooks:
+    -   id: actionlint
+
 -   repo: https://github.com/compilerla/conventional-pre-commit
     rev: v3.6.0
     hooks:
@@ -284,6 +289,13 @@ repos:
               exit 1;
             }
             exit 0
+
+      - id: check-file-size
+        name: Check Python file size limit
+        entry: python scripts/check_file_size.py
+        language: system
+        types: [python]
+        pass_filenames: true
 
 # markdownlint must run after distro-codegen and provider-codegen which generate markdown files
 -   repo: https://github.com/igorshubovych/markdownlint-cli
