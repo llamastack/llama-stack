@@ -1,41 +1,26 @@
 name: vLLM GPU Recording
 
-run-name: GPU recording for ${{ inputs.model }} on ${{ inputs.instance_type }}
+run-name: GPU recording for gpt-oss:20b (${{ inputs.suite }} suite)
 
 on:
   workflow_dispatch:
     inputs:
-      model:
-        description: 'Model to test'
-        required: false
-        type: choice
-        default: 'gpt-oss:20b'
-        options:
-          - gpt-oss:20b
-          - gpt-oss:latest
-          - Qwen/Qwen3-0.6B
-      instance_type:
-        description: 'EC2 instance type'
-        required: false
-        type: choice
-        default: 'g6.2xlarge'
-        options:
-          - g6.2xlarge
-          - g5.2xlarge
-          - g6.8xlarge
-          - g6e.12xlarge
       suite:
         description: 'Test suite to run'
         required: false
-        type: string
+        type: choice
         default: 'base'
+        options:
+          - base
+          - responses
+          - vllm-reasoning
       pr_number:
         description: 'PR number to commit recordings to (optional)'
         required: false
         type: number
 
 concurrency:
-  group: gpu-vllm-record-${{ inputs.model }}-${{ github.run_id }}
+  group: gpu-vllm-record-${{ github.run_id }}
   cancel-in-progress: false  # Don't cancel - EC2 cleanup is critical
 
 # OIDC authentication for AWS - no long-lived credentials!
@@ -44,59 +29,21 @@ permissions:
   id-token: write  # Required for OIDC authentication to AWS
 
 jobs:
-  # Job 1: Launch GPU EC2 instance with multi-region/AZ fallback
+  # Job 1: Launch GPU EC2 instance with multi-AZ fallback
   start-gpu-runner:
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
       instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
-      region: ${{ steps.select-region.outputs.region }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Select region and AZ with fallback
-        id: select-region
-        run: |
-          # Multi-region, multi-AZ fallback strategy
-          # Try: us-east-2 (a, b, c) → us-east-1 (a, b, c)
-
-          # Define configuration for each region/AZ combination
-          declare -a CONFIGS=(
-            "us-east-2|us-east-2a|${{ vars.SUBNET_US_EAST_2A }}|${{ vars.AWS_EC2_AMI_US_EAST_2 }}|${{ vars.SECURITY_GROUP_ID_US_EAST_2 }}"
-            "us-east-2|us-east-2b|${{ vars.SUBNET_US_EAST_2B }}|${{ vars.AWS_EC2_AMI_US_EAST_2 }}|${{ vars.SECURITY_GROUP_ID_US_EAST_2 }}"
-            "us-east-2|us-east-2c|${{ vars.SUBNET_US_EAST_2C }}|${{ vars.AWS_EC2_AMI_US_EAST_2 }}|${{ vars.SECURITY_GROUP_ID_US_EAST_2 }}"
-            "us-east-1|us-east-1a|${{ vars.SUBNET_US_EAST_1A }}|${{ vars.AWS_EC2_AMI_US_EAST_1 }}|${{ vars.SECURITY_GROUP_ID_US_EAST_1 }}"
-            "us-east-1|us-east-1b|${{ vars.SUBNET_US_EAST_1B }}|${{ vars.AWS_EC2_AMI_US_EAST_1 }}|${{ vars.SECURITY_GROUP_ID_US_EAST_1 }}"
-            "us-east-1|us-east-1c|${{ vars.SUBNET_US_EAST_1C }}|${{ vars.AWS_EC2_AMI_US_EAST_1 }}|${{ vars.SECURITY_GROUP_ID_US_EAST_1 }}"
-          )
-
-          echo "=== Attempting to find available capacity ==="
-          echo "Instance type: ${{ inputs.instance_type }}"
-          echo ""
-
-          # For simplicity, we'll try the first configuration (can be enhanced with actual capacity checks)
-          # In production, you'd query AWS for capacity availability
-
-          IFS='|' read -r REGION AZ SUBNET AMI SG <<< "${CONFIGS[0]}"
-
-          echo "Selected configuration:"
-          echo "  Region: $REGION"
-          echo "  AZ: $AZ"
-          echo "  Subnet: $SUBNET"
-          echo "  AMI: $AMI"
-          echo "  Security Group: $SG"
-
-          echo "region=$REGION" >> $GITHUB_OUTPUT
-          echo "subnet=$SUBNET" >> $GITHUB_OUTPUT
-          echo "ami=$AMI" >> $GITHUB_OUTPUT
-          echo "security_group=$SG" >> $GITHUB_OUTPUT
-
       - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4.0.2
+        uses: aws-actions/configure-aws-credentials@e3dd6b9db4c5f1d5e55a52ae244b09d44a2e2d5a # v4.0.2
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ steps.select-region.outputs.region }}
+          aws-region: us-east-2
           role-session-name: GitHubActions-vLLM-GPU-${{ github.run_id }}
 
       - name: Start EC2 runner
@@ -105,17 +52,20 @@ jobs:
         with:
           mode: start
           github-token: ${{ secrets.GH_RUNNER_PAT }}
-          instance-type: ${{ inputs.instance_type }}
-          aws-region: ${{ steps.select-region.outputs.region }}
-          subnet-id: ${{ steps.select-region.outputs.subnet }}
-          ec2-ami-id: ${{ steps.select-region.outputs.ami }}
-          security-group-id: ${{ steps.select-region.outputs.security_group }}
+          instance-type: g6.2xlarge
+          aws-region: us-east-2
+          availability-zones-config: |
+            [
+              {"imageId": "${{ vars.AWS_EC2_AMI_US_EAST_2 }}", "subnetId": "${{ vars.SUBNET_US_EAST_2A }}", "securityGroupId": "${{ vars.SECURITY_GROUP_ID_US_EAST_2 }}"},
+              {"imageId": "${{ vars.AWS_EC2_AMI_US_EAST_2 }}", "subnetId": "${{ vars.SUBNET_US_EAST_2B }}", "securityGroupId": "${{ vars.SECURITY_GROUP_ID_US_EAST_2 }}"},
+              {"imageId": "${{ vars.AWS_EC2_AMI_US_EAST_2 }}", "subnetId": "${{ vars.SUBNET_US_EAST_2C }}", "securityGroupId": "${{ vars.SECURITY_GROUP_ID_US_EAST_2 }}"}
+            ]
           ec2-instance-tags: |
             [
               {"Key": "Name", "Value": "llamastack-vllm-gpu-runner"},
               {"Key": "Project", "Value": "llama-stack"},
               {"Key": "Purpose", "Value": "vllm-gpu-recording"},
-              {"Key": "Model", "Value": "${{ inputs.model }}"},
+              {"Key": "Model", "Value": "gpt-oss:20b"},
               {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
               {"Key": "GitHubRef", "Value": "${{ github.ref }}"},
               {"Key": "GitHubRunId", "Value": "${{ github.run_id }}"},
@@ -124,10 +74,11 @@ jobs:
 
       - name: Runner launch summary
         run: |
-          echo "✅ GPU runner launched successfully!"
-          echo "  Region: ${{ steps.select-region.outputs.region }}"
+          echo "GPU runner launched successfully"
           echo "  Instance ID: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}"
           echo "  Runner Label: ${{ steps.start-ec2-runner.outputs.label }}"
+          echo "  Model: gpt-oss:20b"
+          echo "  Instance Type: g6.2xlarge"
 
   # Job 2: Run vLLM tests on GPU runner
   record-vllm-tests:
@@ -158,7 +109,7 @@ jobs:
       - name: Setup vLLM GPU
         uses: ./.github/actions/setup-vllm-gpu
         with:
-          model: ${{ inputs.model }}
+          model: 'gpt-oss:20b'
           port: '8000'
           gpu-memory-utilization: '0.85'
           max-model-len: '8192'
@@ -216,10 +167,10 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4.0.2
+        uses: aws-actions/configure-aws-credentials@e3dd6b9db4c5f1d5e55a52ae244b09d44a2e2d5a # v4.0.2
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ needs.start-gpu-runner.outputs.region }}
+          aws-region: us-east-2
           role-session-name: GitHubActions-vLLM-GPU-Cleanup-${{ github.run_id }}
 
       - name: Stop EC2 runner
@@ -232,9 +183,8 @@ jobs:
 
       - name: Cleanup summary
         run: |
-          echo "✅ GPU runner terminated successfully!"
+          echo "GPU runner terminated successfully"
           echo "  Instance ID: ${{ needs.start-gpu-runner.outputs.instance-id }}"
-          echo "  Region: ${{ needs.start-gpu-runner.outputs.region }}"
 
   # Job 4: Summary and next steps
   summary:
@@ -246,28 +196,26 @@ jobs:
         run: |
           echo "## vLLM GPU Recording Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Model**: ${{ inputs.model }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Instance Type**: ${{ inputs.instance_type }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Region**: ${{ needs.start-gpu-runner.outputs.region }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Model**: gpt-oss:20b" >> $GITHUB_STEP_SUMMARY
+          echo "**Instance Type**: g6.2xlarge" >> $GITHUB_STEP_SUMMARY
           echo "**Test Suite**: ${{ inputs.suite }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ needs.record-vllm-tests.result }}" == "success" ]; then
-            echo "✅ **Test Status**: Successful" >> $GITHUB_STEP_SUMMARY
+            echo "**Test Status**: Successful" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Recordings have been uploaded as artifacts. Download them from the workflow run and commit manually, or create a PR." >> $GITHUB_STEP_SUMMARY
+            echo "Recordings have been uploaded as artifacts. Download them from the workflow run and commit manually." >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ **Test Status**: Failed" >> $GITHUB_STEP_SUMMARY
+            echo "**Test Status**: Failed" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Check the test logs for errors." >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Cleanup Status**: ${{ needs.stop-gpu-runner.result == 'success' && '✅ Instance terminated' || '⚠️ Check manually' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Cleanup Status**: ${{ needs.stop-gpu-runner.result == 'success' && 'Instance terminated' || 'Check manually' }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Check for cleanup issues
         if: needs.stop-gpu-runner.result != 'success'
         run: |
           echo "::warning::EC2 instance cleanup may have failed! Check AWS console for orphaned instances."
           echo "Instance ID: ${{ needs.start-gpu-runner.outputs.instance-id }}"
-          echo "Region: ${{ needs.start-gpu-runner.outputs.region }}"

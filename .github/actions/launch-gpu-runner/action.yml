@@ -15,15 +15,10 @@ inputs:
   aws-region:
     description: 'AWS region'
     required: true
-  subnet-id:
-    description: 'Subnet ID'
-    required: true
-  ec2-ami-id:
-    description: 'AMI ID'
-    required: true
-  security-group-id:
-    description: 'Security group ID'
-    required: true
+  availability-zones-config:
+    description: 'JSON array of AZ configs with imageId, subnetId, securityGroupId for fallback'
+    required: false
+    default: ''
   # For stop mode
   label:
     description: 'Runner label (for stop mode)'
@@ -59,21 +54,19 @@ runs:
     - name: Start EC2 runner
       if: inputs.mode == 'start'
       id: ec2-runner
-      uses: machulav/ec2-github-runner@v2.3.6
+      uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
       with:
         mode: start
         github-token: ${{ inputs.github-token }}
-        ec2-image-id: ${{ inputs.ec2-ami-id }}
         ec2-instance-type: ${{ inputs.instance-type }}
-        subnet-id: ${{ inputs.subnet-id }}
-        security-group-id: ${{ inputs.security-group-id }}
         aws-resource-tags: ${{ inputs.ec2-instance-tags }}
         runner-home-dir: ${{ inputs.runner-home-dir }}
         iam-role-name: ${{ inputs.iam-role-name }}
+        availability-zones-config: ${{ inputs.availability-zones-config }}
 
     - name: Stop EC2 runner
       if: inputs.mode == 'stop'
-      uses: machulav/ec2-github-runner@v2.3.6
+      uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
       with:
         mode: stop
         github-token: ${{ inputs.github-token }}
