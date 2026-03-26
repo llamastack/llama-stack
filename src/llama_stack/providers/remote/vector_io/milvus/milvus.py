@@ -10,13 +10,14 @@ import os
 from typing import Any
 
 from numpy.typing import NDArray
-from pymilvus import DataType, Function, FunctionType, MilvusClient
+from pymilvus import AnnSearchRequest, DataType, Function, FunctionType, MilvusClient, RRFRanker, WeightedRanker
 
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.milvus import MilvusVectorIOConfig as InlineMilvusVectorIOConfig
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
+    RERANKER_TYPE_WEIGHTED,
     ChunkForDeletion,
     EmbeddingIndex,
     VectorStoreWithIndex,
@@ -70,12 +71,18 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 class MilvusIndex(EmbeddingIndex):
     def __init__(
-        self, client: MilvusClient, collection_name: str, consistency_level="Strong", kvstore: KVStore | None = None
+        self,
+        client: MilvusClient,
+        collection_name: str,
+        consistency_level: str = "Strong",
+        kvstore: KVStore | None = None,
+        use_native_hybrid: bool = False,
     ):
         self.client = client
         self.collection_name = sanitize_collection_name(collection_name)
         self.consistency_level = consistency_level
         self.kvstore = kvstore
+        self.use_native_hybrid = use_native_hybrid
 
     async def initialize(self):
         # MilvusIndex does not require explicit initialization
@@ -310,6 +317,81 @@ class MilvusIndex(EmbeddingIndex):
         reranker_params: dict[str, Any] | None = None,
         filters: Filter | None = None,
     ) -> QueryChunksResponse:
+        if self.use_native_hybrid:
+            return await self._query_hybrid_native(
+                embedding, query_string, k, score_threshold, reranker_type, reranker_params, filters
+            )
+        return await self._query_hybrid_in_memory(
+            embedding, query_string, k, score_threshold, reranker_type, reranker_params, filters
+        )
+
+    async def _query_hybrid_native(
+        self,
+        embedding: NDArray,
+        query_string: str,
+        k: int,
+        score_threshold: float,
+        reranker_type: str,
+        reranker_params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
+    ) -> QueryChunksResponse:
+        """
+        Hybrid search using Milvus's native hybrid search capabilities.
+
+        Uses Milvus's hybrid_search method which combines vector search and
+        BM25 search server-side with configurable reranking strategies.
+        """
+        search_requests = []
+
+        search_requests.append(
+            AnnSearchRequest(data=[embedding.tolist()], anns_field="vector", param={"nprobe": 10}, limit=k)
+        )
+
+        search_requests.append(
+            AnnSearchRequest(data=[query_string], anns_field="sparse", param={"drop_ratio_search": 0.2}, limit=k)
+        )
+
+        if reranker_type == RERANKER_TYPE_WEIGHTED:
+            alpha = (reranker_params or {}).get("alpha", 0.5)
+            rerank = WeightedRanker(alpha, 1 - alpha)
+        else:
+            impact_factor = (reranker_params or {}).get("impact_factor", 60.0)
+            rerank = RRFRanker(impact_factor)
+
+        filter_expr = self._translate_filters(filters) if filters else None
+
+        search_kwargs = {
+            "collection_name": self.collection_name,
+            "reqs": search_requests,
+            "ranker": rerank,
+            "limit": k,
+            "output_fields": ["chunk_content"],
+        }
+
+        if filter_expr:
+            search_kwargs["filter"] = filter_expr
+
+        search_res = await asyncio.to_thread(self.client.hybrid_search, **search_kwargs)
+
+        chunks = []
+        scores = []
+        for res in search_res[0]:
+            chunk = load_embedded_chunk_with_backward_compat(res["entity"]["chunk_content"])
+            chunks.append(chunk)
+            scores.append(res["distance"])
+
+        return QueryChunksResponse(chunks=chunks, scores=scores)
+
+    async def _query_hybrid_in_memory(
+        self,
+        embedding: NDArray,
+        query_string: str,
+        k: int,
+        score_threshold: float,
+        reranker_type: str,
+        reranker_params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
+    ) -> QueryChunksResponse:
         """
         Hybrid search combining vector similarity and keyword search using in-memory aggregation.
 
@@ -383,6 +465,7 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         end_key = f"{VECTOR_DBS_PREFIX}\xff"
         stored_vector_stores = await self.kvstore.values_in_range(start_key, end_key)
 
+        use_native_hybrid = isinstance(self.config, RemoteMilvusVectorIOConfig)
         for vector_store_data in stored_vector_stores:
             vector_store = VectorStore.model_validate_json(vector_store_data)
             index = VectorStoreWithIndex(
@@ -392,6 +475,7 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
                     collection_name=vector_store.identifier,
                     consistency_level=self.config.consistency_level,
                     kvstore=self.kvstore,
+                    use_native_hybrid=use_native_hybrid,
                 ),
                 inference_api=self.inference_api,
             )
@@ -413,13 +497,19 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         await super().shutdown()
 
     async def register_vector_store(self, vector_store: VectorStore) -> None:
+        use_native_hybrid = isinstance(self.config, RemoteMilvusVectorIOConfig)
         if isinstance(self.config, RemoteMilvusVectorIOConfig):
             consistency_level = self.config.consistency_level
         else:
             consistency_level = "Strong"
         index = VectorStoreWithIndex(
             vector_store=vector_store,
-            index=MilvusIndex(self.client, vector_store.identifier, consistency_level=consistency_level),
+            index=MilvusIndex(
+                self.client,
+                vector_store.identifier,
+                consistency_level=consistency_level,
+                use_native_hybrid=use_native_hybrid,
+            ),
             inference_api=self.inference_api,
         )
 
@@ -439,9 +529,15 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
             raise VectorStoreNotFoundError(vector_store_id)
 
         vector_store = VectorStore.model_validate_json(vector_store_data)
+        use_native_hybrid = isinstance(self.config, RemoteMilvusVectorIOConfig)
         index = VectorStoreWithIndex(
             vector_store=vector_store,
-            index=MilvusIndex(client=self.client, collection_name=vector_store.identifier, kvstore=self.kvstore),
+            index=MilvusIndex(
+                client=self.client,
+                collection_name=vector_store.identifier,
+                kvstore=self.kvstore,
+                use_native_hybrid=use_native_hybrid,
+            ),
             inference_api=self.inference_api,
         )
         self.cache[vector_store_id] = index
