@@ -245,7 +245,7 @@ from langchain_openai import ChatOpenAI
 llm = ChatOpenAI(
     base_url="http://your-llama-stack/v1/openai/v1",
     api_key="none",
-    model="ollama/llama3.2:3b",
+    model="ollama/gpt-oss:20b",
 )
 ```
 
