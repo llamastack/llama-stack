@@ -37,7 +37,7 @@ distribution_spec:
     safety:
     - provider_type: inline::llama-guard
     - provider_type: inline::code-scanner
-    agents:
+    responses:
     - provider_type: inline::builtin
     eval:
     - provider_type: inline::builtin

@@ -4,7 +4,7 @@ Pre-built distribution configurations that wire together specific providers for 
 
 ## Directory Structure
 
-```
+```text
 distributions/
   starter/             # General-purpose distribution with many providers enabled
   ci-tests/            # Minimal distribution for CI testing
@@ -25,6 +25,7 @@ distributions/
 A distribution is a pre-built configuration that bundles specific providers for a target environment, similar to how Kubernetes has distributions like AKS, EKS, and GKE. The core API stays the same, but each distribution wires different backends. Concretely, it is a `config.yaml` file that defines which APIs to serve, which providers to use for each API, how storage is configured, and what models/shields/datasets to register at startup.
 
 Example from `starter/config.yaml`:
+
 ```yaml
 version: 2
 distro_name: starter
@@ -48,6 +49,7 @@ Distribution configs use `${env.VAR:=default}` syntax for environment-driven con
 ## Usage
 
 Run a distribution with:
+
 ```bash
 llama stack run starter
 # or
