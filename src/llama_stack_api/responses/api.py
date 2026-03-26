@@ -10,12 +10,14 @@ from typing import Protocol, runtime_checkable
 from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
+    OpenAICompactedResponse,
     OpenAIDeleteResponseObject,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
 )
 
 from .models import (
+    CompactResponseRequest,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -50,3 +52,8 @@ class Responses(Protocol):
         self,
         request: DeleteResponseRequest,
     ) -> OpenAIDeleteResponseObject: ...
+
+    async def compact_openai_response(
+        self,
+        request: CompactResponseRequest,
+    ) -> OpenAICompactedResponse: ...

@@ -3758,9 +3758,11 @@ components:
         title: OpenAIResponseInputFunctionToolCallOutput
       - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
         title: OpenAIResponseMCPApprovalResponse
+      - $ref: '#/components/schemas/OpenAIResponseCompaction'
+        title: OpenAIResponseCompaction
       - $ref: '#/components/schemas/OpenAIResponseMessage'
         title: OpenAIResponseMessage
-      title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage
+      title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
     OpenAIResponseInputToolFileSearch:
       properties:
         type:
@@ -4089,9 +4091,11 @@ components:
               title: OpenAIResponseInputFunctionToolCallOutput
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
               title: OpenAIResponseMCPApprovalResponse
+            - $ref: '#/components/schemas/OpenAIResponseCompaction'
+              title: OpenAIResponseCompaction
             - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
               title: OpenAIResponseMessage-Output
-            title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Output
+            title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
           type: array
           title: Input
       required:
@@ -5726,9 +5730,11 @@ components:
               title: OpenAIResponseInputFunctionToolCallOutput
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
               title: OpenAIResponseMCPApprovalResponse
+            - $ref: '#/components/schemas/OpenAIResponseCompaction'
+              title: OpenAIResponseCompaction
             - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
               title: OpenAIResponseMessage-Output
-            title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Output
+            title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
           type: array
           title: Data
         object:
@@ -8628,6 +8634,86 @@ components:
           default: 0
       title: OpenAIChatCompletionUsagePromptTokensDetails
       description: Token details for prompt tokens in OpenAI chat completion usage.
+    OpenAICompactedResponse:
+      properties:
+        id:
+          type: string
+          title: Id
+        created_at:
+          type: integer
+          title: Created At
+        object:
+          type: string
+          const: response.compaction
+          title: Object
+          default: response.compaction
+        output:
+          items:
+            anyOf:
+            - oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
+                title: OpenAIResponseMessage-Output
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                title: OpenAIResponseOutputMessageWebSearchToolCall
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                title: OpenAIResponseOutputMessageFileSearchToolCall
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                title: OpenAIResponseOutputMessageFunctionToolCall
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                title: OpenAIResponseOutputMessageMCPCall
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                title: OpenAIResponseOutputMessageMCPListTools
+              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                title: OpenAIResponseMCPApprovalRequest
+              discriminator:
+                propertyName: type
+                mapping:
+                  file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                  function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                  mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                  mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                  mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                  message: '#/components/schemas/OpenAIResponseMessage-Output'
+                  web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+              title: OpenAIResponseMessage-Output | ... (7 variants)
+            - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+              title: OpenAIResponseInputFunctionToolCallOutput
+            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+              title: OpenAIResponseMCPApprovalResponse
+            - $ref: '#/components/schemas/OpenAIResponseCompaction'
+              title: OpenAIResponseCompaction
+            - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
+              title: OpenAIResponseMessage-Output
+            title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
+          type: array
+          title: Output
+        usage:
+          $ref: '#/components/schemas/OpenAIResponseUsage'
+      required:
+      - id
+      - created_at
+      - output
+      - usage
+      title: OpenAICompactedResponse
+      description: Response from compacting a conversation.
+    OpenAIResponseCompaction:
+      properties:
+        type:
+          type: string
+          const: compaction
+          title: Type
+          default: compaction
+        encrypted_content:
+          type: string
+          title: Encrypted Content
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+      required:
+      - encrypted_content
+      title: OpenAIResponseCompaction
+      description: A compaction item that summarizes prior conversation context.
     OpenAIResponseIncompleteDetails:
       properties:
         reason:

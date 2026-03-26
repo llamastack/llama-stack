@@ -1467,11 +1467,26 @@ class OpenAIResponseInputFunctionToolCallOutput(BaseModel):
     status: str | None = None
 
 
+@json_schema_type
+class OpenAIResponseCompaction(BaseModel):
+    """A compaction item that summarizes prior conversation context.
+
+    :param type: Always "compaction"
+    :param encrypted_content: Compacted summary of prior conversation (plaintext in Llama Stack)
+    :param id: Unique identifier for this compaction item
+    """
+
+    type: Literal["compaction"] = "compaction"
+    encrypted_content: str
+    id: str | None = None
+
+
 OpenAIResponseInput = Annotated[
     # Responses API allows output messages to be passed in as input
     OpenAIResponseOutput
     | OpenAIResponseInputFunctionToolCallOutput
     | OpenAIResponseMCPApprovalResponse
+    | OpenAIResponseCompaction
     | OpenAIResponseMessage,
     Field(union_mode="left_to_right"),
 ]
@@ -1488,6 +1503,24 @@ class ListOpenAIResponseInputItem(BaseModel):
 
     data: Sequence[OpenAIResponseInput]
     object: Literal["list"] = "list"
+
+
+@json_schema_type
+class OpenAICompactedResponse(BaseModel):
+    """Response from compacting a conversation.
+
+    :param id: Unique identifier for the compacted response
+    :param created_at: Unix timestamp of when the compaction was created
+    :param object: Object type, always "response.compaction"
+    :param output: Compacted output items (user messages + compaction item)
+    :param usage: Token usage information
+    """
+
+    id: str
+    created_at: int
+    object: Literal["response.compaction"] = "response.compaction"
+    output: Sequence[OpenAIResponseInput]
+    usage: OpenAIResponseUsage
 
 
 @json_schema_type

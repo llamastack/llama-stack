@@ -14,6 +14,7 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
 from llama_stack.telemetry.constants import RESPONSES_PARAMETER_USAGE_TOTAL
 from llama_stack_api import (
+    CompactResponseRequest,
     Connectors,
     Conversations,
     CreateResponseRequest,
@@ -24,6 +25,7 @@ from llama_stack_api import (
     ListOpenAIResponseObject,
     ListResponseInputItemsRequest,
     ListResponsesRequest,
+    OpenAICompactedResponse,
     OpenAIDeleteResponseObject,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
@@ -164,6 +166,7 @@ class BuiltinResponsesImpl(Responses):
             presence_penalty=request.presence_penalty,
             extra_body=request.model_extra,
             stream_options=request.stream_options,
+            context_management=request.context_management,
         )
         return result
 
@@ -188,6 +191,18 @@ class BuiltinResponsesImpl(Responses):
             request.include,
             request.limit,
             request.order,
+        )
+
+    async def compact_openai_response(
+        self,
+        request: CompactResponseRequest,
+    ) -> OpenAICompactedResponse:
+        assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
+        return await self.openai_responses_impl.compact_openai_response(
+            model=request.model,
+            input=request.input,
+            instructions=request.instructions,
+            previous_response_id=request.previous_response_id,
         )
 
     async def delete_openai_response(
