@@ -38,6 +38,8 @@ ALLOWED_CODE_SCANNER_MODEL_IDS = [
 
 
 class BuiltinCodeScannerSafetyImpl(Safety):
+    """Safety provider that scans generated code for security vulnerabilities using CodeShield."""
+
     def __init__(self, config: CodeScannerConfig, deps) -> None:
         self.config = config
 

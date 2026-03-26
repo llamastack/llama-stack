@@ -15,6 +15,8 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class QdrantVectorIOConfig(BaseModel):
+    """Configuration for the inline Qdrant vector I/O provider."""
+
     path: str
     persistence: KVStoreReference
 

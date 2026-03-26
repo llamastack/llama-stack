@@ -369,6 +369,8 @@ def _strip_context_prompt_default(schema: dict) -> None:
 
 @json_schema_type
 class VectorStoreChunkingStrategyContextualConfig(BaseModel):
+    """Configuration for contextual chunking that uses an LLM to situate chunks within the document."""
+
     model_config = ConfigDict(json_schema_extra=_strip_context_prompt_default)
 
     model_id: str | None = Field(

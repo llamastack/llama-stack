@@ -54,6 +54,8 @@ class UnregisterBenchmarkRequest(BaseModel):
 
 
 class CommonBenchmarkFields(BaseModel):
+    """Common fields shared across benchmark creation and retrieval."""
+
     dataset_id: str = Field(..., description="Identifier of the dataset to use for the benchmark evaluation.")
     scoring_functions: list[str] = Field(
         ..., description="List of scoring function identifiers to apply during evaluation."
@@ -83,6 +85,8 @@ class Benchmark(CommonBenchmarkFields, Resource):
 
 
 class BenchmarkInput(CommonBenchmarkFields, BaseModel):
+    """Input model for registering a new benchmark."""
+
     benchmark_id: str = Field(..., description="The ID of the benchmark.")
     provider_id: str | None = Field(default=None, description="The ID of the provider to use for the benchmark.")
     provider_benchmark_id: str | None = Field(

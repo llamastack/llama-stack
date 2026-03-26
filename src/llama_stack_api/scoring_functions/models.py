@@ -152,6 +152,8 @@ class UnregisterScoringFunctionRequest(BaseModel):
 
 
 class CommonScoringFnFields(BaseModel):
+    """Common fields shared across scoring function creation and retrieval."""
+
     description: str | None = None
     metadata: dict[str, Any] = Field(
         default_factory=dict,
@@ -184,6 +186,8 @@ class ScoringFn(CommonScoringFnFields, Resource):
 
 
 class ScoringFnInput(CommonScoringFnFields, BaseModel):
+    """Input model for registering a new scoring function."""
+
     scoring_fn_id: str
     provider_id: str | None = None
     provider_scoring_fn_id: str | None = None

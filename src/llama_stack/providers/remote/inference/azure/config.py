@@ -14,6 +14,8 @@ from llama_stack_api import json_schema_type
 
 
 class AzureProviderDataValidator(BaseModel):
+    """Validates provider-specific request data for Azure OpenAI inference."""
+
     azure_api_key: SecretStr = Field(
         description="Azure API key for Azure",
     )
@@ -32,6 +34,8 @@ class AzureProviderDataValidator(BaseModel):
 
 @json_schema_type
 class AzureConfig(RemoteInferenceProviderConfig):
+    """Configuration for the Azure OpenAI inference provider."""
+
     base_url: HttpUrl | None = Field(
         default=None,
         description="Azure API base for Azure (e.g., https://your-resource-name.openai.azure.com/openai/v1)",

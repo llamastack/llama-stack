@@ -47,6 +47,7 @@ class LlamaCLIParser:
 
 
 def main():
+    """Entry point for the Llama CLI."""
     parser = LlamaCLIParser()
     args = parser.parse_args()
     parser.run(args)

@@ -34,6 +34,8 @@ log = get_logger(name=__name__, category="providers::utils")
 
 
 class SentenceTransformerEmbeddingMixin:
+    """Mixin providing OpenAI-compatible embeddings via sentence-transformers models."""
+
     model_store: ModelStore
 
     async def openai_embeddings(

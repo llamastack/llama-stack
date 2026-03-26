@@ -61,6 +61,7 @@ logger = get_logger(name=__name__, category="core::server")
 
 
 def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
+    """Custom warning handler that prints a full stack traceback alongside the warning."""
     log = file if hasattr(file, "write") else sys.stderr
     traceback.print_stack(file=log)
     log.write(warnings.formatwarning(message, category, filename, lineno, line))
@@ -71,6 +72,15 @@ if os.environ.get("LLAMA_STACK_TRACE_WARNINGS"):
 
 
 async def global_exception_handler(request: Request, exc: Exception):
+    """Handle uncaught exceptions by translating them to JSON error responses.
+
+    Args:
+        request: The incoming HTTP request.
+        exc: The unhandled exception.
+
+    Returns:
+        A JSONResponse with the appropriate HTTP status code and error message.
+    """
     traceback.print_exception(type(exc), exc, exc.__traceback__)
     http_exc = translate_exception(exc)
 
@@ -106,6 +116,11 @@ class StackApp(FastAPI):
 
 @asynccontextmanager
 async def lifespan(app: StackApp):
+    """FastAPI lifespan context manager that starts background tasks and handles shutdown.
+
+    Args:
+        app: The StackApp instance.
+    """
     server_version = parse_version("llama-stack")
 
     logger.info(f"Starting up Llama Stack server (version: {server_version})")
@@ -117,6 +132,8 @@ async def lifespan(app: StackApp):
 
 
 class ClientVersionMiddleware:
+    """ASGI middleware that rejects requests from clients with incompatible major.minor versions."""
+
     def __init__(self, app):
         self.app = app
         self.server_version = parse_version("llama-stack")
@@ -342,6 +359,14 @@ def _log_run_config(run_config: StackConfig):
 
 
 def remove_disabled_providers(obj):
+    """Recursively remove disabled providers from a configuration dictionary.
+
+    Args:
+        obj: A configuration value (dict, list, or scalar).
+
+    Returns:
+        The configuration with disabled provider entries removed.
+    """
     if isinstance(obj, dict):
         # Filter out items where provider_id is explicitly disabled or empty
         if "provider_id" in obj and obj["provider_id"] in ("__disabled__", "", None):

@@ -37,16 +37,29 @@ logger = get_logger(name=__name__, category="core")
 
 
 class AdminImplConfig(BaseModel):
+    """Configuration for the Admin API implementation."""
+
     config: StackConfig
 
 
 async def get_provider_impl(config, deps):
+    """Create and initialize an AdminImpl instance.
+
+    Args:
+        config: AdminImplConfig containing the stack configuration.
+        deps: Dictionary of API dependencies.
+
+    Returns:
+        An initialized AdminImpl instance.
+    """
     impl = AdminImpl(config, deps)
     await impl.initialize()
     return impl
 
 
 class AdminImpl(Admin):
+    """Implementation of the Admin API providing provider management, route listing, health, and version endpoints."""
+
     def __init__(self, config: AdminImplConfig, deps):
         self.config = config
         self.deps = deps
