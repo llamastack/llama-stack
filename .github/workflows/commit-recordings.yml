@@ -203,7 +203,7 @@ jobs:
 
               for dir in recordings-temp/tests/integration/*/recordings/; do
                 if [ -d "$dir" ]; then
-                  module_dir=$(basename $(dirname "$dir"))
+                  module_dir=$(basename "$(dirname "$dir")")
                   echo "Copying recordings for $module_dir"
                   mkdir -p "tests/integration/$module_dir/recordings"
                   cp -r "$dir"* "tests/integration/$module_dir/recordings/" 2>/dev/null || true
@@ -214,7 +214,7 @@ jobs:
               echo "Using flattened artifact structure (*/recordings/)"
               for dir in recordings-temp/*/recordings/; do
                 if [ -d "$dir" ]; then
-                  module_dir=$(basename $(dirname "$dir"))
+                  module_dir=$(basename "$(dirname "$dir")")
                   echo "Copying recordings for $module_dir"
                   mkdir -p "tests/integration/$module_dir/recordings"
                   cp -r "$dir"* "tests/integration/$module_dir/recordings/" 2>/dev/null || true

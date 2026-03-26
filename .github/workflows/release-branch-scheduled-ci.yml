@@ -47,7 +47,7 @@ jobs:
               jq -R -s -c 'split("\n") | map(select(length > 0) | ltrimstr(" ") | rtrimstr(" "))')
           fi
 
-          echo "branches=$branches" >> $GITHUB_OUTPUT
+          echo "branches=$branches" >> "$GITHUB_OUTPUT"
           echo "Testing branches: $branches"
 
   unit-tests:
@@ -119,9 +119,9 @@ jobs:
         id: check-ts-client
         run: |
           if [ -d "tests/integration/client-typescript" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Setup Node.js for TypeScript client tests
