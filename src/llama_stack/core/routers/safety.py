@@ -26,6 +26,8 @@ tracer = trace.get_tracer(__name__)
 
 
 class SafetyRouter(Safety):
+    """Router that delegates safety operations to the appropriate provider via a routing table."""
+
     def __init__(
         self,
         routing_table: RoutingTable,

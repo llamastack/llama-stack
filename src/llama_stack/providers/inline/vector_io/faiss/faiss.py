@@ -103,6 +103,8 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 
 class FaissIndex(EmbeddingIndex):
+    """FAISS-based embedding index with optional KV store persistence."""
+
     def __init__(self, dimension: int, kvstore: KVStore | None = None, bank_id: str | None = None):
         self.index = _get_faiss().IndexFlatL2(dimension)
         self.chunk_by_index: dict[int, EmbeddedChunk] = {}
@@ -341,6 +343,8 @@ class FaissIndex(EmbeddingIndex):
 
 
 class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+    """Vector I/O adapter using FAISS for in-memory vector similarity search."""
+
     def __init__(self, config: FaissVectorIOConfig, inference_api: Inference, files_api: Files | None) -> None:
         super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         self.config = config

@@ -27,6 +27,8 @@ logger = get_logger(name=__name__, category="inference::together")
 
 
 class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
+    """Inference adapter for the Together AI platform."""
+
     config: TogetherImplConfig
 
     embedding_model_metadata: dict[str, dict[str, int]] = {

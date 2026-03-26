@@ -21,6 +21,8 @@ DEFAULT_LOG_LEVEL = logging.INFO
 
 
 class LoggingConfig(BaseModel):
+    """Configuration model for category-based logging levels."""
+
     category_levels: dict[str, str] = Field(
         default_factory=dict,
         description="""
@@ -159,6 +161,8 @@ def strip_rich_markup(text):
 
 
 class CustomRichHandler(RichHandler):
+    """Rich logging handler with configurable width and graceful markup error handling."""
+
     def __init__(self, *args, **kwargs):
         # Set a reasonable default width for console output, especially when redirected to files
         console_width = int(os.environ.get("LLAMA_STACK_LOG_WIDTH", "120"))

@@ -21,6 +21,16 @@ _CLIENT_CLASSES = {}
 
 
 async def get_client_impl(protocol, config: RemoteProviderConfig, _deps: Any):
+    """Create and initialize an API client for a remote provider.
+
+    Args:
+        protocol: The protocol class defining the API interface.
+        config: Remote provider configuration containing the URL.
+        _deps: Unused dependency dictionary (kept for interface compatibility).
+
+    Returns:
+        An initialized API client instance for the given protocol.
+    """
     client_class = create_api_client_class(protocol)
     impl = client_class(config.url)
     await impl.initialize()
@@ -28,6 +38,14 @@ async def get_client_impl(protocol, config: RemoteProviderConfig, _deps: Any):
 
 
 def create_api_client_class(protocol) -> type:
+    """Dynamically create an API client class for the given protocol.
+
+    Args:
+        protocol: The protocol class whose webmethod-decorated methods define the API.
+
+    Returns:
+        A dynamically generated client class implementing the protocol's methods.
+    """
     if protocol in _CLIENT_CLASSES:
         return _CLIENT_CLASSES[protocol]
 
@@ -185,8 +203,15 @@ def create_api_client_class(protocol) -> type:
     return APIClient
 
 
-# not quite general these methods are
 def extract_non_async_iterator_type(type_hint):
+    """Extract the non-AsyncIterator type from a Union type hint.
+
+    Args:
+        type_hint: A type hint, potentially a Union containing an AsyncIterator.
+
+    Returns:
+        The non-AsyncIterator type from the Union, or the original type hint.
+    """
     if get_origin(type_hint) is Union:
         args = get_args(type_hint)
         for arg in args:
@@ -196,6 +221,14 @@ def extract_non_async_iterator_type(type_hint):
 
 
 def extract_async_iterator_type(type_hint):
+    """Extract the inner type from an AsyncIterator within a Union type hint.
+
+    Args:
+        type_hint: A type hint, potentially a Union containing an AsyncIterator.
+
+    Returns:
+        The inner type of the AsyncIterator, or None if not found.
+    """
     if get_origin(type_hint) is Union:
         args = get_args(type_hint)
         for arg in args:

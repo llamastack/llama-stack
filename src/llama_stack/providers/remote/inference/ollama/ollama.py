@@ -23,6 +23,8 @@ logger = get_logger(name=__name__, category="inference::ollama")
 
 
 class OllamaInferenceAdapter(OpenAIMixin):
+    """Inference adapter for the Ollama local model runtime."""
+
     config: OllamaImplConfig
 
     # automatically set by the resolver when instantiating the provider

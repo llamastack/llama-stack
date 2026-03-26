@@ -24,6 +24,8 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 
 class ShieldsRoutingTable(CommonRoutingTableImpl, Shields):
+    """Routing table for managing shield registrations and provider lookups."""
+
     async def list_shields(self) -> ListShieldsResponse:
         return ListShieldsResponse(data=await self.get_all_with_type(ResourceType.shield.value))
 

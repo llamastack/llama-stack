@@ -23,6 +23,8 @@ from .config import BraveSearchToolConfig
 
 
 class BraveSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRequestProviderData):
+    """Tool runtime for performing web searches using the Brave Search API."""
+
     def __init__(self, config: BraveSearchToolConfig):
         self.config = config
 

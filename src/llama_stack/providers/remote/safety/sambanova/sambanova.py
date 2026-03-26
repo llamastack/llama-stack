@@ -29,6 +29,8 @@ CANNED_RESPONSE_TEXT = "I can't answer that. Can I help with something else?"
 
 
 class SambaNovaSafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPrivate, NeedsRequestProviderData):
+    """Safety adapter for content moderation using SambaNova AI services."""
+
     def __init__(self, config: SambaNovaSafetyConfig) -> None:
         self.config = config
         self.environment_available_models = []

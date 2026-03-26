@@ -70,6 +70,8 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 
 class MilvusIndex(EmbeddingIndex):
+    """Embedding index backed by a Milvus collection."""
+
     def __init__(
         self,
         client: MilvusClient,
@@ -450,6 +452,8 @@ class MilvusIndex(EmbeddingIndex):
 
 
 class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+    """Vector I/O adapter for remote Milvus instances."""
+
     def __init__(
         self,
         config: RemoteMilvusVectorIOConfig | InlineMilvusVectorIOConfig,

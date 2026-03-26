@@ -11,6 +11,14 @@ from rich.table import Table
 
 
 def print_table(rows, headers=None, separate_rows: bool = False, sort_by: Iterable[int] = tuple()):
+    """Print a formatted table to the console using Rich.
+
+    Args:
+        rows: list of row data, where each row is a list of strings.
+        headers: optional list of column header strings.
+        separate_rows: whether to draw lines between rows.
+        sort_by: column indices to sort rows by.
+    """
     # Convert rows and handle None values
     rows = [[x or "" for x in row] for row in rows]
 

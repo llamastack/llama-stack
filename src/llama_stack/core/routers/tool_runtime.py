@@ -26,6 +26,8 @@ logger = get_logger(name=__name__, category="core::routers")
 
 
 class ToolRuntimeRouter(ToolRuntime):
+    """Router that delegates tool runtime operations to the appropriate provider via a routing table."""
+
     def __init__(
         self,
         routing_table: ToolGroupsRoutingTable,

@@ -137,6 +137,8 @@ class GeminiCompletionSamplingParams(BaseModel):
 
 
 class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
+    """Inference adapter for Google Vertex AI platform."""
+
     # extra="allow" lets the routing infra inject model_store, __provider_id__, etc.
     model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
 

@@ -14,6 +14,8 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class InfinispanVectorIOConfig(BaseModel):
+    """Configuration for the Infinispan vector I/O provider."""
+
     url: HttpUrl = Field(
         default=HttpUrl("http://localhost:11222"), description="Infinispan server URL (e.g., http://localhost:11222)"
     )

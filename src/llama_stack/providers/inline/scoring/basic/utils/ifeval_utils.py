@@ -1720,6 +1720,15 @@ def count_sentences(text):
 
 
 def get_langid(text: str, lid_path: str | None = None) -> str:
+    """Detect the primary language of a text using per-line language detection.
+
+    Args:
+        text: input text to analyze
+        lid_path: unused, kept for interface compatibility
+
+    Returns:
+        ISO 639-1 language code, defaulting to "en" if detection fails
+    """
     line_langs: list[str] = []
     lines = [line.strip() for line in text.split("\n") if len(line.strip()) >= 4]
 

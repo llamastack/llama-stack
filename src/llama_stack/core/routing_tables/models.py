@@ -34,6 +34,8 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 
 class ModelsRoutingTable(CommonRoutingTableImpl, Models):
+    """Routing table for managing model registrations, provider lookups, and dynamic model discovery."""
+
     listed_providers: set[str] = set()
 
     async def refresh(self) -> None:

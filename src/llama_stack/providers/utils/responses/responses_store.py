@@ -41,6 +41,8 @@ class _OpenAIResponseObjectWithInputAndMessages(OpenAIResponseObjectWithInput):
 
 
 class ResponsesStore:
+    """Persistent store for OpenAI Responses API objects with SQL-backed storage."""
+
     def __init__(
         self,
         reference: ResponsesStoreReference | SqlStoreReference,

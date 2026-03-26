@@ -28,6 +28,8 @@ logger = get_logger(name=__name__, category="cli")
 
 
 class StackRun(Subcommand):
+    """CLI subcommand to start a Llama Stack distribution server."""
+
     def __init__(self, subparsers: argparse._SubParsersAction):
         super().__init__()
         self.parser = subparsers.add_parser(

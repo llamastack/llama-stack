@@ -206,6 +206,8 @@ def convert_tooldef_to_chat_tool(tool_def):
 
 
 class StreamingResponseOrchestrator:
+    """Orchestrates streaming response generation with iterative tool calling and safety checks."""
+
     def __init__(
         self,
         inference_api: Inference,

@@ -27,6 +27,8 @@ logger = get_logger(name=__name__, category="inference::nvidia")
 
 
 class NVIDIAInferenceAdapter(OpenAIMixin):
+    """Inference adapter for NVIDIA NIM models and services."""
+
     config: NVIDIAConfig
 
     provider_data_api_key_field: str = "nvidia_api_key"

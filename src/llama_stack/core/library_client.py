@@ -57,6 +57,14 @@ T = TypeVar("T")
 
 
 def convert_pydantic_to_json_value(value: Any) -> Any:
+    """Recursively convert Pydantic models, enums, and nested structures to JSON-serializable values.
+
+    Args:
+        value: A value that may be an Enum, list, dict, BaseModel, or primitive.
+
+    Returns:
+        A JSON-serializable representation of the value.
+    """
     if isinstance(value, Enum):
         return value.value
     elif isinstance(value, list):
@@ -70,6 +78,15 @@ def convert_pydantic_to_json_value(value: Any) -> Any:
 
 
 def convert_to_pydantic(annotation: Any, value: Any) -> Any:
+    """Convert a raw value to the appropriate Pydantic model based on the type annotation.
+
+    Args:
+        annotation: The type annotation to validate against.
+        value: The raw value to convert.
+
+    Returns:
+        The validated and converted value matching the annotation type.
+    """
     if isinstance(annotation, type) and annotation in {str, int, float, bool}:
         return value
 
@@ -135,6 +152,8 @@ class LibraryClientHttpxResponse:
 
 
 class LlamaStackAsLibraryClient(LlamaStackClient):
+    """Synchronous client that runs a Llama Stack distribution in-process as a library."""
+
     def __init__(
         self,
         config_path_or_distro_name: str,
@@ -234,6 +253,8 @@ class LlamaStackAsLibraryClient(LlamaStackClient):
 
 
 class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
+    """Async client that runs a Llama Stack distribution in-process as a library."""
+
     def __init__(
         self,
         config_path_or_distro_name: str,

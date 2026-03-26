@@ -250,6 +250,7 @@ select = [
     "PLE2513", # Checks for strings that contain the raw control character ESC.
     "PLE2514", # Checks for strings that contain the raw control character NUL (0 byte).
     "PLE2515", # Checks for strings that contain the zero width space character.
+    "D101",    # Missing docstring in public class
 ]
 ignore = [
     # The following ignores are desired by the project maintainers.
@@ -266,9 +267,16 @@ unfixable = [
     "PLE2515",
 ] # Do not fix this automatically since ruff will replace the zero-width space with \u200b - let's do it manually
 
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
 # Ignore the following errors for the following files
+# TODO: Fix in follow up PRs
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["DTZ"] # Ignore datetime rules for tests
+"tests/**/*.py" = ["DTZ", "D101"] # Ignore datetime and docstring rules for tests
+"benchmarking/**/*.py" = ["D101"] # Ignore docstring rules for benchmarking scripts
+"client-sdks/**/*.py" = ["D101"] # Ignore docstring rules for client SDKs
+"scripts/**/*.py" = ["D101"] # Ignore docstring rules for scripts
 "src/llama_stack/providers/inline/scoring/basic/utils/ifeval_utils.py" = [
     "RUF001",
 ]
@@ -372,6 +380,8 @@ module = [
     "streamlit_option_menu",
     "lmformatenforcer.*",
     "google.genai.*",
+    "docling.*",
+    "docling_core.*",
 ]
 ignore_missing_imports = true
 

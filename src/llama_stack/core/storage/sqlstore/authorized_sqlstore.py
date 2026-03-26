@@ -66,6 +66,8 @@ def _enhance_item_with_access_control(item: Mapping[str, Any], current_user: Use
 
 
 class SqlRecord(ProtectedResource):
+    """A SQL record wrapped as a protected resource for access control checks."""
+
     def __init__(self, record_id: str, table_name: str, owner: User | None):
         self.type = f"sql_record::{table_name}"
         self.identifier = record_id

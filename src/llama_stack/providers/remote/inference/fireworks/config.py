@@ -14,6 +14,8 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class FireworksImplConfig(RemoteInferenceProviderConfig):
+    """Configuration for the Fireworks AI inference provider."""
+
     base_url: HttpUrl | None = Field(
         default=HttpUrl("https://api.fireworks.ai/inference/v1"),
         description="The URL for the Fireworks server",

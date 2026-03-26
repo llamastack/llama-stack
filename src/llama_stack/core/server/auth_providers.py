@@ -39,6 +39,8 @@ class AuthResponse(BaseModel):
 
 
 class AuthRequestContext(BaseModel):
+    """Context information about the HTTP request being authenticated."""
+
     path: str = Field(description="The path of the request being authenticated")
 
     headers: dict[str, str] = Field(description="HTTP headers from the original request (excluding Authorization)")
@@ -47,6 +49,8 @@ class AuthRequestContext(BaseModel):
 
 
 class AuthRequest(BaseModel):
+    """Request payload sent to custom authentication endpoints."""
+
     api_key: str = Field(description="The API key extracted from the Authorization header")
 
     request: AuthRequestContext = Field(description="Context information about the request being authenticated")
@@ -71,6 +75,15 @@ class AuthProvider(ABC):
 
 
 def get_attributes_from_claims(claims: dict[str, str], mapping: dict[str, str]) -> dict[str, list[str]]:
+    """Extract user attributes from token claims using the configured claims-to-attributes mapping.
+
+    Args:
+        claims: Token claims dictionary (e.g., from JWT or introspection).
+        mapping: Dictionary mapping claim keys to attribute keys.
+
+    Returns:
+        Dictionary mapping attribute keys to lists of attribute values.
+    """
     attributes: dict[str, list[str]] = {}
     for claim_key, attribute_key in mapping.items():
         # First try dot notation for nested traversal (e.g., "resource_access.llamastack.roles")

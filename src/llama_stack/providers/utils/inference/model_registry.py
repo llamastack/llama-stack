@@ -160,6 +160,8 @@ class NetworkConfig(BaseModel):
 
 
 class RemoteInferenceProviderConfig(BaseModel):
+    """Base configuration for remote inference providers with model filtering and auth settings."""
+
     allowed_models: list[str] | None = Field(
         default=None,
         description="List of models that should be registered with the model registry. If None, all models are allowed.",
@@ -182,6 +184,8 @@ class RemoteInferenceProviderConfig(BaseModel):
 # TODO: this class is more confusing than useful right now. We need to make it
 # more closer to the Model class.
 class ProviderModelEntry(BaseModel):
+    """Describes a model available from a provider with its aliases and metadata."""
+
     provider_model_id: str
     aliases: list[str] = Field(default_factory=list)
     llama_model: str | None = None
@@ -194,6 +198,16 @@ def build_hf_repo_model_entry(
     model_descriptor: str,
     additional_aliases: list[str] | None = None,
 ) -> ProviderModelEntry:
+    """Build a ProviderModelEntry for a HuggingFace model.
+
+    Args:
+        provider_model_id: the provider-specific model identifier
+        model_descriptor: the Llama model descriptor
+        additional_aliases: optional extra aliases for the model
+
+    Returns:
+        A ProviderModelEntry with the configured aliases and llama model mapping
+    """
     aliases = [
         # NOTE: avoid HF aliases because they _cannot_ be unique across providers
         # get_huggingface_repo(model_descriptor),
@@ -209,6 +223,8 @@ def build_hf_repo_model_entry(
 
 
 class ModelRegistryHelper(ModelsProtocolPrivate):
+    """Manages model registration, alias resolution, and availability checks for a provider."""
+
     __provider_id__: str
 
     def __init__(

@@ -96,6 +96,8 @@ async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
 
 
 class FileSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
+    """Tool runtime implementation for document ingestion and semantic file search."""
+
     def __init__(
         self,
         config: FileSearchToolRuntimeConfig,

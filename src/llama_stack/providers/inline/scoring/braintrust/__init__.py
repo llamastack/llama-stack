@@ -13,6 +13,8 @@ from .config import BraintrustScoringConfig
 
 
 class BraintrustProviderDataValidator(BaseModel):
+    """Validator for Braintrust provider data requiring an OpenAI API key."""
+
     openai_api_key: SecretStr
 
 

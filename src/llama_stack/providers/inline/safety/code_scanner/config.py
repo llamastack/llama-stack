@@ -10,6 +10,8 @@ from pydantic import BaseModel
 
 
 class CodeScannerConfig(BaseModel):
+    """Configuration for the code scanner safety provider."""
+
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:
         return {}
