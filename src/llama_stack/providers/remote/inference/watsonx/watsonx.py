@@ -87,7 +87,7 @@ class WatsonXInferenceAdapter(OpenAIMixin):
                 self._iam_token_cache[api_key] = (token, expiry)
                 return token
         except Exception as e:
-            logger.warning(f"IAM token exchange failed ({e}), using API key directly")
+            logger.warning("IAM token exchange failed, using API key directly", error=str(e))
             return api_key
 
     def _get_api_key_or_raise(self) -> str:
