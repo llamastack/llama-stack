@@ -5,6 +5,7 @@ This guide explains how to use GPU-enabled self-hosted runners to re-record vLLM
 ## Overview
 
 GPU runners allow us to:
+
 - Test larger models (20B parameters) that don't fit on CPU runners
 - Faster inference with GPU acceleration
 - More realistic production-like test environment
@@ -26,6 +27,7 @@ GPU runners allow us to:
 5. Click **Run workflow**
 
 The workflow will:
+
 1. Launch a GPU EC2 instance (5 min)
 2. Setup vLLM with the model (5 min)
 3. Run tests in record mode (~20 min)
@@ -43,7 +45,7 @@ The workflow will:
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────┐
 │  Workflow Trigger (manual)                      │
 │  - Select model and instance type               │
@@ -142,11 +144,13 @@ Attach this policy to the role:
 You need subnets in two regions for fallback:
 
 **us-east-2 (Primary)**:
+
 - us-east-2a: subnet-xxxxx
 - us-east-2b: subnet-xxxxx
 - us-east-2c: subnet-xxxxx
 
 **us-east-1 (Fallback)**:
+
 - us-east-1a: subnet-xxxxx
 - us-east-1b: subnet-xxxxx
 - us-east-1c: subnet-xxxxx
@@ -156,15 +160,18 @@ You need subnets in two regions for fallback:
 Create security groups in both regions with:
 
 **Inbound Rules**:
+
 - None (runners connect outbound only)
 
 **Outbound Rules**:
+
 - Port 443 (HTTPS): `0.0.0.0/0` - GitHub API, HuggingFace, PyPI
 - Port 80 (HTTP): `0.0.0.0/0` - Package downloads
 
 #### 4. GPU-Enabled AMI
 
 Create AMIs in both regions with:
+
 - Base OS: Amazon Linux 2023 or Ubuntu 22.04
 - NVIDIA drivers
 - CUDA 12.4 runtime
@@ -187,6 +194,7 @@ Add these to **Settings > Secrets and variables > Actions > Secrets**:
 Add these to **Settings > Secrets and variables > Actions > Variables**:
 
 **us-east-2**:
+
 - `SUBNET_US_EAST_2A`: subnet-xxxxx
 - `SUBNET_US_EAST_2B`: subnet-xxxxx
 - `SUBNET_US_EAST_2C`: subnet-xxxxx
@@ -194,6 +202,7 @@ Add these to **Settings > Secrets and variables > Actions > Variables**:
 - `SECURITY_GROUP_ID_US_EAST_2`: sg-xxxxx
 
 **us-east-1**:
+
 - `SUBNET_US_EAST_1A`: subnet-xxxxx
 - `SUBNET_US_EAST_1B`: subnet-xxxxx
 - `SUBNET_US_EAST_1C`: subnet-xxxxx
@@ -260,6 +269,7 @@ The cleanup job always runs (`if: always()`):
 **Problem**: "InsufficientInstanceCapacity" error
 
 **Solution**: The workflow automatically tries fallback regions/AZs. If all fail:
+
 1. Check AWS Service Health Dashboard for capacity issues
 2. Try a different instance type (g5.2xlarge instead of g6.2xlarge)
 3. Try again during off-peak hours
@@ -269,6 +279,7 @@ The cleanup job always runs (`if: always()`):
 **Problem**: Server doesn't respond to health checks
 
 **Solutions**:
+
 1. Check vLLM logs in workflow output
 2. Verify GPU is detected: look for `nvidia-smi` output
 3. Check CUDA installation: `nvcc --version`
@@ -279,6 +290,7 @@ The cleanup job always runs (`if: always()`):
 **Problem**: No artifacts in workflow run
 
 **Solutions**:
+
 1. Check if tests actually created recordings
 2. Verify `tests/integration/*/recordings/` directories exist
 3. Check workflow logs for artifact upload errors
@@ -288,6 +300,7 @@ The cleanup job always runs (`if: always()`):
 **Problem**: Instance still running after workflow completes
 
 **Solutions**:
+
 1. Check stop-gpu-runner job logs for errors
 2. Manually terminate instance via AWS console
 3. Set up CloudWatch alarm for long-running instances (see Phase 2)
@@ -297,6 +310,7 @@ The cleanup job always runs (`if: always()`):
 **Problem**: Unexpected AWS charges
 
 **Solutions**:
+
 1. Check for orphaned instances in AWS EC2 console (filter by tag: `Purpose: vllm-gpu-recording`)
 2. Set up AWS Budget alerts (see `IMPLEMENTATION_PLAN.md` Phase 2)
 3. Review CloudWatch metrics for runner usage
@@ -308,6 +322,7 @@ The cleanup job always runs (`if: always()`):
 **Current**: ~5 minutes to download gpt-oss:20b
 
 **Options**:
+
 1. **Pre-cache in AMI**: Include model in GPU AMI (~0 min load time)
 2. **EBS snapshot**: Attach pre-loaded model volume (~1 min)
 3. **S3 cache**: Download from S3 instead of HuggingFace (~2 min)
@@ -328,6 +343,7 @@ See `IMPLEMENTATION_PLAN.md` Task #3 for implementation.
 To add a new model for GPU testing:
 
 1. **Update workflow input** (`.github/workflows/record-vllm-gpu-tests.yml`):
+
    ```yaml
    model:
      options:
@@ -337,6 +353,7 @@ To add a new model for GPU testing:
    ```
 
 2. **Add to test matrix** (`tests/integration/ci_matrix.json`):
+
    ```json
    "gpu-vllm": [
      {"suite": "base", "setup": "vllm-gpu-gpt-oss"},
@@ -345,6 +362,7 @@ To add a new model for GPU testing:
    ```
 
 3. **Create setup** (`tests/integration/suites.py`):
+
    ```python
    "vllm-gpu-your-model": Setup(
        name="vllm-gpu",
@@ -362,6 +380,7 @@ To add a new model for GPU testing:
 ### CloudWatch Dashboards
 
 Create a dashboard to track:
+
 - Total GPU runner costs (daily/weekly/monthly)
 - Instance launch success rate
 - Average test duration
@@ -372,6 +391,7 @@ See `IMPLEMENTATION_PLAN.md` Task #4 for setup.
 ### Cost Allocation Tags
 
 All EC2 instances are tagged with:
+
 - `Project`: llama-stack
 - `Purpose`: vllm-gpu-recording
 - `Model`: gpt-oss:20b
@@ -384,13 +404,14 @@ Enable cost allocation in **AWS Billing > Cost Allocation Tags** to track costs 
 
 - **Design Document**: `GPU_RUNNERS_DESIGN.md`
 - **Implementation Plan**: `IMPLEMENTATION_PLAN.md`
-- **AWS EC2 Instance Types**: https://aws.amazon.com/ec2/instance-types/g6/
-- **vLLM Documentation**: https://docs.vllm.ai/
-- **GitHub OIDC**: https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services
+- **AWS EC2 Instance Types**: <https://aws.amazon.com/ec2/instance-types/g6/>
+- **vLLM Documentation**: <https://docs.vllm.ai/>
+- **GitHub OIDC**: <https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services>
 
 ## Support
 
 For issues or questions:
+
 - Create an issue in the repository
 - Check existing issues for similar problems
 - Review troubleshooting section above

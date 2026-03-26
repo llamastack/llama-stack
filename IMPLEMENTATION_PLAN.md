@@ -7,6 +7,7 @@ This document outlines the step-by-step implementation plan for adding GPU-enabl
 **Goal**: Enable re-recording of vLLM integration tests with gpt-oss:20b on GPU-enabled EC2 instances via GitHub Actions.
 
 **Key Benefits**:
+
 - Test larger models (20B parameters) that don't fit on CPU runners
 - Faster inference times with GPU acceleration
 - More realistic production-like test environment
@@ -23,10 +24,12 @@ This document outlines the step-by-step implementation plan for adding GPU-enabl
 ### Tasks
 
 #### 1. Set up AWS infrastructure (Task #11) 🔧
+
 **Priority**: Critical - blocking all other work
 **Owner**: DevOps/Charles
 
 **Actions**:
+
 - [ ] Create or identify VPC in us-east-2 and us-east-1
 - [ ] Create subnets (3 AZs per region = 6 total)
 - [ ] Configure security groups (SSH, HTTPS, HTTP)
@@ -34,7 +37,8 @@ This document outlines the step-by-step implementation plan for adding GPU-enabl
 - [ ] Document all IDs and add to GitHub repo variables
 
 **Repository Variables** (add via Settings > Secrets and variables > Actions):
-```
+
+```text
 SUBNET_US_EAST_2A=subnet-xxxxx
 SUBNET_US_EAST_2B=subnet-xxxxx
 SUBNET_US_EAST_2C=subnet-xxxxx
@@ -48,7 +52,8 @@ SECURITY_GROUP_ID_US_EAST_1=sg-xxxxx
 ```
 
 **Repository Secrets**:
-```
+
+```text
 AWS_ROLE_ARN=arn:aws:iam::123456789012:role/GitHubActionsRole
 GH_RUNNER_PAT=ghp_xxxxx (GitHub PAT with 'repo' scope)
 ```
@@ -59,10 +64,12 @@ GH_RUNNER_PAT=ghp_xxxxx (GitHub PAT with 'repo' scope)
 ---
 
 #### 2. Create GPU-enabled AMI (Task #10) 🖼️
+
 **Priority**: Critical - needed for runner launch
 **Depends On**: Task #11 (AWS infrastructure)
 
 **Actions**:
+
 - [ ] Launch base EC2 instance (g6.2xlarge with Amazon Linux 2023 or Ubuntu 22.04)
 - [ ] Install NVIDIA drivers and CUDA 12.4
 - [ ] Install Docker with NVIDIA Container Toolkit
@@ -75,6 +82,7 @@ GH_RUNNER_PAT=ghp_xxxxx (GitHub PAT with 'repo' scope)
 **Alternative**: Use AWS Deep Learning AMI and customize
 
 **Validation**:
+
 ```bash
 nvidia-smi  # Should show GPU
 nvcc --version  # Should show CUDA 12.4
@@ -87,12 +95,14 @@ docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi
 ---
 
 #### 3. Create launch-gpu-runner action (Task #12) ⚙️
+
 **Priority**: Critical - core functionality
 **Depends On**: Tasks #10, #11
 
 **File**: `.github/actions/launch-gpu-runner/action.yml`
 
 **Key Features**:
+
 - Multi-region fallback (us-east-2 → us-east-1)
 - Multi-AZ fallback (3 AZs per region)
 - Dynamic runner label generation
@@ -100,6 +110,7 @@ docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi
 - Error handling and retries
 
 **Implementation Options**:
+
 1. Use `machulav/ec2-github-runner@v2.3.6` with wrapper logic
 2. Fork and customize `instructlab/ci-actions` (if available)
 3. Build custom JavaScript action
@@ -112,12 +123,14 @@ docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi
 ---
 
 #### 4. Create setup-vllm-gpu action (Task #6) 🚀
+
 **Priority**: Critical - needed for test execution
 **Depends On**: Task #10 (AMI with CUDA)
 
 **File**: `.github/actions/setup-vllm-gpu/action.yml`
 
 **Key Features**:
+
 - Install vLLM with GPU support
 - Pull gpt-oss:20b model (or specified model)
 - Start vLLM server with optimal settings:
@@ -128,6 +141,7 @@ docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi
 - Support both Ollama and HuggingFace models
 
 **vLLM Server Command**:
+
 ```bash
 vllm serve gpt-oss:20b \
   --host 0.0.0.0 \
@@ -147,12 +161,14 @@ vllm serve gpt-oss:20b \
 ---
 
 #### 5. Create record-vllm-gpu-tests workflow (Task #1) 📋
+
 **Priority**: Critical - ties everything together
 **Depends On**: Tasks #6, #12
 
 **File**: `.github/workflows/record-vllm-gpu-tests.yml`
 
 **Structure**:
+
 ```yaml
 name: vLLM GPU Recording
 
@@ -179,6 +195,7 @@ jobs:
 ```
 
 **Security Highlights**:
+
 - Test job has `permissions: {}` (prevents secret theft)
 - OIDC authentication (no long-lived AWS credentials)
 - `if: always()` on cleanup job (prevents orphaned instances)
@@ -189,27 +206,33 @@ jobs:
 ---
 
 #### 6. Update test configuration files (Tasks #7, #9) 📝
+
 **Priority**: High - needed for test execution
 
-**6a. Update tests/integration/suites.py (Task #7)**
+#### 6a. Update tests/integration/suites.py (Task #7)
 
-Add new setup:
+Add new setup to SETUP_DEFINITIONS dict:
+
 ```python
-"vllm-gpu-gpt-oss": Setup(
-    name="vllm-gpu",
-    description="vLLM GPU provider with gpt-oss:20b model",
-    env={
-        "VLLM_URL": "http://0.0.0.0:8000/v1",
-    },
-    defaults={
-        "text_model": "vllm/gpt-oss:20b",
-    },
-),
+SETUP_DEFINITIONS = {
+    # ... existing setups ...
+    "vllm-gpu-gpt-oss": Setup(
+        name="vllm-gpu",
+        description="vLLM GPU provider with gpt-oss:20b model",
+        env={
+            "VLLM_URL": "http://0.0.0.0:8000/v1",
+        },
+        defaults={
+            "text_model": "vllm/gpt-oss:20b",
+        },
+    ),
+}
 ```
 
-**6b. Update tests/integration/ci_matrix.json (Task #9)**
+#### 6b. Update tests/integration/ci_matrix.json (Task #9)
 
 Add GPU matrix:
+
 ```json
 "gpu-vllm": [
   {"suite": "base", "setup": "vllm-gpu-gpt-oss", "model": "gpt-oss:20b"},
@@ -224,6 +247,7 @@ Add GPU matrix:
 ---
 
 #### 7. End-to-end testing (Task #8) ✅
+
 **Priority**: Critical - validates entire system
 **Depends On**: Tasks #1, #6, #7, #9, #10, #11, #12
 
@@ -253,6 +277,7 @@ Add GPU matrix:
    - [ ] Total: < 30 min
 
 **Success Criteria**:
+
 - 3 consecutive successful runs
 - 95%+ success rate over 10 runs
 - Average cost < $0.50 per run
@@ -264,10 +289,12 @@ Add GPU matrix:
 ---
 
 #### 8. Documentation (Task #2) 📚
+
 **Priority**: Medium - needed for team adoption
 **Depends On**: Task #8 (successful testing)
 
 **Actions**:
+
 - [ ] Create `docs/gpu-runners.md` with usage guide
 - [ ] Update README.md with GPU runner section
 - [ ] Document troubleshooting steps
@@ -275,6 +302,7 @@ Add GPU matrix:
 - [ ] Document cost estimates and monitoring
 
 **Content**:
+
 - How to trigger manual re-recording
 - Expected costs and runtime
 - AWS prerequisites
@@ -290,12 +318,14 @@ Add GPU matrix:
 
 **Total Estimated Time**: 2-3 weeks (part-time)
 **Key Deliverables**:
+
 - ✅ Working GPU runner infrastructure
 - ✅ Manual workflow_dispatch for re-recording
 - ✅ End-to-end tested with gpt-oss:20b
 - ✅ Documentation for team
 
 **Phase 1 Completion Criteria**:
+
 - [ ] All Phase 1 tasks completed
 - [ ] 10+ successful GPU recording runs
 - [ ] Zero orphaned EC2 instances
@@ -307,12 +337,14 @@ Add GPU matrix:
 
 **Goal**: Reduce costs and improve performance.
 
-### Tasks
+### Phase 2 Tasks
 
 #### 9. Set up cost monitoring (Task #4) 💰
+
 **Priority**: High - prevents cost overruns
 
 **Actions**:
+
 - [ ] Create AWS Budget ($50/month alert)
 - [ ] CloudWatch alarm for long-running instances (> 2 hours)
 - [ ] Lambda for auto-cleanup of orphaned instances
@@ -320,6 +352,7 @@ Add GPU matrix:
 - [ ] Create CloudWatch dashboard
 
 **Metrics to Track**:
+
 - Total monthly GPU costs
 - Average run duration
 - Success rate
@@ -331,9 +364,11 @@ Add GPU matrix:
 ---
 
 #### 10. Implement spot instances (Task #3) 💵
+
 **Priority**: High - 70-80% cost savings
 
 **Actions**:
+
 - [ ] Update launch-gpu-runner action for spot support
 - [ ] Add spot/on-demand fallback logic
 - [ ] Update workflow to use spot by default
@@ -348,9 +383,11 @@ Add GPU matrix:
 ---
 
 #### 11. Add model caching (Task #5) ⚡
+
 **Priority**: Medium - performance optimization
 
 **Actions**:
+
 - [ ] Pre-cache gpt-oss:20b in AMI
 - [ ] Test with cached model
 - [ ] Measure time savings
@@ -367,11 +404,13 @@ Add GPU matrix:
 
 **Total Estimated Time**: 1-2 weeks (part-time)
 **Key Deliverables**:
+
 - ✅ Cost monitoring and alerts
 - ✅ Spot instance support (70-80% cost reduction)
 - ✅ Model caching (33% faster runs)
 
 **Expected Outcomes**:
+
 - Monthly cost: $1.72 → $0.34-$0.69 (with spot instances)
 - Run time: 30 min → 20 min (with caching)
 
@@ -405,7 +444,7 @@ Add GPU matrix:
 
 **Goal**: Support multiple models and advanced use cases.
 
-### Potential Tasks
+### Phase 4 Tasks
 
 1. **Multi-model support**:
    - Add more models to GPU matrix
@@ -425,18 +464,22 @@ Add GPU matrix:
 ## Risk Mitigation
 
 ### Risk 1: EC2 Capacity Issues
+
 **Mitigation**: Multi-region, multi-AZ fallback (9 AZs total)
 **Probability**: Low (<5% with fallback)
 
 ### Risk 2: Cost Overruns
+
 **Mitigation**: AWS Budgets, CloudWatch alarms, auto-cleanup Lambda
 **Probability**: Very Low (<1% with monitoring)
 
 ### Risk 3: Orphaned Instances
+
 **Mitigation**: `if: always()` cleanup, CloudWatch alarms, auto-cleanup
 **Probability**: Very Low (<1%)
 
 ### Risk 4: Security Issues
+
 **Mitigation**: OIDC auth, `permissions: {}`, read-only secrets
 **Probability**: Very Low (<1%)
 
@@ -445,21 +488,25 @@ Add GPU matrix:
 ## Success Metrics
 
 ### Functional
+
 - [ ] Successfully record gpt-oss:20b tests within 30 minutes
 - [ ] 95%+ success rate for runner provisioning
 - [ ] Zero leaked AWS credentials
 
 ### Performance
+
 - [ ] Runner startup time < 5 minutes
 - [ ] vLLM startup time < 5 minutes
 - [ ] Total execution time < 30 minutes (20 min with caching)
 
 ### Cost
+
 - [ ] Monthly AWS costs < $20 for on-demand
 - [ ] Monthly AWS costs < $5 with spot instances
 - [ ] Spot instance utilization > 70%
 
 ### Reliability
+
 - [ ] Multi-region fallback prevents <2% of failures
 - [ ] 100% runner cleanup rate
 - [ ] Zero orphaned instances over 30 days
@@ -469,23 +516,27 @@ Add GPU matrix:
 ## Next Steps
 
 ### Immediate (This Week)
+
 1. **Task #11**: Set up AWS infrastructure (Charles + DevOps)
 2. **Task #10**: Create GPU AMI with CUDA (Charles)
 3. **Task #12**: Create launch-gpu-runner action (Charles)
 
 ### Week 2
-4. **Task #6**: Create setup-vllm-gpu action (Charles)
-5. **Task #1**: Create record-vllm-gpu-tests workflow (Charles)
-6. **Tasks #7, #9**: Update test configuration (Charles)
+
+1. **Task #6**: Create setup-vllm-gpu action (Charles)
+2. **Task #1**: Create record-vllm-gpu-tests workflow (Charles)
+3. **Tasks #7, #9**: Update test configuration (Charles)
 
 ### Week 3
-7. **Task #8**: End-to-end testing (Charles + team)
-8. **Task #2**: Documentation (Charles)
+
+1. **Task #8**: End-to-end testing (Charles + team)
+2. **Task #2**: Documentation (Charles)
 
 ### Week 4
-9. **Task #4**: Set up cost monitoring (DevOps)
-10. **Task #3**: Implement spot instances (Charles)
-11. **Task #5**: Add model caching (Charles)
+
+1. **Task #4**: Set up cost monitoring (DevOps)
+2. **Task #3**: Implement spot instances (Charles)
+3. **Task #5**: Add model caching (Charles)
 
 ---
 

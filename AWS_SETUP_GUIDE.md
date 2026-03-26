@@ -23,6 +23,7 @@ aws iam create-open-id-connect-provider \
 ```
 
 **Via AWS Console**:
+
 1. Go to IAM > Identity providers
 2. Click **Add provider**
 3. Provider type: **OpenID Connect**
@@ -58,6 +59,7 @@ Create a file `trust-policy.json`:
 ```
 
 Replace:
+
 - `YOUR_ACCOUNT_ID`: Your AWS account ID (e.g., `123456789012`)
 - `YOUR_ORG/llama-stack`: Your GitHub repository (e.g., `meta-llama/llama-stack`)
 
@@ -135,7 +137,8 @@ aws iam get-role --role-name GitHubActionsLlamaStackGPU --query 'Role.Arn' --out
 ```
 
 Save this ARN - you'll need it for GitHub secrets:
-```
+
+```text
 arn:aws:iam::123456789012:role/GitHubActionsLlamaStackGPU
 ```
 
@@ -409,6 +412,7 @@ Go to your GitHub repository > Settings > Secrets and variables > Actions > Vari
 Click **New repository variable** for each:
 
 **us-east-2**:
+
 - `SUBNET_US_EAST_2A`: `subnet-xxxxx`
 - `SUBNET_US_EAST_2B`: `subnet-xxxxx`
 - `SUBNET_US_EAST_2C`: `subnet-xxxxx`
@@ -416,6 +420,7 @@ Click **New repository variable** for each:
 - `SECURITY_GROUP_ID_US_EAST_2`: `sg-xxxxx`
 
 **us-east-1**:
+
 - `SUBNET_US_EAST_1A`: `subnet-xxxxx`
 - `SUBNET_US_EAST_1B`: `subnet-xxxxx`
 - `SUBNET_US_EAST_1C`: `subnet-xxxxx`
@@ -435,6 +440,7 @@ Click **New repository variable** for each:
 ### 6.2 Verify Success
 
 Check that:
+
 - [ ] EC2 instance launches in us-east-2
 - [ ] Runner registers and picks up job
 - [ ] GPU is detected (`nvidia-smi` output)
@@ -456,6 +462,7 @@ Check that:
 **Error**: "Not authorized to perform sts:AssumeRoleWithWebIdentity"
 
 **Solutions**:
+
 1. Verify OIDC provider is created correctly
 2. Check trust policy allows your repository
 3. Verify `token.actions.githubusercontent.com:sub` matches your repo
@@ -465,6 +472,7 @@ Check that:
 **Error**: "InsufficientInstanceCapacity"
 
 **Solutions**:
+
 1. Try different AZ (workflow does this automatically)
 2. Try different instance type
 3. Check service quotas in AWS console
@@ -474,6 +482,7 @@ Check that:
 **Error**: "Invalid AMI ID"
 
 **Solutions**:
+
 1. Verify AMI exists in the region you're trying to use
 2. Check AMI ID is correct in GitHub variables
 3. Ensure AMI is not deregistered
@@ -483,6 +492,7 @@ Check that:
 **Error**: "UnauthorizedOperation"
 
 **Solutions**:
+
 1. Verify security group exists in same VPC as subnet
 2. Check security group allows outbound HTTPS (443)
 3. Ensure IAM role has `ec2:DescribeSecurityGroups` permission
@@ -509,6 +519,7 @@ aws budgets create-budget \
 ```
 
 `budget.json`:
+
 ```json
 {
   "BudgetName": "llama-stack-gpu-runners",
@@ -525,6 +536,7 @@ aws budgets create-budget \
 ```
 
 `notifications.json`:
+
 ```json
 [
   {
@@ -548,6 +560,7 @@ aws budgets create-budget \
 ### 1. Principle of Least Privilege
 
 The IAM role only has permissions to:
+
 - Launch/terminate EC2 instances
 - Only in us-east-1 and us-east-2 regions
 - Only for llama-stack repository
@@ -555,6 +568,7 @@ The IAM role only has permissions to:
 ### 2. No Long-Lived Credentials
 
 Using OIDC means:
+
 - No AWS access keys stored in GitHub
 - Tokens expire after use
 - Better audit trail in CloudTrail
@@ -562,6 +576,7 @@ Using OIDC means:
 ### 3. Regular Audits
 
 Monthly:
+
 - [ ] Review EC2 instances for orphaned runners
 - [ ] Check AWS costs vs budget
 - [ ] Review CloudTrail logs for unusual activity
@@ -580,6 +595,7 @@ After completing this setup:
 ## Support
 
 For issues during setup:
+
 - Check AWS CloudTrail for API errors
 - Review GitHub Actions logs for OIDC errors
 - Verify all ARNs and IDs are correct

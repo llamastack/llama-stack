@@ -178,6 +178,7 @@ jobs:
         with:
           mode: stop
           github-token: ${{ secrets.GH_RUNNER_PAT }}
+          aws-region: us-east-2
           label: ${{ needs.start-gpu-runner.outputs.label }}
           ec2-instance-id: ${{ needs.start-gpu-runner.outputs.instance-id }}
 
@@ -194,25 +195,27 @@ jobs:
     steps:
       - name: Workflow summary
         run: |
-          echo "## vLLM GPU Recording Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Model**: gpt-oss:20b" >> $GITHUB_STEP_SUMMARY
-          echo "**Instance Type**: g6.2xlarge" >> $GITHUB_STEP_SUMMARY
-          echo "**Test Suite**: ${{ inputs.suite }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## vLLM GPU Recording Summary"
+            echo ""
+            echo "**Model**: gpt-oss:20b"
+            echo "**Instance Type**: g6.2xlarge"
+            echo "**Test Suite**: ${{ inputs.suite }}"
+            echo ""
 
-          if [ "${{ needs.record-vllm-tests.result }}" == "success" ]; then
-            echo "**Test Status**: Successful" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Recordings have been uploaded as artifacts. Download them from the workflow run and commit manually." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "**Test Status**: Failed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Check the test logs for errors." >> $GITHUB_STEP_SUMMARY
-          fi
+            if [ "${{ needs.record-vllm-tests.result }}" == "success" ]; then
+              echo "**Test Status**: Successful"
+              echo ""
+              echo "Recordings have been uploaded as artifacts. Download them from the workflow run and commit manually."
+            else
+              echo "**Test Status**: Failed"
+              echo ""
+              echo "Check the test logs for errors."
+            fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Cleanup Status**: ${{ needs.stop-gpu-runner.result == 'success' && 'Instance terminated' || 'Check manually' }}" >> $GITHUB_STEP_SUMMARY
+            echo ""
+            echo "**Cleanup Status**: ${{ needs.stop-gpu-runner.result == 'success' && 'Instance terminated' || 'Check manually' }}"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Check for cleanup issues
         if: needs.stop-gpu-runner.result != 'success'

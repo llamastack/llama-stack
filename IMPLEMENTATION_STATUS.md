@@ -8,6 +8,7 @@
 ### Code Implementation (Ready to Use)
 
 #### 1. GitHub Actions Workflow ✅
+
 **File**: `.github/workflows/record-vllm-gpu-tests.yml`
 
 - ✅ Manual workflow_dispatch trigger
@@ -19,12 +20,14 @@
 - ✅ Comprehensive error handling and logging
 
 **Features**:
+
 - Select model: gpt-oss:20b, gpt-oss:latest, Qwen/Qwen3-0.6B
 - Select instance type: g6.2xlarge, g5.2xlarge, g6.8xlarge, g6e.12xlarge
 - Select test suite: base, responses, vllm-reasoning
 - Optional PR number for tracking
 
 #### 2. Setup vLLM GPU Action ✅
+
 **File**: `.github/actions/setup-vllm-gpu/action.yml`
 
 - ✅ GPU verification (nvidia-smi)
@@ -38,6 +41,7 @@
 - ✅ AWQ quantization for 24GB GPUs
 
 #### 3. Launch GPU Runner Action ✅
+
 **File**: `.github/actions/launch-gpu-runner/action.yml`
 
 - ✅ Wrapper for machulav/ec2-github-runner
@@ -49,6 +53,7 @@
 **Note**: Multi-region fallback logic is handled in the workflow, not the action.
 
 #### 4. Test Configuration ✅
+
 **Files**: `tests/integration/suites.py`, `tests/integration/ci_matrix.json`
 
 - ✅ Added `vllm-gpu-gpt-oss` setup in suites.py
@@ -56,6 +61,7 @@
 - ✅ Configured for base, responses, and vllm-reasoning test suites
 
 #### 5. Documentation ✅
+
 **Files**: `docs/gpu-runners.md`, `AWS_SETUP_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, `GPU_RUNNERS_DESIGN.md`
 
 - ✅ User guide for triggering GPU workflows
@@ -72,6 +78,7 @@
 ### Infrastructure Tasks
 
 #### 1. Set up OIDC Provider ⏳
+
 **Owner**: DevOps/Charles
 **Time**: 30 minutes
 
@@ -84,16 +91,19 @@
 **Guide**: `AWS_SETUP_GUIDE.md` Step 1
 
 #### 2. Set up VPC and Networking ⏳
+
 **Owner**: DevOps/Charles
 **Time**: 1-2 hours
 
 **us-east-2 (Primary)**:
+
 - [ ] Create or identify VPC
 - [ ] Create 3 subnets (us-east-2a, 2b, 2c)
 - [ ] Configure internet gateway and routing
 - [ ] Create security group
 
 **us-east-1 (Fallback)**:
+
 - [ ] Create or identify VPC
 - [ ] Create 3 subnets (us-east-1a, 1b, 1c)
 - [ ] Configure internet gateway and routing
@@ -102,10 +112,12 @@
 **Guide**: `AWS_SETUP_GUIDE.md` Step 2
 
 #### 3. Create GPU-Enabled AMI ⏳
+
 **Owner**: DevOps/Charles
 **Time**: 3-4 hours (includes building time)
 
 **us-east-2**:
+
 - [ ] Launch g6.2xlarge instance
 - [ ] Install NVIDIA drivers
 - [ ] Install CUDA 12.4
@@ -114,12 +126,14 @@
 - [ ] Create AMI
 
 **us-east-1**:
+
 - [ ] Copy AMI from us-east-2
 - [ ] Verify AMI works
 
 **Guide**: `AWS_SETUP_GUIDE.md` Step 3
 
 #### 4. Create GitHub Personal Access Token ⏳
+
 **Owner**: Charles
 **Time**: 5 minutes
 
@@ -129,14 +143,17 @@
 **Guide**: `AWS_SETUP_GUIDE.md` Step 4
 
 #### 5. Configure GitHub Secrets and Variables ⏳
+
 **Owner**: Charles
 **Time**: 10 minutes
 
 **Secrets** (Settings > Secrets and variables > Actions > Secrets):
+
 - [ ] `AWS_ROLE_ARN`: IAM role ARN from step 1
 - [ ] `GH_RUNNER_PAT`: GitHub PAT from step 4
 
 **Variables** (Settings > Secrets and variables > Actions > Variables):
+
 - [ ] `SUBNET_US_EAST_2A`, `SUBNET_US_EAST_2B`, `SUBNET_US_EAST_2C`
 - [ ] `SUBNET_US_EAST_1A`, `SUBNET_US_EAST_1B`, `SUBNET_US_EAST_1C`
 - [ ] `AWS_EC2_AMI_US_EAST_2`
@@ -153,6 +170,7 @@
 ### Test Plan
 
 #### 1. Initial Test Run ⏳
+
 **Owner**: Charles
 **Time**: 30 minutes
 
@@ -168,6 +186,7 @@
 **Guide**: `AWS_SETUP_GUIDE.md` Step 6
 
 #### 2. Failure Scenario Testing ⏳
+
 **Owner**: Charles
 **Time**: 1-2 hours
 
@@ -176,6 +195,7 @@
 - [ ] Verify multi-region fallback (if capacity issue)
 
 #### 3. Performance Validation ⏳
+
 **Owner**: Charles
 **Time**: Ongoing (10+ runs)
 
@@ -191,6 +211,7 @@
 ### Tasks
 
 #### 1. Set up AWS Cost Monitoring ⏳
+
 **Time**: 3-4 hours
 
 - [ ] Create AWS Budget with $50/month alert
@@ -202,6 +223,7 @@
 **ROI**: Prevents cost overruns, better visibility
 
 #### 2. Implement Spot Instances ⏳
+
 **Time**: 4-6 hours
 
 - [ ] Update launch-gpu-runner action for spot support
@@ -212,6 +234,7 @@
 **ROI**: 70-80% cost reduction ($0.43 → $0.09-$0.17 per run)
 
 #### 3. Add Model Caching ⏳
+
 **Time**: 2-3 hours
 
 - [ ] Pre-cache gpt-oss:20b in AMI
@@ -224,17 +247,20 @@
 ## 📊 Success Metrics
 
 ### Functional
+
 - [ ] Successfully record gpt-oss:20b tests within 30 minutes
 - [ ] 95%+ success rate for runner provisioning
 - [ ] Zero leaked AWS credentials
 - [ ] Zero orphaned EC2 instances
 
 ### Performance
+
 - [ ] Runner startup time < 5 minutes
 - [ ] vLLM startup time < 5 minutes
 - [ ] Total execution time < 30 minutes
 
 ### Cost
+
 - [ ] Monthly AWS costs < $20 for on-demand usage
 - [ ] Average cost per run: $0.40-$0.50
 
@@ -243,6 +269,7 @@
 ### For First-Time Setup
 
 1. **AWS Setup** (DevOps + Charles, ~8 hours total):
+
    ```bash
    # Follow AWS_SETUP_GUIDE.md steps 1-5
    # Estimated time breakdown:
@@ -274,7 +301,7 @@
 
 ## 📁 File Structure
 
-```
+```text
 llama-stack/
 ├── .github/
 │   ├── actions/
@@ -298,24 +325,28 @@ llama-stack/
 ## 🔒 Security Highlights
 
 ### OIDC Authentication
+
 - ✅ No long-lived AWS credentials in GitHub
 - ✅ Temporary tokens from AWS STS
 - ✅ Automatic rotation
 - ✅ Better audit trail
 
 ### Test Job Isolation
+
 - ✅ `permissions: {}` on test job
 - ✅ Cannot access secrets
 - ✅ Cannot write to repository
 - ✅ Prevents credential theft
 
 ### Cleanup Guarantees
+
 - ✅ `if: always()` on cleanup job
 - ✅ Runs even on failure/cancellation
 - ✅ Prevents orphaned instances
 - ✅ Cost protection
 
 ### Resource Tagging
+
 - ✅ All instances tagged with:
   - Project, Purpose, Model
   - GitHub repository, run ID
@@ -324,6 +355,7 @@ llama-stack/
 ## 💰 Cost Estimates
 
 ### Current State (On-Demand)
+
 | Scenario | Frequency | Cost/Month |
 |----------|-----------|------------|
 | Weekly re-recording | 4x/month | **$1.72** |
@@ -331,6 +363,7 @@ llama-stack/
 | On-demand (PRs) | 10x/month | **$4.30** |
 
 ### Phase 2 (With Spot Instances)
+
 | Scenario | Frequency | Cost/Month |
 |----------|-----------|------------|
 | Weekly re-recording | 4x/month | **$0.36-$0.68** |
@@ -342,16 +375,19 @@ llama-stack/
 ## 📞 Support
 
 ### For AWS Setup Issues
+
 - Consult `AWS_SETUP_GUIDE.md`
 - Check AWS CloudTrail for API errors
 - Verify IAM permissions
 
 ### For Workflow Issues
+
 - Consult `docs/gpu-runners.md`
 - Check GitHub Actions logs
 - Verify all secrets/variables set correctly
 
 ### For General Questions
+
 - Review `GPU_RUNNERS_DESIGN.md` for architecture
 - Review `IMPLEMENTATION_PLAN.md` for roadmap
 - Contact: Charles Doern (@cdoern)
@@ -359,6 +395,7 @@ llama-stack/
 ## 🎯 Next Actions
 
 **Immediate** (This Week):
+
 1. [ ] Complete AWS infrastructure setup (Tasks 11, 10 from plan)
 2. [ ] Configure GitHub secrets and variables
 3. [ ] Run first test workflow (Task 8)
