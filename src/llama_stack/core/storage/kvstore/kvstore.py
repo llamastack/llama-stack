@@ -60,7 +60,7 @@ class InmemoryKVStoreImpl(KVStore):
         return [key for key in self._store.keys() if key >= start_key and key < end_key]
 
     async def delete(self, key: str) -> None:
-        del self._store[key]
+        self._store.pop(key, None)
 
     async def shutdown(self) -> None:
         self._store.clear()
