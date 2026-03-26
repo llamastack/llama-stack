@@ -1,9 +1,9 @@
 version: 2
 distro_name: watsonx
 apis:
-- agents
 - files
 - inference
+- responses
 - safety
 - tool_runtime
 - vector_io
@@ -27,7 +27,7 @@ providers:
     provider_type: inline::llama-guard
     config:
       excluded_categories: []
-  agents:
+  responses:
   - provider_id: builtin
     provider_type: inline::builtin
     config:

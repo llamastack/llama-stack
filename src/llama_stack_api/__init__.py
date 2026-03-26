@@ -15,7 +15,7 @@ server implementation.
 All imports from this package MUST use the form:
     from llama_stack_api import <symbol>
 
-Sub-module imports (e.g., from llama_stack_api.agents import Agents) are NOT supported
+Sub-module imports (e.g., from llama_stack_api.responses import Responses) are NOT supported
 and considered a code smell. All exported symbols are explicitly listed in __all__.
 """
 
@@ -52,7 +52,7 @@ from .admin import (
 
 # Import all public API symbols
 from .responses import (
-    Agents,
+    Responses,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -203,6 +203,8 @@ from .inference import (
     OpenAIChatCompletionMessageContent,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionTextOnlyMessageContent,
+    OpenAIChatCompletionCustomToolCall,
+    OpenAIChatCompletionCustomToolCallFunction,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChatCompletionToolChoice,
@@ -503,8 +505,8 @@ __all__ = [
     "LLAMA_STACK_API_V1ALPHA",
     "LLAMA_STACK_API_V1BETA",
     # API Symbols
-    "Agents",
-    # Agents Request Models
+    "Responses",
+    # Responses Request Models
     "CreateResponseRequest",
     "DeleteResponseRequest",
     "ListResponseInputItemsRequest",
@@ -667,6 +669,8 @@ __all__ = [
     "OpenAIChatCompletionMessageContent",
     "OpenAIChatCompletionRequestWithExtraBody",
     "OpenAIChatCompletionTextOnlyMessageContent",
+    "OpenAIChatCompletionCustomToolCall",
+    "OpenAIChatCompletionCustomToolCallFunction",
     "OpenAIChatCompletionToolCall",
     "OpenAIChatCompletionToolCallFunction",
     "OpenAIChatCompletionUsage",

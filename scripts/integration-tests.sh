@@ -389,6 +389,15 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
         fi
         sleep 1
     done
+    # Verify IPv6 loopback connectivity
+    if curl -s http://[::1]:$LLAMA_STACK_PORT/v1/health 2>/dev/null | grep -q "OK"; then
+        echo "✅ Llama Stack Server is accessible on IPv6 loopback"
+    else
+        echo "❌ Llama Stack Server is not accessible on IPv6 loopback"
+        echo "Server logs:"
+        cat server.log
+        exit 1
+    fi
     echo ""
 
     trap stop_server EXIT ERR INT TERM

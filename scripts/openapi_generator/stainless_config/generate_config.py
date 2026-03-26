@@ -76,25 +76,6 @@ ENVIRONMENTS = {"production": "http://any-hosted-llama-stack.com"}
 
 PAGINATION = [
     {
-        "name": "datasets_iterrows",
-        "type": "offset",
-        "request": {
-            "dataset_id": {"type": "string"},
-            "start_index": {
-                "type": "integer",
-                "x-stainless-pagination-property": {"purpose": "offset_count_param"},
-            },
-            "limit": {"type": "integer"},
-        },
-        "response": {
-            "data": {"type": "array", "items": {"type": "object"}},
-            "next_index": {
-                "type": "integer",
-                "x-stainless-pagination-property": {"purpose": "offset_count_start_field"},
-            },
-        },
-    },
-    {
         "name": "openai_cursor_page",
         "type": "cursor",
         "request": {
@@ -136,49 +117,6 @@ SETTINGS = {
 OPENAPI = {
     "transformations": [
         {
-            "command": "mergeObject",
-            "reason": "Better return_type using enum",
-            "args": {
-                "target": ["$.components.schemas"],
-                "object": {
-                    "ReturnType": {
-                        "additionalProperties": False,
-                        "properties": {
-                            "type": {
-                                "enum": [
-                                    "string",
-                                    "number",
-                                    "boolean",
-                                    "array",
-                                    "object",
-                                    "json",
-                                    "union",
-                                    "chat_completion_input",
-                                    "completion_input",
-                                    "agent_turn_input",
-                                ]
-                            }
-                        },
-                        "required": ["type"],
-                        "type": "object",
-                    }
-                },
-            },
-        },
-        {
-            "command": "replaceProperties",
-            "reason": "Replace return type properties with better model (see above)",
-            "args": {
-                "filter": {
-                    "only": [
-                        "$.components.schemas.ScoringFn.properties.return_type",
-                        "$.components.schemas.RegisterScoringFunctionRequest.properties.return_type",
-                    ]
-                },
-                "value": {"$ref": "#/components/schemas/ReturnType"},
-            },
-        },
-        {
             "command": "oneOfToAnyOf",
             "reason": "Prism (mock server) doesn't like one of our "
             "requests as it technically matches multiple "
@@ -211,7 +149,6 @@ ALL_RESOURCES = {
             "param_type": "ParamType",
             "safety_violation": "SafetyViolation",
             "sampling_params": "SamplingParams",
-            "scoring_result": "ScoringResult",
             "system_message": "SystemMessage",
             "health_info": "HealthInfo",
             "provider_info": "ProviderInfo",
@@ -441,25 +378,6 @@ ALL_RESOURCES = {
             "delete": "delete /v1/shields/{identifier}",
         },
     },
-    "scoring": {
-        "methods": {
-            "score": "post /v1/scoring/score",
-            "score_batch": "post /v1/scoring/score-batch",
-        }
-    },
-    "scoring_functions": {
-        "models": {
-            "scoring_fn": "ScoringFn",
-            "scoring_fn_params": "ScoringFnParams",
-            "list_scoring_functions_response": "ListScoringFunctionsResponse",
-        },
-        "methods": {
-            "retrieve": "get /v1/scoring-functions/{scoring_fn_id}",
-            "list": {"paginated": False, "endpoint": "get /v1/scoring-functions"},
-            "register": "post /v1/scoring-functions",
-            "unregister": "delete /v1/scoring-functions/{scoring_fn_id}",
-        },
-    },
     "files": {
         "models": {
             "file": "OpenAIFileObject",
@@ -484,43 +402,6 @@ ALL_RESOURCES = {
     },
     "alpha": {
         "subresources": {
-            "benchmarks": {
-                "models": {
-                    "benchmark": "Benchmark",
-                    "list_benchmarks_response": "ListBenchmarksResponse",
-                },
-                "methods": {
-                    "retrieve": "get /v1alpha/eval/benchmarks/{benchmark_id}",
-                    "list": {
-                        "paginated": False,
-                        "endpoint": "get /v1alpha/eval/benchmarks",
-                    },
-                    "register": "post /v1alpha/eval/benchmarks",
-                    "unregister": "delete /v1alpha/eval/benchmarks/{benchmark_id}",
-                },
-            },
-            "eval": {
-                "models": {
-                    "evaluate_response": "EvaluateResponse",
-                    "benchmark_config": "BenchmarkConfig",
-                    "job": "Job",
-                },
-                "methods": {
-                    "evaluate_rows": "post /v1alpha/eval/benchmarks/{benchmark_id}/evaluations",
-                    "run_eval": "post /v1alpha/eval/benchmarks/{benchmark_id}/jobs",
-                    "evaluate_rows_alpha": "post /v1alpha/eval/benchmarks/{benchmark_id}/evaluations",
-                    "run_eval_alpha": "post /v1alpha/eval/benchmarks/{benchmark_id}/jobs",
-                },
-                "subresources": {
-                    "jobs": {
-                        "methods": {
-                            "cancel": "delete /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}",
-                            "status": "get /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}",
-                            "retrieve": "get /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result",
-                        }
-                    }
-                },
-            },
             "admin": {
                 "methods": {
                     "list_providers": "get /v1alpha/admin/providers",
@@ -535,21 +416,6 @@ ALL_RESOURCES = {
                     "rerank": "post /v1alpha/inference/rerank",
                 },
             },
-        }
-    },
-    "beta": {
-        "subresources": {
-            "datasets": {
-                "models": {"list_datasets_response": "ListDatasetsResponse"},
-                "methods": {
-                    "register": "post /v1beta/datasets",
-                    "retrieve": "get /v1beta/datasets/{dataset_id}",
-                    "list": {"paginated": False, "endpoint": "get /v1beta/datasets"},
-                    "unregister": "delete /v1beta/datasets/{dataset_id}",
-                    "iterrows": "get /v1beta/datasetio/iterrows/{dataset_id}",
-                    "appendrows": "post /v1beta/datasetio/append-rows/{dataset_id}",
-                },
-            }
         }
     },
 }

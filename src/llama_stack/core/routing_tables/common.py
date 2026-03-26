@@ -85,7 +85,7 @@ class CommonRoutingTableImpl(RoutingTable):
                 await self.dist_registry.register(obj)
 
         # Register all objects from providers
-        for pid, p in self.impls_by_provider_id.items():
+        for _pid, p in self.impls_by_provider_id.items():
             api = get_impl_api(p)
             if api == Api.inference:
                 p.model_store = self

@@ -33,7 +33,7 @@ from llama_stack.core.storage.kvstore.config import SqliteKVStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import SqliteSqlStoreConfig
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.providers.utils.inference.model_registry import ProviderModelEntry
-from llama_stack_api import ConnectorInput, ConnectorType, DatasetPurpose, ModelType
+from llama_stack_api import ConnectorInput, ConnectorType, ModelType
 
 
 def filter_empty_values(obj: Any) -> Any:
@@ -378,11 +378,9 @@ class DistributionTemplate(BaseModel):
 
         # Register YAML representer for enums
         yaml.add_representer(ModelType, enum_representer)
-        yaml.add_representer(DatasetPurpose, enum_representer)
         yaml.add_representer(StorageBackendType, enum_representer)
         yaml.add_representer(ConnectorType, enum_representer)
         yaml.SafeDumper.add_representer(ModelType, enum_representer)
-        yaml.SafeDumper.add_representer(DatasetPurpose, enum_representer)
         yaml.SafeDumper.add_representer(StorageBackendType, enum_representer)
         yaml.SafeDumper.add_representer(ConnectorType, enum_representer)
 
