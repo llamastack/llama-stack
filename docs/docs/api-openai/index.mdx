@@ -5,226 +5,65 @@ sidebar_label: OpenAI Compatibility
 sidebar_position: 1
 ---
 
-import Link from '@docusaurus/Link';
-
 # OpenAI API Compatibility
 
-Llama Stack provides OpenAI API compatibility, allowing you to use existing OpenAI API clients and tools with Llama Stack providers. This compatibility layer enables migration from OpenAI to open-source models.
-
-:::tip Conformance Status
-For detailed conformance metrics, missing properties, and schema issues, see the **[API Conformance Report](./conformance.mdx)**.
-:::
-
-## Overview
-
-OpenAI API compatibility in Llama Stack includes:
-
-- **OpenAI-compatible endpoints** for major APIs
-- **Request/response format compatibility** with OpenAI standards
-- **Authentication** using OpenAI-style API keys
-- **Error handling** with OpenAI-compatible error codes
-
-## Implemented APIs
-
-| API | Endpoint | Status |
-|-----|----------|--------|
-| Chat Completions | `/v1/chat/completions` | ✅ Implemented |
-| Completions | `/v1/completions` | ✅ Implemented |
-| Embeddings | `/v1/embeddings` | ✅ Implemented |
-| Models | `/v1/models` | ✅ Implemented |
-| Files | `/v1/files` | ✅ Implemented |
-| Vector Stores | `/v1/vector_stores` | ✅ Implemented |
-| Batches | `/v1/batches` | ✅ Implemented |
-| Moderations | `/v1/moderations` | ✅ Implemented |
-| Responses | `/v1/responses` | ✅ Implemented |
-| Conversations | `/v1/conversations` | ✅ Implemented |
-
-For a complete list of implemented vs missing endpoints and property-level conformance details, see the [Conformance Report](./conformance.mdx).
-
-## Migration from OpenAI
-
-### Step 1: Update API Endpoint
-Change your API endpoint from OpenAI to your Llama Stack server:
+Llama Stack implements the OpenAI API, so you can use any OpenAI-compatible client — just change the base URL.
 
 ```python
-# Before (OpenAI)
-import openai
-client = openai.OpenAI(api_key="your-openai-key")
+from openai import OpenAI
 
-# After (Llama Stack)
-import openai
-client = openai.OpenAI(
-    api_key="your-llama-stack-key",
-    base_url="http://localhost:8000/v1"  # Your Llama Stack server
-)
-```
-
-### Step 2: Configure Providers
-Set up your preferred providers in the Llama Stack configuration:
-
-```yaml
-# stack-config.yaml
-inference:
-  providers:
-    - name: "builtin"
-      type: "inline"
-      model: "llama-3.1-8b"
-```
-
-### Step 3: Test Compatibility
-Verify that your existing code works with Llama Stack:
-
-```python
-# Test chat completions
+client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
 response = client.chat.completions.create(
-    model="llama-3.1-8b",
-    messages=[
-        {"role": "user", "content": "Hello, world!"}
-    ]
-)
-print(response.choices[0].message.content)
-```
-
-## Provider-Specific Features
-
-### Builtin Provider
-- Full OpenAI API compatibility
-- Local model execution
-- Custom model support
-
-### Remote Providers
-- OpenAI API compatibility
-- Cloud-based execution
-- Scalable infrastructure
-
-### Vector Store Providers
-- OpenAI vector store API compatibility
-- Automatic document processing
-- Advanced search capabilities
-
-## Authentication
-
-Llama Stack supports OpenAI-style authentication:
-
-### API Key Authentication
-```python
-client = openai.OpenAI(
-    api_key="your-api-key",
-    base_url="http://localhost:8000/v1"
+    model="llama-3.3-70b",
+    messages=[{"role": "user", "content": "Hello"}],
 )
 ```
 
-### Environment Variables
-```bash
-export OPENAI_API_KEY="your-api-key"
-export OPENAI_BASE_URL="http://localhost:8000/v1"
-```
+This works with the [OpenAI Python client](https://github.com/openai/openai-python), [TypeScript client](https://github.com/openai/openai-node), or any framework that speaks the OpenAI API (LangChain, LlamaIndex, CrewAI, etc.).
 
-## Error Handling
+## Implemented endpoints
 
-Llama Stack provides OpenAI-compatible error responses:
+| API | Endpoint | Description |
+|-----|----------|-------------|
+| Chat Completions | `/v1/chat/completions` | Text and vision inference, streaming, tool calling |
+| Completions | `/v1/completions` | Text completions |
+| Embeddings | `/v1/embeddings` | Text embeddings |
+| Models | `/v1/models` | Model listing and management |
+| Files | `/v1/files` | File upload and management |
+| Vector Stores | `/v1/vector_stores` | Document storage and semantic search |
+| Batches | `/v1/batches` | Offline batch processing |
+| Moderations | `/v1/moderations` | Content safety via Llama Guard |
+| Responses | `/v1/responses` | Server-side agentic orchestration with tool calling, MCP, and file search |
+| Conversations | `/v1/conversations` | Conversation state management |
+
+For property-level conformance details and missing endpoints, see the [conformance report](./conformance.mdx).
+
+## Responses API
+
+The Responses API is Llama Stack's most distinctive feature. It moves the agentic loop to the server, so a single API call can:
+
+- **Call tools** — the server executes tool calls and feeds results back to the model automatically
+- **Connect to MCP servers** — use any [Model Context Protocol](https://modelcontextprotocol.io/) server as a tool source
+- **Search files** — built-in RAG via vector stores, no external retrieval pipeline needed
+- **Manage conversations** — server-side state with `previous_response_id` chaining
+
+The implementation conforms to the [Open Responses](https://www.openresponses.org/) specification.
 
 ```python
-try:
-    response = client.chat.completions.create(...)
-except openai.APIError as e:
-    print(f"API Error: {e}")
-except openai.RateLimitError as e:
-    print(f"Rate Limit Error: {e}")
-except openai.APIConnectionError as e:
-    print(f"Connection Error: {e}")
+response = client.responses.create(
+    model="llama-3.3-70b",
+    input="What files mention the Q4 results?",
+    tools=[{
+        "type": "file_search",
+        "vector_store_ids": ["vs_abc123"],
+    }],
+)
 ```
 
-## Rate Limiting
+## Provider compatibility
 
-OpenAI-compatible rate limiting is supported:
+Not all features are available on all inference providers. See the [provider compatibility matrix](./provider_matrix.md) for tested feature coverage across Azure, Bedrock, OpenAI, vLLM, WatsonX, and others.
 
-- **Requests per minute** limits
-- **Tokens per minute** limits
-- **Concurrent request** limits
-- **Usage tracking** and monitoring
+## Known limitations
 
-## Monitoring and Observability
-
-Track your API usage with OpenAI-compatible monitoring:
-
-- **Request/response logging**
-- **Usage metrics** and analytics
-- **Performance monitoring**
-- **Error tracking** and alerting
-
-## Best Practices
-
-### 1. Provider Selection
-Choose providers based on your requirements:
-- **Local development**: Builtin, Ollama
-- **Production**: Cloud providers (Fireworks, Together, NVIDIA)
-- **Specialized use cases**: Custom providers
-
-### 2. Model Configuration
-Configure models for optimal performance:
-- **Model selection** based on task requirements
-- **Parameter tuning** for specific use cases
-- **Resource allocation** for performance
-
-### 3. Error Handling
-Implement robust error handling:
-- **Retry logic** for transient failures
-- **Fallback providers** for high availability
-- **Monitoring** and alerting for issues
-
-### 4. Security
-Follow security best practices:
-- **API key management** and rotation
-- **Access control** and authorization
-- **Data privacy** and compliance
-
-## Implementation Examples
-
-For detailed code examples and implementation guides, see our [OpenAI Implementation Guide](../providers/openai.mdx).
-
-## Known Limitations
-
-For a detailed breakdown of schema differences, missing properties, and conformance issues by endpoint, see the [API Conformance Report](./conformance.mdx).
-
-### Responses API Limitations
-The Responses API is still in active development. For detailed information about current limitations and implementation status, see our [OpenAI Responses API Limitations](../providers/openai_responses_limitations.mdx).
-
-## Troubleshooting
-
-### Common Issues
-
-**Connection Errors**
-- Verify server is running
-- Check network connectivity
-- Validate API endpoint URL
-
-**Authentication Errors**
-- Verify API key is correct
-- Check key permissions
-- Ensure proper authentication headers
-
-**Model Errors**
-- Verify model is available
-- Check provider configuration
-- Validate model parameters
-
-### Getting Help
-
-For OpenAI compatibility issues:
-
-1. **Check Documentation**: Review provider-specific documentation
-2. **Community Support**: Ask questions in GitHub issues
-3. **Issue Reporting**: Open GitHub issues for bugs
-4. **Professional Support**: Contact support for enterprise issues
-
-## Roadmap
-
-Upcoming OpenAI compatibility features:
-
-- **Enhanced batch processing** support
-- **Advanced function calling** capabilities
-- **Improved error handling** and diagnostics
-- **Performance optimizations** for large-scale deployments
-
-For the latest updates, follow our [GitHub releases](https://github.com/llamastack/llama-stack/releases) and [GitHub issues](https://github.com/llamastack/llama-stack/issues).
+For a detailed breakdown of schema differences and conformance issues by endpoint, see the [conformance report](./conformance.mdx) and the [Responses API limitations](../providers/openai_responses_limitations.mdx).
