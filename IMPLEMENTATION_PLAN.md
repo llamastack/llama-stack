@@ -55,7 +55,7 @@ SECURITY_GROUP_ID_US_EAST_1=sg-xxxxx
 
 ```text
 AWS_ROLE_ARN=arn:aws:iam::123456789012:role/GitHubActionsRole
-GH_RUNNER_PAT=ghp_xxxxx (GitHub PAT with 'repo' scope)
+RELEASE_PAT=ghp_xxxxx (GitHub PAT with 'repo' scope)
 ```
 
 **Dependencies**: None

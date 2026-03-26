@@ -402,7 +402,7 @@ Click **New repository secret** for each:
 - **Name**: `AWS_ROLE_ARN`
   - **Value**: `arn:aws:iam::123456789012:role/GitHubActionsLlamaStackGPU`
 
-- **Name**: `GH_RUNNER_PAT`
+- **Name**: `RELEASE_PAT`
   - **Value**: `ghp_xxxxxxxxxxxxx` (from Step 4)
 
 ### 5.2 Add Variables

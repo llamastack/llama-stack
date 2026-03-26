@@ -150,7 +150,7 @@
 **Secrets** (Settings > Secrets and variables > Actions > Secrets):
 
 - [ ] `AWS_ROLE_ARN`: IAM role ARN from step 1
-- [ ] `GH_RUNNER_PAT`: GitHub PAT from step 4
+- [ ] `RELEASE_PAT`: GitHub PAT from step 4
 
 **Variables** (Settings > Secrets and variables > Actions > Variables):
 

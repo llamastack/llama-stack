@@ -51,7 +51,7 @@ jobs:
         uses: ./.github/actions/launch-gpu-runner
         with:
           mode: start
-          github-token: ${{ secrets.GH_RUNNER_PAT }}
+          github-token: ${{ secrets.RELEASE_PAT }}
           instance-type: g6.2xlarge
           aws-region: us-east-2
           availability-zones-config: |
@@ -177,7 +177,7 @@ jobs:
         uses: ./.github/actions/launch-gpu-runner
         with:
           mode: stop
-          github-token: ${{ secrets.GH_RUNNER_PAT }}
+          github-token: ${{ secrets.RELEASE_PAT }}
           aws-region: us-east-2
           label: ${{ needs.start-gpu-runner.outputs.label }}
           ec2-instance-id: ${{ needs.start-gpu-runner.outputs.instance-id }}

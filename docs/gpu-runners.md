@@ -187,7 +187,7 @@ See `GPU_RUNNERS_DESIGN.md` Appendix C for AMI build script.
 Add these to **Settings > Secrets and variables > Actions > Secrets**:
 
 - `AWS_ROLE_ARN`: ARN of the IAM role for OIDC (e.g., `arn:aws:iam::123456789012:role/GitHubActionsRole`)
-- `GH_RUNNER_PAT`: GitHub Personal Access Token with `repo` scope
+- `RELEASE_PAT`: GitHub Personal Access Token with `repo` scope
 
 #### Variables
 
