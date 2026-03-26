@@ -13,6 +13,8 @@ from llama_stack_api import json_schema_type
 
 
 class GeminiProviderDataValidator(BaseModel):
+    """Validates provider-specific request data for Google Gemini inference."""
+
     gemini_api_key: SecretStr | None = Field(
         default=None,
         description="API key for Gemini models",
@@ -21,6 +23,8 @@ class GeminiProviderDataValidator(BaseModel):
 
 @json_schema_type
 class GeminiConfig(RemoteInferenceProviderConfig):
+    """Configuration for the Google Gemini inference provider."""
+
     @classmethod
     def sample_run_config(cls, api_key: str = "${env.GEMINI_API_KEY:=}", **kwargs) -> dict[str, Any]:
         return {

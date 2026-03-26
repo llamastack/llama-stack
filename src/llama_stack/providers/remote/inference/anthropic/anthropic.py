@@ -14,6 +14,8 @@ from .config import AnthropicConfig
 
 
 class AnthropicInferenceAdapter(OpenAIMixin):
+    """Inference adapter for Anthropic Claude models."""
+
     config: AnthropicConfig
 
     provider_data_api_key_field: str = "anthropic_api_key"

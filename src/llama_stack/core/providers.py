@@ -26,16 +26,29 @@ logger = get_logger(name=__name__, category="core")
 
 
 class ProviderImplConfig(BaseModel):
+    """Configuration for the Providers API implementation."""
+
     config: StackConfig
 
 
 async def get_provider_impl(config, deps):
+    """Create and initialize a ProviderImpl instance.
+
+    Args:
+        config: ProviderImplConfig containing the stack configuration.
+        deps: Dictionary of API dependencies.
+
+    Returns:
+        An initialized ProviderImpl instance.
+    """
     impl = ProviderImpl(config, deps)
     await impl.initialize()
     return impl
 
 
 class ProviderImpl(Providers):
+    """Implementation of the Providers API for listing and inspecting configured providers."""
+
     def __init__(self, config, deps):
         self.stack_config = config.config
         self.deps = deps

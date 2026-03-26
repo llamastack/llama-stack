@@ -49,6 +49,8 @@ class TransformersInferenceImpl(
     InferenceProvider,
     ModelsProtocolPrivate,
 ):
+    """Inference provider for neural reranking using HuggingFace transformers models."""
+
     __provider_id__: str
 
     def __init__(self, config: TransformersInferenceConfig) -> None:

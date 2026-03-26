@@ -58,6 +58,15 @@ def convert_tooldef_to_openai_tool(
 
 
 async def prepare_openai_completion_params(**params):
+    """Prepare keyword arguments for OpenAI-compatible completion calls.
+
+    Args:
+        **params: parameter key-value pairs, where Pydantic models are serialized
+
+    Returns:
+        Dictionary of non-None parameters with models converted to dicts
+    """
+
     async def _prepare_value(value: Any) -> Any:
         new_value = value
         if isinstance(value, list):

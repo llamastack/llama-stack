@@ -13,6 +13,8 @@ from llama_stack_api import json_schema_type
 
 
 class PassthroughProviderDataValidator(BaseModel):
+    """Validates provider-specific request data for passthrough safety forwarding."""
+
     # extra="allow" because forward_headers key names (e.g. "maas_api_token") are
     # deployer-defined at config time — they can't be declared as typed fields.
     # Without it, Pydantic drops them before build_forwarded_headers() can read them.
@@ -26,6 +28,8 @@ class PassthroughProviderDataValidator(BaseModel):
 
 @json_schema_type
 class PassthroughSafetyConfig(BaseModel):
+    """Configuration for the passthrough safety provider that forwards to a downstream service."""
+
     model_config = ConfigDict(extra="forbid")
     base_url: HttpUrl = Field(
         description="Base URL of the downstream safety service (e.g. https://safety.example.com/v1)",

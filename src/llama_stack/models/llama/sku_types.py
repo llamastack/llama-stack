@@ -11,6 +11,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class CheckpointQuantizationFormat(Enum):
+    """Supported quantization formats for model checkpoints."""
+
     # default format
     bf16 = "bf16"
 
@@ -23,6 +25,8 @@ class CheckpointQuantizationFormat(Enum):
 
 
 class ModelFamily(Enum):
+    """Enumeration of Llama model families by generation."""
+
     llama2 = "llama2"
     llama3 = "llama3"
     llama3_1 = "llama3_1"
@@ -85,6 +89,14 @@ class CoreModelId(Enum):
 
 
 def is_multimodal(model_id) -> bool:
+    """Check whether the given model supports multimodal (vision) input.
+
+    Args:
+        model_id: the CoreModelId to check.
+
+    Returns:
+        True if the model supports vision input, False otherwise.
+    """
     if model_id in [
         CoreModelId.llama3_2_11b_vision,
         CoreModelId.llama3_2_90b_vision,
@@ -97,6 +109,14 @@ def is_multimodal(model_id) -> bool:
 
 
 def model_family(model_id) -> ModelFamily:
+    """Determine the model family for a given CoreModelId.
+
+    Args:
+        model_id: the CoreModelId to classify.
+
+    Returns:
+        The ModelFamily that the model belongs to.
+    """
     if model_id in [
         CoreModelId.llama2_7b,
         CoreModelId.llama2_13b,
@@ -157,6 +177,8 @@ def model_family(model_id) -> ModelFamily:
 
 
 class Model(BaseModel):
+    """Represents a Llama model SKU with its architecture parameters and metadata."""
+
     core_model_id: CoreModelId
     description: str
     huggingface_repo: str | None = None

@@ -14,6 +14,8 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class OCI26aiVectorIOConfig(BaseModel):
+    """Configuration for the Oracle 26ai vector I/O provider."""
+
     conn_str: str = Field(description="Connection string for the given 26ai Service")
     user: str = Field(description="Username name to connect to the service")
     password: str = Field(description="Password to connect to the service")

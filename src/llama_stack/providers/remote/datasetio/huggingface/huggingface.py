@@ -16,6 +16,14 @@ DATASETS_PREFIX = "datasets:"
 
 
 def parse_hf_params(dataset_def: Dataset):
+    """Parse HuggingFace dataset URI into path and query parameters.
+
+    Args:
+        dataset_def: dataset definition containing the source URI
+
+    Returns:
+        Tuple of (dataset_path, params_dict)
+    """
     uri = dataset_def.source.uri
     parsed_uri = urlparse(uri)
     params = parse_qs(parsed_uri.query)
@@ -26,6 +34,8 @@ def parse_hf_params(dataset_def: Dataset):
 
 
 class HuggingfaceDatasetIOImpl(DatasetIO, DatasetsProtocolPrivate):
+    """Dataset I/O provider for loading datasets from HuggingFace Hub."""
+
     def __init__(self, config: HuggingfaceDatasetIOConfig) -> None:
         self.config = config
         # local registry for keeping track of datasets within the provider

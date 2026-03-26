@@ -57,11 +57,15 @@ class HttpxOciAuth(httpx.Auth):
 
 
 class OciInstancePrincipalAuth(HttpxOciAuth):
+    """OCI authentication using instance principal credentials."""
+
     def __init__(self, **kwargs: Mapping[str, Any]):
         self.signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner(**kwargs)
 
 
 class OciUserPrincipalAuth(HttpxOciAuth):
+    """OCI authentication using user principal credentials from a config file."""
+
     def __init__(self, config_file: str = DEFAULT_LOCATION, profile_name: str = DEFAULT_PROFILE):
         config = oci.config.from_file(config_file, profile_name)
         oci.config.validate_config(config)  # type: ignore

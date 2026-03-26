@@ -27,6 +27,11 @@ BUILTIN_DEPS = [
 
 
 def available_providers() -> list[ProviderSpec]:
+    """Return the list of available inference provider specifications.
+
+    Returns:
+        List of ProviderSpec objects describing available providers
+    """
     return [
         InlineProviderSpec(
             api=Api.inference,
