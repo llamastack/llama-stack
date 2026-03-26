@@ -663,6 +663,8 @@ class TestOpenAIResponses:
             pytest.skip("Azure OpenAI does not support the service_tier parameter")
         if text_model_id.startswith("watsonx/"):
             pytest.skip("WatsonX does not support the service_tier parameter")
+        if text_model_id.startswith("vllm/"):
+            pytest.skip("vLLM does not support the service_tier parameter")
 
     def test_openai_response_with_service_tier_auto(self, openai_client, text_model_id):
         """Test OpenAI response with service_tier='auto'.
