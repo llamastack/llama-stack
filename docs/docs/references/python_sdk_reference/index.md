@@ -139,8 +139,6 @@ Methods:
 - <code title="post /v1/agents/{agent_id}/session/{session_id}/turn">client.agents.turn.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/agents/turn.py">create</a>(session_id, \*, agent_id, \*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/agents/turn_create_params.py">params</a>) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/agents/turn_create_response.py">TurnCreateResponse</a></code>
 - <code title="get /v1/agents/{agent_id}/session/{session_id}/turn/{turn_id}">client.agents.turn.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/agents/turn.py">retrieve</a>(turn_id, \*, agent_id, session_id) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/agents/turn.py">Turn</a></code>
 
-
-
 ## Datasets
 
 Types:
@@ -224,7 +222,8 @@ Methods:
 
 **This API is deprecated and will be removed in a future version.**
 
-Use the OpenAI-compatible [Vector Stores API](#vectorstores) instead:
+Use the OpenAI-compatible Vector Stores API instead:
+
 - Instead of `client.vector_io.insert()`, use `client.vector_stores.files.create()` and `client.vector_stores.files.chunks.create()`
 - Instead of `client.vector_io.query()`, use `client.vector_stores.search()`
 
@@ -251,7 +250,8 @@ Methods:
 
 **This API is deprecated and will be removed in a future version.**
 
-Use the OpenAI-compatible [Vector Stores API](#vectorstores) instead:
+Use the OpenAI-compatible Vector Stores API instead:
+
 - Instead of `client.vector_dbs.register()`, use `client.vector_stores.create()`
 - Instead of `client.vector_dbs.list()`, use `client.vector_stores.list()`
 - Instead of `client.vector_dbs.retrieve()`, use `client.vector_stores.retrieve()`

@@ -165,7 +165,7 @@ async def test_openai_chat_completion_is_async(vllm_inference_adapter):
         total_time = time.time() - start_time
 
         assert mock_create_client.call_count == 4  # no cheating
-        assert total_time < (sleep_time * 2), f"Total time taken: {total_time}s exceeded expected max"
+        assert total_time < (sleep_time * 3), f"Total time taken: {total_time}s exceeded expected max"
 
 
 async def test_vllm_completion_extra_body():

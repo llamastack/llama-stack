@@ -43,11 +43,11 @@ jobs:
               grep '\.x$' | \
               sed 's|^[[:space:]]*origin/||' | \
               sort -V | \
-              tail -2 | \
+              tail -3 | \
               jq -R -s -c 'split("\n") | map(select(length > 0) | ltrimstr(" ") | rtrimstr(" "))')
           fi
 
-          echo "branches=$branches" >> $GITHUB_OUTPUT
+          echo "branches=$branches" >> "$GITHUB_OUTPUT"
           echo "Testing branches: $branches"
 
   unit-tests:
@@ -77,7 +77,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: unit-test-results-${{ matrix.branch }}-${{ matrix.python }}
           path: |
@@ -119,9 +119,9 @@ jobs:
         id: check-ts-client
         run: |
           if [ -d "tests/integration/client-typescript" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Setup Node.js for TypeScript client tests

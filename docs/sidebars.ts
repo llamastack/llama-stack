@@ -159,7 +159,7 @@ const sidebars: SidebarsConfig = {
             'providers/vector_io/index',
             'providers/vector_io/inline_chromadb',
             'providers/vector_io/inline_faiss',
-            'providers/vector_io/inline_meta-reference',
+            'providers/vector_io/inline_builtin',
             'providers/vector_io/inline_milvus',
             'providers/vector_io/inline_qdrant',
             'providers/vector_io/inline_sqlite-vec',
@@ -169,7 +169,8 @@ const sidebars: SidebarsConfig = {
             'providers/vector_io/remote_qdrant',
             'providers/vector_io/remote_weaviate',
             'providers/vector_io/remote_elasticsearch',
-            'providers/vector_io/remote_oci'
+            'providers/vector_io/remote_oci',
+            'providers/vector_io/remote_infinispan'
           ],
         },
         {
@@ -178,7 +179,7 @@ const sidebars: SidebarsConfig = {
           collapsed: true,
           items: [
             'providers/tool_runtime/index',
-            'providers/tool_runtime/inline_rag-runtime',
+            'providers/tool_runtime/inline_file-search',
             'providers/tool_runtime/remote_bing-search',
             'providers/tool_runtime/remote_brave-search',
             'providers/tool_runtime/remote_model-context-protocol',
@@ -192,7 +193,7 @@ const sidebars: SidebarsConfig = {
           collapsed: true,
           items: [
             'providers/agents/index',
-            'providers/agents/inline_meta-reference'
+            'providers/agents/inline_builtin'
           ],
         },
         {
@@ -248,7 +249,7 @@ const sidebars: SidebarsConfig = {
           collapsed: true,
           items: [
             'providers/eval/index',
-            'providers/eval/inline_meta-reference',
+            'providers/eval/inline_builtin',
             'providers/eval/remote_nvidia'
           ],
         },

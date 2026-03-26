@@ -4,9 +4,13 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import asyncio
 import time
 
 import pytest
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExporter, SpanExportResult
 
 from llama_stack.core.storage.datatypes import InferenceStoreReference, SqliteSqlStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
@@ -18,6 +22,17 @@ from llama_stack_api import (
     OpenAIUserMessageParam,
     Order,
 )
+
+
+class _CollectingExporter(SpanExporter):
+    """Collects finished spans in memory for test assertions."""
+
+    def __init__(self):
+        self.spans = []
+
+    def export(self, spans):
+        self.spans.extend(spans)
+        return SpanExportResult.SUCCESS
 
 
 @pytest.fixture(autouse=True)
@@ -239,3 +254,163 @@ async def test_inference_store_custom_table_name():
     # Verify the error message uses the custom table name
     with pytest.raises(ValueError, match=f"Record with id='non-existent' not found in table '{custom_table_name}'"):
         await store.list_chat_completions(after="non-existent", limit=2)
+
+
+async def test_otel_traces_not_leaked_across_requests():
+    """Two concurrent requests produce clean, separate OTel traces.
+
+    Reproduces the bug observed in Jaeger traces where background worker tasks
+    permanently inherited the first request's OTel context. This caused all
+    subsequent DB writes from other requests to appear under that trace,
+    inflating it from 5s to 62s with 334 unrelated INSERT operations.
+
+    The fix captures OTel context at enqueue time and attaches it per-item
+    in the worker loop, so each DB write is attributed to its originating request.
+    """
+    exporter = _CollectingExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    tracer = provider.get_tracer("test")
+
+    reference = InferenceStoreReference(
+        backend="sql_default",
+        table_name="otel_test_completions",
+        num_writers=1,
+    )
+    store = InferenceStore(reference, policy=[])
+    await store.initialize()
+    store.enable_write_queue = True
+
+    original_write = store._write_chat_completion
+
+    async def instrumented_write(completion, messages):
+        with tracer.start_as_current_span(f"db-write-{completion.id}"):
+            await original_write(completion, messages)
+
+    store._write_chat_completion = instrumented_write
+
+    base_time = int(time.time())
+    completion_a = create_test_chat_completion("completion-A", base_time + 1)
+    completion_b = create_test_chat_completion("completion-B", base_time + 2)
+    messages_a = [OpenAIUserMessageParam(role="user", content="request A")]
+    messages_b = [OpenAIUserMessageParam(role="user", content="request B")]
+
+    # Simulate two API requests arriving in sequence (as the InferenceRouter does:
+    # asyncio.create_task(store.store_chat_completion(...)) inside a request span).
+    with tracer.start_as_current_span("request-A"):
+        task_a = asyncio.create_task(store.store_chat_completion(completion_a, messages_a))
+    await task_a
+
+    with tracer.start_as_current_span("request-B"):
+        task_b = asyncio.create_task(store.store_chat_completion(completion_b, messages_b))
+    await task_b
+
+    await store.flush()
+    await store.shutdown()
+
+    provider.force_flush()
+    spans_by_name = {}
+    for s in exporter.spans:
+        spans_by_name[s.name] = s
+
+    request_a_trace = spans_by_name["request-A"].context.trace_id
+    request_b_trace = spans_by_name["request-B"].context.trace_id
+    write_a_trace = spans_by_name["db-write-completion-A"].context.trace_id
+    write_b_trace = spans_by_name["db-write-completion-B"].context.trace_id
+
+    assert request_a_trace != request_b_trace, "Requests should have distinct trace IDs"
+
+    assert write_a_trace == request_a_trace, (
+        f"DB write for completion-A should be in request-A's trace, "
+        f"got trace {write_a_trace:#x} expected {request_a_trace:#x}"
+    )
+    assert write_b_trace == request_b_trace, (
+        f"DB write for completion-B should be in request-B's trace, "
+        f"got trace {write_b_trace:#x} expected {request_b_trace:#x}"
+    )
+
+
+async def test_otel_worker_does_not_inherit_first_request_trace():
+    """Workers start with a detached context and don't permanently adopt any request's trace.
+
+    Before the fix, the worker task was created via loop.create_task() inside
+    the first request's span context, permanently binding all future work to
+    that trace. This test verifies that worker-internal operations (like queue
+    polling) don't produce spans under any request's trace.
+    """
+    exporter = _CollectingExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    tracer = provider.get_tracer("test")
+
+    reference = InferenceStoreReference(
+        backend="sql_default",
+        table_name="otel_worker_test",
+        num_writers=1,
+    )
+    store = InferenceStore(reference, policy=[])
+    await store.initialize()
+    store.enable_write_queue = True
+
+    original_write = store._write_chat_completion
+
+    async def instrumented_write(completion, messages):
+        with tracer.start_as_current_span(f"db-write-{completion.id}"):
+            await original_write(completion, messages)
+
+    store._write_chat_completion = instrumented_write
+
+    base_time = int(time.time())
+
+    # First request spawns the worker (this is where the old bug lived:
+    # the worker permanently inherited request-1's trace context)
+    with tracer.start_as_current_span("request-1-spawns-worker"):
+        first_request_trace = trace.get_current_span().get_span_context().trace_id
+        completion_1 = create_test_chat_completion("comp-1", base_time + 1)
+        task = asyncio.create_task(
+            store.store_chat_completion(
+                completion_1,
+                [OpenAIUserMessageParam(role="user", content="first")],
+            )
+        )
+    await task
+    await store.flush()
+
+    # Second request enqueues work; worker is already running
+    with tracer.start_as_current_span("request-2"):
+        second_request_trace = trace.get_current_span().get_span_context().trace_id
+        completion_2 = create_test_chat_completion("comp-2", base_time + 2)
+        task = asyncio.create_task(
+            store.store_chat_completion(
+                completion_2,
+                [OpenAIUserMessageParam(role="user", content="second")],
+            )
+        )
+    await task
+    await store.flush()
+
+    # Third request (no trace context at all)
+    completion_3 = create_test_chat_completion("comp-3", base_time + 3)
+    await store.store_chat_completion(
+        completion_3,
+        [OpenAIUserMessageParam(role="user", content="third")],
+    )
+    await store.flush()
+    await store.shutdown()
+
+    provider.force_flush()
+    spans_by_name = {s.name: s for s in exporter.spans}
+
+    # Write 1 should be in request-1's trace
+    assert spans_by_name["db-write-comp-1"].context.trace_id == first_request_trace
+
+    # Write 2 should be in request-2's trace, NOT request-1's
+    assert spans_by_name["db-write-comp-2"].context.trace_id == second_request_trace
+    assert spans_by_name["db-write-comp-2"].context.trace_id != first_request_trace, (
+        "BUG REPRODUCED: write for request-2 leaked into request-1's trace"
+    )
+
+    # Write 3 (no request context) should be in its own independent trace
+    write_3_trace = spans_by_name["db-write-comp-3"].context.trace_id
+    assert write_3_trace != first_request_trace
+    assert write_3_trace != second_request_trace

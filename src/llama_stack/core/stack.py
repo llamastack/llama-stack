@@ -47,7 +47,6 @@ from llama_stack.core.store.registry import create_dist_registry
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 from llama_stack_api import (
-    Agents,
     Api,
     Batches,
     Benchmarks,
@@ -67,12 +66,12 @@ from llama_stack_api import (
     RegisterModelRequest,
     RegisterScoringFunctionRequest,
     RegisterShieldRequest,
+    Responses,
     Safety,
     Scoring,
     ScoringFunctions,
     Shields,
-    ToolGroups,
-    ToolRuntime,
+    ToolGroupNotFoundError,
     VectorIO,
 )
 from llama_stack_api.datasets import RegisterDatasetRequest
@@ -83,7 +82,7 @@ logger = get_logger(name=__name__, category="core")
 class LlamaStack(
     Providers,
     Inference,
-    Agents,
+    Responses,
     Batches,
     Safety,
     Datasets,
@@ -96,8 +95,6 @@ class LlamaStack(
     Models,
     Shields,
     Inspect,
-    ToolGroups,
-    ToolRuntime,
     Files,
     Prompts,
     Conversations,
@@ -120,7 +117,6 @@ RESOURCES = [
         RegisterScoringFunctionRequest,
     ),
     ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks", RegisterBenchmarkRequest),
-    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups", None),
     ("vector_stores", Api.vector_stores, "register_vector_store", "list_vector_stores", None),
 ]
 
@@ -138,7 +134,6 @@ RESOURCE_ID_FIELDS = [
     "dataset_id",
     "scoring_fn_id",
     "benchmark_id",
-    "toolgroup_id",
 ]
 
 
@@ -253,6 +248,60 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
             logger.debug(
                 f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
             )
+
+
+async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, Any]):
+    """Auto-register built-in tool groups based on configured tool_runtime providers.
+
+    For each tool_runtime provider whose spec declares a toolgroup_id,
+    register that tool group automatically. This replaces the old explicit
+    tool_groups config in registered_resources.
+
+    When multiple providers map to the same toolgroup (e.g. brave-search and
+    tavily-search both serve builtin::websearch), the provider with a configured
+    api_key wins. If none have a key, the first candidate is used so the tool
+    group still exists (invocation will fail with a clear provider error rather
+    than "tool not found").
+    """
+    if Api.tool_groups not in impls:
+        return
+
+    tool_groups_impl = impls[Api.tool_groups]
+
+    registry = get_provider_registry(run_config)
+    type_to_toolgroup = {
+        ptype: spec.toolgroup_id for ptype, spec in registry.get(Api.tool_runtime, {}).items() if spec.toolgroup_id
+    }
+
+    # Single-pass selection: keep the first provider per toolgroup, but
+    # let a provider with a configured api_key replace one without.
+    chosen: dict[str, Provider] = {}
+    chosen_has_key: dict[str, bool] = {}
+    for provider in run_config.providers.get("tool_runtime", []):
+        if not provider.provider_id or provider.provider_id == "__disabled__":
+            continue
+        toolgroup_id = type_to_toolgroup.get(provider.provider_type)
+        if not toolgroup_id:
+            continue
+
+        has_key = "api_key" not in provider.config or bool(provider.config.get("api_key"))
+        if toolgroup_id not in chosen or (has_key and not chosen_has_key[toolgroup_id]):
+            chosen[toolgroup_id] = provider
+            chosen_has_key[toolgroup_id] = has_key
+
+    for toolgroup_id, provider in chosen.items():
+        # Unregister first so register_tool_group rebuilds in-memory tool
+        # indexes (_index_tools) which are empty after a restart.
+        try:
+            await tool_groups_impl.unregister_toolgroup(toolgroup_id)
+        except ToolGroupNotFoundError:
+            pass
+
+        logger.info(f"Auto-registering tool group '{toolgroup_id}' with provider '{provider.provider_id}'")
+        await tool_groups_impl.register_tool_group(
+            toolgroup_id=toolgroup_id,
+            provider_id=provider.provider_id,
+        )
 
 
 async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
@@ -699,6 +748,7 @@ class Stack:
             await impls[Api.connectors].initialize()
 
         await register_resources(self.run_config, impls)
+        await auto_register_tool_groups(self.run_config, impls)
         await register_connectors(self.run_config, impls)
         await refresh_registry_once(impls)
         await validate_vector_stores_config(self.run_config.vector_stores, impls)
@@ -800,7 +850,10 @@ def run_config_from_dynamic_config_spec(
     Create a dynamic distribution from a list of API providers.
 
     The list should be of the form "api=provider", e.g. "inference=fireworks". If you have
-    multiple pairs, separate them with commas or semicolons, e.g. "inference=fireworks,safety=llama-guard,agents=meta-reference"
+    multiple pairs, separate them with commas or semicolons, e.g. "inference=fireworks,safety=llama-guard,agents=builtin"
+
+    You can optionally specify config parameters using URL query parameter syntax,
+    e.g. "inference=inline::sentence-transformers?trust_remote_code=true&max_seq_length=512"
     """
 
     api_providers = dynamic_config_spec.replace(";", ",").split(",")
@@ -813,7 +866,23 @@ def run_config_from_dynamic_config_spec(
             raise ValueError(
                 f"Failed to parse provider spec '{api_provider}'. Expected format: api=provider (e.g. inference=fireworks)"
             )
-        api_str, provider = api_provider.split("=")
+        api_str, provider_with_params = api_provider.split("=", 1)
+
+        # Parse provider name and optional config parameters
+        # Format: provider_name?param1=value1&param2=value2
+        if "?" in provider_with_params:
+            provider, params_str = provider_with_params.split("?", 1)
+            config_overrides = {}
+            # Parse key=value pairs separated by &
+            # Values are kept as strings and Pydantic will handle type conversion
+            for param in params_str.split("&"):
+                if "=" in param:
+                    key, value = param.split("=", 1)
+                    config_overrides[key] = value
+        else:
+            provider = provider_with_params
+            config_overrides = {}
+
         try:
             api = Api(api_str)
         except ValueError:
@@ -836,6 +905,9 @@ def run_config_from_dynamic_config_spec(
         # call method "sample_run_config" on the provider spec config class
         provider_config_type = instantiate_class_type(provider_spec.config_class)
         provider_config = replace_env_vars(provider_config_type.sample_run_config(__distro_dir__=str(distro_dir)))
+
+        # Apply config overrides
+        provider_config.update(config_overrides)
 
         provider_configs_by_api.setdefault(api_str, []).append(
             Provider(

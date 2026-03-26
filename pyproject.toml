@@ -7,6 +7,9 @@ fallback_version = "0.6.1.dev0"
 
 [tool.uv]
 required-version = ">=0.7.0"
+constraint-dependencies = [
+    "pyasn1>=0.6.3",  # CVE-2026-30922: DoS via unbounded recursion
+]
 
 [project]
 name = "llama_stack"
@@ -299,9 +302,9 @@ exclude = [
     "^src/llama_stack/core/store/registry\\.py$",
     "^src/llama_stack/core/utils/exec\\.py$",
     "^src/llama_stack/core/utils/prompt_for_config\\.py$",
-    "^src/llama_stack/providers/inline/agents/meta_reference/",
+    "^src/llama_stack/providers/inline/responses/builtin/",
     "^src/llama_stack/providers/inline/datasetio/localfs/",
-    "^src/llama_stack/providers/inline/eval/meta_reference/eval\\.py$",
+    "^src/llama_stack/providers/inline/eval/builtin/eval\\.py$",
     "^src/llama_stack/providers/inline/inference/sentence_transformers/sentence_transformers\\.py$",
     "^src/llama_stack/providers/inline/post_training/common/validator\\.py$",
     "^src/llama_stack/providers/inline/safety/code_scanner/",
@@ -338,7 +341,6 @@ exclude = [
     "^src/llama_stack/providers/utils/bedrock/client\\.py$",
     "^src/llama_stack/providers/utils/bedrock/refreshable_boto_session\\.py$",
     "^src/llama_stack/providers/utils/inference/embedding_mixin\\.py$",
-    "^src/llama_stack/providers/utils/inference/litellm_openai_mixin\\.py$",
     "^src/llama_stack/providers/utils/inference/model_registry\\.py$",
     "^src/llama_stack/providers/utils/inference/prompt_adapter\\.py$",
     "^src/llama_stack/providers/utils/kvstore/kvstore\\.py$",

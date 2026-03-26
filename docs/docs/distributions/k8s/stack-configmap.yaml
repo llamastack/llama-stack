@@ -45,7 +45,7 @@ data:
             user: ${env.POSTGRES_USER:=llamastack}
             password: ${env.POSTGRES_PASSWORD:=llamastack}
       files:
-      - provider_id: meta-reference-files
+      - provider_id: builtin-files
         provider_type: inline::localfs
         config:
           storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter/files}
@@ -58,8 +58,8 @@ data:
         config:
           excluded_categories: []
       agents:
-      - provider_id: meta-reference
-        provider_type: inline::meta-reference
+      - provider_id: builtin
+        provider_type: inline::builtin
         config:
           persistence_store:
             type: postgres
@@ -148,11 +148,6 @@ data:
     datasets: []
     scoring_fns: []
     benchmarks: []
-    tool_groups:
-    - toolgroup_id: builtin::websearch
-      provider_id: tavily-search
-    - toolgroup_id: builtin::rag
-      provider_id: rag-runtime
     server:
       port: 8321
       auth:

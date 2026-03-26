@@ -66,7 +66,7 @@ jobs:
         run: |
           RECORDINGS_DIR="${{ github.workspace }}/tests/integration/openresponses/recordings"
           COUNT=$(find "$RECORDINGS_DIR" -name "*.json" 2>/dev/null | wc -l)
-          echo "recordings_count=$COUNT" >> $GITHUB_OUTPUT
+          echo "recordings_count=$COUNT" >> "$GITHUB_OUTPUT"
           if [ "$COUNT" -eq 0 ]; then
             echo "::warning::No recordings found in tests/integration/openresponses/recordings/."
             echo "::warning::Run the server locally with LLAMA_STACK_TEST_INFERENCE_MODE=record-if-missing"
@@ -87,15 +87,15 @@ jobs:
         run: |
           mkdir -p /tmp/llama-stack-conformance
           export LLAMA_STACK_LOG_WIDTH=200
-          nohup uv run llama stack run ci-tests --port $LLAMA_STACK_PORT \
+          nohup uv run llama stack run ci-tests --port "$LLAMA_STACK_PORT" \
             > /tmp/llama-stack-conformance/server.log 2>&1 &
           echo "Server PID: $!"
 
       - name: Wait for Llama Stack server to be ready
         run: |
           echo "Waiting for Llama Stack server..."
-          for i in {1..60}; do
-            if curl -s http://localhost:$LLAMA_STACK_PORT/v1/health | grep -q "OK"; then
+          for _ in {1..60}; do
+            if curl -s "http://localhost:$LLAMA_STACK_PORT/v1/health" | grep -q "OK"; then
               echo "Llama Stack server is ready!"
               exit 0
             fi
@@ -147,9 +147,9 @@ jobs:
             echo "**Model:** \`$INFERENCE_MODEL\`"
             echo "**Recordings:** ${{ steps.check-recordings.outputs.recordings_count }} file(s) in \`tests/integration/openresponses/recordings/\`"
             echo ""
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"
 
-          if [ "${{ steps.check-recordings.outputs.recordings_count }}" -eq 0 ]; then
+          if [ "${{ steps.check-recordings.outputs.recordings_count }}" = "0" ]; then
             {
               echo "### No Recordings Found"
               echo ""
@@ -162,7 +162,7 @@ jobs:
               echo "git commit -m 'chore: add OpenResponses conformance recordings'"
               echo '```'
               echo "Commit the resulting \`tests/integration/openresponses/recordings/*.json\` files."
-            } >> $GITHUB_STEP_SUMMARY
+            } >> "$GITHUB_STEP_SUMMARY"
           elif [ -f /tmp/openresponses-results.json ] && jq -e '.summary' /tmp/openresponses-results.json > /dev/null 2>&1; then
             PASSED=$(jq -r '.summary.passed' /tmp/openresponses-results.json)
             FAILED=$(jq -r '.summary.failed' /tmp/openresponses-results.json)
@@ -184,7 +184,7 @@ jobs:
               jq -r '.results[] | "| \(.name) | \(if .status == "passed" then "✅ Pass" else "❌ Fail" end) | \(.duration // "—")ms |"' \
                 /tmp/openresponses-results.json
               echo ""
-            } >> $GITHUB_STEP_SUMMARY
+            } >> "$GITHUB_STEP_SUMMARY"
 
             if [ "$FAILED" -gt 0 ]; then
               {
@@ -192,7 +192,7 @@ jobs:
                 echo ""
                 jq -r '.results[] | select(.status == "failed") | "**\(.name)**\n" + ((.errors // []) | map("- \(.)") | join("\n")) + "\n"' \
                   /tmp/openresponses-results.json
-              } >> $GITHUB_STEP_SUMMARY
+              } >> "$GITHUB_STEP_SUMMARY"
             fi
           else
             {
@@ -209,12 +209,12 @@ jobs:
                 echo ""
                 echo "</details>"
               fi
-            } >> $GITHUB_STEP_SUMMARY
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Upload conformance test results
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: openresponses-conformance-results-${{ github.run_id }}
           path: |

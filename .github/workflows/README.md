@@ -8,6 +8,7 @@ Llama Stack uses GitHub Actions for Continuous Integration (CI). Below is a tabl
 | Build Distribution Images | [build-distributions.yml](build-distributions.yml) | Build Distribution Images |
 | CI Status | [ci-status.yml](ci-status.yml) | Aggregate CI check status |
 | CodeQL Workflow Security Scan | [codeql.yml](codeql.yml) | CodeQL Workflow Security Scan |
+| Commit Recordings | [commit-recordings.yml](commit-recordings.yml) | Commit Recordings |
 | Documentation Build | [docs-build.yml](docs-build.yml) | Build and validate documentation |
 | File Processors Tests | [file-processors-tests.yml](file-processors-tests.yml) | Run file processors integration tests |
 | Installer CI | [install-script-ci.yml](install-script-ci.yml) | Test the installation script |
@@ -24,7 +25,7 @@ Llama Stack uses GitHub Actions for Continuous Integration (CI). Below is a tabl
 | Test Llama Stack Build | [providers-build.yml](providers-build.yml) | Test llama stack build |
 | Test llama stack list-deps | [providers-list-deps.yml](providers-list-deps.yml) | Test llama stack list-deps |
 | Build, test, and publish packages | [pypi.yml](pypi.yml) | Build, test, and publish packages |
-| Integration Tests (Record) | [record-integration-tests.yml](record-integration-tests.yml) | Run the integration test suite from tests/integration |
+| Integration Tests (Record) | [record-integration-tests.yml](record-integration-tests.yml) | Auto-record missing test recordings for PR |
 | Release Branch Scheduled CI | [release-branch-scheduled-ci.yml](release-branch-scheduled-ci.yml) | Scheduled CI checks for active release branches |
 | Check semantic PR titles | [semantic-pr.yml](semantic-pr.yml) | Ensure that PR titles follow the conventional commit spec |
 | Stainless SDK Builds | [stainless-builds.yml](stainless-builds.yml) | Build Stainless SDK from OpenAPI spec changes |

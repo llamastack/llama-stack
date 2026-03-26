@@ -36,10 +36,10 @@ distribution_spec:
     safety:
     - provider_type: inline::llama-guard
     - provider_type: inline::code-scanner
-    agents:
-    - provider_type: inline::meta-reference
+    responses:
+    - provider_type: inline::builtin
     eval:
-    - provider_type: inline::meta-reference
+    - provider_type: inline::builtin
     datasetio:
     - provider_type: remote::huggingface
     - provider_type: inline::localfs
@@ -50,7 +50,7 @@ distribution_spec:
     tool_runtime:
     - provider_type: remote::brave-search
     - provider_type: remote::tavily-search
-    - provider_type: inline::rag-runtime
+    - provider_type: inline::file-search
     - provider_type: remote::model-context-protocol
     batches:
     - provider_type: inline::reference

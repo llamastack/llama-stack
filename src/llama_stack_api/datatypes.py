@@ -94,7 +94,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     :cvar providers: Provider management and configuration
     :cvar inference: Text generation, chat completions, and embeddings
     :cvar safety: Content moderation and safety shields
-    :cvar agents: Agent orchestration and execution
+    :cvar responses: Response orchestration and execution
     :cvar batches: Batch processing for asynchronous API requests
     :cvar vector_io: Vector database operations and queries
     :cvar datasetio: Dataset input/output operations
@@ -118,7 +118,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     providers = "providers"
     inference = "inference"
     safety = "safety"
-    agents = "agents"
+    responses = "responses"
     batches = "batches"
     vector_io = "vector_io"
     datasetio = "datasetio"
@@ -295,6 +295,11 @@ class ProviderSpec(BaseModel):
     )
 
     is_external: bool = Field(default=False, description="Notes whether this provider is an external provider.")
+
+    toolgroup_id: str | None = Field(
+        default=None,
+        description="For tool_runtime providers, the built-in tool group ID this provider serves (e.g. 'builtin::websearch').",
+    )
 
     # used internally by the resolver; this is a hack for now
     deps__: list[str] = Field(default_factory=list)

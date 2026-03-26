@@ -57,3 +57,53 @@ def test_list_deps_formatting_quotes_only_for_uv():
 
     uv_format = format_output_deps_only(["mcp>=1.23.0"], [], [], uv=True)
     assert uv_format.strip() == "uv pip install 'mcp>=1.23.0'"
+
+
+def test_stack_list_deps_expands_provider_dependencies():
+    """Test that listing deps for a provider also includes deps from its API dependencies.
+
+    For example, responses=inline::builtin depends on the inference API.
+    When we list deps for responses, we should also get dependencies from an inference provider.
+    This test picks a known dependency (inference), lists its deps, then verifies those
+    deps appear in the responses output (proving expansion happened).
+    """
+    # First, get dependencies for the inference provider (which responses depends on)
+    inference_args = argparse.Namespace(
+        config=None,
+        env_name="test-env",
+        providers="inference=inline::sentence-transformers",
+        format="deps-only",
+    )
+
+    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+        run_stack_list_deps_command(inference_args)
+        inference_output = mock_stdout.getvalue()
+
+    # Now get dependencies for responses, which should include inference deps
+    responses_args = argparse.Namespace(
+        config=None,
+        env_name="test-env",
+        providers="responses=inline::builtin",
+        format="deps-only",
+    )
+
+    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+        run_stack_list_deps_command(responses_args)
+        responses_output = mock_stdout.getvalue()
+
+    # Verify that dependencies were expanded: responses output should include
+    # inference-specific dependencies. Extract package names from the inference output
+    # and verify at least some appear in the responses output.
+    inference_lines = [line.strip() for line in inference_output.split("\n") if line.strip()]
+    responses_lines = [line.strip() for line in responses_output.split("\n") if line.strip()]
+
+    # The inference provider should have some dependencies
+    assert len(inference_lines) > 0, "Inference provider should have dependencies"
+
+    # At least one inference dependency should appear in responses output
+    # (proving that dependency expansion happened)
+    common_deps = set(inference_lines) & set(responses_lines)
+    assert len(common_deps) > 0, (
+        "Responses dependencies should include at least some inference dependencies, "
+        "proving that dependency expansion happened"
+    )

@@ -12,16 +12,16 @@ def available_providers() -> list[ProviderSpec]:
     return [
         InlineProviderSpec(
             api=Api.eval,
-            provider_type="inline::meta-reference",
-            pip_packages=["tree_sitter", "pythainlp", "langdetect", "emoji", "nltk>=3.9.3"],
-            module="llama_stack.providers.inline.eval.meta_reference",
-            config_class="llama_stack.providers.inline.eval.meta_reference.MetaReferenceEvalConfig",
+            provider_type="inline::builtin",
+            pip_packages=["tree_sitter", "pythainlp", "langdetect", "emoji", "nltk>=3.9.4"],
+            module="llama_stack.providers.inline.eval.builtin",
+            config_class="llama_stack.providers.inline.eval.builtin.BuiltinEvalConfig",
             api_dependencies=[
                 Api.datasetio,
                 Api.datasets,
                 Api.scoring,
                 Api.inference,
-                Api.agents,
+                Api.responses,
             ],
             description="Meta's reference implementation of evaluation tasks with support for multiple languages and evaluation metrics.",
         ),
@@ -40,7 +40,7 @@ def available_providers() -> list[ProviderSpec]:
                 Api.datasets,
                 Api.scoring,
                 Api.inference,
-                Api.agents,
+                Api.responses,
             ],
         ),
     ]

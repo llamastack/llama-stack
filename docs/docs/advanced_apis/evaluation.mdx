@@ -24,10 +24,10 @@ The Evaluation APIs are associated with a set of Resources. Please visit the Res
 
 Llama Stack provides multiple evaluation providers:
 
-- **Meta Reference** (`inline::meta-reference`) - Meta's reference implementation with multi-language support
+- **Builtin** (`inline::builtin`) - Meta's reference implementation with multi-language support
 - **NVIDIA** (`remote::nvidia`) - NVIDIA's evaluation platform integration
 
-### Meta Reference
+### Builtin
 
 Meta's reference implementation of evaluation tasks with support for multiple languages and evaluation metrics.
 
@@ -42,7 +42,7 @@ Meta's reference implementation of evaluation tasks with support for multiple la
 ```yaml
 kvstore:
   type: sqlite
-  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/dummy}/meta_reference_eval.db
+  db_path: ${env.SQLITE_STORE_DIR:=~/.llama/dummy}/builtin_eval.db
 ```
 
 #### Features
@@ -150,7 +150,7 @@ print(f"Evaluation completed: {eval_result}")
 
 ## Best Practices
 
-- **Choose appropriate providers**: Use Meta Reference for comprehensive evaluation, NVIDIA for platform-specific needs
+- **Choose appropriate providers**: Use Builtin for comprehensive evaluation, NVIDIA for platform-specific needs
 - **Configure storage properly**: Ensure your key-value store configuration matches your performance requirements
 - **Monitor evaluation progress**: Large evaluations can take time - implement proper monitoring
 - **Use appropriate scoring functions**: Select scoring metrics that align with your evaluation goals

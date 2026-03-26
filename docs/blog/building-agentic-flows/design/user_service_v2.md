@@ -67,6 +67,7 @@ internal ALB.  The Docker image is built in CI and pushed to our private ECR
 registry.
 
 Health checks:
+
 - **Liveness:** `/healthz` (checks process is up)
 - **Readiness:** `/readyz` (checks DB connection pool + auth gateway reachability)
 

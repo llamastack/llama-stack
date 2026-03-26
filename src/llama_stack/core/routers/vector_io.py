@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import asyncio
+import time
 import uuid
 from typing import Annotated
 
@@ -13,6 +14,17 @@ from fastapi import Body
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.vector_io.filters import parse_filter
+from llama_stack.telemetry.vector_io_metrics import (
+    create_vector_metric_attributes,
+    vector_chunks_processed_total,
+    vector_deletes_total,
+    vector_files_total,
+    vector_insert_duration,
+    vector_inserts_total,
+    vector_queries_total,
+    vector_retrieval_duration,
+    vector_stores_total,
+)
 from llama_stack_api import (
     DEFAULT_CHUNK_OVERLAP_TOKENS,
     DEFAULT_CHUNK_SIZE_TOKENS,
@@ -73,6 +85,26 @@ class VectorIORouter(VectorIO):
     async def shutdown(self) -> None:
         logger.debug("VectorIORouter.shutdown")
         pass
+
+    def _get_provider_id(self, vector_store_id: str) -> str:
+        """Get the provider ID for a vector store for metrics labeling (best-effort).
+
+        Uses the same in-memory cache (get_cached) that the routing table's
+        get_provider_impl uses when dispatching operations, so this does NOT
+        cause an extra DB/async lookup on the hot path.
+
+        Returns "unknown" only as a fallback so that a metrics-label lookup
+        failure never blocks the actual operation.
+        """
+        try:
+            obj = self.routing_table.dist_registry.get_cached("vector_store", vector_store_id)
+            if obj is None:
+                logger.warning(f"Vector store {vector_store_id} not found in registry cache")
+                return "unknown"
+            return obj.provider_id
+        except Exception:
+            logger.warning(f"Could not resolve provider for vector store {vector_store_id}", exc_info=True)
+            return "unknown"
 
     async def _rewrite_query_for_search(self, query: str) -> str:
         """Rewrite a search query using the configured LLM model for better retrieval results."""
@@ -136,37 +168,76 @@ class VectorIORouter(VectorIO):
             f"VectorIORouter.insert_chunks: {request.vector_store_id}, {len(request.chunks)} chunks, "
             f"ttl_seconds={request.ttl_seconds}, chunk_ids={doc_ids}{' and more...' if len(request.chunks) > 3 else ''}"
         )
-        return await self.routing_table.insert_chunks(request)
+        start_time = time.perf_counter()
+        num_chunks = len(request.chunks)
+        provider_id = self._get_provider_id(request.vector_store_id)
+        metric_attrs = create_vector_metric_attributes(
+            vector_db=request.vector_store_id,
+            operation="chunks",
+            provider=provider_id,
+        )
+
+        try:
+            result = await self.routing_table.insert_chunks(request)
+            duration = time.perf_counter() - start_time
+            success_attrs = {**metric_attrs, "status": "success"}
+            vector_inserts_total.add(1, success_attrs)
+            vector_insert_duration.record(duration, metric_attrs)
+            vector_chunks_processed_total.add(num_chunks, metric_attrs)
+            return result
+        except Exception:
+            duration = time.perf_counter() - start_time
+            error_attrs = {**metric_attrs, "status": "error"}
+            vector_inserts_total.add(1, error_attrs)
+            vector_insert_duration.record(duration, metric_attrs)
+            raise
 
     async def query_chunks(
         self,
         request: QueryChunksRequest,
     ) -> QueryChunksResponse:
         logger.debug(f"VectorIORouter.query_chunks: {request.vector_store_id}")
-
-        # Handle the no-filters case early
-        if not request.params or "filters" not in request.params:
-            return await self.routing_table.query_chunks(request)
-
-        # Extract and parse filters from request params
-        # Create a shallow copy to avoid mutating the caller's request
-        params_copy = dict(request.params)
-        filter_data = params_copy.pop("filters")
-
-        try:
-            parsed_filters = parse_filter(filter_data)
-        except ValueError as e:
-            logger.error(f"Invalid filter data: {e}")
-            raise ValueError(f"Invalid filter: {e}") from e
-
-        # Create a new request with the modified params
-        # Add the parsed filters back to params for the provider
-        params_copy["filters"] = parsed_filters
-        modified_request = QueryChunksRequest(
-            vector_store_id=request.vector_store_id, query=request.query, params=params_copy
+        start_time = time.perf_counter()
+        provider_id = self._get_provider_id(request.vector_store_id)
+        metric_attrs = create_vector_metric_attributes(
+            vector_db=request.vector_store_id,
+            operation="query",
+            provider=provider_id,
+            search_mode="vector",
         )
 
-        return await self.routing_table.query_chunks(modified_request)
+        try:
+            # Handle the no-filters case early
+            if not request.params or "filters" not in request.params:
+                result = await self.routing_table.query_chunks(request)
+            else:
+                # Extract and parse filters from request params
+                params_copy = dict(request.params)
+                filter_data = params_copy.pop("filters")
+
+                try:
+                    parsed_filters = parse_filter(filter_data)
+                except ValueError as e:
+                    logger.error(f"Invalid filter data: {e}")
+                    raise ValueError(f"Invalid filter: {e}") from e
+
+                params_copy["filters"] = parsed_filters
+                modified_request = QueryChunksRequest(
+                    vector_store_id=request.vector_store_id, query=request.query, params=params_copy
+                )
+                result = await self.routing_table.query_chunks(modified_request)
+
+            duration = time.perf_counter() - start_time
+            success_attrs = {**metric_attrs, "status": "success"}
+            vector_queries_total.add(1, success_attrs)
+            vector_retrieval_duration.record(duration, metric_attrs)
+            return result
+        except Exception:
+            duration = time.perf_counter() - start_time
+            error_attrs = {**metric_attrs, "status": "error"}
+            vector_queries_total.add(1, error_attrs)
+            vector_retrieval_duration.record(duration, metric_attrs)
+            raise
 
     # OpenAI Vector Stores API endpoints
     async def openai_create_vector_store(
@@ -271,7 +342,12 @@ class VectorIORouter(VectorIO):
                 )
             )
 
-        return await provider.openai_create_vector_store(params)
+        result = await provider.openai_create_vector_store(params)
+        vector_stores_total.add(
+            1,
+            create_vector_metric_attributes(provider=provider_id, operation="create"),
+        )
+        return result
 
     async def openai_list_vector_stores(
         self,
@@ -355,7 +431,19 @@ class VectorIORouter(VectorIO):
         vector_store_id: str,
     ) -> VectorStoreDeleteResponse:
         logger.debug(f"VectorIORouter.openai_delete_vector_store: {vector_store_id}")
-        return await self.routing_table.openai_delete_vector_store(vector_store_id)
+        provider_id = self._get_provider_id(vector_store_id)
+        metric_attrs = create_vector_metric_attributes(
+            vector_db=vector_store_id,
+            operation="store",
+            provider=provider_id,
+        )
+        try:
+            result = await self.routing_table.openai_delete_vector_store(vector_store_id)
+            vector_deletes_total.add(1, {**metric_attrs, "status": "success"})
+            return result
+        except Exception:
+            vector_deletes_total.add(1, {**metric_attrs, "status": "error"})
+            raise
 
     async def openai_search_vector_store(
         self,
@@ -363,25 +451,46 @@ class VectorIORouter(VectorIO):
         request: OpenAISearchVectorStoreRequest,
     ) -> VectorStoreSearchResponsePage:
         logger.debug(f"VectorIORouter.openai_search_vector_store: {vector_store_id}")
-
-        # Handle query rewriting at the router level
-        search_query = request.query
-        if request.rewrite_query:
-            if isinstance(request.query, list):
-                original_query = " ".join(request.query)
-            else:
-                original_query = request.query
-            search_query = await self._rewrite_query_for_search(original_query)
-
-        # Create a new request with the rewritten query and disabled rewriting (since we handled it)
-        forward_request = request.model_copy()
-        forward_request.query = search_query
-        forward_request.rewrite_query = False
-
-        return await self.routing_table.openai_search_vector_store(
-            vector_store_id=vector_store_id,
-            request=forward_request,
+        start_time = time.perf_counter()
+        provider_id = self._get_provider_id(vector_store_id)
+        search_mode = getattr(request, "search_mode", "vector")
+        metric_attrs = create_vector_metric_attributes(
+            vector_db=vector_store_id,
+            operation="search",
+            provider=provider_id,
+            search_mode=search_mode,
         )
+
+        try:
+            # Handle query rewriting at the router level
+            search_query = request.query
+            if request.rewrite_query:
+                if isinstance(request.query, list):
+                    original_query = " ".join(request.query)
+                else:
+                    original_query = request.query
+                search_query = await self._rewrite_query_for_search(original_query)
+
+            forward_request = request.model_copy()
+            forward_request.query = search_query
+            forward_request.rewrite_query = False
+
+            result = await self.routing_table.openai_search_vector_store(
+                vector_store_id=vector_store_id,
+                request=forward_request,
+            )
+
+            duration = time.perf_counter() - start_time
+            success_attrs = {**metric_attrs, "status": "success"}
+            vector_queries_total.add(1, success_attrs)
+            vector_retrieval_duration.record(duration, metric_attrs)
+            return result
+        except Exception:
+            duration = time.perf_counter() - start_time
+            error_attrs = {**metric_attrs, "status": "error"}
+            vector_queries_total.add(1, error_attrs)
+            vector_retrieval_duration.record(duration, metric_attrs)
+            raise
 
     async def openai_attach_file_to_vector_store(
         self,
@@ -389,6 +498,13 @@ class VectorIORouter(VectorIO):
         request: OpenAIAttachFileRequest,
     ) -> VectorStoreFileObject:
         logger.debug(f"VectorIORouter.openai_attach_file_to_vector_store: {vector_store_id}, {request.file_id}")
+        start_time = time.perf_counter()
+        provider_id = self._get_provider_id(vector_store_id)
+        metric_attrs = create_vector_metric_attributes(
+            vector_db=vector_store_id,
+            operation="attach",
+            provider=provider_id,
+        )
 
         # Create a copy to modify chunking strategy if needed
         params = request.model_copy()
@@ -401,10 +517,24 @@ class VectorIORouter(VectorIO):
                 )
             )
 
-        return await self.routing_table.openai_attach_file_to_vector_store(
-            vector_store_id=vector_store_id,
-            request=params,
-        )
+        try:
+            result = await self.routing_table.openai_attach_file_to_vector_store(
+                vector_store_id=vector_store_id,
+                request=params,
+            )
+            duration = time.perf_counter() - start_time
+            success_attrs = {**metric_attrs, "status": "success"}
+            vector_files_total.add(1, success_attrs)
+            vector_inserts_total.add(1, success_attrs)
+            vector_insert_duration.record(duration, metric_attrs)
+            return result
+        except Exception:
+            duration = time.perf_counter() - start_time
+            error_attrs = {**metric_attrs, "status": "error"}
+            vector_files_total.add(1, error_attrs)
+            vector_inserts_total.add(1, error_attrs)
+            vector_insert_duration.record(duration, metric_attrs)
+            raise
 
     async def openai_list_files_in_vector_store(
         self,
@@ -474,10 +604,22 @@ class VectorIORouter(VectorIO):
         file_id: str,
     ) -> VectorStoreFileDeleteResponse:
         logger.debug(f"VectorIORouter.openai_delete_vector_store_file: {vector_store_id}, {file_id}")
-        return await self.routing_table.openai_delete_vector_store_file(
-            vector_store_id=vector_store_id,
-            file_id=file_id,
+        provider_id = self._get_provider_id(vector_store_id)
+        metric_attrs = create_vector_metric_attributes(
+            vector_db=vector_store_id,
+            operation="file",
+            provider=provider_id,
         )
+        try:
+            result = await self.routing_table.openai_delete_vector_store_file(
+                vector_store_id=vector_store_id,
+                file_id=file_id,
+            )
+            vector_deletes_total.add(1, {**metric_attrs, "status": "success"})
+            return result
+        except Exception:
+            vector_deletes_total.add(1, {**metric_attrs, "status": "error"})
+            raise
 
     async def health(self) -> dict[str, HealthResponse]:
         health_statuses = {}

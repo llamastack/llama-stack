@@ -16,19 +16,18 @@ The `llamastack/distribution-dell` distribution consists of the following provid
 
 | API | Provider(s) |
 |-----|-------------|
-| agents | `inline::meta-reference` |
+| agents | `inline::builtin` |
 | datasetio | `remote::huggingface`, `inline::localfs` |
-| eval | `inline::meta-reference` |
+| eval | `inline::builtin` |
 | inference | `remote::tgi`, `inline::sentence-transformers` |
 | safety | `inline::llama-guard` |
 | scoring | `inline::basic`, `inline::llm-as-judge`, `inline::braintrust` |
-| tool_runtime | `remote::brave-search`, `remote::tavily-search`, `inline::rag-runtime` |
+| tool_runtime | `remote::brave-search`, `remote::tavily-search`, `inline::file-search` |
 | vector_io | `inline::faiss`, `remote::chromadb`, `remote::pgvector` |
-
 
 You can use this distribution if you have GPUs and want to run an independent TGI or Dell Enterprise Hub container for running inference.
 
-### Environment Variables
+## Environment Variables
 
 The following environment variables can be configured:
 
@@ -38,8 +37,7 @@ The following environment variables can be configured:
 - `INFERENCE_MODEL`: Inference model loaded into the TGI server (default: `meta-llama/Llama-3.2-3B-Instruct`)
 - `SAFETY_MODEL`: Name of the safety (Llama-Guard) model to use (default: `meta-llama/Llama-Guard-3-1B`)
 
-
-## Setting up Inference server using Dell Enterprise Hub's custom TGI container.
+## Setting up Inference server using Dell Enterprise Hub's custom TGI container
 
 NOTE: This is a placeholder to run inference with TGI. This will be updated to use [Dell Enterprise Hub's containers](https://dell.huggingface.co/authenticated/models) once verified.
 
@@ -97,6 +95,7 @@ docker run --rm -it \
 ## Dell distribution relies on ChromaDB for vector database usage
 
 You can start a chroma-db easily using docker.
+
 ```bash
 # This is where the indices are persisted
 mkdir -p $HOME/chromadb

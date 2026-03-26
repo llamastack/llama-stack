@@ -1,10 +1,10 @@
 version: 2
 distro_name: dell
 apis:
-- agents
 - datasetio
 - eval
 - inference
+- responses
 - safety
 - scoring
 - tool_runtime
@@ -17,6 +17,8 @@ providers:
       url: ${env.DEH_URL}
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
+    config:
+      trust_remote_code: false
   - provider_id: transformers
     provider_type: inline::transformers
   vector_io:
@@ -32,9 +34,9 @@ providers:
     provider_type: inline::llama-guard
     config:
       excluded_categories: []
-  agents:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  responses:
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       persistence:
         agent_state:
@@ -46,8 +48,8 @@ providers:
           max_write_queue_size: 10000
           num_writers: 4
   eval:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       kvstore:
         namespace: eval
@@ -85,8 +87,8 @@ providers:
     config:
       api_key: ${env.TAVILY_SEARCH_API_KEY:=}
       max_results: 3
-  - provider_id: rag-runtime
-    provider_type: inline::rag-runtime
+  - provider_id: file-search
+    provider_type: inline::file-search
 storage:
   backends:
     kv_default:
@@ -133,10 +135,5 @@ registered_resources:
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups:
-  - toolgroup_id: builtin::websearch
-    provider_id: brave-search
-  - toolgroup_id: builtin::rag
-    provider_id: rag-runtime
 server:
   port: 8321

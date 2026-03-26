@@ -1,13 +1,13 @@
 version: 2
 distro_name: starter
 apis:
-- agents
 - batches
 - datasetio
 - eval
 - file_processors
 - files
 - inference
+- responses
 - safety
 - scoring
 - tool_runtime
@@ -93,6 +93,8 @@ providers:
       api_type: ${env.AZURE_API_TYPE:=}
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
+    config:
+      trust_remote_code: false
   - provider_id: transformers
     provider_type: inline::transformers
   vector_io:
@@ -163,8 +165,20 @@ providers:
       persistence:
         namespace: vector_io::elasticsearch
         backend: kv_default
+  - provider_id: ${env.INFINISPAN_URL:+infinispan}
+    provider_type: remote::infinispan
+    config:
+      url: ${env.INFINISPAN_URL:=http://localhost:11222}
+      username: ${env.INFINISPAN_USERNAME:=admin}
+      password: ${env.INFINISPAN_PASSWORD:=}
+      use_https: false
+      auth_mechanism: digest
+      verify_tls: true
+      persistence:
+        namespace: vector_io::infinispan
+        backend: kv_default
   files:
-  - provider_id: meta-reference-files
+  - provider_id: builtin-files
     provider_type: inline::localfs
     config:
       storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter/files}
@@ -181,9 +195,9 @@ providers:
       excluded_categories: []
   - provider_id: code-scanner
     provider_type: inline::code-scanner
-  agents:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  responses:
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       persistence:
         agent_state:
@@ -195,8 +209,8 @@ providers:
           max_write_queue_size: 10000
           num_writers: 4
   eval:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       kvstore:
         namespace: eval
@@ -234,8 +248,8 @@ providers:
     config:
       api_key: ${env.TAVILY_SEARCH_API_KEY:=}
       max_results: 3
-  - provider_id: rag-runtime
-    provider_type: inline::rag-runtime
+  - provider_id: file-search
+    provider_type: inline::file-search
   - provider_id: model-context-protocol
     provider_type: remote::model-context-protocol
   batches:
@@ -284,11 +298,6 @@ registered_resources:
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups:
-  - toolgroup_id: builtin::websearch
-    provider_id: tavily-search
-  - toolgroup_id: builtin::rag
-    provider_id: rag-runtime
 server:
   port: 8321
 vector_stores:
@@ -300,12 +309,12 @@ vector_stores:
     provider_id: transformers
     model_id: Qwen/Qwen3-Reranker-0.6B
   file_search_params:
-    header_template: 'knowledge_search tool found {num_chunks} chunks:
+    header_template: 'file_search tool found {num_chunks} chunks:
 
-      BEGIN of knowledge_search tool results.
+      BEGIN of file_search tool results.
 
       '
-    footer_template: 'END of knowledge_search tool results.
+    footer_template: 'END of file_search tool results.
 
       '
   context_prompt_params:

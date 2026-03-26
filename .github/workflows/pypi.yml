@@ -177,7 +177,7 @@ jobs:
             DATE=$(date -u +%Y%m%d)
             VERSION="${BASE}.dev${DATE}"
           fi
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Computed version: ${VERSION}"
 
   # Build and validate release artifacts
@@ -221,13 +221,13 @@ jobs:
           TYPE="${{ matrix.type }}"
 
           if [ "$PACKAGES" == "all" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           elif [ "$PACKAGES" == "llama-stack-only" ] && [ "$TYPE" == "local" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           elif [ "$PACKAGES" == "clients-only" ] && [ "$TYPE" == "external" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           else
-            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "::notice::Skipping $PACKAGE (packages=$PACKAGES)"
           fi
 
@@ -253,22 +253,22 @@ jobs:
         run: |
           if [ -n "${{ inputs.client_ref }}" ] && [ "${{ inputs.client_ref }}" != "main" ]; then
             # Explicit override from workflow_dispatch
-            echo "ref=${{ inputs.client_ref }}" >> $GITHUB_OUTPUT
+            echo "ref=${{ inputs.client_ref }}" >> "$GITHUB_OUTPUT"
             echo "Using explicit client_ref: ${{ inputs.client_ref }}"
           elif [[ "$GITHUB_REF" == refs/heads/release-* ]]; then
             # Running on a release branch — use the same branch name in client repos
             BRANCH="${GITHUB_REF#refs/heads/}"
-            echo "ref=$BRANCH" >> $GITHUB_OUTPUT
+            echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
             echo "Using release branch: $BRANCH"
           elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             # Running from a version tag — derive release branch (e.g., v0.5.1 -> release-0.5.x)
             TAG="${GITHUB_REF#refs/tags/v}"
             MAJOR_MINOR="${TAG%.*}"
             BRANCH="release-${MAJOR_MINOR}.x"
-            echo "ref=$BRANCH" >> $GITHUB_OUTPUT
+            echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
             echo "Using derived release branch from tag: $BRANCH"
           else
-            echo "ref=main" >> $GITHUB_OUTPUT
+            echo "ref=main" >> "$GITHUB_OUTPUT"
             echo "Using default: main"
           fi
 
@@ -351,7 +351,7 @@ jobs:
           VERSION="${{ needs.compute-version.outputs.version }}"
           # Convert PEP 440 dev version to valid semver for npm
           # e.g. 0.4.5.dev20260202 -> 0.4.5-dev.20260202
-          NPM_VERSION=$(echo "$VERSION" | sed 's/\.dev/-dev./')
+          NPM_VERSION="${VERSION/.dev/-dev.}"
           echo "Setting version to $NPM_VERSION (from $VERSION)"
           npm version "$NPM_VERSION" --no-git-tag-version
           npm install
@@ -398,14 +398,14 @@ jobs:
 
       - name: Upload artifacts (local)
         if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local'
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: Packages-${{ matrix.package }}
           path: ${{ matrix.path }}/dist/*
 
       - name: Upload artifacts (external)
         if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: Packages-${{ matrix.package }}
           path: external-repo/dist/*
@@ -579,13 +579,13 @@ jobs:
           TYPE="${{ matrix.type }}"
 
           if [ "$PACKAGES" == "all" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           elif [ "$PACKAGES" == "llama-stack-only" ] && [ "$TYPE" == "local" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           elif [ "$PACKAGES" == "clients-only" ] && [ "$TYPE" == "external" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           else
-            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "::notice::Skipping publish for $PACKAGE (packages=$PACKAGES)"
           fi
 
@@ -603,11 +603,11 @@ jobs:
         id: check-artifacts
         run: |
           if [ -d "dist" ] && [ "$(ls -A dist 2>/dev/null)" ]; then
-            echo "has_artifacts=true" >> $GITHUB_OUTPUT
+            echo "has_artifacts=true" >> "$GITHUB_OUTPUT"
             echo "Artifacts found:"
             ls -la dist/
           else
-            echo "has_artifacts=false" >> $GITHUB_OUTPUT
+            echo "has_artifacts=false" >> "$GITHUB_OUTPUT"
             echo "::warning::No artifacts found for ${{ matrix.package }}. Skipping publish."
           fi
 
@@ -621,17 +621,23 @@ jobs:
 
           # Determine target registry
           if [ "$EVENT" == "release" ]; then
-            echo "url=https://upload.pypi.org/legacy/" >> $GITHUB_OUTPUT
-            echo "target=pypi.org" >> $GITHUB_OUTPUT
-            echo "is_production=true" >> $GITHUB_OUTPUT
+            {
+              echo "url=https://upload.pypi.org/legacy/"
+              echo "target=pypi.org"
+              echo "is_production=true"
+            } >> "$GITHUB_OUTPUT"
           elif [ "$DRY_RUN" == "off" ]; then
-            echo "url=https://upload.pypi.org/legacy/" >> $GITHUB_OUTPUT
-            echo "target=pypi.org" >> $GITHUB_OUTPUT
-            echo "is_production=true" >> $GITHUB_OUTPUT
+            {
+              echo "url=https://upload.pypi.org/legacy/"
+              echo "target=pypi.org"
+              echo "is_production=true"
+            } >> "$GITHUB_OUTPUT"
           else
-            echo "url=https://test.pypi.org/legacy/" >> $GITHUB_OUTPUT
-            echo "target=test.pypi.org" >> $GITHUB_OUTPUT
-            echo "is_production=false" >> $GITHUB_OUTPUT
+            {
+              echo "url=https://test.pypi.org/legacy/"
+              echo "target=test.pypi.org"
+              echo "is_production=false"
+            } >> "$GITHUB_OUTPUT"
           fi
 
       - name: Sign artifacts with Sigstore (production only)
@@ -709,14 +715,14 @@ jobs:
               exit 1
             fi
             # Extract and publish from the tarball
-            TARBALL=$(ls ./dist/*.tgz | head -1)
+            TARBALL=$(find ./dist -name '*.tgz' | head -1)
             npm publish "$TARBALL" --access public
           else
             echo "DRY RUN: Verifying npm package (not publishing)"
             echo "Package tarball:"
-            ls -la dist/*.tgz
+            find dist -name '*.tgz' -exec ls -la {} +
             # Verify the tarball is valid
-            TARBALL=$(ls ./dist/*.tgz | head -1)
+            TARBALL=$(find ./dist -name '*.tgz' | head -1)
             tar -tzf "$TARBALL" 2>/dev/null | head -20 || true
             echo "... (truncated)"
           fi
@@ -781,7 +787,7 @@ jobs:
 
       - name: Set up QEMU for multi-arch builds
         if: contains(matrix.platforms, 'arm64')
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd
@@ -803,14 +809,18 @@ jobs:
           EVENT="${{ github.event_name }}"
 
           if [ "$EVENT" == "release" ] || [ "$DRY_RUN" == "off" ]; then
-            echo "install_mode=pypi" >> $GITHUB_OUTPUT
-            echo "tags=${IMAGE}:${VERSION},${IMAGE}:latest" >> $GITHUB_OUTPUT
-            echo "version_arg=PYPI_VERSION=${VERSION}" >> $GITHUB_OUTPUT
+            {
+              echo "install_mode=pypi"
+              echo "tags=${IMAGE}:${VERSION},${IMAGE}:latest"
+              echo "version_arg=PYPI_VERSION=${VERSION}"
+            } >> "$GITHUB_OUTPUT"
             echo "Publishing production image: ${IMAGE}:${VERSION} + latest"
           else
-            echo "install_mode=test-pypi" >> $GITHUB_OUTPUT
-            echo "tags=${IMAGE}:test-${VERSION}" >> $GITHUB_OUTPUT
-            echo "version_arg=TEST_PYPI_VERSION=${VERSION}" >> $GITHUB_OUTPUT
+            {
+              echo "install_mode=test-pypi"
+              echo "tags=${IMAGE}:test-${VERSION}"
+              echo "version_arg=TEST_PYPI_VERSION=${VERSION}"
+            } >> "$GITHUB_OUTPUT"
             echo "Publishing test image: ${IMAGE}:test-${VERSION}"
           fi
 
@@ -832,7 +842,7 @@ jobs:
           exit 1
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: .
           file: containers/Containerfile

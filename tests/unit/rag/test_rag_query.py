@@ -8,15 +8,15 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from llama_stack.providers.inline.tool_runtime.rag.config import RagToolRuntimeConfig
-from llama_stack.providers.inline.tool_runtime.rag.memory import MemoryToolRuntimeImpl
+from llama_stack.providers.inline.tool_runtime.file_search.config import FileSearchToolRuntimeConfig
+from llama_stack.providers.inline.tool_runtime.file_search.file_search import FileSearchToolRuntimeImpl
 from llama_stack_api import Chunk, ChunkMetadata, EmbeddedChunk, QueryChunksResponse, RAGQueryConfig
 
 
 class TestRagQuery:
     async def test_query_raises_on_empty_vector_store_ids(self):
-        config = RagToolRuntimeConfig()
-        rag_tool = MemoryToolRuntimeImpl(
+        config = FileSearchToolRuntimeConfig()
+        rag_tool = FileSearchToolRuntimeImpl(
             config=config, vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
         )
         with pytest.raises(ValueError):
@@ -24,9 +24,9 @@ class TestRagQuery:
 
     async def test_query_chunk_metadata_handling(self):
         # Create config with default templates
-        config = RagToolRuntimeConfig()
+        config = FileSearchToolRuntimeConfig()
 
-        rag_tool = MemoryToolRuntimeImpl(
+        rag_tool = FileSearchToolRuntimeImpl(
             config=config, vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
         )
         content = "test query content"
@@ -45,7 +45,7 @@ class TestRagQuery:
                 "key1": "value1",
                 "token_count": 10,
                 "metadata_token_count": 5,
-                # Note this is inserted into `metadata` during MemoryToolRuntimeImpl().insert()
+                # Note this is inserted into `metadata` during FileSearchToolRuntimeImpl().insert()
                 "document_id": "doc1",
             },
             chunk_metadata=chunk_metadata,
@@ -93,9 +93,9 @@ class TestRagQuery:
 
     async def test_query_adds_vector_store_id_to_chunk_metadata(self):
         # Create config with default templates
-        config = RagToolRuntimeConfig()
+        config = FileSearchToolRuntimeConfig()
 
-        rag_tool = MemoryToolRuntimeImpl(
+        rag_tool = FileSearchToolRuntimeImpl(
             config=config,
             vector_io_api=MagicMock(),
             inference_api=MagicMock(),

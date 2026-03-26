@@ -16,6 +16,7 @@ from llama_stack.telemetry.tool_runtime_metrics import (
 from llama_stack_api import (
     URL,
     ListToolDefsResponse,
+    ListToolsRequest,
     ToolRuntime,
 )
 
@@ -98,4 +99,6 @@ class ToolRuntimeRouter(ToolRuntime):
     async def list_runtime_tools(
         self, tool_group_id: str | None = None, mcp_endpoint: URL | None = None, authorization: str | None = None
     ) -> ListToolDefsResponse:
-        return await self.routing_table.list_tools(tool_group_id, authorization=authorization)
+        return await self.routing_table.list_tools(
+            ListToolsRequest(toolgroup_id=tool_group_id), authorization=authorization
+        )

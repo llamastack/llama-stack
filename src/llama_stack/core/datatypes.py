@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import warnings
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any, Literal, Self
@@ -410,11 +411,11 @@ class FileSearchParams(BaseModel):
     """Configuration for file search tool output formatting."""
 
     header_template: str = Field(
-        default="knowledge_search tool found {num_chunks} chunks:\nBEGIN of knowledge_search tool results.\n",
+        default="file_search tool found {num_chunks} chunks:\nBEGIN of file_search tool results.\n",
         description="Template for the header text shown before search results. Available placeholders: {num_chunks} number of chunks found.",
     )
     footer_template: str = Field(
-        default="END of knowledge_search tool results.\n",
+        default="END of file_search tool results.\n",
         description="Template for the footer text shown after search results.",
     )
 
@@ -425,10 +426,8 @@ class FileSearchParams(BaseModel):
             raise ValueError("header_template must not be empty")
         if "{num_chunks}" not in v:
             raise ValueError("header_template must contain {num_chunks} placeholder")
-        if "knowledge_search" not in v.lower():
-            raise ValueError(
-                "header_template must contain 'knowledge_search' keyword to ensure proper tool identification"
-            )
+        if "file_search" not in v.lower():
+            raise ValueError("header_template must contain 'file_search' keyword to ensure proper tool identification")
         return v
 
 
@@ -701,7 +700,20 @@ class RegisteredResources(BaseModel):
     datasets: list[DatasetInput] = Field(default_factory=list)
     scoring_fns: list[ScoringFnInput] = Field(default_factory=list)
     benchmarks: list[BenchmarkInput] = Field(default_factory=list)
-    tool_groups: list[ToolGroupInput] = Field(default_factory=list)
+    tool_groups: list[ToolGroupInput] = Field(default_factory=list, deprecated=True)
+
+    @model_validator(mode="after")
+    def _warn_deprecated_tool_groups(self) -> Self:
+        if self.tool_groups:
+            warnings.warn(
+                "'registered_resources.tool_groups' is deprecated and will be removed in a future release. "
+                "Built-in tool groups are now auto-registered based on configured tool_runtime providers. "
+                "Please remove 'tool_groups' from your configuration.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            self.tool_groups = []
+        return self
 
 
 class ServerConfig(BaseModel):
@@ -778,7 +790,7 @@ The list of APIs to serve. If not specified, all APIs specified in the provider_
 
     providers: dict[str, list[Provider]] = Field(
         description="""
-One or more providers to use for each API. The same provider_type (e.g., meta-reference)
+One or more providers to use for each API. The same provider_type (e.g., builtin)
 can be instantiated multiple times (with different configs) if necessary.
 """,
     )

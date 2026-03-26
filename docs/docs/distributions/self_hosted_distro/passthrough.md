@@ -15,17 +15,16 @@ The `llamastack/distribution-passthrough` distribution consists of the following
 
 | API | Provider(s) |
 |-----|-------------|
-| agents | `inline::meta-reference` |
+| agents | `inline::builtin` |
 | datasetio | `remote::huggingface`, `inline::localfs` |
-| eval | `inline::meta-reference` |
+| eval | `inline::builtin` |
 | inference | `remote::passthrough`, `inline::sentence-transformers` |
 | safety | `inline::llama-guard` |
 | scoring | `inline::basic`, `inline::llm-as-judge`, `inline::braintrust` |
-| tool_runtime | `remote::brave-search`, `remote::tavily-search`, `remote::wolfram-alpha`, `inline::rag-runtime`, `remote::model-context-protocol` |
+| tool_runtime | `remote::brave-search`, `remote::tavily-search`, `remote::wolfram-alpha`, `inline::file-search`, `remote::model-context-protocol` |
 | vector_io | `inline::faiss`, `remote::chromadb`, `remote::pgvector` |
 
-
-### Environment Variables
+## Environment Variables
 
 The following environment variables can be configured:
 
@@ -33,9 +32,9 @@ The following environment variables can be configured:
 - `PASSTHROUGH_API_KEY`: Passthrough API Key (default: ``)
 - `PASSTHROUGH_URL`: Passthrough URL (default: ``)
 
-### Models
+## Models
 
 The following models are available by default:
 
-- `llama3.1-8b-instruct `
-- `llama3.2-11b-vision-instruct `
+- `llama3.1-8b-instruct`
+- `llama3.2-11b-vision-instruct`

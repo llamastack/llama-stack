@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-from llama_stack.core.datatypes import BuildProvider, Provider, ToolGroupInput
+from llama_stack.core.datatypes import BuildProvider, Provider
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
@@ -22,8 +22,8 @@ def get_distribution_template(name: str = "oci") -> DistributionTemplate:
             BuildProvider(provider_type="remote::pgvector"),
         ],
         "safety": [BuildProvider(provider_type="inline::llama-guard")],
-        "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "eval": [BuildProvider(provider_type="inline::meta-reference")],
+        "responses": [BuildProvider(provider_type="inline::builtin")],
+        "eval": [BuildProvider(provider_type="inline::builtin")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),
             BuildProvider(provider_type="inline::localfs"),
@@ -36,7 +36,7 @@ def get_distribution_template(name: str = "oci") -> DistributionTemplate:
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
-            BuildProvider(provider_type="inline::rag-runtime"),
+            BuildProvider(provider_type="inline::file-search"),
             BuildProvider(provider_type="remote::model-context-protocol"),
         ],
         "files": [BuildProvider(provider_type="inline::localfs")],
@@ -55,17 +55,10 @@ def get_distribution_template(name: str = "oci") -> DistributionTemplate:
     )
 
     files_provider = Provider(
-        provider_id="meta-reference-files",
+        provider_id="builtin-files",
         provider_type="inline::localfs",
         config=LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}"),
     )
-    default_tool_groups = [
-        ToolGroupInput(
-            toolgroup_id="builtin::websearch",
-            provider_id="tavily-search",
-        ),
-    ]
-
     return DistributionTemplate(
         name=name,
         distro_type="remote_hosted",
@@ -80,7 +73,6 @@ def get_distribution_template(name: str = "oci") -> DistributionTemplate:
                     "vector_io": [vector_io_provider],
                     "files": [files_provider],
                 },
-                default_tool_groups=default_tool_groups,
             ),
         },
         run_config_env_vars={
