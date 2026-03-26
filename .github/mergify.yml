@@ -1,3 +1,13 @@
+queue_rules:
+- name: default
+  merge_method: squash
+  update_method: merge
+  batch_size: 1
+  merge_conditions:
+      - check-success=ci-status
+      - "#approved-reviews-by>=1"
+      - "#changes-requested-reviews-by=0"
+
 pull_request_rules:
 - name: ping author on conflicts and add 'needs-rebase' label
   conditions:
@@ -23,17 +33,21 @@ pull_request_rules:
       remove:
         - needs-rebase
 
-- name: automatically update PRs that are 3+ commits behind main
+- name: queue approved PRs for merge
   conditions:
       - base=main
-      - "#commits-behind>=3"
+      - check-success=ci-status
+      - "#approved-reviews-by>=1"
+      - "#changes-requested-reviews-by=0"
       - -conflict
       - -draft
       - -closed
+      - -label~=stale
   actions:
-    update: {}
+    queue:
+      name: default
 
-- name: auto-merge on stable release branches
+- name: queue approved PRs on stable release branches
   conditions:
       - base~=^release-[0-9]+\.[0-9]+\.x$
       - check-success=ci-status
@@ -43,8 +57,8 @@ pull_request_rules:
       - -draft
       - -closed
   actions:
-    merge:
-      method: squash
+    queue:
+      name: default
 
 - name: auto-approve dependabot github-deps PRs
   conditions:
@@ -56,16 +70,3 @@ pull_request_rules:
   actions:
     review:
       type: APPROVE
-
-- name: auto-merge dependabot github-deps PRs
-  conditions:
-      - author=dependabot[bot]
-      - title~=^chore\(github-deps\)
-      - check-success=ci-status
-      - "#approved-reviews-by>=1"
-      - -conflict
-      - -draft
-      - -closed
-  actions:
-    merge:
-      method: squash
