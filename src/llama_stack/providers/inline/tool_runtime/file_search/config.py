@@ -12,6 +12,8 @@ from llama_stack.core.datatypes import VectorStoresConfig
 
 
 class FileSearchToolRuntimeConfig(BaseModel):
+    """Configuration for the file search tool runtime provider."""
+
     vector_stores_config: VectorStoresConfig = Field(
         default_factory=VectorStoresConfig,
         description="Configuration for vector store prompt templates and behavior",

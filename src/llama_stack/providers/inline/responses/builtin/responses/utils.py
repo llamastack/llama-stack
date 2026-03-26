@@ -492,6 +492,15 @@ def is_function_tool_call(
     tool_call: OpenAIChatCompletionToolCall,
     tools: list[OpenAIResponseInputTool],
 ) -> bool:
+    """Check whether a tool call corresponds to a user-defined function tool.
+
+    Args:
+        tool_call: the tool call to check
+        tools: list of available response input tools
+
+    Returns:
+        True if the tool call matches a function tool in the tools list
+    """
     if not tool_call.function:
         return False
     for t in tools:

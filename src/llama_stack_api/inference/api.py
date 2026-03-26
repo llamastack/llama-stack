@@ -27,6 +27,8 @@ from .models import (
 
 
 class ModelStore(Protocol):
+    """Protocol for storing and retrieving model definitions."""
+
     async def get_model(self, identifier: str) -> Model: ...
 
 

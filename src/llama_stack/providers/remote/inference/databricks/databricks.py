@@ -18,6 +18,8 @@ logger = get_logger(name=__name__, category="inference::databricks")
 
 
 class DatabricksInferenceAdapter(OpenAIMixin):
+    """Inference adapter for the Databricks platform."""
+
     config: DatabricksImplConfig
 
     provider_data_api_key_field: str = "databricks_api_token"

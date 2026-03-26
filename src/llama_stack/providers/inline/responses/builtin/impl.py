@@ -62,6 +62,8 @@ def _record_parameter_usage(request: CreateResponseRequest, operation: str) -> N
 
 
 class BuiltinResponsesImpl(Responses):
+    """Built-in responses implementing the Agents API with tool use and responses support."""
+
     def __init__(
         self,
         config: BuiltinResponsesImplConfig,

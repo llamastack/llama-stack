@@ -103,11 +103,15 @@ class _BackgroundWorkItem:
 
 
 class OpenAIResponsePreviousResponseWithInputItems(BaseModel):
+    """Container for a previous response object paired with its input items."""
+
     input_items: ListOpenAIResponseInputItem
     response: OpenAIResponseObject
 
 
 class OpenAIResponsesImpl:
+    """Implementation of the OpenAI Responses API with streaming, tool calling, and persistence."""
+
     def __init__(
         self,
         inference_api: Inference,

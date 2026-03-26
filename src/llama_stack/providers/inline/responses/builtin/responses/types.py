@@ -167,6 +167,8 @@ class ToolContext(BaseModel):
 
 
 class ChatCompletionContext(BaseModel):
+    """Holds the accumulated state for a chat completion request within a response turn."""
+
     model: str
     messages: list[OpenAIMessageParam]
     response_tools: list[OpenAIResponseInputTool] | None = None

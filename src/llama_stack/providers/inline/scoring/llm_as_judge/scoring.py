@@ -29,6 +29,8 @@ class LlmAsJudgeScoringImpl(
     Scoring,
     ScoringFunctionsProtocolPrivate,
 ):
+    """Scoring provider that uses an LLM to evaluate and judge response quality."""
+
     def __init__(
         self,
         config: LlmAsJudgeScoringConfig,

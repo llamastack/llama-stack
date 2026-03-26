@@ -11,6 +11,8 @@ from .tavily_search import TavilySearchToolRuntimeImpl
 
 
 class TavilySearchToolProviderDataValidator(BaseModel):
+    """Validator for Tavily Search tool provider data requiring a Tavily Search API key."""
+
     tavily_search_api_key: SecretStr
 
 

@@ -10,6 +10,14 @@ from llama_stack_api import AggregationFunctionType, ScoringResultRow
 
 
 def aggregate_accuracy(scoring_results: list[ScoringResultRow]) -> dict[str, Any]:
+    """Compute accuracy metrics from scoring results.
+
+    Args:
+        scoring_results: list of scoring result rows with score values
+
+    Returns:
+        Dictionary with accuracy, num_correct, and num_total
+    """
     num_correct = sum(result["score"] for result in scoring_results)
     avg_score = num_correct / len(scoring_results)
 
@@ -21,6 +29,14 @@ def aggregate_accuracy(scoring_results: list[ScoringResultRow]) -> dict[str, Any
 
 
 def aggregate_average(scoring_results: list[ScoringResultRow]) -> dict[str, Any]:
+    """Compute the arithmetic average of non-null scores.
+
+    Args:
+        scoring_results: list of scoring result rows with score values
+
+    Returns:
+        Dictionary with average score
+    """
     return {
         "average": sum(result["score"] for result in scoring_results if result["score"] is not None)
         / len([_ for _ in scoring_results if _["score"] is not None]),
@@ -28,6 +44,14 @@ def aggregate_average(scoring_results: list[ScoringResultRow]) -> dict[str, Any]
 
 
 def aggregate_weighted_average(scoring_results: list[ScoringResultRow]) -> dict[str, Any]:
+    """Compute the weighted average of non-null scores.
+
+    Args:
+        scoring_results: list of scoring result rows with score and weight values
+
+    Returns:
+        Dictionary with weighted_average score
+    """
     return {
         "weighted_average": sum(
             result["score"] * result["weight"]
@@ -41,12 +65,28 @@ def aggregate_weighted_average(scoring_results: list[ScoringResultRow]) -> dict[
 def aggregate_categorical_count(
     scoring_results: list[ScoringResultRow],
 ) -> dict[str, Any]:
+    """Count occurrences of each unique score category.
+
+    Args:
+        scoring_results: list of scoring result rows with score values
+
+    Returns:
+        Dictionary with categorical_count mapping each category to its count
+    """
     scores = [str(r["score"]) for r in scoring_results]
     unique_scores = sorted(set(scores))
     return {"categorical_count": {s: scores.count(s) for s in unique_scores}}
 
 
 def aggregate_median(scoring_results: list[ScoringResultRow]) -> dict[str, Any]:
+    """Compute the median of non-null scores.
+
+    Args:
+        scoring_results: list of scoring result rows with score values
+
+    Returns:
+        Dictionary with median score value
+    """
     scores = [r["score"] for r in scoring_results if r["score"] is not None]
     median = statistics.median(scores) if scores else None
     return {"median": median}
@@ -65,6 +105,15 @@ AGGREGATION_FUNCTIONS = {
 def aggregate_metrics(
     scoring_results: list[ScoringResultRow], metrics: list[AggregationFunctionType]
 ) -> dict[str, Any]:
+    """Aggregate scoring results using the specified metric functions.
+
+    Args:
+        scoring_results: list of scoring result rows
+        metrics: list of aggregation function types to apply
+
+    Returns:
+        Dictionary mapping each metric to its aggregated result
+    """
     agg_results = {}
     for metric in metrics:
         if metric not in AGGREGATION_FUNCTIONS:

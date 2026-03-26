@@ -29,15 +29,27 @@ INTERNAL_APIS = {Api.inspect, Api.providers, Api.prompts, Api.conversations, Api
 
 
 def stack_apis() -> list[Api]:
+    """Return all available API types.
+
+    Returns:
+        A list of all Api enum members.
+    """
     return list(Api)
 
 
 class AutoRoutedApiInfo(BaseModel):
+    """Pairing of a routing table API with its corresponding router API for automatic routing."""
+
     routing_table_api: Api
     router_api: Api
 
 
 def builtin_automatically_routed_apis() -> list[AutoRoutedApiInfo]:
+    """Return the built-in routing table to router API pairings.
+
+    Returns:
+        A list of AutoRoutedApiInfo objects mapping routing table APIs to their router APIs.
+    """
     return [
         AutoRoutedApiInfo(
             routing_table_api=Api.models,
@@ -71,6 +83,11 @@ def builtin_automatically_routed_apis() -> list[AutoRoutedApiInfo]:
 
 
 def providable_apis() -> list[Api]:
+    """Return the list of APIs that can have external providers configured.
+
+    Returns:
+        APIs excluding internal APIs and routing table APIs that are auto-generated.
+    """
     routing_table_apis = {x.routing_table_api for x in builtin_automatically_routed_apis()}
     return [api for api in Api if api not in routing_table_apis and api not in INTERNAL_APIS]
 
@@ -172,6 +189,15 @@ def get_provider_registry(
 def get_external_providers_from_dir(
     registry: dict[Api, dict[str, ProviderSpec]], config
 ) -> dict[Api, dict[str, ProviderSpec]]:
+    """Load external provider specs from YAML files in the external providers directory.
+
+    Args:
+        registry: Existing provider registry to extend.
+        config: Stack configuration containing the external_providers_dir path.
+
+    Returns:
+        The updated provider registry with external providers added.
+    """
     logger.warning(
         "Specifying external providers via `external_providers_dir` is being deprecated. Please specify `module:` in the provider instead."
     )
@@ -224,6 +250,16 @@ def get_external_providers_from_dir(
 def get_external_providers_from_module(
     registry: dict[Api, dict[str, ProviderSpec]], config, listing: bool
 ) -> dict[Api, dict[str, ProviderSpec]]:
+    """Load external provider specs from Python modules specified in provider configurations.
+
+    Args:
+        registry: Existing provider registry to extend.
+        config: Stack configuration containing providers with module references.
+        listing: Whether this is being called from a dependency listing process.
+
+    Returns:
+        The updated provider registry with module-based external providers added.
+    """
     provider_list = None
     provider_list = config.providers.items()
     if provider_list is None:

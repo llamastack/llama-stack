@@ -14,6 +14,8 @@ DEFAULT_OLLAMA_URL = "http://localhost:11434/v1"
 
 
 class OllamaImplConfig(RemoteInferenceProviderConfig):
+    """Configuration for the Ollama inference provider."""
+
     auth_credential: SecretStr | None = Field(default=None, exclude=True)
 
     base_url: HttpUrl | None = Field(default=HttpUrl(DEFAULT_OLLAMA_URL))

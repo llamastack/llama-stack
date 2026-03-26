@@ -14,6 +14,8 @@ logger = get_logger(name=__name__, category="inference::fireworks")
 
 
 class FireworksInferenceAdapter(OpenAIMixin):
+    """Inference adapter for the Fireworks AI platform."""
+
     config: FireworksImplConfig
 
     embedding_model_metadata: dict[str, dict[str, int]] = {

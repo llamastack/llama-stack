@@ -29,10 +29,26 @@ def is_list_of_primitives(field_type):
 
 
 def is_basemodel_without_fields(typ):
+    """Check if a type is a Pydantic BaseModel subclass with no defined fields.
+
+    Args:
+        typ: The type to check.
+
+    Returns:
+        True if typ is a BaseModel subclass with zero fields.
+    """
     return inspect.isclass(typ) and issubclass(typ, BaseModel) and len(typ.__fields__) == 0
 
 
 def can_recurse(typ):
+    """Check if a type is a Pydantic BaseModel subclass with fields that can be recursively prompted.
+
+    Args:
+        typ: The type to check.
+
+    Returns:
+        True if typ is a BaseModel subclass with one or more fields.
+    """
     return inspect.isclass(typ) and issubclass(typ, BaseModel) and len(typ.__fields__) > 0
 
 
@@ -54,6 +70,16 @@ def get_non_none_type(field_type):
 
 
 def manually_validate_field(model: type[BaseModel], field_name: str, value: Any):
+    """Run Pydantic field validators manually on a single field value.
+
+    Args:
+        model: The Pydantic model class containing the validators.
+        field_name: The name of the field to validate.
+        value: The value to validate.
+
+    Returns:
+        The validated value.
+    """
     validators = model.__pydantic_decorators__.field_validators
     for _name, validator in validators.items():
         if field_name in validator.info.fields:
@@ -63,6 +89,14 @@ def manually_validate_field(model: type[BaseModel], field_name: str, value: Any)
 
 
 def is_discriminated_union(typ) -> bool:
+    """Check if a type or FieldInfo represents a discriminated union.
+
+    Args:
+        typ: A type hint or Pydantic FieldInfo to check.
+
+    Returns:
+        True if the type is a discriminated union.
+    """
     if isinstance(typ, FieldInfo):
         return typ.discriminator
     else:
@@ -77,6 +111,16 @@ def prompt_for_discriminated_union(
     typ,
     existing_value,
 ):
+    """Interactively prompt the user to select and configure a discriminated union variant.
+
+    Args:
+        field_name: The name of the field being configured.
+        typ: The type hint or FieldInfo for the discriminated union.
+        existing_value: An existing value to use as default, or None.
+
+    Returns:
+        A configured instance of the selected union variant.
+    """
     if isinstance(typ, FieldInfo):
         inner_type = typ.annotation
         discriminator = typ.discriminator
