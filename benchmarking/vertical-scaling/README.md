@@ -11,6 +11,7 @@ This benchmark measures how well the Llama Stack server scales with increasing w
 - **Llama Stack Server** - The inference API under test with `remote::openai` provider
 
 The benchmark runs twice:
+
 1. **Baseline**: Tests the mock server directly to establish maximum throughput
 2. **Stack**: Tests the stack server to measure routing overhead
 
@@ -29,6 +30,7 @@ python --version
 ### Locust (Load Testing)
 
 Verify installation:
+
 ```bash
 uv run --group benchmark locust --version
 ```
@@ -43,6 +45,7 @@ cd benchmarking/vertical-scaling
 ```
 
 This will:
+
 1. Check port availability (8080, 8321)
 2. Start Python mock server on port 8080
 3. Start Llama Stack server on port 8321 with 1 worker
@@ -54,11 +57,13 @@ This will:
 ## Usage
 
 **Server Options:**
+
 - `--workers NUMBER` - Number of uvicorn workers (default: 1)
 - `--mock-port NUMBER` - Port for mock server (default: 8080)
 - `--stack-port NUMBER` - Port for Llama Stack server (default: 8321)
 
 **Benchmark Options:**
+
 - `--users NUMBER` - Concurrent users (default: 1)
 - `--run-time SECONDS` - Test duration (default: 60)
 
@@ -67,6 +72,7 @@ This will:
 ### Output Files
 
 Results are saved to `results/` directory:
+
 - `baseline.html` - Interactive HTML report for mock server baseline
 - `baseline_stats.csv` - Baseline summary statistics
 - `baseline_stats_history.csv` - Baseline time-series data
@@ -77,6 +83,7 @@ Results are saved to `results/` directory:
 - `stack_failures.csv` - Stack failed requests
 
 Additional files in the benchmark directory:
+
 - `stack.log` - Llama Stack server logs
 
 Compare the baseline and stack HTML reports to see the routing overhead.
@@ -102,21 +109,25 @@ Open the HTML report to view:
 ### Identifying Bottlenecks
 
 **Good vertical scaling:**
+
 - RPS increases linearly with workers (2x workers ≈ 2x RPS)
 - Latency remains stable or improves
 - No failures
 
 **CPU-bound bottleneck:**
+
 - RPS increases but plateaus at high worker counts
 - Latency increases with more workers
 - System CPU usage at 100%
 
 **I/O-bound bottleneck:**
+
 - RPS doesn't increase much with workers
 - Latency increases significantly
 - Network or disk I/O saturated
 
 **GIL bottleneck (Python):**
+
 - RPS plateaus around 2-4 workers
 - Adding more workers doesn't help
 - Consider using multiple processes

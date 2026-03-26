@@ -1,13 +1,13 @@
 version: 2
 distro_name: ci-tests
 apis:
-- agents
 - batches
 - datasetio
 - eval
 - file_processors
 - files
 - inference
+- responses
 - safety
 - scoring
 - tool_runtime
@@ -201,7 +201,7 @@ providers:
       excluded_categories: []
   - provider_id: code-scanner
     provider_type: inline::code-scanner
-  agents:
+  responses:
   - provider_id: builtin
     provider_type: inline::builtin
     config:
@@ -302,6 +302,11 @@ registered_resources:
     model_id: watsonx/meta-llama/llama-3-3-70b-instruct
     provider_id: ${env.WATSONX_API_KEY:+watsonx}
     provider_model_id: meta-llama/llama-3-3-70b-instruct
+    model_type: llm
+  - metadata: {}
+    model_id: bedrock/openai.gpt-oss-20b
+    provider_id: ${env.AWS_BEARER_TOKEN_BEDROCK:+bedrock}
+    provider_model_id: openai.gpt-oss-20b
     model_type: llm
   shields:
   - shield_id: llama-guard

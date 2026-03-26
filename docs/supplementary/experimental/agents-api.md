@@ -13,6 +13,7 @@ Main functionalities provided by this API:
 ### 🧪 Feedback Welcome
 
 This API is actively being developed. We welcome feedback on:
+
 - API design and usability
 - Performance characteristics
 - Missing features or capabilities

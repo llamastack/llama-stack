@@ -4,7 +4,7 @@ Resource-to-provider mapping tables. Each routing table tracks which provider ow
 
 ## Directory Structure
 
-```
+```text
 routing_tables/
   __init__.py            # Factory functions: get_routing_table_impl(), get_auto_router_impl()
   common.py              # CommonRoutingTableImpl base class
