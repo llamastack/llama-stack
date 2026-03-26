@@ -4,9 +4,14 @@ queue_rules:
   update_method: merge
   batch_size: 1
   merge_conditions:
+      - base=main
       - check-success=ci-status
       - "#approved-reviews-by>=1"
       - "#changes-requested-reviews-by=0"
+      - -conflict
+      - -draft
+      - -closed
+      - -label~=stale
 
 pull_request_rules:
 - name: ping author on conflicts and add 'needs-rebase' label
