@@ -37,7 +37,7 @@ response = client.chat.completions.create(
 
 Llama Stack has a pluggable provider architecture. Develop locally with Ollama, deploy to production with vLLM, or connect to a managed service — the API stays the same.
 
-```
+```text
 Local development          Production                   Managed service
 ┌─────────────────┐       ┌──────────────────┐          ┌──────────────────┐
 │  Ollama          │       │  vLLM / TGI      │          │  AWS Bedrock     │
