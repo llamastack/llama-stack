@@ -31,6 +31,8 @@ SERVER_DEPENDENCIES = [
 
 
 class ApiInput(BaseModel):
+    """Input specification pairing an API with its provider type."""
+
     api: Api
     provider: str
 
@@ -85,6 +87,11 @@ def get_provider_dependencies(
 
 
 def print_pip_install_help(config: StackConfig):
+    """Print pip install commands needed for the given stack configuration's provider dependencies.
+
+    Args:
+        config: Stack configuration to extract dependencies from.
+    """
     normal_deps, special_deps, _ = get_provider_dependencies(config)
 
     cprint(

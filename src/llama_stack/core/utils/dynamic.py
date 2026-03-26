@@ -8,6 +8,14 @@ import importlib
 
 
 def instantiate_class_type(fully_qualified_name):
+    """Import and return a class from its fully qualified module path.
+
+    Args:
+        fully_qualified_name: Dotted path like 'package.module.ClassName'.
+
+    Returns:
+        The class object referenced by the fully qualified name.
+    """
     module_name, class_name = fully_qualified_name.rsplit(".", 1)
     module = importlib.import_module(module_name)
     return getattr(module, class_name)

@@ -18,6 +18,8 @@ from .models import (
 
 @runtime_checkable
 class Benchmarks(Protocol):
+    """Protocol for managing benchmark resources."""
+
     async def list_benchmarks(
         self,
         request: ListBenchmarksRequest,

@@ -1290,6 +1290,7 @@ components:
       required:
       - file
       title: OpenAIFile
+      description: File content part for OpenAI-compatible chat completion messages.
     OpenAIFileFile:
       properties:
         file_data:
@@ -2037,6 +2038,7 @@ components:
       - model
       - input_messages
       title: OpenAICompletionWithInputMessages
+      description: Chat completion response extended with the original input messages.
     OpenAICompletionRequestWithExtraBody:
       properties:
         model:
@@ -2338,6 +2340,7 @@ components:
       - filename
       - start_index
       title: OpenAIResponseAnnotationContainerFileCitation
+      description: Container file citation annotation referencing a file within a container.
     OpenAIResponseAnnotationFileCitation:
       properties:
         type:
@@ -2377,6 +2380,7 @@ components:
       - file_id
       - index
       title: OpenAIResponseAnnotationFilePath
+      description: File path annotation referencing a generated file in response content.
     OpenAIResponseAnnotations:
       discriminator:
         mapping:
@@ -2678,6 +2682,7 @@ components:
         title: OpenAIResponseContentPartRefusal
       title: OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal
     OpenAIResponseOutputMessageContentOutputText:
+      description: Text content within an output message of an OpenAI response.
       properties:
         text:
           title: Text
@@ -5056,6 +5061,7 @@ components:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseIncomplete
     OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta:
+      description: Streaming event for incremental MCP call argument updates.
       properties:
         delta:
           title: Delta
@@ -5081,6 +5087,7 @@ components:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta
     OpenAIResponseObjectStreamResponseMcpCallArgumentsDone:
+      description: Streaming event for completed MCP call arguments.
       properties:
         arguments:
           title: Arguments
@@ -5156,6 +5163,7 @@ components:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpCallInProgress
     OpenAIResponseObjectStreamResponseMcpListToolsCompleted:
+      description: Streaming event for a completed MCP list tools operation.
       properties:
         sequence_number:
           title: Sequence Number
@@ -5169,6 +5177,7 @@ components:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpListToolsCompleted
     OpenAIResponseObjectStreamResponseMcpListToolsFailed:
+      description: Streaming event for a failed MCP list tools operation.
       properties:
         sequence_number:
           title: Sequence Number
@@ -5182,6 +5191,7 @@ components:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpListToolsFailed
     OpenAIResponseObjectStreamResponseMcpListToolsInProgress:
+      description: Streaming event for MCP list tools operation in progress.
       properties:
         sequence_number:
           title: Sequence Number
@@ -5693,6 +5703,7 @@ components:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseWebSearchCallInProgress
     OpenAIResponseObjectStreamResponseWebSearchCallSearching:
+      description: Streaming event for web search calls currently searching.
       properties:
         item_id:
           title: Item Id
@@ -8442,6 +8453,7 @@ components:
       - Error
       - Not Implemented
       title: HealthStatus
+      description: Health check status values for provider readiness.
     ImageContentItem-Input:
       properties:
         type:
@@ -8819,6 +8831,7 @@ components:
       - required
       - none
       title: OpenAIResponseInputToolChoiceMode
+      description: Enumeration of simple tool choice modes for response generation.
     OpenAIResponseInputToolChoiceWebSearch:
       properties:
         type:
@@ -9027,6 +9040,7 @@ components:
       required:
       - text
       title: OpenAIResponseOutputMessageContentOutputText
+      description: Text content within an output message of an OpenAI response.
     OpenAIResponseOutputMessageContentOutputText-Output:
       properties:
         text:
@@ -9067,6 +9081,7 @@ components:
       required:
       - text
       title: OpenAIResponseOutputMessageContentOutputText
+      description: Text content within an output message of an OpenAI response.
     OpenAIResponseOutputMessageFileSearchToolCallResults:
       properties:
         attributes:
@@ -9513,6 +9528,7 @@ components:
           - type: 'null'
           description: Maximum concurrent LLM calls. Falls back to config default if not provided.
       title: VectorStoreChunkingStrategyContextualConfig
+      description: Configuration for contextual chunking that uses an LLM to situate chunks within the document.
     _URLOrData:
       properties:
         url:
@@ -9590,6 +9606,7 @@ components:
         title: GrammarResponseFormat
       title: JsonSchemaResponseFormat | GrammarResponseFormat
     AllowedToolsConfig:
+      description: Configuration specifying which tools are allowed and their selection mode.
       properties:
         tools:
           description: List of allowed tools.
@@ -9620,6 +9637,7 @@ components:
       - name
       title: CustomToolConfig
     FunctionToolConfig:
+      description: Configuration for a function tool specifying the function name.
       properties:
         name:
           description: Name of the function.
@@ -9970,6 +9988,7 @@ components:
       title: Api
       type: string
     ProviderSpec:
+      description: Base specification for a Llama Stack provider including its config and dependencies.
       properties:
         api:
           $ref: '#/components/schemas/Api'
@@ -10049,6 +10068,7 @@ components:
       - config_class
       title: ProviderSpec
     InlineProviderSpec:
+      description: Provider specification for inline (built-in) providers with optional container support.
       properties:
         api:
           $ref: '#/components/schemas/Api'
@@ -10145,6 +10165,7 @@ components:
       - config_class
       title: InlineProviderSpec
     RemoteProviderSpec:
+      description: Provider specification for remote providers accessed via an adapter.
       properties:
         api:
           $ref: '#/components/schemas/Api'

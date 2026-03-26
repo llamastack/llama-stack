@@ -20,6 +20,8 @@ logger = get_logger(__name__, category="core::registry")
 
 
 class DistributionRegistry(Protocol):
+    """Protocol for distribution registries that store and retrieve routable objects."""
+
     async def get_all(self) -> list[RoutableObjectWithProvider]: ...
 
     async def initialize(self) -> None: ...
@@ -61,6 +63,8 @@ def _parse_registry_values(values: list[str]) -> list[RoutableObjectWithProvider
 
 
 class DiskDistributionRegistry(DistributionRegistry):
+    """KVStore-backed distribution registry that persists objects to disk."""
+
     def __init__(self, kvstore: KVStore):
         self.kvstore = kvstore
 
@@ -131,6 +135,8 @@ class DiskDistributionRegistry(DistributionRegistry):
 
 
 class CachedDiskDistributionRegistry(DiskDistributionRegistry):
+    """Distribution registry with an in-memory cache layer over the disk-backed KVStore."""
+
     def __init__(self, kvstore: KVStore, cache_ttl_seconds: float = 5.0):
         super().__init__(kvstore)
         self.cache: dict[tuple[str, str], RoutableObjectWithProvider] = {}
@@ -252,6 +258,16 @@ class CachedDiskDistributionRegistry(DiskDistributionRegistry):
 async def create_dist_registry(
     metadata_store: KVStoreReference, distro_name: str, cache_ttl_seconds: float = 5.0
 ) -> tuple[CachedDiskDistributionRegistry, KVStore]:
+    """Create and initialize a cached distribution registry backed by a KVStore.
+
+    Args:
+        metadata_store: KVStore reference for storing registry metadata.
+        distro_name: Name of the distribution.
+        cache_ttl_seconds: Time-to-live for cache entries in seconds.
+
+    Returns:
+        A tuple of (initialized CachedDiskDistributionRegistry, underlying KVStore).
+    """
     # instantiate kvstore for storing and retrieving distribution metadata
     dist_kvstore = await kvstore_impl(metadata_store)
     dist_registry = CachedDiskDistributionRegistry(dist_kvstore, cache_ttl_seconds=cache_ttl_seconds)

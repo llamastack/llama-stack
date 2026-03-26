@@ -27,6 +27,8 @@ from .models import (
 
 @runtime_checkable
 class Responses(Protocol):
+    """Protocol for managing OpenAI-compatible responses."""
+
     async def get_openai_response(
         self,
         request: RetrieveResponseRequest,
