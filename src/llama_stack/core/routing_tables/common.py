@@ -23,11 +23,30 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 
 def get_impl_api(p: Any) -> Api:
+    """Get the API type from a provider implementation's spec.
+
+    Args:
+        p: A provider implementation with a __provider_spec__ attribute.
+
+    Returns:
+        The Api enum value for this provider.
+    """
     return p.__provider_spec__.api
 
 
-# TODO: this should return the registered object for all APIs
 async def register_object_with_provider(obj: RoutableObject, p: Any) -> RoutableObject:
+    """Register a routable object with the appropriate provider based on its API type.
+
+    Args:
+        obj: The routable object to register.
+        p: The provider implementation to register with.
+
+    Returns:
+        The registered object (may be modified by the provider).
+
+    Raises:
+        ValueError: If the provider's API type is unknown.
+    """
     api = get_impl_api(p)
 
     assert obj.provider_id != "remote", "Remote provider should not be registered"
@@ -45,6 +64,15 @@ async def register_object_with_provider(obj: RoutableObject, p: Any) -> Routable
 
 
 async def unregister_object_from_provider(obj: RoutableObject, p: Any) -> None:
+    """Unregister a routable object from the appropriate provider based on its API type.
+
+    Args:
+        obj: The routable object to unregister.
+        p: The provider implementation to unregister from.
+
+    Raises:
+        ValueError: If the provider's API type does not support unregistration.
+    """
     api = get_impl_api(p)
     if api == Api.vector_io:
         return await p.unregister_vector_store(obj.identifier)
@@ -62,6 +90,8 @@ Registry = dict[str, list[RoutableObjectWithProvider]]
 
 
 class CommonRoutingTableImpl(RoutingTable):
+    """Base implementation for routing tables that manage object registration and provider dispatch."""
+
     def __init__(
         self,
         impls_by_provider_id: dict[str, RoutedProtocol],
@@ -226,6 +256,18 @@ class CommonRoutingTableImpl(RoutingTable):
 
 
 async def lookup_model(routing_table: CommonRoutingTableImpl, model_id: str) -> Model:
+    """Look up a model by identifier from the routing table.
+
+    Args:
+        routing_table: The routing table to search.
+        model_id: The model identifier to look up.
+
+    Returns:
+        The found Model object.
+
+    Raises:
+        ModelNotFoundError: If no model with the given identifier exists.
+    """
     model = await routing_table.get_object_by_identifier("model", model_id)
     if not model:
         raise ModelNotFoundError(model_id)

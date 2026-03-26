@@ -22,6 +22,11 @@ from llama_stack_api import ModelType
 
 
 def get_distribution_template() -> DistributionTemplate:
+    """Build the Dell distribution template using TGI inference.
+
+    Returns:
+        A DistributionTemplate configured for Dell's TGI-based inference.
+    """
     providers = {
         "inference": [
             BuildProvider(provider_type="remote::tgi"),

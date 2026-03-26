@@ -14,6 +14,14 @@ from llama_stack.providers.remote.inference.oci.config import OCIConfig
 
 
 def get_distribution_template(name: str = "oci") -> DistributionTemplate:
+    """Build the OCI Generative AI distribution template.
+
+    Args:
+        name: the distribution name.
+
+    Returns:
+        A DistributionTemplate configured for OCI inference.
+    """
     providers = {
         "inference": [BuildProvider(provider_type="remote::oci")],
         "vector_io": [

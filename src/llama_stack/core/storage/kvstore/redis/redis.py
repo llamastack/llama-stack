@@ -14,6 +14,8 @@ from ..config import RedisKVStoreConfig
 
 
 class RedisKVStoreImpl(KVStore):
+    """Redis-backed key-value store implementation."""
+
     def __init__(self, config: RedisKVStoreConfig):
         self.config = config
         self._redis: Redis | None = None

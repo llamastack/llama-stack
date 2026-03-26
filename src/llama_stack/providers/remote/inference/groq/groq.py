@@ -10,6 +10,8 @@ from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 
 class GroqInferenceAdapter(OpenAIMixin):
+    """Inference adapter for the Groq LPU platform."""
+
     config: GroqConfig
 
     provider_data_api_key_field: str = "groq_api_key"

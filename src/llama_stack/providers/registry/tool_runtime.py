@@ -15,6 +15,11 @@ from llama_stack_api import (
 
 
 def available_providers() -> list[ProviderSpec]:
+    """Return the list of available tool runtime provider specifications.
+
+    Returns:
+        List of ProviderSpec objects describing available providers
+    """
     return [
         InlineProviderSpec(
             api=Api.tool_runtime,

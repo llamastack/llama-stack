@@ -58,6 +58,8 @@ logger = get_logger(name=__name__, category="files")
 
 
 class LocalfsFilesImpl(Files):
+    """Files provider that stores uploaded files on the local filesystem."""
+
     def __init__(self, config: LocalfsFilesImplConfig, policy: list[AccessRule]) -> None:
         self.config = config
         self.policy = policy

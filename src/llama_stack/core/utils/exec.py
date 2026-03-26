@@ -18,6 +18,15 @@ log = get_logger(name=__name__, category="core")
 
 
 def formulate_run_args(image_type: str, distro_name: str) -> list:
+    """Build the command-line arguments for starting a Llama Stack server.
+
+    Args:
+        image_type: The image type (e.g., 'venv', 'container').
+        distro_name: The distribution or virtual environment name.
+
+    Returns:
+        A list of command-line arguments, or an empty list if no environment is detected.
+    """
     # Only venv is supported now
     current_venv = os.environ.get("VIRTUAL_ENV")
     env_name = distro_name or current_venv
@@ -42,6 +51,11 @@ def formulate_run_args(image_type: str, distro_name: str) -> list:
 
 
 def in_notebook():
+    """Detect whether the current code is running inside a Jupyter notebook.
+
+    Returns:
+        True if running in a Jupyter/IPython notebook, False otherwise.
+    """
     try:
         from IPython import get_ipython
 

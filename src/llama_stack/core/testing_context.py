@@ -13,14 +13,32 @@ TEST_CONTEXT: ContextVar[str | None] = ContextVar("llama_stack_test_context", de
 
 
 def get_test_context() -> str | None:
+    """Get the current test context identifier.
+
+    Returns:
+        The test context string, or None if not set.
+    """
     return TEST_CONTEXT.get()
 
 
 def set_test_context(value: str | None):
+    """Set the test context identifier for the current async context.
+
+    Args:
+        value: The test context string to set, or None to clear.
+
+    Returns:
+        A token that can be used to reset the context variable.
+    """
     return TEST_CONTEXT.set(value)
 
 
 def reset_test_context(token) -> None:
+    """Reset the test context to its previous value using a token from set_test_context.
+
+    Args:
+        token: The token returned by a previous set_test_context call.
+    """
     TEST_CONTEXT.reset(token)
 
 

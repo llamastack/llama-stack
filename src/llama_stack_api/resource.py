@@ -10,6 +10,8 @@ from pydantic import BaseModel, Field
 
 
 class ResourceType(StrEnum):
+    """Enumeration of all resource types managed by Llama Stack."""
+
     model = "model"
     shield = "shield"
     vector_store = "vector_store"

@@ -13,6 +13,8 @@ from llama_stack_api import json_schema_type
 
 
 class SambaNovaProviderDataValidator(BaseModel):
+    """Validates provider-specific request data for SambaNova inference."""
+
     sambanova_api_key: SecretStr | None = Field(
         default=None,
         description="Sambanova Cloud API key",
@@ -21,6 +23,8 @@ class SambaNovaProviderDataValidator(BaseModel):
 
 @json_schema_type
 class SambaNovaImplConfig(RemoteInferenceProviderConfig):
+    """Configuration for the SambaNova inference provider."""
+
     base_url: HttpUrl | None = Field(
         default=HttpUrl("https://api.sambanova.ai/v1"),
         description="The URL for the SambaNova AI server",

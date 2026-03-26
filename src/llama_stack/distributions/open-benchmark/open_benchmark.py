@@ -33,6 +33,11 @@ from llama_stack_api import ModelType
 
 
 def get_inference_providers() -> tuple[list[Provider], dict[str, list[ProviderModelEntry]]]:
+    """Build inference providers and their model registries for the open-benchmark distribution.
+
+    Returns:
+        A tuple of (list of Provider instances, mapping of provider IDs to model entries).
+    """
     # in this template, we allow each API key to be optional
     providers = [
         (
@@ -91,6 +96,11 @@ def get_inference_providers() -> tuple[list[Provider], dict[str, list[ProviderMo
 
 
 def get_distribution_template() -> DistributionTemplate:
+    """Build the open-benchmark distribution template for running evaluations.
+
+    Returns:
+        A DistributionTemplate configured with benchmark datasets and scoring functions.
+    """
     inference_providers, available_models = get_inference_providers()
     providers = {
         "inference": [BuildProvider(provider_type=p.provider_type, module=p.module) for p in inference_providers],

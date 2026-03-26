@@ -11,11 +11,15 @@ from pydantic import BaseModel, field_validator
 
 
 class PromptGuardType(Enum):
+    """Enumeration of prompt guard detection modes."""
+
     injection = "injection"
     jailbreak = "jailbreak"
 
 
 class PromptGuardConfig(BaseModel):
+    """Configuration for the Prompt Guard safety provider with guard type selection."""
+
     guard_type: str = PromptGuardType.injection.value
 
     @classmethod

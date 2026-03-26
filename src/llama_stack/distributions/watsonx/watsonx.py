@@ -12,6 +12,14 @@ from llama_stack.providers.remote.inference.watsonx import WatsonXConfig
 
 
 def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
+    """Build the WatsonX distribution template.
+
+    Args:
+        name: the distribution name.
+
+    Returns:
+        A DistributionTemplate configured for IBM WatsonX inference.
+    """
     providers = {
         "inference": [
             BuildProvider(provider_type="remote::watsonx"),

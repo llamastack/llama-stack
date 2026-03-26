@@ -18,6 +18,8 @@ from llama_stack_api.vector_stores import VectorStore
 
 
 class DynamicApiMeta(EnumMeta):
+    """Metaclass that allows dynamic addition of enum members at runtime."""
+
     def __new__(cls, name, bases, namespace):
         # Store the original enum values
         original_values = {k: v for k, v in namespace.items() if not k.startswith("_")}
@@ -202,18 +204,24 @@ class ModelsProtocolPrivate(Protocol):
 
 
 class ShieldsProtocolPrivate(Protocol):
+    """Protocol for provider-side shield registration and unregistration."""
+
     async def register_shield(self, shield: Shield) -> None: ...
 
     async def unregister_shield(self, identifier: str) -> None: ...
 
 
 class VectorStoresProtocolPrivate(Protocol):
+    """Protocol for provider-side vector store registration and unregistration."""
+
     async def register_vector_store(self, vector_store: VectorStore) -> None: ...
 
     async def unregister_vector_store(self, vector_store_id: str) -> None: ...
 
 
 class ToolGroupsProtocolPrivate(Protocol):
+    """Protocol for provider-side tool group registration and unregistration."""
+
     async def register_toolgroup(self, toolgroup: ToolGroup) -> None: ...
 
     async def unregister_toolgroup(self, toolgroup_id: str) -> None: ...
@@ -221,6 +229,8 @@ class ToolGroupsProtocolPrivate(Protocol):
 
 @json_schema_type
 class ProviderSpec(BaseModel):
+    """Base specification for a Llama Stack provider including its config and dependencies."""
+
     api: Api
     provider_type: str
     config_class: str = Field(
@@ -279,11 +289,15 @@ class ProviderSpec(BaseModel):
 
 
 class RoutingTable(Protocol):
+    """Protocol for resolving a routing key to its provider implementation."""
+
     async def get_provider_impl(self, routing_key: str) -> Any: ...
 
 
 @json_schema_type
 class InlineProviderSpec(ProviderSpec):
+    """Provider specification for inline (built-in) providers with optional container support."""
+
     container_image: str | None = Field(
         default=None,
         description="""
@@ -300,6 +314,8 @@ A description of the provider. This is used to display in the documentation.
 
 
 class RemoteProviderConfig(BaseModel):
+    """Connection configuration for a remote provider endpoint."""
+
     host: str = "localhost"
     port: int | None = None
     protocol: str = "http"
@@ -319,6 +335,8 @@ class RemoteProviderConfig(BaseModel):
 
 @json_schema_type
 class RemoteProviderSpec(ProviderSpec):
+    """Provider specification for remote providers accessed via an adapter."""
+
     adapter_type: str = Field(
         ...,
         description="Unique identifier for this adapter",
@@ -337,6 +355,8 @@ A description of the provider. This is used to display in the documentation.
 
 
 class HealthStatus(StrEnum):
+    """Health check status values for provider readiness."""
+
     OK = "OK"
     ERROR = "Error"
     NOT_IMPLEMENTED = "Not Implemented"
