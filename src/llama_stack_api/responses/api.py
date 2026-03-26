@@ -25,7 +25,7 @@ from .models import (
 
 
 @runtime_checkable
-class Agents(Protocol):
+class Responses(Protocol):
     async def get_openai_response(
         self,
         request: RetrieveResponseRequest,
