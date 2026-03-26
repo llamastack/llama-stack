@@ -86,7 +86,7 @@ From straightforward inference to multi-tool orchestration:
 ```python
 # Standard chat completions (e.g., with Ollama)
 completion = client.chat.completions.create(
-    model="ollama/llama3.2:3b", messages=[{"role": "user", "content": "Explain RAG"}]
+    model="ollama/gpt-oss:20b", messages=[{"role": "user", "content": "Explain RAG"}]
 )
 
 # Advanced responses with tool orchestration (e.g., with Fireworks)
