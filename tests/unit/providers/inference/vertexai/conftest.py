@@ -103,3 +103,160 @@ def _install_google_shims() -> None:
 
 
 _install_google_shims()
+
+# ── shared fixtures and helpers for test_adapter_*.py ──
+
+from unittest.mock import AsyncMock  # noqa: E402
+
+import pytest  # noqa: E402
+
+from llama_stack.providers.remote.inference.vertexai.config import VertexAIConfig  # noqa: E402
+from llama_stack.providers.remote.inference.vertexai.vertexai import VertexAIInferenceAdapter  # noqa: E402
+
+
+async def _async_pager(items):
+    """Yield items through an async iterator."""
+    for item in items:
+        yield item
+
+
+def _make_fake_streaming_chunk(text: str = "chunk") -> SimpleNamespace:
+    """Build a fake streaming chunk object."""
+    part = SimpleNamespace(text=text, function_call=None, thought=None)
+    content = SimpleNamespace(parts=[part])
+    candidate = SimpleNamespace(content=content, finish_reason="STOP", index=0, logprobs_result=None)
+    return SimpleNamespace(candidates=[candidate], usage_metadata=None)
+
+
+@pytest.fixture
+def vertex_config() -> VertexAIConfig:
+    """Handle vertex config."""
+    return VertexAIConfig(project="test-project", location="global")
+
+
+@pytest.fixture
+def adapter(vertex_config: VertexAIConfig) -> VertexAIInferenceAdapter:
+    """Handle adapter."""
+    a = VertexAIInferenceAdapter(config=vertex_config)
+    cast(Any, a).__provider_id__ = "vertexai"
+    return a
+
+
+@pytest.fixture
+def patch_chat_completion_dependencies(monkeypatch):
+    """Patch chat completion dependencies for the test."""
+
+    def factory(
+        adapter: VertexAIInferenceAdapter,
+        *,
+        capture_messages: bool = False,
+        capture_tools: bool = False,
+        capture_generation_kwargs: bool = False,
+    ) -> dict[str, Any]:
+        """Create an adapter with a mocked client."""
+        fake_response = object()
+        fake_completion = object()
+        fake_client = SimpleNamespace(
+            aio=SimpleNamespace(models=SimpleNamespace(generate_content=AsyncMock(return_value=fake_response)))
+        )
+        captured: dict[str, Any] = {"fake_completion": fake_completion}
+
+        async def _provider_model_id(_: str) -> str:
+            """Return a fixed provider model identifier."""
+            return "gemini-2.5-flash"
+
+        monkeypatch.setattr(adapter, "_get_provider_model_id", _provider_model_id)
+        monkeypatch.setattr(adapter, "_validate_model_allowed", lambda _: None)
+        monkeypatch.setattr(adapter, "_get_client", lambda: fake_client)
+
+        if capture_generation_kwargs:
+
+            def _build_generation_config(*_args, **kwargs):
+                """Build generation config."""
+                captured["build_generation_config_kwargs"] = kwargs
+                return object()
+
+            monkeypatch.setattr(adapter, "_build_generation_config", _build_generation_config)
+        else:
+            monkeypatch.setattr(adapter, "_build_generation_config", lambda *_args, **_kwargs: object())
+
+        if capture_messages:
+
+            def _convert_messages(messages):
+                """Convert messages."""
+                captured["messages"] = messages
+                return None, [{"role": "user", "parts": [{"text": "ok"}]}]
+
+        else:
+
+            def _convert_messages(messages):
+                """Convert messages."""
+                return None, [{"role": "user", "parts": [{"text": "ok"}]}]
+
+        monkeypatch.setattr(
+            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_openai_messages_to_gemini",
+            _convert_messages,
+        )
+
+        if capture_tools:
+
+            def _convert_tools_capture(tools):
+                """Convert tools capture."""
+                captured["tools_passed"] = tools
+                return None
+
+            convert_tools = _convert_tools_capture
+        else:
+
+            def _convert_tools_passthrough(_tools):
+                """Convert tools passthrough."""
+                return None
+
+            convert_tools = _convert_tools_passthrough
+
+        monkeypatch.setattr(
+            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_openai_tools_to_gemini",
+            convert_tools,
+        )
+        monkeypatch.setattr(
+            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_gemini_response_to_openai",
+            lambda response, model: fake_completion,
+        )
+
+        return captured
+
+    return factory
+
+
+@pytest.fixture
+def make_adapter_with_mock_embed(monkeypatch):
+    """Create adapter with mock embed."""
+
+    def factory(
+        embeddings: list[list[float]], capture: dict | None = None, usage_metadata: SimpleNamespace | None = None
+    ):
+        """Create an adapter with a mocked client."""
+        a = VertexAIInferenceAdapter(config=VertexAIConfig(project="p", location="l"))
+        cast(Any, a).__provider_id__ = "vertexai"
+
+        fake_embedding_objects = [SimpleNamespace(value=vec) for vec in embeddings]
+        fake_response = SimpleNamespace(embeddings=fake_embedding_objects)
+        if usage_metadata is not None:
+            fake_response.usage_metadata = usage_metadata
+
+        embed_mock = AsyncMock(return_value=fake_response)
+
+        if capture is not None:
+
+            async def capturing_embed(*args, **kwargs):
+                """Handle capturing embed."""
+                capture.update(kwargs)
+                return fake_response
+
+            embed_mock = capturing_embed
+
+        fake_client = SimpleNamespace(aio=SimpleNamespace(models=SimpleNamespace(embed_content=embed_mock)))
+        monkeypatch.setattr(a, "_get_client", lambda: fake_client)
+        return a, embed_mock
+
+    return factory
