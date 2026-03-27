@@ -236,7 +236,7 @@ class OAuth2TokenAuthProvider(AuthProvider):
             async with httpx.AsyncClient(verify=ssl_ctxt) as client:
                 response = await client.post(**post_kwargs)
                 if response.status_code != httpx.codes.OK:
-                    logger.warning(f"Token introspection failed with status code: {response.status_code}")
+                    logger.warning("Token introspection failed with status code", status_code=response.status_code)
                     raise ValueError(f"Token introspection failed: {response.status_code}")
 
                 fields = response.json()
@@ -315,7 +315,7 @@ class CustomAuthProvider(AuthProvider):
                     timeout=10.0,  # Add a reasonable timeout
                 )
                 if response.status_code != httpx.codes.OK:
-                    logger.warning(f"Authentication failed with status code: {response.status_code}")
+                    logger.warning("Authentication failed with status code", status_code=response.status_code)
                     raise ValueError(f"Authentication failed: {response.status_code}")
 
                 # Parse and validate the auth response
@@ -371,7 +371,7 @@ class GitHubTokenAuthProvider(AuthProvider):
         try:
             user_info = await _get_github_user_info(token, self.config.github_api_base_url)
         except httpx.HTTPStatusError as e:
-            logger.warning(f"GitHub token validation failed: {e}")
+            logger.warning("GitHub token validation failed", error=str(e))
             raise ValueError("GitHub token validation failed. Please check your token and try again.") from e
 
         principal = user_info["user"]["login"]
@@ -462,7 +462,9 @@ class KubernetesAuthProvider(AuthProvider):
                 if response.status_code == httpx.codes.UNAUTHORIZED:
                     raise TokenValidationError("Invalid token")
                 if response.status_code != httpx.codes.CREATED:
-                    logger.warning(f"Kubernetes SelfSubjectReview API failed with status code: {response.status_code}")
+                    logger.warning(
+                        "Kubernetes SelfSubjectReview API failed with status code", status_code=response.status_code
+                    )
                     raise TokenValidationError(f"Token validation failed: {response.status_code}")
 
                 review_response = response.json()
@@ -491,7 +493,7 @@ class KubernetesAuthProvider(AuthProvider):
             logger.warning("Kubernetes SelfSubjectReview API request timed out")
             raise ValueError("Token validation timeout") from None
         except Exception as e:
-            logger.warning(f"Error during token validation: {str(e)}")
+            logger.warning("Error during token validation", error=str(e))
             raise ValueError(f"Token validation error: {str(e)}") from e
 
     async def close(self):
