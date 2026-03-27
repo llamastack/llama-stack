@@ -104,7 +104,7 @@ from llama_stack_api import (
 )
 from llama_stack_api.inference import ServiceTier
 
-from .types import ChatCompletionContext, ChatCompletionResult
+from .types import AssistantMessageWithReasoning, ChatCompletionContext, ChatCompletionResult
 from .utils import (
     convert_chat_choice_to_response_message,
     convert_mcp_tool_choice,
@@ -576,7 +576,7 @@ class StreamingResponseOrchestrator:
                     non_function_tool_calls,
                     approvals,
                     next_turn_messages,
-                ) = self._separate_tool_calls(current_response, messages)
+                ) = self._separate_tool_calls(current_response, messages, completion_result_data.reasoning_content)
                 # add any approval requests required
                 for tool_call in approvals:
                     async for evt in self._add_mcp_approval_request(
@@ -697,7 +697,9 @@ class StreamingResponseOrchestrator:
                 response=final_response, sequence_number=self.sequence_number
             )
 
-    def _separate_tool_calls(self, current_response, messages) -> tuple[list, list, list, list]:
+    def _separate_tool_calls(
+        self, current_response: OpenAIChatCompletionResponseMessage, messages, reasoning_content: str | None = None
+    ) -> tuple[list, list, list, list]:
         """Separate tool calls into function and non-function categories."""
         function_tool_calls = []
         non_function_tool_calls = []
@@ -705,13 +707,21 @@ class StreamingResponseOrchestrator:
         next_turn_messages = messages.copy()
 
         for choice in current_response.choices:
-            # Convert response message to input message format for multi-turn
-            message = OpenAIAssistantMessageParam(
-                content=choice.message.content,
-                tool_calls=choice.message.tool_calls,
-            )
-            if getattr(choice.message, "reasoning_content", None):
-                message.reasoning_content = choice.message.reasoning_content
+            # Convert response message to input message format for multi-turn.
+            # Use AssistantMessageWithReasoning if reasoning was present in the
+            # CC response. Providers will be check for this AssistantMessageWithReasoning
+            # message
+            if reasoning_content:
+                message = AssistantMessageWithReasoning(
+                    content=choice.message.content,
+                    tool_calls=choice.message.tool_calls,
+                    reasoning_content=reasoning_content,
+                )
+            else:
+                message = OpenAIAssistantMessageParam(
+                    content=choice.message.content,
+                    tool_calls=choice.message.tool_calls,
+                )
             next_turn_messages.append(message)
             logger.debug("Choice message content", content=choice.message.content)
             logger.debug("Choice message tool_calls", tool_calls=choice.message.tool_calls)
@@ -1285,8 +1295,6 @@ class StreamingResponseOrchestrator:
             content=result.content_text,
             tool_calls=tool_calls,
         )
-        if result.reasoning_content:
-            assistant_message.reasoning_content = result.reasoning_content
         return OpenAIChatCompletion(
             id=result.response_id,
             choices=[

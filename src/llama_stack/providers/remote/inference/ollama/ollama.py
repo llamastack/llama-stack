@@ -11,13 +11,13 @@ from collections.abc import AsyncIterator
 from ollama import AsyncClient as AsyncOllamaClient
 
 from llama_stack.log import get_logger
+from llama_stack.providers.inline.responses.builtin.responses.types import AssistantMessageWithReasoning
 from llama_stack.providers.remote.inference.ollama.config import OllamaImplConfig
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import (
     HealthResponse,
     HealthStatus,
     Model,
-    OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -108,7 +108,7 @@ class OllamaInferenceAdapter(OpenAIMixin):
 
         # Populate Ollama's expected reasoning field on assistant messages
         for msg in params.messages:
-            if isinstance(msg, OpenAIAssistantMessageParam) and msg.reasoning_content:
+            if isinstance(msg, AssistantMessageWithReasoning) and msg.reasoning_content:
                 msg.reasoning = msg.reasoning_content
                 msg.reasoning_content = None
 

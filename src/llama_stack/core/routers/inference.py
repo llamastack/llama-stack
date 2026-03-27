@@ -284,11 +284,11 @@ class InferenceRouter(Inference):
         # silently falling back — the user explicitly requested reasoning.
         try:
             return await provider.openai_chat_completions_with_reasoning(params)
-        except (NotImplementedError, AttributeError):
+        except (NotImplementedError, AttributeError) as err:
             raise ValueError(
                 f"Provider {provider.__class__.__name__} does not support reasoning in chat completions. "
                 "Either use a provider that supports reasoning (e.g. vLLM, Ollama) or remove the reasoning parameter."
-            )
+            ) from err
 
     async def openai_embeddings(
         self,

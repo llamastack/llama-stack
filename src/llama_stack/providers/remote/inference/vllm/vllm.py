@@ -10,6 +10,7 @@ import httpx
 from pydantic import ConfigDict
 
 from llama_stack.log import get_logger
+from llama_stack.providers.inline.responses.builtin.responses.types import AssistantMessageWithReasoning
 from llama_stack.providers.utils.inference.http_client import _build_network_client_kwargs
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import (
@@ -17,7 +18,6 @@ from llama_stack_api import (
     HealthStatus,
     Model,
     ModelType,
-    OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionContentPartImageParam,
@@ -139,7 +139,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
 
         # Populate vLLM's expected reasoning field on assistant messages
         for msg in params.messages:
-            if isinstance(msg, OpenAIAssistantMessageParam) and msg.reasoning_content:
+            if isinstance(msg, AssistantMessageWithReasoning) and msg.reasoning_content:
                 msg.reasoning = msg.reasoning_content
                 msg.reasoning_content = None
 

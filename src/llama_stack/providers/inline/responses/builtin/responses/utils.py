@@ -11,6 +11,7 @@ import re
 import uuid
 from collections.abc import Sequence
 
+from llama_stack.providers.inline.responses.builtin.responses.types import AssistantMessageWithReasoning
 from llama_stack_api import (
     Files,
     OpenAIAssistantMessageParam,
@@ -319,9 +320,10 @@ async def convert_response_input_to_chat_messages(
                     ),
                 )
                 reasoning = _get_preceding_reasoning(input, i)
-                msg = OpenAIAssistantMessageParam(tool_calls=[tool_call])
                 if reasoning:
-                    msg.reasoning_content = reasoning
+                    msg = AssistantMessageWithReasoning(tool_calls=[tool_call], reasoning_content=reasoning)
+                else:
+                    msg = OpenAIAssistantMessageParam(tool_calls=[tool_call])
                 messages.append(msg)
                 if input_item.call_id in tool_call_results:
                     messages.extend(tool_call_results[input_item.call_id])
@@ -336,9 +338,10 @@ async def convert_response_input_to_chat_messages(
                     ),
                 )
                 reasoning = _get_preceding_reasoning(input, i)
-                msg = OpenAIAssistantMessageParam(tool_calls=[tool_call])
                 if reasoning:
-                    msg.reasoning_content = reasoning
+                    msg = AssistantMessageWithReasoning(tool_calls=[tool_call], reasoning_content=reasoning)
+                else:
+                    msg = OpenAIAssistantMessageParam(tool_calls=[tool_call])
                 messages.append(msg)
                 # Output can be None, use empty string as fallback
                 output_content = input_item.output if input_item.output is not None else ""
@@ -383,11 +386,11 @@ async def convert_response_input_to_chat_messages(
                         if last_user_content == content:
                             continue  # Skip duplicate user message
                 # Attach preceding reasoning to assistant messages
-                kwargs: dict = {"content": content}
                 if input_item.role == "assistant":
                     reasoning = _get_preceding_reasoning(input, i)
                     if reasoning:
-                        kwargs["reasoning_content"] = reasoning
+                        messages.append(AssistantMessageWithReasoning(content=content, reasoning_content=reasoning))
+                        continue
                 # Dynamic message type call - different message types have different content expectations
                 messages.append(message_type(content=content))  # type: ignore[call-arg,arg-type]
             else:
