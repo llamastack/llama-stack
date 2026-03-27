@@ -17,6 +17,7 @@ from llama_stack_api.openai_responses import (
 )
 
 from .models import (
+    CancelResponseRequest,
     CompactResponseRequest,
     CreateResponseRequest,
     DeleteResponseRequest,
@@ -59,3 +60,8 @@ class Responses(Protocol):
         self,
         request: CompactResponseRequest,
     ) -> OpenAICompactedResponse: ...
+
+    async def cancel_openai_response(
+        self,
+        request: CancelResponseRequest,
+    ) -> OpenAIResponseObject: ...

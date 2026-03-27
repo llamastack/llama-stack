@@ -1,11 +1,7 @@
 ---
 slug: introducing-llama-stack
 title: Introducing Llama Stack - The Open-Source Platform for Building AI Applications
-authors:
-  - name: Llama Stack Team
-    title: Core Team
-    url: https://github.com/llamastack
-    image_url: https://llamastack.github.io/img/llama-stack-logo.png
+authors: [llama-stack-team]
 tags: [announcement, introduction, getting-started]
 date: 2026-01-22
 ---

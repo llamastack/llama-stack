@@ -14,6 +14,7 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
 from llama_stack.telemetry.constants import RESPONSES_PARAMETER_USAGE_TOTAL
 from llama_stack_api import (
+    CancelResponseRequest,
     CompactResponseRequest,
     Connectors,
     Conversations,
@@ -214,3 +215,10 @@ class BuiltinResponsesImpl(Responses):
     ) -> OpenAIDeleteResponseObject:
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
         return await self.openai_responses_impl.delete_openai_response(request.response_id)
+
+    async def cancel_openai_response(
+        self,
+        request: CancelResponseRequest,
+    ) -> OpenAIResponseObject:
+        assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
+        return await self.openai_responses_impl.cancel_openai_response(request.response_id)

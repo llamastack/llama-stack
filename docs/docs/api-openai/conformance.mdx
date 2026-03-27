@@ -18,20 +18,20 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 87.6% |
-| **Endpoints Implemented** | 29/146 |
+| **Overall Conformance Score** | 87.8% |
+| **Endpoints Implemented** | 28/146 |
 | **Total Properties Checked** | 3441 |
-| **Schema/Type Issues** | 295 |
-| **Missing Properties** | 132 |
-| **Total Issues to Fix** | 427 |
+| **Schema/Type Issues** | 288 |
+| **Missing Properties** | 131 |
+| **Total Issues to Fix** | 419 |
 
 ## Integration Test Coverage
 
-**Overall Test Coverage Score: 43.2%**
+**Overall Test Coverage Score: 44.1%**
 
 | Category | Covered | Total | Score |
 |----------|---------|-------|-------|
-| CRUD Operations | 4 | 6 | 66.7% |
+| CRUD Operations | 5 | 6 | 83.3% |
 | Conversations | 5 | 9 | 55.6% |
 | Request Parameters | 21 | 25 | 84.0% |
 | Streaming Events | 16 | 53 | 30.2% |
@@ -51,7 +51,7 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Embeddings | 64.3% | 14 | 5 | 0 |
 | Files | 66.7% | 42 | 8 | 6 |
 | Models | 66.7% | 15 | 0 | 5 |
-| Responses | 83.1% | 225 | 36 | 2 |
+| Responses | 86.7% | 225 | 29 | 1 |
 | Chat | 87.1% | 403 | 33 | 19 |
 | Conversations | 98.8% | 2165 | 22 | 4 |
 
@@ -175,6 +175,7 @@ The following OpenAI API endpoints are not yet implemented in Llama Stack:
 
 ### /responses
 
+- `/responses/compact`
 - `/responses/input_tokens`
 
 ### /skills
@@ -963,7 +964,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Responses
 
-**Score:** 83.1% · **Issues:** 36 · **Missing:** 2
+**Score:** 86.7% · **Issues:** 29 · **Missing:** 1
 
 #### `/responses`
 
@@ -1010,32 +1011,6 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `responses.200.content.application/json.properties.top_p` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2 | Yes |
 | `responses.200.content.application/json.properties.truncation` | Union variants added: 2 | Yes |
 | `responses.200.content.application/json.properties.usage` | Union variants added: 1; Union variants removed: 1 | Yes |
-
-</details>
-
-#### `/responses/compact`
-
-**POST**
-
-<details>
-<summary>Missing Properties (1)</summary>
-
-- `requestBody.content.application/x-www-form-urlencoded`
-
-</details>
-
-<details>
-<summary>Schema Issues (7)</summary>
-
-| Property | Issues | Tested |
-|----------|--------|--------|
-| `requestBody.content.application/json.properties.input` | Union variants added: 2; Union variants removed: 1 | Yes |
-| `requestBody.content.application/json.properties.model` | Type added: ['string']; Union variants removed: 3 | Yes |
-| `responses.200.content.application/json.properties.object` | Default changed: response.compaction -> None | No |
-| `responses.200.content.application/json.properties.output.items` | Union variants added: 4 | Yes |
-| `responses.200.content.application/json.properties.usage` | Type removed: ['object'] | Yes |
-| `responses.200.content.application/json.properties.usage.properties.input_tokens_details` | Type removed: ['object'] | No |
-| `responses.200.content.application/json.properties.usage.properties.output_tokens_details` | Type removed: ['object'] | No |
 
 </details>
 
