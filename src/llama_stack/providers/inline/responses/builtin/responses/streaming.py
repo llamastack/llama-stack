@@ -540,7 +540,14 @@ class StreamingResponseOrchestrator:
                 # Use reasoning-aware method when reasoning is explicitly requested
                 # with a non-"none" effort level
                 if self.reasoning and self.reasoning.effort and self.reasoning.effort != "none":
-                    completion_result = await self.inference_api.openai_chat_completions_with_reasoning(params)
+                    try:
+                        completion_result = await self.inference_api.openai_chat_completions_with_reasoning(params)
+                    except (NotImplementedError, AttributeError):
+                        logger.critical(
+                            "Provider either does not support or has implemented  reasoning "
+                            "in chat completions. Falling back to using regular chat completion."
+                        )
+                        completion_result = await self.inference_api.openai_chat_completion(params)
                 else:
                     completion_result = await self.inference_api.openai_chat_completion(params)
 

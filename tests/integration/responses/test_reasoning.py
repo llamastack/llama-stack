@@ -132,3 +132,26 @@ def test_reasoning_multi_turn_passthrough(client_with_models, text_model_id):
     message_items = [item for item in resp2.output if item.type == "message"]
     assert len(message_items) > 0, "Expected a message in turn 2 output"
     # assert len(message_items[0].content[0].text) > 0, "Expected non-empty response text in turn 2"
+
+
+def test_reasoning_unsupported_provider_completes_without_error(openai_client, client_with_models, text_model_id):
+    """When reasoning is requested but provider doesn't support it,
+    the response should complete without crashing. The server logs a
+    critical warning and falls back to regular CC — no ReasoningItem
+    in output, but no error either.
+    """
+    provider_type = provider_from_model(client_with_models, text_model_id).provider_type
+    if provider_type not in ("remote::openai",):  # add other un-supported providers here
+        pytest.skip(f"{provider_type} supports reasoning — this test is for unsupported providers only")
+
+    response = openai_client.responses.create(
+        model=text_model_id,
+        input="What is 2 + 2?",
+        reasoning={"effort": "medium"},
+        stream=False,
+    )
+
+    assert response.status == "completed"
+    # No ReasoningItem expected — provider fell back to regular CC
+    reasoning_items = [item for item in response.output if item.type == "reasoning"]
+    assert len(reasoning_items) == 0, "Unsupported provider should not return reasoning items"

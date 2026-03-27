@@ -279,16 +279,9 @@ class InferenceRouter(Inference):
         """
         provider, provider_resource_id = await self._get_model_provider(params.model, ModelType.llm)
         params.model = provider_resource_id
-        # Not all providers implement openai_chat_completions_with_reasoning.
-        # If the provider doesn't support it, raise a clear error rather than
-        # silently falling back — the user explicitly requested reasoning.
-        try:
-            return await provider.openai_chat_completions_with_reasoning(params)
-        except (NotImplementedError, AttributeError) as err:
-            raise ValueError(
-                f"Provider {provider.__class__.__name__} does not support reasoning in chat completions. "
-                "Either use a provider that supports reasoning (e.g. vLLM, Ollama) or remove the reasoning parameter."
-            ) from err
+        # Let NotImplementedError/AttributeError propagate — the Responses
+        # layer catches them and falls back to regular CC with a warning.
+        return await provider.openai_chat_completions_with_reasoning(params)
 
     async def openai_embeddings(
         self,

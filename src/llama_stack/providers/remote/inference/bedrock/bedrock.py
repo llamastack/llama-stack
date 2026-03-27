@@ -9,6 +9,7 @@ from collections.abc import AsyncIterator
 from openai import AuthenticationError
 
 from llama_stack.log import get_logger
+from llama_stack.providers.inline.responses.builtin.responses.types import AssistantMessageWithReasoning
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import (
     OpenAIChatCompletion,
@@ -59,6 +60,57 @@ class BedrockInferenceAdapter(OpenAIMixin):
             "Only /v1/chat/completions is supported. "
             "See https://docs.aws.amazon.com/bedrock/latest/userguide/inference-chat-completions.html"
         )
+
+    def _prepare_reasoning_params(self, params: OpenAIChatCompletionRequestWithExtraBody) -> None:
+        """Adapt CC request params to match what Bedrock expects for reasoning.
+
+        No-op for now. Override if Bedrock needs specific param adjustments.
+        """
+        pass
+
+    async def openai_chat_completions_with_reasoning(
+        self,
+        params: OpenAIChatCompletionRequestWithExtraBody,
+    ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
+        """Chat completion with reasoning support for Bedrock.
+
+        Maps reasoning fields between LlamaStack's internal format
+        (reasoning_content) and whatever field name Bedrock's CC endpoint
+        expects/returns. Update the mapping below if Bedrock changes
+        its reasoning field name.
+        """
+        params = params.model_copy()
+
+        # Adapt CC request params to Bedrock's reasoning format
+        self._prepare_reasoning_params(params)
+
+        # Populate Bedrock's expected reasoning field on assistant messages
+        for msg in params.messages:
+            if isinstance(msg, AssistantMessageWithReasoning) and msg.reasoning_content:
+                msg.reasoning = msg.reasoning_content
+                msg.reasoning_content = None
+
+        result = await self.openai_chat_completion(params)
+
+        # After receiving chunks: extract reasoning from whichever field
+        # Bedrock used, and set it as reasoning_content for the Responses layer
+        if params.stream:
+
+            async def _map_reasoning():
+                async for chunk in result:
+                    for choice in chunk.choices or []:
+                        reasoning = getattr(choice.delta, "reasoning", None) or getattr(
+                            choice.delta, "reasoning_content", None
+                        )
+                        if reasoning:
+                            choice.delta.reasoning_content = reasoning
+                    yield chunk
+
+            return _map_reasoning()
+        else:
+            # Non-streaming reasoning is not tested — the Responses
+            # layer always uses stream=True (streaming.py:518).
+            raise NotImplementedError("Non-streaming reasoning is not yet supported for Bedrock")
 
     async def openai_chat_completion(
         self,
