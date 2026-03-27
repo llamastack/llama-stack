@@ -53,6 +53,7 @@ from .admin import (
 # Import all public API symbols
 from .responses import (
     Responses,
+    CancelResponseRequest,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -590,6 +591,7 @@ __all__ = [
     "Responses",
     "AggregationFunctionType",
     # Responses Request Models
+    "CancelResponseRequest",
     "CreateResponseRequest",
     "DeleteResponseRequest",
     "ListResponseInputItemsRequest",
