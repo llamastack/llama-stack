@@ -321,12 +321,12 @@ exclude = [
     "^src/llama_stack/telemetry/__init__\\.py$",
     #
     # ============================================================================
-    # Section 2: Files that need strict typing issues fixed (138 files)
+    # Section 2: Files that need strict typing issues fixed (137 files)
     # ============================================================================
     # These files have some type hints but fail strict type checking due to
     # incomplete annotations, Any usage, or other strict mode violations.
     #
-    # llama_stack_api files (8 files)
+    # llama_stack_api files (7 files)
     "^src/llama_stack_api/common/content_types\\.py$",
     "^src/llama_stack_api/datatypes\\.py$",
     "^src/llama_stack_api/inference/fastapi_routes\\.py$",
@@ -334,7 +334,6 @@ exclude = [
     "^src/llama_stack_api/prompts/models\\.py$",
     "^src/llama_stack_api/responses/fastapi_routes\\.py$",
     "^src/llama_stack_api/router_utils\\.py$",
-    "^src/llama_stack_api/schema_utils\\.py$",
     # Core files (28 files)
     "^src/llama_stack/core/access_control/conditions\\.py$",
     "^src/llama_stack/core/access_control/datatypes\\.py$",
