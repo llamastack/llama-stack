@@ -38,6 +38,8 @@ class NVIDIAEvalImpl(
     BenchmarksProtocolPrivate,
     ModelRegistryHelper,
 ):
+    """Evaluation provider implementation using NVIDIA evaluation services."""
+
     def __init__(
         self,
         config: NVIDIAEvalConfig,

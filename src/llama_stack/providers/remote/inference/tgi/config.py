@@ -13,6 +13,8 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class TGIImplConfig(RemoteInferenceProviderConfig):
+    """Configuration for the Text Generation Inference (TGI) provider."""
+
     auth_credential: SecretStr | None = Field(default=None, exclude=True)
 
     base_url: HttpUrl | None = Field(
@@ -33,6 +35,8 @@ class TGIImplConfig(RemoteInferenceProviderConfig):
 
 @json_schema_type
 class InferenceEndpointImplConfig(BaseModel):
+    """Configuration for HuggingFace Inference Endpoints."""
+
     endpoint_name: str = Field(
         description="The name of the Hugging Face Inference Endpoint in the format of '{namespace}/{endpoint_name}' (e.g. 'my-cool-org/meta-llama-3-1-8b-instruct-rce'). Namespace is optional and will default to the user account if not provided.",
     )
@@ -56,6 +60,8 @@ class InferenceEndpointImplConfig(BaseModel):
 
 @json_schema_type
 class InferenceAPIImplConfig(BaseModel):
+    """Configuration for HuggingFace Serverless Inference API."""
+
     huggingface_repo: str = Field(
         description="The model ID of the model on the Hugging Face Hub (e.g. 'meta-llama/Meta-Llama-3.1-70B-Instruct')",
     )

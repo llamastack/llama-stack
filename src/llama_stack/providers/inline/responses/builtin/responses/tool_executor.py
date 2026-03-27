@@ -49,6 +49,8 @@ tracer = trace.get_tracer(__name__)
 
 
 class ToolExecutor:
+    """Executes tool calls including file search, web search, MCP, and function tools."""
+
     def __init__(
         self,
         tool_groups_api: ToolGroups,

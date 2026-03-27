@@ -86,6 +86,8 @@ class AsyncBytesIO:
 
 
 class BatchRequest(BaseModel):
+    """Represents a single request line within a batch processing file."""
+
     line_num: int
     custom_id: str
     method: str

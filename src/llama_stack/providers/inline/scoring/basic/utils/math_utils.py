@@ -70,6 +70,15 @@ REMOVED_EXPRESSIONS = [
 
 
 def try_evaluate_frac(expression: str, fmt: str = "0.2e") -> str:
+    """Attempt to evaluate LaTeX frac expressions in a string.
+
+    Args:
+        expression: string potentially containing frac patterns
+        fmt: format specifier for evaluated fractions
+
+    Returns:
+        String with evaluated fractions replaced by their numeric values
+    """
     if isinstance(expression, float):
         return expression
     new_expression = f"{expression}"
@@ -88,6 +97,15 @@ def try_evaluate_frac(expression: str, fmt: str = "0.2e") -> str:
 
 
 def try_evaluate_latex(expression: str, fmt: str = ".2e") -> str:
+    """Attempt to evaluate a LaTeX math expression using sympy.
+
+    Args:
+        expression: LaTeX math expression string
+        fmt: format specifier for the result
+
+    Returns:
+        Formatted numeric string or the original expression if evaluation fails
+    """
     try:
         with time_limit(seconds=5):
             from sympy.parsing.latex import parse_latex
@@ -99,12 +117,29 @@ def try_evaluate_latex(expression: str, fmt: str = ".2e") -> str:
 
 
 def first_answer(text: str, markers: Sequence[str] = ("Q:", "A:")) -> str:
+    """Extract the first answer segment before any marker strings.
+
+    Args:
+        text: input text potentially containing markers
+        markers: sequence of marker strings to split on
+
+    Returns:
+        Text before the first occurrence of any marker
+    """
     for marker in markers:
         text = text.split(marker)[0]
     return text
 
 
 def extract_result_from_boxed(answer: str) -> str:
+    """Extract the value from a LaTeX boxed expression.
+
+    Args:
+        answer: string containing a boxed expression
+
+    Returns:
+        The content inside the boxed command, or empty string if not found
+    """
     box_start = "\\boxed"
     # format is `\\boxed <value>$` or `\\boxed{<value>}`, with potential white spaces framing `<value>`
     start = answer.rfind(box_start)

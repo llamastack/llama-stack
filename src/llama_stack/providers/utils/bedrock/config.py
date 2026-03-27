@@ -12,6 +12,8 @@ from llama_stack.providers.utils.inference.model_registry import RemoteInference
 
 
 class BedrockBaseConfig(RemoteInferenceProviderConfig):
+    """Base configuration for AWS Bedrock providers with credential and connection settings."""
+
     auth_credential: None = Field(default=None, exclude=True)
     aws_access_key_id: SecretStr | None = Field(
         default_factory=lambda: SecretStr(val) if (val := os.getenv("AWS_ACCESS_KEY_ID")) else None,

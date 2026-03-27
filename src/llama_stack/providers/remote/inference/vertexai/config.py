@@ -13,6 +13,8 @@ from llama_stack_api import json_schema_type
 
 
 class VertexAIProviderDataValidator(BaseModel):
+    """Validates provider-specific request data for Google Vertex AI inference."""
+
     vertex_project: str | None = Field(
         default=None,
         description="Google Cloud project ID for Vertex AI",

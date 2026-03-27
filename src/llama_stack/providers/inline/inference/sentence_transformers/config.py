@@ -10,6 +10,8 @@ from pydantic import BaseModel, Field
 
 
 class SentenceTransformersInferenceConfig(BaseModel):
+    """Configuration for the sentence-transformers inference provider."""
+
     trust_remote_code: bool = Field(
         default=False,
         description="Whether to trust and execute remote code from model repositories. "

@@ -19,6 +19,8 @@ from .config import GeminiConfig
 
 
 class GeminiInferenceAdapter(OpenAIMixin):
+    """Inference adapter for Google Gemini models."""
+
     config: GeminiConfig
 
     provider_data_api_key_field: str = "gemini_api_key"

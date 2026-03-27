@@ -14,6 +14,8 @@ from llama_stack_api import json_schema_type
 
 
 class WatsonXProviderDataValidator(BaseModel):
+    """Validates provider-specific request data for IBM WatsonX inference."""
+
     watsonx_project_id: str | None = Field(
         default=None,
         description="IBM WatsonX project ID",
@@ -23,6 +25,8 @@ class WatsonXProviderDataValidator(BaseModel):
 
 @json_schema_type
 class WatsonXConfig(RemoteInferenceProviderConfig):
+    """Configuration for the IBM WatsonX inference provider."""
+
     base_url: HttpUrl | None = Field(
         default_factory=lambda: os.getenv("WATSONX_BASE_URL", "https://us-south.ml.cloud.ibm.com"),
         description="A base url for accessing the watsonx.ai",

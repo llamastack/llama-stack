@@ -18,6 +18,8 @@ logger = get_logger(name=__name__, category="providers::utils")
 
 
 class SqliteKVStoreImpl(KVStore):
+    """SQLite-backed key-value store implementation."""
+
     def __init__(self, config: SqliteKVStoreConfig):
         self.db_path = config.db_path
         self.table_name = "kvstore"

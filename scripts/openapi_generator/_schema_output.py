@@ -6,14 +6,17 @@
 
 """
 Output-stage schema transforms: Stainless deduplication, YAML serialization,
-and legacy sorting for diff stability.
+legacy sorting for diff stability, duplicate union extraction, and validation.
 """
 
+import copy
 from collections import OrderedDict
 from pathlib import Path
 from typing import Any
 
 import yaml
+from openapi_spec_validator import validate_spec
+from openapi_spec_validator.exceptions import OpenAPISpecValidatorError
 
 from ._legacy_order import (
     LEGACY_OPERATION_KEYS,
@@ -215,3 +218,160 @@ def _apply_legacy_sorting(openapi_schema: dict[str, Any]) -> dict[str, Any]:
         openapi_schema["security"] = LEGACY_SECURITY
 
     return openapi_schema
+
+
+def _extract_duplicate_union_types(openapi_schema: dict[str, Any]) -> dict[str, Any]:
+    """
+    Extract duplicate union types to shared schema references.
+
+    Stainless generates type names from union types based on their context, which can cause
+    duplicate names when the same union appears in different places. This function extracts
+    these duplicate unions to shared schema definitions and replaces inline definitions with
+    references to them.
+
+    According to Stainless docs, when duplicate types are detected, they should be extracted
+    to the same ref and declared as a model. This ensures Stainless generates consistent
+    type names regardless of where the union is referenced.
+
+    Fixes: https://www.stainless.com/docs/reference/diagnostics#Python/DuplicateDeclaration
+    """
+    if "components" not in openapi_schema or "schemas" not in openapi_schema["components"]:
+        return openapi_schema
+
+    schemas = openapi_schema["components"]["schemas"]
+
+    # Extract the Output union type (used in OpenAIResponseObjectWithInput-Output and ListOpenAIResponseInputItem)
+    output_union_schema_name = "OpenAIResponseMessageOutputUnion"
+    output_union_title = None
+
+    # Get the union type from OpenAIResponseObjectWithInput-Output.input.items.anyOf
+    if "OpenAIResponseObjectWithInput-Output" in schemas:
+        schema = schemas["OpenAIResponseObjectWithInput-Output"]
+        if isinstance(schema, dict) and "properties" in schema:
+            input_prop = schema["properties"].get("input")
+            if isinstance(input_prop, dict) and "items" in input_prop:
+                items = input_prop["items"]
+                if isinstance(items, dict) and "anyOf" in items:
+                    # Extract the union schema with deep copy
+                    output_union_schema = copy.deepcopy(items["anyOf"])
+                    output_union_title = items.get("title", "OpenAIResponseMessageOutputUnion")
+
+                    # Collect all refs from the oneOf to detect duplicates
+                    refs_in_oneof = set()
+                    for item in output_union_schema:
+                        if isinstance(item, dict) and "oneOf" in item:
+                            oneof = item["oneOf"]
+                            if isinstance(oneof, list):
+                                for variant in oneof:
+                                    if isinstance(variant, dict) and "$ref" in variant:
+                                        refs_in_oneof.add(variant["$ref"])
+                            item["x-stainless-naming"] = "OpenAIResponseMessageOutputOneOf"
+
+                    # Remove duplicate refs from anyOf that are already in oneOf
+                    deduplicated_schema = []
+                    for item in output_union_schema:
+                        if isinstance(item, dict) and "$ref" in item:
+                            if item["$ref"] not in refs_in_oneof:
+                                deduplicated_schema.append(item)
+                        else:
+                            deduplicated_schema.append(item)
+                    output_union_schema = deduplicated_schema
+
+                    # Create the shared schema with x-stainless-naming to ensure consistent naming
+                    if output_union_schema_name not in schemas:
+                        schemas[output_union_schema_name] = {
+                            "anyOf": output_union_schema,
+                            "title": output_union_title,
+                            "x-stainless-naming": output_union_schema_name,
+                        }
+                    # Replace with reference
+                    input_prop["items"] = {"$ref": f"#/components/schemas/{output_union_schema_name}"}
+
+    # Replace the same union in ListOpenAIResponseInputItem.data.items.anyOf
+    if "ListOpenAIResponseInputItem" in schemas and output_union_schema_name in schemas:
+        schema = schemas["ListOpenAIResponseInputItem"]
+        if isinstance(schema, dict) and "properties" in schema:
+            data_prop = schema["properties"].get("data")
+            if isinstance(data_prop, dict) and "items" in data_prop:
+                items = data_prop["items"]
+                if isinstance(items, dict) and "anyOf" in items:
+                    # Replace with reference
+                    data_prop["items"] = {"$ref": f"#/components/schemas/{output_union_schema_name}"}
+
+    # Extract the Input union type (used in _responses_Request.input.anyOf[1].items.anyOf)
+    input_union_schema_name = "OpenAIResponseMessageInputUnion"
+
+    if "_responses_Request" in schemas:
+        schema = schemas["_responses_Request"]
+        if isinstance(schema, dict) and "properties" in schema:
+            input_prop = schema["properties"].get("input")
+            if isinstance(input_prop, dict) and "anyOf" in input_prop:
+                any_of = input_prop["anyOf"]
+                if isinstance(any_of, list) and len(any_of) > 1:
+                    # Check the second item (index 1) which should be the array type
+                    second_item = any_of[1]
+                    if isinstance(second_item, dict) and "items" in second_item:
+                        items = second_item["items"]
+                        if isinstance(items, dict) and "anyOf" in items:
+                            # Extract the union schema with deep copy
+                            input_union_schema = copy.deepcopy(items["anyOf"])
+                            input_union_title = items.get("title", "OpenAIResponseMessageInputUnion")
+
+                            # Collect all refs from the oneOf to detect duplicates
+                            refs_in_oneof = set()
+                            for item in input_union_schema:
+                                if isinstance(item, dict) and "oneOf" in item:
+                                    oneof = item["oneOf"]
+                                    if isinstance(oneof, list):
+                                        for variant in oneof:
+                                            if isinstance(variant, dict) and "$ref" in variant:
+                                                refs_in_oneof.add(variant["$ref"])
+                                    item["x-stainless-naming"] = "OpenAIResponseMessageInputOneOf"
+
+                            # Remove duplicate refs from anyOf that are already in oneOf
+                            deduplicated_schema = []
+                            for item in input_union_schema:
+                                if isinstance(item, dict) and "$ref" in item:
+                                    if item["$ref"] not in refs_in_oneof:
+                                        deduplicated_schema.append(item)
+                                else:
+                                    deduplicated_schema.append(item)
+                            input_union_schema = deduplicated_schema
+
+                            # Create the shared schema with x-stainless-naming to ensure consistent naming
+                            if input_union_schema_name not in schemas:
+                                schemas[input_union_schema_name] = {
+                                    "anyOf": input_union_schema,
+                                    "title": input_union_title,
+                                    "x-stainless-naming": input_union_schema_name,
+                                }
+                            # Replace with reference
+                            second_item["items"] = {"$ref": f"#/components/schemas/{input_union_schema_name}"}
+
+    return openapi_schema
+
+
+def validate_openapi_schema(schema: dict[str, Any], schema_name: str = "OpenAPI schema") -> bool:
+    """
+    Validate an OpenAPI schema using openapi-spec-validator.
+
+    Args:
+        schema: The OpenAPI schema dictionary to validate
+        schema_name: Name of the schema for error reporting
+
+    Returns:
+        True if valid, False otherwise
+
+    Raises:
+        OpenAPIValidationError: If validation fails
+    """
+    try:
+        validate_spec(schema)
+        print(f"{schema_name} is valid")
+        return True
+    except OpenAPISpecValidatorError as e:
+        print(f"{schema_name} validation failed: {e}")
+        return False
+    except Exception as e:
+        print(f"{schema_name} validation error: {e}")
+        return False

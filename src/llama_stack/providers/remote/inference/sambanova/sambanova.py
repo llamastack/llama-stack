@@ -11,6 +11,8 @@ from .config import SambaNovaImplConfig
 
 
 class SambaNovaInferenceAdapter(OpenAIMixin):
+    """Inference adapter for SambaNova AI platform."""
+
     config: SambaNovaImplConfig
 
     provider_data_api_key_field: str = "sambanova_api_key"

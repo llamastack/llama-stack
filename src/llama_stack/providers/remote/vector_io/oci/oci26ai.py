@@ -72,6 +72,8 @@ def normalize_embedding(embedding: np.typing.NDArray) -> np.typing.NDArray:
 
 
 class OCI26aiIndex(EmbeddingIndex):
+    """Embedding index backed by Oracle 26ai vector database."""
+
     def __init__(
         self,
         connection,
@@ -448,6 +450,8 @@ class OCI26aiIndex(EmbeddingIndex):
 
 
 class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+    """Vector I/O adapter for Oracle 26ai database."""
+
     def __init__(
         self,
         config: OCI26aiVectorIOConfig,
