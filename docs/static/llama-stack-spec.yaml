@@ -5827,9 +5827,7 @@ components:
         title: OpenAIResponseMCPApprovalResponse
       - $ref: '#/components/schemas/OpenAIResponseCompaction'
         title: OpenAIResponseCompaction
-      - $ref: '#/components/schemas/OpenAIResponseMessage'
-        title: OpenAIResponseMessage
-      title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
+      title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseCompaction
     OpenAIResponseInputToolFileSearch:
       properties:
         type:
@@ -6167,9 +6165,7 @@ components:
               title: OpenAIResponseMCPApprovalResponse
             - $ref: '#/components/schemas/OpenAIResponseCompaction'
               title: OpenAIResponseCompaction
-            - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-              title: OpenAIResponseMessage-Output
-            title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
+            title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseCompaction
           type: array
           title: Input
       required:
@@ -7824,9 +7820,7 @@ components:
               title: OpenAIResponseMCPApprovalResponse
             - $ref: '#/components/schemas/OpenAIResponseCompaction'
               title: OpenAIResponseCompaction
-            - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-              title: OpenAIResponseMessage-Output
-            title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
+            title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseCompaction
           type: array
           title: Data
         object:
@@ -10310,9 +10304,7 @@ components:
                 title: OpenAIResponseMCPApprovalResponse
               - $ref: '#/components/schemas/OpenAIResponseCompaction'
                 title: OpenAIResponseCompaction
-              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-                title: OpenAIResponseMessage-Input
-              title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
+              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseCompaction
             type: array
             title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
           - type: 'null'
@@ -10452,9 +10444,7 @@ components:
                 title: OpenAIResponseMCPApprovalResponse
               - $ref: '#/components/schemas/OpenAIResponseCompaction'
                 title: OpenAIResponseCompaction
-              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-                title: OpenAIResponseMessage-Input
-              title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
+              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseCompaction
             type: array
             title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
           title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
@@ -11214,9 +11204,7 @@ components:
               title: OpenAIResponseMCPApprovalResponse
             - $ref: '#/components/schemas/OpenAIResponseCompaction'
               title: OpenAIResponseCompaction
-            - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-              title: OpenAIResponseMessage-Output
-            title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
+            title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseCompaction
           type: array
           title: Output
         usage:

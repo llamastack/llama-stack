@@ -1503,11 +1503,12 @@ class OpenAIResponseCompaction(BaseModel):
 
 OpenAIResponseInput = Annotated[
     # Responses API allows output messages to be passed in as input
+    # Note: OpenAIResponseMessage is already included via OpenAIResponseOutput (discriminated by type="message"),
+    # so it must not be repeated here — duplicating it causes Stainless SDK name clashes in generated code.
     OpenAIResponseOutput
     | OpenAIResponseInputFunctionToolCallOutput
     | OpenAIResponseMCPApprovalResponse
-    | OpenAIResponseCompaction
-    | OpenAIResponseMessage,
+    | OpenAIResponseCompaction,
     Field(union_mode="left_to_right"),
 ]
 register_schema(OpenAIResponseInput, name="OpenAIResponseInput")
