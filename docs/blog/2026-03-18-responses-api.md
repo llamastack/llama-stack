@@ -1,7 +1,10 @@
 ---
 slug: responses-api
 title: "Your Agent, Your Rules: Building Powerful Agents with the Responses API in Llama Stack"
-authors: [jwm4]
+authors:
+  - name: Bill Murdock
+    url: https://github.com/jwm4
+    image_url: https://github.com/jwm4.png
 tags: [responses-api, agents, rag, mcp, open-responses]
 date: 2026-03-18
 ---
@@ -10,7 +13,7 @@ The [Responses API](https://developers.openai.com/blog/responses-api) is rapidly
 
 This post covers why the Responses API matters, what Llama Stack's implementation enables, and how it connects to the broader move toward open agent standards like Open Responses.
 
-{/* truncate */}
+{/*truncate*/}
 
 ## Why the Responses API?
 

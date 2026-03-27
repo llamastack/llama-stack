@@ -16,11 +16,19 @@ from llama_stack.providers.remote.safety.nvidia import NVIDIASafetyConfig
 
 
 def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
+    """Build the NVIDIA NIM distribution template.
+
+    Args:
+        name: the distribution name.
+
+    Returns:
+        A DistributionTemplate configured for NVIDIA NIM inference, eval, and safety.
+    """
     providers = {
         "inference": [BuildProvider(provider_type="remote::nvidia")],
         "vector_io": [BuildProvider(provider_type="inline::faiss")],
         "safety": [BuildProvider(provider_type="remote::nvidia")],
-        "agents": [BuildProvider(provider_type="inline::builtin")],
+        "responses": [BuildProvider(provider_type="inline::builtin")],
         "eval": [BuildProvider(provider_type="remote::nvidia")],
         "datasetio": [
             BuildProvider(provider_type="inline::localfs"),

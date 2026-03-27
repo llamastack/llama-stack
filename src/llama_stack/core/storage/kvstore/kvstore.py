@@ -40,6 +40,8 @@ def kvstore_dependencies():
 
 
 class InmemoryKVStoreImpl(KVStore):
+    """In-memory key-value store implementation for testing and ephemeral usage."""
+
     def __init__(self):
         self._store: dict[str, str] = {}
 
@@ -60,7 +62,7 @@ class InmemoryKVStoreImpl(KVStore):
         return [key for key in self._store.keys() if key >= start_key and key < end_key]
 
     async def delete(self, key: str) -> None:
-        del self._store[key]
+        self._store.pop(key, None)
 
     async def shutdown(self) -> None:
         self._store.clear()
@@ -86,6 +88,17 @@ def register_kvstore_backends(backends: dict[str, StorageBackendConfig]) -> None
 
 
 async def kvstore_impl(reference: KVStoreReference) -> KVStore:
+    """Get or create a KVStore instance for the given store reference.
+
+    Args:
+        reference: A reference specifying the backend name and namespace.
+
+    Returns:
+        An initialized KVStore instance for the referenced backend.
+
+    Raises:
+        ValueError: If the backend name is unknown or the backend type is unsupported.
+    """
     backend_name = reference.backend
     cache_key = (backend_name, reference.namespace)
 

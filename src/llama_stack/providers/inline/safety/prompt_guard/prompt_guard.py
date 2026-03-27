@@ -33,6 +33,8 @@ PROMPT_GUARD_MODEL = "Prompt-Guard-86M"
 
 
 class PromptGuardSafetyImpl(ShieldToModerationMixin, Safety, ShieldsProtocolPrivate):
+    """Safety provider using the Prompt Guard model to detect prompt injection and jailbreak attempts."""
+
     shield_store: ShieldStore
 
     def __init__(self, config: PromptGuardConfig, _deps) -> None:
@@ -67,6 +69,8 @@ class PromptGuardSafetyImpl(ShieldToModerationMixin, Safety, ShieldsProtocolPriv
 
 
 class PromptGuardShield:
+    """Runs the Prompt Guard classifier model to score messages for injection or jailbreak risk."""
+
     def __init__(
         self,
         model_dir: str,

@@ -62,12 +62,12 @@ def test_list_deps_formatting_quotes_only_for_uv():
 def test_stack_list_deps_expands_provider_dependencies():
     """Test that listing deps for a provider also includes deps from its API dependencies.
 
-    For example, agents=inline::meta-reference depends on the inference API.
-    When we list deps for agents, we should also get dependencies from an inference provider.
+    For example, responses=inline::builtin depends on the inference API.
+    When we list deps for responses, we should also get dependencies from an inference provider.
     This test picks a known dependency (inference), lists its deps, then verifies those
-    deps appear in the agents output (proving expansion happened).
+    deps appear in the responses output (proving expansion happened).
     """
-    # First, get dependencies for the inference provider (which agents depends on)
+    # First, get dependencies for the inference provider (which responses depends on)
     inference_args = argparse.Namespace(
         config=None,
         env_name="test-env",
@@ -79,31 +79,31 @@ def test_stack_list_deps_expands_provider_dependencies():
         run_stack_list_deps_command(inference_args)
         inference_output = mock_stdout.getvalue()
 
-    # Now get dependencies for agents, which should include inference deps
-    agents_args = argparse.Namespace(
+    # Now get dependencies for responses, which should include inference deps
+    responses_args = argparse.Namespace(
         config=None,
         env_name="test-env",
-        providers="agents=inline::builtin",
+        providers="responses=inline::builtin",
         format="deps-only",
     )
 
     with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
-        run_stack_list_deps_command(agents_args)
-        agents_output = mock_stdout.getvalue()
+        run_stack_list_deps_command(responses_args)
+        responses_output = mock_stdout.getvalue()
 
-    # Verify that dependencies were expanded: agents output should include
+    # Verify that dependencies were expanded: responses output should include
     # inference-specific dependencies. Extract package names from the inference output
-    # and verify at least some appear in the agents output.
+    # and verify at least some appear in the responses output.
     inference_lines = [line.strip() for line in inference_output.split("\n") if line.strip()]
-    agents_lines = [line.strip() for line in agents_output.split("\n") if line.strip()]
+    responses_lines = [line.strip() for line in responses_output.split("\n") if line.strip()]
 
     # The inference provider should have some dependencies
     assert len(inference_lines) > 0, "Inference provider should have dependencies"
 
-    # At least one inference dependency should appear in agents output
+    # At least one inference dependency should appear in responses output
     # (proving that dependency expansion happened)
-    common_deps = set(inference_lines) & set(agents_lines)
+    common_deps = set(inference_lines) & set(responses_lines)
     assert len(common_deps) > 0, (
-        "Agents dependencies should include at least some inference dependencies, "
+        "Responses dependencies should include at least some inference dependencies, "
         "proving that dependency expansion happened"
     )

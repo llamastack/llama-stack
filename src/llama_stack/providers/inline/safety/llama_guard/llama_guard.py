@@ -141,6 +141,8 @@ logger = get_logger(name=__name__, category="safety")
 
 
 class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
+    """Safety provider implementation using Llama Guard models for content moderation."""
+
     def __init__(self, config: LlamaGuardConfig, deps) -> None:
         self.config = config
         self.inference_api = deps[Api.inference]
@@ -228,6 +230,8 @@ class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
 
 
 class LlamaGuardShield:
+    """Runs Llama Guard inference to detect safety category violations in messages."""
+
     def __init__(
         self,
         model: str,

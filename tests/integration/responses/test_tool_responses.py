@@ -38,12 +38,12 @@ from .streaming_assertions import StreamingValidator
 
 @pytest.fixture(autouse=True)
 def _skip_tool_tests_for_watsonx(request):
-    """Skip all tool tests for WatsonX — tool calling via LiteLLM is unreliable."""
+    """Skip all tool tests for WatsonX — tool calling is unreliable."""
     # Get text_model_id from the test's fixturenames if available
     if "text_model_id" in request.fixturenames:
         text_model_id = request.getfixturevalue("text_model_id")
         if text_model_id and text_model_id.startswith("watsonx/"):
-            pytest.skip("WatsonX via LiteLLM does not reliably support tool calling")
+            pytest.skip("WatsonX does not reliably support tool calling")
 
 
 @pytest.mark.parametrize("case", web_search_test_cases)
@@ -254,7 +254,7 @@ def test_response_non_streaming_mcp_tool(responses_client, text_model_id, case, 
         )
         # Suppress expected auth error logs only for the failing auth attempt
         with caplog.at_level(
-            logging.CRITICAL, logger="llama_stack.providers.inline.agents.builtin.responses.streaming"
+            logging.CRITICAL, logger="llama_stack.providers.inline.responses.builtin.responses.streaming"
         ):
             with pytest.raises(exc_type):
                 responses_client.responses.create(

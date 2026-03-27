@@ -4,21 +4,33 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from dataclasses import dataclass
 from functools import lru_cache
 
+from . import sku_list_download as _sku_list_download
 from .sku_types import (
     CheckpointQuantizationFormat,
     CoreModelId,
     Model,
-    ModelFamily,
 )
+
+# Re-export download helpers so existing imports from `sku_list` keep working.
+LlamaDownloadInfo = _sku_list_download.LlamaDownloadInfo
+llama_meta_net_info = _sku_list_download.llama_meta_net_info
+llama_meta_pth_size = _sku_list_download.llama_meta_pth_size
 
 LLAMA2_VOCAB_SIZE = 32000
 LLAMA3_VOCAB_SIZE = 128256
 
 
 def resolve_model(descriptor: str) -> Model | None:
+    """Resolve a model descriptor or HuggingFace repo name to a Model.
+
+    Args:
+        descriptor: a model descriptor string or HuggingFace repository name.
+
+    Returns:
+        The matching Model, or None if no match is found.
+    """
     for m in all_registered_models():
         if descriptor in (m.descriptor(), m.huggingface_repo):
             return m
@@ -26,6 +38,7 @@ def resolve_model(descriptor: str) -> Model | None:
 
 
 def all_registered_models() -> list[Model]:
+    """Return the complete list of all registered Llama models across all families."""
     return (
         llama2_family()
         + llama3_family()
@@ -38,6 +51,7 @@ def all_registered_models() -> list[Model]:
 
 
 def llama2_family() -> list[Model]:
+    """Return all Llama 2 family models (base and instruct)."""
     return [
         *llama2_base_models(),
         *llama2_instruct_models(),
@@ -45,6 +59,7 @@ def llama2_family() -> list[Model]:
 
 
 def llama3_family() -> list[Model]:
+    """Return all Llama 3 family models (base and instruct)."""
     return [
         *llama3_base_models(),
         *llama3_instruct_models(),
@@ -52,6 +67,7 @@ def llama3_family() -> list[Model]:
 
 
 def llama3_1_family() -> list[Model]:
+    """Return all Llama 3.1 family models (base and instruct)."""
     return [
         *llama3_1_base_models(),
         *llama3_1_instruct_models(),
@@ -59,6 +75,7 @@ def llama3_1_family() -> list[Model]:
 
 
 def llama3_2_family() -> list[Model]:
+    """Return all Llama 3.2 family models (base and instruct)."""
     return [
         *llama3_2_base_models(),
         *llama3_2_instruct_models(),
@@ -66,12 +83,14 @@ def llama3_2_family() -> list[Model]:
 
 
 def llama3_3_family() -> list[Model]:
+    """Return all Llama 3.3 family models (instruct only)."""
     return [
         *llama3_3_instruct_models(),
     ]
 
 
 def llama4_family() -> list[Model]:
+    """Return all Llama 4 family models (base and instruct)."""
     return [
         *llama4_base_models(),
         *llama4_instruct_models(),
@@ -79,6 +98,7 @@ def llama4_family() -> list[Model]:
 
 
 def llama4_base_models() -> list[Model]:
+    """Return Llama 4 base (pretrained) models."""
     return [
         Model(
             core_model_id=CoreModelId.llama4_scout_17b_16e,
@@ -98,6 +118,7 @@ def llama4_base_models() -> list[Model]:
 
 
 def llama4_instruct_models() -> list[Model]:
+    """Return Llama 4 instruct (fine-tuned) models including quantized variants."""
     return [
         Model(
             core_model_id=CoreModelId.llama4_scout_17b_16e_instruct,
@@ -126,6 +147,7 @@ def llama4_instruct_models() -> list[Model]:
 
 
 def llama2_base_models() -> list[Model]:
+    """Return Llama 2 base (pretrained) models."""
     return [
         Model(
             core_model_id=CoreModelId.llama2_7b,
@@ -185,6 +207,7 @@ def llama2_base_models() -> list[Model]:
 
 
 def llama3_base_models() -> list[Model]:
+    """Return Llama 3 base (pretrained) models."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_8b,
@@ -226,6 +249,7 @@ def llama3_base_models() -> list[Model]:
 
 
 def llama3_1_base_models() -> list[Model]:
+    """Return Llama 3.1 base (pretrained) models including quantized variants."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_1_8b,
@@ -324,6 +348,7 @@ def llama3_1_base_models() -> list[Model]:
 
 
 def llama3_2_base_models() -> list[Model]:
+    """Return Llama 3.2 base (pretrained) models including vision variants."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_2_1b,
@@ -407,6 +432,7 @@ def llama3_2_base_models() -> list[Model]:
 
 
 def llama2_instruct_models() -> list[Model]:
+    """Return Llama 2 instruct (chat) models."""
     return [
         Model(
             core_model_id=CoreModelId.llama2_7b_chat,
@@ -466,6 +492,7 @@ def llama2_instruct_models() -> list[Model]:
 
 
 def llama3_instruct_models() -> list[Model]:
+    """Return Llama 3 instruct models."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_8b_instruct,
@@ -507,6 +534,7 @@ def llama3_instruct_models() -> list[Model]:
 
 
 def llama3_1_instruct_models() -> list[Model]:
+    """Return Llama 3.1 instruct models including quantized variants."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_1_8b_instruct,
@@ -605,6 +633,7 @@ def llama3_1_instruct_models() -> list[Model]:
 
 
 def arch_args_1b() -> dict:
+    """Return the architecture arguments for 1B parameter Llama 3.2 models."""
     return {
         "dim": 2048,
         "n_layers": 16,
@@ -620,6 +649,7 @@ def arch_args_1b() -> dict:
 
 
 def arch_args_3b() -> dict:
+    """Return the architecture arguments for 3B parameter Llama 3.2 models."""
     return {
         "dim": 3072,
         "n_layers": 28,
@@ -635,6 +665,7 @@ def arch_args_3b() -> dict:
 
 
 def llama3_2_quantized_models() -> list[Model]:
+    """Return Llama 3.2 INT4 quantized instruct model variants."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_2_1b_instruct,
@@ -704,6 +735,7 @@ def llama3_2_quantized_models() -> list[Model]:
 
 
 def llama3_2_instruct_models() -> list[Model]:
+    """Return Llama 3.2 instruct models including vision and quantized variants."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_2_1b_instruct,
@@ -766,6 +798,7 @@ def llama3_2_instruct_models() -> list[Model]:
 
 
 def llama3_3_instruct_models() -> list[Model]:
+    """Return Llama 3.3 instruct models."""
     return [
         Model(
             core_model_id=CoreModelId.llama3_3_70b_instruct,
@@ -790,6 +823,7 @@ def llama3_3_instruct_models() -> list[Model]:
 
 @lru_cache
 def safety_models() -> list[Model]:
+    """Return Llama Guard and other safety models."""
     return [
         Model(
             core_model_id=CoreModelId.llama_guard_4_12b,
@@ -913,117 +947,3 @@ def safety_models() -> list[Model]:
             pth_file_count=1,
         ),
     ]
-
-
-@dataclass
-class LlamaDownloadInfo:
-    folder: str
-    files: list[str]
-    pth_size: int
-
-
-def llama_meta_net_info(model: Model) -> LlamaDownloadInfo:
-    """Information needed to download model from llamameta.net"""
-
-    pth_count = model.pth_file_count
-    if model.core_model_id == CoreModelId.llama3_1_405b:
-        if pth_count == 16:
-            folder = "Llama-3.1-405B-MP16"
-        elif model.quantization_format == CheckpointQuantizationFormat.fp8_mixed:
-            folder = "Llama-3.1-405B"
-        else:
-            folder = "Llama-3.1-405B-MP8"
-    elif model.core_model_id == CoreModelId.llama3_1_405b_instruct:
-        if pth_count == 16:
-            folder = "Llama-3.1-405B-Instruct-MP16"
-        elif model.quantization_format == CheckpointQuantizationFormat.fp8_mixed:
-            folder = "Llama-3.1-405B-Instruct"
-        else:
-            folder = "Llama-3.1-405B-Instruct-MP8"
-    elif model.core_model_id == CoreModelId.llama_guard_3_8b:
-        if model.quantization_format == CheckpointQuantizationFormat.int8:
-            folder = "Llama-Guard-3-8B-INT8-HF"
-        else:
-            folder = "Llama-Guard-3-8B"
-    elif model.core_model_id == CoreModelId.llama_guard_2_8b:
-        folder = "llama-guard-2"
-    else:
-        if model.huggingface_repo is None:
-            raise ValueError(f"Model {model.core_model_id} has no huggingface_repo set")
-        folder = model.huggingface_repo.split("/")[-1]
-        if "Llama-2" in folder:
-            folder = folder.lower()
-
-    files = ["checklist.chk"]
-    if (
-        model.core_model_id == CoreModelId.llama_guard_3_8b
-        and model.quantization_format == CheckpointQuantizationFormat.int8
-    ):
-        files.extend(
-            [
-                "generation_config.json",
-                "model-00001-of-00002.safetensors",
-                "model-00002-of-00002.safetensors",
-                "special_tokens_map.json",
-                "tokenizer.json",
-                "tokenizer_config.json",
-                "model.safetensors.index.json",
-            ]
-        )
-    elif (
-        model.core_model_id == CoreModelId.llama_guard_3_1b
-        and model.quantization_format == CheckpointQuantizationFormat.int4
-    ):
-        files.extend(
-            [
-                "llama_guard_3_1b_pruned_xnnpack.pte",
-                "example-prompt.txt",
-                "params.json",
-                "tokenizer.model",
-            ]
-        )
-    else:
-        files.extend(
-            [
-                "tokenizer.model",
-                "params.json",
-            ]
-        )
-        if model.quantization_format == CheckpointQuantizationFormat.fp8_mixed:
-            files.extend([f"fp8_scales_{i}.pt" for i in range(pth_count)])
-        files.extend([f"consolidated.{i:02d}.pth" for i in range(pth_count)])
-
-    return LlamaDownloadInfo(
-        folder=folder,
-        files=files,
-        pth_size=llama_meta_pth_size(model),
-    )
-
-
-# Sadness because Cloudfront rejects our HEAD requests to find Content-Length
-def llama_meta_pth_size(model: Model) -> int:
-    if model.core_model_id not in (
-        CoreModelId.llama3_1_405b,
-        CoreModelId.llama3_1_405b_instruct,
-        CoreModelId.llama4_maverick_17b_128e,
-        CoreModelId.llama4_maverick_17b_128e_instruct,
-    ):
-        return 0
-
-    if model.model_family == ModelFamily.llama3_1:
-        if model.pth_file_count == 16:
-            return 51268302389
-        elif model.quantization_format == CheckpointQuantizationFormat.fp8_mixed:
-            return 60903742309
-        else:
-            return 101470976045
-
-    if model.model_family == ModelFamily.llama4:
-        if model.core_model_id == CoreModelId.llama4_maverick_17b_128e:
-            return 100458118386
-        elif model.core_model_id == CoreModelId.llama4_maverick_17b_128e_instruct:
-            if model.quantization_format == CheckpointQuantizationFormat.fp8_mixed:
-                return 54121549657
-            else:
-                return 100426653046
-    return 0

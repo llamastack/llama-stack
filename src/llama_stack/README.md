@@ -4,7 +4,7 @@ Server implementation for Llama Stack. This is the main package that provides th
 
 ## Directory Structure
 
-```
+```text
 llama_stack/
   core/               # Server core: routing, resolution, storage, server
   providers/           # All provider implementations (inline + remote)

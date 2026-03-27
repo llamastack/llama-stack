@@ -26,6 +26,8 @@ logger = get_logger(name=__name__, category="safety::bedrock")
 
 
 class BedrockSafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPrivate):
+    """Safety adapter for content moderation using AWS Bedrock Guardrails."""
+
     def __init__(self, config: BedrockSafetyConfig) -> None:
         self.config = config
         self.registered_shields = []

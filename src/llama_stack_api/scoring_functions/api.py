@@ -18,6 +18,8 @@ from .models import (
 
 @runtime_checkable
 class ScoringFunctions(Protocol):
+    """Protocol for managing scoring function resources."""
+
     async def list_scoring_functions(
         self,
         request: ListScoringFunctionsRequest,

@@ -41,6 +41,8 @@ def sanitize_collection_name(name: str, weaviate_format=False) -> str:
 
 
 class WeightedInMemoryAggregator:
+    """Utility for combining vector and keyword search scores using reranking strategies."""
+
     @staticmethod
     def _normalize_scores(scores: dict[str, float]) -> dict[str, float]:
         """

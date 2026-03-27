@@ -42,6 +42,8 @@ class RequestProviderDataContext(AbstractContextManager):
 
 
 class NeedsRequestProviderData:
+    """Mixin for providers that require per-request provider data from request headers."""
+
     def get_request_provider_data(self) -> Any:
         spec = self.__provider_spec__
         if not spec:

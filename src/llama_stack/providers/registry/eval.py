@@ -9,6 +9,11 @@ from llama_stack_api import Api, InlineProviderSpec, ProviderSpec, RemoteProvide
 
 
 def available_providers() -> list[ProviderSpec]:
+    """Return the list of available evaluation provider specifications.
+
+    Returns:
+        List of ProviderSpec objects describing available providers
+    """
     return [
         InlineProviderSpec(
             api=Api.eval,
@@ -21,7 +26,7 @@ def available_providers() -> list[ProviderSpec]:
                 Api.datasets,
                 Api.scoring,
                 Api.inference,
-                Api.agents,
+                Api.responses,
             ],
             description="Meta's reference implementation of evaluation tasks with support for multiple languages and evaluation metrics.",
         ),
@@ -40,7 +45,7 @@ def available_providers() -> list[ProviderSpec]:
                 Api.datasets,
                 Api.scoring,
                 Api.inference,
-                Api.agents,
+                Api.responses,
             ],
         ),
     ]

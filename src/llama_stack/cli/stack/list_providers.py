@@ -10,6 +10,8 @@ from llama_stack.cli.subcommand import Subcommand
 
 
 class StackListProviders(Subcommand):
+    """CLI subcommand to list available providers for Llama Stack APIs."""
+
     def __init__(self, subparsers: argparse._SubParsersAction):
         super().__init__()
         self.parser = subparsers.add_parser(

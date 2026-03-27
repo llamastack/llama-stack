@@ -29,16 +29,29 @@ from llama_stack_api import (
 
 
 class DistributionInspectConfig(BaseModel):
+    """Configuration for the Inspect API implementation."""
+
     config: StackConfig
 
 
 async def get_provider_impl(config, deps):
+    """Create and initialize a DistributionInspectImpl instance.
+
+    Args:
+        config: DistributionInspectConfig containing the stack configuration.
+        deps: Dictionary of API dependencies.
+
+    Returns:
+        An initialized DistributionInspectImpl instance.
+    """
     impl = DistributionInspectImpl(config, deps)
     await impl.initialize()
     return impl
 
 
 class DistributionInspectImpl(Inspect):
+    """Implementation of the Inspect API providing route listing, health, and version endpoints."""
+
     def __init__(self, config: DistributionInspectConfig, deps):
         self.stack_config = config.config
         self.deps = deps

@@ -26,6 +26,8 @@ logger = get_logger(__name__, category="tools")
 
 
 class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRequestProviderData):
+    """Tool runtime for discovering and invoking tools via the Model Context Protocol."""
+
     def __init__(self, config: MCPProviderConfig, _deps: dict[Api, Any]):
         self.config = config
 

@@ -22,6 +22,8 @@ from .models import (
 
 @runtime_checkable
 class Shields(Protocol):
+    """Protocol for managing safety shield resources."""
+
     async def list_shields(self) -> ListShieldsResponse:
         """List all shields."""
         ...

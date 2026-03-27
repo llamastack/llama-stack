@@ -25,7 +25,6 @@ from llama_stack.log import get_logger
 from llama_stack_api import (
     LLAMA_STACK_API_V1ALPHA,
     Admin,
-    Agents,
     Api,
     Batches,
     Benchmarks,
@@ -48,6 +47,7 @@ from llama_stack_api import (
     ProviderSpec,
     RemoteProviderConfig,
     RemoteProviderSpec,
+    Responses,
     Safety,
     Scoring,
     ScoringFunctions,
@@ -68,6 +68,8 @@ logger = get_logger(name=__name__, category="core")
 
 
 class InvalidProviderError(Exception):
+    """Raised when a provider is invalid or has been deprecated with an error."""
+
     pass
 
 
@@ -83,7 +85,7 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
     protocols = {
         Api.admin: Admin,
         Api.providers: ProvidersAPI,
-        Api.agents: Agents,
+        Api.responses: Responses,
         Api.inference: Inference,
         Api.inspect: Inspect,
         Api.batches: Batches,
@@ -121,6 +123,14 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
 
 
 def api_protocol_map_for_compliance_check(config: Any) -> dict[Api, Any]:
+    """Get the API-to-protocol mapping used for provider compliance checks.
+
+    Args:
+        config: Stack configuration for loading external APIs.
+
+    Returns:
+        Dictionary mapping APIs to their protocol classes, with InferenceProvider replacing Inference.
+    """
     external_apis = load_external_apis(config)
     return {
         **api_protocol_map(external_apis),
@@ -129,6 +139,11 @@ def api_protocol_map_for_compliance_check(config: Any) -> dict[Api, Any]:
 
 
 def additional_protocols_map() -> dict[Api, Any]:
+    """Get the mapping of APIs to their additional private protocol classes for routing table support.
+
+    Returns:
+        Dictionary mapping router APIs to tuples of (private_protocol, public_protocol, routing_table_api).
+    """
     return {
         Api.inference: (ModelsProtocolPrivate, Models, Api.models),
         Api.tool_groups: (ToolGroupsProtocolPrivate, ToolGroups, Api.tool_groups),
@@ -145,6 +160,8 @@ def additional_protocols_map() -> dict[Api, Any]:
 
 # TODO: make all this naming far less atrocious. Provider. ProviderSpec. ProviderWithSpec. WTF!
 class ProviderWithSpec(Provider):
+    """A Provider paired with its resolved ProviderSpec for instantiation."""
+
     spec: ProviderSpec
 
 
@@ -341,6 +358,15 @@ async def instantiate_providers(
 def topological_sort(
     providers_with_specs: dict[str, list[ProviderWithSpec]],
 ) -> list[tuple[str, ProviderWithSpec]]:
+    """Sort providers in dependency order using topological sort.
+
+    Args:
+        providers_with_specs: Dictionary mapping API names to their providers with specs.
+
+    Returns:
+        A flattened list of (api_name, provider) tuples in dependency order.
+    """
+
     def dfs(kv, visited: set[str], stack: list[str]):
         api_str, providers = kv
         visited.add(api_str)
@@ -371,7 +397,6 @@ def topological_sort(
     return flattened
 
 
-# returns a class implementing the protocol corresponding to the Api
 async def instantiate_provider(
     provider: ProviderWithSpec,
     deps: dict[Api, Any],
@@ -380,6 +405,19 @@ async def instantiate_provider(
     run_config: StackConfig,
     policy: list[AccessRule],
 ):
+    """Instantiate a single provider, loading its module and verifying protocol compliance.
+
+    Args:
+        provider: The provider with its resolved spec.
+        deps: Resolved API dependencies for this provider.
+        inner_impls: Inner implementations for routing table providers.
+        dist_registry: The distribution registry for resource management.
+        run_config: The stack run configuration.
+        policy: Access control policy rules.
+
+    Returns:
+        The instantiated provider implementation.
+    """
     provider_spec = provider.spec
     if not hasattr(provider_spec, "module") or provider_spec.module is None:
         raise AttributeError(f"ProviderSpec of type {type(provider_spec)} does not have a 'module' attribute")
@@ -441,6 +479,15 @@ async def instantiate_provider(
 
 
 def check_protocol_compliance(obj: Any, protocol: Any) -> None:
+    """Verify that a provider implementation correctly implements all required protocol methods.
+
+    Args:
+        obj: The provider implementation to check.
+        protocol: The protocol class defining required methods.
+
+    Raises:
+        ValueError: If the provider is missing required methods or has signature mismatches.
+    """
     missing_methods = []
 
     mro = type(obj).__mro__
@@ -491,6 +538,15 @@ async def resolve_remote_stack_impls(
     config: RemoteProviderConfig,
     apis: list[str],
 ) -> dict[Api, Any]:
+    """Resolve provider implementations for a remote stack by creating API clients.
+
+    Args:
+        config: Remote provider configuration containing the connection URL.
+        apis: List of API names to resolve.
+
+    Returns:
+        Dictionary mapping APIs to their remote client implementations.
+    """
     protocols = api_protocol_map()
     additional_protocols = additional_protocols_map()
 

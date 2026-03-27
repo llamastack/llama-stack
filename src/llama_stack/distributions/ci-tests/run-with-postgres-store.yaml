@@ -1,13 +1,13 @@
 version: 2
 distro_name: ci-tests
 apis:
-- agents
 - batches
 - datasetio
 - eval
 - file_processors
 - files
 - inference
+- responses
 - safety
 - scoring
 - tool_runtime
@@ -32,10 +32,6 @@ providers:
       network:
         tls:
           verify: ${env.VLLM_TLS_VERIFY:=true}
-  - provider_id: ${env.TGI_URL:+tgi}
-    provider_type: remote::tgi
-    config:
-      base_url: ${env.TGI_URL:=}
   - provider_id: fireworks
     provider_type: remote::fireworks
     config:
@@ -201,7 +197,7 @@ providers:
       excluded_categories: []
   - provider_id: code-scanner
     provider_type: inline::code-scanner
-  agents:
+  responses:
   - provider_id: builtin
     provider_type: inline::builtin
     config:
