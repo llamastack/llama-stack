@@ -279,8 +279,9 @@ class InferenceRouter(Inference):
         """
         provider, provider_resource_id = await self._get_model_provider(params.model, ModelType.llm)
         params.model = provider_resource_id
-        # Let NotImplementedError/AttributeError propagate — the Responses
-        # layer catches them and falls back to regular CC with a warning.
+        # Not all providers implement openai_chat_completions_with_reasoning.
+        # the Responses layer catches them and falls back to regular CC 
+        # with a warning.
         return await provider.openai_chat_completions_with_reasoning(params)
 
     async def openai_embeddings(

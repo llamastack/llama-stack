@@ -540,11 +540,16 @@ class StreamingResponseOrchestrator:
                 # Use reasoning-aware method when reasoning is explicitly requested
                 if self.reasoning and self.reasoning.effort and self.reasoning.effort != "none":
                     try:
-                        completion_result = await self.inference_api.openai_chat_completions_with_reasoning(params)
+                        # Pass a copy — the router mutates params.model (strips provider prefix).
+                        # Keep original params intact in-case of fallback to regular CC.
+                        # NOTE : Is a deep-copy necessary ?
+                        completion_result = await self.inference_api.openai_chat_completions_with_reasoning(
+                            params.model_copy()
+                        )
                     except (NotImplementedError, AttributeError):
                         logger.critical(
-                            "Provider either does not support or has implemented reasoning "
-                            "in their chat completions. Falling back to using regular chat completion."
+                            "Provider does not support reasoning in chat completions. "
+                            "Falling back to regular chat completion."
                         )
                         completion_result = await self.inference_api.openai_chat_completion(params)
                 else:
@@ -557,7 +562,6 @@ class StreamingResponseOrchestrator:
                         completion_result_data = stream_event_or_result
                     else:
                         yield stream_event_or_result
-
                 # If violation detected, skip the rest of processing since we already sent refusal
                 if self.violation_detected:
                     return
