@@ -1412,8 +1412,8 @@ class StreamingResponseOrchestrator:
         for input_tool in tools:
             if input_tool.type == "function":
                 self.ctx.chat_tools.append(
-                    ChatCompletionToolParam(type="function", function=input_tool.model_dump(exclude_none=True))
-                )  # type: ignore[typeddict-item,arg-type]  # Dict compatible with FunctionDefinition
+                    ChatCompletionToolParam(type="function", function=input_tool.model_dump(exclude_none=True))  # type: ignore[typeddict-item,arg-type]  # Dict compatible with FunctionDefinition
+                )
             elif input_tool.type in WebSearchToolTypes:
                 tool_name = "web_search"
                 # Need to access tool_groups_api from tool_executor
@@ -1471,11 +1471,6 @@ class StreamingResponseOrchestrator:
             # Call list_mcp_tools
             tool_defs = None
             list_id = f"mcp_list_{uuid.uuid4()}"
-            attributes = {
-                "server_label": mcp_tool.server_label,
-                "server_url": mcp_tool.server_url,
-                "mcp_list_tools_id": list_id,
-            }
 
             # Get session manager from tool_executor if available (fix for #4452)
             session_manager = getattr(self.tool_executor, "mcp_session_manager", None)
@@ -1484,6 +1479,12 @@ class StreamingResponseOrchestrator:
                 raise ValueError(
                     f"Failed to list MCP tools for server '{mcp_tool.server_label}': server_url is not set"
                 )
+
+            attributes = {
+                "server_label": mcp_tool.server_label,
+                "server_url": mcp_tool.server_url,
+                "mcp_list_tools_id": list_id,
+            }
 
             # TODO: follow semantic conventions for Open Telemetry tool spans
             # https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/#execute-tool-span
