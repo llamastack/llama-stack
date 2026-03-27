@@ -71,6 +71,8 @@ protocol_cache = TTLDict(ttl_seconds=3600)
 
 
 class MCPProtol(Enum):
+    """Enumeration of supported MCP transport protocols."""
+
     UNKNOWN = 0
     STREAMABLE_HTTP = 1
     SSE = 2
@@ -283,6 +285,15 @@ class MCPSessionManager:
 
 @asynccontextmanager
 async def client_wrapper(endpoint: str, headers: dict[str, str]) -> AsyncGenerator[ClientSession, Any]:
+    """Create an MCP client session for the given endpoint with protocol auto-detection.
+
+    Args:
+        endpoint: MCP server endpoint URL
+        headers: HTTP headers to include in the connection
+
+    Returns:
+        An async context manager yielding an initialized ClientSession
+    """
     # we use a ttl'd dict to cache the happy path protocol for each endpoint
     # but, we always fall back to trying the other protocol if we cannot initialize the session
     connection_strategies = [MCPProtol.STREAMABLE_HTTP, MCPProtol.SSE]

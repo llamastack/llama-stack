@@ -16,6 +16,8 @@ DATASETS_PREFIX = "localfs_datasets:"
 
 
 class PandasDataframeDataset:
+    """Wraps a dataset definition with lazy pandas DataFrame loading."""
+
     def __init__(self, dataset_def: Dataset, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.dataset_def = dataset_def
@@ -50,6 +52,8 @@ class PandasDataframeDataset:
 
 
 class LocalFSDatasetIOImpl(DatasetIO, DatasetsProtocolPrivate):
+    """Dataset I/O provider for reading and writing datasets using the local filesystem."""
+
     def __init__(self, config: LocalFSDatasetIOConfig) -> None:
         self.config = config
         # local registry for keeping track of datasets within the provider

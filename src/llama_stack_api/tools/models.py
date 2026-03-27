@@ -72,6 +72,8 @@ class ToolInvocationResult(BaseModel):
 
 
 class ToolStore(Protocol):
+    """Protocol for accessing tool and tool group definitions."""
+
     async def get_tool(self, tool_name: str) -> ToolDef: ...
     async def get_tool_group(self, toolgroup_id: str) -> ToolGroup: ...
 

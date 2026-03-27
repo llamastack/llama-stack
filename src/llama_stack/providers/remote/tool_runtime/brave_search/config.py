@@ -10,6 +10,8 @@ from pydantic import BaseModel, Field
 
 
 class BraveSearchToolConfig(BaseModel):
+    """Configuration for the Brave Search tool runtime."""
+
     api_key: str | None = Field(
         default=None,
         description="The Brave Search API Key",

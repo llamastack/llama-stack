@@ -14,6 +14,8 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class FaissVectorIOConfig(BaseModel):
+    """Configuration for the inline FAISS vector I/O provider."""
+
     persistence: KVStoreReference
 
     @classmethod

@@ -9,6 +9,8 @@ from pydantic import BaseModel
 
 
 class LlmAsJudgeScoringConfig(BaseModel):
+    """Configuration for the LLM-as-judge scoring provider."""
+
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:
         return {}

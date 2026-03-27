@@ -11,6 +11,8 @@ from llama_stack.core.storage.datatypes import KVStoreReference
 
 
 class BuiltinEvalConfig(BaseModel):
+    """Configuration for the built-in evaluation provider."""
+
     kvstore: KVStoreReference
 
     @classmethod

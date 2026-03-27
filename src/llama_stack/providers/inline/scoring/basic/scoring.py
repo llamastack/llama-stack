@@ -42,6 +42,8 @@ class BasicScoringImpl(
     Scoring,
     ScoringFunctionsProtocolPrivate,
 ):
+    """Scoring provider with built-in functions for equality, regex, DocVQA, and IFEval metrics."""
+
     def __init__(
         self,
         config: BasicScoringConfig,

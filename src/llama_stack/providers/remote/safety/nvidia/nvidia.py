@@ -28,6 +28,8 @@ logger = get_logger(name=__name__, category="safety::nvidia")
 
 
 class NVIDIASafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPrivate):
+    """Safety adapter for content moderation using NVIDIA Guardrails services."""
+
     def __init__(self, config: NVIDIASafetyConfig) -> None:
         """
         Initialize the NVIDIASafetyAdapter with a given safety configuration.

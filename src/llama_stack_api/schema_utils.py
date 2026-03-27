@@ -140,6 +140,8 @@ def clear_dynamic_schema_types() -> None:
 
 @dataclass
 class WebMethod:
+    """Metadata container for an API endpoint operation's routing and configuration."""
+
     level: str | None = None
     route: str | None = None
     public: bool = False

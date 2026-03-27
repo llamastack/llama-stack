@@ -13,6 +13,8 @@ from llama_stack_api import json_schema_type
 
 
 class GroqProviderDataValidator(BaseModel):
+    """Validates provider-specific request data for Groq inference."""
+
     groq_api_key: SecretStr | None = Field(
         default=None,
         description="API key for Groq models",
@@ -21,6 +23,8 @@ class GroqProviderDataValidator(BaseModel):
 
 @json_schema_type
 class GroqConfig(RemoteInferenceProviderConfig):
+    """Configuration for the Groq inference provider."""
+
     base_url: HttpUrl | None = Field(
         default=HttpUrl("https://api.groq.com/openai/v1"),
         description="The URL for the Groq AI server",
