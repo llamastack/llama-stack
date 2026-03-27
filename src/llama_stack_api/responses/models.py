@@ -274,6 +274,11 @@ class CompactResponseRequest(BaseModel):
     previous_response_id: str | None = Field(
         default=None, description="ID of a previous response whose history to compact."
     )
+    prompt_cache_key: str | None = Field(
+        default=None,
+        max_length=64,
+        description="A key to use when reading from or writing to the prompt cache.",
+    )
 
 
 class DeleteResponseRequest(BaseModel):

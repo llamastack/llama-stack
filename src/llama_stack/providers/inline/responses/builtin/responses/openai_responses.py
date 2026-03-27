@@ -1154,6 +1154,7 @@ class OpenAIResponsesImpl:
         input: str | list[OpenAIResponseInput] | None = None,
         instructions: str | None = None,
         previous_response_id: str | None = None,
+        prompt_cache_key: str | None = None,
     ) -> OpenAICompactedResponse:
         # Resolve input from previous_response_id or direct input
         if previous_response_id:
@@ -1193,6 +1194,7 @@ class OpenAIResponsesImpl:
             model=model,
             messages=messages,
             stream=False,
+            prompt_cache_key=prompt_cache_key,
         )
         completion = await self.inference_api.openai_chat_completion(params)
 

@@ -205,6 +205,7 @@ class BuiltinResponsesImpl(Responses):
             input=request.input,
             instructions=request.instructions,
             previous_response_id=request.previous_response_id,
+            prompt_cache_key=request.prompt_cache_key,
         )
 
     async def delete_openai_response(
