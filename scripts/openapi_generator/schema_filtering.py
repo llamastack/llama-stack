@@ -239,19 +239,26 @@ def _filter_schema_by_version(
 
 def _filter_deprecated_schema(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     """
-    Filter OpenAPI schema to include only deprecated endpoints.
-    Includes all deprecated endpoints regardless of version (v1, v1alpha, v1beta).
+    Filter OpenAPI schema to include only deprecated operations.
+    Filters at the operation level, not the path level, so non-deprecated
+    operations on the same path (e.g. GET /v1/models) are excluded.
     """
     filtered_schema = openapi_schema.copy()
 
     if "paths" not in filtered_schema:
         return filtered_schema
 
-    # Filter paths to only include deprecated ones
     filtered_paths = {}
     for path, path_item in filtered_schema["paths"].items():
-        if _is_path_deprecated(path_item):
-            filtered_paths[path] = path_item
+        if not isinstance(path_item, dict):
+            continue
+        deprecated_ops = {}
+        for method in ["get", "post", "put", "delete", "patch", "head", "options"]:
+            op = path_item.get(method)
+            if isinstance(op, dict) and op.get("deprecated", False):
+                deprecated_ops[method] = op
+        if deprecated_ops:
+            filtered_paths[path] = deprecated_ops
 
     filtered_schema["paths"] = filtered_paths
 
