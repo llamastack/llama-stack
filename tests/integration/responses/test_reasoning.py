@@ -30,13 +30,14 @@ def test_reasoning_basic_streaming(client_with_models, text_model_id):
 
     skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
 
-    input = "What is 2 + 2?"
+    input = "What is 2 + 2? Think Step by Step !"
 
     # Create a streaming response using a reasoning model
     stream = client_with_models.responses.create(
         model=text_model_id,
         input=input,
         stream=True,
+        reasoning={"effort": "low"},
     )
 
     chunks = []
@@ -144,7 +145,7 @@ def test_reasoning_unsupported_provider_completes_without_error(openai_client, c
     if provider_type not in ("remote::openai",):  # add other un-supported providers here
         pytest.skip(f"{provider_type} supports reasoning — this test is for unsupported providers only")
 
-    response = openai_client.responses.create(
+    response = client_with_models.responses.create(
         model=text_model_id,
         input="What is 2 + 2?",
         reasoning={"effort": "medium"},
