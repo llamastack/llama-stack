@@ -33,7 +33,7 @@ Model registration behavior varies by provider:
 
 Some providers automatically discover and register models during initialization:
 
-- **Remote providers** (e.g., `remote::openai`, `remote::vllm`, `remote::tgi`) can automatically discover models from their API endpoints
+- **Remote providers** (e.g., `remote::openai`, `remote::vllm`, `remote::ollama`) can automatically discover models from their API endpoints
 - Models are discovered via the provider's `list_models()` method during the initial refresh
 - For remote providers that use `RemoteInferenceProviderConfig` (most remote inference providers), you can enable periodic refresh by setting `refresh_models: true` in the provider's configuration:
 
