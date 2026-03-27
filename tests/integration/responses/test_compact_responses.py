@@ -5,10 +5,16 @@
 # the root directory of this source tree.
 
 import pytest
+from llama_stack_client import LlamaStackClient
 
 
 class TestCompactResponses:
     """Tests for POST /v1/responses/compact endpoint."""
+
+    @pytest.fixture(autouse=True)
+    def _skip_non_openai_client(self, responses_client):
+        if isinstance(responses_client, LlamaStackClient):
+            pytest.skip("Compact tests require OpenAI client (.post() method)")
 
     def test_compact_basic_conversation(self, responses_client, text_model_id):
         """Compact a multi-turn conversation with input array."""
@@ -210,9 +216,13 @@ class TestCompactResponses:
 class TestContextManagement:
     """Tests for context_management parameter on responses.create."""
 
+    @pytest.fixture(autouse=True)
+    def _skip_non_openai_client(self, responses_client):
+        if isinstance(responses_client, LlamaStackClient):
+            pytest.skip("Context management tests require OpenAI client")
+
     def test_context_management_auto_compacts_large_input(self, responses_client, text_model_id):
         """When input exceeds compact_threshold, context should be auto-compacted."""
-        # Build a large conversation that exceeds the threshold
         large_input = []
         for i in range(50):
             large_input.append({"role": "user", "content": f"Tell me about topic number {i} in great detail."})
@@ -224,7 +234,6 @@ class TestContextManagement:
             )
         large_input.append({"role": "user", "content": "Summarize what we discussed."})
 
-        # With a low threshold, auto-compaction should trigger
         response = responses_client.responses.create(
             model=text_model_id,
             input=large_input,
