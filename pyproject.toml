@@ -163,7 +163,7 @@ test = [
     "chromadb>=1.0.15",
     "qdrant-client",
     "pymilvus>=2.6.1",
-    "milvus-lite>=2.5.0",
+    "milvus-lite>=2.5.0; platform_machine == 'x86_64' or platform_machine == 'aarch64' or platform_machine == 'arm64'",
     "weaviate-client>=4.16.4",
     "elasticsearch>=8.16.0, <9.0.0"
 ]
