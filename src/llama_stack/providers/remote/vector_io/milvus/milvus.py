@@ -6,7 +6,6 @@
 
 import asyncio
 import heapq
-import os
 from typing import Any
 
 from numpy.typing import NDArray
@@ -14,7 +13,6 @@ from pymilvus import AnnSearchRequest, DataType, Function, FunctionType, MilvusC
 
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
-from llama_stack.providers.inline.vector_io.milvus import MilvusVectorIOConfig as InlineMilvusVectorIOConfig
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
     RERANKER_TYPE_WEIGHTED,
@@ -45,7 +43,7 @@ from llama_stack_api import (
 )
 from llama_stack_api.internal.kvstore import KVStore
 
-from .config import MilvusVectorIOConfig as RemoteMilvusVectorIOConfig
+from .config import MilvusVectorIOConfig
 
 logger = get_logger(name=__name__, category="vector_io::milvus")
 
@@ -452,7 +450,7 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
 
     def __init__(
         self,
-        config: RemoteMilvusVectorIOConfig | InlineMilvusVectorIOConfig,
+        config: MilvusVectorIOConfig,
         inference_api: Inference,
         files_api: Files | None,
     ) -> None:
@@ -469,7 +467,6 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         end_key = f"{VECTOR_DBS_PREFIX}\xff"
         stored_vector_stores = await self.kvstore.values_in_range(start_key, end_key)
 
-        use_native_hybrid = isinstance(self.config, RemoteMilvusVectorIOConfig)
         for vector_store_data in stored_vector_stores:
             vector_store = VectorStore.model_validate_json(vector_store_data)
             index = VectorStoreWithIndex(
@@ -479,18 +476,13 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
                     collection_name=vector_store.identifier,
                     consistency_level=self.config.consistency_level,
                     kvstore=self.kvstore,
-                    use_native_hybrid=use_native_hybrid,
+                    use_native_hybrid=True,
                 ),
                 inference_api=self.inference_api,
             )
             self.cache[vector_store.identifier] = index
-        if isinstance(self.config, RemoteMilvusVectorIOConfig):
-            logger.info(f"Connecting to Milvus server at {self.config.uri}")
-            self.client = MilvusClient(**self.config.model_dump(exclude_none=True))
-        else:
-            logger.info(f"Connecting to Milvus Lite at: {self.config.db_path}")
-            uri = os.path.expanduser(self.config.db_path)
-            self.client = MilvusClient(uri=uri)
+        logger.info(f"Connecting to Milvus server at {self.config.uri}")
+        self.client = MilvusClient(**self.config.model_dump(exclude_none=True))
 
         # Load existing OpenAI vector stores into the in-memory cache
         await self.initialize_openai_vector_stores()
@@ -501,18 +493,13 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         await super().shutdown()
 
     async def register_vector_store(self, vector_store: VectorStore) -> None:
-        use_native_hybrid = isinstance(self.config, RemoteMilvusVectorIOConfig)
-        if isinstance(self.config, RemoteMilvusVectorIOConfig):
-            consistency_level = self.config.consistency_level
-        else:
-            consistency_level = "Strong"
         index = VectorStoreWithIndex(
             vector_store=vector_store,
             index=MilvusIndex(
                 self.client,
                 vector_store.identifier,
-                consistency_level=consistency_level,
-                use_native_hybrid=use_native_hybrid,
+                consistency_level=self.config.consistency_level,
+                use_native_hybrid=True,
             ),
             inference_api=self.inference_api,
         )
@@ -533,14 +520,13 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
             raise VectorStoreNotFoundError(vector_store_id)
 
         vector_store = VectorStore.model_validate_json(vector_store_data)
-        use_native_hybrid = isinstance(self.config, RemoteMilvusVectorIOConfig)
         index = VectorStoreWithIndex(
             vector_store=vector_store,
             index=MilvusIndex(
                 client=self.client,
                 collection_name=vector_store.identifier,
                 kvstore=self.kvstore,
-                use_native_hybrid=use_native_hybrid,
+                use_native_hybrid=True,
             ),
             inference_api=self.inference_api,
         )

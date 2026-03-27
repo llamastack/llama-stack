@@ -30,7 +30,6 @@ from llama_stack.providers.inline.inference.transformers.config import (
     TransformersInferenceConfig,
 )
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
-from llama_stack.providers.inline.vector_io.milvus.config import MilvusVectorIOConfig
 from llama_stack.providers.inline.vector_io.sqlite_vec.config import (
     SQLiteVectorIOConfig,
 )
@@ -140,7 +139,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         "vector_io": [
             BuildProvider(provider_type="inline::faiss"),
             BuildProvider(provider_type="inline::sqlite-vec"),
-            BuildProvider(provider_type="inline::milvus"),
             BuildProvider(provider_type="remote::chromadb"),
             BuildProvider(provider_type="remote::pgvector"),
             BuildProvider(provider_type="remote::qdrant"),
@@ -218,11 +216,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 provider_id="sqlite-vec",
                 provider_type="inline::sqlite-vec",
                 config=SQLiteVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
-            ),
-            Provider(
-                provider_id="${env.MILVUS_URL:+milvus}",
-                provider_type="inline::milvus",
-                config=MilvusVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
             ),
             Provider(
                 provider_id="${env.CHROMADB_URL:+chromadb}",

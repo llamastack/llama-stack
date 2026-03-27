@@ -642,7 +642,7 @@ Please refer to the inline provider documentation.
             api_dependencies=[Api.inference],
             optional_api_dependencies=[Api.files, Api.models],
             description="""
-[Milvus](https://milvus.io/) is an inline and remote vector database provider for Llama Stack. It
+[Milvus](https://milvus.io/) is a remote vector database provider for Llama Stack. It
 allows you to store and query vectors directly within a Milvus database.
 That means you're not limited to storing vectors in memory or in a separate service.
 
@@ -650,7 +650,7 @@ That means you're not limited to storing vectors in memory or in a separate serv
 
 - Easy to use
 - Fully integrated with Llama Stack
-- Supports all search modes: vector, keyword, and hybrid search (both inline and remote configurations)
+- Supports all search modes: vector, keyword, and hybrid search
 
 ## Usage
 
@@ -662,41 +662,13 @@ To use Milvus in your Llama Stack project, follow these steps:
 
 ## Installation
 
-If you want to use inline Milvus, you can install:
-
-```bash
-pip install pymilvus[milvus-lite]
-```
-
-If you want to use remote Milvus, you can install:
-
 ```bash
 pip install pymilvus
 ```
 
 ## Configuration
 
-In Llama Stack, Milvus can be configured in two ways:
-- **Inline (Local) Configuration** - Uses Milvus-Lite for local storage
-- **Remote Configuration** - Connects to a remote Milvus server
-
-### Inline (Local) Configuration
-
-The simplest method is local configuration, which requires setting `db_path`, a path for locally storing Milvus-Lite files:
-
-```yaml
-vector_io:
-  - provider_id: milvus
-    provider_type: inline::milvus
-    config:
-      db_path: ~/.llama/distributions/together/milvus_store.db
-```
-
-### Remote Configuration
-
-Remote configuration is suitable for larger data storage requirements:
-
-#### Standard Remote Connection
+### Standard Remote Connection
 
 ```yaml
 vector_io:
@@ -749,7 +721,7 @@ vector_io:
 
 ## Search Modes
 
-Milvus supports three different search modes for both inline and remote configurations:
+Milvus supports three different search modes:
 
 ### Vector Search
 Vector search uses semantic similarity to find the most relevant chunks based on embedding vectors. This is the default search mode and works well for finding conceptually similar content.
@@ -837,18 +809,6 @@ For detailed documentation on RRF and Weighted rankers, please refer to the [Mil
 See the [Milvus documentation](https://milvus.io/docs/install-overview.md) for more details about Milvus in general.
 
 For more details on TLS configuration, refer to the [TLS setup guide](https://milvus.io/docs/tls.md).
-""",
-        ),
-        InlineProviderSpec(
-            api=Api.vector_io,
-            provider_type="inline::milvus",
-            pip_packages=["pymilvus[milvus-lite]>=2.4.10"] + DEFAULT_VECTOR_IO_DEPS,
-            module="llama_stack.providers.inline.vector_io.milvus",
-            config_class="llama_stack.providers.inline.vector_io.milvus.MilvusVectorIOConfig",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models],
-            description="""
-Please refer to the remote provider documentation.
 """,
         ),
         RemoteProviderSpec(

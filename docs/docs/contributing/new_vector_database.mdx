@@ -44,12 +44,13 @@ filtering, sorting, and aggregating vectors.
 from llama_stack.providers.registry.specs import InlineProviderSpec
 from llama_stack.providers.registry.api import Api
 
-InlineProviderSpec(
+RemoteProviderSpec(
     api=Api.vector_io,
-    provider_type="inline::milvus",
+    adapter_type="milvus",
+    provider_type="remote::milvus",
     pip_packages=["pymilvus>=2.4.10"],
-    module="llama_stack.providers.inline.vector_io.milvus",
-    config_class="llama_stack.providers.inline.vector_io.milvus.MilvusVectorIOConfig",
+    module="llama_stack.providers.remote.vector_io.milvus",
+    config_class="llama_stack.providers.remote.vector_io.milvus.MilvusVectorIOConfig",
     api_dependencies=[Api.inference],
     optional_api_dependencies=[Api.files],
     description="",

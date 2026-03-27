@@ -24,7 +24,6 @@ distribution_spec:
     vector_io:
     - provider_type: inline::faiss
     - provider_type: inline::sqlite-vec
-    - provider_type: inline::milvus
     - provider_type: remote::chromadb
     - provider_type: remote::pgvector
     - provider_type: remote::qdrant

@@ -117,13 +117,6 @@ providers:
       persistence:
         namespace: vector_io::sqlite_vec
         backend: kv_default
-  - provider_id: ${env.MILVUS_URL:+milvus}
-    provider_type: inline::milvus
-    config:
-      db_path: ${env.MILVUS_DB_PATH:=~/.llama/distributions/ci-tests}/milvus.db
-      persistence:
-        namespace: vector_io::milvus
-        backend: kv_default
   - provider_id: ${env.CHROMADB_URL:+chromadb}
     provider_type: remote::chromadb
     config:

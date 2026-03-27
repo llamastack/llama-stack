@@ -160,7 +160,6 @@ const sidebars: SidebarsConfig = {
             'providers/vector_io/inline_chromadb',
             'providers/vector_io/inline_faiss',
             'providers/vector_io/inline_builtin',
-            'providers/vector_io/inline_milvus',
             'providers/vector_io/inline_qdrant',
             'providers/vector_io/inline_sqlite-vec',
             'providers/vector_io/remote_chromadb',

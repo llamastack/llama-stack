@@ -27,7 +27,6 @@ def skip_if_provider_doesnt_support_openai_vector_stores(client_with_models):
         if p.provider_type in [
             "inline::chromadb",
             "inline::faiss",
-            "inline::milvus",
             "inline::qdrant",
             "inline::sqlite-vec",
             "remote::chromadb",
@@ -46,7 +45,6 @@ def skip_if_provider_doesnt_support_openai_vector_stores(client_with_models):
 _PROVIDERS_WITH_NATIVE_FILTERING = {
     "inline::faiss",
     "inline::sqlite-vec",
-    "inline::milvus",
     "remote::milvus",
     "remote::pgvector",
 }
@@ -68,7 +66,6 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(
         "vector": [
             "inline::faiss",
             "inline::sqlite-vec",
-            "inline::milvus",
             "inline::chromadb",
             "inline::qdrant",
             "remote::chromadb",
@@ -80,7 +77,6 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(
             "remote::infinispan",
         ],
         "keyword": [
-            "inline::milvus",
             "inline::qdrant",
             "inline::sqlite-vec",
             "remote::milvus",
@@ -92,7 +88,6 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(
             "remote::infinispan",
         ],
         "hybrid": [
-            "inline::milvus",
             "inline::qdrant",
             "inline::sqlite-vec",
             "remote::milvus",
