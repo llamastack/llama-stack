@@ -10,7 +10,7 @@
 
 [**Quick Start**](https://llamastack.github.io/docs/getting_started/quickstart) | [**Documentation**](https://llamastack.github.io/docs) | [**OpenAI API Compatibility**](https://llamastack.github.io/docs/api-openai) | [**Discord**](https://discord.gg/llama-stack)
 
-**Open-source API server for building AI applications. OpenAI-compatible. Any model, any infrastructure.**
+**Open-source agentic API server for building AI applications. OpenAI-compatible. Any model, any infrastructure.**
 
 Llama Stack is a drop-in replacement for the OpenAI API that you can run anywhere — your laptop, your datacenter, or the cloud. Use any OpenAI-compatible client or agentic framework. Swap between Llama, GPT, Gemini, Mistral, or any model without changing your application code.
 
@@ -28,9 +28,8 @@ response = client.chat.completions.create(
 
 - **Chat Completions & Embeddings** — standard `/v1/chat/completions`, `/v1/completions`, and `/v1/embeddings` endpoints, compatible with any OpenAI client
 - **Responses API** — server-side agentic orchestration with tool calling, MCP server integration, and built-in file search (RAG) in a single API call ([learn more](https://llamastack.github.io/docs/api-openai))
-- **Vector Stores & Files** — `/v1/vector_stores` and `/v1/files` for managed document storage and retrieval
+- **Vector Stores & Files** — `/v1/vector_stores` and `/v1/files` for managed document storage and search
 - **Batches** — `/v1/batches` for offline batch processing
-- **Safety** — content moderation via Llama Guard
 - **[Open Responses](https://www.openresponses.org/) conformant** — the Responses API implementation passes the Open Responses conformance test suite
 
 ## Use any model, use any infrastructure
@@ -62,8 +61,8 @@ Install and run a Llama Stack server:
 # One-line install
 curl -LsSf https://github.com/llamastack/llama-stack/raw/main/scripts/install.sh | bash
 
-# Or install via pip
-pip install llama-stack
+# Or install via uv
+uv pip install llama-stack
 
 # Start the server (uses the starter distribution with Ollama)
 llama stack run
@@ -85,9 +84,7 @@ See the [Quick Start guide](https://llamastack.github.io/docs/getting_started/qu
 |  Language |  SDK | Package |
 | :----: | :----: | :----: |
 | Python |  [llama-stack-client-python](https://github.com/meta-llama/llama-stack-client-python) | [![PyPI version](https://img.shields.io/pypi/v/llama_stack_client.svg)](https://pypi.org/project/llama_stack_client/) |
-| Swift  | [llama-stack-client-swift](https://github.com/meta-llama/llama-stack-client-swift) | [![Swift Package Index](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmeta-llama%2Fllama-stack-client-swift%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/meta-llama/llama-stack-client-swift) |
 | TypeScript   | [llama-stack-client-typescript](https://github.com/meta-llama/llama-stack-client-typescript) | [![NPM version](https://img.shields.io/npm/v/llama-stack-client.svg)](https://npmjs.org/package/llama-stack-client) |
-| Kotlin | [llama-stack-client-kotlin](https://github.com/meta-llama/llama-stack-client-kotlin) | [![Maven version](https://img.shields.io/maven-central/v/com.llama.llamastack/llama-stack-client-kotlin)](https://central.sonatype.com/artifact/com.llama.llamastack/llama-stack-client-kotlin) |
 
 ## Community
 
