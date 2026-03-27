@@ -326,6 +326,8 @@ class ToolExecutor:
                 from llama_stack.providers.utils.tools.mcp import invoke_mcp_tool
 
                 mcp_tool = mcp_tool_to_server[function_name]
+                if not mcp_tool.server_url:
+                    raise ValueError(f"Failed to invoke MCP tool {function_name}: server_url is not set")
                 attributes = {
                     "server_label": mcp_tool.server_label,
                     "server_url": mcp_tool.server_url,

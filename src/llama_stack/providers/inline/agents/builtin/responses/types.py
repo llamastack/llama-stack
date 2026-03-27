@@ -38,7 +38,8 @@ from llama_stack_api import (
 def _json_equal(a: str, b: str) -> bool:
     """Compare two JSON strings by value, falling back to string comparison."""
     try:
-        return json.loads(a) == json.loads(b)
+        # json.loads() returns Any, so == on two Any values is also Any
+        return cast(bool, json.loads(a) == json.loads(b))
     except (json.JSONDecodeError, TypeError):
         return a == b
 

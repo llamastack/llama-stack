@@ -20,6 +20,7 @@ from llama_stack_api import (
     OpenAIResponseObjectWithInput,
     Order,
     ResponseInputItemNotFoundError,
+    ResponseItemInclude,
     ResponseNotFoundError,
 )
 from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
@@ -253,7 +254,7 @@ class ResponsesStore:
         response_id: str,
         after: str | None = None,
         before: str | None = None,
-        include: list[str] | None = None,
+        include: list[ResponseItemInclude] | None = None,
         limit: int | None = 20,
         order: Order | None = Order.desc,
     ) -> ListOpenAIResponseInputItem:
