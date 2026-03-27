@@ -69,6 +69,8 @@ def _build_where_expr(column: ColumnElement, value: Any) -> ColumnElement:
 
 
 class SqlAlchemySqlStoreImpl(SqlStore):
+    """SQLAlchemy-based SQL store implementation supporting SQLite and PostgreSQL backends."""
+
     def __init__(self, config: SqlAlchemySqlStoreConfig):
         self.config = config
         self._is_sqlite_backend = "sqlite" in self.config.engine_str

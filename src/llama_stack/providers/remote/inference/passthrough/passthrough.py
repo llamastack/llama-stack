@@ -30,6 +30,8 @@ logger = get_logger(__name__, category="inference")
 
 
 class PassthroughInferenceAdapter(NeedsRequestProviderData, Inference):
+    """Inference adapter that forwards requests to any OpenAI-compatible endpoint."""
+
     def __init__(self, config: PassthroughImplConfig) -> None:
         self.config = config
 

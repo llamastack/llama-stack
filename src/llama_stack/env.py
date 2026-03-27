@@ -8,6 +8,8 @@ import os
 
 
 class MissingCredentialError(Exception):
+    """Raised when a required credential is not found in the environment."""
+
     pass
 
 

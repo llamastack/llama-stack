@@ -77,6 +77,15 @@ def get_all_api_routes(
 
 
 def initialize_route_impls(impls, external_apis: dict[Api, ExternalApiSpec] | None = None) -> RouteImpls:
+    """Build a mapping of HTTP methods and URL patterns to endpoint implementations.
+
+    Args:
+        impls: Dictionary mapping APIs to their provider implementations.
+        external_apis: Optional dictionary of external API specifications.
+
+    Returns:
+        A nested dictionary mapping HTTP methods to regex-keyed endpoint implementations.
+    """
     api_to_routes = get_all_api_routes(external_apis)
     route_impls: RouteImpls = {}
 

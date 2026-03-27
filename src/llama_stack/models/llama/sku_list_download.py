@@ -16,6 +16,8 @@ from .sku_types import (
 
 @dataclass
 class LlamaDownloadInfo:
+    """Download metadata for retrieving a Llama model from llamameta.net."""
+
     folder: str
     files: list[str]
     pth_size: int

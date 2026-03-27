@@ -15,6 +15,8 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class PassthroughImplConfig(RemoteInferenceProviderConfig):
+    """Configuration for the passthrough inference provider."""
+
     base_url: HttpUrl | None = Field(
         default=None,
         description="The URL for the passthrough endpoint",

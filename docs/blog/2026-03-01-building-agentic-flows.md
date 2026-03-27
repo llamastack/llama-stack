@@ -1,11 +1,7 @@
 ---
 slug: building-agentic-flows-with-conversations-and-responses
 title: "Building a Self-Improving Agent with Llama Stack"
-authors:
-  - name: Raghotham Murthy
-    title: Llama Stack Core Team
-    url: https://github.com/raghotham
-    image_url: https://github.com/raghotham.png
+authors: [raghotham]
 tags: [agents, responses-api, conversations, prompts, tutorial]
 date: 2026-03-01
 ---

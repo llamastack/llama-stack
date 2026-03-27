@@ -68,6 +68,11 @@ def format_output_deps_only(
 
 
 def run_stack_list_deps_command(args: argparse.Namespace) -> None:
+    """Resolve and print the pip dependencies for a Llama Stack distribution.
+
+    Args:
+        args: parsed CLI arguments containing config or providers specification.
+    """
     if args.config:
         try:
             from llama_stack.core.utils.config_resolution import resolve_config_or_distro
@@ -141,6 +146,14 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
 
 
 def quote_if_needed(dep):
+    """Wrap a dependency string in quotes if it contains shell-special characters.
+
+    Args:
+        dep: a pip dependency specifier string.
+
+    Returns:
+        The dependency string, quoted if it contains commas or comparison operators.
+    """
     # Add quotes if the dependency contains special characters that need escaping in shell
     # This includes: commas, comparison operators (<, >, <=, >=, ==, !=)
     needs_quoting = any(char in dep for char in [",", "<", ">", "="])

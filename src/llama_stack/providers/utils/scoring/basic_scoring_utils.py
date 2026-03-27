@@ -10,11 +10,19 @@ from types import FrameType
 
 
 class TimeoutError(Exception):
+    """Raised when a timed operation exceeds its allowed duration."""
+
     pass
 
 
 @contextlib.contextmanager
 def time_limit(seconds: float) -> Iterator[None]:
+    """Context manager that raises TimeoutError after the specified number of seconds.
+
+    Args:
+        seconds: maximum allowed execution time
+    """
+
     def signal_handler(signum: int, frame: FrameType | None) -> None:
         raise TimeoutError("Timed out!")
 

@@ -11,4 +11,6 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class BedrockSafetyConfig(BedrockBaseConfig):
+    """Configuration for the AWS Bedrock safety provider."""
+
     pass
