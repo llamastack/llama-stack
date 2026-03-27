@@ -5,13 +5,16 @@
   "summary": {
     "endpoints": {
       "implemented": 28,
-      "total": 114,
+      "total": 146,
       "missing": [
         "/assistants",
         "/assistants/{assistant_id}",
         "/audio/speech",
         "/audio/transcriptions",
         "/audio/translations",
+        "/audio/voice_consents",
+        "/audio/voice_consents/{consent_id}",
+        "/audio/voices",
         "/chat/completions/{completion_id}/messages",
         "/evals",
         "/evals/{eval_id}",
@@ -39,6 +42,12 @@
         "/organization/certificates/deactivate",
         "/organization/certificates/{certificate_id}",
         "/organization/costs",
+        "/organization/groups",
+        "/organization/groups/{group_id}",
+        "/organization/groups/{group_id}/roles",
+        "/organization/groups/{group_id}/roles/{role_id}",
+        "/organization/groups/{group_id}/users",
+        "/organization/groups/{group_id}/users/{user_id}",
         "/organization/invites",
         "/organization/invites/{invite_id}",
         "/organization/projects",
@@ -49,12 +58,16 @@
         "/organization/projects/{project_id}/certificates",
         "/organization/projects/{project_id}/certificates/activate",
         "/organization/projects/{project_id}/certificates/deactivate",
+        "/organization/projects/{project_id}/groups",
+        "/organization/projects/{project_id}/groups/{group_id}",
         "/organization/projects/{project_id}/rate_limits",
         "/organization/projects/{project_id}/rate_limits/{rate_limit_id}",
         "/organization/projects/{project_id}/service_accounts",
         "/organization/projects/{project_id}/service_accounts/{service_account_id}",
         "/organization/projects/{project_id}/users",
         "/organization/projects/{project_id}/users/{user_id}",
+        "/organization/roles",
+        "/organization/roles/{role_id}",
         "/organization/usage/audio_speeches",
         "/organization/usage/audio_transcriptions",
         "/organization/usage/code_interpreter_sessions",
@@ -65,6 +78,14 @@
         "/organization/usage/vector_stores",
         "/organization/users",
         "/organization/users/{user_id}",
+        "/organization/users/{user_id}/roles",
+        "/organization/users/{user_id}/roles/{role_id}",
+        "/projects/{project_id}/groups/{group_id}/roles",
+        "/projects/{project_id}/groups/{group_id}/roles/{role_id}",
+        "/projects/{project_id}/roles",
+        "/projects/{project_id}/roles/{role_id}",
+        "/projects/{project_id}/users/{user_id}/roles",
+        "/projects/{project_id}/users/{user_id}/roles/{role_id}",
         "/realtime/calls",
         "/realtime/calls/{call_id}/accept",
         "/realtime/calls/{call_id}/hangup",
@@ -73,7 +94,14 @@
         "/realtime/client_secrets",
         "/realtime/sessions",
         "/realtime/transcription_sessions",
+        "/responses/compact",
         "/responses/input_tokens",
+        "/skills",
+        "/skills/{skill_id}",
+        "/skills/{skill_id}/content",
+        "/skills/{skill_id}/versions",
+        "/skills/{skill_id}/versions/{version}",
+        "/skills/{skill_id}/versions/{version}/content",
         "/threads",
         "/threads/runs",
         "/threads/{thread_id}",
@@ -90,17 +118,21 @@
         "/uploads/{upload_id}/complete",
         "/uploads/{upload_id}/parts",
         "/videos",
+        "/videos/characters",
+        "/videos/characters/{character_id}",
+        "/videos/edits",
+        "/videos/extensions",
         "/videos/{video_id}",
         "/videos/{video_id}/content",
         "/videos/{video_id}/remix"
       ]
     },
     "conformance": {
-      "score": 84.0,
-      "issues": 284,
+      "score": 87.8,
+      "issues": 288,
       "missing_properties": 131,
-      "total_problems": 415,
-      "total_properties": 2598
+      "total_problems": 419,
+      "total_properties": 3441
     }
   },
   "categories": {
@@ -288,7 +320,7 @@
                 {
                   "property": "POST.requestBody.content.application/json.properties.endpoint",
                   "details": [
-                    "Enum removed: ['/v1/responses', '/v1/chat/completions', '/v1/embeddings', '/v1/completions', '/v1/moderations']"
+                    "Enum removed: ['/v1/responses', '/v1/chat/completions', '/v1/embeddings', '/v1/completions', '/v1/moderations', '/v1/images/generations', '/v1/images/edits', '/v1/videos']"
                   ]
                 },
                 {
@@ -675,10 +707,10 @@
       ]
     },
     "Chat": {
-      "score": 87.8,
-      "issues": 30,
+      "score": 87.1,
+      "issues": 33,
       "missing_properties": 19,
-      "total_properties": 402,
+      "total_properties": 403,
       "endpoints": [
         {
           "path": "/chat/completions",
@@ -718,6 +750,12 @@
                   ]
                 },
                 {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.tool_calls.items",
+                  "details": [
+                    "Union variants added: 2"
+                  ]
+                },
+                {
                   "property": "GET.responses.200.content.application/json.properties.data.items.properties.usage",
                   "details": [
                     "Type removed: ['object']"
@@ -743,7 +781,7 @@
                 }
               ],
               "missing_count": 5,
-              "issues_count": 8
+              "issues_count": 9
             },
             {
               "method": "POST",
@@ -776,6 +814,12 @@
                   "property": "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call",
                   "details": [
                     "Type removed: ['object']"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls.items",
+                  "details": [
+                    "Union variants added: 2"
                   ]
                 },
                 {
@@ -862,7 +906,7 @@
                 }
               ],
               "missing_count": 10,
-              "issues_count": 16
+              "issues_count": 17
             }
           ]
         },
@@ -897,6 +941,12 @@
                   ]
                 },
                 {
+                  "property": "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls.items",
+                  "details": [
+                    "Union variants added: 2"
+                  ]
+                },
+                {
                   "property": "GET.responses.200.content.application/json.properties.usage",
                   "details": [
                     "Type removed: ['object']"
@@ -916,7 +966,7 @@
                 }
               ],
               "missing_count": 4,
-              "issues_count": 6
+              "issues_count": 7
             }
           ]
         }
@@ -1019,7 +1069,7 @@
                   "property": "POST.requestBody.content.application/json.properties.prompt",
                   "details": [
                     "Union variants added: 4",
-                    "Union variants removed: 4"
+                    "Default changed: <|endoftext|> -> None"
                   ]
                 },
                 {
@@ -1034,8 +1084,7 @@
                   "property": "POST.requestBody.content.application/json.properties.stop",
                   "details": [
                     "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 3",
-                    "Union variants removed: 2"
+                    "Union variants added: 3"
                   ]
                 },
                 {
@@ -1096,10 +1145,10 @@
       ]
     },
     "Conversations": {
-      "score": 98.0,
+      "score": 98.8,
       "issues": 22,
       "missing_properties": 4,
-      "total_properties": 1323,
+      "total_properties": 2165,
       "endpoints": [
         {
           "path": "/conversations",
@@ -1216,7 +1265,8 @@
                 {
                   "property": "GET.responses.200.content.application/json.properties.data.items",
                   "details": [
-                    "Union variants removed: 22"
+                    "Union variants added: 9",
+                    "Union variants removed: 25"
                   ]
                 },
                 {
@@ -1244,7 +1294,7 @@
                 {
                   "property": "GET.responses.200.content.application/json.properties.object",
                   "details": [
-                    "Type added: ['string']",
+                    "Enum removed: ['list']",
                     "Default changed: None -> list"
                   ]
                 }
@@ -1261,13 +1311,15 @@
                 {
                   "property": "POST.requestBody.content.application/json.properties.items.items",
                   "details": [
+                    "Union variants added: 9",
                     "Union variants removed: 3"
                   ]
                 },
                 {
                   "property": "POST.responses.200.content.application/json.properties.data.items",
                   "details": [
-                    "Union variants removed: 22"
+                    "Union variants added: 9",
+                    "Union variants removed: 25"
                   ]
                 },
                 {
@@ -1295,7 +1347,7 @@
                 {
                   "property": "POST.responses.200.content.application/json.properties.object",
                   "details": [
-                    "Type added: ['string']",
+                    "Enum removed: ['list']",
                     "Default changed: None -> list"
                   ]
                 }
@@ -1340,8 +1392,8 @@
       ]
     },
     "Embeddings": {
-      "score": 71.4,
-      "issues": 4,
+      "score": 64.3,
+      "issues": 5,
       "missing_properties": 0,
       "total_properties": 14,
       "endpoints": [
@@ -1352,6 +1404,12 @@
               "method": "POST",
               "missing_properties": [],
               "conformance_issues": [
+                {
+                  "property": "POST.requestBody.content.application/json.properties.input",
+                  "details": [
+                    "Union variants added: 4"
+                  ]
+                },
                 {
                   "property": "POST.requestBody.content.application/json.properties.model",
                   "details": [
@@ -1380,7 +1438,7 @@
                 }
               ],
               "missing_count": 0,
-              "issues_count": 4
+              "issues_count": 5
             }
           ]
         }
@@ -1605,14 +1663,14 @@
                 {
                   "property": "POST.requestBody.content.application/json.properties.input",
                   "details": [
-                    "Union variants added: 2",
-                    "Union variants removed: 3"
+                    "Union variants added: 2"
                   ]
                 },
                 {
                   "property": "POST.requestBody.content.application/json.properties.model",
                   "details": [
-                    "Nullable added (OpenAI non-nullable)"
+                    "Nullable added (OpenAI non-nullable)",
+                    "Default changed: omni-moderation-latest -> None"
                   ]
                 },
                 {
@@ -2001,8 +2059,7 @@
                   "property": "POST.requestBody.content.application/json.properties.chunking_strategy",
                   "details": [
                     "Type removed: ['object']",
-                    "Union variants added: 2",
-                    "Union variants removed: 2"
+                    "Union variants added: 2"
                   ]
                 },
                 {
@@ -2256,8 +2313,7 @@
                   "property": "POST.requestBody.content.application/json.properties.chunking_strategy",
                   "details": [
                     "Type removed: ['object']",
-                    "Union variants added: 2",
-                    "Union variants removed: 2"
+                    "Union variants added: 2"
                   ]
                 },
                 {
@@ -2380,6 +2436,7 @@
                   "property": "GET.responses.200.content.application/json.properties.data.items.properties.chunking_strategy",
                   "details": [
                     "Type removed: ['object']",
+                    "Union variants added: 3",
                     "Union variants removed: 2"
                   ]
                 },
@@ -2470,6 +2527,7 @@
                   "property": "GET.responses.200.content.application/json.properties.data.items.properties.chunking_strategy",
                   "details": [
                     "Type removed: ['object']",
+                    "Union variants added: 3",
                     "Union variants removed: 2"
                   ]
                 },
@@ -2541,8 +2599,7 @@
                   "property": "POST.requestBody.content.application/json.properties.chunking_strategy",
                   "details": [
                     "Type removed: ['object']",
-                    "Union variants added: 2",
-                    "Union variants removed: 2"
+                    "Union variants added: 2"
                   ]
                 },
                 {
@@ -2557,6 +2614,7 @@
                   "property": "POST.responses.200.content.application/json.properties.chunking_strategy",
                   "details": [
                     "Type removed: ['object']",
+                    "Union variants added: 3",
                     "Union variants removed: 2"
                   ]
                 },
@@ -2634,6 +2692,7 @@
                   "property": "GET.responses.200.content.application/json.properties.chunking_strategy",
                   "details": [
                     "Type removed: ['object']",
+                    "Union variants added: 3",
                     "Union variants removed: 2"
                   ]
                 },
@@ -2693,6 +2752,7 @@
                   "property": "POST.responses.200.content.application/json.properties.chunking_strategy",
                   "details": [
                     "Type removed: ['object']",
+                    "Union variants added: 3",
                     "Union variants removed: 2"
                   ]
                 },
@@ -2768,8 +2828,7 @@
                 {
                   "property": "POST.requestBody.content.application/json.properties.filters",
                   "details": [
-                    "Union variants added: 2",
-                    "Union variants removed: 2"
+                    "Union variants added: 2"
                   ]
                 },
                 {
@@ -2783,8 +2842,7 @@
                 {
                   "property": "POST.requestBody.content.application/json.properties.query",
                   "details": [
-                    "Union variants added: 1",
-                    "Union variants removed: 1"
+                    "Union variants added: 2"
                   ]
                 },
                 {

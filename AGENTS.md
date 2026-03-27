@@ -133,6 +133,9 @@ handled elsewhere.
 
 When making code changes, check whether the following documentation needs updating:
 
+- `README.md` — the root README contains an ASCII architecture diagram showing API
+  endpoints, inference providers, vector stores, tools/connectors, and file storage.
+  Update it when adding or removing providers, APIs, or backend integrations.
 - `ARCHITECTURE.md` — system overview, request flow, provider architecture, API layer,
   storage, configuration, and test recording system
 - Module-level `README.md` files in key directories:
