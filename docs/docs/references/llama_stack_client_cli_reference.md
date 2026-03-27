@@ -72,7 +72,7 @@ llama-stack-client providers list
 +-----------+----------------+-----------------+
 | datasetio | meta0          | meta-reference  |
 +-----------+----------------+-----------------+
-| inference | tgi0           | remote::tgi     |
+| inference | vllm0          | remote::vllm    |
 +-----------+----------------+-----------------+
 | memory    | meta-reference | meta-reference  |
 +-----------+----------------+-----------------+
@@ -175,7 +175,7 @@ llama-stack-client models get Llama3.1-8B-Instruct
 +----------------------+----------------------+----------------------------------------------------------+---------------+
 | identifier           | llama_model          | metadata                                                 | provider_id   |
 +======================+======================+==========================================================+===============+
-| Llama3.1-8B-Instruct | Llama3.1-8B-Instruct | {'huggingface_repo': 'meta-llama/Llama-3.1-8B-Instruct'} | tgi0          |
+| Llama3.1-8B-Instruct | Llama3.1-8B-Instruct | {'huggingface_repo': 'meta-llama/Llama-3.1-8B-Instruct'} | vllm0         |
 +----------------------+----------------------+----------------------------------------------------------+---------------+
 ```
 
