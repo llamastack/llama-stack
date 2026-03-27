@@ -95,33 +95,6 @@ def available_providers() -> list[ProviderSpec]:
         ),
         RemoteProviderSpec(
             api=Api.inference,
-            adapter_type="tgi",
-            provider_type="remote::tgi",
-            pip_packages=["huggingface_hub", "aiohttp"],
-            module="llama_stack.providers.remote.inference.tgi",
-            config_class="llama_stack.providers.remote.inference.tgi.TGIImplConfig",
-            description="Text Generation Inference (TGI) provider for HuggingFace model serving.",
-        ),
-        RemoteProviderSpec(
-            api=Api.inference,
-            adapter_type="hf::serverless",
-            provider_type="remote::hf::serverless",
-            pip_packages=["huggingface_hub", "aiohttp"],
-            module="llama_stack.providers.remote.inference.tgi",
-            config_class="llama_stack.providers.remote.inference.tgi.InferenceAPIImplConfig",
-            description="HuggingFace Inference API serverless provider for on-demand model inference.",
-        ),
-        RemoteProviderSpec(
-            api=Api.inference,
-            provider_type="remote::hf::endpoint",
-            adapter_type="hf::endpoint",
-            pip_packages=["huggingface_hub", "aiohttp"],
-            module="llama_stack.providers.remote.inference.tgi",
-            config_class="llama_stack.providers.remote.inference.tgi.InferenceEndpointImplConfig",
-            description="HuggingFace Inference Endpoints provider for dedicated model serving.",
-        ),
-        RemoteProviderSpec(
-            api=Api.inference,
             adapter_type="fireworks",
             provider_type="remote::fireworks",
             pip_packages=[
