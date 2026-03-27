@@ -225,6 +225,7 @@ ALL_RESOURCES = {
         "models": {
             "response_object_stream": "OpenAIResponseObjectStream",
             "response_object": "OpenAIResponseObject",
+            "compacted_response": "OpenAICompactedResponse",
         },
         "methods": {
             "create": {
@@ -240,6 +241,10 @@ ALL_RESOURCES = {
             "delete": {
                 "type": "http",
                 "endpoint": "delete /v1/responses/{response_id}",
+            },
+            "compact": {
+                "type": "http",
+                "endpoint": "post /v1/responses/compact",
             },
         },
         "subresources": {
