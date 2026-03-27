@@ -9,6 +9,15 @@ import pytest
 from .streaming_assertions import StreamingValidator
 
 
+def _get_attr(item, key, default=None):
+    """Get attribute from typed object or dict — works with both
+    the current LlamaStack client (returns dicts) and OpenAI client
+    (returns typed objects)."""
+    if isinstance(item, dict):
+        return item.get(key, default)
+    return getattr(item, key, default)
+
+
 def provider_from_model(client_with_models, text_model_id):
     models = {m.id: m for m in client_with_models.models.list()}
     models.update(
@@ -37,8 +46,9 @@ def test_reasoning_basic_streaming(client_with_models, text_model_id):
         model=text_model_id,
         input=input,
         stream=True,
-        reasoning={"effort": "low"},
+        reasoning={"effort": "high"},
     )
+
 
     chunks = []
     # Collect all chunks
@@ -80,17 +90,18 @@ def test_reasoning_non_streaming(client_with_models, text_model_id):
         stream=False,
     )
 
-    output_types = [item.type for item in response.output]
-    reasoning_items = [item for item in response.output if item.type == "reasoning"]
+    output_types = [_get_attr(item, "type") for item in response.output]
+    reasoning_items = [item for item in response.output if _get_attr(item, "type") == "reasoning"]
 
     assert len(reasoning_items) > 0, f"Expected reasoning items in output, got types: {output_types}"
 
     reasoning_item = reasoning_items[0]
-    assert reasoning_item.id, "Reasoning item should have an id"
-    assert reasoning_item.content is not None, "Reasoning item should have content"
-    assert len(reasoning_item.content) > 0, "Reasoning item should have at least one content entry"
-    assert reasoning_item.content[0].type == "reasoning_text"
-    assert len(reasoning_item.content[0].text) > 0, "Reasoning content text should not be empty"
+    assert _get_attr(reasoning_item, "id"), "Reasoning item should have an id"
+    content = _get_attr(reasoning_item, "content")
+    assert content is not None, "Reasoning item should have content"
+    assert len(content) > 0, "Reasoning item should have at least one content entry"
+    assert _get_attr(content[0], "type") == "reasoning_text"
+    assert len(_get_attr(content[0], "text", "")) > 0, "Reasoning content text should not be empty"
 
 
 def test_reasoning_multi_turn_passthrough(client_with_models, text_model_id):
@@ -114,8 +125,8 @@ def test_reasoning_multi_turn_passthrough(client_with_models, text_model_id):
         stream=False,
     )
 
-    output_types = [item.type for item in resp1.output]
-    reasoning_items = [item for item in resp1.output if item.type == "reasoning"]
+    output_types = [_get_attr(item, "type") for item in resp1.output]
+    reasoning_items = [item for item in resp1.output if _get_attr(item, "type") == "reasoning"]
     assert len(reasoning_items) > 0, f"Expected reasoning items in turn 1, got types: {output_types}"
 
     # Turn 2: pass previous output back as input with a follow-up
@@ -130,9 +141,8 @@ def test_reasoning_multi_turn_passthrough(client_with_models, text_model_id):
     )
 
     assert resp2.output, "Expected non-empty output in turn 2"
-    message_items = [item for item in resp2.output if item.type == "message"]
+    message_items = [item for item in resp2.output if _get_attr(item, "type") == "message"]
     assert len(message_items) > 0, "Expected a message in turn 2 output"
-    # assert len(message_items[0].content[0].text) > 0, "Expected non-empty response text in turn 2"
 
 
 def test_reasoning_unsupported_provider_completes_without_error(openai_client, client_with_models, text_model_id):
@@ -152,7 +162,7 @@ def test_reasoning_unsupported_provider_completes_without_error(openai_client, c
         stream=False,
     )
 
-    assert response.status == "completed"
+    assert _get_attr(response, "status") == "completed"
     # No ReasoningItem expected — provider fell back to regular CC
-    reasoning_items = [item for item in response.output if item.type == "reasoning"]
+    reasoning_items = [item for item in response.output if _get_attr(item, "type") == "reasoning"]
     assert len(reasoning_items) == 0, "Unsupported provider should not return reasoning items"
