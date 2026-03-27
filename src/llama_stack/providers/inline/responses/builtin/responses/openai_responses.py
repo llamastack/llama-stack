@@ -1214,7 +1214,9 @@ class OpenAIResponsesImpl:
             else:
                 all_input = list(input)
         else:
-            raise InvalidParameterError("Either 'input' or 'previous_response_id' must be provided.")
+            raise InvalidParameterError(
+                "input, previous_response_id", None, "Either 'input' or 'previous_response_id' must be provided."
+            )
 
         # Convert to chat messages for the summarization call
         messages = await convert_response_input_to_chat_messages(all_input, files_api=self.files_api)

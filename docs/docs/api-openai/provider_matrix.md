@@ -19,11 +19,11 @@ inference provider, based on integration test results.
 
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
-| azure | 102 | 102 | 0 | 86% |
-| bedrock | 25 | 25 | 0 | 21% |
-| openai | 119 | 119 | 0 | 100% |
+| azure | 102 | 102 | 0 | 78% |
+| bedrock | 25 | 25 | 0 | 19% |
+| openai | 130 | 130 | 0 | 100% |
 | vllm | 1 | 1 | 0 | 1% |
-| watsonx | 56 | 56 | 0 | 47% |
+| watsonx | 56 | 56 | 0 | 43% |
 
 ## Provider Details
 
@@ -52,6 +52,22 @@ Models, endpoints, and versions used during test recordings.
 | non streaming multi turn image | ✅ | ⏭️ | ✅ | — | ⏭️ |
 | streaming basic | ✅ | ✅ | ✅ | — | ✅ |
 | streaming incremental content | ✅ | ✅ | ✅ | — | ✅ |
+
+## Compact Responses
+
+| Feature | azure | bedrock | openai | vllm | watsonx |
+| --- | --- | --- | --- | --- | --- |
+| compact basic conversation | — | — | ✅ | — | — |
+| compact chain through compaction | — | — | ✅ | — | — |
+| compact double compaction | — | — | ✅ | — | — |
+| compact input items hides compaction | — | — | ✅ | — | — |
+| compact roundtrip | — | — | ✅ | — | — |
+| compact single message | — | — | ✅ | — | — |
+| compact with previous response id | — | — | ✅ | — | — |
+| compact with tool calls dropped | — | — | ✅ | — | — |
+| context management auto compacts large input | — | — | ✅ | — | — |
+| context management no compact below threshold | — | — | ✅ | — | — |
+| context management none does not compact | — | — | ✅ | — | — |
 
 ## Conversation Responses
 
