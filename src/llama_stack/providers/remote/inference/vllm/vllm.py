@@ -35,6 +35,8 @@ log = get_logger(name=__name__, category="inference::vllm")
 
 
 class VLLMInferenceAdapter(OpenAIMixin):
+    """Inference adapter for remote vLLM servers."""
+
     config: VLLMInferenceAdapterConfig
 
     model_config = ConfigDict(arbitrary_types_allowed=True)

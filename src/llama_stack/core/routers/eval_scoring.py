@@ -33,6 +33,8 @@ logger = get_logger(name=__name__, category="core::routers")
 
 
 class ScoringRouter(Scoring):
+    """Router that delegates scoring operations to the appropriate provider via a routing table."""
+
     def __init__(
         self,
         routing_table: RoutingTable,
@@ -93,6 +95,8 @@ class ScoringRouter(Scoring):
 
 
 class EvalRouter(Eval):
+    """Router that delegates evaluation operations to the appropriate provider via a routing table."""
+
     def __init__(
         self,
         routing_table: RoutingTable,

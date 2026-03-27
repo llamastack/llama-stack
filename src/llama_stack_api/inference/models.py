@@ -235,6 +235,8 @@ register_schema(ResponseFormat, name="ResponseFormat")
 
 # This is an internally used class
 class CompletionRequest(BaseModel):
+    """Internal request model for text completion inference."""
+
     model: str
     content: InterleavedContent
     sampling_params: SamplingParams | None = Field(default_factory=SamplingParams)
@@ -326,6 +328,8 @@ class OpenAIFileFile(BaseModel):
 
 @json_schema_type
 class OpenAIFile(BaseModel):
+    """File content part for OpenAI-compatible chat completion messages."""
+
     type: Literal["file"] = Field(default="file", description="Must be 'file' to identify this as file content.")
     file: OpenAIFileFile = Field(..., description="File specification.")
 
@@ -506,6 +510,8 @@ register_schema(OpenAIResponseFormatParam, name="OpenAIResponseFormatParam")
 
 @json_schema_type
 class FunctionToolConfig(BaseModel):
+    """Configuration for a function tool specifying the function name."""
+
     name: str = Field(..., description="Name of the function.")
 
 
@@ -542,6 +548,8 @@ class OpenAIChatCompletionToolChoiceCustomTool(BaseModel):
 
 @json_schema_type
 class AllowedToolsConfig(BaseModel):
+    """Configuration specifying which tools are allowed and their selection mode."""
+
     tools: list[dict[str, Any]] = Field(..., description="List of allowed tools.")
     mode: Literal["auto", "required"] = Field(..., description="Mode for allowed tools.")
 
@@ -847,6 +855,8 @@ class ServiceTier(StrEnum):
 
 
 class OpenAICompletionWithInputMessages(OpenAIChatCompletion):
+    """Chat completion response extended with the original input messages."""
+
     input_messages: list[OpenAIMessageParam] = Field(
         ..., description="The input messages used to generate this completion."
     )

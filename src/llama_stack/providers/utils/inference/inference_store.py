@@ -38,6 +38,8 @@ class _WriteItem(NamedTuple):
 
 
 class InferenceStore:
+    """Persistent store for chat completion records with async write queue support."""
+
     def __init__(
         self,
         reference: InferenceStoreReference,

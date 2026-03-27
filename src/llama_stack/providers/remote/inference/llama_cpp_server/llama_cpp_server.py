@@ -10,6 +10,8 @@ from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 
 class LlamaCppServerInferenceAdapter(OpenAIMixin):
+    """Inference adapter for llama.cpp servers with an OpenAI-compatible API."""
+
     config: LlamaCppServerConfig
 
     def get_api_key(self) -> str | None:

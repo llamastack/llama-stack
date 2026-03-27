@@ -10,6 +10,8 @@ from .config import TogetherImplConfig
 
 
 class TogetherProviderDataValidator(BaseModel):
+    """Validator for Together provider data requiring a Together API key."""
+
     together_api_key: SecretStr
 
 

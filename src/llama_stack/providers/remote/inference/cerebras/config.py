@@ -16,6 +16,8 @@ DEFAULT_BASE_URL = "https://api.cerebras.ai/v1"
 
 
 class CerebrasProviderDataValidator(BaseModel):
+    """Validates provider-specific request data for Cerebras inference."""
+
     cerebras_api_key: SecretStr | None = Field(
         default=None,
         description="API key for Cerebras models",
@@ -24,6 +26,8 @@ class CerebrasProviderDataValidator(BaseModel):
 
 @json_schema_type
 class CerebrasImplConfig(RemoteInferenceProviderConfig):
+    """Configuration for the Cerebras inference provider."""
+
     base_url: HttpUrl | None = Field(
         default=HttpUrl(os.environ.get("CEREBRAS_BASE_URL", DEFAULT_BASE_URL)),
         description="Base URL for the Cerebras API",

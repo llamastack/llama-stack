@@ -49,6 +49,8 @@ class _HfAdapter(OpenAIMixin):
 
 
 class TGIAdapter(_HfAdapter):
+    """Inference adapter for direct TGI server connections."""
+
     async def initialize(self, config: TGIImplConfig) -> None:
         if not config.base_url:
             raise ValueError(
@@ -70,6 +72,8 @@ class TGIAdapter(_HfAdapter):
 
 
 class InferenceAPIAdapter(_HfAdapter):
+    """Inference adapter for HuggingFace Serverless Inference API."""
+
     async def initialize(self, config: InferenceAPIImplConfig) -> None:
         self.hf_client = AsyncInferenceClient(model=config.huggingface_repo, token=config.api_token.get_secret_value())
         endpoint_info = await self.hf_client.get_endpoint_info()
@@ -79,6 +83,8 @@ class InferenceAPIAdapter(_HfAdapter):
 
 
 class InferenceEndpointAdapter(_HfAdapter):
+    """Inference adapter for HuggingFace Inference Endpoints."""
+
     async def initialize(self, config: InferenceEndpointImplConfig) -> None:
         # Get the inference endpoint details
         api = HfApi(token=config.api_token.get_secret_value())

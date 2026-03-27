@@ -14,6 +14,8 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class WeaviateVectorIOConfig(BaseModel):
+    """Configuration for the Weaviate vector I/O provider."""
+
     weaviate_api_key: str | None = Field(description="The API key for the Weaviate instance", default=None)
     weaviate_cluster_url: str | None = Field(description="The URL of the Weaviate cluster", default="localhost:8080")
     persistence: KVStoreReference | None = Field(

@@ -75,6 +75,8 @@ PGVectorIndexConfig = Annotated[
 
 @json_schema_type
 class PGVectorVectorIOConfig(BaseModel):
+    """Configuration for the PGVector vector I/O provider."""
+
     host: str | None = Field(default="localhost")
     port: int | None = Field(default=5432)
     db: str | None = Field(default="postgres")
