@@ -37,21 +37,21 @@ response = client.chat.completions.create(
 Llama Stack has a pluggable provider architecture. Develop locally with Ollama, deploy to production with vLLM, or connect to a managed service — the API stays the same.
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│                 Llama Stack Server                           │
+┌──────────────────────────────────────────────────────────────┐
+│                      Llama Stack Server                      │
 │            (same API, same code, any environment)            │
-│                                                             │
-│  /v1/chat/completions    /v1/responses    /v1/vector_stores │
-│  /v1/embeddings          /v1/files        /v1/batches       │
-├─────────────────────────────┬───────────────────────────────┤
-│  Inference providers        │  Vector store providers       │
-│  ├── Ollama (local)         │  ├── FAISS / SQLite-vec       │
-│  ├── vLLM / TGI (cluster)  │  ├── Milvus / Qdrant          │
-│  ├── AWS Bedrock            │  ├── PGVector / ChromaDB      │
-│  ├── Azure OpenAI           │  ├── Weaviate                 │
-│  ├── Fireworks / Together   │  └── Elasticsearch            │
-│  └── ...15+ more            │                               │
-└─────────────────────────────┴───────────────────────────────┘
+│                                                              │
+│  /v1/chat/completions   /v1/responses     /v1/vector_stores  │
+│  /v1/embeddings         /v1/files         /v1/batches        │
+├──────────────────────────────┬───────────────────────────────┤
+│  Inference providers         │  Vector store providers       │
+│    Ollama (local)            │    FAISS, SQLite-vec           │
+│    vLLM, TGI (cluster)       │    Milvus, Qdrant             │
+│    AWS Bedrock               │    PGVector, ChromaDB          │
+│    Azure OpenAI              │    Weaviate                    │
+│    Fireworks, Together       │    Elasticsearch               │
+│    ...15+ more               │                               │
+└──────────────────────────────┴───────────────────────────────┘
 ```
 
 See the [provider documentation](https://llamastack.github.io/docs/providers) for the full list.
