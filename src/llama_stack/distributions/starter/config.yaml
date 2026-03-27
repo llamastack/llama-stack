@@ -29,10 +29,6 @@ providers:
       network:
         tls:
           verify: ${env.VLLM_TLS_VERIFY:=true}
-  - provider_id: ${env.TGI_URL:+tgi}
-    provider_type: remote::tgi
-    config:
-      base_url: ${env.TGI_URL:=}
   - provider_id: fireworks
     provider_type: remote::fireworks
     config:

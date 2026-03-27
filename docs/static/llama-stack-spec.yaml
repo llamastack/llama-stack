@@ -2693,6 +2693,45 @@ paths:
       description: Get the version of the service.
       operationId: version_v1_version_get
       x-public: true
+  /v1/responses/{response_id}/cancel:
+    post:
+      responses:
+        '200':
+          description: The updated response object with status 'cancelled'.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIResponseObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+        '404':
+          description: Response not found.
+        '409':
+          description: 'Conflict: Cannot cancel response (not a background response or already in terminal state).'
+      tags:
+      - Responses
+      summary: Cancel a background response that is in progress.
+      description: Cancel a background response that is queued or in progress. Only responses created with background=true can be cancelled.
+      operationId: cancel_openai_response_v1_responses__response_id__cancel_post
+      parameters:
+      - name: response_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the OpenAI response to cancel.
+          title: Response Id
+        description: The ID of the OpenAI response to cancel.
 components:
   schemas:
     Error:
