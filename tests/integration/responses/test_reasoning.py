@@ -75,6 +75,7 @@ def test_reasoning_non_streaming(client_with_models, text_model_id):
     response = client_with_models.responses.create(
         model=text_model_id,
         input="What is 2 + 2? Think step by step.",
+        reasoning={"effort": "medium"},
         stream=False,
     )
 
@@ -108,6 +109,7 @@ def test_reasoning_multi_turn_passthrough(client_with_models, text_model_id):
     resp1 = client_with_models.responses.create(
         model=text_model_id,
         input=input_messages,
+        reasoning={"effort": "medium"},
         stream=False,
     )
 
@@ -122,6 +124,7 @@ def test_reasoning_multi_turn_passthrough(client_with_models, text_model_id):
     resp2 = client_with_models.responses.create(
         model=text_model_id,
         input=turn2_input,
+        reasoning={"effort": "medium"},
         stream=False,
     )
 
