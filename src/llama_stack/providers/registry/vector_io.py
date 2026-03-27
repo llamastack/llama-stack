@@ -17,6 +17,11 @@ DEFAULT_VECTOR_IO_DEPS = ["chardet", "pypdf>=6.7.2"]
 
 
 def available_providers() -> list[ProviderSpec]:
+    """Return the list of available vector I/O provider specifications.
+
+    Returns:
+        List of ProviderSpec objects describing available providers
+    """
     return [
         InlineProviderSpec(
             api=Api.vector_io,

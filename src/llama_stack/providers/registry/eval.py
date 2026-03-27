@@ -9,6 +9,11 @@ from llama_stack_api import Api, InlineProviderSpec, ProviderSpec, RemoteProvide
 
 
 def available_providers() -> list[ProviderSpec]:
+    """Return the list of available evaluation provider specifications.
+
+    Returns:
+        List of ProviderSpec objects describing available providers
+    """
     return [
         InlineProviderSpec(
             api=Api.eval,

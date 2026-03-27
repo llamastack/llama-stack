@@ -14,6 +14,8 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class MilvusVectorIOConfig(BaseModel):
+    """Configuration for the inline Milvus vector I/O provider."""
+
     db_path: str
     persistence: KVStoreReference = Field(description="Config for KV store backend (SQLite only for now)")
     consistency_level: str = Field(description="The consistency level of the Milvus server", default="Strong")

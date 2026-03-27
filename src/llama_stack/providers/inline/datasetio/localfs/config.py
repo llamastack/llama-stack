@@ -11,6 +11,8 @@ from llama_stack.core.storage.datatypes import KVStoreReference
 
 
 class LocalFSDatasetIOConfig(BaseModel):
+    """Configuration for the local filesystem dataset I/O provider."""
+
     kvstore: KVStoreReference
 
     @classmethod

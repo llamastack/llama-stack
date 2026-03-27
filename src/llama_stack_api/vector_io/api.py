@@ -42,11 +42,15 @@ from .models import (
 
 
 class VectorStoreTable(Protocol):
+    """Protocol for looking up vector store definitions."""
+
     def get_vector_store(self, vector_store_id: str) -> VectorStore | None: ...
 
 
 @runtime_checkable
 class VectorIO(Protocol):
+    """Protocol for vector database operations and OpenAI-compatible vector store management."""
+
     vector_store_table: VectorStoreTable | None = None
 
     # this will just block now until chunks are inserted, but it should

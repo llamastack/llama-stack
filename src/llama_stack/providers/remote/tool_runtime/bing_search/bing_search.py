@@ -24,6 +24,8 @@ from .config import BingSearchToolConfig
 
 
 class BingSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRequestProviderData):
+    """Tool runtime for performing web searches using the Bing Search API."""
+
     def __init__(self, config: BingSearchToolConfig):
         self.config = config
         self.url = "https://api.bing.microsoft.com/v7.0/search"

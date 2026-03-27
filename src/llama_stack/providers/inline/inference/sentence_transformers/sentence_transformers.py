@@ -32,6 +32,8 @@ class SentenceTransformersInferenceImpl(
     InferenceProvider,
     ModelsProtocolPrivate,
 ):
+    """Inference provider for text embeddings using sentence-transformers models."""
+
     __provider_id__: str
 
     def __init__(self, config: SentenceTransformersInferenceConfig) -> None:

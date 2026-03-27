@@ -55,11 +55,15 @@ RoutingKey = str | list[str]
 
 
 class RegistryEntrySource(StrEnum):
+    """Source of a registry entry, distinguishing user-registered from provider-listed resources."""
+
     via_register_api = "via_register_api"
     listed_from_provider = "listed_from_provider"
 
 
 class User(BaseModel):
+    """An authenticated user with a principal identity and optional access control attributes."""
+
     principal: str
     # further attributes that may be used for access control decisions
     attributes: dict[str, list[str]] | None = None
@@ -78,30 +82,44 @@ class ResourceWithOwner(Resource):
 
 # Use the extended Resource for all routable objects
 class ModelWithOwner(Model, ResourceWithOwner):
+    """A Model resource extended with ownership information for access control."""
+
     pass
 
 
 class ShieldWithOwner(Shield, ResourceWithOwner):
+    """A Shield resource extended with ownership information for access control."""
+
     pass
 
 
 class VectorStoreWithOwner(VectorStore, ResourceWithOwner):
+    """A VectorStore resource extended with ownership information for access control."""
+
     pass
 
 
 class DatasetWithOwner(Dataset, ResourceWithOwner):
+    """A Dataset resource extended with ownership information for access control."""
+
     pass
 
 
 class ScoringFnWithOwner(ScoringFn, ResourceWithOwner):
+    """A ScoringFn resource extended with ownership information for access control."""
+
     pass
 
 
 class BenchmarkWithOwner(Benchmark, ResourceWithOwner):
+    """A Benchmark resource extended with ownership information for access control."""
+
     pass
 
 
 class ToolGroupWithOwner(ToolGroup, ResourceWithOwner):
+    """A ToolGroup resource extended with ownership information for access control."""
+
     pass
 
 
@@ -123,6 +141,8 @@ RoutedProtocol = Inference | Safety | VectorIO | DatasetIO | Scoring | Eval | To
 
 # Example: /inference, /safety
 class AutoRoutedProviderSpec(ProviderSpec):
+    """Provider spec for automatically routed APIs like inference and safety that delegate to a routing table."""
+
     provider_type: str = "router"
     config_class: str = ""
 
@@ -136,6 +156,8 @@ class AutoRoutedProviderSpec(ProviderSpec):
 
 # Example: /models, /shields
 class RoutingTableProviderSpec(ProviderSpec):
+    """Provider spec for routing table APIs like models and shields that manage resource registries."""
+
     provider_type: str = "routing_table"
     config_class: str = ""
     container_image: str | None = None
@@ -146,6 +168,8 @@ class RoutingTableProviderSpec(ProviderSpec):
 
 
 class Provider(BaseModel):
+    """A configured provider instance with its type, identifier, and configuration."""
+
     # provider_id of None means that the provider is not enabled - this happens
     # when the provider is enabled via a conditional environment variable
     provider_id: str | None
@@ -164,6 +188,8 @@ class Provider(BaseModel):
 
 
 class BuildProvider(BaseModel):
+    """A provider specification used during distribution build, containing just the type and optional module."""
+
     provider_type: str
     module: str | None = Field(
         default=None,
@@ -178,6 +204,8 @@ class BuildProvider(BaseModel):
 
 
 class DistributionSpec(BaseModel):
+    """Specification defining a distribution's providers and container image."""
+
     description: str | None = Field(
         default="",
         description="Description of the distribution",
@@ -194,6 +222,8 @@ class DistributionSpec(BaseModel):
 
 
 class OAuth2JWKSConfig(BaseModel):
+    """Configuration for OAuth2 JSON Web Key Set (JWKS) key retrieval."""
+
     # The JWKS URI for collecting public keys
     uri: str
     token: str | None = Field(default=None, description="token to authorise access to jwks")
@@ -201,6 +231,8 @@ class OAuth2JWKSConfig(BaseModel):
 
 
 class OAuth2IntrospectionConfig(BaseModel):
+    """Configuration for OAuth2 token introspection endpoint (RFC 7662)."""
+
     url: str
     client_id: str
     client_secret: str
@@ -345,6 +377,8 @@ class AuthenticationConfig(BaseModel):
 
 
 class AuthenticationRequiredError(Exception):
+    """Raised when a request requires authentication but none was provided."""
+
     pass
 
 
@@ -644,10 +678,14 @@ class SafetyConfig(BaseModel):
 
 
 class QuotaPeriod(StrEnum):
+    """Time period for request quota enforcement."""
+
     DAY = "day"
 
 
 class QuotaConfig(BaseModel):
+    """Configuration for per-client request rate limiting."""
+
     kvstore: KVStoreReference = Field(description="Config for KV store backend (SQLite only for now)")
     anonymous_max_requests: int = Field(default=100, description="Max requests for unauthenticated clients per period")
     authenticated_max_requests: int = Field(
@@ -657,6 +695,8 @@ class QuotaConfig(BaseModel):
 
 
 class CORSConfig(BaseModel):
+    """Configuration for Cross-Origin Resource Sharing (CORS) headers."""
+
     allow_origins: list[str] = Field(default_factory=list)
     allow_origin_regex: str | None = Field(default=None)
     allow_methods: list[str] = Field(default=["OPTIONS"])
@@ -673,6 +713,14 @@ class CORSConfig(BaseModel):
 
 
 def process_cors_config(cors_config: bool | CORSConfig | None) -> CORSConfig | None:
+    """Convert a CORS configuration value into a resolved CORSConfig object.
+
+    Args:
+        cors_config: A boolean (True for dev defaults, False/None to disable), or a CORSConfig instance.
+
+    Returns:
+        A CORSConfig instance or None if CORS is disabled.
+    """
     if cors_config is False or cors_config is None:
         return None
 
@@ -717,6 +765,8 @@ class RegisteredResources(BaseModel):
 
 
 class ServerConfig(BaseModel):
+    """Configuration for the HTTP(S) server including TLS, authentication, and quotas."""
+
     port: int = Field(
         default=8321,
         description="Port to listen on",
@@ -760,6 +810,8 @@ class ServerConfig(BaseModel):
 
 
 class StackConfig(BaseModel):
+    """Top-level runtime configuration for a Llama Stack distribution including providers, storage, and server settings."""
+
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
     distro_name: str | None = Field(
