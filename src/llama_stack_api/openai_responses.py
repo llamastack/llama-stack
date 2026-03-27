@@ -1503,12 +1503,16 @@ class OpenAIResponseCompaction(BaseModel):
 
 OpenAIResponseInput = Annotated[
     # Responses API allows output messages to be passed in as input
-    # Note: OpenAIResponseMessage is already included via OpenAIResponseOutput (discriminated by type="message"),
-    # so it must not be repeated here — duplicating it causes Stainless SDK name clashes in generated code.
+    # OpenAIResponseMessage appears in both OpenAIResponseOutput (discriminated by type="message")
+    # AND as a standalone fallback below. The standalone entry is required because inputs without
+    # an explicit "type" field (e.g. {"role": "user", "content": "..."}) fail the discriminator
+    # check in OpenAIResponseOutput. The left_to_right union mode tries the discriminated union
+    # first, then falls back to matching OpenAIResponseMessage directly.
     OpenAIResponseOutput
     | OpenAIResponseInputFunctionToolCallOutput
     | OpenAIResponseMCPApprovalResponse
-    | OpenAIResponseCompaction,
+    | OpenAIResponseCompaction
+    | OpenAIResponseMessage,
     Field(union_mode="left_to_right"),
 ]
 register_schema(OpenAIResponseInput, name="OpenAIResponseInput")

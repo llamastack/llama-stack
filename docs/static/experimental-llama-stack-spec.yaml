@@ -3796,7 +3796,9 @@ components:
         title: OpenAIResponseMCPApprovalResponse
       - $ref: '#/components/schemas/OpenAIResponseCompaction'
         title: OpenAIResponseCompaction
-      title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseCompaction
+      - $ref: '#/components/schemas/OpenAIResponseMessage'
+        title: OpenAIResponseMessage
+      title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
     OpenAIResponseInputToolFileSearch:
       properties:
         type:
@@ -4134,7 +4136,9 @@ components:
               title: OpenAIResponseMCPApprovalResponse
             - $ref: '#/components/schemas/OpenAIResponseCompaction'
               title: OpenAIResponseCompaction
-            title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseCompaction
+            - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
+              title: OpenAIResponseMessage-Output
+            title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
           type: array
           title: Input
       required:
@@ -5779,7 +5783,9 @@ components:
               title: OpenAIResponseMCPApprovalResponse
             - $ref: '#/components/schemas/OpenAIResponseCompaction'
               title: OpenAIResponseCompaction
-            title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseCompaction
+            - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
+              title: OpenAIResponseMessage-Output
+            title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
           type: array
           title: Data
         object:
@@ -8789,7 +8795,9 @@ components:
               title: OpenAIResponseMCPApprovalResponse
             - $ref: '#/components/schemas/OpenAIResponseCompaction'
               title: OpenAIResponseCompaction
-            title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseCompaction
+            - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
+              title: OpenAIResponseMessage-Output
+            title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
           type: array
           title: Output
         usage:
