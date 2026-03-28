@@ -19,10 +19,10 @@ inference provider, based on integration test results.
 
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
-| azure | 101 | 101 | 0 | 84% |
+| azure | 102 | 102 | 0 | 84% |
 | bedrock | 28 | 28 | 0 | 23% |
 | ollama | 2 | 2 | 0 | 2% |
-| openai | 118 | 118 | 0 | 98% |
+| openai | 119 | 119 | 0 | 98% |
 | vllm | 4 | 4 | 0 | 3% |
 | watsonx | 56 | 56 | 0 | 46% |
 
@@ -90,6 +90,7 @@ Models, endpoints, and versions used during test recordings.
 | --- | --- | --- | --- | --- | --- | --- |
 | background false is synchronous | ✅ | — | — | ✅ | — | ✅ |
 | background returns queued | ✅ | — | — | ✅ | — | ✅ |
+| cancel completed response fails | ✅ | — | — | ✅ | — | ⏭️ |
 | incomplete details length | ✅ | — | — | ✅ | — | ✅ |
 | incomplete details length streaming | ✅ | — | — | ✅ | — | ✅ |
 | incomplete details max iterations exceeded | ✅ | — | — | ✅ | — | ✅ |
