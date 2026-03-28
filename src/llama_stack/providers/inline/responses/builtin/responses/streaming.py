@@ -551,6 +551,9 @@ class StreamingResponseOrchestrator:
                             "Provider does not support reasoning in chat completions. "
                             "Falling back to regular chat completion."
                         )
+                        # Clear reasoning_effort — the fallback provider may not
+                        # support it (e.g. OpenAI's gpt-4o rejects reasoning_effort)
+                        params.reasoning_effort = None
                         completion_result = await self.inference_api.openai_chat_completion(params)
                 else:
                     completion_result = await self.inference_api.openai_chat_completion(params)

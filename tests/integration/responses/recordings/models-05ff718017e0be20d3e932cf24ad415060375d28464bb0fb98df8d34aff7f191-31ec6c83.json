@@ -1,5 +1,5 @@
 {
-  "test_id": null,
+  "test_id": "tests/integration/responses/test_reasoning.py::test_reasoning_multi_turn_passthrough[txt=openai/gpt-4o]",
   "request": {
     "method": "POST",
     "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/models",
@@ -16,44 +16,8 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "qwen.qwen3-32b",
-          "created": 1764460800,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "mistral.devstral-2-123b",
-          "created": 1765843200,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "qwen.qwen3-vl-235b-a22b-instruct",
-          "created": 1764460800,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "mistral.ministral-3-8b-instruct",
-          "created": 1763923750,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "openai.gpt-oss-20b",
-          "created": 1764460800,
+          "id": "mistral.mistral-large-3-675b-instruct",
+          "created": 1763923896,
           "object": "model",
           "owned_by": "system"
         }
@@ -70,8 +34,8 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "qwen.qwen3-coder-30b-a3b-instruct",
-          "created": 1764460800,
+          "id": "nvidia.nemotron-nano-3-30b",
+          "created": 1765065600,
           "object": "model",
           "owned_by": "system"
         }
@@ -79,8 +43,17 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "zai.glm-5",
-          "created": 1771770206,
+          "id": "nvidia.nemotron-super-3-120b",
+          "created": 1768780800,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "qwen.qwen3-next-80b-a3b-instruct",
+          "created": 1764460800,
           "object": "model",
           "owned_by": "system"
         }
@@ -97,7 +70,16 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "google.gemma-3-27b-it",
+          "id": "mistral.ministral-3-3b-instruct",
+          "created": 1763923654,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "mistral.voxtral-mini-3b-2507",
           "created": 1764460800,
           "object": "model",
           "owned_by": "system"
@@ -106,34 +88,7 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "zai.glm-4.7-flash",
-          "created": 1769644800,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "openai.gpt-oss-safeguard-120b",
-          "created": 1764460800,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "qwen.qwen3-coder-next",
-          "created": 1770163200,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "openai.gpt-oss-safeguard-20b",
+          "id": "moonshotai.kimi-k2-thinking",
           "created": 1764460800,
           "object": "model",
           "owned_by": "system"
@@ -151,6 +106,51 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
+          "id": "qwen.qwen3-coder-next",
+          "created": 1770163200,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "openai.gpt-oss-safeguard-120b",
+          "created": 1764460800,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "zai.glm-4.6",
+          "created": 1764460800,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "openai.gpt-oss-120b",
+          "created": 1764460800,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "minimax.minimax-m2.1",
+          "created": 1769396433,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
           "id": "minimax.minimax-m2.5",
           "created": 1769396433,
           "object": "model",
@@ -160,26 +160,8 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "moonshotai.kimi-k2-thinking",
-          "created": 1764460800,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "mistral.voxtral-small-24b-2507",
-          "created": 1764460800,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "qwen.qwen3-next-80b-a3b-instruct",
-          "created": 1764460800,
+          "id": "zai.glm-4.7-flash",
+          "created": 1769644800,
           "object": "model",
           "owned_by": "system"
         }
@@ -196,7 +178,7 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "minimax.minimax-m2",
+          "id": "google.gemma-3-27b-it",
           "created": 1764460800,
           "object": "model",
           "owned_by": "system"
@@ -214,8 +196,8 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "openai.gpt-oss-120b",
-          "created": 1764460800,
+          "id": "zai.glm-5",
+          "created": 1771770206,
           "object": "model",
           "owned_by": "system"
         }
@@ -223,43 +205,7 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "mistral.ministral-3-14b-instruct",
-          "created": 1763923865,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "nvidia.nemotron-super-3-120b",
-          "created": 1768780800,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "mistral.mistral-large-3-675b-instruct",
-          "created": 1763923896,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "mistral.voxtral-mini-3b-2507",
-          "created": 1764460800,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "qwen.qwen3-235b-a22b-2507",
+          "id": "qwen.qwen3-coder-30b-a3b-instruct",
           "created": 1764460800,
           "object": "model",
           "owned_by": "system"
@@ -277,25 +223,7 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "minimax.minimax-m2.1",
-          "created": 1769396433,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "moonshotai.kimi-k2.5",
-          "created": 1769558400,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "google.gemma-3-4b-it",
+          "id": "openai.gpt-oss-20b",
           "created": 1764460800,
           "object": "model",
           "owned_by": "system"
@@ -304,16 +232,7 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "mistral.ministral-3-3b-instruct",
-          "created": 1763923654,
-          "object": "model",
-          "owned_by": "system"
-        }
-      },
-      {
-        "__type__": "openai.types.model.Model",
-        "__data__": {
-          "id": "deepseek.v3.1",
+          "id": "qwen.qwen3-32b",
           "created": 1764460800,
           "object": "model",
           "owned_by": "system"
@@ -322,8 +241,53 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "deepseek.v3.2",
-          "created": 1769385600,
+          "id": "mistral.ministral-3-14b-instruct",
+          "created": 1763923865,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "openai.gpt-oss-safeguard-20b",
+          "created": 1764460800,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "mistral.ministral-3-8b-instruct",
+          "created": 1763923750,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "minimax.minimax-m2",
+          "created": 1764460800,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "qwen.qwen3-vl-235b-a22b-instruct",
+          "created": 1764460800,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "qwen.qwen3-235b-a22b-2507",
+          "created": 1764460800,
           "object": "model",
           "owned_by": "system"
         }
@@ -340,8 +304,8 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "nvidia.nemotron-nano-3-30b",
-          "created": 1765065600,
+          "id": "mistral.voxtral-small-24b-2507",
+          "created": 1764460800,
           "object": "model",
           "owned_by": "system"
         }
@@ -349,8 +313,44 @@
       {
         "__type__": "openai.types.model.Model",
         "__data__": {
-          "id": "zai.glm-4.6",
+          "id": "google.gemma-3-4b-it",
           "created": 1764460800,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "deepseek.v3.1",
+          "created": 1764460800,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "moonshotai.kimi-k2.5",
+          "created": 1769558400,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "deepseek.v3.2",
+          "created": 1769385600,
+          "object": "model",
+          "owned_by": "system"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "mistral.devstral-2-123b",
+          "created": 1765843200,
           "object": "model",
           "owned_by": "system"
         }

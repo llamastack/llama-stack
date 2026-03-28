@@ -22,7 +22,7 @@ inference provider, based on integration test results.
 | azure | 102 | 102 | 0 | 84% |
 | bedrock | 28 | 28 | 0 | 23% |
 | ollama | 2 | 2 | 0 | 2% |
-| openai | 119 | 119 | 0 | 98% |
+| openai | 122 | 122 | 0 | 100% |
 | vllm | 4 | 4 | 0 | 3% |
 | watsonx | 56 | 56 | 0 | 46% |
 
@@ -149,9 +149,9 @@ Models, endpoints, and versions used during test recordings.
 | Feature | azure | bedrock | ollama | openai | vllm | watsonx |
 | --- | --- | --- | --- | --- | --- | --- |
 | reasoning basic streaming | ✅ | ✅ | ⏭️ | ✅ | ✅ | ✅ |
-| reasoning multi turn passthrough | ⏭️ | ✅ | ✅ | ⏭️ | ✅ | ⏭️ |
-| reasoning non streaming | ⏭️ | ✅ | ✅ | ⏭️ | ✅ | ⏭️ |
-| reasoning unsupported provider completes without error | ⏭️ | ✅ | ⏭️ | ⏭️ | ✅ | ⏭️ |
+| reasoning multi turn passthrough | ⏭️ | ✅ | ✅ | ✅ | ✅ | ⏭️ |
+| reasoning non streaming | ⏭️ | ✅ | ✅ | ✅ | ✅ | ⏭️ |
+| reasoning unsupported provider completes without error | ⏭️ | ✅ | ⏭️ | ✅ | ✅ | ⏭️ |
 
 ## Responses Access Control
 
