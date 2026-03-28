@@ -405,8 +405,8 @@ def test_delete_response_maps_value_error_to_400():
 def test_openapi_create_response_advertises_form_urlencoded_request_body():
     """OpenAPI schema should advertise application/x-www-form-urlencoded as accepted request content type."""
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
-    router = build_fastapi_router(Api.agents, impl)
+    impl = AsyncMock(spec=Responses)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -419,7 +419,7 @@ def test_openapi_create_response_advertises_form_urlencoded_request_body():
 def test_create_response_accepts_form_urlencoded():
     """POST /v1/responses accepts application/x-www-form-urlencoded content type."""
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
     expected_response = OpenAIResponseObject(
         id="resp_form",
@@ -432,7 +432,7 @@ def test_create_response_accepts_form_urlencoded():
     )
     impl.create_openai_response.return_value = expected_response
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -455,7 +455,7 @@ def test_create_response_accepts_form_urlencoded():
 def test_create_response_form_urlencoded_with_json_encoded_complex_fields():
     """Form-urlencoded requests support JSON-encoded strings for complex fields like tools."""
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
     expected_response = OpenAIResponseObject(
         id="resp_complex",
@@ -468,7 +468,7 @@ def test_create_response_form_urlencoded_with_json_encoded_complex_fields():
     )
     impl.create_openai_response.return_value = expected_response
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -498,9 +498,9 @@ def test_create_response_form_urlencoded_with_json_encoded_complex_fields():
 def test_create_response_form_urlencoded_validation_error():
     """Form-urlencoded requests with invalid data return 422."""
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -517,7 +517,7 @@ def test_create_response_form_urlencoded_validation_error():
 def test_create_response_form_urlencoded_raw_wire_format():
     """POST /v1/responses parses raw key=value&key=value form-urlencoded body."""
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
     expected_response = OpenAIResponseObject(
         id="resp_raw",
@@ -530,7 +530,7 @@ def test_create_response_form_urlencoded_raw_wire_format():
     )
     impl.create_openai_response.return_value = expected_response
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -553,7 +553,7 @@ def test_create_response_form_urlencoded_raw_wire_format():
 def test_create_response_form_urlencoded_repeated_keys_collected_as_list():
     """Repeated form keys are collected into a list (e.g. include=a&include=b)."""
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
     expected_response = OpenAIResponseObject(
         id="resp_multi",
@@ -566,7 +566,7 @@ def test_create_response_form_urlencoded_repeated_keys_collected_as_list():
     )
     impl.create_openai_response.return_value = expected_response
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
@@ -586,7 +586,7 @@ def test_create_response_form_urlencoded_repeated_keys_collected_as_list():
 def test_create_response_form_urlencoded_with_charset():
     """Content-Type with charset parameter is handled correctly."""
     app = FastAPI()
-    impl = AsyncMock(spec=Agents)
+    impl = AsyncMock(spec=Responses)
 
     expected_response = OpenAIResponseObject(
         id="resp_charset",
@@ -599,7 +599,7 @@ def test_create_response_form_urlencoded_with_charset():
     )
     impl.create_openai_response.return_value = expected_response
 
-    router = build_fastapi_router(Api.agents, impl)
+    router = build_fastapi_router(Api.responses, impl)
     assert router is not None
     app.include_router(router)
 
