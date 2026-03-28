@@ -244,9 +244,9 @@ def _extract_duplicate_union_types(openapi_schema: dict[str, Any]) -> dict[str, 
     output_union_schema_name = "OpenAIResponseMessageOutputUnion"
     output_union_title = None
 
-    # Get the union type from OpenAIResponseObjectWithInput-Output.input.items.anyOf
-    if "OpenAIResponseObjectWithInput-Output" in schemas:
-        schema = schemas["OpenAIResponseObjectWithInput-Output"]
+    # Get the union type from OpenAIResponseObjectWithInput.input.items.anyOf
+    if "OpenAIResponseObjectWithInput" in schemas:
+        schema = schemas["OpenAIResponseObjectWithInput"]
         if isinstance(schema, dict) and "properties" in schema:
             input_prop = schema["properties"].get("input")
             if isinstance(input_prop, dict) and "items" in input_prop:
@@ -297,6 +297,17 @@ def _extract_duplicate_union_types(openapi_schema: dict[str, Any]) -> dict[str, 
                 if isinstance(items, dict) and "anyOf" in items:
                     # Replace with reference
                     data_prop["items"] = {"$ref": f"#/components/schemas/{output_union_schema_name}"}
+
+    # Replace the same union in OpenAICompactedResponse.output.items.anyOf
+    if "OpenAICompactedResponse" in schemas and output_union_schema_name in schemas:
+        schema = schemas["OpenAICompactedResponse"]
+        if isinstance(schema, dict) and "properties" in schema:
+            output_prop = schema["properties"].get("output")
+            if isinstance(output_prop, dict) and "items" in output_prop:
+                items = output_prop["items"]
+                if isinstance(items, dict) and "anyOf" in items:
+                    # Replace with reference
+                    output_prop["items"] = {"$ref": f"#/components/schemas/{output_union_schema_name}"}
 
     # Extract the Input union type (used in _responses_Request.input.anyOf[1].items.anyOf)
     input_union_schema_name = "OpenAIResponseMessageInputUnion"

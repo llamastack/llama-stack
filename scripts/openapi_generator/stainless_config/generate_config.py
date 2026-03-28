@@ -226,6 +226,9 @@ ALL_RESOURCES = {
             "response_object_stream": "OpenAIResponseObjectStream",
             "response_object": "OpenAIResponseObject",
             "compacted_response": "OpenAICompactedResponse",
+            "response_input": "OpenAIResponseInput",
+            "response_message": "OpenAIResponseMessage",
+            "response_output": "OpenAIResponseOutput",
         },
         "methods": {
             "create": {
