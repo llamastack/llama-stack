@@ -19,7 +19,7 @@ inference provider, based on integration test results.
 
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
-| azure | 102 | 102 | 0 | 78% |
+| azure | 113 | 113 | 0 | 87% |
 | bedrock | 25 | 25 | 0 | 19% |
 | openai | 130 | 130 | 0 | 100% |
 | vllm | 1 | 1 | 0 | 1% |
@@ -31,7 +31,7 @@ Models, endpoints, and versions used during test recordings.
 
 | Provider | Model(s) | Endpoint | Version Info |
 |----------|----------|----------|--------------|
-| azure | gpt-4o | llama-stack-test.openai.azure.com, lls-test.openai.azure.com | openai sdk: 2.5.0 |
+| azure | gpt-4o | llama-stack-test.openai.azure.com, lls-test.openai.azure.com | openai sdk: 2.30.0 |
 | bedrock | openai.gpt-oss-20b | bedrock-mantle.us-east-2.api.aws | openai sdk: 2.5.0 |
 | openai | gpt-4o, o4-mini, text-embedding-3-small | api.openai.com | openai sdk: 2.5.0 |
 | vllm | Qwen/Qwen3-0.6B | — | — |
@@ -57,17 +57,17 @@ Models, endpoints, and versions used during test recordings.
 
 | Feature | azure | bedrock | openai | vllm | watsonx |
 | --- | --- | --- | --- | --- | --- |
-| compact basic conversation | — | — | ✅ | — | — |
-| compact chain through compaction | — | — | ✅ | — | — |
-| compact double compaction | — | — | ✅ | — | — |
-| compact input items hides compaction | — | — | ✅ | — | — |
-| compact roundtrip | — | — | ✅ | — | — |
-| compact single message | — | — | ✅ | — | — |
-| compact with previous response id | — | — | ✅ | — | — |
-| compact with tool calls dropped | — | — | ✅ | — | — |
-| context management auto compacts large input | — | — | ✅ | — | — |
-| context management no compact below threshold | — | — | ✅ | — | — |
-| context management none does not compact | — | — | ✅ | — | — |
+| compact basic conversation | ✅ | — | ✅ | — | — |
+| compact chain through compaction | ✅ | — | ✅ | — | — |
+| compact double compaction | ✅ | — | ✅ | — | — |
+| compact input items hides compaction | ✅ | — | ✅ | — | — |
+| compact roundtrip | ✅ | — | ✅ | — | — |
+| compact single message | ✅ | — | ✅ | — | — |
+| compact with previous response id | ✅ | — | ✅ | — | — |
+| compact with tool calls dropped | ✅ | — | ✅ | — | — |
+| context management auto compacts large input | ✅ | — | ✅ | — | — |
+| context management no compact below threshold | ✅ | — | ✅ | — | — |
+| context management none does not compact | ✅ | — | ✅ | — | — |
 
 ## Conversation Responses
 
