@@ -49,7 +49,6 @@ def test_reasoning_basic_streaming(client_with_models, text_model_id):
         reasoning={"effort": "high"},
     )
 
-
     chunks = []
     # Collect all chunks
     for chunk in stream:
