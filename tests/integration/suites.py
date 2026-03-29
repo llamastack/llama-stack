@@ -160,16 +160,6 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "text_model": "watsonx/meta-llama/llama-3-3-70b-instruct",
         },
     ),
-    "tgi": Setup(
-        name="tgi",
-        description="Text Generation Inference (TGI) provider with a text model",
-        env={
-            "TGI_URL": "http://localhost:8080",
-        },
-        defaults={
-            "text_model": "tgi/Qwen/Qwen3-0.6B",
-        },
-    ),
     "together": Setup(
         name="together",
         description="Together computer models",
