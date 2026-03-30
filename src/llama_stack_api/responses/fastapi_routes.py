@@ -224,6 +224,13 @@ def create_router(impl: Responses) -> APIRouter:
         response_model=OpenAICompactedResponse,
         summary="Compact a conversation.",
         description="Compresses conversation history into a smaller representation while preserving context.",
+        openapi_extra={
+            "requestBody": {
+                "content": {
+                    "application/x-www-form-urlencoded": {},
+                },
+            }
+        },
     )
     async def compact_openai_response(
         request: Annotated[CompactResponseRequest, Body(...)],

@@ -2850,6 +2850,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CompactResponseRequest'
+          application/x-www-form-urlencoded: {}
         required: true
   /v1/responses/{response_id}/cancel:
     post:
