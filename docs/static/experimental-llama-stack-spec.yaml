@@ -6822,43 +6822,48 @@ components:
       title: RerankResponse
       description: Response from a reranking request.
     RegisterModelRequest:
+      description: Request model for registering a model.
       properties:
         model_id:
-          type: string
-          title: Model Id
           description: The identifier of the model to register.
+          title: Model Id
+          type: string
         provider_model_id:
           anyOf:
           - type: string
           - type: 'null'
           description: The identifier of the model in the provider.
+          nullable: true
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
           description: The identifier of the provider.
+          nullable: true
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
           description: Any additional metadata for this model.
+          nullable: true
         model_type:
           anyOf:
           - $ref: '#/components/schemas/ModelType'
             title: ModelType
           - type: 'null'
           description: The type of model to register.
+          nullable: true
           title: ModelType
         model_validation:
           anyOf:
           - type: boolean
           - type: 'null'
           description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
+          nullable: true
       required:
       - model_id
       title: RegisterModelRequest
-      description: Request model for registering a model.
     ParamType:
       discriminator:
         mapping:
