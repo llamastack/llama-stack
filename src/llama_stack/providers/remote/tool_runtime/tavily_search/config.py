@@ -10,6 +10,8 @@ from pydantic import BaseModel, Field
 
 
 class TavilySearchToolConfig(BaseModel):
+    """Configuration for the Tavily Search tool runtime."""
+
     api_key: str | None = Field(
         default=None,
         description="The Tavily Search API Key",

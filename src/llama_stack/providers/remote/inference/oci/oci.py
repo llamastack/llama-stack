@@ -31,6 +31,8 @@ MODEL_CAPABILITIES = ["TEXT_GENERATION", "TEXT_SUMMARIZATION", "TEXT_EMBEDDINGS"
 
 
 class OCIInferenceAdapter(OpenAIMixin):
+    """Inference adapter for Oracle Cloud Infrastructure Generative AI."""
+
     config: OCIConfig
 
     embedding_models: list[str] = []

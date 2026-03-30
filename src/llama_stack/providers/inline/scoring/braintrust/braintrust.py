@@ -103,6 +103,8 @@ class BraintrustScoringImpl(
     ScoringFunctionsProtocolPrivate,
     NeedsRequestProviderData,
 ):
+    """Scoring provider using Braintrust evaluators for LLM output assessment."""
+
     def __init__(
         self,
         config: BraintrustScoringConfig,

@@ -21,7 +21,6 @@ from llama_stack.providers.remote.inference.ollama import OllamaImplConfig
 from llama_stack.providers.remote.inference.openai import OpenAIConfig
 from llama_stack.providers.remote.inference.runpod import RunpodImplConfig
 from llama_stack.providers.remote.inference.sambanova import SambaNovaImplConfig
-from llama_stack.providers.remote.inference.tgi import TGIImplConfig
 from llama_stack.providers.remote.inference.together import TogetherImplConfig
 from llama_stack.providers.remote.inference.vertexai import VertexAIConfig
 from llama_stack.providers.remote.inference.vllm import VLLMInferenceAdapterConfig
@@ -46,7 +45,6 @@ class TestRemoteInferenceProviderConfig:
             (OpenAIConfig, "api_key", "OPENAI_API_KEY", {}),
             (RunpodImplConfig, "api_token", "RUNPOD_API_TOKEN", {}),
             (SambaNovaImplConfig, "api_key", "SAMBANOVA_API_KEY", {}),
-            (TGIImplConfig, None, None, {"url": "FAKE"}),
             (TogetherImplConfig, "api_key", "TOGETHER_API_KEY", {}),
             (VertexAIConfig, None, None, {"project": "FAKE", "location": "FAKE"}),
             (VLLMInferenceAdapterConfig, "api_token", "VLLM_API_TOKEN", {}),

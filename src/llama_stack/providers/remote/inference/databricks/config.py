@@ -13,6 +13,8 @@ from llama_stack_api import json_schema_type
 
 
 class DatabricksProviderDataValidator(BaseModel):
+    """Validates provider-specific request data for Databricks inference."""
+
     databricks_api_token: SecretStr | None = Field(
         default=None,
         description="API token for Databricks models",
@@ -21,6 +23,8 @@ class DatabricksProviderDataValidator(BaseModel):
 
 @json_schema_type
 class DatabricksImplConfig(RemoteInferenceProviderConfig):
+    """Configuration for the Databricks inference provider."""
+
     base_url: HttpUrl | None = Field(
         default=None,
         description="The URL for the Databricks model serving endpoint (should include /serving-endpoints path)",

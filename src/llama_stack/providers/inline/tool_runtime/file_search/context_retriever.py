@@ -44,6 +44,15 @@ async def default_rag_query_generator(
     content: InterleavedContent,
     **kwargs,
 ):
+    """Generate a RAG query by converting content to a plain string.
+
+    Args:
+        config: query generator configuration with separator settings
+        content: interleaved content to convert
+
+    Returns:
+        String representation of the content
+    """
     return interleaved_content_as_str(content, sep=config.separator)
 
 
@@ -52,6 +61,15 @@ async def llm_rag_query_generator(
     content: InterleavedContent,
     **kwargs,
 ):
+    """Generate a RAG query using an LLM to reformulate the content.
+
+    Args:
+        config: LLM query generator configuration with template and model
+        content: interleaved content to reformulate
+
+    Returns:
+        LLM-generated query string for RAG retrieval
+    """
     assert "inference_api" in kwargs, "LLMRAGQueryGenerator needs inference_api"
     inference_api = kwargs["inference_api"]
 

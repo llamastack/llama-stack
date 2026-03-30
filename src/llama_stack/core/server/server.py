@@ -55,7 +55,7 @@ from llama_stack.core.stack import (
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
-from llama_stack.log import LoggingConfig, get_logger
+from llama_stack.log import LoggingConfig, get_logger, parse_yaml_config, setup_logging
 from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
 from llama_stack_api.common.errors import OpenAIErrorResponse
 
@@ -69,6 +69,7 @@ logger = get_logger(name=__name__, category="core::server")
 
 
 def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
+    """Custom warning handler that prints a full stack traceback alongside the warning."""
     log = file if hasattr(file, "write") else sys.stderr
     traceback.print_stack(file=log)
     log.write(warnings.formatwarning(message, category, filename, lineno, line))
@@ -79,6 +80,14 @@ if os.environ.get("LLAMA_STACK_TRACE_WARNINGS"):
 
 
 def create_sse_event(data: Any) -> str:
+    """Format a data payload as a Server-Sent Events message string.
+
+    Args:
+        data: A Pydantic model or JSON-serializable object.
+
+    Returns:
+        An SSE-formatted string with the data field.
+    """
     if isinstance(data, BaseModel):
         data = data.model_dump_json()
     else:
@@ -88,6 +97,15 @@ def create_sse_event(data: Any) -> str:
 
 
 async def global_exception_handler(request: Request, exc: Exception):
+    """Handle uncaught exceptions by translating them to JSON error responses.
+
+    Args:
+        request: The incoming HTTP request.
+        exc: The unhandled exception.
+
+    Returns:
+        A JSONResponse with the appropriate HTTP status code and error message.
+    """
     traceback.print_exception(type(exc), exc, exc.__traceback__)
     http_exc = translate_exception(exc)
 
@@ -123,6 +141,11 @@ class StackApp(FastAPI):
 
 @asynccontextmanager
 async def lifespan(app: StackApp):
+    """FastAPI lifespan context manager that starts background tasks and handles shutdown.
+
+    Args:
+        app: The StackApp instance.
+    """
     server_version = parse_version("llama-stack")
 
     logger.info(f"Starting up Llama Stack server (version: {server_version})")
@@ -134,6 +157,16 @@ async def lifespan(app: StackApp):
 
 
 def is_streaming_request(func_name: str, request: Request, **kwargs):
+    """Determine if a request should use streaming based on its parameters.
+
+    Args:
+        func_name: Name of the endpoint function.
+        request: The incoming HTTP request.
+        **kwargs: The parsed request parameters.
+
+    Returns:
+        True if the request should stream, False otherwise.
+    """
     # TODO: pass the api method and punt it to the Protocol definition directly
     # If there's a stream parameter at top level, use it
     if "stream" in kwargs:
@@ -149,12 +182,25 @@ def is_streaming_request(func_name: str, request: Request, **kwargs):
 
 
 async def maybe_await(value):
+    """Await a value if it is a coroutine, otherwise return it directly.
+
+    Args:
+        value: A coroutine or regular value.
+
+    Returns:
+        The resolved value.
+    """
     if inspect.iscoroutine(value):
         return await value
     return value
 
 
 async def sse_generator(event_gen_coroutine):
+    """Async generator that converts an event stream coroutine into SSE-formatted strings.
+
+    Args:
+        event_gen_coroutine: A coroutine that yields events to be sent as SSE.
+    """
     event_gen = None
     try:
         event_gen = await event_gen_coroutine
@@ -170,6 +216,11 @@ async def sse_generator(event_gen_coroutine):
 
 
 async def log_request_pre_validation(request: Request):
+    """Log the raw request body before FastAPI validation for debugging purposes.
+
+    Args:
+        request: The incoming HTTP request.
+    """
     if request.method in ("POST", "PUT", "PATCH"):
         try:
             body_bytes = await request.body()
@@ -187,6 +238,17 @@ async def log_request_pre_validation(request: Request):
 
 
 def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
+    """Create a FastAPI route handler that wraps an API method with streaming support and error handling.
+
+    Args:
+        func: The API method to wrap.
+        method: The HTTP method (get, post, etc.).
+        route: The URL route path.
+
+    Returns:
+        A FastAPI-compatible route handler function.
+    """
+
     @functools.wraps(func)
     async def route_handler(request: Request, **kwargs):
         await log_request_pre_validation(request)
@@ -251,6 +313,8 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
 
 
 class ClientVersionMiddleware:
+    """ASGI middleware that rejects requests from clients with incompatible major.minor versions."""
+
     def __init__(self, app):
         self.app = app
         self.server_version = parse_version("llama-stack")
@@ -343,6 +407,14 @@ def create_app() -> StackApp:
         config_contents = yaml.safe_load(fp)
         if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
             logger_config = LoggingConfig(**cfg)
+
+        # Configure logging in each worker process
+        if logger_config:
+            category_levels = parse_yaml_config(logger_config)
+            setup_logging(category_levels)
+        else:
+            setup_logging()
+
         logger = get_logger(name=__name__, category="core::server", config=logger_config)
 
         config = replace_env_vars(config_contents)
@@ -505,6 +577,14 @@ def _log_run_config(run_config: StackConfig):
 
 
 def extract_path_params(route: str) -> list[str]:
+    """Extract parameter names from a URL route pattern.
+
+    Args:
+        route: A URL route pattern with {param} placeholders.
+
+    Returns:
+        A list of parameter names found in the route.
+    """
     segments = route.split("/")
     params = [seg[1:-1] for seg in segments if seg.startswith("{") and seg.endswith("}")]
     # to handle path params like {param:path}
@@ -513,6 +593,14 @@ def extract_path_params(route: str) -> list[str]:
 
 
 def remove_disabled_providers(obj):
+    """Recursively remove disabled providers from a configuration dictionary.
+
+    Args:
+        obj: A configuration value (dict, list, or scalar).
+
+    Returns:
+        The configuration with disabled provider entries removed.
+    """
     if isinstance(obj, dict):
         # Filter out items where provider_id is explicitly disabled or empty
         if "provider_id" in obj and obj["provider_id"] in ("__disabled__", "", None):

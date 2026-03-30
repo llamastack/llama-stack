@@ -10,6 +10,8 @@ from .config import AzureConfig
 
 
 class AzureInferenceAdapter(OpenAIMixin):
+    """Inference adapter for Azure OpenAI Service."""
+
     config: AzureConfig
 
     provider_data_api_key_field: str = "azure_api_key"

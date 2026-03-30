@@ -13,6 +13,8 @@ from llama_stack_api import json_schema_type
 
 
 class AnthropicProviderDataValidator(BaseModel):
+    """Validates provider-specific request data for Anthropic inference."""
+
     anthropic_api_key: SecretStr | None = Field(
         default=None,
         description="API key for Anthropic models",
@@ -21,6 +23,8 @@ class AnthropicProviderDataValidator(BaseModel):
 
 @json_schema_type
 class AnthropicConfig(RemoteInferenceProviderConfig):
+    """Configuration for the Anthropic inference provider."""
+
     @classmethod
     def sample_run_config(cls, api_key: str = "${env.ANTHROPIC_API_KEY:=}", **kwargs) -> dict[str, Any]:
         return {

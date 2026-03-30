@@ -10,6 +10,8 @@ from pydantic import BaseModel
 
 
 class LlamaGuardConfig(BaseModel):
+    """Configuration for the Llama Guard safety provider with category exclusion settings."""
+
     excluded_categories: list[str] = []
 
     @classmethod

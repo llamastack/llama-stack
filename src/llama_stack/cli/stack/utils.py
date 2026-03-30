@@ -15,6 +15,8 @@ TEMPLATES_PATH = Path(__file__).parent.parent.parent / "distributions"
 
 
 class ImageType(Enum):
+    """Supported image types for building Llama Stack distributions."""
+
     CONTAINER = "container"
     VENV = "venv"
 
