@@ -6,6 +6,7 @@
 
 """Unit tests for vector IO metrics."""
 
+import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -184,6 +185,26 @@ class TestVectorIORouterMetricsIntegration:
             patch.object(vector_insert_duration, "record"),
         ):
             with pytest.raises(RuntimeError, match="insert failed"):
+                await router.insert_chunks(mock_request)
+
+            mock_counter.assert_called_once()
+            attrs = mock_counter.call_args[0][1]
+            assert attrs["status"] == "error"
+
+    async def test_insert_chunks_records_cancelled_error_metrics(self):
+        router, mock_rt = self._create_mock_router()
+        mock_rt.insert_chunks = AsyncMock(side_effect=asyncio.CancelledError())
+
+        mock_request = MagicMock()
+        mock_request.vector_store_id = "vs_test"
+        mock_request.chunks = [MagicMock(document_id="doc_1")]
+        mock_request.ttl_seconds = None
+
+        with (
+            patch.object(vector_inserts_total, "add") as mock_counter,
+            patch.object(vector_insert_duration, "record"),
+        ):
+            with pytest.raises(asyncio.CancelledError):
                 await router.insert_chunks(mock_request)
 
             mock_counter.assert_called_once()

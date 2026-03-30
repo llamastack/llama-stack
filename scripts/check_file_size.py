@@ -27,7 +27,7 @@ EXCLUDE_PATTERNS = [
 GRANDFATHERED_FILES = {
     "src/llama_stack/providers/inline/responses/builtin/responses/openai_responses.py",
     "src/llama_stack/providers/inline/responses/builtin/responses/streaming.py",
-    "src/llama_stack/providers/inline/scoring/basic/utils/ifeval_utils.py",
+    "src/llama_stack/providers/inline/scoring/basic/utils/ifeval_word_list.py",  # pure data file
     "src/llama_stack/providers/utils/memory/openai_vector_store_mixin.py",
     "src/llama_stack/providers/registry/vector_io.py",
     "src/llama_stack/testing/api_recorder.py",
@@ -37,8 +37,6 @@ GRANDFATHERED_FILES = {
     "tests/integration/vector_io/test_openai_vector_stores.py",
     "tests/integration/responses/test_openai_responses.py",
     "tests/integration/responses/test_tool_responses.py",
-    "tests/unit/providers/responses/builtin/test_openai_responses.py",
-    "tests/unit/providers/utils/inference/test_openai_mixin.py",
 }
 
 
