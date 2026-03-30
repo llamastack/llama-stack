@@ -12,6 +12,7 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 
 import re
 import secrets
+from typing import Self
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -59,7 +60,7 @@ class Prompt(BaseModel):
         return prompt_version
 
     @model_validator(mode="after")
-    def validate_prompt_variables(self):
+    def validate_prompt_variables(self) -> Self:
         """Validate that all variables used in the prompt are declared in the variables list."""
         if not self.prompt:
             return self
