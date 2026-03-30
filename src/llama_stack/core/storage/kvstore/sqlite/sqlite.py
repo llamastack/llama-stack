@@ -101,7 +101,7 @@ class SqliteKVStoreImpl(KVStore):
                     return None
                 value, expiration = row
                 if not isinstance(value, str):
-                    logger.warning(f"Expected string value for key {key}, got {type(value)}, returning None")
+                    logger.warning("Expected string value for key, returning None", key=key, value_type=type(value))
                     return None
                 return value
         else:
@@ -115,7 +115,7 @@ class SqliteKVStoreImpl(KVStore):
                         return None
                     value, expiration = row
                     if not isinstance(value, str):
-                        logger.warning(f"Expected string value for key {key}, got {type(value)}, returning None")
+                        logger.warning("Expected string value for key, returning None", key=key, value_type=type(value))
                         return None
                     return value
 

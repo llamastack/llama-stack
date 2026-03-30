@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-fallback_version = "0.6.1.dev0"
+fallback_version = "0.6.2.dev0"
 
 [tool.uv]
 required-version = ">=0.7.0"
@@ -44,6 +44,7 @@ dependencies = [
     "pyjwt[crypto]>=2.12.0",                          # Pull crypto to support RS256 for jwt. Requires 2.12.0+ to fix CVE-2026-32597.
     "pydantic>=2.11.9",
     "rich",
+    "structlog>=24.1.0",
     "termcolor",
     "tiktoken",
     "h11>=0.16.0",
@@ -67,7 +68,7 @@ dependencies = [
 
 [project.optional-dependencies]
 client = [
-    "llama-stack-client>=0.6.0", # Optional for library-only usage
+    "llama-stack-client>=0.6.1", # Optional for library-only usage
 ]
 
 [dependency-groups]
@@ -118,7 +119,7 @@ type_checking = [
     "lm-format-enforcer",
     "mcp>=1.23.0",
     "ollama",
-    "llama-stack-client>=0.6.0",
+    "llama-stack-client>=0.6.1",
 ]
 # These are the dependencies required for running unit tests.
 unit = [
@@ -334,9 +335,7 @@ exclude = [
     # llama_stack_api files (3 files)
     "^src/llama_stack_api/models/models\\.py$",
     "^src/llama_stack_api/prompts/models\\.py$",
-    # Core files (28 files)
-    "^src/llama_stack/core/access_control/conditions\\.py$",
-    "^src/llama_stack/core/access_control/datatypes\\.py$",
+    # Core files (26 files)
     "^src/llama_stack/core/build\\.py$",
     "^src/llama_stack/core/configure\\.py$",
     "^src/llama_stack/core/connectors/connectors\\.py$",
