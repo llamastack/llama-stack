@@ -1170,6 +1170,7 @@ class OpenAIResponsesImpl:
                     stream_chunk.type in {"response.completed", "response.incomplete"}
                     and final_response
                     and failed_response is None
+                    and store
                 ):
                     if conversation:
                         messages_to_store = list(

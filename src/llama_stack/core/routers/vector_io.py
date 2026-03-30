@@ -185,6 +185,12 @@ class VectorIORouter(VectorIO):
             vector_insert_duration.record(duration, metric_attrs)
             vector_chunks_processed_total.add(num_chunks, metric_attrs)
             return result
+        except asyncio.CancelledError:
+            duration = time.perf_counter() - start_time
+            error_attrs = {**metric_attrs, "status": "error"}
+            vector_inserts_total.add(1, error_attrs)
+            vector_insert_duration.record(duration, metric_attrs)
+            raise
         except Exception:
             duration = time.perf_counter() - start_time
             error_attrs = {**metric_attrs, "status": "error"}
@@ -232,6 +238,12 @@ class VectorIORouter(VectorIO):
             vector_queries_total.add(1, success_attrs)
             vector_retrieval_duration.record(duration, metric_attrs)
             return result
+        except asyncio.CancelledError:
+            duration = time.perf_counter() - start_time
+            error_attrs = {**metric_attrs, "status": "error"}
+            vector_queries_total.add(1, error_attrs)
+            vector_retrieval_duration.record(duration, metric_attrs)
+            raise
         except Exception:
             duration = time.perf_counter() - start_time
             error_attrs = {**metric_attrs, "status": "error"}
@@ -441,6 +453,9 @@ class VectorIORouter(VectorIO):
             result = await self.routing_table.openai_delete_vector_store(vector_store_id)
             vector_deletes_total.add(1, {**metric_attrs, "status": "success"})
             return result
+        except asyncio.CancelledError:
+            vector_deletes_total.add(1, {**metric_attrs, "status": "error"})
+            raise
         except Exception:
             vector_deletes_total.add(1, {**metric_attrs, "status": "error"})
             raise
@@ -485,6 +500,12 @@ class VectorIORouter(VectorIO):
             vector_queries_total.add(1, success_attrs)
             vector_retrieval_duration.record(duration, metric_attrs)
             return result
+        except asyncio.CancelledError:
+            duration = time.perf_counter() - start_time
+            error_attrs = {**metric_attrs, "status": "error"}
+            vector_queries_total.add(1, error_attrs)
+            vector_retrieval_duration.record(duration, metric_attrs)
+            raise
         except Exception:
             duration = time.perf_counter() - start_time
             error_attrs = {**metric_attrs, "status": "error"}
@@ -528,6 +549,13 @@ class VectorIORouter(VectorIO):
             vector_inserts_total.add(1, success_attrs)
             vector_insert_duration.record(duration, metric_attrs)
             return result
+        except asyncio.CancelledError:
+            duration = time.perf_counter() - start_time
+            error_attrs = {**metric_attrs, "status": "error"}
+            vector_files_total.add(1, error_attrs)
+            vector_inserts_total.add(1, error_attrs)
+            vector_insert_duration.record(duration, metric_attrs)
+            raise
         except Exception:
             duration = time.perf_counter() - start_time
             error_attrs = {**metric_attrs, "status": "error"}
@@ -617,6 +645,9 @@ class VectorIORouter(VectorIO):
             )
             vector_deletes_total.add(1, {**metric_attrs, "status": "success"})
             return result
+        except asyncio.CancelledError:
+            vector_deletes_total.add(1, {**metric_attrs, "status": "error"})
+            raise
         except Exception:
             vector_deletes_total.add(1, {**metric_attrs, "status": "error"})
             raise
