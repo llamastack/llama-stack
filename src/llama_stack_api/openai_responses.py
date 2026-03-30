@@ -1530,7 +1530,8 @@ OpenAIResponseObjectStream = Annotated[
     | OpenAIResponseObjectStreamResponseFileSearchCallCompleted
     | OpenAIResponseObjectStreamResponseIncomplete
     | OpenAIResponseObjectStreamResponseFailed
-    | OpenAIResponseObjectStreamResponseCompleted,
+    | OpenAIResponseObjectStreamResponseCompleted
+    | OpenAIResponseObjectStreamError,
     Field(discriminator="type"),
 ]
 register_schema(OpenAIResponseObjectStream, name="OpenAIResponseObjectStream")
