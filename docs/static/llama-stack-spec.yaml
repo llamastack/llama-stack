@@ -11473,9 +11473,11 @@ components:
         text:
           type: string
           title: Text
+          description: The reasoning text content from the model.
         type:
           type: string
           title: Type
+          description: The type identifier, always 'reasoning_text'.
           enum:
           - reasoning_text
       required:
@@ -11487,14 +11489,17 @@ components:
         id:
           type: string
           title: Id
+          description: Unique identifier for the reasoning output item.
         summary:
           items:
             $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningSummary'
           type: array
           title: Summary
+          description: Summary of the reasoning output.
         type:
           type: string
           title: Type
+          description: The type identifier, always 'reasoning'.
           enum:
           - reasoning
         content:
@@ -11503,10 +11508,16 @@ components:
               $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningContent'
             type: array
           - type: 'null'
+          description: The reasoning content from the model.
         status:
           anyOf:
           - type: string
+            enum:
+            - in_progress
+            - completed
+            - incomplete
           - type: 'null'
+          description: The status of the reasoning output.
       required:
       - id
       - summary
@@ -11517,9 +11528,11 @@ components:
         text:
           type: string
           title: Text
+          description: The summary text of the reasoning output.
         type:
           type: string
           title: Type
+          description: The type identifier, always 'summary_text'.
           enum:
           - summary_text
       required:
@@ -11547,6 +11560,7 @@ components:
             - concise
             - detailed
           - type: 'null'
+          description: Summary mode for reasoning output. One of 'auto', 'concise', or 'detailed'.
       title: OpenAIResponseReasoning
       description: |-
         Configuration for reasoning effort in OpenAI responses.
