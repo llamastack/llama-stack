@@ -11,6 +11,8 @@ from .models import InspectProviderRequest, ListProvidersResponse, ProviderInfo
 
 @runtime_checkable
 class Providers(Protocol):
+    """Protocol for listing and inspecting providers."""
+
     async def list_providers(self) -> ListProvidersResponse: ...
 
     async def inspect_provider(self, request: InspectProviderRequest) -> ProviderInfo: ...

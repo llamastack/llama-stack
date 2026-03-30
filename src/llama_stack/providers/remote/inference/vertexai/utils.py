@@ -21,6 +21,14 @@ logger = get_logger(__name__, category="inference")
 
 
 def resolve_timeout_ms(timeout: TimeoutConfig | float | None) -> int | None:
+    """Convert a timeout config to milliseconds.
+
+    Args:
+        timeout: timeout as seconds float or TimeoutConfig object
+
+    Returns:
+        Timeout in milliseconds, or None if not configured
+    """
     if timeout is None:
         return None
 
@@ -34,6 +42,14 @@ def resolve_timeout_ms(timeout: TimeoutConfig | float | None) -> int | None:
 
 
 def resolve_ssl_verify(tls: TLSConfig) -> ssl.SSLContext | Path | str | bool:
+    """Convert a TLSConfig into an ssl.SSLContext or verification path.
+
+    Args:
+        tls: TLS configuration object
+
+    Returns:
+        An SSLContext, certificate path, or boolean for verification
+    """
     ssl_result = _build_ssl_context(tls)
 
     if ssl_result is False:
@@ -49,6 +65,14 @@ def resolve_ssl_verify(tls: TLSConfig) -> ssl.SSLContext | Path | str | bool:
 
 
 def build_httpx_kwargs(network_config: NetworkConfig) -> tuple[dict[str, Any], bool]:
+    """Build httpx client keyword arguments from a NetworkConfig.
+
+    Args:
+        network_config: network configuration with TLS and proxy settings
+
+    Returns:
+        Tuple of (kwargs_dict, needs_httpx_client_bool)
+    """
     httpx_kwargs: dict[str, Any] = {"follow_redirects": True}
     needs_httpx_client = False
 
@@ -68,6 +92,14 @@ def build_httpx_kwargs(network_config: NetworkConfig) -> tuple[dict[str, Any], b
 
 
 def build_http_options(network_config: NetworkConfig | None) -> genai_types.HttpOptions | None:
+    """Build Google GenAI HttpOptions from a NetworkConfig.
+
+    Args:
+        network_config: optional network configuration
+
+    Returns:
+        HttpOptions object or None if no options are configured
+    """
     if network_config is None:
         return None
 

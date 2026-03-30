@@ -26,6 +26,15 @@ logger = get_logger(name=__name__, category="core")
 
 
 def configure_single_provider(registry: dict[str, ProviderSpec], provider: Provider) -> Provider:
+    """Interactively configure a single provider by prompting for its config values.
+
+    Args:
+        registry: Dictionary mapping provider types to their specifications.
+        provider: The provider to configure.
+
+    Returns:
+        A new Provider instance with the user-provided configuration.
+    """
     provider_spec = registry[provider.provider_type]
     config_type = instantiate_class_type(provider_spec.config_class)
     try:
@@ -45,6 +54,15 @@ def configure_single_provider(registry: dict[str, ProviderSpec], provider: Provi
 
 
 def configure_api_providers(config: StackConfig, build_spec: DistributionSpec) -> StackConfig:
+    """Interactively configure providers for all APIs in the stack configuration.
+
+    Args:
+        config: The current stack configuration to update.
+        build_spec: The distribution specification defining available providers.
+
+    Returns:
+        The updated StackConfig with user-configured providers.
+    """
     is_nux = len(config.providers) == 0
 
     if is_nux:
@@ -120,6 +138,15 @@ def configure_api_providers(config: StackConfig, build_spec: DistributionSpec) -
 def upgrade_from_routing_table(
     config_dict: dict[str, Any],
 ) -> dict[str, Any]:
+    """Upgrade a legacy config dict from routing_table format to the providers format.
+
+    Args:
+        config_dict: A configuration dictionary using the old routing_table/api_providers schema.
+
+    Returns:
+        The upgraded configuration dictionary using the providers schema.
+    """
+
     def get_providers(entries):
         return [
             Provider(
@@ -193,6 +220,14 @@ def upgrade_from_routing_table(
 
 
 def parse_and_maybe_upgrade_config(config_dict: dict[str, Any]) -> StackConfig:
+    """Parse a configuration dictionary into a StackConfig, upgrading from legacy format if needed.
+
+    Args:
+        config_dict: Raw configuration dictionary, potentially in legacy routing_table format.
+
+    Returns:
+        A validated StackConfig instance.
+    """
     if "routing_table" in config_dict:
         logger.info("Upgrading config...")
         config_dict = upgrade_from_routing_table(config_dict)

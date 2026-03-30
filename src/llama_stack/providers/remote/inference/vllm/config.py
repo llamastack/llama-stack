@@ -19,6 +19,8 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class VLLMInferenceAdapterConfig(RemoteInferenceProviderConfig):
+    """Configuration for the remote vLLM inference provider."""
+
     base_url: HttpUrl | None = Field(
         default=None,
         description="The URL for the vLLM model serving endpoint",

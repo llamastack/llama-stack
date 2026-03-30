@@ -11,6 +11,8 @@ from .config import BraveSearchToolConfig
 
 
 class BraveSearchToolProviderDataValidator(BaseModel):
+    """Validator for Brave Search tool provider data requiring a Brave Search API key."""
+
     brave_search_api_key: SecretStr
 
 

@@ -10,6 +10,8 @@ from .config import FireworksImplConfig
 
 
 class FireworksProviderDataValidator(BaseModel):
+    """Validator for Fireworks provider data requiring a Fireworks API key."""
+
     fireworks_api_key: SecretStr
 
 

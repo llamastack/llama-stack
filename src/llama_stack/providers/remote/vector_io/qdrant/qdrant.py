@@ -63,6 +63,8 @@ def convert_id(_id: str) -> str:
 
 
 class QdrantIndex(EmbeddingIndex):
+    """Embedding index backed by a Qdrant collection."""
+
     def __init__(self, client: AsyncQdrantClient, collection_name: str):
         self.client = client
         self.collection_name = collection_name
@@ -323,6 +325,8 @@ class QdrantIndex(EmbeddingIndex):
 
 
 class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+    """Vector I/O adapter for remote Qdrant instances."""
+
     def __init__(
         self,
         config: RemoteQdrantVectorIOConfig | InlineQdrantVectorIOConfig,

@@ -87,7 +87,7 @@ def _http_exception_from_sse_error(exc: Exception) -> HTTPException:
     return HTTPException(status_code=500, detail="Internal server error: An unexpected error occurred.")
 
 
-def _preserve_context_for_sse(event_gen):
+def _preserve_context_for_sse(event_gen: AsyncIterator[str]) -> AsyncIterator[str]:
     """Preserve request context for SSE streaming.
 
     StreamingResponse runs in a different task, losing request contextvars.
@@ -95,11 +95,11 @@ def _preserve_context_for_sse(event_gen):
     """
     context = contextvars.copy_context()
 
-    async def wrapper():
+    async def wrapper() -> AsyncIterator[str]:
         try:
             while True:
                 try:
-                    task = context.run(asyncio.create_task, event_gen.__anext__())
+                    task: asyncio.Task[str] = context.run(asyncio.create_task, event_gen.__anext__())  # type: ignore[arg-type]
                     item = await task
                 except StopAsyncIteration:
                     break

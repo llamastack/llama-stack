@@ -4,13 +4,26 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 
 from rich.console import Console
 from rich.table import Table
 
 
-def print_table(rows, headers=None, separate_rows: bool = False, sort_by: Iterable[int] = tuple()):
+def print_table(
+    rows: Sequence[Sequence[str | None]],
+    headers: Sequence[str] | None = None,
+    separate_rows: bool = False,
+    sort_by: Iterable[int] = tuple(),
+) -> None:
+    """Print a formatted table to the console using Rich.
+
+    Args:
+        rows: list of row data, where each row is a list of strings.
+        headers: optional list of column header strings.
+        separate_rows: whether to draw lines between rows.
+        sort_by: column indices to sort rows by.
+    """
     # Convert rows and handle None values
     rows = [[x or "" for x in row] for row in rows]
 

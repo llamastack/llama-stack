@@ -17,6 +17,11 @@ from ..starter.starter import get_distribution_template as get_starter_distribut
 
 
 def get_distribution_template() -> DistributionTemplate:
+    """Build the CI tests distribution template with test-specific overrides.
+
+    Returns:
+        A DistributionTemplate based on the starter template with CI-specific connectors and auth config.
+    """
     template = get_starter_distribution_template(name="ci-tests")
     template.description = "CI tests for Llama Stack"
 

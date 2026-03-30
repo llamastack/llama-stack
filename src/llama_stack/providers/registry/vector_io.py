@@ -17,6 +17,11 @@ DEFAULT_VECTOR_IO_DEPS = ["chardet", "pypdf>=6.7.2"]
 
 
 def available_providers() -> list[ProviderSpec]:
+    """Return the list of available vector I/O provider specifications.
+
+    Returns:
+        List of ProviderSpec objects describing available providers
+    """
     return [
         InlineProviderSpec(
             api=Api.vector_io,
@@ -631,7 +636,7 @@ Please refer to the inline provider documentation.
             api=Api.vector_io,
             adapter_type="milvus",
             provider_type="remote::milvus",
-            pip_packages=["pymilvus>=2.4.10"] + DEFAULT_VECTOR_IO_DEPS,
+            pip_packages=["pymilvus>=2.6.2"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.remote.vector_io.milvus",
             config_class="llama_stack.providers.remote.vector_io.milvus.MilvusVectorIOConfig",
             api_dependencies=[Api.inference],

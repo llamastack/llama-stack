@@ -51,7 +51,7 @@ jobs:
           cache-dependency-path: 'src/llama_stack_ui/'
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
 
       - name: Install npm dependencies
         run: npm ci
@@ -69,7 +69,11 @@ jobs:
       # Install oasdiff: https://github.com/oasdiff/oasdiff, a tool for detecting breaking changes in OpenAPI specs.
       - name: Install oasdiff
         run: |
-          curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh
+          for i in 1 2 3; do
+            curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh && break
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
           cp /usr/local/bin/oasdiff ~/oasdiff
 
       - name: Run pre-commit

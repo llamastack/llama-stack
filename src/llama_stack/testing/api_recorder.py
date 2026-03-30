@@ -51,6 +51,8 @@ DEFAULT_STORAGE_DIR = REPO_ROOT / "tests/integration/common"
 
 
 class APIRecordingMode(StrEnum):
+    """Enumeration of modes for API request recording and replay in tests."""
+
     LIVE = "live"
     RECORD = "record"
     REPLAY = "replay"
@@ -307,6 +309,11 @@ def unpatch_httpx_for_test_id():
 
 
 def get_api_recording_mode() -> APIRecordingMode:
+    """Return the current API recording mode from the LLAMA_STACK_TEST_INFERENCE_MODE environment variable.
+
+    Returns:
+        The active APIRecordingMode, defaulting to REPLAY if not set.
+    """
     return APIRecordingMode(os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE", "replay").lower())
 
 
