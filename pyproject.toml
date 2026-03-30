@@ -310,20 +310,12 @@ follow_imports = "silent"
 # to exclude the entire directory.
 exclude = [
     # ============================================================================
-    # Section 1: Files that need type hints added (8 files)
+    # Section 1: Files that need type hints added (1 file)
     # ============================================================================
     # These files are missing type annotations on functions/methods. Functions
     # lack parameter and/or return type hints.
     #
-    # Core files (7 files)
-    "^src/llama_stack/core/admin\\.py$",
-    "^src/llama_stack/core/client\\.py$",
-    "^src/llama_stack/core/inspect\\.py$",
-    "^src/llama_stack/core/providers\\.py$",
-    "^src/llama_stack/core/utils/context\\.py$",
-    "^src/llama_stack/core/utils/dynamic\\.py$",
-    "^src/llama_stack/core/utils/prompt_for_config\\.py$",
-    # Other (1 files)
+    # Other (1 file)
     "^src/llama_stack/telemetry/__init__\\.py$",
     #
     # ============================================================================
