@@ -29,4 +29,7 @@ class DoclingFileProcessorConfig(BaseModel):
 
     @classmethod
     def sample_run_config(cls, **kwargs: Any) -> dict[str, Any]:
-        return {}
+        return {
+            "default_chunk_size_tokens": 800,
+            "default_chunk_overlap_tokens": 400,
+        }
