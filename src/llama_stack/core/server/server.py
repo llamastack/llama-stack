@@ -47,7 +47,7 @@ from llama_stack.core.stack import (
 )
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
-from llama_stack.log import LoggingConfig, get_logger
+from llama_stack.log import LoggingConfig, get_logger, parse_yaml_config, setup_logging
 from llama_stack_api import Api, ConflictError, ResourceNotFoundError
 from llama_stack_api.common.errors import OpenAIErrorResponse
 
@@ -226,6 +226,14 @@ def create_app() -> StackApp:
         config_contents = yaml.safe_load(fp)
         if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
             logger_config = LoggingConfig(**cfg)
+
+        # Configure logging in each worker process
+        if logger_config:
+            category_levels = parse_yaml_config(logger_config)
+            setup_logging(category_levels)
+        else:
+            setup_logging()
+
         logger = get_logger(name=__name__, category="core::server", config=logger_config)
 
         config = replace_env_vars(config_contents)
