@@ -10,7 +10,9 @@ import os
 import sys
 import traceback
 import warnings
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 from importlib.metadata import version as parse_version
 from pathlib import Path
 
@@ -21,6 +23,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from openai import BadRequestError
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import (
@@ -60,7 +63,14 @@ REPO_ROOT = Path(__file__).parent.parent.parent.parent
 logger = get_logger(name=__name__, category="core::server")
 
 
-def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
+def warn_with_traceback(
+    message: Warning | str,
+    category: type[Warning],
+    filename: str,
+    lineno: int,
+    file: Any = None,
+    line: str | None = None,
+) -> None:
     """Custom warning handler that prints a full stack traceback alongside the warning."""
     log = file if hasattr(file, "write") else sys.stderr
     traceback.print_stack(file=log)
@@ -71,7 +81,7 @@ if os.environ.get("LLAMA_STACK_TRACE_WARNINGS"):
     warnings.showwarning = warn_with_traceback
 
 
-async def global_exception_handler(request: Request, exc: Exception):
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle uncaught exceptions by translating them to JSON error responses.
 
     Args:
@@ -102,7 +112,7 @@ class StackApp(FastAPI):
     start background tasks (e.g. refresh model registry periodically) from the lifespan context manager.
     """
 
-    def __init__(self, config: StackConfig, *args, **kwargs):
+    def __init__(self, config: StackConfig, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.stack: Stack = Stack(config)
 
@@ -110,12 +120,12 @@ class StackApp(FastAPI):
         # Storage backends use lazy engine initialization, so connections are created on
         # first use in the correct event loop, avoiding event loop mismatch issues.
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(asyncio.run, self.stack.initialize())
+            future = executor.submit(asyncio.run, self.stack.initialize())  # type: ignore[no-untyped-call]
             future.result()
 
 
 @asynccontextmanager
-async def lifespan(app: StackApp):
+async def lifespan(app: StackApp) -> AsyncIterator[None]:
     """FastAPI lifespan context manager that starts background tasks and handles shutdown.
 
     Args:
@@ -125,20 +135,20 @@ async def lifespan(app: StackApp):
 
     logger.info("Starting up Llama Stack server", version=server_version)
     assert app.stack is not None
-    app.stack.create_registry_refresh_task()
+    app.stack.create_registry_refresh_task()  # type: ignore[no-untyped-call]
     yield
     logger.info("Shutting down")
-    await app.stack.shutdown()
+    await app.stack.shutdown()  # type: ignore[no-untyped-call]
 
 
 class ClientVersionMiddleware:
     """ASGI middleware that rejects requests from clients with incompatible major.minor versions."""
 
-    def __init__(self, app):
+    def __init__(self, app: ASGIApp) -> None:
         self.app = app
         self.server_version = parse_version("llama-stack")
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> Any:
         if scope["type"] == "http":
             headers = dict(scope.get("headers", []))
             client_version = headers.get(b"x-llamastack-client-version", b"").decode()
@@ -148,7 +158,7 @@ class ClientVersionMiddleware:
                     server_version_parts = tuple(map(int, self.server_version.split(".")[:2]))
                     if client_version_parts != server_version_parts:
 
-                        async def send_version_error(send):
+                        async def send_version_error(send: Send) -> None:
                             await send(
                                 {
                                     "type": "http.response.start",
@@ -177,13 +187,13 @@ class ProviderDataMiddleware:
     running in test mode for deterministic ID generation.
     """
 
-    def __init__(self, app):
+    def __init__(self, app: ASGIApp) -> None:
         self.app = app
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> Any:
         if scope["type"] == "http":
             headers = {k.decode(): v.decode() for k, v in scope.get("headers", [])}
-            user = user_from_scope(scope)
+            user = user_from_scope(dict(scope))
 
             with request_provider_data_context(headers, user):
                 test_context_token = None
@@ -194,7 +204,7 @@ class ProviderDataMiddleware:
                         sync_test_context_from_provider_data,
                     )
 
-                    test_context_token = sync_test_context_from_provider_data()
+                    test_context_token = sync_test_context_from_provider_data()  # type: ignore[no-untyped-call]
                     reset_fn = reset_test_context
                 try:
                     return await self.app(scope, receive, send)
@@ -214,11 +224,11 @@ def create_app() -> StackApp:
     Returns:
         Configured StackApp instance.
     """
-    config_file = os.getenv("LLAMA_STACK_CONFIG")
-    if config_file is None:
+    config_file_str = os.getenv("LLAMA_STACK_CONFIG")
+    if config_file_str is None:
         raise ValueError("LLAMA_STACK_CONFIG environment variable is required")
 
-    config_file = resolve_config_or_distro(config_file)
+    config_file = resolve_config_or_distro(config_file_str)
 
     # Load and process configuration
     logger_config = None
@@ -255,6 +265,7 @@ def create_app() -> StackApp:
     app.add_middleware(ProviderDataMiddleware)
 
     impls = app.stack.impls
+    assert impls is not None
 
     if config.server.auth:
         # Add route authorization middleware if route_policy is configured
@@ -358,7 +369,7 @@ def create_app() -> StackApp:
     return app
 
 
-def _log_run_config(run_config: StackConfig):
+def _log_run_config(run_config: StackConfig) -> None:
     """Logs the run config with redacted fields and disabled providers removed."""
     logger.info("Stack Configuration:")
     safe_config = redact_sensitive_fields(run_config.model_dump(mode="json"))
@@ -366,7 +377,7 @@ def _log_run_config(run_config: StackConfig):
     logger.info(yaml.dump(clean_config, indent=2))
 
 
-def remove_disabled_providers(obj):
+def remove_disabled_providers(obj: Any) -> Any:
     """Recursively remove disabled providers from a configuration dictionary.
 
     Args:

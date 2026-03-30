@@ -45,7 +45,7 @@ def _convert_path_to_regex(path: str) -> str:
     return f"^{pattern}$"
 
 
-def initialize_route_impls(impls) -> RouteImpls:
+def initialize_route_impls(impls: dict[Api, Any]) -> RouteImpls:
     route_impls: RouteImpls = {}
 
     for api_name in _ROUTER_FACTORIES.keys():

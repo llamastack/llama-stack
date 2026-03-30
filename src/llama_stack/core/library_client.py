@@ -11,6 +11,7 @@ import logging  # allow-direct-logging
 import os
 import sys
 import typing
+from collections.abc import AsyncGenerator, Generator
 from enum import Enum
 from io import BytesIO
 from pathlib import Path
@@ -145,8 +146,13 @@ class LibraryClientUploadFile:
 class LibraryClientHttpxResponse:
     """LibraryClient httpx Response object for FastAPI Response conversion."""
 
-    def __init__(self, response):
-        self.content = response.body if isinstance(response.body, bytes) else response.body.encode()
+    def __init__(self, response: FastAPIResponse) -> None:
+        if isinstance(response.body, bytes):
+            self.content = response.body
+        elif isinstance(response.body, memoryview):
+            self.content = bytes(response.body)
+        else:
+            self.content = response.body.encode()
         self.status_code = response.status_code
         self.headers = response.headers
 
@@ -177,7 +183,7 @@ class LlamaStackAsLibraryClient(LlamaStackClient):
         finally:
             asyncio.set_event_loop(None)
 
-    def initialize(self):
+    def initialize(self) -> None:
         """
         Deprecated method for backward compatibility.
         """
@@ -218,17 +224,17 @@ class LlamaStackAsLibraryClient(LlamaStackClient):
         """
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit the context manager and shut down the client."""
         self.shutdown()
 
-    def request(self, *args, **kwargs):
+    def request(self, *args: Any, **kwargs: Any) -> Any:
         loop = self.loop
         asyncio.set_event_loop(loop)
 
         if kwargs.get("stream"):
 
-            def sync_generator():
+            def sync_generator() -> Generator[Any, None, None]:
                 try:
                     async_stream = loop.run_until_complete(self.async_client.request(*args, **kwargs))
                     while True:
@@ -265,7 +271,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         super().__init__()
         # Initialize logging from environment variables first
         setup_logging()
-        if in_notebook():
+        if in_notebook():  # type: ignore[no-untyped-call]
             import nest_asyncio
 
             nest_asyncio.apply()
@@ -289,7 +295,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         self.route_impls: RouteImpls | None = None  # Initialize to None to prevent AttributeError
         self.stack: Stack | None = None
 
-    def _remove_root_logger_handlers(self):
+    def _remove_root_logger_handlers(self) -> None:
         """
         Remove all handlers from the root logger. Needed to avoid polluting the console with logs.
         """
@@ -311,7 +317,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             self.route_impls = None
 
             self.stack = Stack(self.config, self.custom_provider_registry)
-            await self.stack.initialize()
+            await self.stack.initialize()  # type: ignore[no-untyped-call]
             self.impls = self.stack.impls
         except ModuleNotFoundError as _e:
             cprint(_e.msg, color="red", file=sys.stderr)
@@ -323,7 +329,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             if self.config_path_or_distro_name.endswith(".yaml"):
                 print_pip_install_help(self.config)
             else:
-                prefix = "!" if in_notebook() else ""
+                prefix = "!" if in_notebook() else ""  # type: ignore[no-untyped-call]
                 cprint(
                     f"Please run:\n\n{prefix}llama stack list-deps {self.config_path_or_distro_name} | xargs -L1 uv pip install\n\n",
                     "yellow",
@@ -364,7 +370,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             await client.shutdown()
         """
         if self.stack:
-            await self.stack.shutdown()
+            await self.stack.shutdown()  # type: ignore[no-untyped-call]
             self.stack = None
 
     async def __aenter__(self) -> "AsyncLlamaStackAsLibraryClient":
@@ -380,7 +386,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         await self.initialize()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit the async context manager and shut down the client."""
         await self.shutdown()
 
@@ -389,9 +395,9 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         cast_to: Any,
         options: Any,
         *,
-        stream=False,
-        stream_cls=None,
-    ):
+        stream: bool = False,
+        stream_cls: Any = None,
+    ) -> Any:
         if self.route_impls is None:
             raise ValueError("Client not initialized. Please call initialize() first.")
 
@@ -417,7 +423,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                 )
             return response
 
-    def _handle_file_uploads(self, options: Any, body: dict) -> tuple[dict, list[str]]:
+    def _handle_file_uploads(self, options: Any, body: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
         """Handle file uploads from OpenAI client and add them to the request body."""
         if not (hasattr(options, "files") and options.files):
             return body, []
@@ -447,7 +453,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         *,
         cast_to: Any,
         options: Any,
-    ):
+    ) -> Any:
         assert self.route_impls is not None  # Should be guaranteed by request() method, assertion for mypy
         path = options.url
         body = options.params or {}
@@ -518,7 +524,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         cast_to: Any,
         options: Any,
         stream_cls: Any,
-    ):
+    ) -> Any:
         assert self.route_impls is not None  # Should be guaranteed by request() method, assertion for mypy
         path = options.url
         body = options.params or {}
@@ -535,7 +541,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         if isinstance(result, FastAPIResponse):
             content_type = result.media_type or content_type
 
-        async def gen():
+        async def gen() -> AsyncGenerator[bytes, None]:
             # Handle FastAPI StreamingResponse (returned by router endpoints)
             # Extract the async generator from the StreamingResponse body
             from fastapi.responses import StreamingResponse
@@ -546,6 +552,8 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                     # Chunk is already SSE-formatted string from sse_generator, encode to bytes
                     if isinstance(chunk, str):
                         yield chunk.encode("utf-8")
+                    elif isinstance(chunk, memoryview):
+                        yield bytes(chunk)
                     else:
                         yield chunk
             else:
@@ -588,7 +596,9 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         )
         return await response.parse()
 
-    def _convert_body(self, func: Any, body: dict | None = None, exclude_params: set[str] | None = None) -> dict:
+    def _convert_body(
+        self, func: Any, body: dict[str, Any] | None = None, exclude_params: set[str] | None = None
+    ) -> dict[str, Any]:
         body = body or {}
         exclude_params = exclude_params or set()
         sig = inspect.signature(func)
