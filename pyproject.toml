@@ -276,7 +276,16 @@ convention = "google"
 "benchmarking/**/*.py" = ["D101"] # Ignore docstring rules for benchmarking scripts
 "client-sdks/**/*.py" = ["D101"] # Ignore docstring rules for client SDKs
 "scripts/**/*.py" = ["D101"] # Ignore docstring rules for scripts
-"src/llama_stack/providers/inline/scoring/basic/utils/ifeval_utils.py" = [
+"src/llama_stack/providers/inline/scoring/basic/utils/ifeval_support.py" = [
+    "RUF001",
+]
+"src/llama_stack/providers/inline/scoring/basic/utils/ifeval_checkers_core.py" = [
+    "RUF001",
+]
+"src/llama_stack/providers/inline/scoring/basic/utils/ifeval_checkers_format.py" = [
+    "RUF001",
+]
+"src/llama_stack/providers/inline/scoring/basic/utils/ifeval_word_list.py" = [
     "RUF001",
 ]
 "src/llama_stack/providers/inline/scoring/basic/scoring_fn/fn_defs/regex_parser_multiple_choice_answer.py" = [
