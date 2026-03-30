@@ -1333,7 +1333,7 @@ class OpenAIResponsesImpl:
 
             estimated_tokens = self._estimate_token_count(input)
             if estimated_tokens > threshold:
-                logger.debug(f"Auto-compacting: estimated {estimated_tokens} tokens exceeds threshold {threshold}")
+                logger.debug("Auto-compacting", estimated_tokens=estimated_tokens, threshold=threshold)
                 compacted = await self.compact_openai_response(model=model, input=input)
                 return list(compacted.output)
 
