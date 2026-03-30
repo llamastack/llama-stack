@@ -798,9 +798,8 @@ class OpenAIResponsesImpl:
                     extra={"model": model, "conversation": conversation, "previous_response_id": previous_response_id},
                 )
                 raise InternalServerError()
-            # Preserve background flag: response_id is set when called from
-            # the background loop, None for non-background responses
-            final_response.background = response_id is not None
+            # Preserve the request mode on the terminal response object returned to the caller.
+            final_response.background = background
             return final_response
 
     async def _create_background_response(
