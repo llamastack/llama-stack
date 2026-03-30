@@ -422,7 +422,7 @@ class LlamaGuardShield:
             unsafe_code_list = [code.strip() for code in unsafe_code.split(",")]
             invalid_codes = [code for code in unsafe_code_list if code not in SAFETY_CODE_TO_CATEGORIES_MAP]
             if invalid_codes:
-                logger.warning(f"Invalid safety codes returned: {invalid_codes}")
+                logger.warning("Invalid safety codes returned", invalid_codes=invalid_codes)
                 # just returning safe object, as we don't know what the invalid codes can map to
                 return ModerationObject(
                     id=f"modr-{uuid.uuid4()}",
