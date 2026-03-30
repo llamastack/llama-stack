@@ -108,7 +108,7 @@ class ResponseLanguageChecker(Instruction):
             return langdetect.detect(value) == self._language
         except langdetect.LangDetectException as e:
             # Count as instruction is followed.
-            logger.info("Unable to detect language for text %s due to %s", value, e)  # refex: disable=pytotw.037
+            logger.info("Unable to detect language", text=value, error=str(e))
             return True
 
 
