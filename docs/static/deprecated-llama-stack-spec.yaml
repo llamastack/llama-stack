@@ -13,156 +13,7 @@ info:
 servers:
 - url: http://any-hosted-llama-stack.com
 paths:
-  /v1/models:
-    get:
-      responses:
-        '200':
-          description: A list of OpenAI model objects.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenAIListModelsResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Models
-      summary: List models using the OpenAI API.
-      description: List models using the OpenAI API.
-      operationId: openai_list_models_v1_models_get
-    post:
-      responses:
-        '200':
-          description: The registered model object.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Model'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Models
-      summary: Register a model.
-      description: Register a model.
-      operationId: register_model_v1_models_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterModelRequest'
-        required: true
-      deprecated: true
-  /v1/models/{model_id}:
-    get:
-      responses:
-        '200':
-          description: The model object.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Model'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Models
-      summary: Get a model by its identifier.
-      description: Get a model by its identifier.
-      operationId: get_model_v1_models__model_id__get
-      parameters:
-      - name: model_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the model to get.
-          title: Model Id
-        description: The ID of the model to get.
-    delete:
-      responses:
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-        '204':
-          description: The model was successfully unregistered.
-      tags:
-      - Models
-      summary: Unregister a model.
-      description: Unregister a model.
-      operationId: unregister_model_v1_models__model_id__delete
-      parameters:
-      - name: model_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the model to unregister.
-          title: Model Id
-        description: The ID of the model to unregister.
-      deprecated: true
   /v1/shields:
-    get:
-      responses:
-        '200':
-          description: A ListShieldsResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListShieldsResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Shields
-      summary: List all shields.
-      description: List all shields.
-      operationId: list_shields_v1_shields_get
     post:
       responses:
         '200':
@@ -196,40 +47,6 @@ paths:
         required: true
       deprecated: true
   /v1/shields/{identifier}:
-    get:
-      responses:
-        '200':
-          description: A Shield.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Shield'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Shields
-      summary: Get a shield by its identifier.
-      description: Get a shield by its identifier.
-      operationId: get_shield_v1_shields__identifier__get
-      parameters:
-      - name: identifier
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The identifier of the shield to get.
-          title: Identifier
-        description: The identifier of the shield to get.
     delete:
       responses:
         '400':
@@ -6694,43 +6511,48 @@ components:
       title: RerankResponse
       description: Response from a reranking request.
     RegisterModelRequest:
+      description: Request model for registering a model.
       properties:
         model_id:
-          type: string
-          title: Model Id
           description: The identifier of the model to register.
+          title: Model Id
+          type: string
         provider_model_id:
           anyOf:
           - type: string
           - type: 'null'
           description: The identifier of the model in the provider.
+          nullable: true
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
           description: The identifier of the provider.
+          nullable: true
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
           description: Any additional metadata for this model.
+          nullable: true
         model_type:
           anyOf:
           - $ref: '#/components/schemas/ModelType'
             title: ModelType
           - type: 'null'
           description: The type of model to register.
+          nullable: true
           title: ModelType
         model_validation:
           anyOf:
           - type: boolean
           - type: 'null'
           description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
+          nullable: true
       required:
       - model_id
       title: RegisterModelRequest
-      description: Request model for registering a model.
     ParamType:
       discriminator:
         mapping:
