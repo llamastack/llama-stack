@@ -65,6 +65,21 @@ _category_levels: dict[str, int] = dict.fromkeys(CATEGORIES, DEFAULT_LOG_LEVEL)
 # Track whether structlog has been configured
 _structlog_configured = False
 
+# Registry mapping logger names to their categories, so setup_logging() can
+# retroactively re-apply levels to loggers created before it was called.
+_logger_categories: dict[str, str] = {}
+
+
+def _reset_logging_state() -> None:
+    """Reset module-level logging state. For use in tests only."""
+    global _category_levels, _logger_categories, _structlog_configured
+    _category_levels.clear()
+    _category_levels.update(dict.fromkeys(CATEGORIES, DEFAULT_LOG_LEVEL))
+    _logger_categories.clear()
+    _structlog_configured = False
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+
 
 def config_to_category_levels(category: str, level: str):
     """
@@ -467,18 +482,22 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
     }
     dictConfig(logging_config)
 
-    # Update log levels for all loggers that were created before setup_logging was called
-    for name, logger in logging.root.manager.loggerDict.items():
-        if isinstance(logger, logging.Logger):
-            # Skip infrastructure loggers (uvicorn, fastapi) to preserve their configured levels
-            if name.startswith(("uvicorn", "fastapi")):
-                continue
-            # Update llama_stack loggers if root level was explicitly set (e.g., via all=CRITICAL)
-            if name.startswith("llama_stack") and "root" in category_levels:
-                logger.setLevel(root_level)
-            # Update third-party library loggers
-            elif not name.startswith("llama_stack"):
-                logger.setLevel(root_level)
+    # Re-apply category levels to loggers created before setup_logging was called
+    for name, category in _logger_categories.items():
+        log_obj = logging.root.manager.loggerDict.get(name)
+        if not isinstance(log_obj, logging.Logger):
+            continue
+        root_category = category.split("::")[0]
+        if category in _category_levels:
+            log_obj.setLevel(_category_levels[category])
+        elif root_category in _category_levels:
+            log_obj.setLevel(_category_levels[root_category])
+
+    # Update third-party and unregistered loggers to root level
+    for name, log_obj in logging.root.manager.loggerDict.items():
+        if isinstance(log_obj, logging.Logger) and name not in _logger_categories:
+            if not name.startswith(("uvicorn", "fastapi")):
+                log_obj.setLevel(root_level)
 
 
 def get_logger(
@@ -510,6 +529,7 @@ def get_logger(
 
     # Get or create the stdlib logger and set its level
     stdlib_logger = logging.getLogger(name)
+    _logger_categories[name] = category
     if category in _category_levels:
         log_level = _category_levels[category]
     else:
