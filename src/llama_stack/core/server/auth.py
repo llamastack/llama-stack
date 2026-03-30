@@ -5,10 +5,12 @@
 # the root directory of this source tree.
 
 import re
+from typing import Any
 
 import httpx
 from aiohttp import hdrs
 
+from llama_stack.core.access_control.conditions import User as ProtocolUser
 from llama_stack.core.access_control.conditions import parse_conditions
 from llama_stack.core.access_control.datatypes import RouteAccessRule
 from llama_stack.core.datatypes import AuthenticationConfig, User
@@ -89,12 +91,12 @@ class AuthenticationMiddleware:
     access resources that don't have access_attributes defined.
     """
 
-    def __init__(self, app, auth_config: AuthenticationConfig, impls):
+    def __init__(self, app: Any, auth_config: AuthenticationConfig, impls: Any) -> None:
         self.app = app
         self.impls = impls
         self.auth_provider = create_auth_provider(auth_config)
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> Any:
         if scope["type"] == "http":
             # Find the route and check if authentication is required
             path = scope.get("path", "")
@@ -152,12 +154,12 @@ class AuthenticationMiddleware:
             logger.debug(
                 "Authentication successful: with attributes",
                 principal=validation_result.principal,
-                attributes_count=len(validation_result.attributes),
+                attributes_count=len(validation_result.attributes) if validation_result.attributes else 0,
             )
 
         return await self.app(scope, receive, send)
 
-    async def _send_auth_error(self, send, message, status=401):
+    async def _send_auth_error(self, send: Any, message: str, status: int = 401) -> Any:
         await send(
             {
                 "type": "http.response.start",
@@ -177,11 +179,11 @@ class RouteAuthorizationMiddleware:
 
     """
 
-    def __init__(self, app, route_policy: list[RouteAccessRule]):
+    def __init__(self, app: Any, route_policy: list[RouteAccessRule]) -> None:
         self.app = app
         self.route_policy = route_policy
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> Any:
         # Only process HTTP requests
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
@@ -357,7 +359,7 @@ class RouteAuthorizationMiddleware:
         # No conditions specified - rule applies regardless of user
         return True
 
-    async def _send_error(self, send, message: str, status: int = 403):
+    async def _send_error(self, send: Any, message: str, status: int = 403) -> Any:
         """Send an error response."""
         await send(
             {
@@ -378,7 +380,7 @@ class _RouteContext:
     user attributes (e.g., "user with admin in roles") and don't require resource properties.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.type = "route"
         self.identifier = "route"
-        self.owner = None
+        self.owner: ProtocolUser | None = None

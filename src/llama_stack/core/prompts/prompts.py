@@ -4,6 +4,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from __future__ import annotations
+
 import json
 from typing import Any
 
@@ -33,7 +35,7 @@ class PromptServiceConfig(BaseModel):
     config: StackConfig
 
 
-async def get_provider_impl(config: PromptServiceConfig, deps: dict[Any, Any]):
+async def get_provider_impl(config: PromptServiceConfig, deps: dict[Any, Any]) -> PromptServiceImpl:
     """Get the prompt service implementation."""
     impl = PromptServiceImpl(config, deps)
     await impl.initialize()

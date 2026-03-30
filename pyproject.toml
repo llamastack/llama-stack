@@ -323,7 +323,12 @@ exclude = [
     # llama_stack_api files (3 files)
     "^src/llama_stack_api/models/models\\.py$",
     "^src/llama_stack_api/prompts/models\\.py$",
-    # Core files (6 files)
+    # Core files (15 files)
+    "^src/llama_stack/core/distribution\\.py$",
+    "^src/llama_stack/core/library_client\\.py$",
+    "^src/llama_stack/core/server/quota\\.py$",
+    "^src/llama_stack/core/server/routes\\.py$",
+    "^src/llama_stack/core/server/server\\.py$",
     "^src/llama_stack/core/stack\\.py$",
     "^src/llama_stack/core/store/registry\\.py$",
     "^src/llama_stack/core/task\\.py$",
