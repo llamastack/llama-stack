@@ -658,6 +658,145 @@ class TestOpenAIResponses:
         assert response.background is False
         assert len(response.output) > 0
 
+    def test_cancel_queued_or_in_progress_response(self, openai_client, text_model_id):
+        """Test cancelling a background response that is queued or in progress."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX rate limits cause cancel tests to fail")
+        # Create a background response
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="Write a detailed 5000 word essay about quantum physics and the nature of reality.",
+            background=True,
+        )
+
+        assert response.status == "queued"
+        response_id = response.id
+
+        # Cancel immediately - in replay mode, background worker starts very quickly
+        openai_client.responses.cancel(response_id=response_id)
+
+        # Poll for cancelled status (background worker may have picked up task)
+        max_wait = 5
+        poll_interval = 0.1
+        elapsed = 0
+
+        while elapsed < max_wait:
+            time.sleep(poll_interval)
+            elapsed += poll_interval
+
+            retrieved = openai_client.responses.retrieve(response_id=response_id)
+            if retrieved.status == "cancelled":
+                return
+
+            # In replay mode, worker may have started processing before cancel completed
+            assert retrieved.status in ("queued", "in_progress", "cancelled"), (
+                f"Unexpected status '{retrieved.status}' - expected queued/in_progress/cancelled"
+            )
+
+        pytest.fail(f"Response did not transition to cancelled within {max_wait} seconds")
+
+    def test_cancel_already_cancelled_is_idempotent(self, openai_client, text_model_id):
+        """Test that cancelling an already-cancelled response is idempotent."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX rate limits cause cancel tests to fail")
+        # Create and cancel a background response
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="Write a long story.",
+            background=True,
+        )
+
+        response_id = response.id
+        openai_client.responses.cancel(response_id=response_id)
+
+        # Poll for cancelled status
+        max_wait = 5
+        poll_interval = 0.1
+        elapsed = 0
+
+        while elapsed < max_wait:
+            time.sleep(poll_interval)
+            elapsed += poll_interval
+
+            retrieved = openai_client.responses.retrieve(response_id=response_id)
+            if retrieved.status == "cancelled":
+                break
+
+            assert retrieved.status in ("queued", "in_progress", "cancelled"), f"Unexpected status '{retrieved.status}'"
+        else:
+            pytest.fail(f"Response did not transition to cancelled within {max_wait} seconds")
+
+        # Cancel again - should return same state without error
+        cancelled_again = openai_client.responses.cancel(response_id=response_id)
+        assert cancelled_again.id == response_id
+        assert cancelled_again.status == "cancelled"
+
+    def test_cancel_completed_response_fails(self, openai_client, text_model_id):
+        """Test that cancelling a completed response returns 409 Conflict."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX rate limits cause cancel tests to fail")
+        # Create a synchronous (completed) response
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="Say hello",
+            background=False,
+        )
+
+        assert response.status == "completed"
+        response_id = response.id
+
+        # Try to cancel it - should fail with 409
+        with pytest.raises(Exception) as exc_info:
+            openai_client.responses.cancel(response_id=response_id)
+
+        # Check for conflict error (different clients may raise different exceptions)
+        error_str = str(exc_info.value).lower()
+        assert "409" in error_str or "conflict" in error_str or "cannot cancel" in error_str
+
+    def test_cancel_nonexistent_response_fails(self, openai_client, text_model_id):
+        """Test that cancelling a non-existent response returns 404."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX rate limits cause cancel tests to fail")
+        fake_id = "resp_fake_nonexistent_id"
+
+        with pytest.raises(Exception) as exc_info:
+            openai_client.responses.cancel(response_id=fake_id)
+
+        # Check for not found error
+        error_str = str(exc_info.value).lower()
+        assert "404" in error_str or "not found" in error_str
+
+    def test_cancel_prevents_completion(self, openai_client, text_model_id):
+        """Test that a cancelled response does not complete."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX rate limits cause cancel tests to fail")
+        # Create a background response
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="Write a detailed essay.",
+            background=True,
+        )
+
+        response_id = response.id
+        assert response.status == "queued"
+
+        # Cancel immediately
+        cancelled = openai_client.responses.cancel(response_id=response_id)
+        assert cancelled.status == "cancelled"
+
+        # Poll to verify it stays cancelled and doesn't complete
+        max_wait = 5
+        poll_interval = 0.5
+        elapsed = 0
+
+        while elapsed < max_wait:
+            time.sleep(poll_interval)
+            elapsed += poll_interval
+
+            retrieved = openai_client.responses.retrieve(response_id=response_id)
+            assert retrieved.status == "cancelled", f"Expected 'cancelled' but got '{retrieved.status}'"
+            assert len(retrieved.output) == 0
+
     def _skip_service_tier_for_unsupported(self, text_model_id):
         if text_model_id.startswith("azure/"):
             pytest.skip("Azure OpenAI does not support the service_tier parameter")
