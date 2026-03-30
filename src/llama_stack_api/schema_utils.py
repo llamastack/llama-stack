@@ -209,7 +209,7 @@ def webmethod(
     return wrap
 
 
-def remove_null_from_anyof(schema: dict, *, add_nullable: bool = False) -> None:
+def remove_null_from_anyof(schema: dict[str, Any], *, add_nullable: bool = False) -> None:
     """Remove null type from anyOf and optionally add nullable flag.
 
     Converts Pydantic's default OpenAPI 3.1 style:
@@ -248,7 +248,7 @@ def remove_null_from_anyof(schema: dict, *, add_nullable: bool = False) -> None:
             schema["nullable"] = True
 
 
-def nullable_openai_style(schema: dict) -> None:
+def nullable_openai_style(schema: dict[str, Any]) -> None:
     """Shorthand for remove_null_from_anyof with add_nullable=True.
 
     Use this for fields that need OpenAPI 3.0 nullable style to match OpenAI's spec.

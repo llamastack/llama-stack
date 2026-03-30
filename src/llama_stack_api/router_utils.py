@@ -17,7 +17,7 @@ JSON error responses instead of dropping the connection.
 """
 
 import inspect
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from typing import Annotated, Any, TypeVar
 
 from fastapi import HTTPException, Path, Query, Request, Response
@@ -98,8 +98,8 @@ def create_query_dependency[T: BaseModel](model_class: type[T]) -> Callable[...,
     # they are standard Python function attributes that exist on all callable objects at runtime.
     # Setting them allows FastAPI to properly introspect the function signature for dependency injection.
     dependency_func.__signature__ = inspect.Signature(sig_params)  # type: ignore[attr-defined]
-    dependency_func.__annotations__ = annotations  # type: ignore[attr-defined]
-    dependency_func.__name__ = f"get_{model_class.__name__.lower()}_request"  # type: ignore[attr-defined]
+    dependency_func.__annotations__ = annotations
+    dependency_func.__name__ = f"get_{model_class.__name__.lower()}_request"
 
     return dependency_func
 
@@ -160,8 +160,8 @@ def create_path_dependency[T: BaseModel](model_class: type[T]) -> Callable[..., 
     # they are standard Python function attributes that exist on all callable objects at runtime.
     # Setting them allows FastAPI to properly introspect the function signature for dependency injection.
     dependency_func.__signature__ = inspect.Signature([param])  # type: ignore[attr-defined]
-    dependency_func.__annotations__ = annotations  # type: ignore[attr-defined]
-    dependency_func.__name__ = f"get_{model_class.__name__.lower()}_request"  # type: ignore[attr-defined]
+    dependency_func.__annotations__ = annotations
+    dependency_func.__name__ = f"get_{model_class.__name__.lower()}_request"
 
     return dependency_func
 
@@ -198,7 +198,7 @@ class ExceptionTranslatingRoute(APIRoute):
     ``Exception`` handler registered via ``app.exception_handler(Exception)``.
     """
 
-    def get_route_handler(self):
+    def get_route_handler(self) -> Callable[[Request], Coroutine[Any, Any, Response]]:
         original = super().get_route_handler()
 
         async def handler(request: Request) -> Response:
