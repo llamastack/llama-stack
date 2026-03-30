@@ -1006,6 +1006,7 @@ class OpenAIResponsesImpl:
                 logger.info(f"Background response {response_id} was cancelled before final update")
                 return
 
+            result_response.background = True
             result_response.id = response_id  # Ensure we update the correct response
             await self.responses_store.update_response_object(result_response)
         else:
