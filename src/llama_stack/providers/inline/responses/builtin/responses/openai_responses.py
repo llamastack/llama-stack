@@ -798,8 +798,9 @@ class OpenAIResponsesImpl:
                     extra={"model": model, "conversation": conversation, "previous_response_id": previous_response_id},
                 )
                 raise InternalServerError()
-            # Set background=False for non-background responses
-            final_response.background = False
+            # Preserve background flag: response_id is set when called from
+            # the background loop, None for non-background responses
+            final_response.background = response_id is not None
             return final_response
 
     async def _create_background_response(
@@ -1006,7 +1007,6 @@ class OpenAIResponsesImpl:
                 logger.info(f"Background response {response_id} was cancelled before final update")
                 return
 
-            result_response.background = True
             result_response.id = response_id  # Ensure we update the correct response
             await self.responses_store.update_response_object(result_response)
         else:
@@ -1203,13 +1203,13 @@ class OpenAIResponsesImpl:
         # Get current response state
         response = await self.responses_store.get_response_object(response_id)
 
-        # Only background responses can be cancelled
-        if not response.background:
-            raise ConflictError(f"Cannot cancel response '{response_id}': only background responses can be cancelled")
-
         # If already cancelled, return current state (idempotent)
         if response.status == "cancelled":
             return response.to_response_object()
+
+        # Only background responses can be cancelled
+        if not response.background:
+            raise ConflictError(f"Cannot cancel response '{response_id}': only background responses can be cancelled")
 
         # Cannot cancel responses in terminal states
         if response.status in ["completed", "failed", "incomplete"]:
