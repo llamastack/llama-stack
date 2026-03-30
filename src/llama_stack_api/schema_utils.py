@@ -138,23 +138,6 @@ def clear_dynamic_schema_types() -> None:
     _dynamic_schema_types.clear()
 
 
-@dataclass
-class WebMethod:
-    """Metadata container for an API endpoint operation's routing and configuration."""
-
-    level: str | None = None
-    route: str | None = None
-    public: bool = False
-    request_examples: list[Any] | None = None
-    response_examples: list[Any] | None = None
-    method: str | None = None
-    raw_bytes_request_body: bool | None = False
-    # A descriptive name of the corresponding span created by tracing
-    descriptive_name: str | None = None
-    deprecated: bool | None = False
-    require_authentication: bool | None = True
-
-
 CallableT = TypeVar("CallableT", bound=Callable[..., Any])
 
 

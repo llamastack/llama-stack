@@ -26,7 +26,6 @@ from .schema_utils import (  # noqa: I001
     CallableT,
     ExtraBodyField,
     SchemaInfo,
-    WebMethod,
     clear_dynamic_schema_types,
     get_registered_schema_info,
     iter_dynamic_schema_types,
@@ -1103,7 +1102,6 @@ __all__ = [
     "VectorStoresProtocolPrivate",
     "VersionInfo",
     "ViolationLevel",
-    "WebMethod",
     "WebSearchToolTypes",
     "WeightedRanker",
     # Validators

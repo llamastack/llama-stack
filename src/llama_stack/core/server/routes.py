@@ -6,6 +6,7 @@
 
 import re
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
 from llama_stack.core.server.fastapi_router_registry import (
@@ -13,15 +14,23 @@ from llama_stack.core.server.fastapi_router_registry import (
     build_fastapi_router,
     get_router_routes,
 )
-from llama_stack_api import Api, WebMethod
+from llama_stack_api import Api
 from llama_stack_api.router_utils import PUBLIC_ROUTE_KEY
+
+
+@dataclass
+class RouteAuthInfo:
+    """Authentication metadata for a route."""
+
+    require_authentication: bool = True
+
 
 EndpointFunc = Callable[..., Any]
 PathParams = dict[str, str]
-RouteInfo = tuple[EndpointFunc, str, WebMethod]
+RouteInfo = tuple[EndpointFunc, str, RouteAuthInfo]
 PathImpl = dict[str, RouteInfo]
 RouteImpls = dict[str, PathImpl]
-RouteMatch = tuple[EndpointFunc, PathParams, str, WebMethod]
+RouteMatch = tuple[EndpointFunc, PathParams, str, RouteAuthInfo]
 
 
 def _convert_path_to_regex(path: str) -> str:
@@ -62,14 +71,13 @@ def initialize_route_impls(impls) -> RouteImpls:
 
                 # Routes with openapi_extra[PUBLIC_ROUTE_KEY]=True don't require authentication
                 is_public = (route.openapi_extra or {}).get(PUBLIC_ROUTE_KEY, False)
-                webmethod = WebMethod(
-                    descriptive_name=None,
+                auth_info = RouteAuthInfo(
                     require_authentication=not is_public,
                 )
                 route_impls[method][_convert_path_to_regex(route.path)] = (
                     func,
                     route.path,
-                    webmethod,
+                    auth_info,
                 )
 
     return route_impls
