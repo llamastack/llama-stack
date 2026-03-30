@@ -12,9 +12,9 @@ import traceback
 import warnings
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any
 from importlib.metadata import version as parse_version
 from pathlib import Path
+from typing import Any
 
 import httpx
 import yaml
