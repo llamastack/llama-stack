@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import asyncio
 import time
 from typing import Any
 
@@ -83,6 +84,19 @@ class ToolRuntimeRouter(ToolRuntime):
 
             return result
 
+        except asyncio.CancelledError:
+            # Record cancellation metrics
+            duration = time.perf_counter() - start_time
+            if metric_attrs:
+                error_attrs = {**metric_attrs, "status": "error"}
+            else:
+                error_attrs = create_tool_metric_attributes(
+                    tool_name=tool_name,
+                    status="error",
+                )
+            tool_invocations_total.add(1, error_attrs)
+            tool_duration.record(duration, error_attrs)
+            raise
         except Exception:
             # Record error metrics
             duration = time.perf_counter() - start_time

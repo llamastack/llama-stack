@@ -102,7 +102,7 @@ def skip_if_model_doesnt_support_variable_dimensions(client_with_models, model_i
             "inline::sentence-transformers",
             # Error code: 400 - {'error_code': 'BAD_REQUEST', 'message': 'Bad request: json: unknown field "dimensions"\n'}
             "remote::databricks",
-            "remote::watsonx",  # openai.BadRequestError: Error code: 400 - {'detail': "litellm.UnsupportedParamsError: watsonx does not support parameters: {'dimensions': 384}
+            "remote::watsonx",  # watsonx does not support the dimensions parameter
         )
         or (provider.provider_type == "remote::openai" and "text-embedding-3" not in model_id)
         or (

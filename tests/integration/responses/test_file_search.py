@@ -173,7 +173,7 @@ def test_response_file_search_filter_by_region(responses_client, text_model_id, 
 def test_response_file_search_filter_by_category(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test file search with category equality filter."""
     if text_model_id.startswith("watsonx/"):
-        pytest.skip("WatsonX via LiteLLM does not reliably support tool calling")
+        pytest.skip("WatsonX does not reliably support tool calling")
     tools = [
         {
             "type": "file_search",
@@ -288,7 +288,7 @@ def test_response_file_search_filter_compound_and(responses_client, text_model_i
 def test_response_file_search_filter_compound_or(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test file search with compound OR filter (marketing OR sales)."""
     if text_model_id.startswith("watsonx/"):
-        pytest.skip("WatsonX via LiteLLM does not reliably support tool calling")
+        pytest.skip("WatsonX does not reliably support tool calling")
     tools = [
         {
             "type": "file_search",
@@ -333,7 +333,7 @@ def test_response_file_search_filter_compound_or(responses_client, text_model_id
 def test_response_file_search_streaming_events(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test that file search emits proper streaming events (in_progress, searching, completed)."""
     if text_model_id.startswith("watsonx/"):
-        pytest.skip("WatsonX via LiteLLM does not reliably support tool calling")
+        pytest.skip("WatsonX does not reliably support tool calling")
     tools = [
         {
             "type": "file_search",

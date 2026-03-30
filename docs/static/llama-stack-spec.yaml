@@ -1504,6 +1504,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateResponseRequest'
+          application/x-www-form-urlencoded: {}
   /v1/responses/{response_id}:
     get:
       responses:
