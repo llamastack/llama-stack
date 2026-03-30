@@ -142,14 +142,14 @@ def middleware_with_mocks(mock_auth_endpoint):
     )
     middleware = AuthenticationMiddleware(mock_app, auth_config, {})
 
-    from llama_stack_api import WebMethod
+    from llama_stack.core.server.routes import RouteAuthInfo
 
     routes = {
-        ("POST", "/test/scoped"): WebMethod(route="/test/scoped", method="POST"),
-        ("GET", "/test/public"): WebMethod(route="/test/public", method="GET"),
-        ("GET", "/health"): WebMethod(route="/health", method="GET", require_authentication=False),
-        ("GET", "/version"): WebMethod(route="/version", method="GET", require_authentication=False),
-        ("GET", "/models/list"): WebMethod(route="/models/list", method="GET", require_authentication=True),
+        ("POST", "/test/scoped"): RouteAuthInfo(),
+        ("GET", "/test/public"): RouteAuthInfo(),
+        ("GET", "/health"): RouteAuthInfo(require_authentication=False),
+        ("GET", "/version"): RouteAuthInfo(require_authentication=False),
+        ("GET", "/models/list"): RouteAuthInfo(require_authentication=True),
     }
 
     # Mock the route finding logic
