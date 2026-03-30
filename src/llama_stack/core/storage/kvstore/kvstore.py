@@ -16,19 +16,20 @@ from collections import defaultdict
 from datetime import datetime
 from typing import cast
 
-from llama_stack.core.storage.datatypes import KVStoreReference, StorageBackendConfig
-from llama_stack_api.internal.kvstore import KVStore
-
-from .config import (
-    KVStoreConfig,
+from llama_stack.core.storage.datatypes import (
+    KVStoreReference,
     MongoDBKVStoreConfig,
     PostgresKVStoreConfig,
     RedisKVStoreConfig,
     SqliteKVStoreConfig,
+    StorageBackendConfig,
 )
+from llama_stack_api.internal.kvstore import KVStore
+
+from .config import KVStoreConfig
 
 
-def kvstore_dependencies():
+def kvstore_dependencies() -> list[str]:
     """
     Returns all possible kvstore dependencies for registry/provider specifications.
 
@@ -42,7 +43,7 @@ def kvstore_dependencies():
 class InmemoryKVStoreImpl(KVStore):
     """In-memory key-value store implementation for testing and ephemeral usage."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._store: dict[str, str] = {}
 
     async def initialize(self) -> None:
@@ -121,15 +122,15 @@ async def kvstore_impl(reference: KVStoreReference) -> KVStore:
 
         impl: KVStore
         if isinstance(config, RedisKVStoreConfig):
-            from .redis import RedisKVStoreImpl
+            from .redis import RedisKVStoreImpl  # type: ignore[attr-defined]
 
             impl = RedisKVStoreImpl(config)
         elif isinstance(config, SqliteKVStoreConfig):
-            from .sqlite import SqliteKVStoreImpl
+            from .sqlite import SqliteKVStoreImpl  # type: ignore[attr-defined]
 
             impl = SqliteKVStoreImpl(config)
         elif isinstance(config, PostgresKVStoreConfig):
-            from .postgres import PostgresKVStoreImpl
+            from .postgres import PostgresKVStoreImpl  # type: ignore[attr-defined]
 
             impl = PostgresKVStoreImpl(config)
         elif isinstance(config, MongoDBKVStoreConfig):
