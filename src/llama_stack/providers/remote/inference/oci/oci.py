@@ -12,7 +12,7 @@ import httpx
 import oci
 from oci.generative_ai.generative_ai_client import GenerativeAiClient
 from oci.generative_ai.models import ModelCollection
-from openai._base_client import DefaultAsyncHttpxClient
+from openai import DefaultAsyncHttpxClient
 
 from llama_stack.log import get_logger
 from llama_stack.providers.remote.inference.oci.auth import OciInstancePrincipalAuth, OciUserPrincipalAuth
@@ -31,6 +31,8 @@ MODEL_CAPABILITIES = ["TEXT_GENERATION", "TEXT_SUMMARIZATION", "TEXT_EMBEDDINGS"
 
 
 class OCIInferenceAdapter(OpenAIMixin):
+    """Inference adapter for Oracle Cloud Infrastructure Generative AI."""
+
     config: OCIConfig
 
     embedding_models: list[str] = []
@@ -67,6 +69,7 @@ class OCIInferenceAdapter(OpenAIMixin):
                 headers={
                     "CompartmentId": compartment_id,
                 },
+                verify=self.shared_ssl_context,
             ),
         }
 

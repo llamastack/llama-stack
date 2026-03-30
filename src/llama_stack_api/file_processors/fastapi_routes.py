@@ -17,6 +17,11 @@ from typing import Annotated, Any
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import ValidationError
 
+from llama_stack_api.common.upload_safety import (
+    DEFAULT_MAX_UPLOAD_SIZE_BYTES,
+    PreReadUploadFile,
+    read_upload_with_size_limit,
+)
 from llama_stack_api.router_utils import standard_responses
 from llama_stack_api.vector_io import (
     VectorStoreChunkingStrategy,
@@ -29,11 +34,12 @@ from .api import FileProcessors
 from .models import ProcessFileRequest, ProcessFileResponse
 
 
-def create_router(impl: FileProcessors) -> APIRouter:
+def create_router(impl: FileProcessors, max_upload_size_bytes: int = DEFAULT_MAX_UPLOAD_SIZE_BYTES) -> APIRouter:
     """Create a FastAPI router for the File Processors API.
 
     Args:
         impl: The FileProcessors implementation instance
+        max_upload_size_bytes: Maximum allowed upload size in bytes for direct file uploads.
 
     Returns:
         APIRouter configured for the File Processors API
@@ -100,11 +106,17 @@ def create_router(impl: FileProcessors) -> APIRouter:
             except ValidationError as e:
                 raise HTTPException(status_code=400, detail=f"Invalid chunking strategy: {str(e)}") from e
 
+        # For direct uploads, enforce the upload size limit before passing to the provider
+        safe_file = None
+        if file is not None:
+            content = await read_upload_with_size_limit(file, max_upload_size_bytes)
+            safe_file = PreReadUploadFile(content, filename=file.filename, content_type=file.content_type)
+
         request = ProcessFileRequest(
             file_id=file_id,
             options=options,
             chunking_strategy=parsed_chunking_strategy,
         )
-        return await impl.process_file(request, file)
+        return await impl.process_file(request, safe_file)
 
     return router

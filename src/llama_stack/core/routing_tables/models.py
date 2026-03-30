@@ -34,6 +34,8 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 
 class ModelsRoutingTable(CommonRoutingTableImpl, Models):
+    """Routing table for managing model registrations, provider lookups, and dynamic model discovery."""
+
     listed_providers: set[str] = set()
 
     async def refresh(self) -> None:
@@ -46,7 +48,11 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             try:
                 models = await provider.list_models()
             except Exception as e:
-                logger.warning(f"Model refresh failed for provider {provider_id}: {e}")
+                if provider_id not in self.listed_providers:
+                    self.listed_providers.add(provider_id)
+                    logger.warning("Model refresh skipped", provider_id=provider_id)
+                else:
+                    logger.warning("Model refresh failed", provider_id=provider_id, error=str(e))
                 continue
 
             self.listed_providers.add(provider_id)
@@ -118,15 +124,21 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                         dynamic_models.append(model)
                     else:
                         logger.debug(
-                            f"Access denied to dynamic model '{model.identifier}' for user {user.principal if user else 'anonymous'}"
+                            "Access denied to dynamic model",
+                            model=model.identifier,
+                            user=user.principal if user else "anonymous",
                         )
 
                 logger.debug(
-                    f"Fetched {len(dynamic_models)} accessible models from provider {provider_id} using provider_data"
+                    "Fetched accessible models from provider using provider_data",
+                    count=len(dynamic_models),
+                    provider_id=provider_id,
                 )
 
             except Exception as e:
-                logger.debug(f"Failed to list models from provider {provider_id} with provider_data: {e}")
+                logger.debug(
+                    "Failed to list models from provider with provider_data", provider_id=provider_id, error=str(e)
+                )
                 continue
 
         return dynamic_models
@@ -210,14 +222,16 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         provider_id: str | None = None,
         metadata: dict[str, Any] | None = None,
         model_type: ModelType | None = None,
+        model_validation: bool | None = None,
     ) -> Model:
         # Support both the public Models API (RegisterModelRequest) and legacy parameter-based interface
         if isinstance(request, RegisterModelRequest):
             model_id = request.model_id
             provider_model_id = request.provider_model_id
             provider_id = request.provider_id
-            metadata = request.metadata
+            metadata = request.metadata or {}
             model_type = request.model_type
+            model_validation = request.model_validation
         elif isinstance(request, str):
             # Legacy positional argument: register_model("model-id", ...)
             model_id = request
@@ -248,6 +262,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             provider_id=provider_id,
             metadata=metadata,
             model_type=model_type,
+            model_validation=model_validation,
             source=RegistryEntrySource.via_register_api,
         )
         registered_model = await self.register_object(model)
@@ -291,7 +306,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                 model_ids[model.provider_resource_id] = model.identifier
                 continue
 
-            logger.debug(f"unregistering model {model.identifier}")
+            logger.debug("Unregistering model", model=model.identifier)
             await self.unregister_object(model)
 
         for model in models:
@@ -302,7 +317,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             if model.identifier == model.provider_resource_id:
                 model.identifier = f"{provider_id}/{model.provider_resource_id}"
 
-            logger.debug(f"registering model {model.identifier} ({model.provider_resource_id})")
+            logger.debug("Registering model", model=model.identifier, provider_resource_id=model.provider_resource_id)
             await self.register_object(
                 ModelWithOwner(
                     identifier=model.identifier,

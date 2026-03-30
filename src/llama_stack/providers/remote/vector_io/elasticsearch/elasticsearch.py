@@ -13,9 +13,9 @@ from numpy.typing import NDArray
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.vector_io.filters import Filter
 from llama_stack_api import (
-    ChunkForDeletion,
     DeleteChunksRequest,
     EmbeddedChunk,
     Files,
@@ -43,6 +43,8 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 
 class ElasticsearchIndex(EmbeddingIndex):
+    """Embedding index backed by an Elasticsearch index."""
+
     def __init__(self, client: AsyncElasticsearch, collection_name: str):
         self.client = client
         self.collection_name = collection_name
@@ -216,8 +218,12 @@ class ElasticsearchIndex(EmbeddingIndex):
 
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         """Vector search using kNN."""
+        if filters is not None:
+            raise NotImplementedError("Elasticsearch provider does not yet support native filtering")
 
         try:
             results = await self.client.search(
@@ -234,8 +240,12 @@ class ElasticsearchIndex(EmbeddingIndex):
 
         return await self._results_to_chunks(results)
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_keyword(
+        self, query_string: str, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         """Keyword search using match query."""
+        if filters is not None:
+            raise NotImplementedError("Elasticsearch provider does not yet support native filtering")
 
         try:
             results = await self.client.search(
@@ -260,7 +270,10 @@ class ElasticsearchIndex(EmbeddingIndex):
         score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
+        if filters is not None:
+            raise NotImplementedError("Elasticsearch provider does not yet support native filtering")
         supported_retrievers = ["rrf", "linear"]
         original_reranker_type = reranker_type
         if reranker_type == "weighted":
@@ -365,6 +378,8 @@ class ElasticsearchIndex(EmbeddingIndex):
 
 
 class ElasticsearchVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+    """Vector I/O adapter for remote Elasticsearch instances."""
+
     def __init__(
         self,
         config: ElasticsearchVectorIOConfig,

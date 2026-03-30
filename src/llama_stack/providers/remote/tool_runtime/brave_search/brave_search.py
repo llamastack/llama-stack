@@ -23,6 +23,8 @@ from .config import BraveSearchToolConfig
 
 
 class BraveSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRequestProviderData):
+    """Tool runtime for performing web searches using the Brave Search API."""
+
     def __init__(self, config: BraveSearchToolConfig):
         self.config = config
 
@@ -44,7 +46,7 @@ class BraveSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRe
             raise ValueError(
                 'Pass Search provider\'s API Key in the header X-LlamaStack-Provider-Data as { "brave_search_api_key": <your api key>}'
             )
-        return provider_data.brave_search_api_key
+        return provider_data.brave_search_api_key.get_secret_value()
 
     async def list_runtime_tools(
         self,

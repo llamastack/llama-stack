@@ -6,14 +6,16 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack_api import json_schema_type
 
 
 class GroqProviderDataValidator(BaseModel):
-    groq_api_key: str | None = Field(
+    """Validates provider-specific request data for Groq inference."""
+
+    groq_api_key: SecretStr | None = Field(
         default=None,
         description="API key for Groq models",
     )
@@ -21,6 +23,8 @@ class GroqProviderDataValidator(BaseModel):
 
 @json_schema_type
 class GroqConfig(RemoteInferenceProviderConfig):
+    """Configuration for the Groq inference provider."""
+
     base_url: HttpUrl | None = Field(
         default=HttpUrl("https://api.groq.com/openai/v1"),
         description="The URL for the Groq AI server",

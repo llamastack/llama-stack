@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 from llama_stack.core.stack import replace_env_vars
 from llama_stack.providers.remote.inference.openai.config import OpenAIConfig
@@ -63,7 +63,7 @@ class TestOpenAIBaseURLConfig:
         adapter = OpenAIInferenceAdapter(config=config)
         adapter.provider_data_api_key_field = None  # Disable provider data for this test
 
-        # Mock the get_api_key method since it's delegated to LiteLLMOpenAIMixin
+        # Mock the get_api_key method since it's delegated to OpenAIMixin
         adapter.get_api_key = MagicMock(return_value="test-key")
 
         # Access the client property to trigger AsyncOpenAI initialization
@@ -73,6 +73,7 @@ class TestOpenAIBaseURLConfig:
         mock_openai_class.assert_called_once_with(
             api_key="test-key",
             base_url=custom_url,
+            http_client=ANY,
         )
 
     @patch("llama_stack.providers.utils.inference.openai_mixin.AsyncOpenAI")
@@ -109,6 +110,7 @@ class TestOpenAIBaseURLConfig:
         mock_openai_class.assert_called_with(
             api_key="test-key",
             base_url=custom_url,
+            http_client=ANY,
         )
 
         # Verify the models.list method was called
@@ -151,4 +153,5 @@ class TestOpenAIBaseURLConfig:
         mock_openai_class.assert_called_with(
             api_key="test-key",
             base_url="https://proxy.openai.com/v1",
+            http_client=ANY,
         )

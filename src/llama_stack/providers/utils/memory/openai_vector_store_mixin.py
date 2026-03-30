@@ -7,9 +7,12 @@
 import asyncio
 import json
 import mimetypes
+import random
 import time
 import uuid
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
+from enum import StrEnum
 from typing import Annotated, Any
 
 from fastapi import Body
@@ -24,6 +27,7 @@ from llama_stack.providers.utils.memory.vector_store import (
     content_from_data_and_mime_type,
     make_overlapped_chunks,
 )
+from llama_stack.providers.utils.vector_io.filters import parse_filter
 from llama_stack_api import (
     DEFAULT_CHUNK_OVERLAP_TOKENS,
     DEFAULT_CHUNK_SIZE_TOKENS,
@@ -37,19 +41,26 @@ from llama_stack_api import (
     Inference,
     InsertChunksRequest,
     OpenAIAttachFileRequest,
+    OpenAIChatCompletionContentPartTextParam,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIFileObject,
     OpenAISearchVectorStoreRequest,
+    OpenAISystemMessageParam,
     OpenAIUpdateVectorStoreFileRequest,
     OpenAIUpdateVectorStoreRequest,
+    OpenAIUserMessageParam,
     QueryChunksRequest,
     QueryChunksResponse,
     SearchRankingOptions,
+    TextContentItem,
     VectorStore,
     VectorStoreChunkingStrategy,
     VectorStoreChunkingStrategyAuto,
+    VectorStoreChunkingStrategyContextual,
+    VectorStoreChunkingStrategyContextualConfig,
     VectorStoreChunkingStrategyStatic,
     VectorStoreChunkingStrategyStaticConfig,
     VectorStoreContent,
@@ -88,6 +99,26 @@ OPENAI_VECTOR_STORES_PREFIX = f"openai_vector_stores:{VERSION}::"
 OPENAI_VECTOR_STORES_FILES_PREFIX = f"openai_vector_stores_files:{VERSION}::"
 OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_contents:{VERSION}::"
 OPENAI_VECTOR_STORES_FILE_BATCHES_PREFIX = f"openai_vector_stores_file_batches:{VERSION}::"
+
+
+_RETRIABLE_STATUS_CODES = {429, 502, 503, 504}
+_MAX_RETRIES = 3
+_RETRY_BASE_DELAY = 1.0
+
+
+def _is_retriable_error(exc: Exception) -> bool:
+    if isinstance(exc, TimeoutError | ConnectionError):
+        return True
+    status = getattr(getattr(exc, "response", None), "status_code", None) or getattr(exc, "status_code", None)
+    return status in _RETRIABLE_STATUS_CODES if status else False
+
+
+class _ChunkContextResult(StrEnum):
+    """Internal enum for chunk contextualization results."""
+
+    SUCCESS = "success"
+    EMPTY = "empty"
+    FAILED = "failed"
 
 
 class OpenAIVectorStoreMixin(ABC):
@@ -291,14 +322,14 @@ class OpenAIVectorStoreMixin(ABC):
             info = json.loads(item)
             expires_at = info.get("expires_at")
             if expires_at and current_time > expires_at:
-                logger.info(f"Cleaning up expired file batch: {info['id']}")
+                logger.info("Cleaning up expired file batch", id=info["id"])
                 await self.kvstore.delete(f"{OPENAI_VECTOR_STORES_FILE_BATCHES_PREFIX}{info['id']}")
                 # Remove from in-memory cache if present
                 self.openai_file_batches.pop(info["id"], None)
                 expired_count += 1
 
         if expired_count > 0:
-            logger.info(f"Cleaned up {expired_count} expired file batches")
+            logger.info("Cleaned up expired file batches", expired_count=expired_count)
 
     async def _get_completed_files_in_batch(self, vector_store_id: str, file_ids: list[str]) -> set[str]:
         """Determine which files in a batch are actually completed by checking vector store file_ids."""
@@ -338,7 +369,7 @@ class OpenAIVectorStoreMixin(ABC):
         # If all files are already completed, mark batch as completed
         if remaining_count == 0:
             batch_info["status"] = "completed"
-            logger.info(f"Batch {batch_id} is already fully completed, updating status")
+            logger.info("Batch is already fully completed, updating status", batch_id=batch_id)
 
         # Save updated batch info
         await self._save_openai_vector_store_file_batch(batch_id, batch_info)
@@ -349,7 +380,7 @@ class OpenAIVectorStoreMixin(ABC):
         """Resume processing of incomplete file batches after server restart."""
         for batch_id, batch_info in self.openai_file_batches.items():
             if batch_info["status"] == "in_progress":
-                logger.info(f"Analyzing incomplete file batch: {batch_id}")
+                logger.info("Analyzing incomplete file batch", batch_id=batch_id)
 
                 remaining_files = await self._analyze_batch_completion_on_resume(batch_id, batch_info)
 
@@ -358,13 +389,22 @@ class OpenAIVectorStoreMixin(ABC):
                     continue
 
                 if remaining_files:
-                    logger.info(f"Resuming batch {batch_id} with {len(remaining_files)} remaining files")
+                    logger.info(
+                        "Resuming batch with remaining files",
+                        batch_id=batch_id,
+                        remaining_files_count=len(remaining_files),
+                    )
                     # Restart the background processing task with only remaining files
                     task = asyncio.create_task(self._process_file_batch_async(batch_id, batch_info, remaining_files))
                     self._file_batch_tasks[batch_id] = task
 
     async def initialize_openai_vector_stores(self) -> None:
         """Load existing OpenAI vector stores and file batches into the in-memory cache."""
+        if not self.files_api:
+            logger.warning(
+                "Files API is not available. File attachment operations on vector stores will fail. "
+                "Ensure a 'files' provider is configured if file operations are needed."
+            )
         self.openai_vector_stores = await self._load_openai_vector_stores()
         self.openai_file_batches = await self._load_openai_vector_store_file_batches()
         self._file_batch_tasks = {}
@@ -436,13 +476,17 @@ class OpenAIVectorStoreMixin(ABC):
                 int(metadata["embedding_dimension"]) if metadata.get("embedding_dimension") else EMBEDDING_DIMENSION
             )
             logger.debug(
-                f"Using embedding config from metadata (takes precedence over extra_body): model='{embedding_model}', dimension={embedding_dimension}"
+                "Using embedding config from metadata (takes precedence over extra_body): model=, dimension",
+                embedding_model=embedding_model,
+                embedding_dimension=embedding_dimension,
             )
         else:
             embedding_model = extra_body.get("embedding_model")
             embedding_dimension = extra_body.get("embedding_dimension", EMBEDDING_DIMENSION)
             logger.debug(
-                f"Using embedding config from extra_body: model='{embedding_model}', dimension={embedding_dimension}"
+                "Using embedding config from extra_body: model=, dimension",
+                embedding_model=embedding_model,
+                embedding_dimension=embedding_dimension,
             )
 
         # use provider_id set by router; fallback to provider's own ID when used directly via --stack-config
@@ -471,7 +515,7 @@ class OpenAIVectorStoreMixin(ABC):
             total=0,
         )
         if not params.chunking_strategy or params.chunking_strategy.type == "auto":
-            chunking_strategy = VectorStoreChunkingStrategyStatic(
+            chunking_strategy: VectorStoreChunkingStrategy = VectorStoreChunkingStrategyStatic(
                 static=VectorStoreChunkingStrategyStaticConfig(
                     max_chunk_size_tokens=DEFAULT_CHUNK_SIZE_TOKENS,
                     chunk_overlap_tokens=DEFAULT_CHUNK_OVERLAP_TOKENS,
@@ -524,7 +568,12 @@ class OpenAIVectorStoreMixin(ABC):
         # Log any exceptions but don't fail the vector store creation
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                logger.warning(f"Failed to attach file {file_ids[i]} to vector store {vector_store_id}: {result}")
+                logger.warning(
+                    "Failed to attach file to vector store",
+                    file_ids_i=file_ids[i],
+                    vector_store_id=vector_store_id,
+                    result=result,
+                )
 
         # Get the updated store info and return it
         store_info = self.openai_vector_stores[vector_store_id]
@@ -637,7 +686,7 @@ class OpenAIVectorStoreMixin(ABC):
         try:
             await self.unregister_vector_store(vector_store_id)
         except Exception as e:
-            logger.warning(f"Failed to delete underlying vector DB {vector_store_id}: {e}")
+            logger.warning("Failed to delete underlying vector DB", vector_store_id=vector_store_id, error=str(e))
 
         return VectorStoreDeleteResponse(
             id=vector_store_id,
@@ -689,10 +738,15 @@ class OpenAIVectorStoreMixin(ABC):
                 else 0.0
             )
             params = {
+                "max_num_results": max_num_results,
                 "max_chunks": max_num_results * self.vector_stores_config.chunk_retrieval_params.chunk_multiplier,
                 "score_threshold": score_threshold,
                 "mode": request.search_mode,
             }
+
+            # Parse filters into typed objects and pass through to the query
+            if request.filters:
+                params["filters"] = parse_filter(request.filters)
 
             # Use VectorStoresConfig defaults when ranking_options values are not provided
             config = self.vector_stores_config or VectorStoresConfig()
@@ -709,15 +763,7 @@ class OpenAIVectorStoreMixin(ABC):
             # Convert response to OpenAI format
             data = []
             for embedded_chunk, score in zip(response.chunks, response.scores, strict=False):
-                # EmbeddedChunk inherits from Chunk, so use it directly
                 chunk = embedded_chunk
-
-                # Apply filters if provided
-                if request.filters:
-                    # Simple metadata filtering
-                    if not self._matches_filters(chunk.metadata, request.filters):
-                        continue
-
                 content = self._chunk_to_vector_store_content(chunk)
 
                 response_data_item = VectorStoreSearchResponse(
@@ -740,7 +786,7 @@ class OpenAIVectorStoreMixin(ABC):
 
         except Exception as e:
             # Log the error and return empty results
-            logger.error(f"Error searching vector store {vector_store_id}: {e}")
+            logger.error("Error searching vector store", vector_store_id=vector_store_id, error=str(e))
             return VectorStoreSearchResponsePage(
                 search_query=request.query if isinstance(request.query, list) else [request.query],
                 data=[],
@@ -778,12 +824,12 @@ class OpenAIVectorStoreMixin(ABC):
             elif ranking_options.ranker == "neural":
                 reranker_params["model"] = ranking_options.model
             else:
-                logger.debug(f"Unknown ranker value: {ranking_options.ranker}, passing through")
+                logger.debug("Unknown ranker value, passing through", ranker=ranking_options.ranker)
 
             params["reranker_type"] = reranker_type
             params["reranker_params"] = reranker_params
 
-            # Store model and weights for neural reranking (TODO: implemented in Part II)
+            # Store model and weights for neural reranking
             if ranking_options.model:
                 params["neural_model"] = ranking_options.model
             if ranking_options.weights:
@@ -803,66 +849,6 @@ class OpenAIVectorStoreMixin(ABC):
                 params["reranker_params"] = reranker_params
 
         return params
-
-    def _matches_filters(self, metadata: dict[str, Any], filters: dict[str, Any]) -> bool:
-        """Check if metadata matches the provided filters."""
-        if not filters:
-            return True
-
-        filter_type = filters.get("type")
-
-        if filter_type is None:
-            if "key" not in filters and "value" not in filters and "filters" not in filters:
-                for key, value in filters.items():
-                    if key not in metadata:
-                        return False
-                    if metadata[key] != value:
-                        return False
-                return True
-            else:
-                raise ValueError("Unsupported filter structure: missing 'type' field")
-
-        if filter_type in ["eq", "ne", "gt", "gte", "lt", "lte"]:
-            # Comparison filter
-            filter_key = filters.get("key")
-            value = filters.get("value")
-
-            if filter_key is None or not isinstance(filter_key, str):
-                return False
-
-            if filter_key not in metadata:
-                return False
-
-            metadata_value = metadata[filter_key]
-
-            if filter_type == "eq":
-                return bool(metadata_value == value)
-            elif filter_type == "ne":
-                return bool(metadata_value != value)
-            elif filter_type == "gt":
-                return bool(metadata_value > value)
-            elif filter_type == "gte":
-                return bool(metadata_value >= value)
-            elif filter_type == "lt":
-                return bool(metadata_value < value)
-            elif filter_type == "lte":
-                return bool(metadata_value <= value)
-            else:
-                raise ValueError(f"Unsupported filter type: {filter_type}")
-
-        elif filter_type == "and":
-            # All filters must match
-            sub_filters = filters.get("filters", [])
-            return all(self._matches_filters(metadata, f) for f in sub_filters)
-
-        elif filter_type == "or":
-            # At least one filter must match
-            sub_filters = filters.get("filters", [])
-            return any(self._matches_filters(metadata, f) for f in sub_filters)
-
-        else:
-            # Unknown filter type, default to no match
-            raise ValueError(f"Unsupported filter type: {filter_type}")
 
     def _chunk_to_vector_store_content(
         self, chunk: EmbeddedChunk, include_embeddings: bool = False, include_metadata: bool = False
@@ -907,7 +893,9 @@ class OpenAIVectorStoreMixin(ABC):
         # Check if file is already attached to this vector store
         store_info = self.openai_vector_stores[vector_store_id]
         if file_id in store_info["file_ids"]:
-            logger.warning(f"File {file_id} is already attached to vector store {vector_store_id}, skipping")
+            logger.warning(
+                "File is already attached to vector store, skipping", file_id=file_id, vector_store_id=vector_store_id
+            )
             # Return existing file object
             file_info = await self._load_openai_vector_store_file(vector_store_id, file_id)
             return VectorStoreFileObject(**file_info)
@@ -928,7 +916,7 @@ class OpenAIVectorStoreMixin(ABC):
             vector_store_id=vector_store_id,
         )
 
-        if not hasattr(self, "files_api") or not self.files_api:
+        if not self.files_api:
             vector_store_file_object.status = "failed"
             vector_store_file_object.last_error = VectorStoreFileLastError(
                 code="server_error",
@@ -939,8 +927,18 @@ class OpenAIVectorStoreMixin(ABC):
         if isinstance(chunking_strategy, VectorStoreChunkingStrategyStatic):
             max_chunk_size_tokens = chunking_strategy.static.max_chunk_size_tokens
             chunk_overlap_tokens = chunking_strategy.static.chunk_overlap_tokens
+        elif isinstance(chunking_strategy, VectorStoreChunkingStrategyContextual):
+            max_chunk_size_tokens = chunking_strategy.contextual.max_chunk_size_tokens
+            chunk_overlap_tokens = chunking_strategy.contextual.chunk_overlap_tokens
+            # Fail fast on missing model_id before entering the file-processing try/except
+            ctx = chunking_strategy.contextual
+            if not ctx.model_id and not self.vector_stores_config.contextual_retrieval_params.model:
+                raise ValueError(
+                    "Failed to initialize contextual chunking: model_id is required. "
+                    "Provide it in chunking_strategy.contextual or configure a default "
+                    "in contextual_retrieval_params.model on the server."
+                )
         else:
-            # Default values from OpenAI API spec
             max_chunk_size_tokens = DEFAULT_CHUNK_SIZE_TOKENS
             chunk_overlap_tokens = DEFAULT_CHUNK_OVERLAP_TOKENS
 
@@ -959,7 +957,7 @@ class OpenAIVectorStoreMixin(ABC):
             # Try using FileProcessor API if available
             if hasattr(self, "file_processor_api") and self.file_processor_api:
                 try:
-                    logger.debug(f"Using FileProcessor API to process file {file_id}")
+                    logger.debug("Using FileProcessor API to process file", file_id=file_id)
                     pf_resp = await self.file_processor_api.process_file(
                         ProcessFileRequest(file_id=file_id, chunking_strategy=chunking_strategy)
                     )
@@ -983,20 +981,30 @@ class OpenAIVectorStoreMixin(ABC):
                         )
                         chunks.append(enhanced_chunk)
 
-                    logger.debug(f"FileProcessor generated {len(chunks)} chunks for file {file_id}")
+                    logger.debug("FileProcessor generated chunks for file", chunks_count=len(chunks), file_id=file_id)
 
                 except Exception as e:
-                    logger.warning(f"FileProcessor failed for file {file_id}, falling back to legacy chunking: {e}")
+                    logger.warning(
+                        "FileProcessor failed for file, falling back to legacy chunking", file_id=file_id, error=str(e)
+                    )
                     # Fall back to legacy chunking path
                     chunks = await self._legacy_chunk_file(
                         file_id, file_response, max_chunk_size_tokens, chunk_overlap_tokens, chunk_attributes
                     )
             else:
-                logger.debug(f"FileProcessor API not available, using legacy chunking for file {file_id}")
+                logger.debug("FileProcessor API not available, using legacy chunking for file", file_id=file_id)
                 # Legacy chunking path when FileProcessor not available
                 chunks = await self._legacy_chunk_file(
                     file_id, file_response, max_chunk_size_tokens, chunk_overlap_tokens, chunk_attributes
                 )
+
+            if isinstance(chunking_strategy, VectorStoreChunkingStrategyContextual):
+                mime_type, _ = mimetypes.guess_type(file_response.filename)
+                content_response = await self.files_api.openai_retrieve_file_content(
+                    RetrieveFileContentRequest(file_id=file_id)
+                )
+                full_content = content_from_data_and_mime_type(content_response.body, mime_type)
+                await self._execute_contextual_chunk_transformation(chunks, full_content, chunking_strategy.contextual)
             if not chunks:
                 vector_store_file_object.status = "failed"
                 vector_store_file_object.last_error = VectorStoreFileLastError(
@@ -1250,7 +1258,7 @@ class OpenAIVectorStoreMixin(ABC):
                 if document_id:
                     chunks_for_deletion.append(ChunkForDeletion(chunk_id=str(c.chunk_id), document_id=document_id))
                 else:
-                    logger.warning(f"Chunk {c.chunk_id} has no document_id, skipping deletion")
+                    logger.warning("Chunk has no document_id, skipping deletion", chunk_id=c.chunk_id)
 
         if chunks_for_deletion:
             await self.delete_chunks(
@@ -1364,7 +1372,7 @@ class OpenAIVectorStoreMixin(ABC):
                     )
                     return file_id, vector_store_file_object.status == "completed"
                 except Exception as e:
-                    logger.error(f"Failed to process file {file_id} in batch {batch_id}: {e}")
+                    logger.error("Failed to process file in batch", file_id=file_id, batch_id=batch_id, error=str(e))
                     return file_id, False
 
         # Process files in chunks to avoid creating too many tasks at once
@@ -1402,11 +1410,20 @@ class OpenAIVectorStoreMixin(ABC):
             # Reconstruct chunking strategy object
             chunking_strategy_obj: VectorStoreChunkingStrategy | None = None
             if chunking_strategy_dict:
-                if chunking_strategy_dict.get("type") == "static":
+                strategy_type = chunking_strategy_dict.get("type")
+                if strategy_type == "static":
                     chunking_strategy_obj = VectorStoreChunkingStrategyStatic(
                         static=VectorStoreChunkingStrategyStaticConfig(**chunking_strategy_dict["static"])
                     )
+                elif strategy_type == "contextual":
+                    chunking_strategy_obj = VectorStoreChunkingStrategyContextual(
+                        contextual=VectorStoreChunkingStrategyContextualConfig(**chunking_strategy_dict["contextual"])
+                    )
                 else:
+                    if strategy_type != "auto":
+                        logger.warning(
+                            "Unknown chunking strategy type, falling back to auto", strategy_type=strategy_type
+                        )
                     chunking_strategy_obj = VectorStoreChunkingStrategyAuto()
 
             await self._process_files_with_concurrency(
@@ -1424,12 +1441,12 @@ class OpenAIVectorStoreMixin(ABC):
             await self._save_openai_vector_store_file_batch(batch_id, batch_info)
 
         except asyncio.CancelledError:
-            logger.info(f"File batch processing cancelled for batch {batch_id}")
+            logger.info("File batch processing cancelled for batch", batch_id=batch_id)
             batch_info["status"] = "cancelled"
             await self._save_openai_vector_store_file_batch(batch_id, batch_info)
             raise
         except Exception:
-            logger.exception(f"Error processing file batch {batch_id}")
+            logger.exception("Failed to process file batch", batch_id=batch_id)
             batch_info["status"] = "failed"
             await self._save_openai_vector_store_file_batch(batch_id, batch_info)
 
@@ -1448,6 +1465,16 @@ class OpenAIVectorStoreMixin(ABC):
         batch_info = self.openai_file_batches[batch_id]
         if batch_info["vector_store_id"] != vector_store_id:
             raise ValueError(f"File batch {batch_id} does not belong to vector store {vector_store_id}")
+
+        # Check if batch has expired (7 days from creation)
+        import time
+
+        current_time = int(time.time())
+        created_at = batch_info.get("created_at", current_time)
+        expires_at = batch_info.get("expires_at", created_at + (7 * 24 * 60 * 60))  # 7 days default
+
+        if current_time > expires_at:
+            raise ValueError(f"File batch {batch_id} has expired after 7 days from creation")
 
         return VectorStoreFileBatchObject(**batch_info)
 
@@ -1543,8 +1570,8 @@ class OpenAIVectorStoreMixin(ABC):
         if batch_info["vector_store_id"] != vector_store_id:
             raise ValueError(f"File batch {batch_id} does not belong to vector store {vector_store_id}")
 
-        if batch_info["status"] == "completed":
-            return VectorStoreFileBatchObject(**batch_info)
+        if batch_info["status"] in ["completed", "failed"]:
+            raise ValueError(f"Cannot cancel batch {batch_id} with status {batch_info['status']}")
 
         # Cancel the background task if running
         if batch_id in self._file_batch_tasks:
@@ -1561,3 +1588,164 @@ class OpenAIVectorStoreMixin(ABC):
         await self._save_openai_vector_store_file_batch(batch_id, batch_info)
 
         return VectorStoreFileBatchObject(**batch_info)
+
+    async def _execute_contextual_chunk_transformation(
+        self,
+        chunks: list[Chunk],
+        full_content: str,
+        strategy_config: VectorStoreChunkingStrategyContextualConfig,
+    ) -> None:
+        """
+        Applies contextual chunk transformation (to support Contextual Retrieval) by situating
+        each chunk within the overall document.
+
+        NOTE: This method mutates the Chunk objects in-place by prepending context to their content.
+        """
+        ctx_config = self.vector_stores_config.contextual_retrieval_params
+
+        model_id = strategy_config.model_id
+        if not model_id:
+            if ctx_config.model:
+                model_id = f"{ctx_config.model.provider_id}/{ctx_config.model.model_id}"
+            else:
+                raise ValueError(
+                    "Failed to initialize contextual chunking: model_id is required. "
+                    "Provide it in chunking_strategy.contextual or configure a default "
+                    "in contextual_retrieval_params.model on the server."
+                )
+
+        timeout_seconds = strategy_config.timeout_seconds or ctx_config.default_timeout_seconds
+        max_concurrency = strategy_config.max_concurrency or ctx_config.default_max_concurrency
+
+        doc_token_estimate = len(full_content) // 4
+        if doc_token_estimate > ctx_config.max_document_tokens:
+            raise ValueError(
+                f"Failed to process document for contextual retrieval: size (~{doc_token_estimate} tokens) "
+                f"exceeds maximum allowed ({ctx_config.max_document_tokens} tokens)"
+            )
+
+        context_prompt_template = strategy_config.context_prompt
+
+        logger.info("Applying contextual retrieval to chunks using model", chunks_count=len(chunks), model_id=model_id)
+
+        # Split prompt into system (document) + user (chunk) messages to enable prefix caching.
+        # All major providers (OpenAI, vLLM, Anthropic) cache shared token prefixes by placing the
+        # document in a system message, the KV-cache is computed once and reused across all chunk requests.
+        chunk_placeholder = "{{CHUNK_CONTENT}}"
+        split_idx = context_prompt_template.index(chunk_placeholder)
+        system_template = context_prompt_template[:split_idx].replace("{{WHOLE_DOCUMENT}}", full_content).rstrip()
+        user_template = context_prompt_template[split_idx:]
+
+        semaphore = asyncio.Semaphore(max_concurrency)
+
+        async def contextualize_chunk(chunk: Chunk) -> _ChunkContextResult:
+            async with semaphore:
+                user_prompt = user_template.replace(chunk_placeholder, interleaved_content_as_str(chunk.content))
+                messages: list = [
+                    OpenAISystemMessageParam(role="system", content=system_template),
+                    OpenAIUserMessageParam(role="user", content=user_prompt),
+                ]
+
+                params = OpenAIChatCompletionRequestWithExtraBody(
+                    model=model_id,
+                    messages=messages,
+                    stream=False,
+                    temperature=0.0,
+                    max_tokens=256,
+                )
+                for attempt in range(_MAX_RETRIES + 1):
+                    try:
+                        response = await asyncio.wait_for(
+                            self.inference_api.openai_chat_completion(params), timeout=timeout_seconds
+                        )
+
+                        if isinstance(response, AsyncIterator):
+                            raise TypeError(
+                                f"Failed to contextualize chunk {chunk.chunk_id}: "
+                                "received streaming response, contextual retrieval requires non-streaming inference."
+                            )
+
+                        if not response.choices:
+                            raise ValueError(
+                                f"Failed to contextualize chunk {chunk.chunk_id}: LLM returned empty choices"
+                            )
+
+                        raw_context = response.choices[0].message.content
+                        if raw_context is None:
+                            logger.warning("LLM returned None content for chunk", chunk_id=chunk.chunk_id)
+                            return _ChunkContextResult.EMPTY
+                        context = (
+                            raw_context.strip()
+                            if isinstance(raw_context, str)
+                            else " ".join(
+                                p.text for p in raw_context if isinstance(p, OpenAIChatCompletionContentPartTextParam)
+                            ).strip()
+                        )
+                        if not context:
+                            logger.warning("LLM returned empty context for chunk", chunk_id=chunk.chunk_id)
+                            return _ChunkContextResult.EMPTY
+                        if isinstance(chunk.content, str):
+                            chunk.content = f"{context}\n\n{chunk.content}"
+                        elif isinstance(chunk.content, list):
+                            chunk.content.insert(0, TextContentItem(text=f"{context}\n\n"))
+                        return _ChunkContextResult.SUCCESS
+
+                    except asyncio.CancelledError:
+                        raise
+                    except (MemoryError, SystemExit, KeyboardInterrupt, RecursionError):
+                        raise
+                    except Exception as e:
+                        if _is_retriable_error(e) and attempt < _MAX_RETRIES:
+                            delay = _RETRY_BASE_DELAY * (2**attempt) + random.uniform(0, 0.5)
+                            logger.warning(
+                                "Chunk : retriable error (), retrying in s (attempt /)",
+                                chunk_id=chunk.chunk_id,
+                                error_type=type(e).__name__,
+                                delay=delay,
+                                attempt_1=attempt + 1,
+                                max_retries_1=_MAX_RETRIES + 1,
+                            )
+                            await asyncio.sleep(delay)
+                            continue
+                        if _is_retriable_error(e):
+                            logger.error(
+                                "Chunk : exhausted attempts, last error",
+                                chunk_id=chunk.chunk_id,
+                                max_retries_1=_MAX_RETRIES + 1,
+                                error_type=type(e).__name__,
+                                error=str(e),
+                            )
+                        else:
+                            logger.error(
+                                "Failed to contextualize chunk",
+                                chunk_id=chunk.chunk_id,
+                                error_type=type(e).__name__,
+                                error=str(e),
+                            )
+                        return _ChunkContextResult.FAILED
+
+                return _ChunkContextResult.FAILED
+
+        results = await asyncio.gather(*(contextualize_chunk(chunk) for chunk in chunks))
+
+        total = len(chunks)
+        fail_count = sum(1 for r in results if r == _ChunkContextResult.FAILED)
+        empty_count = sum(1 for r in results if r == _ChunkContextResult.EMPTY)
+
+        if fail_count > 0:
+            if fail_count == total:
+                raise RuntimeError(f"Failed to contextualize any chunks for model {model_id}")
+            logger.warning("Contextual retrieval partially failed: / chunks failed", fail_count=fail_count, total=total)
+
+        if empty_count > 0:
+            if empty_count == total and fail_count == 0:
+                raise RuntimeError(
+                    f"Failed to generate context using model {model_id}: empty context for all {total} chunks. "
+                    "Verify the model supports instruction-following and the prompt template is appropriate."
+                )
+            logger.warning(
+                "Contextual retrieval: / chunks received empty context", empty_count=empty_count, total=total
+            )
+
+        if fail_count == 0 and empty_count == 0:
+            logger.info("Successfully contextualized all chunks", total=total)

@@ -24,6 +24,8 @@ from .config import TavilySearchToolConfig
 
 
 class TavilySearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRequestProviderData):
+    """Tool runtime for performing AI-optimized web searches using the Tavily API."""
+
     def __init__(self, config: TavilySearchToolConfig):
         self.config = config
 
@@ -45,7 +47,7 @@ class TavilySearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsR
             raise ValueError(
                 'Pass Search provider\'s API Key in the header X-LlamaStack-Provider-Data as { "tavily_search_api_key": <your api key>}'
             )
-        return provider_data.tavily_search_api_key
+        return provider_data.tavily_search_api_key.get_secret_value()
 
     async def list_runtime_tools(
         self,

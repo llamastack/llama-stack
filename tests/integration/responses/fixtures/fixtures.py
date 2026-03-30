@@ -119,7 +119,7 @@ def openai_client(base_url, api_key, provider):
         base_url=base_url,
         api_key=api_key,
         max_retries=0,
-        timeout=30.0,
+        timeout=60.0,
     )
     yield client
     # Cleanup: close HTTP connections

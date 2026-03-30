@@ -149,12 +149,17 @@ def dependency_tools():
 
 
 @contextmanager
-def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Callable] | None = None):
+def make_mcp_server(
+    required_auth_token: str | None = None,
+    tools: dict[str, Callable] | None = None,
+    port: int | None = None,
+):
     """
     Create an MCP server with the specified tools.
 
     :param required_auth_token: Optional auth token required for access
     :param tools: Dictionary of tool_name -> tool_function. If None, uses default tools.
+    :param port: Optional fixed port to listen on. If None, an available port is chosen automatically.
     """
     import threading
     import time
@@ -216,7 +221,8 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
             sock.bind(("", 0))
             return sock.getsockname()[1]
 
-    port = get_open_port()
+    if port is None:
+        port = get_open_port()
     logger = get_logger(__name__, category="tests::mcp")
 
     # make uvicorn logs be less verbose
@@ -238,10 +244,8 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
     logger.debug(f"Starting MCP server thread on port {port}")
     server_thread.start()
 
-    # Wait for the server thread to be running
-    # Note: We can't use a simple HTTP GET health check on /sse because it's an SSE endpoint
-    # that expects a long-lived connection, not a simple request/response
-    timeout = 2
+    # Wait for the server to be actually listening on the port
+    timeout = 5
     start_time = time.time()
 
     # Determine the appropriate host for the server URL based on test environment
@@ -251,18 +255,32 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
 
     mcp_host = os.environ.get("LLAMA_STACK_TEST_MCP_HOST", "localhost")
     server_url = f"http://{mcp_host}:{port}/sse"
-    logger.debug(f"Waiting for MCP server thread to start on port {port} (accessible via {mcp_host})")
+    logger.debug(f"Waiting for MCP server to listen on port {port} (accessible via {mcp_host})")
 
+    import socket
+
+    server_ready = False
     while time.time() - start_time < timeout:
-        if server_thread.is_alive():
-            # Give the server a moment to bind to the port
-            time.sleep(0.1)
-            logger.debug(f"MCP server is ready on port {port}")
+        if not server_thread.is_alive():
+            logger.error(f"MCP server thread died unexpectedly on port {port}")
             break
-        time.sleep(0.05)
-    else:
-        # If we exit the loop due to timeout
-        logger.error(f"MCP server thread failed to start within {timeout} seconds on port {port}")
+
+        # Check if port is actually listening
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.settimeout(0.1)
+                result = sock.connect_ex(("127.0.0.1", port))
+                if result == 0:
+                    logger.debug(f"MCP server is ready on port {port}")
+                    server_ready = True
+                    break
+        except Exception as e:
+            logger.debug(f"Port check failed: {e}")
+
+        time.sleep(0.1)
+
+    if not server_ready:
+        logger.error(f"MCP server failed to become ready within {timeout} seconds on port {port}")
 
     try:
         yield {"server_url": server_url}

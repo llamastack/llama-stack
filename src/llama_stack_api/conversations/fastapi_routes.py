@@ -15,7 +15,12 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Body, Depends, Path
 from pydantic import BaseModel
 
-from llama_stack_api.router_utils import create_path_dependency, create_query_dependency, standard_responses
+from llama_stack_api.router_utils import (
+    ExceptionTranslatingRoute,
+    create_path_dependency,
+    create_query_dependency,
+    standard_responses,
+)
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
 from .api import Conversations
@@ -62,6 +67,7 @@ def create_router(impl: Conversations) -> APIRouter:
         prefix=f"/{LLAMA_STACK_API_V1}",
         tags=["Conversations"],
         responses=standard_responses,
+        route_class=ExceptionTranslatingRoute,
     )
 
     @router.post(

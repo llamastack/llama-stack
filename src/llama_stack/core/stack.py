@@ -10,6 +10,7 @@ import inspect
 import os
 import re
 import tempfile
+from pathlib import Path
 from typing import Any, get_type_hints
 
 import yaml
@@ -18,7 +19,14 @@ from pydantic import BaseModel
 from llama_stack.core.admin import AdminImpl, AdminImplConfig
 from llama_stack.core.connectors.connectors import ConnectorServiceConfig, ConnectorServiceImpl
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
-from llama_stack.core.datatypes import Provider, QualifiedModel, SafetyConfig, StackConfig, VectorStoresConfig
+from llama_stack.core.datatypes import (
+    Provider,
+    QualifiedModel,
+    RerankerModel,
+    SafetyConfig,
+    StackConfig,
+    VectorStoresConfig,
+)
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
 from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceImpl
@@ -39,7 +47,6 @@ from llama_stack.core.store.registry import create_dist_registry
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 from llama_stack_api import (
-    Agents,
     Api,
     Batches,
     Benchmarks,
@@ -52,19 +59,19 @@ from llama_stack_api import (
     Inference,
     Inspect,
     Models,
-    PostTraining,
+    ModelType,
     Prompts,
     Providers,
     RegisterBenchmarkRequest,
     RegisterModelRequest,
     RegisterScoringFunctionRequest,
     RegisterShieldRequest,
+    Responses,
     Safety,
     Scoring,
     ScoringFunctions,
     Shields,
-    ToolGroups,
-    ToolRuntime,
+    ToolGroupNotFoundError,
     VectorIO,
 )
 from llama_stack_api.datasets import RegisterDatasetRequest
@@ -75,11 +82,10 @@ logger = get_logger(name=__name__, category="core")
 class LlamaStack(
     Providers,
     Inference,
-    Agents,
+    Responses,
     Batches,
     Safety,
     Datasets,
-    PostTraining,
     VectorIO,
     Eval,
     Benchmarks,
@@ -89,13 +95,13 @@ class LlamaStack(
     Models,
     Shields,
     Inspect,
-    ToolGroups,
-    ToolRuntime,
     Files,
     Prompts,
     Conversations,
     Connectors,
 ):
+    """Composite protocol combining all Llama Stack API interfaces."""
+
     pass
 
 
@@ -113,7 +119,6 @@ RESOURCES = [
         RegisterScoringFunctionRequest,
     ),
     ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks", RegisterBenchmarkRequest),
-    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups", None),
     ("vector_stores", Api.vector_stores, "register_vector_store", "list_vector_stores", None),
 ]
 
@@ -131,20 +136,11 @@ RESOURCE_ID_FIELDS = [
     "dataset_id",
     "scoring_fn_id",
     "benchmark_id",
-    "toolgroup_id",
 ]
 
 
 def is_request_model(t: Any) -> bool:
-    """Check if a type is a request model (Pydantic BaseModel).
-
-    Args:
-        t: The type to check
-
-    Returns:
-        True if the type is a Pydantic BaseModel subclass, False otherwise
-    """
-
+    """Check if a type is a request model (Pydantic BaseModel)."""
     return inspect.isclass(t) and issubclass(t, BaseModel)
 
 
@@ -153,20 +149,6 @@ async def invoke_with_optional_request(method: Any) -> Any:
 
     For APIs that use request models, this will create an empty request object.
     For backward compatibility, falls back to calling without arguments.
-
-    Uses get_type_hints() to resolve forward references (e.g., "ListBenchmarksRequest" -> actual class).
-
-    Handles methods with:
-    - No parameters: calls without arguments
-    - One or more request model parameters: creates empty instances for each
-    - Mixed parameters: creates request models, uses defaults for others
-    - Required non-request-model parameters without defaults: falls back to calling without arguments
-
-    Args:
-        method: The method to invoke
-
-    Returns:
-        The result of calling the method
     """
     try:
         hints = get_type_hints(method)
@@ -211,6 +193,7 @@ async def invoke_with_optional_request(method: Any) -> Any:
 
 
 async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
+    """Register all resources defined in the run configuration with their respective providers."""
     for rsrc, api, register_method, list_method, request_class in RESOURCES:
         objects = getattr(run_config.registered_resources, rsrc)
         if api not in impls:
@@ -221,9 +204,14 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
             if hasattr(obj, "provider_id"):
                 # Do not register models on disabled providers
                 if not obj.provider_id or obj.provider_id == "__disabled__":
-                    logger.debug(f"Skipping {rsrc.capitalize()} registration for disabled provider.")
+                    logger.debug("Skipping registration for disabled provider", resource=rsrc.capitalize())
                     continue
-                logger.debug(f"registering {rsrc.capitalize()} {obj} for provider {obj.provider_id}")
+                logger.debug(
+                    "Registering resource for provider",
+                    resource=rsrc.capitalize(),
+                    obj=obj,
+                    provider_id=obj.provider_id,
+                )
 
             # TODO: Once all register methods are migrated to accept request objects,
             # remove this conditional and always use the request_class pattern.
@@ -244,8 +232,65 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
 
         for obj in objects_to_process:
             logger.debug(
-                f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
+                ": served by",
+                rsrc_capitalize=rsrc.capitalize(),
+                identifier=obj.identifier,
+                provider_id=obj.provider_id,
             )
+
+
+async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, Any]):
+    """Auto-register built-in tool groups based on configured tool_runtime providers.
+
+    For each tool_runtime provider whose spec declares a toolgroup_id,
+    register that tool group automatically. This replaces the old explicit
+    tool_groups config in registered_resources.
+
+    When multiple providers map to the same toolgroup (e.g. brave-search and
+    tavily-search both serve builtin::websearch), the provider with a configured
+    api_key wins. If none have a key, the first candidate is used so the tool
+    group still exists (invocation will fail with a clear provider error rather
+    than "tool not found").
+    """
+    if Api.tool_groups not in impls:
+        return
+
+    tool_groups_impl = impls[Api.tool_groups]
+
+    registry = get_provider_registry(run_config)
+    type_to_toolgroup = {
+        ptype: spec.toolgroup_id for ptype, spec in registry.get(Api.tool_runtime, {}).items() if spec.toolgroup_id
+    }
+
+    # Single-pass selection: keep the first provider per toolgroup, but
+    # let a provider with a configured api_key replace one without.
+    chosen: dict[str, Provider] = {}
+    chosen_has_key: dict[str, bool] = {}
+    for provider in run_config.providers.get("tool_runtime", []):
+        if not provider.provider_id or provider.provider_id == "__disabled__":
+            continue
+        toolgroup_id = type_to_toolgroup.get(provider.provider_type)
+        if not toolgroup_id:
+            continue
+
+        has_key = "api_key" not in provider.config or bool(provider.config.get("api_key"))
+        if toolgroup_id not in chosen or (has_key and not chosen_has_key[toolgroup_id]):
+            chosen[toolgroup_id] = provider
+            chosen_has_key[toolgroup_id] = has_key
+
+    for toolgroup_id, provider in chosen.items():
+        # Unregister first so register_tool_group rebuilds in-memory tool
+        # indexes (_index_tools) which are empty after a restart.
+        try:
+            await tool_groups_impl.unregister_toolgroup(toolgroup_id)
+        except ToolGroupNotFoundError:
+            pass
+
+        logger.info("Auto-registering tool group", toolgroup_id=toolgroup_id, provider_id=provider.provider_id)
+        await tool_groups_impl.register_tool_group(
+            toolgroup_id=toolgroup_id,
+            provider_id=provider.provider_id,
+        )
 
 
 async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
@@ -260,7 +305,7 @@ async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
 
     # Register/Update config connectors
     for connector in run_config.connectors:
-        logger.debug(f"Registering connector: {connector.connector_id}")
+        logger.debug("Registering connector", connector_id=connector.connector_id)
         await connectors_impl.register_connector(
             connector_id=connector.connector_id,
             connector_type=connector.connector_type,
@@ -272,7 +317,7 @@ async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
     existing_connectors = await connectors_impl.list_connectors()
     for connector in existing_connectors.data:
         if connector.connector_id not in config_connector_ids:
-            logger.info(f"Removing orphaned connector: {connector.connector_id}")
+            logger.info("Removing orphaned connector", connector_id=connector.connector_id)
             await connectors_impl.unregister_connector(connector.connector_id)
 
 
@@ -284,6 +329,10 @@ async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig
     # Validate default embedding model
     if vector_stores_config.default_embedding_model is not None:
         await _validate_embedding_model(vector_stores_config.default_embedding_model, impls)
+
+    # Validate default reranker model
+    if vector_stores_config.default_reranker_model is not None:
+        await _validate_reranker_model(vector_stores_config.default_reranker_model, impls)
 
     # Validate rewrite query params
     if vector_stores_config.rewrite_query_params:
@@ -320,7 +369,31 @@ async def _validate_embedding_model(embedding_model: QualifiedModel, impls: dict
     except ValueError as err:
         raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
 
-    logger.debug(f"Validated embedding model: {model_identifier} (dimension: {embedding_dimension})")
+    logger.debug(
+        "Validated embedding model", model_identifier=model_identifier, embedding_dimension=embedding_dimension
+    )
+
+
+async def _validate_reranker_model(reranker_model: RerankerModel, impls: dict[Api, Any]) -> None:
+    """Validate that a reranker model exists."""
+    provider_id = reranker_model.provider_id
+    model_id = reranker_model.model_id
+    model_identifier = f"{provider_id}/{model_id}"
+
+    if Api.models not in impls:
+        raise ValueError(f"Models API is not available but vector_stores config requires model '{model_identifier}'")
+
+    models_impl = impls[Api.models]
+    response = await models_impl.list_models()
+    models_list = {m.identifier: m for m in response.data if m.model_type == ModelType.rerank}
+
+    model = models_list.get(model_identifier)
+    if model is None:
+        raise ValueError(
+            f"Reranker model '{model_identifier}' not found. Available reranker models: {list(models_list.keys())}"
+        )
+
+    logger.debug("Validated reranker model", model_identifier=model_identifier)
 
 
 async def _validate_rewrite_query_model(rewrite_query_model: QualifiedModel, impls: dict[Api, Any]) -> None:
@@ -344,10 +417,11 @@ async def _validate_rewrite_query_model(rewrite_query_model: QualifiedModel, imp
             f"Rewrite query model '{model_identifier}' not found. Available LLM models: {list(llm_models_list.keys())}"
         )
 
-    logger.debug(f"Validated rewrite query model: {model_identifier}")
+    logger.debug("Validated rewrite query model", model_identifier=model_identifier)
 
 
 async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict[Api, Any]):
+    """Validate that the configured default shield exists among registered shields."""
     if safety_config is None or safety_config.default_shield_id is None:
         return
 
@@ -372,6 +446,8 @@ async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict
 
 
 class EnvVarError(Exception):
+    """Raised when a required environment variable is not set or empty."""
+
     def __init__(self, var_name: str, path: str = ""):
         self.var_name = var_name
         self.path = path
@@ -384,7 +460,38 @@ class EnvVarError(Exception):
 
 
 def replace_env_vars(config: Any, path: str = "") -> Any:
+    """Recursively replace environment variable references in a configuration object."""
     if isinstance(config, dict):
+        # Special handling for auth provider_config with conditional type field
+        # This allows auth to be enabled/disabled via environment variables
+        # Example: type: ${env.AUTH_PROVIDER:+oauth2_token}
+        if "provider_config" in config and path == "server.auth":
+            provider_cfg = config.get("provider_config")
+            if isinstance(provider_cfg, dict) and "type" in provider_cfg:
+                try:
+                    # Resolve the type field first to check if auth should be enabled
+                    resolved_type = replace_env_vars(provider_cfg["type"], f"{path}.provider_config.type")
+
+                    # If type is empty/None, disable auth by setting provider_config to None
+                    # This prevents validation errors on the discriminated union
+                    if resolved_type is None or resolved_type == "":
+                        # Process rest of config normally but exclude provider_config from expansion
+                        # to avoid EnvVarError from bare env vars (e.g., ${env.KEYCLOAK_URL})
+                        result = {
+                            k: replace_env_vars(v, f"{path}.{k}" if path else k)
+                            for k, v in config.items()
+                            if k != "provider_config"
+                        }
+                        result["provider_config"] = None
+                        return result
+                except EnvVarError as e:
+                    # If we can't resolve type, continue with normal processing
+                    # and let validation catch the error
+                    logger.debug(
+                        "Could not resolve auth provider type field: - continuing with normal processing",
+                        var_name=e.var_name,
+                    )
+
         result = {}
         for k, v in config.items():
             try:
@@ -404,7 +511,8 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
                         resolved_provider_id = replace_env_vars(v["provider_id"], f"{path}[{i}].provider_id")
                         if resolved_provider_id == "__disabled__":
                             logger.debug(
-                                f"Skipping config env variable expansion for disabled provider: {v.get('provider_id', '')}"
+                                "Skipping config env variable expansion for disabled provider",
+                                v_get_provider_id=v.get("provider_id", ""),
                             )
                             continue
                     except EnvVarError:
@@ -421,13 +529,21 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
                                 resolved_id = replace_env_vars(v[id_field], f"{path}[{i}].{id_field}")
                                 if resolved_id is None or resolved_id == "":
                                     logger.debug(
-                                        f"Skipping {path}[{i}] with empty {id_field} (conditional env var not set)"
+                                        "Skipping [] with empty (conditional env var not set)",
+                                        path=path,
+                                        i=i,
+                                        id_field=id_field,
                                     )
                                     should_skip = True
                                     break
                             except EnvVarError as e:
                                 logger.warning(
-                                    f"Could not resolve {id_field} in {path}[{i}], env var '{e.var_name}': {e}"
+                                    "Could not resolve in [], env var",
+                                    id_field=id_field,
+                                    path=path,
+                                    i=i,
+                                    var_name=e.var_name,
+                                    error=str(e),
                                 )
                     if should_skip:
                         continue
@@ -532,12 +648,7 @@ def cast_distro_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
 
 
 def add_internal_implementations(impls: dict[Api, Any], config: StackConfig, policy: list) -> None:
-    """Add internal implementations (inspect, providers, and admin) to the implementations dictionary.
-    Args:
-        impls: Dictionary of API implementations
-        config: Stack run configuration
-        policy: Access control policy rules
-    """
+    """Add internal implementations (inspect, providers, admin, etc.) to the implementations dictionary."""
     inspect_impl = DistributionInspectImpl(
         DistributionInspectConfig(config=config),
         deps=impls,
@@ -594,6 +705,8 @@ def _initialize_storage(run_config: StackConfig):
 
 
 class Stack:
+    """Manages the lifecycle of a Llama Stack instance, including initialization, registry refresh, and shutdown."""
+
     def __init__(self, run_config: StackConfig, provider_registry: ProviderRegistry | None = None):
         self.run_config = run_config
         self.provider_registry = provider_registry
@@ -609,7 +722,7 @@ class Stack:
             TEST_RECORDING_CONTEXT = setup_api_recording()
             if TEST_RECORDING_CONTEXT:
                 TEST_RECORDING_CONTEXT.__enter__()
-                logger.info(f"API recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
+                logger.info("API recording enabled", mode=os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"))
 
         _initialize_storage(self.run_config)
         stores = self.run_config.storage.stores
@@ -637,6 +750,7 @@ class Stack:
             await impls[Api.connectors].initialize()
 
         await register_resources(self.run_config, impls)
+        await auto_register_tool_groups(self.run_config, impls)
         await register_connectors(self.run_config, impls)
         await refresh_registry_once(impls)
         await validate_vector_stores_config(self.run_config.vector_stores, impls)
@@ -655,7 +769,7 @@ class Stack:
             if task.cancelled():
                 logger.error("Model refresh task cancelled")
             elif task.exception():
-                logger.error(f"Model refresh task failed: {task.exception()}")
+                logger.error("Model refresh task failed", error=str(task.exception()))
                 traceback.print_exception(task.exception())
             else:
                 logger.debug("Model refresh task completed")
@@ -665,23 +779,23 @@ class Stack:
     async def shutdown(self):
         for impl in self.impls.values():
             impl_name = impl.__class__.__name__
-            logger.debug(f"Shutting down {impl_name}")
+            logger.debug("Shutting down", impl_name=impl_name)
             try:
                 if hasattr(impl, "shutdown"):
                     await asyncio.wait_for(impl.shutdown(), timeout=5)
                 else:
-                    logger.warning(f"No shutdown method for {impl_name}")
+                    logger.warning("No shutdown method for", impl_name=impl_name)
             except TimeoutError:
-                logger.exception(f"Shutdown timeout for {impl_name}")
+                logger.exception("Shutdown timeout", impl_name=impl_name)
             except (Exception, asyncio.CancelledError) as e:
-                logger.exception(f"Failed to shutdown {impl_name}: {e}")
+                logger.exception("Failed to shutdown", impl_name=impl_name, error=str(e))
 
         global TEST_RECORDING_CONTEXT
         if TEST_RECORDING_CONTEXT:
             try:
                 TEST_RECORDING_CONTEXT.__exit__(None, None, None)
             except Exception as e:
-                logger.error(f"Error during API recording cleanup: {e}")
+                logger.error("Error during API recording cleanup", error=str(e))
 
         global REGISTRY_REFRESH_TASK
         if REGISTRY_REFRESH_TASK:
@@ -694,15 +808,16 @@ class Stack:
         try:
             await shutdown_kvstore_backends()
         except Exception as e:
-            logger.exception(f"Failed to shutdown KV store backends: {e}")
+            logger.exception("Failed to shutdown KV store backends", error=str(e))
 
         try:
             await shutdown_sqlstore_backends()
         except Exception as e:
-            logger.exception(f"Failed to shutdown SQL store backends: {e}")
+            logger.exception("Failed to shutdown SQL store backends", error=str(e))
 
 
 async def refresh_registry_once(impls: dict[Api, Any]):
+    """Refresh all routing table registries once by calling their refresh methods."""
     logger.debug("refreshing registry")
     routing_tables = [v for v in impls.values() if isinstance(v, CommonRoutingTableImpl)]
     for routing_table in routing_tables:
@@ -710,6 +825,7 @@ async def refresh_registry_once(impls: dict[Api, Any]):
 
 
 async def refresh_registry_task(impls: dict[Api, Any]):
+    """Background task that periodically refreshes routing table registries."""
     logger.info("starting registry refresh task")
     while True:
         await refresh_registry_once(impls)
@@ -718,6 +834,7 @@ async def refresh_registry_task(impls: dict[Api, Any]):
 
 
 def get_stack_run_config_from_distro(distro: str) -> StackConfig:
+    """Load a StackConfig from a named distribution's bundled config.yaml."""
     distro_path = importlib.resources.files("llama_stack") / f"distributions/{distro}/config.yaml"
 
     with importlib.resources.as_file(distro_path) as path:
@@ -728,26 +845,57 @@ def get_stack_run_config_from_distro(distro: str) -> StackConfig:
     return StackConfig(**replace_env_vars(run_config))
 
 
-def run_config_from_adhoc_config_spec(
-    adhoc_config_spec: str, provider_registry: ProviderRegistry | None = None
+def run_config_from_dynamic_config_spec(
+    dynamic_config_spec: str,
+    provider_registry: ProviderRegistry | None = None,
+    distro_dir: Path | None = None,
+    distro_name: str = "dynamic-distro",
 ) -> StackConfig:
     """
-    Create an adhoc distribution from a list of API providers.
+    Create a dynamic distribution from a list of API providers.
 
     The list should be of the form "api=provider", e.g. "inference=fireworks". If you have
-    multiple pairs, separate them with commas or semicolons, e.g. "inference=fireworks,safety=llama-guard,agents=meta-reference"
+    multiple pairs, separate them with commas or semicolons, e.g. "inference=fireworks,safety=llama-guard,agents=builtin"
+
+    You can optionally specify config parameters using URL query parameter syntax,
+    e.g. "inference=inline::sentence-transformers?trust_remote_code=true&max_seq_length=512"
     """
 
-    api_providers = adhoc_config_spec.replace(";", ",").split(",")
-    provider_registry = provider_registry or get_provider_registry()
+    api_providers = dynamic_config_spec.replace(";", ",").split(",")
+    provider_registry = get_provider_registry() if provider_registry is None else provider_registry
 
-    distro_dir = tempfile.mkdtemp()
+    distro_dir = distro_dir or Path(tempfile.mkdtemp())
     provider_configs_by_api = {}
     for api_provider in api_providers:
-        api_str, provider = api_provider.split("=")
-        api = Api(api_str)
+        if "=" not in api_provider:
+            raise ValueError(
+                f"Failed to parse provider spec '{api_provider}'. Expected format: api=provider (e.g. inference=fireworks)"
+            )
+        api_str, provider_with_params = api_provider.split("=", 1)
 
-        providers_by_type = provider_registry[api]
+        # Parse provider name and optional config parameters
+        # Format: provider_name?param1=value1&param2=value2
+        if "?" in provider_with_params:
+            provider, params_str = provider_with_params.split("?", 1)
+            config_overrides = {}
+            # Parse key=value pairs separated by &
+            # Values are kept as strings and Pydantic will handle type conversion
+            for param in params_str.split("&"):
+                if "=" in param:
+                    key, value = param.split("=", 1)
+                    config_overrides[key] = value
+        else:
+            provider = provider_with_params
+            config_overrides = {}
+
+        try:
+            api = Api(api_str)
+        except ValueError:
+            raise ValueError(f"Failed to parse provider spec: '{api_str}' is not a valid API") from None
+
+        providers_by_type = provider_registry.get(api)
+        if providers_by_type is None:
+            raise ValueError(f"Failed to find providers for API '{api_str}'")
         provider_spec = providers_by_type.get(provider)
         if not provider_spec:
             provider_spec = providers_by_type.get(f"inline::{provider}")
@@ -761,23 +909,30 @@ def run_config_from_adhoc_config_spec(
 
         # call method "sample_run_config" on the provider spec config class
         provider_config_type = instantiate_class_type(provider_spec.config_class)
-        provider_config = replace_env_vars(provider_config_type.sample_run_config(__distro_dir__=distro_dir))
+        provider_config = replace_env_vars(provider_config_type.sample_run_config(__distro_dir__=str(distro_dir)))
 
-        provider_configs_by_api[api_str] = [
+        # Apply config overrides
+        provider_config.update(config_overrides)
+
+        provider_configs_by_api.setdefault(api_str, []).append(
             Provider(
-                provider_id=provider,
+                provider_id=provider_spec.provider_type.split("::")[-1],
                 provider_type=provider_spec.provider_type,
                 config=provider_config,
             )
-        ]
+        )
     config = StackConfig(
-        distro_name="distro-test",
+        distro_name=distro_name,
         apis=list(provider_configs_by_api.keys()),
         providers=provider_configs_by_api,
         storage=StorageConfig(
             backends={
-                "kv_default": SqliteKVStoreConfig(db_path=f"{distro_dir}/kvstore.db"),
-                "sql_default": SqliteSqlStoreConfig(db_path=f"{distro_dir}/sql_store.db"),
+                "kv_default": SqliteKVStoreConfig(
+                    db_path=f"${{env.SQLITE_STORE_DIR:={distro_dir}}}/kvstore.db",
+                ),
+                "sql_default": SqliteSqlStoreConfig(
+                    db_path=f"${{env.SQLITE_STORE_DIR:={distro_dir}}}/sql_store.db",
+                ),
             },
             stores=ServerStoresConfig(
                 metadata=KVStoreReference(backend="kv_default", namespace="registry"),

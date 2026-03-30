@@ -13,7 +13,9 @@ from llama_stack_api import json_schema_type
 
 
 class RunpodProviderDataValidator(BaseModel):
-    runpod_api_token: str | None = Field(
+    """Validates provider-specific request data for RunPod inference."""
+
+    runpod_api_token: SecretStr | None = Field(
         default=None,
         description="API token for RunPod models",
     )
@@ -21,6 +23,8 @@ class RunpodProviderDataValidator(BaseModel):
 
 @json_schema_type
 class RunpodImplConfig(RemoteInferenceProviderConfig):
+    """Configuration for the RunPod inference provider."""
+
     base_url: HttpUrl | None = Field(
         default=None,
         description="The URL for the Runpod model serving endpoint",

@@ -7,7 +7,6 @@ distribution_spec:
     - provider_type: remote::cerebras
     - provider_type: remote::ollama
     - provider_type: remote::vllm
-    - provider_type: remote::tgi
     - provider_type: remote::fireworks
     - provider_type: remote::together
     - provider_type: remote::bedrock
@@ -20,6 +19,7 @@ distribution_spec:
     - provider_type: remote::sambanova
     - provider_type: remote::azure
     - provider_type: inline::sentence-transformers
+    - provider_type: inline::transformers
     vector_io:
     - provider_type: inline::faiss
     - provider_type: inline::sqlite-vec
@@ -36,12 +36,10 @@ distribution_spec:
     safety:
     - provider_type: inline::llama-guard
     - provider_type: inline::code-scanner
-    agents:
-    - provider_type: inline::meta-reference
-    post_training:
-    - provider_type: inline::torchtune-cpu
+    responses:
+    - provider_type: inline::builtin
     eval:
-    - provider_type: inline::meta-reference
+    - provider_type: inline::builtin
     datasetio:
     - provider_type: remote::huggingface
     - provider_type: inline::localfs
@@ -52,7 +50,7 @@ distribution_spec:
     tool_runtime:
     - provider_type: remote::brave-search
     - provider_type: remote::tavily-search
-    - provider_type: inline::rag-runtime
+    - provider_type: inline::file-search
     - provider_type: remote::model-context-protocol
     batches:
     - provider_type: inline::reference

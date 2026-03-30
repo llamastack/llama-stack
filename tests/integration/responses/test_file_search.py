@@ -9,7 +9,7 @@ import time
 
 import pytest
 
-from .helpers import new_vector_store, upload_file
+from .helpers import assert_text_contains, new_vector_store, upload_file
 
 
 @pytest.mark.parametrize(
@@ -27,6 +27,8 @@ from .helpers import new_vector_store, upload_file
     ],
 )
 def test_response_text_format(responses_client, text_model_id, text_format):
+    if text_format.get("type") == "json_schema" and "watsonx" in text_model_id:
+        pytest.skip("WatsonX does not reliably follow json_schema output format.")
     stream = False
     response = responses_client.responses.create(
         model=text_model_id,
@@ -36,14 +38,20 @@ def test_response_text_format(responses_client, text_model_id, text_format):
     )
     # by_alias=True is needed because otherwise Pydantic renames our "schema" field
     assert response.text.format.model_dump(exclude_none=True, by_alias=True) == text_format
-    assert "paris" in response.output_text.lower()
+    assert_text_contains(response.output_text, "paris")
     if text_format["type"] == "json_schema":
-        assert "paris" in json.loads(response.output_text)["capital"].lower()
+        assert_text_contains(json.loads(response.output_text)["capital"], "paris")
 
 
 @pytest.fixture
-def vector_store_with_filtered_files(responses_client, embedding_model_id, embedding_dimension, tmp_path_factory):
+def vector_store_with_filtered_files(
+    request, responses_client, embedding_model_id, embedding_dimension, tmp_path_factory
+):
     # """Create a vector store with multiple files that have different attributes for filtering tests."""
+    if "text_model_id" in request.fixturenames:
+        text_model_id = request.getfixturevalue("text_model_id")
+        if text_model_id and text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX file search filters are not reliably supported")
     vector_store = new_vector_store(
         responses_client, "test_vector_store_with_filters", embedding_model_id, embedding_dimension
     )
@@ -131,6 +139,8 @@ def vector_store_with_filtered_files(responses_client, embedding_model_id, embed
 
 def test_response_file_search_filter_by_region(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test file search with region equality filter."""
+    if text_model_id.startswith("watsonx/"):
+        pytest.skip("WatsonX file search filters are not reliably supported")
     tools = [
         {
             "type": "file_search",
@@ -162,6 +172,8 @@ def test_response_file_search_filter_by_region(responses_client, text_model_id, 
 
 def test_response_file_search_filter_by_category(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test file search with category equality filter."""
+    if text_model_id.startswith("watsonx/"):
+        pytest.skip("WatsonX does not reliably support tool calling")
     tools = [
         {
             "type": "file_search",
@@ -192,6 +204,8 @@ def test_response_file_search_filter_by_category(responses_client, text_model_id
 
 def test_response_file_search_filter_by_date_range(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test file search with date range filter using compound AND."""
+    if text_model_id.startswith("watsonx/"):
+        pytest.skip("WatsonX file search filters are not reliably supported")
     tools = [
         {
             "type": "file_search",
@@ -235,6 +249,8 @@ def test_response_file_search_filter_by_date_range(responses_client, text_model_
 
 def test_response_file_search_filter_compound_and(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test file search with compound AND filter (region AND category)."""
+    if text_model_id.startswith("watsonx/"):
+        pytest.skip("WatsonX file search filters are not reliably supported")
     tools = [
         {
             "type": "file_search",
@@ -271,6 +287,8 @@ def test_response_file_search_filter_compound_and(responses_client, text_model_i
 
 def test_response_file_search_filter_compound_or(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test file search with compound OR filter (marketing OR sales)."""
+    if text_model_id.startswith("watsonx/"):
+        pytest.skip("WatsonX does not reliably support tool calling")
     tools = [
         {
             "type": "file_search",
@@ -314,6 +332,8 @@ def test_response_file_search_filter_compound_or(responses_client, text_model_id
 
 def test_response_file_search_streaming_events(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test that file search emits proper streaming events (in_progress, searching, completed)."""
+    if text_model_id.startswith("watsonx/"):
+        pytest.skip("WatsonX does not reliably support tool calling")
     tools = [
         {
             "type": "file_search",

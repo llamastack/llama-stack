@@ -103,11 +103,27 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "rerank_model": "vllm/Qwen/Qwen3-Reranker-0.6B",
         },
     ),
+    "ollama-reasoning": Setup(
+        name="ollama",
+        description="Local Ollama provider with a reasoning-capable model (gpt-oss)",
+        env={
+            "OLLAMA_URL": "http://0.0.0.0:11434/v1",
+        },
+        defaults={
+            "text_model": "ollama/gpt-oss:20b",
+        },
+    ),
     "bedrock": Setup(
         name="bedrock",
-        description="AWS Bedrock provider with OpenAI GPT-OSS model (us-west-2)",
+        description=(
+            "AWS Bedrock via OpenAI-compatible Mantle API (OpenAI GPT-OSS; "
+            "see AWS Chat Completions docs). No default vision model — GPT-OSS is text-only; "
+            "tests that require vision_model_id skip unless you pass --vision-model."
+        ),
         defaults={
-            "text_model": "bedrock/openai.gpt-oss-20b-1:0",
+            "text_model": "bedrock/openai.gpt-oss-20b",
+            "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
+            "embedding_dimension": 768,
         },
     ),
     "gpt": Setup(
@@ -115,18 +131,33 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         description="OpenAI GPT models for high-quality responses and tool calling",
         defaults={
             "text_model": "openai/gpt-4o",
+            "vision_model": "openai/gpt-4o",
             "embedding_model": "openai/text-embedding-3-small",
             "embedding_dimension": 1536,
         },
     ),
-    "tgi": Setup(
-        name="tgi",
-        description="Text Generation Inference (TGI) provider with a text model",
-        env={
-            "TGI_URL": "http://localhost:8080",
-        },
+    "gpt-reasoning": Setup(
+        name="gpt-reasoning",
+        description="OpenAI reasoning models (o4-mini) for reasoning effort tests",
         defaults={
-            "text_model": "tgi/Qwen/Qwen3-0.6B",
+            "text_model": "openai/o4-mini",
+        },
+    ),
+    "azure": Setup(
+        name="azure",
+        description="Azure-hosted GPT models via the Azure OpenAI-compatible endpoint",
+        defaults={
+            "text_model": "azure/gpt-4o",
+            "vision_model": "azure/gpt-4o",
+            "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
+            "embedding_dimension": 768,
+        },
+    ),
+    "watsonx": Setup(
+        name="watsonx",
+        description="IBM WatsonX AI models",
+        defaults={
+            "text_model": "watsonx/meta-llama/llama-3-3-70b-instruct",
         },
     ),
     "together": Setup(
@@ -192,14 +223,21 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "embedding_model": "sentence-transformers/nomic-embed-text-v1.5",
         },
     ),
+    "vllm-qwen3next": Setup(
+        name="vllm-qwen3next",
+        description="Qwen3-Next model for contextual retrieval validation",
+        defaults={
+            "text_model": "Qwen3-Next-80B-A3B-Instruct-FP8",
+            "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
+        },
+    ),
 }
 
 
 base_roots = [
     str(p)
     for p in this_dir.glob("*")
-    if p.is_dir()
-    and p.name not in ("__pycache__", "fixtures", "test_cases", "recordings", "responses", "post_training")
+    if p.is_dir() and p.name not in ("__pycache__", "fixtures", "test_cases", "recordings", "responses")
 ]
 
 SUITE_DEFINITIONS: dict[str, Suite] = {
@@ -223,10 +261,25 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         roots=["tests/integration/inference/test_vision_inference.py"],
         default_setup="ollama-vision",
     ),
-    "reasoning": Suite(
-        name="reasoning",
+    "vllm-reasoning": Suite(
+        name="vllm-reasoning",
         roots=["tests/integration/responses/test_reasoning.py"],
         default_setup="vllm",
+    ),
+    "gpt-reasoning": Suite(
+        name="gpt-reasoning",
+        roots=[
+            "tests/integration/responses/test_openai_responses.py::test_openai_response_reasoning_effort",
+            "tests/integration/responses/test_openai_responses.py::test_openai_response_reasoning_effort_streaming",
+        ],
+        default_setup="gpt-reasoning",
+    ),
+    "ollama-reasoning": Suite(
+        name="ollama-reasoning",
+        roots=[
+            "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_reasoning_passthrough",
+        ],
+        default_setup="ollama-reasoning",
     ),
     # Bedrock-specific tests with pre-recorded responses (no live API calls in CI)
     "bedrock": Suite(
@@ -235,6 +288,21 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
             "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_non_streaming",
             "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_streaming",
             "tests/integration/inference/test_openai_completion.py::test_inference_store",
+        ],
+        default_setup="bedrock",
+    ),
+    # Bedrock responses suite — subset of tests that reliably pass with GPT-OSS via
+    # the Mantle API. Structured output, parallel tool calls, and some multi-turn
+    # tool tests are excluded due to model capability gaps.
+    "bedrock-responses": Suite(
+        name="bedrock-responses",
+        roots=[
+            "tests/integration/responses/test_basic_responses.py",
+            "tests/integration/responses/test_conversation_responses.py",
+            "tests/integration/responses/test_mcp_authentication.py",
+            "tests/integration/responses/test_prompt_templates.py",
+            "tests/integration/responses/test_reasoning.py",
+            "tests/integration/responses/test_responses_errors.py",
         ],
         default_setup="bedrock",
     ),

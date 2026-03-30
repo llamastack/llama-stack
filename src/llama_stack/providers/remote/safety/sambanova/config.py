@@ -12,7 +12,9 @@ from llama_stack_api import json_schema_type
 
 
 class SambaNovaProviderDataValidator(BaseModel):
-    sambanova_api_key: str | None = Field(
+    """Validates provider-specific request data for SambaNova safety."""
+
+    sambanova_api_key: SecretStr | None = Field(
         default=None,
         description="Sambanova Cloud API key",
     )
@@ -20,6 +22,8 @@ class SambaNovaProviderDataValidator(BaseModel):
 
 @json_schema_type
 class SambaNovaSafetyConfig(BaseModel):
+    """Configuration for the SambaNova safety provider."""
+
     url: str = Field(
         default="https://api.sambanova.ai/v1",
         description="The URL for the SambaNova AI server",

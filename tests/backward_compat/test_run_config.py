@@ -18,6 +18,7 @@ import pytest
 import yaml
 
 from llama_stack.core.datatypes import StackConfig
+from llama_stack.core.stack import replace_env_vars
 
 
 def get_test_configs():
@@ -44,9 +45,17 @@ def get_test_configs():
         return config_files
 
 
-@pytest.mark.parametrize("config_file", get_test_configs(), ids=lambda p: p.stem)
+@pytest.mark.parametrize("config_file", get_test_configs(), ids=lambda p: p.parent.name)
 def test_load_run_config(config_file):
     with open(config_file) as f:
         config_data = yaml.safe_load(f)
+
+    # Resolve env vars for fields like discriminated unions (e.g. auth provider type)
+    # that cannot accept raw ${env...} strings. Use replace_env_vars with fallback
+    # to raw config for distributions requiring env vars without defaults.
+    try:
+        config_data = replace_env_vars(config_data)
+    except Exception:
+        pass
 
     StackConfig.model_validate(config_data)

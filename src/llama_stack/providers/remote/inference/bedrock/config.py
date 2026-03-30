@@ -6,19 +6,23 @@
 
 import os
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 
 
 class BedrockProviderDataValidator(BaseModel):
-    aws_bearer_token_bedrock: str | None = Field(
+    """Validates provider-specific request data for AWS Bedrock inference."""
+
+    aws_bearer_token_bedrock: SecretStr | None = Field(
         default=None,
         description="API Key (Bearer token) for Amazon Bedrock",
     )
 
 
 class BedrockConfig(RemoteInferenceProviderConfig):
+    """Configuration for the AWS Bedrock inference provider."""
+
     region_name: str = Field(
         default_factory=lambda: os.getenv("AWS_DEFAULT_REGION", "us-east-2"),
         description="AWS Region for the Bedrock Runtime endpoint",

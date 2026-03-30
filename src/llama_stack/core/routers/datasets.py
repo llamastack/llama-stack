@@ -8,7 +8,7 @@ from typing import Any
 
 from llama_stack.log import get_logger
 from llama_stack_api import (
-    AppendRowsRequest,
+    AppendRowsParams,
     DatasetIO,
     DatasetPurpose,
     DataSource,
@@ -21,6 +21,8 @@ logger = get_logger(name=__name__, category="core::routers")
 
 
 class DatasetIORouter(DatasetIO):
+    """Router that delegates DatasetIO operations to the appropriate provider via a routing table."""
+
     def __init__(
         self,
         routing_table: RoutingTable,
@@ -44,7 +46,11 @@ class DatasetIORouter(DatasetIO):
         dataset_id: str | None = None,
     ) -> None:
         logger.debug(
-            f"DatasetIORouter.register_dataset: {purpose=} {source=} {metadata=} {dataset_id=}",
+            "DatasetIORouter.register_dataset",
+            purpose=purpose,
+            source=source,
+            metadata=metadata,
+            dataset_id=dataset_id,
         )
         await self.routing_table.register_dataset(
             purpose=purpose,
@@ -55,7 +61,10 @@ class DatasetIORouter(DatasetIO):
 
     async def iterrows(self, request: IterRowsRequest) -> PaginatedResponse:
         logger.debug(
-            f"DatasetIORouter.iterrows: {request.dataset_id}, start_index={request.start_index} limit={request.limit}",
+            "DatasetIORouter.iterrows: , start_index= limit",
+            dataset_id=request.dataset_id,
+            start_index=request.start_index,
+            limit=request.limit,
         )
         provider = await self.routing_table.get_provider_impl(request.dataset_id)
         return await provider.iterrows(
@@ -64,10 +73,10 @@ class DatasetIORouter(DatasetIO):
             limit=request.limit,
         )
 
-    async def append_rows(self, request: AppendRowsRequest) -> None:
-        logger.debug(f"DatasetIORouter.append_rows: {request.dataset_id}, {len(request.rows)} rows")
-        provider = await self.routing_table.get_provider_impl(request.dataset_id)
+    async def append_rows(self, params: AppendRowsParams) -> None:
+        logger.debug("DatasetIORouter.append_rows", dataset_id=params.dataset_id, rows_count=len(params.rows))
+        provider = await self.routing_table.get_provider_impl(params.dataset_id)
         return await provider.append_rows(
-            dataset_id=request.dataset_id,
-            rows=request.rows,
+            dataset_id=params.dataset_id,
+            rows=params.rows,
         )

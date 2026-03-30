@@ -24,6 +24,8 @@ from .config import WolframAlphaToolConfig
 
 
 class WolframAlphaToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRequestProviderData):
+    """Tool runtime for querying Wolfram Alpha computational knowledge engine."""
+
     def __init__(self, config: WolframAlphaToolConfig):
         self.config = config
         self.url = "https://api.wolframalpha.com/v2/query"
@@ -46,7 +48,7 @@ class WolframAlphaToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsR
             raise ValueError(
                 'Pass WolframAlpha API Key in the header X-LlamaStack-Provider-Data as { "wolfram_alpha_api_key": <your api key>}'
             )
-        return provider_data.wolfram_alpha_api_key
+        return provider_data.wolfram_alpha_api_key.get_secret_value()
 
     async def list_runtime_tools(
         self,

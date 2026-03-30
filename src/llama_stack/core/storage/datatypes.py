@@ -17,6 +17,8 @@ from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 
 
 class StorageBackendType(StrEnum):
+    """Supported storage backend types for key-value and SQL stores."""
+
     KV_REDIS = "kv_redis"
     KV_SQLITE = "kv_sqlite"
     KV_POSTGRES = "kv_postgres"
@@ -26,6 +28,8 @@ class StorageBackendType(StrEnum):
 
 
 class CommonConfig(BaseModel):
+    """Base configuration shared by all key-value store backends."""
+
     namespace: str | None = Field(
         default=None,
         description="All keys will be prefixed with this namespace",
@@ -33,6 +37,8 @@ class CommonConfig(BaseModel):
 
 
 class RedisKVStoreConfig(CommonConfig):
+    """Configuration for the Redis key-value store backend."""
+
     type: Literal[StorageBackendType.KV_REDIS] = StorageBackendType.KV_REDIS
     host: str = "localhost"
     port: int = 6379
@@ -55,6 +61,8 @@ class RedisKVStoreConfig(CommonConfig):
 
 
 class SqliteKVStoreConfig(CommonConfig):
+    """Configuration for the SQLite key-value store backend."""
+
     type: Literal[StorageBackendType.KV_SQLITE] = StorageBackendType.KV_SQLITE
     db_path: str = Field(
         description="File path for the sqlite database",
@@ -73,6 +81,8 @@ class SqliteKVStoreConfig(CommonConfig):
 
 
 class PostgresKVStoreConfig(CommonConfig):
+    """Configuration for the PostgreSQL key-value store backend."""
+
     type: Literal[StorageBackendType.KV_POSTGRES] = StorageBackendType.KV_POSTGRES
     host: str = "localhost"
     port: int | str = 5432
@@ -117,6 +127,8 @@ class PostgresKVStoreConfig(CommonConfig):
 
 
 class MongoDBKVStoreConfig(CommonConfig):
+    """Configuration for the MongoDB key-value store backend."""
+
     type: Literal[StorageBackendType.KV_MONGODB] = StorageBackendType.KV_MONGODB
     host: str = "localhost"
     port: int = 27017
@@ -143,6 +155,10 @@ class MongoDBKVStoreConfig(CommonConfig):
 
 
 class SqlAlchemySqlStoreConfig(BaseModel):
+    """Base configuration for SQLAlchemy-based SQL store backends."""
+
+    pool_pre_ping: bool = True
+
     @property
     @abstractmethod
     def engine_str(self) -> str: ...
@@ -154,6 +170,8 @@ class SqlAlchemySqlStoreConfig(BaseModel):
 
 
 class SqliteSqlStoreConfig(SqlAlchemySqlStoreConfig):
+    """Configuration for the SQLite SQL store backend."""
+
     type: Literal[StorageBackendType.SQL_SQLITE] = StorageBackendType.SQL_SQLITE
     db_path: str = Field(
         description="Database path, e.g. ~/.llama/distributions/ollama/sqlstore.db",
@@ -176,12 +194,17 @@ class SqliteSqlStoreConfig(SqlAlchemySqlStoreConfig):
 
 
 class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
+    """Configuration for the PostgreSQL SQL store backend."""
+
     type: Literal[StorageBackendType.SQL_POSTGRES] = StorageBackendType.SQL_POSTGRES
     host: str = "localhost"
     port: int | str = 5432
     db: str = "llamastack"
     user: str
     password: str | None = None
+    pool_size: int = Field(default=10, ge=1, description="Number of persistent connections in the pool")
+    max_overflow: int = Field(default=20, ge=0, description="Max additional connections beyond pool_size")
+    pool_recycle: int = Field(default=-1, ge=-1, description="Connection recycle interval in seconds, -1 to disable")
 
     @property
     def engine_str(self) -> str:
@@ -200,6 +223,10 @@ class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
             "db": "${env.POSTGRES_DB:=llamastack}",
             "user": "${env.POSTGRES_USER:=llamastack}",
             "password": "${env.POSTGRES_PASSWORD:=llamastack}",
+            "pool_size": "${env.POSTGRES_POOL_SIZE:=10}",
+            "max_overflow": "${env.POSTGRES_MAX_OVERFLOW:=20}",
+            "pool_recycle": "${env.POSTGRES_POOL_RECYCLE:=-1}",
+            "pool_pre_ping": "${env.POSTGRES_POOL_PRE_PING:=true}",
         }
 
 
@@ -263,6 +290,8 @@ class ResponsesStoreReference(InferenceStoreReference):
 
 
 class ServerStoresConfig(BaseModel):
+    """Configuration mapping logical store names to their backend references."""
+
     metadata: KVStoreReference | None = Field(
         default=KVStoreReference(
             backend="kv_default",
@@ -311,6 +340,8 @@ def _default_backends() -> dict[str, StorageBackendConfig]:
 
 
 class StorageConfig(BaseModel):
+    """Top-level storage configuration defining backends and store references."""
+
     # default_factory resolves SQLITE_STORE_DIR at construction time via
     # os.environ.get() instead of embedding literal ${env.SQLITE_STORE_DIR:=...}
     # strings that would bypass replace_env_vars() and crash on read-only

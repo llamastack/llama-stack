@@ -55,7 +55,7 @@ def test_register_dataset(nvidia_adapter, run_async):
         type=ResourceType.dataset,
         provider_resource_id="",
         provider_id="",
-        purpose=DatasetPurpose.post_training_messages,
+        purpose=DatasetPurpose.eval_question_answer,
         source=URIDataSource(uri="https://example.com/data.jsonl"),
         metadata={"provider_id": "nvidia", "format": "jsonl", "description": "Test dataset description"},
     )
@@ -118,7 +118,7 @@ def test_register_dataset_with_custom_namespace_project(run_async):
             type=ResourceType.dataset,
             provider_resource_id="",
             provider_id="",
-            purpose=DatasetPurpose.post_training_messages,
+            purpose=DatasetPurpose.eval_question_answer,
             source=URIDataSource(uri="https://example.com/data.jsonl"),
             metadata={"format": "jsonl"},
         )

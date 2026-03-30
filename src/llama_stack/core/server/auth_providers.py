@@ -39,6 +39,8 @@ class AuthResponse(BaseModel):
 
 
 class AuthRequestContext(BaseModel):
+    """Context information about the HTTP request being authenticated."""
+
     path: str = Field(description="The path of the request being authenticated")
 
     headers: dict[str, str] = Field(description="HTTP headers from the original request (excluding Authorization)")
@@ -47,6 +49,8 @@ class AuthRequestContext(BaseModel):
 
 
 class AuthRequest(BaseModel):
+    """Request payload sent to custom authentication endpoints."""
+
     api_key: str = Field(description="The API key extracted from the Authorization header")
 
     request: AuthRequestContext = Field(description="Context information about the request being authenticated")
@@ -71,6 +75,15 @@ class AuthProvider(ABC):
 
 
 def get_attributes_from_claims(claims: dict[str, str], mapping: dict[str, str]) -> dict[str, list[str]]:
+    """Extract user attributes from token claims using the configured claims-to-attributes mapping.
+
+    Args:
+        claims: Token claims dictionary (e.g., from JWT or introspection).
+        mapping: Dictionary mapping claim keys to attribute keys.
+
+    Returns:
+        Dictionary mapping attribute keys to lists of attribute values.
+    """
     attributes: dict[str, list[str]] = {}
     for claim_key, attribute_key in mapping.items():
         # First try dot notation for nested traversal (e.g., "resource_access.llamastack.roles")
@@ -167,14 +180,6 @@ class OAuth2TokenAuthProvider(AuthProvider):
             jwks_client: jwt.PyJWKClient = self._get_jwks_client()
             signing_key = jwks_client.get_signing_key_from_jwt(token)
             algorithm = jwt.get_unverified_header(token)["alg"]
-            claims = jwt.decode(
-                token,
-                signing_key.key,
-                algorithms=[algorithm],
-                audience=self.config.audience,
-                issuer=self.config.issuer,
-                options={"verify_exp": True, "verify_aud": True, "verify_iss": True},
-            )
 
             # Decode and verify the JWT
             claims = jwt.decode(
@@ -231,7 +236,7 @@ class OAuth2TokenAuthProvider(AuthProvider):
             async with httpx.AsyncClient(verify=ssl_ctxt) as client:
                 response = await client.post(**post_kwargs)
                 if response.status_code != httpx.codes.OK:
-                    logger.warning(f"Token introspection failed with status code: {response.status_code}")
+                    logger.warning("Token introspection failed with status code", status_code=response.status_code)
                     raise ValueError(f"Token introspection failed: {response.status_code}")
 
                 fields = response.json()
@@ -310,7 +315,7 @@ class CustomAuthProvider(AuthProvider):
                     timeout=10.0,  # Add a reasonable timeout
                 )
                 if response.status_code != httpx.codes.OK:
-                    logger.warning(f"Authentication failed with status code: {response.status_code}")
+                    logger.warning("Authentication failed with status code", status_code=response.status_code)
                     raise ValueError(f"Authentication failed: {response.status_code}")
 
                 # Parse and validate the auth response
@@ -366,7 +371,7 @@ class GitHubTokenAuthProvider(AuthProvider):
         try:
             user_info = await _get_github_user_info(token, self.config.github_api_base_url)
         except httpx.HTTPStatusError as e:
-            logger.warning(f"GitHub token validation failed: {e}")
+            logger.warning("GitHub token validation failed", error=str(e))
             raise ValueError("GitHub token validation failed. Please check your token and try again.") from e
 
         principal = user_info["user"]["login"]
@@ -457,7 +462,9 @@ class KubernetesAuthProvider(AuthProvider):
                 if response.status_code == httpx.codes.UNAUTHORIZED:
                     raise TokenValidationError("Invalid token")
                 if response.status_code != httpx.codes.CREATED:
-                    logger.warning(f"Kubernetes SelfSubjectReview API failed with status code: {response.status_code}")
+                    logger.warning(
+                        "Kubernetes SelfSubjectReview API failed with status code", status_code=response.status_code
+                    )
                     raise TokenValidationError(f"Token validation failed: {response.status_code}")
 
                 review_response = response.json()
@@ -486,7 +493,7 @@ class KubernetesAuthProvider(AuthProvider):
             logger.warning("Kubernetes SelfSubjectReview API request timed out")
             raise ValueError("Token validation timeout") from None
         except Exception as e:
-            logger.warning(f"Error during token validation: {str(e)}")
+            logger.warning("Error during token validation", error=str(e))
             raise ValueError(f"Token validation error: {str(e)}") from e
 
     async def close(self):

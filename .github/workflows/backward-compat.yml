@@ -15,6 +15,10 @@ on:
       - 'src/llama_stack/distributions/**/config.yaml'
       - 'tests/backward_compat/**'
       - '.github/workflows/backward-compat.yml'
+  merge_group:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -37,7 +41,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install uv
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           enable-cache: true
 
@@ -67,14 +71,14 @@ jobs:
             fi
 
             # Extract filename for storage
-            filename=$(basename $(dirname "$config_path"))
+            filename=$(basename "$(dirname "$config_path")")
             echo "  - $filename (from $config_path)"
 
             git show origin/main:"$config_path" > "/tmp/main_configs/${filename}.yaml"
           done <<< "$CONFIG_PATHS"
 
           echo ""
-          echo "Extracted $(ls /tmp/main_configs/*.yaml | wc -l) config files"
+          echo "Extracted $(find /tmp/main_configs -name '*.yaml' | wc -l) config files"
 
       - name: Test all configs from main
         id: test_configs
@@ -82,37 +86,37 @@ jobs:
         run: |
           # Run pytest once with all configs parameterized
           if COMPAT_TEST_CONFIGS_DIR=/tmp/main_configs uv run pytest tests/backward_compat/test_run_config.py -v; then
-            echo "failed=false" >> $GITHUB_OUTPUT
+            echo "failed=false" >> "$GITHUB_OUTPUT"
           else
-            echo "failed=true" >> $GITHUB_OUTPUT
+            echo "failed=true" >> "$GITHUB_OUTPUT"
             exit 1
           fi
 
       - name: Check for breaking change acknowledgment
         id: check_ack
         if: steps.test_configs.outputs.failed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           echo "Breaking changes detected. Checking for acknowledgment..."
 
           # Check PR title for '!:' marker (conventional commits)
-          PR_TITLE="${{ github.event.pull_request.title }}"
           if [[ "$PR_TITLE" =~ ^[a-z]+\!: ]]; then
             echo "✓ Breaking change acknowledged in PR title"
-            echo "acknowledged=true" >> $GITHUB_OUTPUT
+            echo "acknowledged=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           # Check commit messages for BREAKING CHANGE:
           if git log origin/main..HEAD --format=%B | grep -q "BREAKING CHANGE:"; then
             echo "✓ Breaking change acknowledged in commit message"
-            echo "acknowledged=true" >> $GITHUB_OUTPUT
+            echo "acknowledged=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           echo "✗ Breaking change NOT acknowledged"
-          echo "acknowledged=false" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ github.token }}
+          echo "acknowledged=false" >> "$GITHUB_OUTPUT"
 
       - name: Evaluate results
         if: always()
@@ -183,28 +187,28 @@ jobs:
       - name: Check for breaking change acknowledgment
         id: check_ack
         if: steps.test_integration.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           echo "Integration tests failed. Checking for acknowledgment..."
 
           # Check PR title for '!:' marker (conventional commits)
-          PR_TITLE="${{ github.event.pull_request.title }}"
           if [[ "$PR_TITLE" =~ ^[a-z]+\!: ]]; then
             echo "✓ Breaking change acknowledged in PR title"
-            echo "acknowledged=true" >> $GITHUB_OUTPUT
+            echo "acknowledged=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           # Check commit messages for BREAKING CHANGE:
           if git log origin/main..HEAD --format=%B | grep -q "BREAKING CHANGE:"; then
             echo "✓ Breaking change acknowledged in commit message"
-            echo "acknowledged=true" >> $GITHUB_OUTPUT
+            echo "acknowledged=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           echo "✗ Breaking change NOT acknowledged"
-          echo "acknowledged=false" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ github.token }}
+          echo "acknowledged=false" >> "$GITHUB_OUTPUT"
 
       - name: Evaluate integration test results
         if: always()
@@ -232,6 +236,7 @@ jobs:
 
   test-integration-release:
     name: Run Integration Tests with Latest Release (Informational)
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -248,13 +253,13 @@ jobs:
 
           if [ -z "$LATEST_TAG" ]; then
             echo "No releases found, skipping release compatibility check"
-            echo "has_release=false" >> $GITHUB_OUTPUT
+            echo "has_release=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           echo "Latest release: $LATEST_TAG"
-          echo "has_release=true" >> $GITHUB_OUTPUT
-          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "has_release=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -267,13 +272,13 @@ jobs:
           # Try with src/ prefix first (newer releases), then without (older releases)
           if git show "$RELEASE_TAG:src/llama_stack/distributions/ci-tests/config.yaml" > /tmp/release-ci-tests-config.yaml 2>/dev/null; then
             echo "Extracted ci-tests config.yaml from release $RELEASE_TAG (src/ path)"
-            echo "has_config=true" >> $GITHUB_OUTPUT
+            echo "has_config=true" >> "$GITHUB_OUTPUT"
           elif git show "$RELEASE_TAG:llama_stack/distributions/ci-tests/config.yaml" > /tmp/release-ci-tests-config.yaml 2>/dev/null; then
             echo "Extracted ci-tests config.yaml from release $RELEASE_TAG (old path)"
-            echo "has_config=true" >> $GITHUB_OUTPUT
+            echo "has_config=true" >> "$GITHUB_OUTPUT"
           else
             echo "::warning::ci-tests/config.yaml not found in release $RELEASE_TAG"
-            echo "has_config=false" >> $GITHUB_OUTPUT
+            echo "has_config=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Setup test environment
@@ -350,12 +355,12 @@ jobs:
           The tests pass on \`main\` but fail with this PR's changes.
 
           > **Note:** This is informational only and does not block merge.
-          > Consider whether this breaking change is acceptable for users."
+          > Consider whether this breaking change is acceptable for users." || echo "Could not post PR comment (expected for fork PRs)"
             else
               echo "Comment already exists, skipping to avoid spam"
             fi
 
-            cat >> $GITHUB_STEP_SUMMARY <<EOF
+            cat >> "$GITHUB_STEP_SUMMARY" <<EOF
           ## 🚨 NEW Breaking Change Detected
 
           **Integration tests against release \`$RELEASE_TAG\` FAILED**
@@ -375,7 +380,7 @@ jobs:
             # Existing breaking change - both PR and main fail
             echo "::warning::Breaking change already exists in main branch"
 
-            cat >> $GITHUB_STEP_SUMMARY <<EOF
+            cat >> "$GITHUB_STEP_SUMMARY" <<EOF
           ## ⚠️ Release Compatibility Test Failed (Existing Issue)
 
           **Integration tests against release \`$RELEASE_TAG\` FAILED**
@@ -389,7 +394,7 @@ jobs:
 
           else
             # Success - tests pass
-            cat >> $GITHUB_STEP_SUMMARY <<EOF
+            cat >> "$GITHUB_STEP_SUMMARY" <<EOF
           ## ✅ Release Compatibility Test Passed
 
           Integration tests against release \`$RELEASE_TAG\` passed successfully.
@@ -401,6 +406,7 @@ jobs:
 
   check-schema-release-compatibility:
     name: Check Schema Compatibility with Latest Release (Informational)
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -415,7 +421,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install uv
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           enable-cache: true
 
@@ -431,13 +437,13 @@ jobs:
 
           if [ -z "$LATEST_TAG" ]; then
             echo "No releases found, skipping release compatibility check"
-            echo "has_release=false" >> $GITHUB_OUTPUT
+            echo "has_release=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           echo "Latest release: $LATEST_TAG"
-          echo "has_release=true" >> $GITHUB_OUTPUT
-          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "has_release=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -452,7 +458,7 @@ jobs:
 
           if [ -z "$CONFIG_PATHS" ]; then
             echo "::warning::No config.yaml files found in release $RELEASE_TAG"
-            echo "has_configs=false" >> $GITHUB_OUTPUT
+            echo "has_configs=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -465,22 +471,21 @@ jobs:
               continue
             fi
 
-            filename=$(basename $(dirname "$config_path"))
+            filename=$(basename "$(dirname "$config_path")")
             echo "  - $filename (from $config_path)"
 
             git show "$RELEASE_TAG:$config_path" > "/tmp/release_configs/${filename}.yaml" 2>/dev/null || true
           done <<< "$CONFIG_PATHS"
 
           echo ""
-          echo "Extracted $(ls /tmp/release_configs/*.yaml 2>/dev/null | wc -l) config files"
-          echo "has_configs=true" >> $GITHUB_OUTPUT
+          echo "Extracted $(find /tmp/release_configs -name '*.yaml' 2>/dev/null | wc -l) config files"
+          echo "has_configs=true" >> "$GITHUB_OUTPUT"
 
       - name: Test against release configs (PR branch)
         id: test_schema_pr
         if: steps.get_release.outputs.has_release == 'true' && steps.extract_release_configs.outputs.has_configs == 'true'
         continue-on-error: true
         run: |
-          RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
           COMPAT_TEST_CONFIGS_DIR=/tmp/release_configs uv run pytest tests/backward_compat/test_run_config.py -v --tb=short
 
       - name: Checkout main branch to test baseline
@@ -498,7 +503,6 @@ jobs:
         if: steps.get_release.outputs.has_release == 'true' && steps.extract_release_configs.outputs.has_configs == 'true'
         continue-on-error: true
         run: |
-          RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
           COMPAT_TEST_CONFIGS_DIR=/tmp/release_configs uv run pytest tests/backward_compat/test_run_config.py -v --tb=short
 
       - name: Report results and post PR comment
@@ -528,12 +532,12 @@ jobs:
           The tests pass on \`main\` but fail with this PR's changes.
 
           > **Note:** This is informational only and does not block merge.
-          > Consider whether this breaking change is acceptable for users."
+          > Consider whether this breaking change is acceptable for users." || echo "Could not post PR comment (expected for fork PRs)"
             else
               echo "Comment already exists, skipping to avoid spam"
             fi
 
-            cat >> $GITHUB_STEP_SUMMARY <<EOF
+            cat >> "$GITHUB_STEP_SUMMARY" <<EOF
           ## 🚨 NEW Schema Breaking Change Detected
 
           **Schema validation against release \`$RELEASE_TAG\` FAILED**
@@ -553,7 +557,7 @@ jobs:
             # Existing breaking change - both PR and main fail
             echo "::warning::Schema breaking change already exists in main branch"
 
-            cat >> $GITHUB_STEP_SUMMARY <<EOF
+            cat >> "$GITHUB_STEP_SUMMARY" <<EOF
           ## ⚠️ Release Schema Compatibility Failed (Existing Issue)
 
           **Schema validation against release \`$RELEASE_TAG\` FAILED**
@@ -567,7 +571,7 @@ jobs:
 
           else
             # Success - tests pass
-            cat >> $GITHUB_STEP_SUMMARY <<EOF
+            cat >> "$GITHUB_STEP_SUMMARY" <<EOF
           ## ✅ Release Schema Compatibility Passed
 
           All config.yaml configs from release \`$RELEASE_TAG\` are compatible.

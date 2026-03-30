@@ -24,6 +24,8 @@ from .config import BingSearchToolConfig
 
 
 class BingSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRequestProviderData):
+    """Tool runtime for performing web searches using the Bing Search API."""
+
     def __init__(self, config: BingSearchToolConfig):
         self.config = config
         self.url = "https://api.bing.microsoft.com/v7.0/search"
@@ -46,7 +48,7 @@ class BingSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsReq
             raise ValueError(
                 'Pass Bing Search API Key in the header X-LlamaStack-Provider-Data as { "bing_search_api_key": <your api key>}'
             )
-        return provider_data.bing_search_api_key
+        return provider_data.bing_search_api_key.get_secret_value()
 
     async def list_runtime_tools(
         self,

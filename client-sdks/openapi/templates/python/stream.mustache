@@ -1,0 +1,183 @@
+"""Sync streaming response handler."""
+
+from __future__ import annotations
+from typing import TypeVar, Generic, Iterator, Callable, Any, TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from {{packageName}}.api_client import ApiClient
+    from {{packageName}}.rest import RESTResponseType
+
+T = TypeVar("T")
+
+
+class Stream(Generic[T]):
+    """
+    Sync streaming response handler.
+
+    Handles synchronous streaming responses, particularly for server-sent events (SSE).
+    """
+
+    def __init__(
+        self,
+        response: RESTResponseType,
+        client: ApiClient,
+        *,
+        cast_to: type[T] | None = None,
+        decoder: Callable[[str], T] | None = None,
+    ) -> None:
+        """
+        Initialize Stream.
+
+        :param response: httpx.Response object with streaming enabled
+        :param client: ApiClient instance
+        :param cast_to: Optional type to cast streamed data to
+        :param decoder: Optional custom decoder function
+        """
+        self._response = response
+        self._client = client
+        self._cast_to = cast_to
+        self._decoder = decoder or self._default_decoder
+        self._iterator: Iterator[T] | None = None
+
+    def _default_decoder(self, data: str) -> Any:
+        """
+        Default decoder for streaming data.
+
+        :param data: Raw string data
+        :return: Decoded data
+        """
+        if not data:
+            return None
+
+        try:
+            import json
+            json_data = json.loads(data)
+            if self._cast_to and hasattr(self._cast_to, 'from_dict'):
+                # Use from_dict for proper type handling
+                return self._cast_to.from_dict(json_data)
+            elif self._cast_to and hasattr(self._cast_to, 'model_validate'):
+                # Pydantic model
+                return self._cast_to.model_validate(json_data)
+            return json_data
+        except json.JSONDecodeError:
+            return data
+
+    def __iter__(self) -> Iterator[T]:
+        """
+        Iterator over stream items.
+
+        :return: Iterator
+        """
+        for item in self._iter_events():
+            if item is not None:
+                yield item
+
+    def __next__(self) -> T:
+        """
+        Get next item in stream.
+
+        :return: Next stream item
+        :raises StopIteration: When stream is exhausted
+        """
+        if self._iterator is None:
+            self._iterator = self._iter_events()
+        return next(self._iterator)
+
+    def _iter_events(self) -> Iterator[T]:
+        """
+        Iterate through server-sent events.
+
+        Parses SSE format and yields decoded events.
+        SSE events are separated by double newlines (\n\n).
+
+        :return: Iterator of decoded events
+        """
+
+        # Buffer for accumulating data across chunks
+        buffer = ""
+
+        # Read the response in streaming mode
+
+        chunk_count = 0
+        for chunk_bytes in self._response.iter_bytes():
+            chunk_count += 1
+            if not chunk_bytes:
+                continue
+
+            # Decode chunk and add to buffer
+            chunk = chunk_bytes.decode('utf-8')
+            buffer += chunk
+
+            # Process complete events from buffer (events are separated by \n\n)
+            while '\n\n' in buffer:
+                event, buffer = buffer.split('\n\n', 1)
+
+                # Parse the event - can have multiple lines
+                for line in event.split('\n'):
+                    line = line.rstrip('\r')
+
+                    # Skip empty lines and comments
+                    if not line or line.startswith(':'):
+                        continue
+
+                    # Parse SSE format
+                    if line.startswith('data: '):
+                        data = line[6:]  # Remove 'data: ' prefix
+
+                        # Handle end of stream marker
+                        if data == '[DONE]':
+                            return
+
+                        # Decode and yield the data
+                        try:
+                            decoded = self._decoder(data)
+                        except Exception as e:
+                            decoded = None
+                        if decoded is not None:
+                            yield decoded
+
+        # Process any remaining event in buffer (event without trailing \n\n)
+        if buffer.strip():
+            for line in buffer.split('\n'):
+                line = line.rstrip('\r')
+                if line.startswith('data: '):
+                    data = line[6:]
+                    if data != '[DONE]':
+                        decoded = self._decoder(data)
+                        if decoded is not None:
+                            yield decoded
+
+    def close(self) -> None:
+        """
+        Close the response connection.
+        """
+        self._response.close()
+
+    def __enter__(self) -> Stream[T]:
+        """Context manager entry."""
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        """Context manager exit."""
+        self.close()
+
+    @property
+    def status_code(self) -> int:
+        """HTTP status code."""
+        return self._response.status
+
+    @property
+    def headers(self):
+        """HTTP headers."""
+        return self._response.headers
+
+    def until_done(self) -> None:
+        """
+        Consume the entire stream until completion.
+
+        This is useful when you need to ensure the stream is fully consumed
+        but don't need to process the items.
+        """
+        for _ in self:
+            pass

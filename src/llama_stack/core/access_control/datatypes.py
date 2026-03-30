@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 from enum import StrEnum
-from typing import Self
+from typing import Any, Self
 
 from pydantic import BaseModel, model_validator
 
@@ -13,6 +13,8 @@ from .conditions import parse_conditions
 
 
 class Action(StrEnum):
+    """CRUD actions for access control evaluation."""
+
     CREATE = "create"
     READ = "read"
     UPDATE = "update"
@@ -20,6 +22,8 @@ class Action(StrEnum):
 
 
 class Scope(BaseModel):
+    """Defines the scope of an access rule including optional principal, actions, and resource constraints."""
+
     principal: str | None = None
     actions: Action | list[Action]
     resource: str | None = None
@@ -29,22 +33,23 @@ class RouteScope(BaseModel):
     """Scope for route-level access control.
 
     Defines which API routes can be accessed. The paths field
-    accepts single paths, lists of paths, or wildcards:
+    accepts single paths, lists of paths, wildcards, or regex patterns:
     - Exact: "/v1/chat/completions"
     - List: ["/v1/files*", "/v1/models*"]
     - Prefix wildcard: "/v1/files*" matches "/v1/files" and all paths starting with "/v1/files"
     - Full wildcard: "*"
+    - Regex pattern: "regex:/v1/(chat|inference)/.*" matches paths using regular expressions
     """
 
     paths: str | list[str]
 
 
-def _mutually_exclusive(obj, a: str, b: str):
+def _mutually_exclusive(obj: Any, a: str, b: str) -> None:
     if getattr(obj, a) and getattr(obj, b):
         raise ValueError(f"{a} and {b} are mutually exclusive")
 
 
-def _require_one_of(obj, a: str, b: str):
+def _require_one_of(obj: Any, a: str, b: str) -> None:
     if not getattr(obj, a) and not getattr(obj, b):
         raise ValueError(f"on of {a} or {b} is required")
 
@@ -55,9 +60,10 @@ class AccessRule(BaseModel):
     A rule defines a list of action either to permit or to forbid. It may specify a
     principal or a resource that must match for the rule to take effect. The resource
     to match should be specified in the form of a type qualified identifier, e.g.
-    model::my-model or vector_store::some-db, or a wildcard for all resources of a type,
-    e.g. model::*. If the principal or resource are not specified, they will match all
-    requests.
+    model::my-model or vector_store::some-db, a wildcard for all resources of a type,
+    e.g. model::*, or a regex pattern with the "regex:" prefix, e.g.
+    regex:model::(llama|mistral)-3\\.\\d+-\\d+b. If the principal or resource are not
+    specified, they will match all requests.
 
     A rule may also specify a condition, either a 'when' or an 'unless', with additional
     constraints as to where the rule applies. The constraints supported at present are:
@@ -134,6 +140,7 @@ class RouteAccessRule(BaseModel):
     - A list of paths: ["/v1/files*", "/v1/models*"]
     - A wildcard prefix: "/v1/files*" matches /v1/files and all paths starting with /v1/files
     - Full wildcard: "*" matches all routes
+    - Regex pattern: "regex:/v1/(chat|inference)/.*" matches paths using regular expressions
 
     Path normalization: Trailing slashes are automatically removed (e.g., /v1/files/ becomes /v1/files).
 

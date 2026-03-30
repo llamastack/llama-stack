@@ -27,6 +27,8 @@ logger = get_logger(name=__name__, category="inference::together")
 
 
 class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
+    """Inference adapter for the Together AI platform."""
+
     config: TogetherImplConfig
 
     embedding_model_metadata: dict[str, dict[str, int]] = {
@@ -55,7 +57,7 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
                 raise ValueError(
                     'Pass Together API Key in the header X-LlamaStack-Provider-Data as { "together_api_key": <your api key>}'
                 )
-            together_api_key = provider_data.together_api_key
+            together_api_key = provider_data.together_api_key.get_secret_value()
         return AsyncTogether(api_key=together_api_key)
 
     async def list_provider_model_ids(self) -> Iterable[str]:
@@ -100,7 +102,8 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
         #  - togethercomputer/m2-bert-80M-32k-retrieval *does not* return usage information
         if not hasattr(response, "usage") or response.usage is None:
             logger.warning(
-                f"Together's embedding endpoint for {params.model} did not return usage information, substituting -1s."
+                "Together's embedding endpoint for did not return usage information, substituting -1s.",
+                model=params.model,
             )
             # Cast to allow monkey-patching the response object
             response.usage = cast(Any, OpenAIEmbeddingUsage(prompt_tokens=-1, total_tokens=-1))

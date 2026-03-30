@@ -18,6 +18,8 @@ logger = get_logger(name=__name__, category="providers::utils")
 
 
 class SqliteKVStoreImpl(KVStore):
+    """SQLite-backed key-value store implementation."""
+
     def __init__(self, config: SqliteKVStoreConfig):
         self.db_path = config.db_path
         self.table_name = "kvstore"
@@ -99,7 +101,7 @@ class SqliteKVStoreImpl(KVStore):
                     return None
                 value, expiration = row
                 if not isinstance(value, str):
-                    logger.warning(f"Expected string value for key {key}, got {type(value)}, returning None")
+                    logger.warning("Expected string value for key, returning None", key=key, value_type=type(value))
                     return None
                 return value
         else:
@@ -113,7 +115,7 @@ class SqliteKVStoreImpl(KVStore):
                         return None
                     value, expiration = row
                     if not isinstance(value, str):
-                        logger.warning(f"Expected string value for key {key}, got {type(value)}, returning None")
+                        logger.warning("Expected string value for key, returning None", key=key, value_type=type(value))
                         return None
                     return value
 

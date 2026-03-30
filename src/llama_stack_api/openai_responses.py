@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, model_validator
 from typing_extensions import TypedDict
 
 from llama_stack_api.inference import OpenAITokenLogProb
-from llama_stack_api.schema_utils import json_schema_type, register_schema
+from llama_stack_api.schema_utils import json_schema_type, register_schema, remove_null_from_anyof
 from llama_stack_api.vector_io import SearchRankingOptions as FileSearchRankingOptions
 
 # NOTE(ashwin): this file is literally a copy of the OpenAI responses API schema. We should probably
@@ -145,6 +145,8 @@ class OpenAIResponseAnnotationCitation(BaseModel):
 
 @json_schema_type
 class OpenAIResponseAnnotationContainerFileCitation(BaseModel):
+    """Container file citation annotation referencing a file within a container."""
+
     type: Literal["container_file_citation"] = "container_file_citation"
     container_id: str
     end_index: int
@@ -155,6 +157,8 @@ class OpenAIResponseAnnotationContainerFileCitation(BaseModel):
 
 @json_schema_type
 class OpenAIResponseAnnotationFilePath(BaseModel):
+    """File path annotation referencing a generated file in response content."""
+
     type: Literal["file_path"] = "file_path"
     file_id: str
     index: int
@@ -172,6 +176,8 @@ register_schema(OpenAIResponseAnnotations, name="OpenAIResponseAnnotations")
 
 @json_schema_type
 class OpenAIResponseOutputMessageContentOutputText(BaseModel):
+    """Text content within an output message of an OpenAI response."""
+
     text: str
     type: Literal["output_text"] = "output_text"
     annotations: list[OpenAIResponseAnnotations] = Field(default_factory=list)
@@ -641,6 +647,8 @@ class OpenAIResponseInputToolChoiceCustomTool(BaseModel):
 
 
 class OpenAIResponseInputToolChoiceMode(str, Enum):
+    """Enumeration of simple tool choice modes for response generation."""
+
     auto = "auto"
     required = "required"
     none = "none"
@@ -712,6 +720,7 @@ class OpenAIResponseIncompleteDetails(BaseModel):
 class OpenAIResponseObject(BaseModel):
     """Complete OpenAI response object containing generation results and metadata.
 
+    :param background: Whether this response was run in background mode (default: False)
     :param created_at: Unix timestamp when the response was created
     :param completed_at: (Optional) Unix timestamp when the response was completed
     :param error: (Optional) Error details if the response generation failed
@@ -724,10 +733,11 @@ class OpenAIResponseObject(BaseModel):
     :param previous_response_id: (Optional) ID of the previous response in a conversation
     :param prompt_cache_key: (Optional) A key to use when reading from or writing to the prompt cache
     :param prompt: (Optional) Reference to a prompt template and its variables.
-    :param status: Current status of the response generation
+    :param status: Current status of the response generation (queued, in_progress, completed, failed, cancelled, incomplete)
     :param temperature: (Optional) Sampling temperature used for generation
     :param text: Text formatting configuration for the response
     :param top_p: (Optional) Nucleus sampling parameter used for generation
+    :param top_logprobs: (Optional) Number of most likely tokens returned at each position with log probabilities
     :param tools: (Optional) An array of tools the model may call while generating a response.
     :param tool_choice: (Optional) Tool choice configuration for the response.
     :param truncation: (Optional) Truncation strategy applied to the response
@@ -739,9 +749,11 @@ class OpenAIResponseObject(BaseModel):
     :param metadata: (Optional) Dictionary of metadata key-value pairs
     """
 
+    background: bool | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
     created_at: int
     completed_at: int | None = None
     error: OpenAIResponseError | None = None
+    frequency_penalty: float | None = None
     id: str
     incomplete_details: OpenAIResponseIncompleteDetails | None = None
     model: str
@@ -757,6 +769,7 @@ class OpenAIResponseObject(BaseModel):
     # before the field was added. New responses will have this set always.
     text: OpenAIResponseText = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))
     top_p: float | None = None
+    top_logprobs: int | None = None
     tools: Sequence[OpenAIResponseTool] | None = None
     tool_choice: OpenAIResponseInputToolChoice | None = None
     truncation: str | None = None
@@ -768,6 +781,7 @@ class OpenAIResponseObject(BaseModel):
     safety_identifier: str | None = None
     service_tier: str | None = None
     metadata: dict[str, str] | None = None
+    presence_penalty: float | None = None
     store: bool
 
 
@@ -790,10 +804,12 @@ class OpenAIResponseObjectStreamResponseCreated(BaseModel):
     """Streaming event indicating a new response has been created.
 
     :param response: The response object that was created
+    :param sequence_number: Sequential number for ordering streaming events
     :param type: Event type identifier, always "response.created"
     """
 
     response: OpenAIResponseObject
+    sequence_number: int
     type: Literal["response.created"] = "response.created"
 
 
@@ -816,10 +832,12 @@ class OpenAIResponseObjectStreamResponseCompleted(BaseModel):
     """Streaming event indicating a response has been completed.
 
     :param response: Completed response object
+    :param sequence_number: Sequential number for ordering streaming events
     :param type: Event type identifier, always "response.completed"
     """
 
     response: OpenAIResponseObject
+    sequence_number: int
     type: Literal["response.completed"] = "response.completed"
 
 
@@ -983,6 +1001,8 @@ class OpenAIResponseObjectStreamResponseWebSearchCallInProgress(BaseModel):
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseWebSearchCallSearching(BaseModel):
+    """Streaming event for web search calls currently searching."""
+
     item_id: str
     output_index: int
     sequence_number: int
@@ -1007,24 +1027,32 @@ class OpenAIResponseObjectStreamResponseWebSearchCallCompleted(BaseModel):
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpListToolsInProgress(BaseModel):
+    """Streaming event for MCP list tools operation in progress."""
+
     sequence_number: int
     type: Literal["response.mcp_list_tools.in_progress"] = "response.mcp_list_tools.in_progress"
 
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpListToolsFailed(BaseModel):
+    """Streaming event for a failed MCP list tools operation."""
+
     sequence_number: int
     type: Literal["response.mcp_list_tools.failed"] = "response.mcp_list_tools.failed"
 
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpListToolsCompleted(BaseModel):
+    """Streaming event for a completed MCP list tools operation."""
+
     sequence_number: int
     type: Literal["response.mcp_list_tools.completed"] = "response.mcp_list_tools.completed"
 
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta(BaseModel):
+    """Streaming event for incremental MCP call argument updates."""
+
     delta: str
     item_id: str
     output_index: int
@@ -1034,6 +1062,8 @@ class OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta(BaseModel):
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpCallArgumentsDone(BaseModel):
+    """Streaming event for completed MCP call arguments."""
+
     arguments: str  # final arguments of the MCP call
     item_id: str
     output_index: int
@@ -1451,7 +1481,7 @@ class OpenAIResponseInputFunctionToolCallOutput(BaseModel):
     """
 
     call_id: str
-    output: str
+    output: str | list[OpenAIResponseInputMessageContent]
     type: Literal["function_call_output"] = "function_call_output"
     id: str | None = None
     status: str | None = None

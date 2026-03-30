@@ -54,8 +54,8 @@ def mock_distro_dir(tmp_path):
 def create_path_mock(builtin_dist_dir):
     """Create a properly mocked Path object that returns builtin_dist_dir for the distributions path."""
     mock_parent_parent_parent = MagicMock()
-    mock_parent_parent_parent.__truediv__ = (
-        lambda self, other: builtin_dist_dir if other == "distributions" else MagicMock()
+    mock_parent_parent_parent.__truediv__ = lambda self, other: (
+        builtin_dist_dir if other == "distributions" else MagicMock()
     )
 
     mock_path = MagicMock()

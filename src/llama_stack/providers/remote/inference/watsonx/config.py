@@ -7,22 +7,26 @@
 import os
 from typing import Any
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack_api import json_schema_type
 
 
 class WatsonXProviderDataValidator(BaseModel):
+    """Validates provider-specific request data for IBM WatsonX inference."""
+
     watsonx_project_id: str | None = Field(
         default=None,
         description="IBM WatsonX project ID",
     )
-    watsonx_api_key: str | None = None
+    watsonx_api_key: SecretStr | None = None
 
 
 @json_schema_type
 class WatsonXConfig(RemoteInferenceProviderConfig):
+    """Configuration for the IBM WatsonX inference provider."""
+
     base_url: HttpUrl | None = Field(
         default_factory=lambda: os.getenv("WATSONX_BASE_URL", "https://us-south.ml.cloud.ibm.com"),
         description="A base url for accessing the watsonx.ai",

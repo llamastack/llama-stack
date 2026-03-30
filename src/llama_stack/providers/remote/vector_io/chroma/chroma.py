@@ -16,11 +16,10 @@ from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.chroma import ChromaVectorIOConfig as InlineChromaVectorIOConfig
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
 from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 from llama_stack_api import (
-    ChunkForDeletion,
     DeleteChunksRequest,
     EmbeddedChunk,
     Files,
@@ -50,12 +49,22 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 # this is a helper to allow us to use async and non-async chroma clients interchangeably
 async def maybe_await(result):
+    """Await a coroutine if needed, otherwise return the value directly.
+
+    Args:
+        result: a coroutine or plain value
+
+    Returns:
+        The resolved value
+    """
     if asyncio.iscoroutine(result):
         return await result
     return result
 
 
 class ChromaIndex(EmbeddingIndex):
+    """Embedding index backed by a ChromaDB collection."""
+
     def __init__(self, client: ChromaClientType, collection, kvstore: KVStore | None = None):
         self.client = client
         self.collection = collection
@@ -76,7 +85,13 @@ class ChromaIndex(EmbeddingIndex):
             self.collection.add(documents=[chunk.model_dump_json() for chunk in chunks], embeddings=embeddings, ids=ids)
         )
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Any = None
+    ) -> QueryChunksResponse:
+        # Filters are not yet implemented for Chroma provider
+        if filters is not None:
+            raise NotImplementedError("Chroma provider does not yet support native filtering")
+
         results = await maybe_await(
             self.collection.query(
                 query_embeddings=[embedding.tolist()], n_results=k, include=["documents", "distances"]
@@ -225,6 +240,8 @@ class ChromaIndex(EmbeddingIndex):
 
 
 class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+    """Vector I/O adapter for remote ChromaDB instances."""
+
     def __init__(
         self,
         config: RemoteChromaVectorIOConfig | InlineChromaVectorIOConfig,

@@ -1,0 +1,330 @@
+# Commits recordings from the record-integration-tests.yml workflow back to PRs.
+# This workflow runs with elevated permissions but only executes trusted code from the base repo.
+# Triggered via workflow_run after record-integration-tests.yml completes successfully.
+name: Commit Recordings
+
+on:
+  workflow_run:
+    workflows: ["Integration Tests (Record)"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  commit-recordings:
+    runs-on: ubuntu-latest
+    # Only run if the recording workflow succeeded
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Download workflow artifacts
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: ${{ github.event.workflow_run.id }},
+            });
+
+            const fs = require('fs');
+            const path = require('path');
+
+            // Download all recording artifacts
+            for (const artifact of artifacts.data.artifacts) {
+              if (artifact.name.startsWith('recordings-')) {
+                console.log(`Downloading artifact: ${artifact.name}`);
+                const download = await github.rest.actions.downloadArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id,
+                  archive_format: 'zip',
+                });
+
+                const artifactPath = path.join(process.env.GITHUB_WORKSPACE, `${artifact.name}.zip`);
+                fs.writeFileSync(artifactPath, Buffer.from(download.data));
+              }
+            }
+
+      - name: Extract artifacts
+        run: |
+          mkdir -p recordings-temp
+          for zipfile in recordings-*.zip; do
+            if [ -f "$zipfile" ]; then
+              echo "Extracting $zipfile"
+              unzip -o "$zipfile" -d recordings-temp/
+            fi
+          done
+
+      - name: Download PR metadata artifact
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: ${{ github.event.workflow_run.id }},
+            });
+
+            const metadataArtifact = artifacts.data.artifacts.find(a => a.name.startsWith('pr-metadata-'));
+            if (metadataArtifact) {
+              console.log(`Found PR metadata artifact: ${metadataArtifact.name}`);
+              const download = await github.rest.actions.downloadArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: metadataArtifact.id,
+                archive_format: 'zip',
+              });
+
+              const fs = require('fs');
+              fs.writeFileSync('pr-metadata.zip', Buffer.from(download.data));
+            } else {
+              console.log('No PR metadata artifact found');
+            }
+
+      - name: Extract PR metadata
+        run: |
+          if [ -f pr-metadata.zip ]; then
+            unzip -o pr-metadata.zip
+            echo "PR metadata contents:"
+            cat pr-info.json
+          else
+            echo "No PR metadata file to extract"
+          fi
+
+      - name: Get PR information
+        id: pr-info
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const fs = require('fs');
+            let prNumber = null;
+            let headRepo = null;
+            let headRef = null;
+            let headSha = null;
+
+            // Try to load from metadata artifact first
+            if (fs.existsSync('pr-info.json')) {
+              try {
+                const metadata = JSON.parse(fs.readFileSync('pr-info.json', 'utf8'));
+                prNumber = parseInt(metadata.pr_number, 10);
+                headRepo = metadata.pr_head_repo;
+                headRef = metadata.pr_head_ref;
+                headSha = metadata.pr_head_sha;
+                console.log(`Loaded PR info from metadata: PR #${prNumber}`);
+              } catch (e) {
+                console.log(`Failed to parse metadata: ${e.message}`);
+              }
+            }
+
+            // Fallback: check if triggered by pull_request event
+            if (!prNumber) {
+              const runInfo = await github.rest.actions.getWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: ${{ github.event.workflow_run.id }},
+              });
+
+              if (runInfo.data.event === 'pull_request' && runInfo.data.pull_requests.length > 0) {
+                const pr = runInfo.data.pull_requests[0];
+                prNumber = pr.number;
+
+                const prData = await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: prNumber,
+                });
+
+                headRepo = prData.data.head.repo.full_name;
+                headRef = prData.data.head.ref;
+                headSha = prData.data.head.sha;
+              } else {
+                console.log('No PR metadata and not a pull_request event, skipping commit');
+                core.setOutput('skip', 'true');
+                return;
+              }
+            }
+
+            core.setOutput('pr_number', prNumber);
+            core.setOutput('head_repo', headRepo);
+            core.setOutput('head_ref', headRef);
+            core.setOutput('head_sha', headSha);
+            core.setOutput('is_fork_pr', headRepo !== `${context.repo.owner}/${context.repo.repo}`);
+
+      - name: Preserve artifacts before checkout
+        if: steps.pr-info.outputs.skip != 'true' && steps.pr-info.outputs.is_fork_pr != 'true'
+        run: mv recordings-temp /tmp/recordings-temp 2>/dev/null || true
+
+      - name: Checkout PR branch (same-repo)
+        if: steps.pr-info.outputs.skip != 'true' && steps.pr-info.outputs.is_fork_pr != 'true'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: ${{ steps.pr-info.outputs.head_repo }}
+          ref: ${{ steps.pr-info.outputs.head_ref }}
+          fetch-depth: 0
+          token: ${{ github.token }}
+
+      - name: Restore artifacts after checkout
+        if: steps.pr-info.outputs.skip != 'true' && steps.pr-info.outputs.is_fork_pr != 'true'
+        run: mv /tmp/recordings-temp recordings-temp 2>/dev/null || true
+
+      - name: Checkout PR branch (fork)
+        if: steps.pr-info.outputs.skip != 'true' && steps.pr-info.outputs.is_fork_pr == 'true'
+        env:
+          # RELEASE_PAT has repo scope, which allows cloning and pushing to fork
+          # PR branches when maintainerCanModify is enabled. github.token can't do this.
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+          HEAD_REPO: ${{ steps.pr-info.outputs.head_repo }}
+          HEAD_REF: ${{ steps.pr-info.outputs.head_ref }}
+        run: |
+          # Move artifacts out of the way before cloning, then restore after.
+          mv recordings-temp /tmp/recordings-temp 2>/dev/null || true
+          # Clean up workspace files (artifacts, metadata) to ensure empty directory for clone
+          rm -f recordings-*.zip pr-metadata.zip pr-info.json
+          git clone --depth 1 --branch "${HEAD_REF}" "https://x-access-token:${GH_TOKEN}@github.com/${HEAD_REPO}.git" .
+          mv /tmp/recordings-temp recordings-temp 2>/dev/null || true
+
+      - name: Copy recordings to repo
+        if: steps.pr-info.outputs.skip != 'true'
+        run: |
+          if [ -d "recordings-temp" ]; then
+            echo "Copying recordings from artifacts to repo"
+
+            # Handle old artifact structure (if tests/integration path exists)
+            if [ -d "recordings-temp/tests/integration" ]; then
+              echo "Using old artifact structure (tests/integration/...)"
+              if [ -d "recordings-temp/tests/integration/recordings" ]; then
+                mkdir -p "tests/integration/recordings"
+                cp -r recordings-temp/tests/integration/recordings/* tests/integration/recordings/ 2>/dev/null || true
+              fi
+
+              for dir in recordings-temp/tests/integration/*/recordings/; do
+                if [ -d "$dir" ]; then
+                  module_dir=$(basename "$(dirname "$dir")")
+                  echo "Copying recordings for $module_dir"
+                  mkdir -p "tests/integration/$module_dir/recordings"
+                  cp -r "$dir"* "tests/integration/$module_dir/recordings/" 2>/dev/null || true
+                fi
+              done
+            else
+              # Handle new flattened artifact structure (*/recordings/)
+              echo "Using flattened artifact structure (*/recordings/)"
+              for dir in recordings-temp/*/recordings/; do
+                if [ -d "$dir" ]; then
+                  module_dir=$(basename "$(dirname "$dir")")
+                  echo "Copying recordings for $module_dir"
+                  mkdir -p "tests/integration/$module_dir/recordings"
+                  cp -r "$dir"* "tests/integration/$module_dir/recordings/" 2>/dev/null || true
+                fi
+              done
+
+              # Also handle top-level recordings directory if it exists
+              if [ -d "recordings-temp/recordings" ]; then
+                echo "Copying top-level recordings"
+                mkdir -p "tests/integration/recordings"
+                cp -r recordings-temp/recordings/* tests/integration/recordings/ 2>/dev/null || true
+              fi
+            fi
+          fi
+
+      - name: Commit and push recordings
+        id: commit
+        if: steps.pr-info.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ steps.pr-info.outputs.is_fork_pr == 'true' && secrets.RELEASE_PAT || github.token }}
+          PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}
+          HEAD_REPO: ${{ steps.pr-info.outputs.head_repo }}
+          HEAD_REF: ${{ steps.pr-info.outputs.head_ref }}
+          IS_FORK_PR: ${{ steps.pr-info.outputs.is_fork_pr }}
+          BASE_REPO: ${{ github.repository }}
+        run: |
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Check if there are recording changes
+          if [[ -z $(git status --porcelain tests/integration/recordings/ tests/integration/*/recordings/) ]]; then
+            echo "No recording changes to commit"
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Recording changes detected, committing..."
+          git add tests/integration/recordings/ tests/integration/*/recordings/
+
+          git commit -m "Recordings update from CI
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+          # Push to PR branch
+          if [ "$IS_FORK_PR" = "true" ]; then
+            echo "This is a fork PR, checking maintainer permissions..."
+
+            # Check if maintainer can modify
+            MAINTAINER_CAN_MODIFY=$(gh pr view "$PR_NUMBER" --repo "$BASE_REPO" --json maintainerCanModify --jq '.maintainerCanModify')
+
+            if [ "$MAINTAINER_CAN_MODIFY" = "true" ]; then
+              echo "Maintainer can modify - pushing to fork PR branch"
+              git push "https://x-access-token:${GH_TOKEN}@github.com/${HEAD_REPO}.git" "HEAD:${HEAD_REF}"
+              echo "Successfully pushed recordings to fork PR"
+              echo "pushed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "::warning::Cannot push to fork PR: 'Allow edits from maintainers' is not enabled"
+              echo "::warning::Contributor needs to check 'Allow edits from maintainers' when creating the PR"
+              echo "pushed=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          else
+            echo "Pushing to same-repo PR branch: $HEAD_REF"
+            git push origin "HEAD:${HEAD_REF}"
+            echo "Successfully pushed recordings"
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment on PR
+        if: steps.commit.outputs.pushed == 'true'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}
+        with:
+          script: |
+            const prNumber = parseInt(process.env.PR_NUMBER, 10);
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const COMMENT_MARKER = '<!-- commit-recordings-bot -->';
+
+            const message = `${COMMENT_MARKER}\n✅ **Recordings committed successfully**\n\nRecordings from the integration tests have been committed to this PR.\n\n[View commit workflow](${runUrl})`;
+
+            try {
+              // Find existing bot comment
+              let existing = null;
+              for await (const response of github.paginate.iterator(github.rest.issues.listComments, {
+                issue_number: prNumber,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+              })) {
+                existing = response.data.find(c => c.body.includes(COMMENT_MARKER));
+                if (existing) break;
+              }
+
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  comment_id: existing.id,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: message,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  issue_number: prNumber,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: message,
+                });
+              }
+            } catch (error) {
+              core.warning(`Could not post PR comment: ${error.message}`);
+            }

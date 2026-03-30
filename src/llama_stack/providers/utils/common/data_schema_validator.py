@@ -12,6 +12,8 @@ from llama_stack_api import ChatCompletionInputType, CompletionInputType, String
 
 
 class ColumnName(Enum):
+    """Enumeration of recognized column names for dataset schemas."""
+
     input_query = "input_query"
     expected_answer = "expected_answer"
     chat_completion_input = "chat_completion_input"
@@ -72,6 +74,14 @@ VALID_SCHEMAS_FOR_EVAL = [
 
 
 def get_valid_schemas(api_str: str):
+    """Return the valid dataset schemas for the given API.
+
+    Args:
+        api_str: API identifier string (e.g. "scoring" or "eval")
+
+    Returns:
+        List of valid schema dictionaries for the specified API
+    """
     if api_str == Api.scoring.value:
         return VALID_SCHEMAS_FOR_SCORING
     elif api_str == Api.eval.value:
@@ -84,6 +94,12 @@ def validate_dataset_schema(
     dataset_schema: dict[str, Any],
     expected_schemas: list[dict[str, Any]],
 ):
+    """Validate that a dataset schema matches one of the expected schemas.
+
+    Args:
+        dataset_schema: the schema to validate
+        expected_schemas: list of acceptable schema definitions
+    """
     if dataset_schema not in expected_schemas:
         raise ValueError(f"Dataset {dataset_schema} does not have a correct input schema in {expected_schemas}")
 
@@ -92,6 +108,12 @@ def validate_row_schema(
     input_row: dict[str, Any],
     expected_schemas: list[dict[str, Any]],
 ):
+    """Validate that an input row contains keys from at least one expected schema.
+
+    Args:
+        input_row: dictionary representing a data row
+        expected_schemas: list of acceptable schema definitions
+    """
     for schema in expected_schemas:
         if all(key in input_row for key in schema):
             return

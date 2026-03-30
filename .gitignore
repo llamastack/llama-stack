@@ -23,11 +23,15 @@ docs/notebooks/nvidia/tool_calling/sample_data/
 pyrightconfig.json
 venv/
 pytest-report.xml
+.pytest_cache/
 .coverage
+htmlcov/
 .python-version
-AGENTS.md
-server.log
-CLAUDE.md
+.mypy_cache/
+*.log
+*.swp
+*.swo
+*.tsbuildinfo
 .claude/
 docs/.docusaurus/
 docs/node_modules/
@@ -44,5 +48,9 @@ tests/integration/client-typescript/node_modules/
 
 # client SDK generated files
 client-sdks/openapi/openapi.yml
+client-sdks/openapi/openapi-hierarchical.yml
+client-sdks/openapi/api-hierarchy.yml
+client-sdks/openapi/openapi-config.json
 client-sdks/openapi/sdks/
 client-sdks/openapi/.openapi-generator/
+.agentready

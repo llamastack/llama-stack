@@ -1,49 +1,38 @@
 # API Reference Overview
 
-The Llama Stack provides a comprehensive set of APIs organized by stability level to help you choose the right endpoints for your use case.
+Llama Stack implements the OpenAI API and organizes endpoints by stability level. Use any OpenAI-compatible client to access these APIs.
 
-## 🟢 Stable APIs
+## Stable APIs
 
-**Production-ready APIs with backward compatibility guarantees.**
+**Production-ready, OpenAI-compatible endpoints.**
 
-These APIs are fully tested, documented, and stable. They follow semantic versioning principles and maintain backward compatibility within major versions. Recommended for production applications.
+| API | Endpoint | Description |
+|-----|----------|-------------|
+| Chat Completions | `/v1/chat/completions` | Text and vision inference, streaming, tool calling |
+| Completions | `/v1/completions` | Text completions |
+| Embeddings | `/v1/embeddings` | Text embeddings |
+| Models | `/v1/models` | Model listing and management |
+| Files | `/v1/files` | File upload and management |
+| Vector Stores | `/v1/vector_stores` | Document storage and semantic search |
+| Batches | `/v1/batches` | Offline batch processing |
+| Moderations | `/v1/moderations` | Content safety via Llama Guard |
+| Responses | `/v1/responses` | Server-side agentic orchestration with tool calling, MCP, and file search |
+| Conversations | `/v1/conversations` | Conversation state management |
+
+These APIs follow semantic versioning and maintain backward compatibility within major versions.
 
 [**Browse Stable APIs →**](./api/index.mdx)
 
-**Key Features:**
-- ✅ Backward compatibility guaranteed
-- ✅ Comprehensive testing and validation
-- ✅ Production-ready reliability
-- ✅ Long-term support
-
----
-
-## 🟡 Experimental APIs
+## Experimental APIs
 
 **Preview APIs that may change before becoming stable.**
 
-These APIs include v1alpha and v1beta endpoints that are feature-complete but may undergo changes based on feedback. Great for exploring new capabilities and providing feedback.
+Experimental endpoints (v1alpha, v1beta) include new capabilities under active development. They are feature-complete but may change based on feedback.
 
 [**Browse Experimental APIs →**](./api-experimental/index.mdx)
 
-**Key Features:**
-- 🧪 Latest features and capabilities
-- 🧪 May change based on user feedback
-- 🧪 Active development and iteration
-- 🧪 Opportunity to influence final design
+## Deprecated APIs
 
----
+**Legacy APIs scheduled for removal.**
 
-## 🔴 Deprecated APIs
-
-**Legacy APIs for migration reference.**
-
-These APIs are deprecated and will be removed in future versions. They are provided for migration purposes and to help transition to newer, stable alternatives.
-
-[**Browse Deprecated APIs →**](./api-deprecated/index.mdx)
-
-**Key Features:**
-- ⚠️ Will be removed in future versions
-- ⚠️ Migration guidance provided
-- ⚠️ Use for compatibility during transition
-- ⚠️ Not recommended for new projects
+See [deprecated APIs](./api-deprecated/index.mdx) for migration guidance.

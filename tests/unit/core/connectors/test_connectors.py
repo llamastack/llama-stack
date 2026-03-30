@@ -44,6 +44,9 @@ def mock_kvstore():
         async def keys_in_range(self, start_key, end_key):
             return [k for k in storage.keys() if start_key <= k < end_key]
 
+        async def values_in_range(self, start_key, end_key):
+            return [v for k, v in storage.items() if start_key <= k < end_key]
+
         async def close(self):
             pass
 
@@ -58,7 +61,7 @@ def mock_kvstore():
 async def connector_service(mock_kvstore):
     """Create a ConnectorServiceImpl with mocked dependencies."""
     # Create a minimal mock config - we'll inject the kvstore directly
-    mock_config = MagicMock()
+    mock_config = MagicMock(spec=Connector)
 
     with patch(
         "llama_stack.core.connectors.connectors.kvstore_impl",
@@ -378,7 +381,7 @@ class TestConnectorIdResolution:
 
     async def test_connector_id_resolved_to_server_url(self, mock_connectors_api, sample_connector):
         """Test that connector_id is resolved to server_url via connectors API."""
-        from llama_stack.providers.inline.agents.meta_reference.responses.streaming import (
+        from llama_stack.providers.inline.responses.builtin.responses.streaming import (
             resolve_mcp_connector_id,
         )
 
@@ -394,11 +397,11 @@ class TestConnectorIdResolution:
         resolved_tool = await resolve_mcp_connector_id(mcp_tool, mock_connectors_api)
 
         assert resolved_tool.server_url == "http://localhost:8080/mcp"
-        mock_connectors_api.get_connector.assert_called_once_with("my-mcp-server")
+        mock_connectors_api.get_connector.assert_called_once_with(GetConnectorRequest(connector_id="my-mcp-server"))
 
     async def test_server_url_not_overwritten_when_provided(self, mock_connectors_api):
         """Test that existing server_url is not overwritten even if connector_id provided."""
-        from llama_stack.providers.inline.agents.meta_reference.responses.streaming import (
+        from llama_stack.providers.inline.responses.builtin.responses.streaming import (
             resolve_mcp_connector_id,
         )
 
@@ -419,7 +422,7 @@ class TestConnectorIdResolution:
 
     async def test_connector_id_resolution_propagates_not_found_error(self, mock_connectors_api):
         """Test that ConnectorNotFoundError propagates when connector doesn't exist."""
-        from llama_stack.providers.inline.agents.meta_reference.responses.streaming import (
+        from llama_stack.providers.inline.responses.builtin.responses.streaming import (
             resolve_mcp_connector_id,
         )
 

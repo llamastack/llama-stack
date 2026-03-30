@@ -14,6 +14,11 @@ from llama_stack_api import (
 
 
 def available_providers() -> list[ProviderSpec]:
+    """Return the list of available safety provider specifications.
+
+    Returns:
+        List of ProviderSpec objects describing available providers
+    """
     return [
         InlineProviderSpec(
             api=Api.safety,
@@ -64,6 +69,16 @@ def available_providers() -> list[ProviderSpec]:
             module="llama_stack.providers.remote.safety.nvidia",
             config_class="llama_stack.providers.remote.safety.nvidia.NVIDIASafetyConfig",
             description="NVIDIA's safety provider for content moderation and safety filtering.",
+        ),
+        RemoteProviderSpec(
+            api=Api.safety,
+            adapter_type="passthrough",
+            provider_type="remote::passthrough",
+            pip_packages=[],
+            module="llama_stack.providers.remote.safety.passthrough",
+            config_class="llama_stack.providers.remote.safety.passthrough.PassthroughSafetyConfig",
+            provider_data_validator="llama_stack.providers.remote.safety.passthrough.config.PassthroughProviderDataValidator",
+            description="Passthrough safety provider that forwards moderation calls to a downstream HTTP service.",
         ),
         RemoteProviderSpec(
             api=Api.safety,

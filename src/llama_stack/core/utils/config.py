@@ -12,7 +12,7 @@ def redact_sensitive_fields(data: dict[str, Any]) -> dict[str, Any]:
     sensitive_patterns = ["api_key", "api_token", "password", "secret", "token"]
 
     # Specific configuration field names that should NOT be redacted despite containing "token"
-    safe_token_fields = ["chunk_size_tokens", "max_tokens", "default_chunk_overlap_tokens"]
+    safe_token_fields = ["chunk_size_tokens", "max_tokens", "default_chunk_overlap_tokens", "max_document_tokens"]
 
     def _redact_value(v: Any) -> Any:
         if isinstance(v, dict):

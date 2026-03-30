@@ -141,6 +141,8 @@ logger = get_logger(name=__name__, category="safety")
 
 
 class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
+    """Safety provider implementation using Llama Guard models for content moderation."""
+
     def __init__(self, config: LlamaGuardConfig, deps) -> None:
         self.config = config
         self.inference_api = deps[Api.inference]
@@ -228,6 +230,8 @@ class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
 
 
 class LlamaGuardShield:
+    """Runs Llama Guard inference to detect safety category violations in messages."""
+
     def __init__(
         self,
         model: str,
@@ -250,13 +254,16 @@ class LlamaGuardShield:
         self.safety_categories = safety_categories
 
     def check_unsafe_response(self, response: str) -> str | None:
-        match = re.match(r"^unsafe\n(.*)$", response)
-        if match:
-            # extracts the unsafe code
-            extracted = match.group(1)
-            return extracted
+        if not response.startswith("unsafe"):
+            return None
 
-        return None
+        found_codes = re.findall(r"\bS\d{1,2}\b", response)
+        valid_codes = set(SAFETY_CATEGORIES_TO_CODE_MAP.values())
+        filtered_codes = [code for code in found_codes if code in valid_codes]
+        if not filtered_codes:
+            return None
+
+        return ",".join(filtered_codes)
 
     def get_safety_categories(self) -> list[str]:
         excluded_categories = self.excluded_categories
@@ -415,7 +422,7 @@ class LlamaGuardShield:
             unsafe_code_list = [code.strip() for code in unsafe_code.split(",")]
             invalid_codes = [code for code in unsafe_code_list if code not in SAFETY_CODE_TO_CATEGORIES_MAP]
             if invalid_codes:
-                logger.warning(f"Invalid safety codes returned: {invalid_codes}")
+                logger.warning("Invalid safety codes returned", invalid_codes=invalid_codes)
                 # just returning safe object, as we don't know what the invalid codes can map to
                 return ModerationObject(
                     id=f"modr-{uuid.uuid4()}",

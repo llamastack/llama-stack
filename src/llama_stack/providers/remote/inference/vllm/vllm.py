@@ -6,11 +6,11 @@
 from collections.abc import AsyncIterator
 from urllib.parse import urljoin
 
-import aiohttp
 import httpx
 from pydantic import ConfigDict
 
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.http_client import _build_network_client_kwargs
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import (
     HealthResponse,
@@ -24,7 +24,6 @@ from llama_stack_api import (
     OpenAIChatCompletionRequestWithExtraBody,
     RerankData,
     RerankResponse,
-    ToolChoice,
 )
 from llama_stack_api.inference import RerankRequest
 
@@ -34,12 +33,11 @@ log = get_logger(name=__name__, category="inference::vllm")
 
 
 class VLLMInferenceAdapter(OpenAIMixin):
+    """Inference adapter for remote vLLM servers."""
+
     config: VLLMInferenceAdapterConfig
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    # vLLM does not support the stream_options parameter
-    supports_stream_options: bool = False
 
     provider_data_api_key_field: str = "vllm_api_token"
 
@@ -60,6 +58,13 @@ class VLLMInferenceAdapter(OpenAIMixin):
                 "You must provide a URL in config.yaml (or via the VLLM_URL environment variable) to use vLLM."
             )
 
+    def _build_httpx_client_kwargs(self) -> dict:
+        """Build httpx.AsyncClient kwargs that honour network/TLS configuration."""
+        kwargs = _build_network_client_kwargs(self.config.network)
+        if not kwargs:
+            kwargs["verify"] = self.shared_ssl_context
+        return kwargs
+
     async def health(self) -> HealthResponse:
         """
         Performs a health check by verifying connectivity to the remote vLLM server.
@@ -74,7 +79,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
             base_url = self.get_base_url()
             health_url = urljoin(base_url, "health")
 
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(**self._build_httpx_client_kwargs()) as client:
                 response = await client.get(health_url)
                 response.raise_for_status()
                 return HealthResponse(status=HealthStatus.OK)
@@ -105,19 +110,19 @@ class VLLMInferenceAdapter(OpenAIMixin):
         if params.max_tokens is None and self.config.max_tokens:
             params.max_tokens = self.config.max_tokens
 
-        # This is to be consistent with OpenAI API and support vLLM <= v0.6.3
-        # References:
-        #   * https://platform.openai.com/docs/api-reference/chat/create#chat-create-tool_choice
-        #   * https://github.com/vllm-project/vllm/pull/10000
-        if not params.tools and params.tool_choice is not None:
-            params.tool_choice = ToolChoice.none.value
-
         return await super().openai_chat_completion(params)
 
     def construct_model_from_identifier(self, identifier: str) -> Model:
-        if (
-            "rerank" in identifier.lower()
-        ):  # TODO: guessing that any model with "rerank" in its name is a reranking model is pretty hacky
+        # vLLM's /v1/models response does not expose a model task/type field, so classify by name.
+        if "embed" in identifier.lower():
+            return Model(
+                provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                provider_resource_id=identifier,
+                identifier=identifier,
+                model_type=ModelType.embedding,
+                metadata={},
+            )
+        if "rerank" in identifier.lower():
             return Model(
                 provider_id=self.__provider_id__,  # type: ignore[attr-defined]
                 provider_resource_id=identifier,
@@ -150,40 +155,45 @@ class VLLMInferenceAdapter(OpenAIMixin):
         if request.max_num_results is not None:
             payload["top_n"] = request.max_num_results
 
+        # vLLM does not support /v1/rerank ->
+        #   "To indicate that the rerank API is not part of the standard OpenAI API,
+        #    we have located it at `/rerank`. Please update your client accordingly.
+        #    (Note: Conforms to JinaAI rerank API)" - vLLM 0.15.1
+        endpoint = self.get_base_url().replace("/v1", "") + "/rerank"  # TODO: find a better solution
+
+        headers: dict[str, str] = {}
+        api_key = self.get_api_key()
+        if api_key and api_key != "NO KEY REQUIRED":
+            headers["Authorization"] = f"Bearer {api_key}"
+
         try:
-            async with aiohttp.ClientSession() as session:
-                # vLLM does not support /v1/rerank ->
-                #   "To indicate that the rerank API is not part of the standard OpenAI API,
-                #    we have located it at `/rerank`. Please update your client accordingly.
-                #    (Note: Conforms to JinaAI rerank API)" - vLLM 0.15.1
-                endpoint = self.get_base_url().replace("/v1", "") + "/rerank"  # TODO: find a better solution
-                async with session.post(endpoint, headers={}, json=payload) as response:
-                    if response.status != 200:
-                        response_text = await response.text()
+            async with httpx.AsyncClient(**self._build_httpx_client_kwargs()) as client:
+                response = await client.post(endpoint, headers=headers, json=payload)
+                if response.status_code != 200:
+                    raise RuntimeError(
+                        f"vLLM rerank API request failed with status {response.status_code}: {response.text}"
+                    )
+
+                def convert_result_item(item: dict) -> RerankData:
+                    if "index" not in item or "relevance_score" not in item:
                         raise RuntimeError(
-                            f"vLLM rerank API request failed with status {response.status}: {response_text}"
+                            "vLLM rerank API response missing required fields 'index' or 'relevance_score'"
                         )
 
-                    def convert_result_item(item: dict) -> RerankData:
-                        if "index" not in item or "relevance_score" not in item:
-                            raise RuntimeError(
-                                "vLLM rerank API response missing required fields 'index' or 'relevance_score'"
-                            )
+                    try:
+                        return RerankData(index=int(item["index"]), relevance_score=float(item["relevance_score"]))
+                    except (TypeError, ValueError) as e:
+                        raise RuntimeError(f"Invalid data types in vLLM rerank API response: {e}") from e
 
-                        try:
-                            return RerankData(index=int(item["index"]), relevance_score=float(item["relevance_score"]))
-                        except (TypeError, ValueError) as e:
-                            raise RuntimeError(f"Invalid data types in vLLM rerank API response: {e}") from e
+                result = response.json()
 
-                    result = await response.json()
+                if "results" not in result:
+                    raise RuntimeError("vLLM rerank API response missing 'results' field")
 
-                    if "results" not in result:
-                        raise RuntimeError("vLLM rerank API response missing 'results' field")
+                rerank_data = [convert_result_item(item) for item in result.get("results")]
+                rerank_data.sort(key=lambda entry: entry.relevance_score, reverse=True)
 
-                    rerank_data = [convert_result_item(item) for item in result.get("results")]
-                    rerank_data.sort(key=lambda entry: entry.relevance_score, reverse=True)
+                return RerankResponse(data=rerank_data)
 
-                    return RerankResponse(data=rerank_data)
-
-        except aiohttp.ClientError as e:
+        except httpx.HTTPError as e:
             raise ConnectionError(f"Failed to connect to vLLM rerank API at {endpoint}: {e}") from e

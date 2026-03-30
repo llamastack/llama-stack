@@ -5,14 +5,15 @@
 # the root directory of this source tree.
 
 import base64
+import ssl
 import uuid
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Iterable
 from typing import Any
 
 import httpx
-from openai import AsyncOpenAI
-from pydantic import BaseModel, ConfigDict
+from openai import AsyncOpenAI, DefaultAsyncHttpxClient
+from pydantic import BaseModel, ConfigDict, Field
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
@@ -70,7 +71,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     """
 
     # Allow extra fields so the routing infra can inject model_store, __provider_id__, etc.
-    model_config = ConfigDict(extra="allow")
+    # Allow arbitrary types for shared_ssl_context
+    model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
 
     config: RemoteInferenceProviderConfig
 
@@ -103,6 +105,11 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
     # Optional field name in provider data to look for API key, which takes precedence
     provider_data_api_key_field: str | None = None
+
+    # Shared SSL context for all calls to improve performance
+    # SSL context construction touches disk and is expensive
+    # Trade-off: SSL context changes require server restart
+    shared_ssl_context: ssl.SSLContext | bool = Field(default_factory=ssl.create_default_context, exclude=True)
 
     def get_api_key(self) -> str | None:
         """
@@ -230,6 +237,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         #   * Applies network config (TLS, proxy, timeout, headers) on top
         #   * Network config headers take precedence over provider headers (allows override)
         # - Otherwise, if network config exists, create http_client from it
+        # - Otherwise, use a cached SSL context for performance
         # This allows providers with custom auth to still use standard network settings
         if "http_client" in extra_params:
             if network_kwargs:
@@ -238,6 +246,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
                 )
         elif network_kwargs:
             extra_params["http_client"] = httpx.AsyncClient(**network_kwargs)
+        else:
+            extra_params["http_client"] = DefaultAsyncHttpxClient(verify=self.shared_ssl_context)
 
         return AsyncOpenAI(
             api_key=api_key,
@@ -251,7 +261,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         if self.provider_data_api_key_field:
             provider_data = self.get_request_provider_data()
             if provider_data and getattr(provider_data, self.provider_data_api_key_field, None):
-                api_key = getattr(provider_data, self.provider_data_api_key_field)
+                value = getattr(provider_data, self.provider_data_api_key_field)
+                api_key = value.get_secret_value()
 
         return api_key
 
@@ -479,6 +490,16 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     ##
 
     async def register_model(self, model: Model) -> Model:
+        # Check if we should validate model availability (defaults to False)
+        should_validate = bool(model.model_validation)
+
+        if not should_validate:
+            logger.debug(
+                "Skipping model availability check for (model_validation=false)",
+                provider_model_id=model.provider_model_id,
+            )
+            return model
+
         if not await self.check_model_availability(model.provider_model_id):
             raise ValueError(f"Model {model.provider_model_id} is not available from provider {self.__provider_id__}")  # type: ignore[attr-defined]
         return model
@@ -498,13 +519,15 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
         api_key = self._get_api_key_from_config_or_provider_data()
         if not api_key:
-            logger.debug(f"{self.__class__.__name__}.list_provider_model_ids() disabled because API key not provided")
+            logger.debug(
+                "list_provider_model_ids() disabled because API key not provided", provider=self.__class__.__name__
+            )
             return None
 
         try:
             iterable = await self.list_provider_model_ids()
         except Exception as e:
-            logger.error(f"{self.__class__.__name__}.list_provider_model_ids() failed with: {e}")
+            logger.error("list_provider_model_ids() failed", provider=self.__class__.__name__, error=str(e))
             raise
         if not hasattr(iterable, "__iter__"):
             raise TypeError(
@@ -513,13 +536,17 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             )
 
         provider_models_ids = list(iterable)
-        logger.info(f"{self.__class__.__name__}.list_provider_model_ids() returned {len(provider_models_ids)} models")
+        logger.info(
+            "list_provider_model_ids() returned models",
+            provider=self.__class__.__name__,
+            count=len(provider_models_ids),
+        )
 
         for provider_model_id in provider_models_ids:
             if not isinstance(provider_model_id, str):
                 raise ValueError(f"Model ID {provider_model_id} from list_provider_model_ids() is not a string")
             if self.config.allowed_models is not None and provider_model_id not in self.config.allowed_models:
-                logger.info(f"Skipping model {provider_model_id} as it is not in the allowed models list")
+                logger.info("Skipping model not in allowed models list", model=provider_model_id)
                 continue
             model = self.construct_model_from_identifier(provider_model_id)
             self._model_cache[provider_model_id] = model

@@ -74,7 +74,6 @@ const sidebars: SidebarsConfig = {
           items: [
             'distributions/self_hosted_distro/starter',
             'distributions/self_hosted_distro/dell',
-            'distributions/self_hosted_distro/dell-tgi',
             'distributions/self_hosted_distro/nvidia',
             'distributions/self_hosted_distro/passthrough',
           ],
@@ -120,8 +119,6 @@ const sidebars: SidebarsConfig = {
             'providers/inference/remote_fireworks',
             'providers/inference/remote_gemini',
             'providers/inference/remote_groq',
-            'providers/inference/remote_hf_endpoint',
-            'providers/inference/remote_hf_serverless',
             'providers/inference/remote_llama-openai-compat',
             'providers/inference/remote_nvidia',
             'providers/inference/remote_ollama',
@@ -130,7 +127,6 @@ const sidebars: SidebarsConfig = {
             'providers/inference/remote_runpod',
             'providers/inference/remote_sambanova',
             'providers/inference/remote_sambanova-openai-compat',
-            'providers/inference/remote_tgi',
             'providers/inference/remote_together',
             'providers/inference/remote_vertexai',
             'providers/inference/remote_vllm',
@@ -159,7 +155,7 @@ const sidebars: SidebarsConfig = {
             'providers/vector_io/index',
             'providers/vector_io/inline_chromadb',
             'providers/vector_io/inline_faiss',
-            'providers/vector_io/inline_meta-reference',
+            'providers/vector_io/inline_builtin',
             'providers/vector_io/inline_milvus',
             'providers/vector_io/inline_qdrant',
             'providers/vector_io/inline_sqlite-vec',
@@ -169,7 +165,8 @@ const sidebars: SidebarsConfig = {
             'providers/vector_io/remote_qdrant',
             'providers/vector_io/remote_weaviate',
             'providers/vector_io/remote_elasticsearch',
-            'providers/vector_io/remote_oci'
+            'providers/vector_io/remote_oci',
+            'providers/vector_io/remote_infinispan'
           ],
         },
         {
@@ -178,7 +175,7 @@ const sidebars: SidebarsConfig = {
           collapsed: true,
           items: [
             'providers/tool_runtime/index',
-            'providers/tool_runtime/inline_rag-runtime',
+            'providers/tool_runtime/inline_file-search',
             'providers/tool_runtime/remote_bing-search',
             'providers/tool_runtime/remote_brave-search',
             'providers/tool_runtime/remote_model-context-protocol',
@@ -192,7 +189,7 @@ const sidebars: SidebarsConfig = {
           collapsed: true,
           items: [
             'providers/agents/index',
-            'providers/agents/inline_meta-reference'
+            'providers/agents/inline_builtin'
           ],
         },
         {
@@ -248,7 +245,7 @@ const sidebars: SidebarsConfig = {
           collapsed: true,
           items: [
             'providers/eval/index',
-            'providers/eval/inline_meta-reference',
+            'providers/eval/inline_builtin',
             'providers/eval/remote_nvidia'
           ],
         },

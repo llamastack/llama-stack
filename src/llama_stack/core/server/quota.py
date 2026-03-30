@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import json
 import time
 from datetime import UTC, datetime, timedelta
 
@@ -13,6 +12,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from llama_stack.core.storage.datatypes import KVStoreReference, StorageBackendType
 from llama_stack.core.storage.kvstore.kvstore import _KVSTORE_BACKENDS, kvstore_impl
 from llama_stack.log import get_logger
+from llama_stack_api.common.errors import OpenAIErrorResponse
 from llama_stack_api.internal.kvstore import KVStore
 
 logger = get_logger(name=__name__, category="core::server")
@@ -51,8 +51,8 @@ class QuotaMiddleware:
             backend_config = _KVSTORE_BACKENDS.get(self.kv_config.backend)
             if backend_config and backend_config.type == StorageBackendType.KV_SQLITE:
                 logger.warning(
-                    "QuotaMiddleware: Using SQLite backend. Expiry/TTL is not enforced; cleanup is manual. "
-                    f"window_seconds={self.window_seconds}"
+                    "QuotaMiddleware: Using SQLite backend. Expiry/TTL is not enforced; cleanup is manual. window_seconds",
+                    window_seconds=self.window_seconds,
                 )
         return self.kv
 
@@ -106,5 +106,5 @@ class QuotaMiddleware:
                 "headers": [[b"content-type", b"application/json"]],
             }
         )
-        body = json.dumps({"error": {"message": message}}).encode()
+        body = OpenAIErrorResponse.from_message(message).to_bytes()
         await send({"type": "http.response.body", "body": body})

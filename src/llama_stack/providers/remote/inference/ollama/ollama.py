@@ -23,13 +23,12 @@ logger = get_logger(name=__name__, category="inference::ollama")
 
 
 class OllamaInferenceAdapter(OpenAIMixin):
+    """Inference adapter for the Ollama local model runtime."""
+
     config: OllamaImplConfig
 
     # automatically set by the resolver when instantiating the provider
     __provider_id__: str
-
-    # Ollama does not support the stream_options parameter
-    supports_stream_options: bool = False
 
     embedding_model_metadata: dict[str, dict[str, int]] = {
         "all-minilm:l6-v2": {
@@ -74,11 +73,12 @@ class OllamaInferenceAdapter(OpenAIMixin):
         return str(self.config.base_url)
 
     async def initialize(self) -> None:
-        logger.info(f"checking connectivity to Ollama at `{self.config.base_url}`...")
+        logger.info("checking connectivity to Ollama", base_url=self.config.base_url)
         r = await self.health()
         if r["status"] == HealthStatus.ERROR:
             logger.warning(
-                f"Ollama Server is not running (message: {r['message']}). Make sure to start it using `ollama serve` in a separate terminal"
+                "Ollama Server is not running (message: ). Make sure to start it using `ollama serve` in a separate terminal",
+                r_message=r["message"],
             )
 
     async def health(self) -> HealthResponse:
@@ -104,7 +104,8 @@ class OllamaInferenceAdapter(OpenAIMixin):
         elif await self.check_model_availability(f"{model.provider_model_id}:latest"):
             model.provider_resource_id = f"{model.provider_model_id}:latest"
             logger.warning(
-                f"Imprecise provider resource id was used but 'latest' is available in Ollama - using '{model.provider_model_id}'"
+                "Imprecise provider resource id was used but 'latest' is available in Ollama - using",
+                provider_model_id=model.provider_model_id,
             )
             return model
 

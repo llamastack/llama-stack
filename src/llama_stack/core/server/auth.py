@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import json
+import re
 
 import httpx
 from aiohttp import hdrs
@@ -16,6 +16,7 @@ from llama_stack.core.request_headers import user_from_scope
 from llama_stack.core.server.auth_providers import create_auth_provider
 from llama_stack.core.server.routes import find_matching_route, initialize_route_impls
 from llama_stack.log import get_logger
+from llama_stack_api.common.errors import OpenAIErrorResponse
 
 logger = get_logger(name=__name__, category="core::auth")
 
@@ -113,7 +114,7 @@ class AuthenticationMiddleware:
 
             # If webmethod explicitly sets require_authentication=False, allow without auth
             if webmethod and webmethod.require_authentication is False:
-                logger.debug(f"Allowing unauthenticated access to endpoint: {path}")
+                logger.debug("Allowing unauthenticated access to endpoint", path=path)
                 return await self.app(scope, receive, send)
 
             # Handle authentication
@@ -151,7 +152,9 @@ class AuthenticationMiddleware:
             if validation_result.attributes:
                 scope["user_attributes"] = validation_result.attributes
             logger.debug(
-                f"Authentication successful: {validation_result.principal} with {len(validation_result.attributes)} attributes"
+                "Authentication successful: with attributes",
+                principal=validation_result.principal,
+                attributes_count=len(validation_result.attributes),
             )
 
         return await self.app(scope, receive, send)
@@ -164,8 +167,7 @@ class AuthenticationMiddleware:
                 "headers": [[b"content-type", b"application/json"]],
             }
         )
-        error_key = "message" if status == 401 else "detail"
-        error_msg = json.dumps({"error": {error_key: message}}).encode()
+        error_msg = OpenAIErrorResponse.from_message(message).to_bytes()
         await send({"type": "http.response.body", "body": error_msg})
 
 
@@ -225,23 +227,31 @@ class RouteAuthorizationMiddleware:
                     decision = "APPROVED"
                     reason = rule.description or ""
                     logger.debug(
-                        f"ROUTE_AUTHZ,decision={decision},user={user_str},"
-                        f"route={route},rule_index={index},reason={reason!r}"
+                        "ROUTE_AUTHZ",
+                        decision=decision,
+                        user_str=user_str,
+                        route=route,
+                        index=index,
+                        reason=reason,
                     )
                     return True
                 else:  # forbid
                     decision = "DENIED"
                     reason = rule.description or ""
                     logger.debug(
-                        f"ROUTE_AUTHZ,decision={decision},user={user_str},"
-                        f"route={route},rule_index={index},reason={reason!r}"
+                        "ROUTE_AUTHZ",
+                        decision=decision,
+                        user_str=user_str,
+                        route=route,
+                        index=index,
+                        reason=reason,
                     )
                     return False
 
         # No matching rule found - deny by default
         decision = "DENIED"
         reason = "no matching rule"
-        logger.debug(f"ROUTE_AUTHZ,decision={decision},user={user_str},route={route},rule_index=-1,reason={reason!r}")
+        logger.debug("ROUTE_AUTHZ", decision=decision, user=user_str, route=route, rule_index=-1, reason=reason)
         return False
 
     def _rule_matches(self, rule: RouteAccessRule, route: str, user: User | None) -> bool:
@@ -271,6 +281,7 @@ class RouteAuthorizationMiddleware:
         - Exact match: "/v1/chat/completions"
         - Prefix wildcard: "/v1/files*" matches "/v1/files", "/v1/files/upload", "/v1/files/list", etc.
         - Full wildcard: "*" matches all routes
+        - Regex pattern: "regex:/v1/(chat|inference)/.*" matches routes using regular expressions
         """
         patterns = [rule_patterns] if isinstance(rule_patterns, str) else rule_patterns
 
@@ -278,6 +289,18 @@ class RouteAuthorizationMiddleware:
             if pattern == "*":
                 # Full wildcard matches everything
                 return True
+            elif pattern.startswith("regex:"):
+                # Regex pattern: extract pattern after "regex:" prefix
+                regex_pattern = pattern[6:]
+                try:
+                    if re.match(regex_pattern, request_route):
+                        return True
+                except re.error as e:
+                    logger.warning(
+                        "Invalid regex pattern in route_policy: . Error: . Skipping this pattern.",
+                        regex_pattern=regex_pattern,
+                        error=str(e),
+                    )
             elif pattern.endswith("*"):
                 # Prefix wildcard: check if request route starts with the prefix
                 prefix = pattern[:-1]  # Remove "*"
@@ -345,8 +368,7 @@ class RouteAuthorizationMiddleware:
                 "headers": [[b"content-type", b"application/json"]],
             }
         )
-        error_key = "message" if status == 401 else "detail"
-        error_msg = json.dumps({"error": {error_key: message}}).encode()
+        error_msg = OpenAIErrorResponse.from_message(message).to_bytes()
         await send({"type": "http.response.body", "body": error_msg})
 
 

@@ -26,6 +26,9 @@ providers:
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
     config: {}
+  - provider_id: transformers
+    provider_type: inline::transformers
+    config: {}
   vector_io:
   - provider_id: ${env.ENABLE_CHROMADB:+chromadb}
     provider_type: remote::chromadb
@@ -35,7 +38,7 @@ providers:
         namespace: vector_io::chroma_remote
         backend: kv_default
   files:
-  - provider_id: meta-reference-files
+  - provider_id: builtin-files
     provider_type: inline::localfs
     config:
       storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter/files}
@@ -48,8 +51,8 @@ providers:
     config:
       excluded_categories: []
   agents:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       persistence:
         agent_state:
@@ -130,11 +133,6 @@ registered_resources:
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups:
-  - toolgroup_id: builtin::websearch
-    provider_id: tavily-search
-  - toolgroup_id: builtin::rag
-    provider_id: rag-runtime
 server:
   port: 8321
   auth:
@@ -145,3 +143,6 @@ vector_stores:
   default_embedding_model:
     provider_id: sentence-transformers
     model_id: nomic-ai/nomic-embed-text-v1.5
+  default_reranker_model:
+    provider_id: transformers
+    model_id: Qwen/Qwen3-Reranker-0.6B

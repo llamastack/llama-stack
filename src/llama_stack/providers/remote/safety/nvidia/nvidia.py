@@ -6,7 +6,7 @@
 
 from typing import Any
 
-import requests
+import httpx
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.safety import ShieldToModerationMixin
@@ -28,6 +28,8 @@ logger = get_logger(name=__name__, category="safety::nvidia")
 
 
 class NVIDIASafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPrivate):
+    """Safety adapter for content moderation using NVIDIA Guardrails services."""
+
     def __init__(self, config: NVIDIASafetyConfig) -> None:
         """
         Initialize the NVIDIASafetyAdapter with a given safety configuration.
@@ -103,9 +105,10 @@ class NeMoGuardrails:
         headers = {
             "Accept": "application/json",
         }
-        response = requests.post(url=f"{self.guardrails_service_url}{path}", headers=headers, json=data)
-        response.raise_for_status()
-        return response.json()
+        async with httpx.AsyncClient(timeout=httpx.Timeout(30.0)) as client:
+            response = await client.post(url=f"{self.guardrails_service_url}{path}", headers=headers, json=data)
+            response.raise_for_status()
+            return response.json()
 
     async def run(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
         """

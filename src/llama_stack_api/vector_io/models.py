@@ -12,7 +12,7 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from llama_stack_api.common.content_types import InterleavedContent
 from llama_stack_api.schema_utils import json_schema_type, register_schema
@@ -31,7 +31,7 @@ class ChunkMetadata(BaseModel):
     """
     `ChunkMetadata` is backend metadata for a `Chunk` that is used to store additional information about the chunk that
         will not be used in the context during inference, but is required for backend functionality. The `ChunkMetadata`
-        is set during chunk creation in `MemoryToolRuntimeImpl().insert()`and is not expected to change after.
+        is set during chunk creation in `FileSearchToolRuntimeImpl().insert()`and is not expected to change after.
         Use `Chunk.metadata` for metadata that will be used in the context during inference.
     :param chunk_id: The ID of the chunk. If not set, it will be generated based on the document ID and content.
     :param document_id: The ID of the document this chunk belongs to.
@@ -349,8 +349,90 @@ class VectorStoreChunkingStrategyStatic(BaseModel):
     static: VectorStoreChunkingStrategyStaticConfig
 
 
+DEFAULT_CONTEXT_PROMPT = (
+    "<document>\n{{WHOLE_DOCUMENT}}\n</document>\n"
+    "Here is the chunk we want to situate within the whole document\n"
+    "<chunk>\n{{CHUNK_CONTENT}}\n</chunk>\n"
+    "Please give a short succinct description to situate this chunk of text within the overall document "
+    "for the purposes of improving search retrieval of the chunk. "
+    "Answer only with the succinct description and nothing else."
+)
+
+
+def _strip_context_prompt_default(schema: dict) -> None:
+    """Strip context_prompt default from JSON schema to prevent double-curly-brace
+    template placeholders from breaking Stainless SDK code generation."""
+    if props := schema.get("properties", {}):
+        if cp := props.get("context_prompt"):
+            cp.pop("default", None)
+
+
+@json_schema_type
+class VectorStoreChunkingStrategyContextualConfig(BaseModel):
+    """Configuration for contextual chunking that uses an LLM to situate chunks within the document."""
+
+    model_config = ConfigDict(json_schema_extra=_strip_context_prompt_default)
+
+    model_id: str | None = Field(
+        default=None,
+        min_length=1,
+        description="LLM model for generating context. Falls back to VectorStoresConfig.contextual_retrieval_params.model if not provided.",
+    )
+    context_prompt: str = Field(
+        default=DEFAULT_CONTEXT_PROMPT,
+        description="Prompt template for contextual retrieval. Uses WHOLE_DOCUMENT and CHUNK_CONTENT placeholders wrapped in double curly braces.",
+    )
+    max_chunk_size_tokens: int = Field(
+        default=700,
+        ge=100,
+        le=4096,
+        description="Maximum tokens per chunk. Suggested ~700 to allow room for prepended context.",
+    )
+    chunk_overlap_tokens: int = Field(
+        default=400,
+        ge=0,
+        description="Tokens to overlap between adjacent chunks. Must be less than max_chunk_size_tokens.",
+    )
+    timeout_seconds: int | None = Field(
+        default=None,
+        ge=1,
+        description="Timeout per LLM call in seconds. Falls back to config default if not provided.",
+    )
+    max_concurrency: int | None = Field(
+        default=None,
+        ge=1,
+        description="Maximum concurrent LLM calls. Falls back to config default if not provided.",
+    )
+
+    @model_validator(mode="after")
+    def validate_config(self) -> "VectorStoreChunkingStrategyContextualConfig":
+        if self.chunk_overlap_tokens >= self.max_chunk_size_tokens:
+            raise ValueError("chunk_overlap_tokens must be less than max_chunk_size_tokens")
+
+        if "{{WHOLE_DOCUMENT}}" not in self.context_prompt:
+            raise ValueError("context_prompt must contain {{WHOLE_DOCUMENT}} placeholder")
+        if "{{CHUNK_CONTENT}}" not in self.context_prompt:
+            raise ValueError("context_prompt must contain {{CHUNK_CONTENT}} placeholder")
+        if self.context_prompt.index("{{WHOLE_DOCUMENT}}") >= self.context_prompt.index("{{CHUNK_CONTENT}}"):
+            raise ValueError(
+                "context_prompt must have {{WHOLE_DOCUMENT}} before {{CHUNK_CONTENT}} to enable prefix caching"
+            )
+
+        return self
+
+
+@json_schema_type
+class VectorStoreChunkingStrategyContextual(BaseModel):
+    """Contextual chunking strategy that uses an LLM to situate chunks within the document."""
+
+    type: Literal["contextual"] = Field(default="contextual", description="Strategy type identifier.")
+    contextual: VectorStoreChunkingStrategyContextualConfig = Field(
+        description="Configuration for contextual chunking."
+    )
+
+
 VectorStoreChunkingStrategy = Annotated[
-    VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic,
+    VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual,
     Field(discriminator="type"),
 ]
 register_schema(VectorStoreChunkingStrategy, name="VectorStoreChunkingStrategy")
@@ -379,7 +461,7 @@ class SearchRankingOptions(BaseModel):
     :param ranker: (Optional) Name of the ranking algorithm to use. Supported values:
         - "weighted": Weighted combination of vector and keyword scores
         - "rrf": Reciprocal Rank Fusion algorithm
-        - "neural": Neural reranking model (requires model parameter, Part II)
+        - "neural": Neural reranking model (requires model parameter)
         Note: For OpenAI API compatibility, any string value is accepted, but only the above values are supported.
     :param score_threshold: (Optional) Minimum relevance score threshold for results. Default: 0.0
     :param alpha: (Optional) Weight factor for weighted ranker (0-1).
@@ -394,10 +476,10 @@ class SearchRankingOptions(BaseModel):
         Falls back to VectorStoresConfig.chunk_retrieval_params.rrf_impact_factor if not provided.
     :param weights: (Optional) Dictionary of weights for combining different signal types.
         Keys can be "vector", "keyword", "neural". Values should sum to 1.0.
-        Used when combining algorithm-based reranking with neural reranking (Part II).
+        Used when combining algorithm-based reranking with neural reranking.
         Example: {"vector": 0.3, "keyword": 0.3, "neural": 0.4}
-    :param model: (Optional) Model identifier for neural reranker (e.g., "vllm/Qwen3-Reranker-0.6B").
-        Required when ranker="neural" or when weights contains "neural" (Part II).
+    :param model: (Optional) Model identifier for neural reranker (e.g., "transformers/Qwen/Qwen3-Reranker-0.6B").
+        Required when ranker="neural" or when weights contains "neural".
     """
 
     ranker: str | None = None
@@ -735,6 +817,8 @@ __all__ = [
     "SearchRankingOptions",
     "VectorStoreChunkingStrategy",
     "VectorStoreChunkingStrategyAuto",
+    "VectorStoreChunkingStrategyContextual",
+    "VectorStoreChunkingStrategyContextualConfig",
     "VectorStoreChunkingStrategyStatic",
     "VectorStoreChunkingStrategyStaticConfig",
     "VectorStoreContent",

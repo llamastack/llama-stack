@@ -6,14 +6,16 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack_api import json_schema_type
 
 
 class LlamaProviderDataValidator(BaseModel):
-    llama_api_key: str | None = Field(
+    """Validates provider-specific request data for Llama OpenAI-compatible inference."""
+
+    llama_api_key: SecretStr | None = Field(
         default=None,
         description="API key for api.llama models",
     )
@@ -21,6 +23,8 @@ class LlamaProviderDataValidator(BaseModel):
 
 @json_schema_type
 class LlamaCompatConfig(RemoteInferenceProviderConfig):
+    """Configuration for the Llama OpenAI-compatible inference provider."""
+
     base_url: HttpUrl | None = Field(
         default=HttpUrl("https://api.llama.com/compat/v1/"),
         description="The URL for the Llama API server",

@@ -12,7 +12,7 @@ FastAPI route decorators.
 
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Depends
 
 from llama_stack_api.router_utils import create_path_dependency, standard_responses
 from llama_stack_api.version import LLAMA_STACK_API_V1
@@ -22,13 +22,10 @@ from .models import (
     GetModelRequest,
     Model,
     OpenAIListModelsResponse,
-    RegisterModelRequest,
-    UnregisterModelRequest,
 )
 
 # Path parameter dependencies for single-field models
 get_model_request = create_path_dependency(GetModelRequest)
-unregister_model_request = create_path_dependency(UnregisterModelRequest)
 
 
 def create_router(impl: Models) -> APIRouter:
@@ -71,34 +68,5 @@ def create_router(impl: Models) -> APIRouter:
         request: Annotated[GetModelRequest, Depends(get_model_request)],
     ) -> Model:
         return await impl.get_model(request)
-
-    @router.post(
-        "/models",
-        response_model=Model,
-        summary="Register a model.",
-        description="Register a model.",
-        responses={
-            200: {"description": "The registered model object."},
-        },
-        deprecated=True,
-    )
-    async def register_model(
-        request: Annotated[RegisterModelRequest, Body(...)],
-    ) -> Model:
-        return await impl.register_model(request)
-
-    @router.delete(
-        "/models/{model_id:path}",
-        summary="Unregister a model.",
-        description="Unregister a model.",
-        responses={
-            200: {"description": "The model was successfully unregistered."},
-        },
-        deprecated=True,
-    )
-    async def unregister_model(
-        request: Annotated[UnregisterModelRequest, Depends(unregister_model_request)],
-    ) -> None:
-        return await impl.unregister_model(request)
 
     return router

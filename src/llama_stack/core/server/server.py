@@ -45,7 +45,7 @@ from llama_stack.core.request_headers import (
     request_provider_data_context,
     user_from_scope,
 )
-from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
+from llama_stack.core.server.fastapi_router_registry import _ROUTER_FACTORIES, build_fastapi_router
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
@@ -55,10 +55,12 @@ from llama_stack.core.stack import (
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
-from llama_stack.log import LoggingConfig, get_logger
+from llama_stack.log import LoggingConfig, get_logger, parse_yaml_config, setup_logging
 from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
+from llama_stack_api.common.errors import OpenAIErrorResponse
 
 from .auth import AuthenticationMiddleware, RouteAuthorizationMiddleware
+from .metrics import RequestMetricsMiddleware, build_route_to_api_map
 from .quota import QuotaMiddleware
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
@@ -67,6 +69,7 @@ logger = get_logger(name=__name__, category="core::server")
 
 
 def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
+    """Custom warning handler that prints a full stack traceback alongside the warning."""
     log = file if hasattr(file, "write") else sys.stderr
     traceback.print_stack(file=log)
     log.write(warnings.formatwarning(message, category, filename, lineno, line))
@@ -77,6 +80,14 @@ if os.environ.get("LLAMA_STACK_TRACE_WARNINGS"):
 
 
 def create_sse_event(data: Any) -> str:
+    """Format a data payload as a Server-Sent Events message string.
+
+    Args:
+        data: A Pydantic model or JSON-serializable object.
+
+    Returns:
+        An SSE-formatted string with the data field.
+    """
     if isinstance(data, BaseModel):
         data = data.model_dump_json()
     else:
@@ -86,6 +97,15 @@ def create_sse_event(data: Any) -> str:
 
 
 async def global_exception_handler(request: Request, exc: Exception):
+    """Handle uncaught exceptions by translating them to JSON error responses.
+
+    Args:
+        request: The incoming HTTP request.
+        exc: The unhandled exception.
+
+    Returns:
+        A JSONResponse with the appropriate HTTP status code and error message.
+    """
     traceback.print_exception(type(exc), exc, exc.__traceback__)
     http_exc = translate_exception(exc)
 
@@ -96,10 +116,9 @@ async def global_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, ResourceNotFoundError) and request.url.path.startswith("/v1/vector_stores"):
         http_exc = HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=str(exc))
 
-    # The OpenAI Python SDK parses error responses as body["error"]["message"].
-    # Using "message" (not "detail") ensures the SDK surfaces the actual error text
-    # in exception messages, which client code and integration tests rely on.
-    return JSONResponse(status_code=http_exc.status_code, content={"error": {"message": http_exc.detail}})
+    return JSONResponse(
+        status_code=http_exc.status_code, content=OpenAIErrorResponse.from_message(http_exc.detail).to_dict()
+    )
 
 
 class StackApp(FastAPI):
@@ -112,11 +131,9 @@ class StackApp(FastAPI):
         super().__init__(*args, **kwargs)
         self.stack: Stack = Stack(config)
 
-        # This code is called from a running event loop managed by uvicorn so we cannot simply call
-        # asyncio.run() to initialize the stack. We cannot await either since this is not an async
-        # function.
-        # As a workaround, we use a thread pool executor to run the initialize() method
-        # in a separate thread.
+        # Initialize stack in a temporary event loop to set up impls for route registration.
+        # Storage backends use lazy engine initialization, so connections are created on
+        # first use in the correct event loop, avoiding event loop mismatch issues.
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(asyncio.run, self.stack.initialize())
             future.result()
@@ -124,9 +141,14 @@ class StackApp(FastAPI):
 
 @asynccontextmanager
 async def lifespan(app: StackApp):
+    """FastAPI lifespan context manager that starts background tasks and handles shutdown.
+
+    Args:
+        app: The StackApp instance.
+    """
     server_version = parse_version("llama-stack")
 
-    logger.info(f"Starting up Llama Stack server (version: {server_version})")
+    logger.info("Starting up Llama Stack server", version=server_version)
     assert app.stack is not None
     app.stack.create_registry_refresh_task()
     yield
@@ -135,6 +157,16 @@ async def lifespan(app: StackApp):
 
 
 def is_streaming_request(func_name: str, request: Request, **kwargs):
+    """Determine if a request should use streaming based on its parameters.
+
+    Args:
+        func_name: Name of the endpoint function.
+        request: The incoming HTTP request.
+        **kwargs: The parsed request parameters.
+
+    Returns:
+        True if the request should stream, False otherwise.
+    """
     # TODO: pass the api method and punt it to the Protocol definition directly
     # If there's a stream parameter at top level, use it
     if "stream" in kwargs:
@@ -150,12 +182,25 @@ def is_streaming_request(func_name: str, request: Request, **kwargs):
 
 
 async def maybe_await(value):
+    """Await a value if it is a coroutine, otherwise return it directly.
+
+    Args:
+        value: A coroutine or regular value.
+
+    Returns:
+        The resolved value.
+    """
     if inspect.iscoroutine(value):
         return await value
     return value
 
 
 async def sse_generator(event_gen_coroutine):
+    """Async generator that converts an event stream coroutine into SSE-formatted strings.
+
+    Args:
+        event_gen_coroutine: A coroutine that yields events to be sent as SSE.
+    """
     event_gen = None
     try:
         event_gen = await event_gen_coroutine
@@ -167,16 +212,15 @@ async def sse_generator(event_gen_coroutine):
             await event_gen.aclose()
     except Exception as e:
         logger.exception("Error in sse_generator")
-        yield create_sse_event(
-            {
-                "error": {
-                    "message": str(translate_exception(e)),
-                },
-            }
-        )
+        yield create_sse_event(OpenAIErrorResponse.from_message(translate_exception(e)).to_dict())
 
 
 async def log_request_pre_validation(request: Request):
+    """Log the raw request body before FastAPI validation for debugging purposes.
+
+    Args:
+        request: The incoming HTTP request.
+    """
     if request.method in ("POST", "PUT", "PATCH"):
         try:
             body_bytes = await request.body()
@@ -186,14 +230,27 @@ async def log_request_pre_validation(request: Request):
                     log_output = rich.pretty.pretty_repr(parsed_body)
                 except (json.JSONDecodeError, UnicodeDecodeError):
                     log_output = repr(body_bytes)
-                logger.debug(f"Incoming raw request body for {request.method} {request.url.path}:\n{log_output}")
+                logger.debug("Incoming raw request body", method=request.method, path=request.url.path, body=log_output)
             else:
-                logger.debug(f"Incoming {request.method} {request.url.path} request with empty body.")
+                logger.debug("Incoming request with empty body", method=request.method, path=request.url.path)
         except Exception as e:
-            logger.warning(f"Could not read or log request body for {request.method} {request.url.path}: {e}")
+            logger.warning(
+                "Could not read or log request body", method=request.method, path=request.url.path, error=str(e)
+            )
 
 
 def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
+    """Create a FastAPI route handler that wraps an API method with streaming support and error handling.
+
+    Args:
+        func: The API method to wrap.
+        method: The HTTP method (get, post, etc.).
+        route: The URL route path.
+
+    Returns:
+        A FastAPI-compatible route handler function.
+    """
+
     @functools.wraps(func)
     async def route_handler(request: Request, **kwargs):
         await log_request_pre_validation(request)
@@ -222,9 +279,9 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
                 return result
         except Exception as e:
             if logger.isEnabledFor(logging.INFO):
-                logger.exception(f"Error executing endpoint {route=} {method=}")
+                logger.exception("Error executing endpoint", route=route, method=method)
             else:
-                logger.error(f"Error executing endpoint {route=} {method=}: {str(e)}")
+                logger.error("Error executing endpoint", route=route, method=method, error=str(e))
             raise translate_exception(e) from e
 
     sig = inspect.signature(func)
@@ -258,6 +315,8 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
 
 
 class ClientVersionMiddleware:
+    """ASGI middleware that rejects requests from clients with incompatible major.minor versions."""
+
     def __init__(self, app):
         self.app = app
         self.server_version = parse_version("llama-stack")
@@ -280,13 +339,9 @@ class ClientVersionMiddleware:
                                     "headers": [[b"content-type", b"application/json"]],
                                 }
                             )
-                            error_msg = json.dumps(
-                                {
-                                    "error": {
-                                        "message": f"Client version {client_version} is not compatible with server version {self.server_version}. Please update your client."
-                                    }
-                                }
-                            ).encode()
+                            error_msg = OpenAIErrorResponse.from_message(
+                                f"Client version {client_version} is not compatible with server version {self.server_version}. Please update your client."
+                            ).to_bytes()
                             await send({"type": "http.response.body", "body": error_msg})
 
                         return await send_version_error(send)
@@ -354,6 +409,14 @@ def create_app() -> StackApp:
         config_contents = yaml.safe_load(fp)
         if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
             logger_config = LoggingConfig(**cfg)
+
+        # Configure logging in each worker process
+        if logger_config:
+            category_levels = parse_yaml_config(logger_config)
+            setup_logging(category_levels)
+        else:
+            setup_logging()
+
         logger = get_logger(name=__name__, category="core::server", config=logger_config)
 
         config = replace_env_vars(config_contents)
@@ -382,13 +445,13 @@ def create_app() -> StackApp:
         # NOTE: Add this FIRST because middleware wraps in reverse order (last added runs first)
         # We want: Request → Auth → RouteAuth → App
         if config.server.auth.route_policy:
-            logger.info(f"Enabling route-level authorization with {len(config.server.auth.route_policy)} rules")
+            logger.info("Enabling route-level authorization", rule_count=len(config.server.auth.route_policy))
             app.add_middleware(RouteAuthorizationMiddleware, route_policy=config.server.auth.route_policy)
 
         # Add authentication middleware only if provider is configured
         # This runs FIRST in the middleware chain (last added = first to run)
         if config.server.auth.provider_config:
-            logger.info(f"Enabling authentication with provider: {config.server.auth.provider_config.type.value}")
+            logger.info("Enabling authentication", provider=config.server.auth.provider_config.type.value)
             app.add_middleware(AuthenticationMiddleware, auth_config=config.server.auth, impls=impls)
     else:
         if config.server.quota:
@@ -448,6 +511,11 @@ def create_app() -> StackApp:
     apis_to_serve.add("conversations")
     apis_to_serve.add("connectors")
 
+    # Build route-to-API mapping and add request metrics middleware.
+    # Added last so it runs first (outermost), wrapping auth/quota/cors.
+    route_to_api = build_route_to_api_map(_ROUTER_FACTORIES, all_routes, impls)
+    app.add_middleware(RequestMetricsMiddleware, route_to_api=route_to_api)
+
     for api_str in apis_to_serve:
         api = Api(api_str)
 
@@ -456,7 +524,7 @@ def create_app() -> StackApp:
         router = build_fastapi_router(api, impl)
         if router:
             app.include_router(router)
-            logger.debug(f"Registered FastAPIrouter for {api} API")
+            logger.debug("Registered FastAPI router", api=str(api))
             continue
 
         # Fall back to old webmethod-based route discovery until the migration is complete
@@ -474,7 +542,7 @@ def create_app() -> StackApp:
             if not available_methods:
                 raise ValueError(f"No methods found for {route.name} on {impl}")
             method = available_methods[0]
-            logger.debug(f"{method} {route.path}")
+            logger.debug("Registering route", method=method, path=route.path)
 
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._fields")
@@ -486,7 +554,7 @@ def create_app() -> StackApp:
                     )
                 )
 
-    logger.debug(f"serving APIs: {apis_to_serve}")
+    logger.debug("Serving APIs", apis=list(apis_to_serve))
 
     # Register specific exception handlers before the generic Exception handler
     # This prevents the re-raising behavior that causes connection resets
@@ -511,6 +579,14 @@ def _log_run_config(run_config: StackConfig):
 
 
 def extract_path_params(route: str) -> list[str]:
+    """Extract parameter names from a URL route pattern.
+
+    Args:
+        route: A URL route pattern with {param} placeholders.
+
+    Returns:
+        A list of parameter names found in the route.
+    """
     segments = route.split("/")
     params = [seg[1:-1] for seg in segments if seg.startswith("{") and seg.endswith("}")]
     # to handle path params like {param:path}
@@ -519,6 +595,14 @@ def extract_path_params(route: str) -> list[str]:
 
 
 def remove_disabled_providers(obj):
+    """Recursively remove disabled providers from a configuration dictionary.
+
+    Args:
+        obj: A configuration value (dict, list, or scalar).
+
+    Returns:
+        The configuration with disabled provider entries removed.
+    """
     if isinstance(obj, dict):
         # Filter out items where provider_id is explicitly disabled or empty
         if "provider_id" in obj and obj["provider_id"] in ("__disabled__", "", None):

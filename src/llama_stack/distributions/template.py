@@ -22,7 +22,6 @@ from llama_stack.core.datatypes import (
     Provider,
     SafetyConfig,
     ShieldInput,
-    ToolGroupInput,
     VectorStoresConfig,
 )
 from llama_stack.core.distribution import get_provider_registry
@@ -36,7 +35,7 @@ from llama_stack.core.storage.kvstore.config import SqliteKVStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import SqliteSqlStoreConfig
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.providers.utils.inference.model_registry import ProviderModelEntry
-from llama_stack_api import ConnectorInput, DatasetPurpose, ModelType
+from llama_stack_api import ConnectorInput, ConnectorType, DatasetPurpose, ModelType
 
 
 def filter_empty_values(obj: Any) -> Any:
@@ -87,6 +86,14 @@ def filter_empty_values(obj: Any) -> Any:
 def get_model_registry(
     available_models: dict[str, list[ProviderModelEntry]],
 ) -> tuple[list[ModelInput], bool]:
+    """Build a model registry from provider model entries, detecting ID conflicts.
+
+    Args:
+        available_models: mapping of provider IDs to their available model entries.
+
+    Returns:
+        A tuple of (list of ModelInput, whether model ID conflicts were detected).
+    """
     models = []
 
     # check for conflicts in model ids
@@ -130,6 +137,15 @@ def get_shield_registry(
     available_safety_models: dict[str, list[ProviderModelEntry]],
     ids_conflict_in_models: bool,
 ) -> list[ShieldInput]:
+    """Build a shield registry from safety model entries, detecting ID conflicts.
+
+    Args:
+        available_safety_models: mapping of provider IDs to their safety model entries.
+        ids_conflict_in_models: whether model ID conflicts were detected in the model registry.
+
+    Returns:
+        A list of ShieldInput instances for registered shields.
+    """
     shields = []
 
     # check for conflicts in shield ids
@@ -170,20 +186,24 @@ def get_shield_registry(
 
 
 class DefaultModel(BaseModel):
+    """A model entry used for documentation generation in distribution templates."""
+
     model_id: str
     doc_string: str
 
 
 class RunConfigSettings(BaseModel):
+    """Settings for generating a distribution run configuration YAML file."""
+
     provider_overrides: dict[str, list[Provider]] = Field(default_factory=dict)
     default_models: list[ModelInput] | None = None
     default_shields: list[ShieldInput] | None = None
-    default_tool_groups: list[ToolGroupInput] | None = None
     default_datasets: list[DatasetInput] | None = None
     default_benchmarks: list[BenchmarkInput] | None = None
     default_connectors: list[ConnectorInput] | None = None
     vector_stores_config: VectorStoresConfig | None = None
     safety_config: SafetyConfig | None = None
+    auth_config: dict[str, Any] | None = None
     storage_backends: dict[str, Any] | None = None
     storage_stores: dict[str, Any] | None = None
 
@@ -282,12 +302,14 @@ class RunConfigSettings(BaseModel):
                 "datasets": [d.model_dump(exclude_none=True) for d in (self.default_datasets or [])],
                 "scoring_fns": [],
                 "benchmarks": [b.model_dump(exclude_none=True) for b in (self.default_benchmarks or [])],
-                "tool_groups": [t.model_dump(exclude_none=True) for t in (self.default_tool_groups or [])],
             },
             "server": {
                 "port": 8321,
             },
         }
+
+        if self.auth_config:
+            config["server"]["auth"] = self.auth_config
 
         if self.vector_stores_config:
             config["vector_stores"] = self.vector_stores_config.model_dump(exclude_none=True)
@@ -386,9 +408,11 @@ class DistributionTemplate(BaseModel):
         yaml.add_representer(ModelType, enum_representer)
         yaml.add_representer(DatasetPurpose, enum_representer)
         yaml.add_representer(StorageBackendType, enum_representer)
+        yaml.add_representer(ConnectorType, enum_representer)
         yaml.SafeDumper.add_representer(ModelType, enum_representer)
         yaml.SafeDumper.add_representer(DatasetPurpose, enum_representer)
         yaml.SafeDumper.add_representer(StorageBackendType, enum_representer)
+        yaml.SafeDumper.add_representer(ConnectorType, enum_representer)
 
         for output_dir in [yaml_output_dir, doc_output_dir]:
             output_dir.mkdir(parents=True, exist_ok=True)

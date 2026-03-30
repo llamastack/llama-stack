@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.sql.elements import ColumnElement
 
-from llama_stack.core.storage.datatypes import SqlAlchemySqlStoreConfig
+from llama_stack.core.storage.datatypes import PostgresSqlStoreConfig, SqlAlchemySqlStoreConfig
 from llama_stack.log import get_logger
 from llama_stack_api import PaginatedResponse
 from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType, SqlStore
@@ -69,25 +69,65 @@ def _build_where_expr(column: ColumnElement, value: Any) -> ColumnElement:
 
 
 class SqlAlchemySqlStoreImpl(SqlStore):
+    """SQLAlchemy-based SQL store implementation supporting SQLite and PostgreSQL backends."""
+
     def __init__(self, config: SqlAlchemySqlStoreConfig):
         self.config = config
         self._is_sqlite_backend = "sqlite" in self.config.engine_str
-        self.async_session = async_sessionmaker(self.create_engine())
+        self._engine: AsyncEngine | None = None  # Lazy initialization
+        self.async_session = None
         self.metadata = MetaData()
+        self._pending_columns: dict[
+            str, list[tuple[str, ColumnType, bool]]
+        ] = {}  # table -> [(col_name, col_type, nullable)]
+
+    async def _ensure_engine(self):
+        """Lazy initialization: create engine on first use in the current event loop.
+
+        This fixes event loop mismatch issues when Stack is initialized in a different
+        event loop (e.g., ThreadPoolExecutor) than request handling (uvicorn's loop).
+        """
+        if self._engine is None:
+            # Create engine in the current running event loop
+            self._engine = self.create_engine()
+            self.async_session = async_sessionmaker(self._engine)
+
+            # Create all tables that were registered during initialization
+            if self.metadata.tables:
+                async with self._engine.begin() as conn:
+                    await conn.run_sync(self.metadata.create_all, checkfirst=True)
+
+            # Add all pending columns that were queued during initialization
+            for table_name, columns in self._pending_columns.items():
+                for col_name, col_type, nullable in columns:
+                    await self._add_column_now(table_name, col_name, col_type, nullable)
+            self._pending_columns.clear()
+
+    async def shutdown(self):
+        """Dispose of the async engine and close all connections."""
+        if self._engine:
+            await self._engine.dispose()
+            self._engine = None
 
     def create_engine(self) -> AsyncEngine:
         # Configure connection args for better concurrency support
         connect_args = {}
+        engine_kwargs: dict[str, Any] = {"pool_pre_ping": self.config.pool_pre_ping}
         if self._is_sqlite_backend:
             # SQLite-specific optimizations for concurrent access
             # With WAL mode, most locks resolve in milliseconds, but allow up to 5s for edge cases
             connect_args["timeout"] = 5.0
             connect_args["check_same_thread"] = False  # Allow usage across asyncio tasks
+        elif isinstance(self.config, PostgresSqlStoreConfig):
+            engine_kwargs["pool_size"] = self.config.pool_size
+            engine_kwargs["max_overflow"] = self.config.max_overflow
+            if self.config.pool_recycle >= 0:
+                engine_kwargs["pool_recycle"] = self.config.pool_recycle
 
         engine = create_async_engine(
             self.config.engine_str,
-            pool_pre_ping=True,
             connect_args=connect_args,
+            **engine_kwargs,
         )
 
         # Enable WAL mode for SQLite to support concurrent readers and writers
@@ -107,19 +147,13 @@ class SqlAlchemySqlStoreImpl(SqlStore):
 
         return engine
 
-    async def shutdown(self) -> None:
-        """Dispose the session maker's engine and close all connections."""
-        # The async_session holds a reference to the engine created in __init__
-        if self.async_session:
-            engine = self.async_session.kw.get("bind")
-            if engine:
-                await engine.dispose()
-
     async def create_table(
         self,
         table: str,
         schema: Mapping[str, ColumnType | ColumnDefinition],
     ) -> None:
+        # Don't create engine yet - just store table metadata
+        # Engine will be created on first data operation
         if not schema:
             raise ValueError(f"No columns defined for table '{table}'.")
 
@@ -145,16 +179,14 @@ class SqlAlchemySqlStoreImpl(SqlStore):
                 Column(col_name, sqlalchemy_type, primary_key=is_primary_key, nullable=is_nullable)
             )
 
+        # Register table in metadata - actual creation happens in _ensure_engine()
         if table not in self.metadata.tables:
-            sqlalchemy_table = Table(table, self.metadata, *sqlalchemy_columns)
-        else:
-            sqlalchemy_table = self.metadata.tables[table]
-
-        engine = self.create_engine()
-        async with engine.begin() as conn:
-            await conn.run_sync(self.metadata.create_all, tables=[sqlalchemy_table], checkfirst=True)
+            Table(table, self.metadata, *sqlalchemy_columns)
+        # If table already exists in metadata, we're done (no need to recreate)
 
     async def insert(self, table: str, data: Mapping[str, Any] | Sequence[Mapping[str, Any]]) -> None:
+        await self._ensure_engine()  # Lazy init in current event loop
+        assert self.async_session is not None  # _ensure_engine guarantees this
         async with self.async_session() as session:
             await session.execute(self.metadata.tables[table].insert(), data)
             await session.commit()
@@ -166,6 +198,8 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         conflict_columns: list[str],
         update_columns: list[str] | None = None,
     ) -> None:
+        await self._ensure_engine()  # Lazy init in current event loop
+        assert self.async_session is not None  # _ensure_engine guarantees this
         table_obj = self.metadata.tables[table]
         dialect_insert = self._get_dialect_insert(table_obj)
         insert_stmt = dialect_insert.values(**data)
@@ -187,10 +221,13 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         table: str,
         where: Mapping[str, Any] | None = None,
         where_sql: str | None = None,
+        where_sql_params: Mapping[str, Any] | None = None,
         limit: int | None = None,
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
         cursor: tuple[str, str] | None = None,
     ) -> PaginatedResponse:
+        await self._ensure_engine()  # Lazy init in current event loop
+        assert self.async_session is not None  # _ensure_engine guarantees this
         async with self.async_session() as session:
             table_obj = self.metadata.tables[table]
             query = select(table_obj)
@@ -200,7 +237,10 @@ class SqlAlchemySqlStoreImpl(SqlStore):
                     query = query.where(_build_where_expr(table_obj.c[key], value))
 
             if where_sql:
-                query = query.where(text(where_sql))
+                clause = text(where_sql)
+                if where_sql_params:
+                    clause = clause.bindparams(**where_sql_params)
+                query = query.where(clause)
 
             # Handle cursor-based pagination
             if cursor:
@@ -287,9 +327,10 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         table: str,
         where: Mapping[str, Any] | None = None,
         where_sql: str | None = None,
+        where_sql_params: Mapping[str, Any] | None = None,
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
     ) -> dict[str, Any] | None:
-        result = await self.fetch_all(table, where, where_sql, limit=1, order_by=order_by)
+        result = await self.fetch_all(table, where, where_sql, where_sql_params, limit=1, order_by=order_by)
         if not result.data:
             return None
         return result.data[0]
@@ -300,6 +341,8 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         data: Mapping[str, Any],
         where: Mapping[str, Any],
     ) -> None:
+        await self._ensure_engine()  # Lazy init in current event loop
+        assert self.async_session is not None  # _ensure_engine guarantees this
         if not where:
             raise ValueError("where is required for update")
 
@@ -311,6 +354,8 @@ class SqlAlchemySqlStoreImpl(SqlStore):
             await session.commit()
 
     async def delete(self, table: str, where: Mapping[str, Any]) -> None:
+        await self._ensure_engine()  # Lazy init in current event loop
+        assert self.async_session is not None  # _ensure_engine guarantees this
         if not where:
             raise ValueError("where is required for delete")
 
@@ -328,11 +373,27 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         column_type: ColumnType,
         nullable: bool = True,
     ) -> None:
-        """Add a column to an existing table if the column doesn't already exist."""
-        engine = self.create_engine()
+        """Queue a column to be added when engine is created, or add it now if engine exists."""
+        if self._engine is None:
+            # Engine not created yet - queue this column addition for later
+            if table not in self._pending_columns:
+                self._pending_columns[table] = []
+            self._pending_columns[table].append((column_name, column_type, nullable))
+        else:
+            # Engine already exists - add column immediately
+            await self._add_column_now(table, column_name, column_type, nullable)
 
+    async def _add_column_now(
+        self,
+        table: str,
+        column_name: str,
+        column_type: ColumnType,
+        nullable: bool = True,
+    ) -> None:
+        """Actually add a column to an existing table if the column doesn't already exist."""
+        assert self._engine is not None  # Only called when engine exists
         try:
-            async with engine.begin() as conn:
+            async with self._engine.begin() as conn:
 
                 def check_column_exists(sync_conn):
                     inspector = inspect(sync_conn)
@@ -356,7 +417,7 @@ class SqlAlchemySqlStoreImpl(SqlStore):
 
                 # Create the ALTER TABLE statement
                 # Note: We need to get the dialect-specific type name
-                dialect = engine.dialect
+                dialect = self._engine.dialect
                 type_impl = sqlalchemy_type()
                 compiled_type = type_impl.compile(dialect=dialect)
 
@@ -367,7 +428,7 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         except Exception as e:
             # If any error occurs during migration, log it but don't fail
             # The table creation will handle adding the column
-            logger.error(f"Error adding column {column_name} to table {table}: {e}")
+            logger.error("Error adding column to table", column_name=column_name, table=table, error=str(e))
             pass
 
     def _get_dialect_insert(self, table: Table):
