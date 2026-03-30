@@ -99,11 +99,13 @@ class VectorIORouter(VectorIO):
         try:
             obj = self.routing_table.dist_registry.get_cached("vector_store", vector_store_id)
             if obj is None:
-                logger.warning(f"Vector store {vector_store_id} not found in registry cache")
+                logger.warning("Vector store not found in registry cache", vector_store_id=vector_store_id)
                 return "unknown"
             return obj.provider_id
         except Exception:
-            logger.warning(f"Could not resolve provider for vector store {vector_store_id}", exc_info=True)
+            logger.warning(
+                "Could not resolve provider for vector store", vector_store_id=vector_store_id, exc_info=True
+            )
             return "unknown"
 
     async def _rewrite_query_for_search(self, query: str) -> str:
@@ -138,12 +140,12 @@ class VectorIORouter(VectorIO):
             response = await self.inference_api.openai_chat_completion(request)
             content = response.choices[0].message.content
             if content is None:
-                logger.error(f"LLM returned None content for query rewriting. Model: {model_id}")
+                logger.error("LLM returned None content for query rewriting. Model", model_id=model_id)
                 raise RuntimeError("Query rewrite failed due to an internal error")
             rewritten_query: str = content.strip()
             return rewritten_query
         except Exception as e:
-            logger.error(f"Query rewrite failed with LLM call error. Model: {model_id}, Error: {e}")
+            logger.error("Query rewrite failed with LLM call error", model_id=model_id, error=str(e))
             raise RuntimeError("Query rewrite failed due to an internal error") from e
 
     async def _get_embedding_model_dimension(self, embedding_model_id: str) -> int:
@@ -165,8 +167,11 @@ class VectorIORouter(VectorIO):
     ) -> None:
         doc_ids = [chunk.document_id for chunk in request.chunks[:3]]
         logger.debug(
-            f"VectorIORouter.insert_chunks: {request.vector_store_id}, {len(request.chunks)} chunks, "
-            f"ttl_seconds={request.ttl_seconds}, chunk_ids={doc_ids}{' and more...' if len(request.chunks) > 3 else ''}"
+            "VectorIORouter.insert_chunks",
+            vector_store_id=request.vector_store_id,
+            chunk_count=len(request.chunks),
+            ttl_seconds=request.ttl_seconds,
+            doc_ids=doc_ids,
         )
         start_time = time.perf_counter()
         num_chunks = len(request.chunks)
@@ -202,7 +207,7 @@ class VectorIORouter(VectorIO):
         self,
         request: QueryChunksRequest,
     ) -> QueryChunksResponse:
-        logger.debug(f"VectorIORouter.query_chunks: {request.vector_store_id}")
+        logger.debug("VectorIORouter.query_chunks", vector_store_id=request.vector_store_id)
         start_time = time.perf_counter()
         provider_id = self._get_provider_id(request.vector_store_id)
         metric_attrs = create_vector_metric_attributes(
@@ -224,7 +229,7 @@ class VectorIORouter(VectorIO):
                 try:
                     parsed_filters = parse_filter(filter_data)
                 except ValueError as e:
-                    logger.error(f"Invalid filter data: {e}")
+                    logger.error("Invalid filter data", error=str(e))
                     raise ValueError(f"Invalid filter: {e}") from e
 
                 params_copy["filters"] = parsed_filters
@@ -303,7 +308,7 @@ class VectorIORouter(VectorIO):
                     default_provider = self.vector_stores_config.default_provider_id
                     if default_provider in available_providers:
                         provider_id = default_provider
-                        logger.debug(f"Using configured default vector store provider: {provider_id}")
+                        logger.debug("Using configured default vector store provider", provider_id=provider_id)
                     else:
                         raise ValueError(
                             f"Configured default vector store provider '{default_provider}' not found. "
@@ -368,7 +373,7 @@ class VectorIORouter(VectorIO):
         after: str | None = None,
         before: str | None = None,
     ) -> VectorStoreListResponse:
-        logger.debug(f"VectorIORouter.openai_list_vector_stores: limit={limit}")
+        logger.debug("VectorIORouter.openai_list_vector_stores", limit=limit)
         # Route to default provider for now - could aggregate from all providers in the future
         # call retrieve on each vector dbs to get list of vector stores
         vector_stores = await self.routing_table.get_all_with_type("vector_store")
@@ -378,7 +383,7 @@ class VectorIORouter(VectorIO):
                 vector_store_obj = await self.routing_table.openai_retrieve_vector_store(vector_store.identifier)
                 all_stores.append(vector_store_obj)
             except Exception as e:
-                logger.error(f"Error retrieving vector store {vector_store.identifier}: {e}")
+                logger.error("Error retrieving vector store", identifier=vector_store.identifier, error=str(e))
                 continue
 
         # Sort by created_at
@@ -417,7 +422,7 @@ class VectorIORouter(VectorIO):
         self,
         vector_store_id: str,
     ) -> VectorStoreObject:
-        logger.debug(f"VectorIORouter.openai_retrieve_vector_store: {vector_store_id}")
+        logger.debug("VectorIORouter.openai_retrieve_vector_store", vector_store_id=vector_store_id)
         return await self.routing_table.openai_retrieve_vector_store(vector_store_id)
 
     async def openai_update_vector_store(
@@ -425,7 +430,7 @@ class VectorIORouter(VectorIO):
         vector_store_id: str,
         request: OpenAIUpdateVectorStoreRequest,
     ) -> VectorStoreObject:
-        logger.debug(f"VectorIORouter.openai_update_vector_store: {vector_store_id}")
+        logger.debug("VectorIORouter.openai_update_vector_store", vector_store_id=vector_store_id)
 
         # Check if provider_id is being changed (not supported)
         if request.metadata and "provider_id" in request.metadata:
@@ -442,7 +447,7 @@ class VectorIORouter(VectorIO):
         self,
         vector_store_id: str,
     ) -> VectorStoreDeleteResponse:
-        logger.debug(f"VectorIORouter.openai_delete_vector_store: {vector_store_id}")
+        logger.debug("VectorIORouter.openai_delete_vector_store", vector_store_id=vector_store_id)
         provider_id = self._get_provider_id(vector_store_id)
         metric_attrs = create_vector_metric_attributes(
             vector_db=vector_store_id,
@@ -465,7 +470,7 @@ class VectorIORouter(VectorIO):
         vector_store_id: str,
         request: OpenAISearchVectorStoreRequest,
     ) -> VectorStoreSearchResponsePage:
-        logger.debug(f"VectorIORouter.openai_search_vector_store: {vector_store_id}")
+        logger.debug("VectorIORouter.openai_search_vector_store", vector_store_id=vector_store_id)
         start_time = time.perf_counter()
         provider_id = self._get_provider_id(vector_store_id)
         search_mode = getattr(request, "search_mode", "vector")
@@ -518,7 +523,11 @@ class VectorIORouter(VectorIO):
         vector_store_id: str,
         request: OpenAIAttachFileRequest,
     ) -> VectorStoreFileObject:
-        logger.debug(f"VectorIORouter.openai_attach_file_to_vector_store: {vector_store_id}, {request.file_id}")
+        logger.debug(
+            "VectorIORouter.openai_attach_file_to_vector_store",
+            vector_store_id=vector_store_id,
+            file_id=request.file_id,
+        )
         start_time = time.perf_counter()
         provider_id = self._get_provider_id(vector_store_id)
         metric_attrs = create_vector_metric_attributes(
@@ -573,7 +582,7 @@ class VectorIORouter(VectorIO):
         before: str | None = None,
         filter: VectorStoreFileStatus | None = None,
     ) -> VectorStoreListFilesResponse:
-        logger.debug(f"VectorIORouter.openai_list_files_in_vector_store: {vector_store_id}")
+        logger.debug("VectorIORouter.openai_list_files_in_vector_store", vector_store_id=vector_store_id)
         return await self.routing_table.openai_list_files_in_vector_store(
             vector_store_id=vector_store_id,
             limit=limit,
@@ -588,7 +597,9 @@ class VectorIORouter(VectorIO):
         vector_store_id: str,
         file_id: str,
     ) -> VectorStoreFileObject:
-        logger.debug(f"VectorIORouter.openai_retrieve_vector_store_file: {vector_store_id}, {file_id}")
+        logger.debug(
+            "VectorIORouter.openai_retrieve_vector_store_file", vector_store_id=vector_store_id, file_id=file_id
+        )
         return await self.routing_table.openai_retrieve_vector_store_file(
             vector_store_id=vector_store_id,
             file_id=file_id,
@@ -602,8 +613,11 @@ class VectorIORouter(VectorIO):
         include_metadata: bool | None = False,
     ) -> VectorStoreFileContentResponse:
         logger.debug(
-            f"VectorIORouter.openai_retrieve_vector_store_file_contents: {vector_store_id}, {file_id}, "
-            f"include_embeddings={include_embeddings}, include_metadata={include_metadata}"
+            "VectorIORouter.openai_retrieve_vector_store_file_contents: , , include_embeddings=, include_metadata",
+            vector_store_id=vector_store_id,
+            file_id=file_id,
+            include_embeddings=include_embeddings,
+            include_metadata=include_metadata,
         )
 
         return await self.routing_table.openai_retrieve_vector_store_file_contents(
@@ -619,7 +633,7 @@ class VectorIORouter(VectorIO):
         file_id: str,
         request: OpenAIUpdateVectorStoreFileRequest,
     ) -> VectorStoreFileObject:
-        logger.debug(f"VectorIORouter.openai_update_vector_store_file: {vector_store_id}, {file_id}")
+        logger.debug("VectorIORouter.openai_update_vector_store_file", vector_store_id=vector_store_id, file_id=file_id)
         return await self.routing_table.openai_update_vector_store_file(
             vector_store_id=vector_store_id,
             file_id=file_id,
@@ -631,7 +645,7 @@ class VectorIORouter(VectorIO):
         vector_store_id: str,
         file_id: str,
     ) -> VectorStoreFileDeleteResponse:
-        logger.debug(f"VectorIORouter.openai_delete_vector_store_file: {vector_store_id}, {file_id}")
+        logger.debug("VectorIORouter.openai_delete_vector_store_file", vector_store_id=vector_store_id, file_id=file_id)
         provider_id = self._get_provider_id(vector_store_id)
         metric_attrs = create_vector_metric_attributes(
             vector_db=vector_store_id,
@@ -681,7 +695,9 @@ class VectorIORouter(VectorIO):
         params: Annotated[OpenAICreateVectorStoreFileBatchRequestWithExtraBody, Body(...)],
     ) -> VectorStoreFileBatchObject:
         logger.debug(
-            f"VectorIORouter.openai_create_vector_store_file_batch: {vector_store_id}, {len(params.file_ids)} files"
+            "VectorIORouter.openai_create_vector_store_file_batch: , files",
+            vector_store_id=vector_store_id,
+            file_ids_count=len(params.file_ids),
         )
         return await self.routing_table.openai_create_vector_store_file_batch(
             vector_store_id=vector_store_id,
@@ -693,7 +709,9 @@ class VectorIORouter(VectorIO):
         batch_id: str,
         vector_store_id: str,
     ) -> VectorStoreFileBatchObject:
-        logger.debug(f"VectorIORouter.openai_retrieve_vector_store_file_batch: {batch_id}, {vector_store_id}")
+        logger.debug(
+            "VectorIORouter.openai_retrieve_vector_store_file_batch", batch_id=batch_id, vector_store_id=vector_store_id
+        )
         return await self.routing_table.openai_retrieve_vector_store_file_batch(
             batch_id=batch_id,
             vector_store_id=vector_store_id,
@@ -709,7 +727,11 @@ class VectorIORouter(VectorIO):
         limit: int | None = 20,
         order: str | None = "desc",
     ) -> VectorStoreFilesListInBatchResponse:
-        logger.debug(f"VectorIORouter.openai_list_files_in_vector_store_file_batch: {batch_id}, {vector_store_id}")
+        logger.debug(
+            "VectorIORouter.openai_list_files_in_vector_store_file_batch",
+            batch_id=batch_id,
+            vector_store_id=vector_store_id,
+        )
         return await self.routing_table.openai_list_files_in_vector_store_file_batch(
             batch_id=batch_id,
             vector_store_id=vector_store_id,
@@ -725,7 +747,9 @@ class VectorIORouter(VectorIO):
         batch_id: str,
         vector_store_id: str,
     ) -> VectorStoreFileBatchObject:
-        logger.debug(f"VectorIORouter.openai_cancel_vector_store_file_batch: {batch_id}, {vector_store_id}")
+        logger.debug(
+            "VectorIORouter.openai_cancel_vector_store_file_batch", batch_id=batch_id, vector_store_id=vector_store_id
+        )
         return await self.routing_table.openai_cancel_vector_store_file_batch(
             batch_id=batch_id,
             vector_store_id=vector_store_id,

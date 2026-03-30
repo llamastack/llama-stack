@@ -114,7 +114,7 @@ class AuthenticationMiddleware:
 
             # If webmethod explicitly sets require_authentication=False, allow without auth
             if webmethod and webmethod.require_authentication is False:
-                logger.debug(f"Allowing unauthenticated access to endpoint: {path}")
+                logger.debug("Allowing unauthenticated access to endpoint", path=path)
                 return await self.app(scope, receive, send)
 
             # Handle authentication
@@ -152,7 +152,9 @@ class AuthenticationMiddleware:
             if validation_result.attributes:
                 scope["user_attributes"] = validation_result.attributes
             logger.debug(
-                f"Authentication successful: {validation_result.principal} with {len(validation_result.attributes)} attributes"
+                "Authentication successful: with attributes",
+                principal=validation_result.principal,
+                attributes_count=len(validation_result.attributes),
             )
 
         return await self.app(scope, receive, send)
@@ -225,23 +227,31 @@ class RouteAuthorizationMiddleware:
                     decision = "APPROVED"
                     reason = rule.description or ""
                     logger.debug(
-                        f"ROUTE_AUTHZ,decision={decision},user={user_str},"
-                        f"route={route},rule_index={index},reason={reason!r}"
+                        "ROUTE_AUTHZ",
+                        decision=decision,
+                        user_str=user_str,
+                        route=route,
+                        index=index,
+                        reason=reason,
                     )
                     return True
                 else:  # forbid
                     decision = "DENIED"
                     reason = rule.description or ""
                     logger.debug(
-                        f"ROUTE_AUTHZ,decision={decision},user={user_str},"
-                        f"route={route},rule_index={index},reason={reason!r}"
+                        "ROUTE_AUTHZ",
+                        decision=decision,
+                        user_str=user_str,
+                        route=route,
+                        index=index,
+                        reason=reason,
                     )
                     return False
 
         # No matching rule found - deny by default
         decision = "DENIED"
         reason = "no matching rule"
-        logger.debug(f"ROUTE_AUTHZ,decision={decision},user={user_str},route={route},rule_index=-1,reason={reason!r}")
+        logger.debug("ROUTE_AUTHZ", decision=decision, user=user_str, route=route, rule_index=-1, reason=reason)
         return False
 
     def _rule_matches(self, rule: RouteAccessRule, route: str, user: User | None) -> bool:
@@ -287,7 +297,9 @@ class RouteAuthorizationMiddleware:
                         return True
                 except re.error as e:
                     logger.warning(
-                        f"Invalid regex pattern in route_policy: '{regex_pattern}'. Error: {e}. Skipping this pattern."
+                        "Invalid regex pattern in route_policy: . Error: . Skipping this pattern.",
+                        regex_pattern=regex_pattern,
+                        error=str(e),
                     )
             elif pattern.endswith("*"):
                 # Prefix wildcard: check if request route starts with the prefix

@@ -41,7 +41,9 @@ def matches_resource(resource_scope: str, actual_resource: str) -> bool:
         try:
             return bool(re.match(pattern, actual_resource))
         except re.error as e:
-            logger.warning(f"Invalid regex pattern in access_policy: '{pattern}'. Error: {e}. Treating as non-match.")
+            logger.warning(
+                "Invalid regex pattern in access_policy, treating as non-match", pattern=pattern, error=str(e)
+            )
             return False
     return resource_scope.endswith("::*") and actual_resource.startswith(resource_scope[:-1])
 
@@ -201,9 +203,13 @@ def is_action_allowed(
     decision_str = "APPROVED" if decision else "DENIED"
     user_str = user.principal if user else "none"
     logger.debug(
-        f"AUTHZ,decision={decision_str},user={user_str},"
-        f"resource_id={qualified_resource_id},action={action},"
-        f"rule_index={index},reason={reason!r}"
+        "AUTHZ",
+        decision_str=decision_str,
+        user_str=user_str,
+        qualified_resource_id=qualified_resource_id,
+        action=action,
+        index=index,
+        reason=reason,
     )
     return decision
 

@@ -123,7 +123,7 @@ async def lifespan(app: StackApp):
     """
     server_version = parse_version("llama-stack")
 
-    logger.info(f"Starting up Llama Stack server (version: {server_version})")
+    logger.info("Starting up Llama Stack server", version=server_version)
     assert app.stack is not None
     app.stack.create_registry_refresh_task()
     yield
@@ -262,13 +262,13 @@ def create_app() -> StackApp:
         # NOTE: Add this FIRST because middleware wraps in reverse order (last added runs first)
         # We want: Request → Auth → RouteAuth → App
         if config.server.auth.route_policy:
-            logger.info(f"Enabling route-level authorization with {len(config.server.auth.route_policy)} rules")
+            logger.info("Enabling route-level authorization", rule_count=len(config.server.auth.route_policy))
             app.add_middleware(RouteAuthorizationMiddleware, route_policy=config.server.auth.route_policy)
 
         # Add authentication middleware only if provider is configured
         # This runs FIRST in the middleware chain (last added = first to run)
         if config.server.auth.provider_config:
-            logger.info(f"Enabling authentication with provider: {config.server.auth.provider_config.type.value}")
+            logger.info("Enabling authentication", provider=config.server.auth.provider_config.type.value)
             app.add_middleware(AuthenticationMiddleware, auth_config=config.server.auth, impls=impls)
     else:
         if config.server.quota:
@@ -340,9 +340,9 @@ def create_app() -> StackApp:
         router = build_fastapi_router(api, impl)
         if router:
             app.include_router(router)
-            logger.debug(f"Registered FastAPI router for {api} API")
+            logger.debug("Registered FastAPI router", api=str(api))
 
-    logger.debug(f"serving APIs: {apis_to_serve}")
+    logger.debug("Serving APIs", apis=list(apis_to_serve))
 
     # Register specific exception handlers before the generic Exception handler
     # This prevents the re-raising behavior that causes connection resets

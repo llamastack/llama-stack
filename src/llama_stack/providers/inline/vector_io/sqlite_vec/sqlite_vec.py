@@ -243,7 +243,7 @@ class SQLiteVecIndex(EmbeddingIndex):
 
             except sqlite3.Error as e:
                 connection.rollback()
-                logger.error(f"Error inserting into {self.vector_table}: {e}")
+                logger.error("Error inserting into", vector_table=self.vector_table, error=str(e))
                 raise
 
             finally:
@@ -361,7 +361,7 @@ class SQLiteVecIndex(EmbeddingIndex):
                 chunk_data = json.loads(chunk_json)
                 embedded_chunk = load_embedded_chunk_with_backward_compat(chunk_data)
             except Exception as e:
-                logger.error(f"Error parsing chunk JSON for id {_id}: {e}")
+                logger.error("Error parsing chunk JSON for id", _id=_id, error=str(e))
                 continue
             chunks.append(embedded_chunk)
             scores.append(score)
@@ -410,7 +410,7 @@ class SQLiteVecIndex(EmbeddingIndex):
                 chunk_data = json.loads(chunk_json)
                 embedded_chunk = load_embedded_chunk_with_backward_compat(chunk_data)
             except Exception as e:
-                logger.error(f"Error parsing chunk JSON for id {_id}: {e}")
+                logger.error("Error parsing chunk JSON for id", _id=_id, error=str(e))
                 continue
             chunks.append(embedded_chunk)
             scores.append(score)
@@ -507,7 +507,7 @@ class SQLiteVecIndex(EmbeddingIndex):
                 connection.commit()
             except Exception as e:
                 connection.rollback()
-                logger.error(f"Error deleting chunks: {e}")
+                logger.error("Error deleting chunks", error=str(e))
                 raise
             finally:
                 cur.close()

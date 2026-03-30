@@ -140,15 +140,7 @@ RESOURCE_ID_FIELDS = [
 
 
 def is_request_model(t: Any) -> bool:
-    """Check if a type is a request model (Pydantic BaseModel).
-
-    Args:
-        t: The type to check
-
-    Returns:
-        True if the type is a Pydantic BaseModel subclass, False otherwise
-    """
-
+    """Check if a type is a request model (Pydantic BaseModel)."""
     return inspect.isclass(t) and issubclass(t, BaseModel)
 
 
@@ -157,20 +149,6 @@ async def invoke_with_optional_request(method: Any) -> Any:
 
     For APIs that use request models, this will create an empty request object.
     For backward compatibility, falls back to calling without arguments.
-
-    Uses get_type_hints() to resolve forward references (e.g., "ListBenchmarksRequest" -> actual class).
-
-    Handles methods with:
-    - No parameters: calls without arguments
-    - One or more request model parameters: creates empty instances for each
-    - Mixed parameters: creates request models, uses defaults for others
-    - Required non-request-model parameters without defaults: falls back to calling without arguments
-
-    Args:
-        method: The method to invoke
-
-    Returns:
-        The result of calling the method
     """
     try:
         hints = get_type_hints(method)
@@ -215,12 +193,7 @@ async def invoke_with_optional_request(method: Any) -> Any:
 
 
 async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
-    """Register all resources defined in the run configuration with their respective providers.
-
-    Args:
-        run_config: The stack run configuration containing registered_resources.
-        impls: Dictionary mapping APIs to their provider implementations.
-    """
+    """Register all resources defined in the run configuration with their respective providers."""
     for rsrc, api, register_method, list_method, request_class in RESOURCES:
         objects = getattr(run_config.registered_resources, rsrc)
         if api not in impls:
@@ -231,9 +204,14 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
             if hasattr(obj, "provider_id"):
                 # Do not register models on disabled providers
                 if not obj.provider_id or obj.provider_id == "__disabled__":
-                    logger.debug(f"Skipping {rsrc.capitalize()} registration for disabled provider.")
+                    logger.debug("Skipping registration for disabled provider", resource=rsrc.capitalize())
                     continue
-                logger.debug(f"registering {rsrc.capitalize()} {obj} for provider {obj.provider_id}")
+                logger.debug(
+                    "Registering resource for provider",
+                    resource=rsrc.capitalize(),
+                    obj=obj,
+                    provider_id=obj.provider_id,
+                )
 
             # TODO: Once all register methods are migrated to accept request objects,
             # remove this conditional and always use the request_class pattern.
@@ -254,7 +232,10 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
 
         for obj in objects_to_process:
             logger.debug(
-                f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
+                ": served by",
+                rsrc_capitalize=rsrc.capitalize(),
+                identifier=obj.identifier,
+                provider_id=obj.provider_id,
             )
 
 
@@ -305,7 +286,7 @@ async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, An
         except ToolGroupNotFoundError:
             pass
 
-        logger.info(f"Auto-registering tool group '{toolgroup_id}' with provider '{provider.provider_id}'")
+        logger.info("Auto-registering tool group", toolgroup_id=toolgroup_id, provider_id=provider.provider_id)
         await tool_groups_impl.register_tool_group(
             toolgroup_id=toolgroup_id,
             provider_id=provider.provider_id,
@@ -324,7 +305,7 @@ async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
 
     # Register/Update config connectors
     for connector in run_config.connectors:
-        logger.debug(f"Registering connector: {connector.connector_id}")
+        logger.debug("Registering connector", connector_id=connector.connector_id)
         await connectors_impl.register_connector(
             connector_id=connector.connector_id,
             connector_type=connector.connector_type,
@@ -336,7 +317,7 @@ async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
     existing_connectors = await connectors_impl.list_connectors()
     for connector in existing_connectors.data:
         if connector.connector_id not in config_connector_ids:
-            logger.info(f"Removing orphaned connector: {connector.connector_id}")
+            logger.info("Removing orphaned connector", connector_id=connector.connector_id)
             await connectors_impl.unregister_connector(connector.connector_id)
 
 
@@ -388,7 +369,9 @@ async def _validate_embedding_model(embedding_model: QualifiedModel, impls: dict
     except ValueError as err:
         raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
 
-    logger.debug(f"Validated embedding model: {model_identifier} (dimension: {embedding_dimension})")
+    logger.debug(
+        "Validated embedding model", model_identifier=model_identifier, embedding_dimension=embedding_dimension
+    )
 
 
 async def _validate_reranker_model(reranker_model: RerankerModel, impls: dict[Api, Any]) -> None:
@@ -410,7 +393,7 @@ async def _validate_reranker_model(reranker_model: RerankerModel, impls: dict[Ap
             f"Reranker model '{model_identifier}' not found. Available reranker models: {list(models_list.keys())}"
         )
 
-    logger.debug(f"Validated reranker model: {model_identifier}.")
+    logger.debug("Validated reranker model", model_identifier=model_identifier)
 
 
 async def _validate_rewrite_query_model(rewrite_query_model: QualifiedModel, impls: dict[Api, Any]) -> None:
@@ -434,19 +417,11 @@ async def _validate_rewrite_query_model(rewrite_query_model: QualifiedModel, imp
             f"Rewrite query model '{model_identifier}' not found. Available LLM models: {list(llm_models_list.keys())}"
         )
 
-    logger.debug(f"Validated rewrite query model: {model_identifier}")
+    logger.debug("Validated rewrite query model", model_identifier=model_identifier)
 
 
 async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict[Api, Any]):
-    """Validate that the configured default shield exists among registered shields.
-
-    Args:
-        safety_config: Optional safety configuration with a default_shield_id.
-        impls: Dictionary mapping APIs to their provider implementations.
-
-    Raises:
-        ValueError: If the default shield ID is not found among registered shields.
-    """
+    """Validate that the configured default shield exists among registered shields."""
     if safety_config is None or safety_config.default_shield_id is None:
         return
 
@@ -485,18 +460,7 @@ class EnvVarError(Exception):
 
 
 def replace_env_vars(config: Any, path: str = "") -> Any:
-    """Recursively replace environment variable references in a configuration object.
-
-    Args:
-        config: Configuration value (dict, list, str, or other) to process.
-        path: Dot-separated path for error reporting.
-
-    Returns:
-        The configuration with all environment variable references resolved.
-
-    Raises:
-        EnvVarError: If a required environment variable is not set.
-    """
+    """Recursively replace environment variable references in a configuration object."""
     if isinstance(config, dict):
         # Special handling for auth provider_config with conditional type field
         # This allows auth to be enabled/disabled via environment variables
@@ -524,7 +488,8 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
                     # If we can't resolve type, continue with normal processing
                     # and let validation catch the error
                     logger.debug(
-                        f"Could not resolve auth provider type field: {e.var_name} - continuing with normal processing"
+                        "Could not resolve auth provider type field: - continuing with normal processing",
+                        var_name=e.var_name,
                     )
 
         result = {}
@@ -546,7 +511,8 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
                         resolved_provider_id = replace_env_vars(v["provider_id"], f"{path}[{i}].provider_id")
                         if resolved_provider_id == "__disabled__":
                             logger.debug(
-                                f"Skipping config env variable expansion for disabled provider: {v.get('provider_id', '')}"
+                                "Skipping config env variable expansion for disabled provider",
+                                v_get_provider_id=v.get("provider_id", ""),
                             )
                             continue
                     except EnvVarError:
@@ -563,13 +529,21 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
                                 resolved_id = replace_env_vars(v[id_field], f"{path}[{i}].{id_field}")
                                 if resolved_id is None or resolved_id == "":
                                     logger.debug(
-                                        f"Skipping {path}[{i}] with empty {id_field} (conditional env var not set)"
+                                        "Skipping [] with empty (conditional env var not set)",
+                                        path=path,
+                                        i=i,
+                                        id_field=id_field,
                                     )
                                     should_skip = True
                                     break
                             except EnvVarError as e:
                                 logger.warning(
-                                    f"Could not resolve {id_field} in {path}[{i}], env var '{e.var_name}': {e}"
+                                    "Could not resolve in [], env var",
+                                    id_field=id_field,
+                                    path=path,
+                                    i=i,
+                                    var_name=e.var_name,
+                                    error=str(e),
                                 )
                     if should_skip:
                         continue
@@ -674,12 +648,7 @@ def cast_distro_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
 
 
 def add_internal_implementations(impls: dict[Api, Any], config: StackConfig, policy: list) -> None:
-    """Add internal implementations (inspect, providers, and admin) to the implementations dictionary.
-    Args:
-        impls: Dictionary of API implementations
-        config: Stack run configuration
-        policy: Access control policy rules
-    """
+    """Add internal implementations (inspect, providers, admin, etc.) to the implementations dictionary."""
     inspect_impl = DistributionInspectImpl(
         DistributionInspectConfig(config=config),
         deps=impls,
@@ -753,7 +722,7 @@ class Stack:
             TEST_RECORDING_CONTEXT = setup_api_recording()
             if TEST_RECORDING_CONTEXT:
                 TEST_RECORDING_CONTEXT.__enter__()
-                logger.info(f"API recording enabled: mode={os.environ.get('LLAMA_STACK_TEST_INFERENCE_MODE')}")
+                logger.info("API recording enabled", mode=os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"))
 
         _initialize_storage(self.run_config)
         stores = self.run_config.storage.stores
@@ -800,7 +769,7 @@ class Stack:
             if task.cancelled():
                 logger.error("Model refresh task cancelled")
             elif task.exception():
-                logger.error(f"Model refresh task failed: {task.exception()}")
+                logger.error("Model refresh task failed", error=str(task.exception()))
                 traceback.print_exception(task.exception())
             else:
                 logger.debug("Model refresh task completed")
@@ -810,23 +779,23 @@ class Stack:
     async def shutdown(self):
         for impl in self.impls.values():
             impl_name = impl.__class__.__name__
-            logger.debug(f"Shutting down {impl_name}")
+            logger.debug("Shutting down", impl_name=impl_name)
             try:
                 if hasattr(impl, "shutdown"):
                     await asyncio.wait_for(impl.shutdown(), timeout=5)
                 else:
-                    logger.warning(f"No shutdown method for {impl_name}")
+                    logger.warning("No shutdown method for", impl_name=impl_name)
             except TimeoutError:
-                logger.exception(f"Shutdown timeout for {impl_name}")
+                logger.exception("Shutdown timeout", impl_name=impl_name)
             except (Exception, asyncio.CancelledError) as e:
-                logger.exception(f"Failed to shutdown {impl_name}: {e}")
+                logger.exception("Failed to shutdown", impl_name=impl_name, error=str(e))
 
         global TEST_RECORDING_CONTEXT
         if TEST_RECORDING_CONTEXT:
             try:
                 TEST_RECORDING_CONTEXT.__exit__(None, None, None)
             except Exception as e:
-                logger.error(f"Error during API recording cleanup: {e}")
+                logger.error("Error during API recording cleanup", error=str(e))
 
         global REGISTRY_REFRESH_TASK
         if REGISTRY_REFRESH_TASK:
@@ -839,20 +808,16 @@ class Stack:
         try:
             await shutdown_kvstore_backends()
         except Exception as e:
-            logger.exception(f"Failed to shutdown KV store backends: {e}")
+            logger.exception("Failed to shutdown KV store backends", error=str(e))
 
         try:
             await shutdown_sqlstore_backends()
         except Exception as e:
-            logger.exception(f"Failed to shutdown SQL store backends: {e}")
+            logger.exception("Failed to shutdown SQL store backends", error=str(e))
 
 
 async def refresh_registry_once(impls: dict[Api, Any]):
-    """Refresh all routing table registries once by calling their refresh methods.
-
-    Args:
-        impls: Dictionary mapping APIs to their provider implementations.
-    """
+    """Refresh all routing table registries once by calling their refresh methods."""
     logger.debug("refreshing registry")
     routing_tables = [v for v in impls.values() if isinstance(v, CommonRoutingTableImpl)]
     for routing_table in routing_tables:
@@ -860,11 +825,7 @@ async def refresh_registry_once(impls: dict[Api, Any]):
 
 
 async def refresh_registry_task(impls: dict[Api, Any]):
-    """Background task that periodically refreshes routing table registries.
-
-    Args:
-        impls: Dictionary mapping APIs to their provider implementations.
-    """
+    """Background task that periodically refreshes routing table registries."""
     logger.info("starting registry refresh task")
     while True:
         await refresh_registry_once(impls)
@@ -873,17 +834,7 @@ async def refresh_registry_task(impls: dict[Api, Any]):
 
 
 def get_stack_run_config_from_distro(distro: str) -> StackConfig:
-    """Load a StackConfig from a named distribution's bundled config.yaml.
-
-    Args:
-        distro: Name of the distribution (e.g., 'starter', 'ci-tests').
-
-    Returns:
-        A validated StackConfig loaded from the distribution's config file.
-
-    Raises:
-        ValueError: If the distribution is not found.
-    """
+    """Load a StackConfig from a named distribution's bundled config.yaml."""
     distro_path = importlib.resources.files("llama_stack") / f"distributions/{distro}/config.yaml"
 
     with importlib.resources.as_file(distro_path) as path:

@@ -206,7 +206,7 @@ def get_langid(text: str, lid_path: str | None = None) -> str:
         try:
             line_langs.append(langdetect.detect(line))
         except langdetect.LangDetectException as e:
-            logger.info("Unable to detect language for text %s due to %s", line, e)  # refex: disable=pytotw.037
+            logger.info("Unable to detect language", text=line, error=str(e))
 
     if len(line_langs) == 0:
         return "en"
