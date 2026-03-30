@@ -6,11 +6,7 @@
     "headers": {},
     "body": {},
     "endpoint": "/v1/models",
-    "model": "",
-    "provider_metadata": {
-      "openai_sdk_version": "2.5.0",
-      "vllm_server_version": "0.18.1rc1.dev197+g0e9358c11"
-    }
+    "model": ""
   },
   "response": {
     "body": [
@@ -18,7 +14,7 @@
         "__type__": "openai.types.model.Model",
         "__data__": {
           "id": "Qwen/Qwen3-0.6B",
-          "created": 1774650272,
+          "created": 1770865370,
           "object": "model",
           "owned_by": "vllm",
           "root": "Qwen/Qwen3-0.6B",
@@ -26,9 +22,9 @@
           "max_model_len": 8192,
           "permission": [
             {
-              "id": "modelperm-b228f9a926fa4840",
+              "id": "modelperm-9d8b2db487d0e15f",
               "object": "model_permission",
-              "created": 1774650272,
+              "created": 1770865370,
               "allow_create_engine": false,
               "allow_sampling": true,
               "allow_logprobs": true,
