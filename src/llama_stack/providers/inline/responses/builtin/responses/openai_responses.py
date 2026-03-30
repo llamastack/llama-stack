@@ -693,10 +693,6 @@ class OpenAIResponsesImpl:
         if max_tool_calls is not None and max_tool_calls < 1:
             raise ValueError(f"Invalid {max_tool_calls=}; should be >= 1")
 
-        # Auto-compact if context_management is configured
-        if context_management:
-            input = await self._maybe_auto_compact(input, model, context_management)
-
         # Handle background mode
         if background:
             return await self._create_background_response(
@@ -757,6 +753,7 @@ class OpenAIResponsesImpl:
             presence_penalty=presence_penalty,
             extra_body=extra_body,
             stream_options=stream_options,
+            context_management=context_management,
         )
 
         if stream:
@@ -1065,6 +1062,7 @@ class OpenAIResponsesImpl:
         presence_penalty: float | None = None,
         extra_body: dict | None = None,
         stream_options: ResponseStreamOptions | None = None,
+        context_management: list | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -1075,6 +1073,13 @@ class OpenAIResponsesImpl:
         all_input, messages, tool_context = await self._process_input_with_previous_response(
             input, tools, previous_response_id, conversation
         )
+
+        # Auto-compact if context_management is configured (runs on resolved history, not just new input)
+        if context_management:
+            compacted_input = await self._maybe_auto_compact(all_input, model, context_management)
+            if compacted_input is not all_input:
+                all_input = compacted_input
+                messages = await convert_response_input_to_chat_messages(all_input, files_api=self.files_api)
 
         if instructions:
             messages.insert(0, OpenAISystemMessageParam(content=instructions))
@@ -1203,12 +1208,25 @@ class OpenAIResponsesImpl:
         prompt_cache_key: str | None = None,
     ) -> OpenAICompactedResponse:
         # Resolve input from previous_response_id or direct input
+        resolved_messages = None
         if previous_response_id:
             previous_response = await self.responses_store.get_response_object(previous_response_id)
+            if previous_response.status in ("queued", "in_progress"):
+                raise ValueError(
+                    f"Response {previous_response_id} is still {previous_response.status}. "
+                    "Cannot compact an incomplete background response."
+                )
             if input is not None:
                 all_input = await self._prepend_previous_response(input, previous_response)
             else:
                 all_input = list(previous_response.input) + list(previous_response.output)
+
+            # Use stored messages when available for full conversation context.
+            # previous_response.input only contains the last turn when conversation= was used,
+            # but .messages has the complete chat history across all turns.
+            if previous_response.messages:
+                message_adapter = TypeAdapter(list[OpenAIMessageParam])
+                resolved_messages = message_adapter.validate_python(previous_response.messages)
         elif input is not None:
             if isinstance(input, str):
                 all_input = [OpenAIResponseMessage(content=input, role="user")]
@@ -1220,7 +1238,17 @@ class OpenAIResponsesImpl:
             )
 
         # Convert to chat messages for the summarization call
-        messages = await convert_response_input_to_chat_messages(all_input, files_api=self.files_api)
+        if resolved_messages is not None:
+            messages = resolved_messages
+            # If caller also provided new input, convert and append it so the
+            # summarization covers the full conversation including the new turn.
+            if input is not None:
+                new_messages = await convert_response_input_to_chat_messages(
+                    input, previous_messages=messages, files_api=self.files_api
+                )
+                messages.extend(new_messages)
+        else:
+            messages = await convert_response_input_to_chat_messages(all_input, files_api=self.files_api)
 
         # Add summarization prompt
         summarization_prompt = (
