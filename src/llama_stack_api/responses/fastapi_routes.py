@@ -120,7 +120,7 @@ def create_sse_event(data: Any) -> str:
     return f"data: {data}\n\n"
 
 
-async def sse_generator(event_gen):
+async def sse_generator(event_gen: AsyncIterator[Any]) -> AsyncIterator[str]:
     """Convert an async generator to SSE format.
 
     This function iterates over an async generator and formats each yielded
@@ -181,16 +181,16 @@ async def get_list_response_input_items_request(
     )
 
 
-def _preserve_context_for_sse(event_gen):
+def _preserve_context_for_sse(event_gen: AsyncIterator[str]) -> AsyncIterator[str]:
     # StreamingResponse runs in a different task, losing request contextvars.
     # create_task inside context.run captures the context at task creation.
     context = contextvars.copy_context()
 
-    async def wrapper():
+    async def wrapper() -> AsyncIterator[str]:
         try:
             while True:
                 try:
-                    task = context.run(asyncio.create_task, event_gen.__anext__())
+                    task: asyncio.Task[str] = context.run(asyncio.create_task, event_gen.__anext__())  # type: ignore[arg-type]
                     item = await task
                 except StopAsyncIteration:
                     break
@@ -297,7 +297,10 @@ def create_router(impl: Responses) -> APIRouter:
         description="List input items.",
     )
     async def list_openai_response_input_items(
-        request: Annotated[ListResponseInputItemsRequest, Depends(get_list_response_input_items_request)],
+        request: Annotated[
+            ListResponseInputItemsRequest,
+            Depends(get_list_response_input_items_request),
+        ],
     ) -> ListOpenAIResponseInputItem:
         return await impl.list_openai_response_input_items(request)
 
