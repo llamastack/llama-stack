@@ -61,7 +61,7 @@ class SchemaInfo:
 _json_schema_types: dict[type, SchemaInfo] = {}
 
 
-def json_schema_type(cls):
+def json_schema_type[T](cls: type[T]) -> type[T]:
     """
     Decorator to mark a Pydantic model for top-level component registration.
 
@@ -71,9 +71,7 @@ def json_schema_type(cls):
     This provides control over schema registration to avoid unnecessary indirection
     for simple one-off types while keeping complex reusable types as components.
     """
-    cls._llama_stack_schema_type = True
     schema_name = getattr(cls, "__name__", f"Anonymous_{id(cls)}")
-    cls._llama_stack_schema_name = schema_name
     _json_schema_types.setdefault(cls, SchemaInfo(name=schema_name, type=cls, source="json_schema_type"))
     return cls
 
@@ -83,7 +81,7 @@ _registered_schemas: dict[Any, SchemaInfo] = {}
 _dynamic_schema_types: dict[type, SchemaInfo] = {}
 
 
-def register_schema(schema_type, name: str | None = None):
+def register_schema[T](schema_type: T, name: str | None = None) -> T:
     """
     Register a schema type for top-level component registration.
 
@@ -121,6 +119,11 @@ def iter_json_schema_types() -> Iterable[type]:
     return tuple(info.type for info in _json_schema_types.values())
 
 
+def get_json_schema_type_info(schema_type: type) -> SchemaInfo | None:
+    """Return the registration metadata for a @json_schema_type decorated model if present."""
+    return _json_schema_types.get(schema_type)
+
+
 def iter_dynamic_schema_types() -> Iterable[type]:
     """Iterate over dynamic models registered at generation time."""
     return tuple(info.type for info in _dynamic_schema_types.values())
@@ -138,10 +141,75 @@ def clear_dynamic_schema_types() -> None:
     _dynamic_schema_types.clear()
 
 
+@dataclass
+class WebMethod:
+    """Metadata container for an API endpoint operation's routing and configuration."""
+
+    level: str | None = None
+    route: str | None = None
+    public: bool = False
+    request_examples: list[Any] | None = None
+    response_examples: list[Any] | None = None
+    method: str | None = None
+    raw_bytes_request_body: bool | None = False
+    # A descriptive name of the corresponding span created by tracing
+    descriptive_name: str | None = None
+    deprecated: bool | None = False
+    require_authentication: bool | None = True
+
+
 CallableT = TypeVar("CallableT", bound=Callable[..., Any])
 
 
-def remove_null_from_anyof(schema: dict, *, add_nullable: bool = False) -> None:
+def webmethod(
+    route: str | None = None,
+    method: str | None = None,
+    level: str | None = None,
+    public: bool | None = False,
+    request_examples: list[Any] | None = None,
+    response_examples: list[Any] | None = None,
+    raw_bytes_request_body: bool | None = False,
+    descriptive_name: str | None = None,
+    deprecated: bool | None = False,
+    require_authentication: bool | None = True,
+) -> Callable[[CallableT], CallableT]:
+    """
+    Decorator that supplies additional metadata to an endpoint operation function.
+
+    :param route: The URL path pattern associated with this operation which path parameters are substituted into.
+    :param public: True if the operation can be invoked without prior authentication.
+    :param request_examples: Sample requests that the operation might take. Pass a list of objects, not JSON.
+    :param response_examples: Sample responses that the operation might produce. Pass a list of objects, not JSON.
+    :param require_authentication: Whether this endpoint requires authentication (default True).
+    """
+
+    def wrap(func: CallableT) -> CallableT:
+        webmethod_obj = WebMethod(
+            route=route,
+            method=method,
+            level=level,
+            public=public or False,
+            request_examples=request_examples,
+            response_examples=response_examples,
+            raw_bytes_request_body=raw_bytes_request_body,
+            descriptive_name=descriptive_name,
+            deprecated=deprecated,
+            require_authentication=require_authentication if require_authentication is not None else True,
+        )
+
+        # Store all webmethods in a list to support multiple decorators
+        if not hasattr(func, "__webmethods__"):
+            func.__webmethods__ = []  # type: ignore
+        func.__webmethods__.append(webmethod_obj)  # type: ignore
+
+        # Keep the last one as __webmethod__ for backwards compatibility
+        func.__webmethod__ = webmethod_obj  # type: ignore
+        return func
+
+    return wrap
+
+
+def remove_null_from_anyof(schema: dict[str, Any], *, add_nullable: bool = False) -> None:
     """Remove null type from anyOf and optionally add nullable flag.
 
     Converts Pydantic's default OpenAPI 3.1 style:
@@ -180,7 +248,7 @@ def remove_null_from_anyof(schema: dict, *, add_nullable: bool = False) -> None:
             schema["nullable"] = True
 
 
-def nullable_openai_style(schema: dict) -> None:
+def nullable_openai_style(schema: dict[str, Any]) -> None:
     """Shorthand for remove_null_from_anyof with add_nullable=True.
 
     Use this for fields that need OpenAPI 3.0 nullable style to match OpenAI's spec.
