@@ -97,7 +97,7 @@ class StackRun(Subcommand):
             config_dict = run_config.model_dump(mode="json")
 
             config_file = distro_dir / "config.yaml"
-            logger.info(f"Writing generated config to: {config_file}")
+            logger.info("Writing generated config to", config_file=config_file)
             with open(config_file, "w") as f:
                 yaml.dump(config_dict, f, default_flow_style=False, sort_keys=False)
 
@@ -105,7 +105,7 @@ class StackRun(Subcommand):
             config_file = None
 
         if config_file:
-            logger.info(f"Using stack configuration: {config_file}")
+            logger.info("Using stack configuration", config_file=config_file)
 
             try:
                 config_dict = yaml.safe_load(config_file.read_text())
@@ -166,12 +166,12 @@ class StackRun(Subcommand):
                 uvicorn_config["ssl_cert_reqs"] = ssl.CERT_REQUIRED
 
             logger.info(
-                f"HTTPS enabled with certificates:\n  Key: {keyfile}\n  Cert: {certfile}\n  CA: {config.server.tls_cafile}"
+                "HTTPS enabled with certificates", keyfile=keyfile, certfile=certfile, cafile=config.server.tls_cafile
             )
         else:
-            logger.info(f"HTTPS enabled with certificates:\n  Key: {keyfile}\n  Cert: {certfile}")
+            logger.info("HTTPS enabled with certificates", keyfile=keyfile, certfile=certfile)
 
-        logger.info(f"Listening on {host}:{port}")
+        logger.info("Listening on", host=host, port=port)
 
         # We need to catch KeyboardInterrupt because uvicorn's signal handling
         # re-raises SIGINT signals using signal.raise_signal(), which Python
@@ -201,7 +201,8 @@ class StackRun(Subcommand):
         npm_check = subprocess.run(["npm", "--version"], capture_output=True, text=True, check=False)
         if npm_check.returncode != 0:
             logger.warning(
-                f"'npm' command not found or not executable. UI development server will not be started. Error: {npm_check.stderr}"
+                "npm command not found or not executable, UI development server will not be started",
+                error=npm_check.stderr,
             )
             return
 
@@ -225,13 +226,13 @@ class StackRun(Subcommand):
                 stderr=stderr_log_file,
                 env={**os.environ, "NEXT_PUBLIC_LLAMA_STACK_BASE_URL": f"http://localhost:{stack_server_port}"},
             )
-            logger.info(f"UI development server process started in {ui_dir} with PID {process.pid}.")
-            logger.info(f"Logs: stdout -> {ui_stdout_log_path}, stderr -> {ui_stderr_log_path}")
-            logger.info(f"UI will be available at http://localhost:{os.getenv('LLAMA_STACK_UI_PORT', 8322)}")
+            logger.info("UI development server process started", ui_dir=ui_dir, pid=process.pid)
+            logger.info("UI server logs", stdout=ui_stdout_log_path, stderr=ui_stderr_log_path)
+            logger.info("UI will be available", port=os.getenv("LLAMA_STACK_UI_PORT", 8322))
 
         except FileNotFoundError:
             logger.error(
                 "Failed to start UI development server: 'npm' command not found. Make sure npm is installed and in your PATH."
             )
         except Exception as e:
-            logger.error(f"Failed to start UI development server in {ui_dir}: {e}")
+            logger.error("Failed to start UI development server", ui_dir=ui_dir, error=str(e))

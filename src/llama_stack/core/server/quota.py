@@ -51,8 +51,8 @@ class QuotaMiddleware:
             backend_config = _KVSTORE_BACKENDS.get(self.kv_config.backend)
             if backend_config and backend_config.type == StorageBackendType.KV_SQLITE:
                 logger.warning(
-                    "QuotaMiddleware: Using SQLite backend. Expiry/TTL is not enforced; cleanup is manual. "
-                    f"window_seconds={self.window_seconds}"
+                    "QuotaMiddleware: Using SQLite backend. Expiry/TTL is not enforced; cleanup is manual. window_seconds",
+                    window_seconds=self.window_seconds,
                 )
         return self.kv
 

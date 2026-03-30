@@ -56,10 +56,14 @@ def setup_telemetry():
         provider = MeterProvider(resource=resource, metric_readers=[reader])
         metrics.set_meter_provider(provider)
 
-        logger.info(f"OpenTelemetry metrics exporter configured: {otlp_endpoint} (interval: {export_interval_s}s)")
+        logger.info(
+            "OpenTelemetry metrics exporter configured: (interval: s)",
+            otlp_endpoint=otlp_endpoint,
+            export_interval_s=export_interval_s,
+        )
 
     except Exception as e:
-        logger.warning(f"Failed to configure OpenTelemetry metrics exporter: {e}")
+        logger.warning("Failed to configure OpenTelemetry metrics exporter", error=str(e))
 
 
 # Initialize telemetry when module is imported
