@@ -731,7 +731,7 @@ class StreamingResponseOrchestrator:
                                     non_function_tool_calls.append(tool_call)
                                     executed_tool_calls.append(tool_call)
                                 else:
-                                    logger.info(f"Approval denied for {tool_call.id} on {tool_call.function.name}")
+                                    logger.info("Approval denied", id=tool_call.id, name=tool_call.function.name)
                                     has_deferred_or_denied = True
                             else:
                                 logger.info("Requesting approval for on", id=tool_call.id, name=tool_call.function.name)
