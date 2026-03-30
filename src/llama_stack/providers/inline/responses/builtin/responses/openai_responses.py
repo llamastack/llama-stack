@@ -798,8 +798,8 @@ class OpenAIResponsesImpl:
                     extra={"model": model, "conversation": conversation, "previous_response_id": previous_response_id},
                 )
                 raise InternalServerError()
-            # Set background=False for non-background responses
-            final_response.background = False
+            # Preserve the request mode on the terminal response object returned to the caller.
+            final_response.background = background
             return final_response
 
     async def _create_background_response(
@@ -1203,13 +1203,13 @@ class OpenAIResponsesImpl:
         # Get current response state
         response = await self.responses_store.get_response_object(response_id)
 
-        # Only background responses can be cancelled
-        if not response.background:
-            raise ConflictError(f"Cannot cancel response '{response_id}': only background responses can be cancelled")
-
         # If already cancelled, return current state (idempotent)
         if response.status == "cancelled":
             return response.to_response_object()
+
+        # Only background responses can be cancelled
+        if not response.background:
+            raise ConflictError(f"Cannot cancel response '{response_id}': only background responses can be cancelled")
 
         # Cannot cancel responses in terminal states
         if response.status in ["completed", "failed", "incomplete"]:
