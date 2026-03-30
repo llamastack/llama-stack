@@ -241,7 +241,8 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
     )
 
     # Should have content part events for text streaming
-    # Expected: response.created, response.in_progress, content_part.added, output_text.delta, content_part.done, response.completed
+    # Expected: response.created, response.in_progress, output_item.added, content_part.added,
+    #           output_text.delta, output_text.done, content_part.done, output_item.done, response.completed
     assert len(chunks) >= 5
     assert chunks[0].type == "response.created"
     assert any(chunk.type == "response.in_progress" for chunk in chunks)
@@ -250,10 +251,12 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
     content_part_added_events = [c for c in chunks if c.type == "response.content_part.added"]
     content_part_done_events = [c for c in chunks if c.type == "response.content_part.done"]
     text_delta_events = [c for c in chunks if c.type == "response.output_text.delta"]
+    text_done_events = [c for c in chunks if c.type == "response.output_text.done"]
 
     assert len(content_part_added_events) >= 1, "Should have content_part.added event for text"
     assert len(content_part_done_events) >= 1, "Should have content_part.done event for text"
     assert len(text_delta_events) >= 1, "Should have text delta events"
+    assert len(text_done_events) >= 1, "Should have output_text.done event with final accumulated text"
 
     added_event = content_part_added_events[0]
     done_event = content_part_done_events[0]
@@ -262,6 +265,20 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
     assert added_event.output_index == done_event.output_index == 0
     assert added_event.item_id == done_event.item_id
     assert added_event.response_id == done_event.response_id
+
+    # Verify output_text.done contains the final accumulated text and correct indices
+    text_done_event = text_done_events[0]
+    assert text_done_event.content_index == 0
+    assert text_done_event.output_index == 0
+    assert text_done_event.item_id == added_event.item_id
+    assert isinstance(text_done_event.text, str)
+    assert len(text_done_event.text) > 0, "output_text.done should contain the final text"
+
+    # Verify output_text.done comes before content_part.done (per OpenAI protocol)
+    chunk_types = [c.type for c in chunks]
+    text_done_idx = chunk_types.index("response.output_text.done")
+    content_done_idx = chunk_types.index("response.content_part.done")
+    assert text_done_idx < content_done_idx, "output_text.done must precede content_part.done"
 
     # Verify final event is completion
     assert chunks[-1].type == "response.completed"
