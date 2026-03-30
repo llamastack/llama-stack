@@ -10,7 +10,11 @@ Schema filtering and version filtering for OpenAPI generation.
 
 from typing import Any
 
-from llama_stack_api.schema_utils import iter_json_schema_types, iter_registered_schema_types
+from llama_stack_api.schema_utils import (
+    get_json_schema_type_info,
+    iter_json_schema_types,
+    iter_registered_schema_types,
+)
 from llama_stack_api.version import (
     LLAMA_STACK_API_V1,
     LLAMA_STACK_API_V1ALPHA,
@@ -22,7 +26,8 @@ def _get_all_json_schema_type_names() -> set[str]:
     """Collect schema names from @json_schema_type-decorated models."""
     schema_names = set()
     for model in iter_json_schema_types():
-        schema_name = getattr(model, "_llama_stack_schema_name", None) or getattr(model, "__name__", None)
+        schema_info = get_json_schema_type_info(model)
+        schema_name = schema_info.name if schema_info else getattr(model, "__name__", None)
         if schema_name:
             schema_names.add(schema_name)
     return schema_names
