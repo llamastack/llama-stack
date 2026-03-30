@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-fallback_version = "0.6.1.dev0"
+fallback_version = "0.6.2.dev0"
 
 [tool.uv]
 required-version = ">=0.7.0"
@@ -44,6 +44,7 @@ dependencies = [
     "pyjwt[crypto]>=2.12.0",                          # Pull crypto to support RS256 for jwt. Requires 2.12.0+ to fix CVE-2026-32597.
     "pydantic>=2.11.9",
     "rich",
+    "structlog>=24.1.0",
     "termcolor",
     "tiktoken",
     "h11>=0.16.0",
@@ -67,7 +68,7 @@ dependencies = [
 
 [project.optional-dependencies]
 client = [
-    "llama-stack-client>=0.6.0", # Optional for library-only usage
+    "llama-stack-client>=0.6.1", # Optional for library-only usage
 ]
 
 [dependency-groups]
@@ -118,7 +119,7 @@ type_checking = [
     "lm-format-enforcer",
     "mcp>=1.23.0",
     "ollama",
-    "llama-stack-client>=0.6.0",
+    "llama-stack-client>=0.6.1",
 ]
 # These are the dependencies required for running unit tests.
 unit = [
@@ -163,7 +164,7 @@ test = [
     "chromadb>=1.0.15",
     "qdrant-client",
     "pymilvus>=2.6.2",
-    "milvus-lite>=2.5.0",
+    "milvus-lite>=2.5.0; platform_machine == 'x86_64' or platform_machine == 'aarch64' or platform_machine == 'arm64'",
     "weaviate-client>=4.16.4",
     "elasticsearch>=8.16.0, <9.0.0"
 ]
@@ -276,7 +277,16 @@ convention = "google"
 "benchmarking/**/*.py" = ["D101"] # Ignore docstring rules for benchmarking scripts
 "client-sdks/**/*.py" = ["D101"] # Ignore docstring rules for client SDKs
 "scripts/**/*.py" = ["D101"] # Ignore docstring rules for scripts
-"src/llama_stack/providers/inline/scoring/basic/utils/ifeval_utils.py" = [
+"src/llama_stack/providers/inline/scoring/basic/utils/ifeval_support.py" = [
+    "RUF001",
+]
+"src/llama_stack/providers/inline/scoring/basic/utils/ifeval_checkers_core.py" = [
+    "RUF001",
+]
+"src/llama_stack/providers/inline/scoring/basic/utils/ifeval_checkers_format.py" = [
+    "RUF001",
+]
+"src/llama_stack/providers/inline/scoring/basic/utils/ifeval_word_list.py" = [
     "RUF001",
 ]
 "src/llama_stack/providers/inline/scoring/basic/scoring_fn/fn_defs/regex_parser_multiple_choice_answer.py" = [
@@ -300,15 +310,11 @@ follow_imports = "silent"
 # to exclude the entire directory.
 exclude = [
     # ============================================================================
-    # Section 1: Files that need type hints added (11 files)
+    # Section 1: Files that need type hints added (8 files)
     # ============================================================================
     # These files are missing type annotations on functions/methods. Functions
     # lack parameter and/or return type hints.
     #
-    # CLI files (3 files)
-    "^src/llama_stack/cli/llama\\.py$",
-    "^src/llama_stack/cli/scripts/run\\.py$",
-    "^src/llama_stack/cli/table\\.py$",
     # Core files (7 files)
     "^src/llama_stack/core/admin\\.py$",
     "^src/llama_stack/core/client\\.py$",
@@ -321,23 +327,15 @@ exclude = [
     "^src/llama_stack/telemetry/__init__\\.py$",
     #
     # ============================================================================
-    # Section 2: Files that need strict typing issues fixed (138 files)
+    # Section 2: Files that need strict typing issues fixed (133 files)
     # ============================================================================
     # These files have some type hints but fail strict type checking due to
     # incomplete annotations, Any usage, or other strict mode violations.
     #
-    # llama_stack_api files (8 files)
-    "^src/llama_stack_api/common/content_types\\.py$",
-    "^src/llama_stack_api/datatypes\\.py$",
-    "^src/llama_stack_api/inference/fastapi_routes\\.py$",
+    # llama_stack_api files (3 files)
     "^src/llama_stack_api/models/models\\.py$",
     "^src/llama_stack_api/prompts/models\\.py$",
-    "^src/llama_stack_api/responses/fastapi_routes\\.py$",
-    "^src/llama_stack_api/router_utils\\.py$",
-    "^src/llama_stack_api/schema_utils\\.py$",
-    # Core files (28 files)
-    "^src/llama_stack/core/access_control/conditions\\.py$",
-    "^src/llama_stack/core/access_control/datatypes\\.py$",
+    # Core files (26 files)
     "^src/llama_stack/core/build\\.py$",
     "^src/llama_stack/core/configure\\.py$",
     "^src/llama_stack/core/connectors/connectors\\.py$",

@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 
-def install_wheel_from_presigned():
+def install_wheel_from_presigned() -> None:
     """Run the shell script to install a wheel package from a presigned URL."""
     file = "install-wheel-from-presigned.sh"
     script_path = os.path.join(os.path.dirname(__file__), file)

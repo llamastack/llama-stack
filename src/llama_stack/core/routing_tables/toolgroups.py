@@ -81,7 +81,7 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
                 except Exception as e:
                     # Other errors that the client cannot fix are logged and
                     # those specific toolgroups are skipped.
-                    logger.warning(f"Error listing tools for toolgroup {toolgroup.identifier}: {e}")
+                    logger.warning("Error listing tools for toolgroup", identifier=toolgroup.identifier, error=str(e))
                     logger.debug(e, exc_info=True)
                     continue
             all_tools.extend(self.toolgroups_to_tools[toolgroup.identifier])

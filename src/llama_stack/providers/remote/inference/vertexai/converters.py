@@ -204,7 +204,7 @@ def _convert_image_url_part(part: dict[str, Any]) -> dict[str, Any] | None:
         logger.warning("HTTP image URL reached converter without pre-download; skipping")
         return None
 
-    logger.warning("Unsupported image URL scheme in user message; skipping: %s", url[:50])
+    logger.warning("Unsupported image URL scheme in user message, skipping", url=url[:50])
     return None
 
 

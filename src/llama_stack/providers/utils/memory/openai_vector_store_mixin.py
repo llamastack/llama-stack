@@ -322,14 +322,14 @@ class OpenAIVectorStoreMixin(ABC):
             info = json.loads(item)
             expires_at = info.get("expires_at")
             if expires_at and current_time > expires_at:
-                logger.info(f"Cleaning up expired file batch: {info['id']}")
+                logger.info("Cleaning up expired file batch", id=info["id"])
                 await self.kvstore.delete(f"{OPENAI_VECTOR_STORES_FILE_BATCHES_PREFIX}{info['id']}")
                 # Remove from in-memory cache if present
                 self.openai_file_batches.pop(info["id"], None)
                 expired_count += 1
 
         if expired_count > 0:
-            logger.info(f"Cleaned up {expired_count} expired file batches")
+            logger.info("Cleaned up expired file batches", expired_count=expired_count)
 
     async def _get_completed_files_in_batch(self, vector_store_id: str, file_ids: list[str]) -> set[str]:
         """Determine which files in a batch are actually completed by checking vector store file_ids."""
@@ -369,7 +369,7 @@ class OpenAIVectorStoreMixin(ABC):
         # If all files are already completed, mark batch as completed
         if remaining_count == 0:
             batch_info["status"] = "completed"
-            logger.info(f"Batch {batch_id} is already fully completed, updating status")
+            logger.info("Batch is already fully completed, updating status", batch_id=batch_id)
 
         # Save updated batch info
         await self._save_openai_vector_store_file_batch(batch_id, batch_info)
@@ -380,7 +380,7 @@ class OpenAIVectorStoreMixin(ABC):
         """Resume processing of incomplete file batches after server restart."""
         for batch_id, batch_info in self.openai_file_batches.items():
             if batch_info["status"] == "in_progress":
-                logger.info(f"Analyzing incomplete file batch: {batch_id}")
+                logger.info("Analyzing incomplete file batch", batch_id=batch_id)
 
                 remaining_files = await self._analyze_batch_completion_on_resume(batch_id, batch_info)
 
@@ -389,7 +389,11 @@ class OpenAIVectorStoreMixin(ABC):
                     continue
 
                 if remaining_files:
-                    logger.info(f"Resuming batch {batch_id} with {len(remaining_files)} remaining files")
+                    logger.info(
+                        "Resuming batch with remaining files",
+                        batch_id=batch_id,
+                        remaining_files_count=len(remaining_files),
+                    )
                     # Restart the background processing task with only remaining files
                     task = asyncio.create_task(self._process_file_batch_async(batch_id, batch_info, remaining_files))
                     self._file_batch_tasks[batch_id] = task
@@ -472,13 +476,17 @@ class OpenAIVectorStoreMixin(ABC):
                 int(metadata["embedding_dimension"]) if metadata.get("embedding_dimension") else EMBEDDING_DIMENSION
             )
             logger.debug(
-                f"Using embedding config from metadata (takes precedence over extra_body): model='{embedding_model}', dimension={embedding_dimension}"
+                "Using embedding config from metadata (takes precedence over extra_body): model=, dimension",
+                embedding_model=embedding_model,
+                embedding_dimension=embedding_dimension,
             )
         else:
             embedding_model = extra_body.get("embedding_model")
             embedding_dimension = extra_body.get("embedding_dimension", EMBEDDING_DIMENSION)
             logger.debug(
-                f"Using embedding config from extra_body: model='{embedding_model}', dimension={embedding_dimension}"
+                "Using embedding config from extra_body: model=, dimension",
+                embedding_model=embedding_model,
+                embedding_dimension=embedding_dimension,
             )
 
         # use provider_id set by router; fallback to provider's own ID when used directly via --stack-config
@@ -560,7 +568,12 @@ class OpenAIVectorStoreMixin(ABC):
         # Log any exceptions but don't fail the vector store creation
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                logger.warning(f"Failed to attach file {file_ids[i]} to vector store {vector_store_id}: {result}")
+                logger.warning(
+                    "Failed to attach file to vector store",
+                    file_ids_i=file_ids[i],
+                    vector_store_id=vector_store_id,
+                    result=result,
+                )
 
         # Get the updated store info and return it
         store_info = self.openai_vector_stores[vector_store_id]
@@ -673,7 +686,7 @@ class OpenAIVectorStoreMixin(ABC):
         try:
             await self.unregister_vector_store(vector_store_id)
         except Exception as e:
-            logger.warning(f"Failed to delete underlying vector DB {vector_store_id}: {e}")
+            logger.warning("Failed to delete underlying vector DB", vector_store_id=vector_store_id, error=str(e))
 
         return VectorStoreDeleteResponse(
             id=vector_store_id,
@@ -773,7 +786,7 @@ class OpenAIVectorStoreMixin(ABC):
 
         except Exception as e:
             # Log the error and return empty results
-            logger.error(f"Error searching vector store {vector_store_id}: {e}")
+            logger.error("Error searching vector store", vector_store_id=vector_store_id, error=str(e))
             return VectorStoreSearchResponsePage(
                 search_query=request.query if isinstance(request.query, list) else [request.query],
                 data=[],
@@ -811,7 +824,7 @@ class OpenAIVectorStoreMixin(ABC):
             elif ranking_options.ranker == "neural":
                 reranker_params["model"] = ranking_options.model
             else:
-                logger.debug(f"Unknown ranker value: {ranking_options.ranker}, passing through")
+                logger.debug("Unknown ranker value, passing through", ranker=ranking_options.ranker)
 
             params["reranker_type"] = reranker_type
             params["reranker_params"] = reranker_params
@@ -880,7 +893,9 @@ class OpenAIVectorStoreMixin(ABC):
         # Check if file is already attached to this vector store
         store_info = self.openai_vector_stores[vector_store_id]
         if file_id in store_info["file_ids"]:
-            logger.warning(f"File {file_id} is already attached to vector store {vector_store_id}, skipping")
+            logger.warning(
+                "File is already attached to vector store, skipping", file_id=file_id, vector_store_id=vector_store_id
+            )
             # Return existing file object
             file_info = await self._load_openai_vector_store_file(vector_store_id, file_id)
             return VectorStoreFileObject(**file_info)
@@ -942,7 +957,7 @@ class OpenAIVectorStoreMixin(ABC):
             # Try using FileProcessor API if available
             if hasattr(self, "file_processor_api") and self.file_processor_api:
                 try:
-                    logger.debug(f"Using FileProcessor API to process file {file_id}")
+                    logger.debug("Using FileProcessor API to process file", file_id=file_id)
                     pf_resp = await self.file_processor_api.process_file(
                         ProcessFileRequest(file_id=file_id, chunking_strategy=chunking_strategy)
                     )
@@ -966,16 +981,18 @@ class OpenAIVectorStoreMixin(ABC):
                         )
                         chunks.append(enhanced_chunk)
 
-                    logger.debug(f"FileProcessor generated {len(chunks)} chunks for file {file_id}")
+                    logger.debug("FileProcessor generated chunks for file", chunks_count=len(chunks), file_id=file_id)
 
                 except Exception as e:
-                    logger.warning(f"FileProcessor failed for file {file_id}, falling back to legacy chunking: {e}")
+                    logger.warning(
+                        "FileProcessor failed for file, falling back to legacy chunking", file_id=file_id, error=str(e)
+                    )
                     # Fall back to legacy chunking path
                     chunks = await self._legacy_chunk_file(
                         file_id, file_response, max_chunk_size_tokens, chunk_overlap_tokens, chunk_attributes
                     )
             else:
-                logger.debug(f"FileProcessor API not available, using legacy chunking for file {file_id}")
+                logger.debug("FileProcessor API not available, using legacy chunking for file", file_id=file_id)
                 # Legacy chunking path when FileProcessor not available
                 chunks = await self._legacy_chunk_file(
                     file_id, file_response, max_chunk_size_tokens, chunk_overlap_tokens, chunk_attributes
@@ -1241,7 +1258,7 @@ class OpenAIVectorStoreMixin(ABC):
                 if document_id:
                     chunks_for_deletion.append(ChunkForDeletion(chunk_id=str(c.chunk_id), document_id=document_id))
                 else:
-                    logger.warning(f"Chunk {c.chunk_id} has no document_id, skipping deletion")
+                    logger.warning("Chunk has no document_id, skipping deletion", chunk_id=c.chunk_id)
 
         if chunks_for_deletion:
             await self.delete_chunks(
@@ -1355,7 +1372,7 @@ class OpenAIVectorStoreMixin(ABC):
                     )
                     return file_id, vector_store_file_object.status == "completed"
                 except Exception as e:
-                    logger.error(f"Failed to process file {file_id} in batch {batch_id}: {e}")
+                    logger.error("Failed to process file in batch", file_id=file_id, batch_id=batch_id, error=str(e))
                     return file_id, False
 
         # Process files in chunks to avoid creating too many tasks at once
@@ -1404,7 +1421,9 @@ class OpenAIVectorStoreMixin(ABC):
                     )
                 else:
                     if strategy_type != "auto":
-                        logger.warning(f"Unknown chunking strategy type '{strategy_type}', falling back to auto")
+                        logger.warning(
+                            "Unknown chunking strategy type, falling back to auto", strategy_type=strategy_type
+                        )
                     chunking_strategy_obj = VectorStoreChunkingStrategyAuto()
 
             await self._process_files_with_concurrency(
@@ -1422,12 +1441,12 @@ class OpenAIVectorStoreMixin(ABC):
             await self._save_openai_vector_store_file_batch(batch_id, batch_info)
 
         except asyncio.CancelledError:
-            logger.info(f"File batch processing cancelled for batch {batch_id}")
+            logger.info("File batch processing cancelled for batch", batch_id=batch_id)
             batch_info["status"] = "cancelled"
             await self._save_openai_vector_store_file_batch(batch_id, batch_info)
             raise
         except Exception:
-            logger.exception(f"Error processing file batch {batch_id}")
+            logger.exception("Failed to process file batch", batch_id=batch_id)
             batch_info["status"] = "failed"
             await self._save_openai_vector_store_file_batch(batch_id, batch_info)
 
@@ -1607,7 +1626,7 @@ class OpenAIVectorStoreMixin(ABC):
 
         context_prompt_template = strategy_config.context_prompt
 
-        logger.info(f"Applying contextual retrieval to {len(chunks)} chunks using model {model_id}")
+        logger.info("Applying contextual retrieval to chunks using model", chunks_count=len(chunks), model_id=model_id)
 
         # Split prompt into system (document) + user (chunk) messages to enable prefix caching.
         # All major providers (OpenAI, vLLM, Anthropic) cache shared token prefixes by placing the
@@ -1653,7 +1672,7 @@ class OpenAIVectorStoreMixin(ABC):
 
                         raw_context = response.choices[0].message.content
                         if raw_context is None:
-                            logger.warning(f"LLM returned None content for chunk {chunk.chunk_id}")
+                            logger.warning("LLM returned None content for chunk", chunk_id=chunk.chunk_id)
                             return _ChunkContextResult.EMPTY
                         context = (
                             raw_context.strip()
@@ -1663,7 +1682,7 @@ class OpenAIVectorStoreMixin(ABC):
                             ).strip()
                         )
                         if not context:
-                            logger.warning(f"LLM returned empty context for chunk {chunk.chunk_id}")
+                            logger.warning("LLM returned empty context for chunk", chunk_id=chunk.chunk_id)
                             return _ChunkContextResult.EMPTY
                         if isinstance(chunk.content, str):
                             chunk.content = f"{context}\n\n{chunk.content}"
@@ -1679,18 +1698,30 @@ class OpenAIVectorStoreMixin(ABC):
                         if _is_retriable_error(e) and attempt < _MAX_RETRIES:
                             delay = _RETRY_BASE_DELAY * (2**attempt) + random.uniform(0, 0.5)
                             logger.warning(
-                                f"Chunk {chunk.chunk_id}: retriable error ({type(e).__name__}), "
-                                f"retrying in {delay:.1f}s (attempt {attempt + 1}/{_MAX_RETRIES + 1})"
+                                "Chunk : retriable error (), retrying in s (attempt /)",
+                                chunk_id=chunk.chunk_id,
+                                error_type=type(e).__name__,
+                                delay=delay,
+                                attempt_1=attempt + 1,
+                                max_retries_1=_MAX_RETRIES + 1,
                             )
                             await asyncio.sleep(delay)
                             continue
                         if _is_retriable_error(e):
                             logger.error(
-                                f"Chunk {chunk.chunk_id}: exhausted {_MAX_RETRIES + 1} attempts, "
-                                f"last error: {type(e).__name__}: {e}"
+                                "Chunk : exhausted attempts, last error",
+                                chunk_id=chunk.chunk_id,
+                                max_retries_1=_MAX_RETRIES + 1,
+                                error_type=type(e).__name__,
+                                error=str(e),
                             )
                         else:
-                            logger.error(f"Failed to contextualize chunk {chunk.chunk_id}: {type(e).__name__}: {e}")
+                            logger.error(
+                                "Failed to contextualize chunk",
+                                chunk_id=chunk.chunk_id,
+                                error_type=type(e).__name__,
+                                error=str(e),
+                            )
                         return _ChunkContextResult.FAILED
 
                 return _ChunkContextResult.FAILED
@@ -1704,7 +1735,7 @@ class OpenAIVectorStoreMixin(ABC):
         if fail_count > 0:
             if fail_count == total:
                 raise RuntimeError(f"Failed to contextualize any chunks for model {model_id}")
-            logger.warning(f"Contextual retrieval partially failed: {fail_count}/{total} chunks failed")
+            logger.warning("Contextual retrieval partially failed: / chunks failed", fail_count=fail_count, total=total)
 
         if empty_count > 0:
             if empty_count == total and fail_count == 0:
@@ -1712,7 +1743,9 @@ class OpenAIVectorStoreMixin(ABC):
                     f"Failed to generate context using model {model_id}: empty context for all {total} chunks. "
                     "Verify the model supports instruction-following and the prompt template is appropriate."
                 )
-            logger.warning(f"Contextual retrieval: {empty_count}/{total} chunks received empty context")
+            logger.warning(
+                "Contextual retrieval: / chunks received empty context", empty_count=empty_count, total=total
+            )
 
         if fail_count == 0 and empty_count == 0:
-            logger.info(f"Successfully contextualized all {total} chunks")
+            logger.info("Successfully contextualized all chunks", total=total)

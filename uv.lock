@@ -2084,6 +2084,7 @@ dependencies = [
     { name = "rich" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "starlette" },
+    { name = "structlog" },
     { name = "termcolor" },
     { name = "tiktoken" },
     { name = "tornado" },
@@ -2149,7 +2150,7 @@ test = [
     { name = "datasets" },
     { name = "elasticsearch" },
     { name = "mcp" },
-    { name = "milvus-lite" },
+    { name = "milvus-lite", marker = "platform_machine == 'aarch64' or platform_machine == 'arm64' or platform_machine == 'x86_64'" },
     { name = "psycopg2-binary" },
     { name = "pymilvus" },
     { name = "pypdf" },
@@ -2227,7 +2228,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "jsonschema" },
     { name = "llama-stack-api", editable = "src/llama_stack_api" },
-    { name = "llama-stack-client", marker = "extra == 'client'", specifier = ">=0.6.0" },
+    { name = "llama-stack-client", marker = "extra == 'client'", specifier = ">=0.6.1" },
     { name = "mcp", specifier = ">=1.23.0" },
     { name = "numpy", specifier = ">=2.3.2" },
     { name = "oci", specifier = ">=2.165.0" },
@@ -2246,6 +2247,7 @@ requires-dist = [
     { name = "rich" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.41" },
     { name = "starlette", specifier = ">=0.49.1" },
+    { name = "structlog", specifier = ">=24.1.0" },
     { name = "termcolor" },
     { name = "tiktoken" },
     { name = "tornado", specifier = ">=6.5.3" },
@@ -2305,7 +2307,7 @@ test = [
     { name = "datasets", specifier = ">=4.0.0" },
     { name = "elasticsearch", specifier = ">=8.16.0,<9.0.0" },
     { name = "mcp", specifier = ">=1.23.0" },
-    { name = "milvus-lite", specifier = ">=2.5.0" },
+    { name = "milvus-lite", marker = "platform_machine == 'aarch64' or platform_machine == 'arm64' or platform_machine == 'x86_64'", specifier = ">=2.5.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
     { name = "pymilvus", specifier = ">=2.6.2" },
     { name = "pypdf", specifier = ">=6.7.2" },
@@ -2326,7 +2328,7 @@ type-checking = [
     { name = "datasets" },
     { name = "fairscale" },
     { name = "faiss-cpu" },
-    { name = "llama-stack-client", specifier = ">=0.6.0" },
+    { name = "llama-stack-client", specifier = ">=0.6.1" },
     { name = "lm-format-enforcer" },
     { name = "mcp", specifier = ">=1.23.0" },
     { name = "nest-asyncio" },
@@ -2394,7 +2396,7 @@ requires-dist = [
 
 [[package]]
 name = "llama-stack-client"
-version = "0.6.0"
+version = "0.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -2413,9 +2415,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b7/e9/62dc71e7d6003d9b56a1e632445065f55687c891e62eff1636e10b5dd629/llama_stack_client-0.6.0.tar.gz", hash = "sha256:3290aac36dcafbd1bc0baaf995522e2037f57056672b5a1516af112a4210f3ea", size = 368695, upload-time = "2026-03-11T15:04:19.267Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/19/01/47b32f2fb003b7f3fc24a401cd7b091892025f626dd07661647f64e3df68/llama_stack_client-0.6.1.tar.gz", hash = "sha256:13dabd74c29d5159cdcfca5a9e6f99c99f08aa688fa8403d6c5f6042b61519d2", size = 368690, upload-time = "2026-03-30T13:11:39.597Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/83/a3/33d3e066a320a993b6f9cca9c8efe8da7deb2045df61235d327d0a05b25f/llama_stack_client-0.6.0-py3-none-any.whl", hash = "sha256:7e514a6ffd92f237aceb062dadc4db44e24a3cd9c4ea35e25173d1e0739beb8e", size = 392001, upload-time = "2026-03-11T15:04:17.772Z" },
+    { url = "https://files.pythonhosted.org/packages/57/bd/da2f43993b9b753f0465548b17efbbee492a6980fdd5e14fadf8566cdb1f/llama_stack_client-0.6.1-py3-none-any.whl", hash = "sha256:47aa4f47b591ffbd35b7be946552c4198006daaf57505898372d7bc7c1df510f", size = 391998, upload-time = "2026-03-30T13:11:38.067Z" },
 ]
 
 [[package]]
@@ -5406,6 +5408,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5e/27/72dc451cdaef1714fd0d75cc430e50a06c12c9046295fdf1f94af1b766eb/streamlit-option-menu-0.4.0.tar.gz", hash = "sha256:48ec69d59e547fa2fa4bfae001620df8af56a80de2f765ddbb9fcbfb84017129", size = 827290, upload-time = "2024-10-09T14:51:01.685Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fd/52/2f525ad4262dc83d67297f69ec5afcee1438b9e9ae22aa318396725ddbed/streamlit_option_menu-0.4.0-py3-none-any.whl", hash = "sha256:a55fc7554047b6db371595af2182e435b8a2c715ee6124e8543685bd4670b07e", size = 829255, upload-time = "2024-10-09T14:50:59.707Z" },
+]
+
+[[package]]
+name = "structlog"
+version = "25.5.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ef/52/9ba0f43b686e7f3ddfeaa78ac3af750292662284b3661e91ad5494f21dbc/structlog-25.5.0.tar.gz", hash = "sha256:098522a3bebed9153d4570c6d0288abf80a031dfdb2048d59a49e9dc2190fc98", size = 1460830, upload-time = "2025-10-27T08:28:23.028Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a8/45/a132b9074aa18e799b891b91ad72133c98d8042c70f6240e4c5f9dabee2f/structlog-25.5.0-py3-none-any.whl", hash = "sha256:a8453e9b9e636ec59bd9e79bbd4a72f025981b3ba0f5837aebf48f02f37a7f9f", size = 72510, upload-time = "2025-10-27T08:28:21.535Z" },
 ]
 
 [[package]]
