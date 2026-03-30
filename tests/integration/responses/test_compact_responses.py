@@ -8,6 +8,15 @@ import pytest
 from llama_stack_client import LlamaStackClient
 
 
+@pytest.fixture(autouse=True)
+def _skip_compact_tests_for_watsonx(request):
+    """Skip compact tests for WatsonX — no recordings available yet."""
+    if "text_model_id" in request.fixturenames:
+        text_model_id = request.getfixturevalue("text_model_id")
+        if text_model_id and text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX compact test recordings not available yet")
+
+
 class TestCompactResponses:
     """Tests for POST /v1/responses/compact endpoint."""
 
