@@ -1221,10 +1221,11 @@ class OpenAIResponsesImpl:
             else:
                 all_input = list(previous_response.input) + list(previous_response.output)
 
-            # Use stored messages when available for full conversation context.
-            # previous_response.input only contains the last turn when conversation= was used,
-            # but .messages has the complete chat history across all turns.
-            if previous_response.messages:
+            # Use stored messages for full conversation context when the caller also
+            # provides new input. In conversation= mode, .input only contains the last
+            # turn's items while .messages has the complete chat history. When input is
+            # None, .input + .output (set above) already captures the full context.
+            if previous_response.messages and input is not None:
                 message_adapter = TypeAdapter(list[OpenAIMessageParam])
                 resolved_messages = message_adapter.validate_python(previous_response.messages)
         elif input is not None:
