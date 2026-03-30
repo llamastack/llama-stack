@@ -100,11 +100,16 @@ The `reasoning` object in the output of Responses works for inference providers 
 
 ### Service Tier
 
-**Status:** Not Implemented
+**Status:** Implemented (Merged)
 
-**Issue:** [#3550](https://github.com/llamastack/llama-stack/issues/3550)
+**Issues:** [#3550](https://github.com/llamastack/llama-stack/issues/3550), [#4705](https://github.com/llamastack/llama-stack/issues/4705)
+**PR:** [#4816](https://github.com/llamastack/llama-stack/pull/4816)
 
-Responses has a field `service_tier` that can be used to prioritize access to inference resources.  Not all inference providers have such a concept, but Llama Stack pass through this value for those providers that do.  Currently it does not.
+The `service_tier` parameter is now fully supported in the Responses API. When provided, Llama Stack passes this value through to inference providers that support service tier prioritization (such as OpenAI). Providers that do not support this parameter safely ignore it with a warning, ensuring no errors occur.
+
+**Supported values:** `auto`, `default`, `flex`
+
+See integration tests in `tests/integration/responses/test_openai_responses.py` for usage examples.
 
 ---
 
