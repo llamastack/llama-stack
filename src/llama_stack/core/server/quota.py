@@ -6,6 +6,7 @@
 
 import time
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from starlette.types import ASGIApp, Receive, Scope, Send
 
@@ -56,7 +57,7 @@ class QuotaMiddleware:
                 )
         return self.kv
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> Any:
         if scope["type"] == "http":
             # pick key & limit based on auth
             auth_id = scope.get("authenticated_client_id")
@@ -98,7 +99,7 @@ class QuotaMiddleware:
 
         return await self.app(scope, receive, send)
 
-    async def _send_error(self, send: Send, status: int, message: str):
+    async def _send_error(self, send: Send, status: int, message: str) -> None:
         await send(
             {
                 "type": "http.response.start",
