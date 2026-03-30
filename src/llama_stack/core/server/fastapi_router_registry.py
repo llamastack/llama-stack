@@ -15,13 +15,17 @@ External APIs can also provide a `create_router` function in their module
 """
 
 import importlib
+import importlib.util
 from collections.abc import Callable
 from typing import Any, cast
 
 from fastapi import APIRouter
 from fastapi.routing import APIRoute
 
+from llama_stack.log import get_logger
 from llama_stack_api.datatypes import Api, ExternalApiSpec
+
+logger = get_logger(__name__, category="core")
 
 # Api enum values that don't match their package name in llama_stack_api
 _API_TO_PACKAGE: dict[str, str] = {
@@ -42,13 +46,22 @@ def _discover_router_factories() -> dict[str, Callable[[Any], APIRouter]]:
     for api in Api:
         package_name = _API_TO_PACKAGE.get(api.value, api.value)
         module_path = f"llama_stack_api.{package_name}.fastapi_routes"
+        # Check if the module exists before importing — a missing module is
+        # expected (not all APIs have routers), but a broken import is a bug
+        # that should be surfaced.
+        try:
+            spec = importlib.util.find_spec(module_path)
+        except (ModuleNotFoundError, ValueError):
+            continue
+        if spec is None:
+            continue
         try:
             module = importlib.import_module(module_path)
             create_router = getattr(module, "create_router", None)
             if create_router is not None:
                 factories[api.value] = create_router
-        except (ImportError, ModuleNotFoundError):
-            pass
+        except Exception:
+            logger.warning("Failed to import router module", module=module_path, exc_info=True)
     return factories
 
 
@@ -69,8 +82,8 @@ def register_external_api_routers(external_apis: dict[Api, ExternalApiSpec]) -> 
             create_router = getattr(module, "create_router", None)
             if create_router is not None:
                 _ROUTER_FACTORIES[api.value] = create_router
-        except (ImportError, ModuleNotFoundError):
-            pass
+        except Exception:
+            logger.warning("Failed to import external API router", api=api.value, module=api_spec.module, exc_info=True)
 
 
 def build_fastapi_router(api: "Api", impl: Any) -> APIRouter | None:

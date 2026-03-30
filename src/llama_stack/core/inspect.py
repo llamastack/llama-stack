@@ -63,16 +63,6 @@ class DistributionInspectImpl(Inspect):
         def _get_provider_types(api: Api) -> list[str]:
             if api.value in ["providers", "inspect"]:
                 return []  # These APIs don't have "real" providers — they're internal to the stack
-
-            # For routing table APIs, look up providers from their router API
-            # (e.g., benchmarks -> eval, models -> inference, etc.)
-            from llama_stack.core.distribution import builtin_automatically_routed_apis
-
-            for auto_routed in builtin_automatically_routed_apis():
-                if auto_routed.routing_table_api == api:
-                    providers = config.providers.get(auto_routed.router_api.value, [])
-                    return [p.provider_type for p in providers] if providers else []
-
             providers = config.providers.get(api.value, [])
             return [p.provider_type for p in providers] if providers else []
 
