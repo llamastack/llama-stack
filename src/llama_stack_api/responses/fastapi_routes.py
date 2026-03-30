@@ -17,7 +17,7 @@ import logging  # allow-direct-logging
 from collections.abc import AsyncIterator
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query
+from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -50,6 +50,63 @@ from .models import (
 )
 
 logger = logging.LoggerAdapter(logging.getLogger(__name__), {"category": "agents"})
+
+
+def _parse_form_value(value: str) -> Any:
+    """Try to parse a form value as JSON, falling back to the raw string."""
+    try:
+        return json.loads(value)
+    except ValueError:
+        return value
+
+
+def _build_form_data_dict(form_data: Any) -> dict[str, Any]:
+    """Build a dict from form data, collecting repeated keys into lists."""
+    data: dict[str, Any] = {}
+    for key, value in form_data.multi_items():
+        parsed = _parse_form_value(value) if isinstance(value, str) else value
+        if key in data:
+            # Convert to list on second occurrence, append on subsequent
+            existing = data[key]
+            if isinstance(existing, list):
+                existing.append(parsed)
+            else:
+                data[key] = [existing, parsed]
+        else:
+            data[key] = parsed
+    return data
+
+
+class FormURLEncodedRoute(ExceptionTranslatingRoute):
+    """Route class that converts form-urlencoded bodies to JSON before FastAPI parses them.
+
+    This allows Body(...) to handle both JSON and form-urlencoded requests transparently,
+    preserving FastAPI's automatic OpenAPI schema generation.
+    """
+
+    def get_route_handler(self) -> Any:
+        original = super().get_route_handler()
+
+        async def handler(request: Request) -> Response:
+            content_type = request.headers.get("content-type", "").split(";")[0].strip()
+            if content_type == "application/x-www-form-urlencoded":
+                form_data = await request.form()
+                data = _build_form_data_dict(form_data)
+                # Replace body with JSON so FastAPI's Body() parser works
+                request._body = json.dumps(data).encode()
+                # Update content-type so FastAPI parses as JSON
+                request.scope["headers"] = [
+                    (b"content-type", b"application/json") if k == b"content-type" else (k, v)
+                    for k, v in request.scope["headers"]
+                ]
+                # Clear cached headers/form so Starlette re-reads from scope
+                for attr in ("_headers", "_form"):
+                    if hasattr(request, attr):
+                        delattr(request, attr)
+            resp: Response = await original(request)
+            return resp
+
+        return handler
 
 
 def create_sse_event(data: Any) -> str:
@@ -157,7 +214,7 @@ def create_router(impl: Responses) -> APIRouter:
         prefix=f"/{LLAMA_STACK_API_V1}",
         tags=["Responses"],
         responses=standard_responses,
-        route_class=ExceptionTranslatingRoute,
+        route_class=FormURLEncodedRoute,
     )
 
     @router.get(
@@ -183,6 +240,13 @@ def create_router(impl: Responses) -> APIRouter:
                 "content": {
                     "application/json": {"schema": {"$ref": "#/components/schemas/OpenAIResponseObject"}},
                     "text/event-stream": {"schema": {"$ref": "#/components/schemas/OpenAIResponseObjectStream"}},
+                },
+            }
+        },
+        openapi_extra={
+            "requestBody": {
+                "content": {
+                    "application/x-www-form-urlencoded": {},
                 },
             }
         },
