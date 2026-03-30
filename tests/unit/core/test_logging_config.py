@@ -232,16 +232,16 @@ class TestLoggingConfigIntegration:
         }
         setup_logging(category_levels)
 
-        # Act - get loggers for each category
-        core_logger = get_logger("test.core", category="core")
-        server_logger = get_logger("test.server", category="server")
-        router_logger = get_logger("test.router", category="router")
+        # Act - get loggers for each category (calls register the stdlib logger + level)
+        get_logger("test.core", category="core")
+        get_logger("test.server", category="server")
+        get_logger("test.router", category="router")
 
-        # Assert - verify effective log levels
-        # Note: get_logger returns a LoggerAdapter, so we need to get the underlying logger
-        assert core_logger.logger.level == logging.DEBUG
-        assert server_logger.logger.level == logging.WARNING
-        assert router_logger.logger.level == logging.INFO
+        # Assert - verify effective log levels on the underlying stdlib loggers
+        # get_logger returns a structlog BoundLogger; check the stdlib logger directly
+        assert logging.getLogger("test.core").level == logging.DEBUG
+        assert logging.getLogger("test.server").level == logging.WARNING
+        assert logging.getLogger("test.router").level == logging.INFO
 
     def test_setup_logging_updates_preexisting_loggers(self):
         """
@@ -254,14 +254,14 @@ class TestLoggingConfigIntegration:
         # Arrange - reset to defaults, then create loggers BEFORE calling
         # setup_logging with custom levels (simulates module-level imports)
         setup_logging({"core": logging.INFO})
-        auth_logger = get_logger("test.preexisting.auth", category="core::auth")
-        server_logger = get_logger("test.preexisting.server", category="core::server")
-        assert auth_logger.logger.level == logging.INFO
-        assert server_logger.logger.level == logging.INFO
+        get_logger("test.preexisting.auth", category="core::auth")
+        get_logger("test.preexisting.server", category="core::server")
+        assert logging.getLogger("test.preexisting.auth").level == logging.INFO
+        assert logging.getLogger("test.preexisting.server").level == logging.INFO
 
         # Act - call setup_logging with custom levels, as create_app() does
         setup_logging({"core": logging.DEBUG})
 
         # Assert - pre-existing loggers must now reflect the updated level
-        assert auth_logger.logger.level == logging.DEBUG
-        assert server_logger.logger.level == logging.DEBUG
+        assert logging.getLogger("test.preexisting.auth").level == logging.DEBUG
+        assert logging.getLogger("test.preexisting.server").level == logging.DEBUG
