@@ -13,6 +13,8 @@ from llama_stack_api import json_schema_type
 
 
 class OpenAIProviderDataValidator(BaseModel):
+    """Validates provider-specific request data for OpenAI inference."""
+
     openai_api_key: SecretStr | None = Field(
         default=None,
         description="API key for OpenAI models",
@@ -21,6 +23,8 @@ class OpenAIProviderDataValidator(BaseModel):
 
 @json_schema_type
 class OpenAIConfig(RemoteInferenceProviderConfig):
+    """Configuration for the OpenAI inference provider."""
+
     base_url: HttpUrl | None = Field(
         default=HttpUrl("https://api.openai.com/v1"),
         description="Base URL for OpenAI API",

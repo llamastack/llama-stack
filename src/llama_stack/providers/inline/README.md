@@ -4,7 +4,7 @@ In-process provider implementations that run locally within the Llama Stack serv
 
 ## Directory Structure
 
-```
+```text
 inline/
   agents/              # Agent orchestration (meta-reference: responses API, tool calling)
   batches/             # Batch processing for async job execution

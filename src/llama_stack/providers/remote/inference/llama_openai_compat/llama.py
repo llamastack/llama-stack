@@ -20,6 +20,8 @@ logger = get_logger(name=__name__, category="inference::llama_openai_compat")
 
 
 class LlamaCompatInferenceAdapter(OpenAIMixin):
+    """Inference adapter for Llama models using an OpenAI-compatible API endpoint."""
+
     config: LlamaCompatConfig
 
     provider_data_api_key_field: str = "llama_api_key"

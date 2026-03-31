@@ -61,7 +61,6 @@ def _get_config_for_provider(provider_spec: ProviderSpec) -> dict[str, Any]:
 ENABLED_INFERENCE_PROVIDERS = [
     "ollama",
     "vllm",
-    "tgi",
     "fireworks",
     "together",
     "gemini",
@@ -79,7 +78,6 @@ ENABLED_INFERENCE_PROVIDERS = [
 INFERENCE_PROVIDER_IDS = {
     "ollama": "${env.OLLAMA_URL:+ollama}",
     "vllm": "${env.VLLM_URL:+vllm}",
-    "tgi": "${env.TGI_URL:+tgi}",
     "cerebras": "${env.CEREBRAS_API_KEY:+cerebras}",
     "nvidia": "${env.NVIDIA_API_KEY:+nvidia}",
     "vertexai": "${env.VERTEX_AI_PROJECT:+vertexai}",
@@ -88,6 +86,11 @@ INFERENCE_PROVIDER_IDS = {
 
 
 def get_remote_inference_providers() -> list[Provider]:
+    """Build the list of remote inference providers enabled in the starter distribution.
+
+    Returns:
+        A list of Provider instances for enabled remote inference backends.
+    """
     # Filter out inline providers and some others - the starter distro only exposes remote providers
     remote_providers = [
         provider
@@ -116,6 +119,14 @@ def get_remote_inference_providers() -> list[Provider]:
 
 
 def get_distribution_template(name: str = "starter") -> DistributionTemplate:
+    """Build the starter distribution template with multiple remote providers.
+
+    Args:
+        name: the distribution name.
+
+    Returns:
+        A DistributionTemplate configured for CPU-only environments with popular remote providers.
+    """
     remote_inference_providers = get_remote_inference_providers()
 
     providers = {
@@ -141,7 +152,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::llama-guard"),
             BuildProvider(provider_type="inline::code-scanner"),
         ],
-        "agents": [BuildProvider(provider_type="inline::builtin")],
+        "responses": [BuildProvider(provider_type="inline::builtin")],
         "eval": [BuildProvider(provider_type="inline::builtin")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),

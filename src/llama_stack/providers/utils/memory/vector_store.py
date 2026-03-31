@@ -65,7 +65,16 @@ log = get_logger(name=__name__, category="providers::utils")
 
 @cache
 def _get_encoding(name: str) -> tiktoken.Encoding:
-    return tiktoken.get_encoding(name)
+    try:
+        return tiktoken.get_encoding(name)
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to load tiktoken encoding '{name}'. "
+            "In air-gapped or network-restricted environments, the encoding must be pre-cached "
+            "at image build time. Set TIKTOKEN_CACHE_DIR to a directory containing the cached "
+            f"encoding file, or ensure the container image was built with the encoding pre-cached. "
+            f"Original error: {e}"
+        ) from e
 
 
 # Constants for reranker types
@@ -75,6 +84,14 @@ RERANKER_TYPE_NORMALIZED = "normalized"
 
 
 def parse_pdf(data: bytes) -> str:
+    """Extract text content from PDF binary data.
+
+    Args:
+        data: raw PDF bytes
+
+    Returns:
+        Concatenated text from all pages
+    """
     # For PDF and DOC/DOCX files, we can't reliably convert to string
     pdf_bytes = io.BytesIO(data)
     pdf_reader = PdfReader(pdf_bytes)
@@ -82,6 +99,16 @@ def parse_pdf(data: bytes) -> str:
 
 
 def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, encoding: str | None = None) -> str:
+    """Convert raw data to a string based on its MIME type.
+
+    Args:
+        data: raw bytes or string content
+        mime_type: MIME type of the data
+        encoding: optional character encoding override
+
+    Returns:
+        Extracted text content as a string
+    """
     if isinstance(data, str):
         return data
 
@@ -199,6 +226,8 @@ def _validate_embedding(embedding: EmbeddingSequence, index: int, expected_dimen
 
 
 class EmbeddingIndex(ABC):
+    """Abstract base class for vector embedding storage and retrieval backends."""
+
     @abstractmethod
     async def add_chunks(self, embedded_chunks: list[EmbeddedChunk]):
         raise NotImplementedError()
@@ -239,6 +268,8 @@ class EmbeddingIndex(ABC):
 
 @dataclass
 class VectorStoreWithIndex:
+    """Associates a VectorStore with its EmbeddingIndex and inference API for chunk operations."""
+
     vector_store: VectorStore
     index: EmbeddingIndex
     inference_api: Inference

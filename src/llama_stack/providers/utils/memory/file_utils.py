@@ -12,6 +12,14 @@ from llama_stack_api import URL
 
 
 def data_url_from_file(file_path: str) -> URL:
+    """Create a data URL from a local file path.
+
+    Args:
+        file_path: path to the file on disk
+
+    Returns:
+        A URL object containing the base64-encoded data URL
+    """
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
 

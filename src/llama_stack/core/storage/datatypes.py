@@ -17,6 +17,8 @@ from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 
 
 class StorageBackendType(StrEnum):
+    """Supported storage backend types for key-value and SQL stores."""
+
     KV_REDIS = "kv_redis"
     KV_SQLITE = "kv_sqlite"
     KV_POSTGRES = "kv_postgres"
@@ -26,6 +28,8 @@ class StorageBackendType(StrEnum):
 
 
 class CommonConfig(BaseModel):
+    """Base configuration shared by all key-value store backends."""
+
     namespace: str | None = Field(
         default=None,
         description="All keys will be prefixed with this namespace",
@@ -33,6 +37,8 @@ class CommonConfig(BaseModel):
 
 
 class RedisKVStoreConfig(CommonConfig):
+    """Configuration for the Redis key-value store backend."""
+
     type: Literal[StorageBackendType.KV_REDIS] = StorageBackendType.KV_REDIS
     host: str = "localhost"
     port: int = 6379
@@ -46,7 +52,7 @@ class RedisKVStoreConfig(CommonConfig):
         return ["redis"]
 
     @classmethod
-    def sample_run_config(cls):
+    def sample_run_config(cls) -> dict[str, str]:
         return {
             "type": StorageBackendType.KV_REDIS.value,
             "host": "${env.REDIS_HOST:=localhost}",
@@ -55,6 +61,8 @@ class RedisKVStoreConfig(CommonConfig):
 
 
 class SqliteKVStoreConfig(CommonConfig):
+    """Configuration for the SQLite key-value store backend."""
+
     type: Literal[StorageBackendType.KV_SQLITE] = StorageBackendType.KV_SQLITE
     db_path: str = Field(
         description="File path for the sqlite database",
@@ -65,7 +73,7 @@ class SqliteKVStoreConfig(CommonConfig):
         return ["aiosqlite"]
 
     @classmethod
-    def sample_run_config(cls, __distro_dir__: str, db_name: str = "kvstore.db"):
+    def sample_run_config(cls, __distro_dir__: str, db_name: str = "kvstore.db") -> dict[str, str]:
         return {
             "type": StorageBackendType.KV_SQLITE.value,
             "db_path": "${env.SQLITE_STORE_DIR:=" + __distro_dir__ + "}/" + db_name,
@@ -73,6 +81,8 @@ class SqliteKVStoreConfig(CommonConfig):
 
 
 class PostgresKVStoreConfig(CommonConfig):
+    """Configuration for the PostgreSQL key-value store backend."""
+
     type: Literal[StorageBackendType.KV_POSTGRES] = StorageBackendType.KV_POSTGRES
     host: str = "localhost"
     port: int | str = 5432
@@ -84,7 +94,7 @@ class PostgresKVStoreConfig(CommonConfig):
     table_name: str = "llamastack_kvstore"
 
     @classmethod
-    def sample_run_config(cls, table_name: str = "llamastack_kvstore", **kwargs):
+    def sample_run_config(cls, table_name: str = "llamastack_kvstore", **kwargs: object) -> dict[str, str]:
         return {
             "type": StorageBackendType.KV_POSTGRES.value,
             "host": "${env.POSTGRES_HOST:=localhost}",
@@ -117,6 +127,8 @@ class PostgresKVStoreConfig(CommonConfig):
 
 
 class MongoDBKVStoreConfig(CommonConfig):
+    """Configuration for the MongoDB key-value store backend."""
+
     type: Literal[StorageBackendType.KV_MONGODB] = StorageBackendType.KV_MONGODB
     host: str = "localhost"
     port: int = 27017
@@ -130,7 +142,7 @@ class MongoDBKVStoreConfig(CommonConfig):
         return ["pymongo"]
 
     @classmethod
-    def sample_run_config(cls, collection_name: str = "llamastack_kvstore"):
+    def sample_run_config(cls, collection_name: str = "llamastack_kvstore") -> dict[str, str]:
         return {
             "type": StorageBackendType.KV_MONGODB.value,
             "host": "${env.MONGODB_HOST:=localhost}",
@@ -143,6 +155,8 @@ class MongoDBKVStoreConfig(CommonConfig):
 
 
 class SqlAlchemySqlStoreConfig(BaseModel):
+    """Base configuration for SQLAlchemy-based SQL store backends."""
+
     pool_pre_ping: bool = True
 
     @property
@@ -156,6 +170,8 @@ class SqlAlchemySqlStoreConfig(BaseModel):
 
 
 class SqliteSqlStoreConfig(SqlAlchemySqlStoreConfig):
+    """Configuration for the SQLite SQL store backend."""
+
     type: Literal[StorageBackendType.SQL_SQLITE] = StorageBackendType.SQL_SQLITE
     db_path: str = Field(
         description="Database path, e.g. ~/.llama/distributions/ollama/sqlstore.db",
@@ -166,7 +182,7 @@ class SqliteSqlStoreConfig(SqlAlchemySqlStoreConfig):
         return "sqlite+aiosqlite:///" + Path(self.db_path).expanduser().as_posix()
 
     @classmethod
-    def sample_run_config(cls, __distro_dir__: str, db_name: str = "sqlstore.db"):
+    def sample_run_config(cls, __distro_dir__: str, db_name: str = "sqlstore.db") -> dict[str, str]:
         return {
             "type": StorageBackendType.SQL_SQLITE.value,
             "db_path": "${env.SQLITE_STORE_DIR:=" + __distro_dir__ + "}/" + db_name,
@@ -178,6 +194,8 @@ class SqliteSqlStoreConfig(SqlAlchemySqlStoreConfig):
 
 
 class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
+    """Configuration for the PostgreSQL SQL store backend."""
+
     type: Literal[StorageBackendType.SQL_POSTGRES] = StorageBackendType.SQL_POSTGRES
     host: str = "localhost"
     port: int | str = 5432
@@ -197,7 +215,7 @@ class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
         return super().pip_packages() + ["asyncpg"]
 
     @classmethod
-    def sample_run_config(cls, **kwargs):
+    def sample_run_config(cls, **kwargs: object) -> dict[str, str]:
         return {
             "type": StorageBackendType.SQL_POSTGRES.value,
             "host": "${env.POSTGRES_HOST:=localhost}",
@@ -272,6 +290,8 @@ class ResponsesStoreReference(InferenceStoreReference):
 
 
 class ServerStoresConfig(BaseModel):
+    """Configuration mapping logical store names to their backend references."""
+
     metadata: KVStoreReference | None = Field(
         default=KVStoreReference(
             backend="kv_default",
@@ -320,6 +340,8 @@ def _default_backends() -> dict[str, StorageBackendConfig]:
 
 
 class StorageConfig(BaseModel):
+    """Top-level storage configuration defining backends and store references."""
+
     # default_factory resolves SQLITE_STORE_DIR at construction time via
     # os.environ.get() instead of embedding literal ${env.SQLITE_STORE_DIR:=...}
     # strings that would bypass replace_env_vars() and crash on read-only

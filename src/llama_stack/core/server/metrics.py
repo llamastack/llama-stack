@@ -56,7 +56,6 @@ class RouteInfo:
 
 def build_route_to_api_map(
     router_factories: dict,
-    api_routes: dict,
     impls: dict,
 ) -> dict[str, RouteInfo]:
     """Build a mapping from route path patterns to API and method names.
@@ -70,7 +69,6 @@ def build_route_to_api_map(
 
     Args:
         router_factories: Dict of api_name -> router factory function
-        api_routes: Dict of Api -> list of (Route, WebMethod) from legacy webmethod APIs
         impls: Dict of Api -> implementation instances
 
     Returns:
@@ -83,7 +81,6 @@ def build_route_to_api_map(
 
     route_to_api: dict[str, RouteInfo] = {}
 
-    # Process FastAPI router routes
     for api_name in router_factories:
         api = Api(api_name)
         if api not in impls:
@@ -97,17 +94,6 @@ def build_route_to_api_map(
                         if http_method == "HEAD":
                             continue
                         route_to_api[f"{http_method}:{route.path}"] = info
-
-    # Process legacy webmethod routes
-    for api, routes in api_routes.items():
-        if api.value in router_factories:
-            continue
-        for route, _ in routes:
-            info = RouteInfo(api.value, route.name or "unknown")
-            for http_method in route.methods or {"GET"}:
-                if http_method == "HEAD":
-                    continue
-                route_to_api[f"{http_method}:{route.path}"] = info
 
     return route_to_api
 

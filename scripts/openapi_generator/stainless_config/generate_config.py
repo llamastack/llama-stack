@@ -410,8 +410,6 @@ ALL_RESOURCES = {
         "methods": {
             "list": {"paginated": False, "endpoint": "get /v1/models"},
             "retrieve": "get /v1/models/{model_id}",
-            "register": "post /v1/models",
-            "unregister": "delete /v1/models/{model_id}",
         },
         "subresources": {"openai": {"methods": {"list": {"paginated": False, "endpoint": "get /v1/models"}}}},
     },

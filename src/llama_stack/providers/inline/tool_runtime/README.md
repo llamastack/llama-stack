@@ -4,7 +4,7 @@ Inline tool runtime providers that execute tools within the server process.
 
 ## Directory Structure
 
-```
+```text
 tool_runtime/
   rag/                 # RAG (Retrieval-Augmented Generation) tool runtime
     __init__.py        # Provider factory (get_provider_impl)

@@ -16,19 +16,20 @@ from collections import defaultdict
 from datetime import datetime
 from typing import cast
 
-from llama_stack.core.storage.datatypes import KVStoreReference, StorageBackendConfig
-from llama_stack_api.internal.kvstore import KVStore
-
-from .config import (
-    KVStoreConfig,
+from llama_stack.core.storage.datatypes import (
+    KVStoreReference,
     MongoDBKVStoreConfig,
     PostgresKVStoreConfig,
     RedisKVStoreConfig,
     SqliteKVStoreConfig,
+    StorageBackendConfig,
 )
+from llama_stack_api.internal.kvstore import KVStore
+
+from .config import KVStoreConfig
 
 
-def kvstore_dependencies():
+def kvstore_dependencies() -> list[str]:
     """
     Returns all possible kvstore dependencies for registry/provider specifications.
 
@@ -40,7 +41,9 @@ def kvstore_dependencies():
 
 
 class InmemoryKVStoreImpl(KVStore):
-    def __init__(self):
+    """In-memory key-value store implementation for testing and ephemeral usage."""
+
+    def __init__(self) -> None:
         self._store: dict[str, str] = {}
 
     async def initialize(self) -> None:
@@ -60,7 +63,7 @@ class InmemoryKVStoreImpl(KVStore):
         return [key for key in self._store.keys() if key >= start_key and key < end_key]
 
     async def delete(self, key: str) -> None:
-        del self._store[key]
+        self._store.pop(key, None)
 
     async def shutdown(self) -> None:
         self._store.clear()
@@ -86,6 +89,17 @@ def register_kvstore_backends(backends: dict[str, StorageBackendConfig]) -> None
 
 
 async def kvstore_impl(reference: KVStoreReference) -> KVStore:
+    """Get or create a KVStore instance for the given store reference.
+
+    Args:
+        reference: A reference specifying the backend name and namespace.
+
+    Returns:
+        An initialized KVStore instance for the referenced backend.
+
+    Raises:
+        ValueError: If the backend name is unknown or the backend type is unsupported.
+    """
     backend_name = reference.backend
     cache_key = (backend_name, reference.namespace)
 
@@ -108,15 +122,15 @@ async def kvstore_impl(reference: KVStoreReference) -> KVStore:
 
         impl: KVStore
         if isinstance(config, RedisKVStoreConfig):
-            from .redis import RedisKVStoreImpl
+            from .redis import RedisKVStoreImpl  # type: ignore[attr-defined]
 
             impl = RedisKVStoreImpl(config)
         elif isinstance(config, SqliteKVStoreConfig):
-            from .sqlite import SqliteKVStoreImpl
+            from .sqlite import SqliteKVStoreImpl  # type: ignore[attr-defined]
 
             impl = SqliteKVStoreImpl(config)
         elif isinstance(config, PostgresKVStoreConfig):
-            from .postgres import PostgresKVStoreImpl
+            from .postgres import PostgresKVStoreImpl  # type: ignore[attr-defined]
 
             impl = PostgresKVStoreImpl(config)
         elif isinstance(config, MongoDBKVStoreConfig):

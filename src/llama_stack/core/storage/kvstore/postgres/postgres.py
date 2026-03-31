@@ -19,6 +19,8 @@ log = get_logger(name=__name__, category="providers::utils")
 
 
 class PostgresKVStoreImpl(KVStore):
+    """PostgreSQL-backed key-value store implementation."""
+
     def __init__(self, config: PostgresKVStoreConfig):
         self.config = config
         self._conn: PGConnection | None = None

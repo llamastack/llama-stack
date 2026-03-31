@@ -11,7 +11,6 @@ from tqdm import tqdm
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.providers.utils.common.data_schema_validator import ColumnName
 from llama_stack_api import (
-    Agents,
     Benchmark,
     BenchmarksProtocolPrivate,
     DatasetIO,
@@ -30,6 +29,7 @@ from llama_stack_api import (
     OpenAICompletionRequestWithExtraBody,
     OpenAISystemMessageParam,
     OpenAIUserMessageParam,
+    Responses,
     RunEvalRequest,
     ScoreRequest,
     Scoring,
@@ -44,6 +44,8 @@ class BuiltinEvalImpl(
     Eval,
     BenchmarksProtocolPrivate,
 ):
+    """Built-in evaluation provider that runs benchmarks using inference, scoring, and datasets."""
+
     def __init__(
         self,
         config: BuiltinEvalConfig,
@@ -51,14 +53,14 @@ class BuiltinEvalImpl(
         datasets_api: Datasets,
         scoring_api: Scoring,
         inference_api: Inference,
-        agents_api: Agents,
+        responses_api: Responses,
     ) -> None:
         self.config = config
         self.datasetio_api = datasetio_api
         self.datasets_api = datasets_api
         self.scoring_api = scoring_api
         self.inference_api = inference_api
-        self.agents_api = agents_api
+        self.responses_api = responses_api
 
         # TODO: assume sync job, will need jobs API for async scheduling
         self.jobs = {}

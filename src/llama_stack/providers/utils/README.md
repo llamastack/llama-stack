@@ -4,7 +4,7 @@ Shared utilities used across multiple providers.
 
 ## Directory Structure
 
-```
+```text
 utils/
   inference/           # Inference utilities (OpenAI mixin, model registry, prompt adapter)
   bedrock/             # AWS Bedrock-specific utilities (should be moved into the bedrock provider)

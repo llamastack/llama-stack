@@ -20,6 +20,8 @@ logger = get_logger(__name__, category="core::registry")
 
 
 class DistributionRegistry(Protocol):
+    """Protocol for distribution registries that store and retrieve routable objects."""
+
     async def get_all(self) -> list[RoutableObjectWithProvider]: ...
 
     async def initialize(self) -> None: ...
@@ -54,13 +56,15 @@ def _parse_registry_values(values: list[str]) -> list[RoutableObjectWithProvider
             obj = pydantic.TypeAdapter(RoutableObjectWithProvider).validate_json(value)
             all_objects.append(obj)
         except pydantic.ValidationError as e:
-            logger.error(f"Error parsing registry value, raw value: {value}. Error: {e}")
+            logger.error("Error parsing registry value", raw_value=value, error=str(e))
             continue
 
     return all_objects
 
 
 class DiskDistributionRegistry(DistributionRegistry):
+    """KVStore-backed distribution registry that persists objects to disk."""
+
     def __init__(self, kvstore: KVStore):
         self.kvstore = kvstore
 
@@ -84,7 +88,13 @@ class DiskDistributionRegistry(DistributionRegistry):
         try:
             return pydantic.TypeAdapter(RoutableObjectWithProvider).validate_json(json_str)
         except pydantic.ValidationError as e:
-            logger.error(f"Error parsing registry value for {type}:{identifier}, raw value: {json_str}. Error: {e}")
+            logger.error(
+                "Error parsing registry value",
+                resource_type=type,
+                identifier=identifier,
+                raw_value=json_str,
+                error=str(e),
+            )
             return None
 
     async def update(self, obj: RoutableObjectWithProvider) -> RoutableObjectWithProvider:
@@ -117,7 +127,7 @@ class DiskDistributionRegistry(DistributionRegistry):
                     f"with conflicting field values: {conflicts}. "
                     "Unregister it first if you want to replace it."
                 )
-            logger.debug(f"Re-registration of {obj.type} '{obj.identifier}' is a no-op (subset match)")
+            logger.debug("Re-registration is a no-op (subset match)", obj_type=obj.type, identifier=obj.identifier)
             return True
 
         await self.kvstore.set(
@@ -131,6 +141,8 @@ class DiskDistributionRegistry(DistributionRegistry):
 
 
 class CachedDiskDistributionRegistry(DiskDistributionRegistry):
+    """Distribution registry with an in-memory cache layer over the disk-backed KVStore."""
+
     def __init__(self, kvstore: KVStore, cache_ttl_seconds: float = 5.0):
         super().__init__(kvstore)
         self.cache: dict[tuple[str, str], RoutableObjectWithProvider] = {}
@@ -252,6 +264,16 @@ class CachedDiskDistributionRegistry(DiskDistributionRegistry):
 async def create_dist_registry(
     metadata_store: KVStoreReference, distro_name: str, cache_ttl_seconds: float = 5.0
 ) -> tuple[CachedDiskDistributionRegistry, KVStore]:
+    """Create and initialize a cached distribution registry backed by a KVStore.
+
+    Args:
+        metadata_store: KVStore reference for storing registry metadata.
+        distro_name: Name of the distribution.
+        cache_ttl_seconds: Time-to-live for cache entries in seconds.
+
+    Returns:
+        A tuple of (initialized CachedDiskDistributionRegistry, underlying KVStore).
+    """
     # instantiate kvstore for storing and retrieving distribution metadata
     dist_kvstore = await kvstore_impl(metadata_store)
     dist_registry = CachedDiskDistributionRegistry(dist_kvstore, cache_ttl_seconds=cache_ttl_seconds)

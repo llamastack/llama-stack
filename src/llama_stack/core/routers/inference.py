@@ -75,7 +75,7 @@ class InferenceRouter(Inference):
             try:
                 await self.store.shutdown()
             except Exception as e:
-                logger.warning(f"Error during InferenceStore shutdown: {e}")
+                logger.warning("Error during InferenceStore shutdown", error=str(e))
 
     async def register_model(
         self,
@@ -86,7 +86,12 @@ class InferenceRouter(Inference):
         model_type: ModelType | None = None,
     ) -> None:
         logger.debug(
-            f"InferenceRouter.register_model: {model_id=} {provider_model_id=} {provider_id=} {metadata=} {model_type=}",
+            "InferenceRouter.register_model",
+            model_id=model_id,
+            provider_model_id=provider_model_id,
+            provider_id=provider_id,
+            metadata=metadata,
+            model_type=model_type,
         )
         request = RegisterModelRequest(
             model_id=model_id,
@@ -121,7 +126,7 @@ class InferenceRouter(Inference):
 
         # Check if provider exists
         if provider_id not in self.routing_table.impls_by_provider_id:
-            logger.warning(f"Provider {provider_id} not found for model {model_id}")
+            logger.warning("Provider not found for model", provider_id=provider_id, model_id=model_id)
             raise ModelNotFoundError(model_id)
 
         # Create a temporary model object for RBAC check
@@ -137,7 +142,9 @@ class InferenceRouter(Inference):
         user = get_authenticated_user()
         if not is_action_allowed(self.routing_table.policy, "read", temp_model, user):
             logger.debug(
-                f"Access denied to model '{model_id}' via fallback path for user {user.principal if user else 'anonymous'}"
+                "Access denied to model via fallback path for user",
+                model_id=model_id,
+                user=user.principal if user else "anonymous",
             )
             raise ModelNotFoundError(model_id)
 
@@ -156,7 +163,10 @@ class InferenceRouter(Inference):
         params: Annotated[OpenAICompletionRequestWithExtraBody, Body(...)],
     ) -> OpenAICompletion:
         logger.debug(
-            f"InferenceRouter.openai_completion: model={params.model}, stream={params.stream}, prompt={params.prompt}",
+            "InferenceRouter.openai_completion: model=, stream=, prompt",
+            model=params.model,
+            stream=params.stream,
+            prompt=params.prompt,
         )
         request_model_id = params.model
         provider, provider_resource_id = await self._get_model_provider(params.model, ModelType.llm)
@@ -174,7 +184,10 @@ class InferenceRouter(Inference):
         params: Annotated[OpenAIChatCompletionRequestWithExtraBody, Body(...)],
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         logger.debug(
-            f"InferenceRouter.openai_chat_completion: model={params.model}, stream={params.stream}, messages={params.messages}",
+            "InferenceRouter.openai_chat_completion: model=, stream=, messages",
+            model=params.model,
+            stream=params.stream,
+            messages=params.messages,
         )
         request_model_id = params.model
         provider, provider_resource_id = await self._get_model_provider(params.model, ModelType.llm)
@@ -222,7 +235,11 @@ class InferenceRouter(Inference):
         params: Annotated[OpenAIEmbeddingsRequestWithExtraBody, Body(...)],
     ) -> OpenAIEmbeddingsResponse:
         logger.debug(
-            f"InferenceRouter.openai_embeddings: model={params.model}, input_type={type(params.input)}, encoding_format={params.encoding_format}, dimensions={params.dimensions}",
+            "InferenceRouter.openai_embeddings: model=, input_type=, encoding_format=, dimensions",
+            model=params.model,
+            type_params_input=type(params.input),
+            encoding_format=params.encoding_format,
+            dimensions=params.dimensions,
         )
         request_model_id = params.model
         provider, provider_resource_id = await self._get_model_provider(params.model, ModelType.embedding)
@@ -432,5 +449,5 @@ class InferenceRouter(Inference):
                     model=fully_qualified_model_id,
                     object="chat.completion",
                 )
-                logger.debug(f"InferenceRouter.completion_response: {final_response}")
+                logger.debug("InferenceRouter.completion_response", final_response=final_response)
                 asyncio.create_task(self.store.store_chat_completion(final_response, messages))

@@ -34,6 +34,8 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 
 class ModelsRoutingTable(CommonRoutingTableImpl, Models):
+    """Routing table for managing model registrations, provider lookups, and dynamic model discovery."""
+
     listed_providers: set[str] = set()
 
     async def refresh(self) -> None:
@@ -47,11 +49,10 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                 models = await provider.list_models()
             except Exception as e:
                 if provider_id not in self.listed_providers:
-                    # Mark provider as listed to prevent repeated refresh attempts
                     self.listed_providers.add(provider_id)
-                    logger.warning(f"Model refresh skipped for provider {provider_id}")
+                    logger.warning("Model refresh skipped", provider_id=provider_id)
                 else:
-                    logger.warning(f"Model refresh failed for provider {provider_id}: {e}")
+                    logger.warning("Model refresh failed", provider_id=provider_id, error=str(e))
                 continue
 
             self.listed_providers.add(provider_id)
@@ -123,15 +124,21 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                         dynamic_models.append(model)
                     else:
                         logger.debug(
-                            f"Access denied to dynamic model '{model.identifier}' for user {user.principal if user else 'anonymous'}"
+                            "Access denied to dynamic model",
+                            model=model.identifier,
+                            user=user.principal if user else "anonymous",
                         )
 
                 logger.debug(
-                    f"Fetched {len(dynamic_models)} accessible models from provider {provider_id} using provider_data"
+                    "Fetched accessible models from provider using provider_data",
+                    count=len(dynamic_models),
+                    provider_id=provider_id,
                 )
 
             except Exception as e:
-                logger.debug(f"Failed to list models from provider {provider_id} with provider_data: {e}")
+                logger.debug(
+                    "Failed to list models from provider with provider_data", provider_id=provider_id, error=str(e)
+                )
                 continue
 
         return dynamic_models
@@ -299,7 +306,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                 model_ids[model.provider_resource_id] = model.identifier
                 continue
 
-            logger.debug(f"unregistering model {model.identifier}")
+            logger.debug("Unregistering model", model=model.identifier)
             await self.unregister_object(model)
 
         for model in models:
@@ -310,7 +317,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             if model.identifier == model.provider_resource_id:
                 model.identifier = f"{provider_id}/{model.provider_resource_id}"
 
-            logger.debug(f"registering model {model.identifier} ({model.provider_resource_id})")
+            logger.debug("Registering model", model=model.identifier, provider_resource_id=model.provider_resource_id)
             await self.register_object(
                 ModelWithOwner(
                     identifier=model.identifier,

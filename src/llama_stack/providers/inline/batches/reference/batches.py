@@ -86,6 +86,8 @@ class AsyncBytesIO:
 
 
 class BatchRequest(BaseModel):
+    """Represents a single request line within a batch processing file."""
+
     line_num: int
     custom_id: str
     method: str
@@ -147,7 +149,9 @@ class ReferenceBatchesImpl(Batches):
         if self._processing_tasks:
             # don't cancel tasks - just let them stop naturally on shutdown
             # cancelling would mark batches as "cancelled" in the database
-            logger.info(f"Shutdown initiated with {len(self._processing_tasks)} active batch processing tasks")
+            logger.info(
+                "Shutdown initiated with active batch processing tasks", active_tasks=len(self._processing_tasks)
+            )
 
     # TODO (SECURITY): this currently works w/ configured api keys, not with x-llamastack-provider-data or with user policy restrictions
     async def create_batch(
@@ -227,7 +231,7 @@ class ReferenceBatchesImpl(Batches):
                         "Either use a new idempotency key or ensure all parameters match the original request."
                     )
 
-                logger.info(f"Returning existing batch with ID: {batch_id}")
+                logger.info("Returning existing batch", batch_id=batch_id)
                 return existing_batch
             except BatchNotFoundError:
                 # Batch doesn't exist, continue with creation
@@ -247,7 +251,7 @@ class ReferenceBatchesImpl(Batches):
         )
 
         await self.kvstore.set(f"batch:{batch_id}", batch.to_json())
-        logger.info(f"Created new batch with ID: {batch_id}")
+        logger.info("Created new batch", batch_id=batch_id)
 
         if self.process_batches:
             task = asyncio.create_task(self._process_batch(batch_id))
@@ -328,7 +332,9 @@ class ReferenceBatchesImpl(Batches):
                 # batch processing is async. once cancelling, only allow "cancelled" status updates
                 if batch.status == "cancelling" and updates.get("status") != "cancelled":
                     logger.info(
-                        f"Skipping status update for cancelled batch {batch_id}: attempted {updates.get('status')}"
+                        "Skipping status update for cancelled batch",
+                        batch_id=batch_id,
+                        attempted_status=updates.get("status"),
                     )
                     return
 
@@ -340,7 +346,7 @@ class ReferenceBatchesImpl(Batches):
 
                 await self.kvstore.set(f"batch:{batch_id}", json.dumps(batch_dict))
             except Exception as e:
-                logger.error(f"Failed to update batch {batch_id}: {e}")
+                logger.error("Failed to update batch", batch_id=batch_id, error=str(e))
 
     async def _validate_input(self, batch: BatchObject) -> tuple[list[BatchError], list[BatchRequest]]:
         """
@@ -524,15 +530,15 @@ class ReferenceBatchesImpl(Batches):
     async def _process_batch(self, batch_id: str) -> None:
         """Background task to process a batch of requests."""
         try:
-            logger.info(f"Starting batch processing for {batch_id}")
+            logger.info("Starting batch processing", batch_id=batch_id)
             async with self._batch_semaphore:  # semaphore to limit concurrency
-                logger.info(f"Acquired semaphore for batch {batch_id}")
+                logger.info("Acquired semaphore for batch", batch_id=batch_id)
                 await self._process_batch_impl(batch_id)
         except asyncio.CancelledError:
-            logger.info(f"Batch processing cancelled for {batch_id}")
+            logger.info("Batch processing cancelled", batch_id=batch_id)
             await self._update_batch(batch_id, status="cancelled", cancelled_at=int(time.time()))
         except Exception as e:
-            logger.error(f"Batch processing failed for {batch_id}: {e}")
+            logger.error("Batch processing failed", batch_id=batch_id, error=str(e))
             await self._update_batch(
                 batch_id,
                 status="failed",
@@ -550,10 +556,10 @@ class ReferenceBatchesImpl(Batches):
         errors, requests = await self._validate_input(batch)
         if errors:
             await self._update_batch(batch_id, status="failed", failed_at=int(time.time()), errors=Errors(data=errors))
-            logger.info(f"Batch validation failed for {batch_id} with {len(errors)} errors")
+            logger.info("Batch validation failed", batch_id=batch_id, error_count=len(errors))
             return
 
-        logger.info(f"Processing {len(requests)} requests for batch {batch_id}")
+        logger.info("Processing requests for batch", batch_id=batch_id, request_count=len(requests))
 
         total_requests = len(requests)
         await self._update_batch(
@@ -606,7 +612,10 @@ class ReferenceBatchesImpl(Batches):
             await self._update_batch(batch_id, status="completed", completed_at=int(time.time()))
 
             logger.info(
-                f"Batch processing completed for {batch_id}: {completed_count} completed, {failed_count} failed"
+                "Batch processing completed for : completed, failed",
+                batch_id=batch_id,
+                completed_count=completed_count,
+                failed_count=failed_count,
             )
         except Exception as e:
             # note: errors is empty at this point, so we don't lose anything by ignoring it
@@ -673,7 +682,9 @@ class ReferenceBatchesImpl(Batches):
                     },
                 }
         except Exception as e:
-            logger.info(f"Error processing request {request.custom_id} in batch {batch_id}: {e}")
+            logger.info(
+                "Error processing request in batch", custom_id=request.custom_id, batch_id=batch_id, error=str(e)
+            )
             return {
                 "id": request_id,
                 "custom_id": request.custom_id,

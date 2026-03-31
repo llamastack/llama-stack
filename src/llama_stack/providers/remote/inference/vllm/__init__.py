@@ -10,6 +10,8 @@ from .config import VLLMInferenceAdapterConfig
 
 
 class VLLMProviderDataValidator(BaseModel):
+    """Validator for vLLM provider data with an optional API token."""
+
     vllm_api_token: SecretStr | None = None
 
 

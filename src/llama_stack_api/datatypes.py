@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from collections.abc import Iterator
 from enum import Enum, EnumMeta, StrEnum
 from typing import Any, Protocol
 from urllib.parse import urlparse
@@ -21,27 +22,29 @@ from llama_stack_api.vector_stores import VectorStore
 
 
 class DynamicApiMeta(EnumMeta):
-    def __new__(cls, name, bases, namespace):
+    """Metaclass that allows dynamic addition of enum members at runtime."""
+
+    def __new__(cls, name: str, bases: tuple[type, ...], namespace: dict[str, Any]) -> type:
         # Store the original enum values
         original_values = {k: v for k, v in namespace.items() if not k.startswith("_")}
 
         # Create the enum class
-        cls = super().__new__(cls, name, bases, namespace)
+        enum_cls = super().__new__(cls, name, bases, namespace)  # type: ignore[arg-type]
 
         # Store the original values for reference
-        cls._original_values = original_values
+        enum_cls._original_values = original_values  # type: ignore[attr-defined]
         # Initialize _dynamic_values
-        cls._dynamic_values = {}
+        enum_cls._dynamic_values: dict[str, Any] = {}  # type: ignore[attr-defined,misc]
 
-        return cls
+        return enum_cls
 
-    def __call__(cls, value):
+    def __call__(cls, value: Any) -> Any:  # type: ignore[override]
         try:
             return super().__call__(value)
         except ValueError as e:
             # If this value was already dynamically added, return it
-            if value in cls._dynamic_values:
-                return cls._dynamic_values[value]
+            if value in cls._dynamic_values:  # type: ignore[attr-defined]
+                return cls._dynamic_values[value]  # type: ignore[attr-defined]
 
             # If the value doesn't exist, create a new enum member
             # Create a new member name from the value
@@ -55,13 +58,13 @@ class DynamicApiMeta(EnumMeta):
             # register new APIs explicitly
             raise ValueError(f"API '{value}' does not exist. Use Api.add() to register new APIs.") from e
 
-    def __iter__(cls):
+    def __iter__(cls) -> Iterator[Any]:
         # Allow iteration over both static and dynamic members
         yield from super().__iter__()
         if hasattr(cls, "_dynamic_values"):
             yield from cls._dynamic_values.values()
 
-    def add(cls, value):
+    def add(cls, value: str) -> Any:
         """
         Add a new API to the enum.
         Used to register external APIs.
@@ -73,7 +76,7 @@ class DynamicApiMeta(EnumMeta):
             return cls._member_map_[member_name]
 
         # Create a new enum member
-        member = object.__new__(cls)
+        member: Any = object.__new__(cls)  # type: ignore[arg-type]
         member._name_ = member_name
         member._value_ = value
 
@@ -83,7 +86,7 @@ class DynamicApiMeta(EnumMeta):
         cls._member_type_ = str
 
         # Store it in our dynamic values
-        cls._dynamic_values[value] = member
+        cls._dynamic_values[value] = member  # type: ignore[attr-defined]
 
         return member
 
@@ -94,7 +97,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     :cvar providers: Provider management and configuration
     :cvar inference: Text generation, chat completions, and embeddings
     :cvar safety: Content moderation and safety shields
-    :cvar agents: Agent orchestration and execution
+    :cvar responses: Response orchestration and execution
     :cvar batches: Batch processing for asynchronous API requests
     :cvar vector_io: Vector database operations and queries
     :cvar datasetio: Dataset input/output operations
@@ -118,7 +121,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     providers = "providers"
     inference = "inference"
     safety = "safety"
-    agents = "agents"
+    responses = "responses"
     batches = "batches"
     vector_io = "vector_io"
     datasetio = "datasetio"
@@ -217,34 +220,46 @@ class ModelsProtocolPrivate(Protocol):
 
 
 class ShieldsProtocolPrivate(Protocol):
+    """Protocol for provider-side shield registration and unregistration."""
+
     async def register_shield(self, shield: Shield) -> None: ...
 
     async def unregister_shield(self, identifier: str) -> None: ...
 
 
 class VectorStoresProtocolPrivate(Protocol):
+    """Protocol for provider-side vector store registration and unregistration."""
+
     async def register_vector_store(self, vector_store: VectorStore) -> None: ...
 
     async def unregister_vector_store(self, vector_store_id: str) -> None: ...
 
 
 class DatasetsProtocolPrivate(Protocol):
+    """Protocol for provider-side dataset registration and unregistration."""
+
     async def register_dataset(self, dataset: Dataset) -> None: ...
 
     async def unregister_dataset(self, dataset_id: str) -> None: ...
 
 
 class ScoringFunctionsProtocolPrivate(Protocol):
+    """Protocol for provider-side scoring function listing and registration."""
+
     async def list_scoring_functions(self) -> list[ScoringFn]: ...
 
     async def register_scoring_function(self, scoring_fn: ScoringFn) -> None: ...
 
 
 class BenchmarksProtocolPrivate(Protocol):
+    """Protocol for provider-side benchmark registration."""
+
     async def register_benchmark(self, benchmark: Benchmark) -> None: ...
 
 
 class ToolGroupsProtocolPrivate(Protocol):
+    """Protocol for provider-side tool group registration and unregistration."""
+
     async def register_toolgroup(self, toolgroup: ToolGroup) -> None: ...
 
     async def unregister_toolgroup(self, toolgroup_id: str) -> None: ...
@@ -252,6 +267,8 @@ class ToolGroupsProtocolPrivate(Protocol):
 
 @json_schema_type
 class ProviderSpec(BaseModel):
+    """Base specification for a Llama Stack provider including its config and dependencies."""
+
     api: Api
     provider_type: str
     config_class: str = Field(
@@ -294,7 +311,10 @@ class ProviderSpec(BaseModel):
         default=None,
     )
 
-    is_external: bool = Field(default=False, description="Notes whether this provider is an external provider.")
+    is_external: bool = Field(
+        default=False,
+        description="Notes whether this provider is an external provider.",
+    )
 
     toolgroup_id: str | None = Field(
         default=None,
@@ -310,11 +330,15 @@ class ProviderSpec(BaseModel):
 
 
 class RoutingTable(Protocol):
+    """Protocol for resolving a routing key to its provider implementation."""
+
     async def get_provider_impl(self, routing_key: str) -> Any: ...
 
 
 @json_schema_type
 class InlineProviderSpec(ProviderSpec):
+    """Provider specification for inline (built-in) providers with optional container support."""
+
     container_image: str | None = Field(
         default=None,
         description="""
@@ -331,6 +355,8 @@ A description of the provider. This is used to display in the documentation.
 
 
 class RemoteProviderConfig(BaseModel):
+    """Connection configuration for a remote provider endpoint."""
+
     host: str = "localhost"
     port: int | None = None
     protocol: str = "http"
@@ -350,6 +376,8 @@ class RemoteProviderConfig(BaseModel):
 
 @json_schema_type
 class RemoteProviderSpec(ProviderSpec):
+    """Provider specification for remote providers accessed via an adapter."""
+
     adapter_type: str = Field(
         ...,
         description="Unique identifier for this adapter",
@@ -368,6 +396,8 @@ A description of the provider. This is used to display in the documentation.
 
 
 class HealthStatus(StrEnum):
+    """Health check status values for provider readiness."""
+
     OK = "OK"
     ERROR = "Error"
     NOT_IMPLEMENTED = "Not Implemented"

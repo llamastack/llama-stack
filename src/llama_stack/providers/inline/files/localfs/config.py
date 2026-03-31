@@ -12,6 +12,8 @@ from llama_stack.core.storage.datatypes import SqlStoreReference
 
 
 class LocalfsFilesImplConfig(BaseModel):
+    """Configuration for the local filesystem files provider."""
+
     storage_dir: str = Field(
         description="Directory to store uploaded files",
     )

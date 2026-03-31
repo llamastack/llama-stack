@@ -189,6 +189,14 @@ PUNCTUATION = [
 
 
 def normalize_answer(s: str) -> str:
+    """Normalize a DocVQA answer by removing punctuation, articles, and extra whitespace.
+
+    Args:
+        s: raw answer string
+
+    Returns:
+        Normalized answer string
+    """
     # process punctuation
     for p in PUNCTUATION:
         if (p + " " in s or " " + p in s) or (re.search(COMMA_STRIP, s) is not None):

@@ -114,7 +114,7 @@ jobs:
             --schedule "${{ github.event.schedule }}" \
             --test-setup "${{ github.event.inputs.test-setup || '' }}" \
             --matrix-key "${{ inputs.matrix_key || 'default' }}")
-          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
           echo "Generated matrix: $MATRIX"
 
   run-replay-mode-tests:
@@ -131,7 +131,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        client: [library, docker, server]
+        client: [library, server]
         # Use Python 3.13 only on nightly schedule (daily latest client test), otherwise use 3.12
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
         node-version: [22]
@@ -150,7 +150,7 @@ jobs:
       # called from pull_request_target workflows.
       - name: Setup test environment
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
-        uses: llamastack/llama-stack/.github/actions/setup-test-environment@700b202df7e520c1b19977e97657b3aebc055e56
+        uses: llamastack/llama-stack/.github/actions/setup-test-environment@2b0ece2628d4edc18912ffb7fbbb014da08a37ad
         with:
           python-version: ${{ matrix.python-version }}
           client-version: ${{ matrix.client-version }}
@@ -171,13 +171,13 @@ jobs:
       - name: Setup TypeScript client
         if: ${{ matrix.client == 'server' }}
         id: setup-ts-client
-        uses: llamastack/llama-stack/.github/actions/setup-typescript-client@700b202df7e520c1b19977e97657b3aebc055e56
+        uses: llamastack/llama-stack/.github/actions/setup-typescript-client@2b0ece2628d4edc18912ffb7fbbb014da08a37ad
         with:
           client-version: ${{ matrix.client-version }}
 
       - name: Run tests
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
-        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@700b202df7e520c1b19977e97657b3aebc055e56
+        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@2b0ece2628d4edc18912ffb7fbbb014da08a37ad
         env:
           OPENAI_API_KEY: dummy
           AZURE_API_KEY: replay-mode-dummy-key

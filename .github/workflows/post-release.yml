@@ -84,14 +84,16 @@ jobs:
           NEXT_FALLBACK="${MAJOR}.${MINOR}.${NEXT_PATCH}.dev0"
           RELEASE_BRANCH="release-${MAJOR}.${MINOR}.x"
 
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "major=${MAJOR}" >> $GITHUB_OUTPUT
-          echo "minor=${MINOR}" >> $GITHUB_OUTPUT
-          echo "patch=${PATCH}" >> $GITHUB_OUTPUT
-          echo "next_patch=${NEXT_PATCH}" >> $GITHUB_OUTPUT
-          echo "next_dev_tag=${NEXT_DEV_TAG}" >> $GITHUB_OUTPUT
-          echo "next_fallback=${NEXT_FALLBACK}" >> $GITHUB_OUTPUT
-          echo "release_branch=${RELEASE_BRANCH}" >> $GITHUB_OUTPUT
+          {
+            echo "version=${VERSION}"
+            echo "major=${MAJOR}"
+            echo "minor=${MINOR}"
+            echo "patch=${PATCH}"
+            echo "next_patch=${NEXT_PATCH}"
+            echo "next_dev_tag=${NEXT_DEV_TAG}"
+            echo "next_fallback=${NEXT_FALLBACK}"
+            echo "release_branch=${RELEASE_BRANCH}"
+          } >> "$GITHUB_OUTPUT"
 
           echo "Release version: ${VERSION}"
           echo "Next dev tag: ${NEXT_DEV_TAG}"
@@ -118,7 +120,7 @@ jobs:
           echo "Pushed tag $DEV_TAG to main ($MAIN_SHA)"
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
 
       # -----------------------------------------------------------------------
       # Step B: Bump fallback_version on main and open PR

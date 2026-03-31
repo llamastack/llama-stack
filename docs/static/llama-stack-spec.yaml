@@ -605,6 +605,7 @@ paths:
                 - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
                 - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 discriminator:
                   propertyName: type
                   mapping:
@@ -617,6 +618,7 @@ paths:
                     mcp_approval_response: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
                     mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                     mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                    reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 title: Response Retrieve Item V1 Conversations  Conversation Id  Items  Item Id  Get
         '400':
           $ref: '#/components/responses/BadRequest400'
@@ -1423,7 +1425,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
       tags:
-      - Agents
+      - Responses
       summary: List all responses.
       description: List all responses.
       operationId: list_openai_responses_v1_responses_get
@@ -1494,7 +1496,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
       tags:
-      - Agents
+      - Responses
       summary: Create a model response.
       description: Create a model response.
       operationId: create_openai_response_v1_responses_post
@@ -1504,6 +1506,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateResponseRequest'
+          application/x-www-form-urlencoded: {}
   /v1/responses/{response_id}:
     get:
       responses:
@@ -1526,7 +1529,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
       tags:
-      - Agents
+      - Responses
       summary: Get a model response.
       description: Get a model response.
       operationId: get_openai_response_v1_responses__response_id__get
@@ -1560,7 +1563,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
       tags:
-      - Agents
+      - Responses
       summary: Delete a response.
       description: Delete a response.
       operationId: delete_openai_response_v1_responses__response_id__delete
@@ -1595,7 +1598,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
       tags:
-      - Agents
+      - Responses
       summary: List input items.
       description: List input items.
       operationId: list_openai_response_input_items_v1_responses__response_id__input_items_get
@@ -2495,16 +2498,22 @@ paths:
         in: query
         required: false
         schema:
+          anyOf:
+          - type: string
+            enum:
+            - completed
+          - type: string
+            enum:
+            - in_progress
+          - type: string
+            enum:
+            - cancelled
+          - type: string
+            enum:
+            - failed
+          - type: 'null'
           description: Filter by file status.
           title: Filter
-          type: string
-          enum:
-          - completed
-          - in_progress
-          - cancelled
-          - failed
-          default: completed
-          nullable: true
         description: Filter by file status.
     post:
       responses:
@@ -2812,6 +2821,45 @@ paths:
       description: Get the version of the service.
       operationId: version_v1_version_get
       x-public: true
+  /v1/responses/{response_id}/cancel:
+    post:
+      responses:
+        '200':
+          description: The updated response object with status 'cancelled'.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIResponseObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+        '404':
+          description: Response not found.
+        '409':
+          description: 'Conflict: Cannot cancel response (not a background response or already in terminal state).'
+      tags:
+      - Responses
+      summary: Cancel a background response that is in progress.
+      description: Cancel a background response that is queued or in progress. Only responses created with background=true can be cancelled.
+      operationId: cancel_openai_response_v1_responses__response_id__cancel_post
+      parameters:
+      - name: response_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the OpenAI response to cancel.
+          title: Response Id
+        description: The ID of the OpenAI response to cancel.
 components:
   schemas:
     Error:
@@ -2840,9 +2888,9 @@ components:
       properties:
         object:
           type: string
-          const: list
           title: Object
-          default: list
+          enum:
+          - list
         data:
           items:
             $ref: '#/components/schemas/Batch'
@@ -2880,9 +2928,10 @@ components:
           description: The endpoint to be used for all requests in the batch.
         completion_window:
           type: string
-          const: 24h
           title: Completion Window
           description: The time window within which the batch should be processed.
+          enum:
+          - 24h
         metadata:
           anyOf:
           - additionalProperties:
@@ -2920,8 +2969,9 @@ components:
           title: Input File Id
         object:
           type: string
-          const: batch
           title: Object
+          enum:
+          - batch
         status:
           type: string
           enum:
@@ -3041,10 +3091,10 @@ components:
           description: ID of the last completion in this list.
         object:
           type: string
-          const: list
           title: Object
           description: Must be 'list' to identify this as a list response.
-          default: list
+          enum:
+          - list
       required:
       - data
       - has_more
@@ -3057,11 +3107,11 @@ components:
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
       properties:
         role:
-          const: assistant
-          default: assistant
           description: Must be 'assistant' to identify this as the model's response.
           title: Role
           type: string
+          enum:
+          - assistant
         content:
           anyOf:
           - type: string
@@ -3082,7 +3132,7 @@ components:
         tool_calls:
           anyOf:
           - items:
-              $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
+              $ref: '#/components/schemas/ChatCompletionMessageToolCall'
             type: array
           - type: 'null'
           description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
@@ -3092,10 +3142,10 @@ components:
       properties:
         type:
           type: string
-          const: image_url
           title: Type
           description: Must be 'image_url' to identify this as image content.
-          default: image_url
+          enum:
+          - image_url
         image_url:
           $ref: '#/components/schemas/OpenAIImageURL'
           description: Image URL specification and processing details.
@@ -3122,10 +3172,10 @@ components:
       properties:
         type:
           type: string
-          const: text
           title: Type
           description: Must be 'text' to identify this as text content.
-          default: text
+          enum:
+          - text
         text:
           type: string
           title: Text
@@ -3134,34 +3184,6 @@ components:
       - text
       title: OpenAIChatCompletionContentPartTextParam
       description: Text content part for OpenAI-compatible chat completion messages.
-    OpenAIChatCompletionToolCall:
-      properties:
-        index:
-          anyOf:
-          - type: integer
-            minimum: 0.0
-          - type: 'null'
-          description: Index of the tool call in the list.
-        id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Unique identifier for the tool call.
-        type:
-          type: string
-          const: function
-          title: Type
-          description: Must be 'function' to identify this as a function call.
-          default: function
-        function:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionToolCallFunction'
-            title: OpenAIChatCompletionToolCallFunction
-          - type: 'null'
-          description: Function call details.
-          title: OpenAIChatCompletionToolCallFunction
-      title: OpenAIChatCompletionToolCall
-      description: Tool call specification for OpenAI-compatible chat completion responses.
     OpenAIChatCompletionToolCallFunction:
       properties:
         name:
@@ -3226,8 +3248,25 @@ components:
           title: Index
           description: The index of the choice.
         logprobs:
-          $ref: '#/components/schemas/OpenAIChoiceLogprobs'
+          anyOf:
+          - properties:
+              content:
+                anyOf:
+                - items:
+                    $ref: '#/components/schemas/OpenAITokenLogProb'
+                  type: array
+                - type: 'null'
+                description: The log probabilities for the tokens in the message.
+              refusal:
+                anyOf:
+                - items:
+                    $ref: '#/components/schemas/OpenAITokenLogProb'
+                  type: array
+                - type: 'null'
+                description: The log probabilities for the refusal tokens.
+          - type: 'null'
           description: The log probabilities for the tokens in the message.
+          title: LogprobsUnion
       required:
       - message
       - finish_reason
@@ -3237,16 +3276,18 @@ components:
     OpenAIChoiceLogprobs:
       properties:
         content:
-          items:
-            $ref: '#/components/schemas/OpenAITokenLogProb'
-          type: array
-          title: Content
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
           description: The log probabilities for the tokens in the message.
         refusal:
-          items:
-            $ref: '#/components/schemas/OpenAITokenLogProb'
-          type: array
-          title: Refusal
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
           description: The log probabilities for the refusal tokens.
       title: OpenAIChoiceLogprobs
       description: The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response.
@@ -3254,10 +3295,10 @@ components:
       properties:
         role:
           type: string
-          const: developer
           title: Role
           description: Must be 'developer' to identify this as a developer message.
-          default: developer
+          enum:
+          - developer
         content:
           anyOf:
           - type: string
@@ -3280,16 +3321,17 @@ components:
       properties:
         type:
           type: string
-          const: file
           title: Type
           description: Must be 'file' to identify this as file content.
-          default: file
+          enum:
+          - file
         file:
           $ref: '#/components/schemas/OpenAIFileFile'
           description: File specification.
       required:
       - file
       title: OpenAIFile
+      description: File content part for OpenAI-compatible chat completion messages.
     OpenAIFileFile:
       properties:
         file_data:
@@ -3353,10 +3395,10 @@ components:
       properties:
         role:
           type: string
-          const: system
           title: Role
           description: Must be 'system' to identify this as a system message.
-          default: system
+          enum:
+          - system
         content:
           anyOf:
           - type: string
@@ -3408,10 +3450,10 @@ components:
       properties:
         role:
           type: string
-          const: tool
           title: Role
           description: Must be 'tool' to identify this as a tool response.
-          default: tool
+          enum:
+          - tool
         tool_call_id:
           type: string
           title: Tool Call Id
@@ -3456,11 +3498,11 @@ components:
       description: A message from the user in an OpenAI-compatible chat completion request.
       properties:
         role:
-          const: user
-          default: user
           description: Must be 'user' to identify this as a user message.
           title: Role
           type: string
+          enum:
+          - user
         content:
           anyOf:
           - type: string
@@ -3516,20 +3558,20 @@ components:
       properties:
         type:
           type: string
-          const: json_object
           title: Type
           description: Must be 'json_object' to indicate generic JSON object response format.
-          default: json_object
+          enum:
+          - json_object
       title: OpenAIResponseFormatJSONObject
       description: JSON object response format for OpenAI-compatible chat completion requests.
     OpenAIResponseFormatJSONSchema:
       properties:
         type:
           type: string
-          const: json_schema
           title: Type
           description: Must be 'json_schema' to indicate structured JSON response format.
-          default: json_schema
+          enum:
+          - json_schema
         json_schema:
           $ref: '#/components/schemas/OpenAIJSONSchema'
           description: The JSON schema specification for the response.
@@ -3556,10 +3598,10 @@ components:
       properties:
         type:
           type: string
-          const: text
           title: Type
           description: Must be 'text' to indicate plain text response format.
-          default: text
+          enum:
+          - text
       title: OpenAIResponseFormatText
       description: Text response format for OpenAI-compatible chat completion requests.
     OpenAIChatCompletionRequestWithExtraBody:
@@ -3798,11 +3840,11 @@ components:
           title: Choices
           type: array
         object:
-          const: chat.completion
-          default: chat.completion
           description: The object type.
           title: Object
           type: string
+          enum:
+          - chat.completion
         created:
           description: The Unix timestamp in seconds when the chat completion was created.
           minimum: 0
@@ -3847,11 +3889,11 @@ components:
           title: Choices
           type: array
         object:
-          const: chat.completion.chunk
-          default: chat.completion.chunk
           description: The object type.
           title: Object
           type: string
+          enum:
+          - chat.completion.chunk
         created:
           description: The Unix timestamp in seconds when the chat completion was created.
           minimum: 0
@@ -3911,7 +3953,7 @@ components:
         tool_calls:
           description: The tool calls of the delta.
           items:
-            $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
+            $ref: '#/components/schemas/ChatCompletionMessageToolCall'
           title: Tool Calls
           type: array
           nullable: true
@@ -3945,9 +3987,22 @@ components:
           title: Index
           type: integer
         logprobs:
-          $ref: '#/components/schemas/OpenAIChoiceLogprobs'
+          properties:
+            content:
+              anyOf:
+              - items:
+                  $ref: '#/components/schemas/OpenAITokenLogProb'
+                type: array
+              - type: 'null'
+              description: The log probabilities for the tokens in the message.
+            refusal:
+              anyOf:
+              - items:
+                  $ref: '#/components/schemas/OpenAITokenLogProb'
+                type: array
+              - type: 'null'
+              description: The log probabilities for the refusal tokens.
           description: The log probabilities for the tokens in the message.
-          nullable: true
       required:
       - delta
       - index
@@ -3967,10 +4022,10 @@ components:
           description: List of choices.
         object:
           type: string
-          const: chat.completion
           title: Object
           description: The object type.
-          default: chat.completion
+          enum:
+          - chat.completion
         created:
           type: integer
           minimum: 0.0
@@ -4024,6 +4079,7 @@ components:
       - model
       - input_messages
       title: OpenAICompletionWithInputMessages
+      description: Chat completion response extended with the original input messages.
     OpenAICompletionRequestWithExtraBody:
       properties:
         model:
@@ -4178,11 +4234,11 @@ components:
           title: Model
           type: string
         object:
-          const: text_completion
-          default: text_completion
           description: The object type.
           title: Object
           type: string
+          enum:
+          - text_completion
       required:
       - id
       - choices
@@ -4213,12 +4269,25 @@ components:
           type: integer
         logprobs:
           anyOf:
-          - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
-            title: OpenAIChoiceLogprobs
+          - properties:
+              content:
+                anyOf:
+                - items:
+                    $ref: '#/components/schemas/OpenAITokenLogProb'
+                  type: array
+                - type: 'null'
+                description: The log probabilities for the tokens in the message.
+              refusal:
+                anyOf:
+                - items:
+                    $ref: '#/components/schemas/OpenAITokenLogProb'
+                  type: array
+                - type: 'null'
+                description: The log probabilities for the refusal tokens.
           - type: 'null'
           description: The log probabilities for the tokens in the choice.
           nullable: true
-          title: OpenAIChoiceLogprobs
+          title: LogprobsUnion
       required:
       - finish_reason
       - text
@@ -4235,6 +4304,7 @@ components:
           mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
           mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
           message: '#/components/schemas/OpenAIResponseMessage'
+          reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
           web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
         propertyName: type
       oneOf:
@@ -4256,14 +4326,16 @@ components:
         title: OpenAIResponseOutputMessageMCPCall
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
         title: OpenAIResponseOutputMessageMCPListTools
-      title: OpenAIResponseMessage | ... (9 variants)
+      - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+        title: OpenAIResponseOutputMessageReasoningItem
+      title: OpenAIResponseMessage | ... (10 variants)
     OpenAIResponseAnnotationCitation:
       properties:
         type:
           type: string
-          const: url_citation
           title: Type
-          default: url_citation
+          enum:
+          - url_citation
         end_index:
           type: integer
           title: End Index
@@ -4287,9 +4359,9 @@ components:
       properties:
         type:
           type: string
-          const: container_file_citation
           title: Type
-          default: container_file_citation
+          enum:
+          - container_file_citation
         container_id:
           type: string
           title: Container Id
@@ -4312,13 +4384,14 @@ components:
       - filename
       - start_index
       title: OpenAIResponseAnnotationContainerFileCitation
+      description: Container file citation annotation referencing a file within a container.
     OpenAIResponseAnnotationFileCitation:
       properties:
         type:
           type: string
-          const: file_citation
           title: Type
-          default: file_citation
+          enum:
+          - file_citation
         file_id:
           type: string
           title: File Id
@@ -4338,9 +4411,9 @@ components:
       properties:
         type:
           type: string
-          const: file_path
           title: Type
-          default: file_path
+          enum:
+          - file_path
         file_id:
           type: string
           title: File Id
@@ -4351,6 +4424,7 @@ components:
       - file_id
       - index
       title: OpenAIResponseAnnotationFilePath
+      description: File path annotation referencing a generated file in response content.
     OpenAIResponseAnnotations:
       discriminator:
         mapping:
@@ -4373,9 +4447,9 @@ components:
       properties:
         type:
           type: string
-          const: refusal
           title: Type
-          default: refusal
+          enum:
+          - refusal
         refusal:
           type: string
           title: Refusal
@@ -4411,9 +4485,9 @@ components:
           title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
         type:
           type: string
-          const: function_call_output
           title: Type
-          default: function_call_output
+          enum:
+          - function_call_output
         id:
           anyOf:
           - type: string
@@ -4446,9 +4520,9 @@ components:
       properties:
         type:
           type: string
-          const: input_file
           title: Type
-          default: input_file
+          enum:
+          - input_file
         file_data:
           anyOf:
           - type: string
@@ -4470,18 +4544,23 @@ components:
     OpenAIResponseInputMessageContentImage:
       properties:
         detail:
-          title: Detail
+          anyOf:
+          - type: string
+            enum:
+            - low
+          - type: string
+            enum:
+            - high
+          - type: string
+            enum:
+            - auto
+          title: string
           default: auto
-          type: string
-          enum:
-          - low
-          - high
-          - auto
         type:
           type: string
-          const: input_image
           title: Type
-          default: input_image
+          enum:
+          - input_image
         file_id:
           anyOf:
           - type: string
@@ -4499,9 +4578,9 @@ components:
           title: Text
         type:
           type: string
-          const: input_text
           title: Type
-          default: input_text
+          enum:
+          - input_text
       required:
       - text
       title: OpenAIResponseInputMessageContentText
@@ -4522,9 +4601,9 @@ components:
           title: Server Label
         type:
           type: string
-          const: mcp_approval_request
           title: Type
-          default: mcp_approval_request
+          enum:
+          - mcp_approval_request
       required:
       - arguments
       - id
@@ -4542,9 +4621,9 @@ components:
           title: Approve
         type:
           type: string
-          const: mcp_approval_response
           title: Type
-          default: mcp_approval_response
+          enum:
+          - mcp_approval_response
         id:
           anyOf:
           - type: string
@@ -4601,19 +4680,25 @@ components:
             title: list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
           title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
         role:
-          title: Role
-          type: string
-          enum:
-          - system
-          - developer
-          - user
-          - assistant
-          default: system
+          anyOf:
+          - type: string
+            enum:
+            - system
+          - type: string
+            enum:
+            - developer
+          - type: string
+            enum:
+            - user
+          - type: string
+            enum:
+            - assistant
+          title: string
         type:
-          const: message
-          default: message
           title: Type
           type: string
+          enum:
+          - message
         id:
           anyOf:
           - type: string
@@ -4641,15 +4726,16 @@ components:
         title: OpenAIResponseContentPartRefusal
       title: OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal
     OpenAIResponseOutputMessageContentOutputText:
+      description: Text content within an output message of an OpenAI response.
       properties:
         text:
           title: Text
           type: string
         type:
-          const: output_text
-          default: output_text
           title: Type
           type: string
+          enum:
+          - output_text
         annotations:
           items:
             discriminator:
@@ -4696,9 +4782,9 @@ components:
           title: Status
         type:
           type: string
-          const: file_search_call
           title: Type
-          default: file_search_call
+          enum:
+          - file_search_call
         results:
           anyOf:
           - items:
@@ -4724,9 +4810,9 @@ components:
           title: Arguments
         type:
           type: string
-          const: function_call
           title: Type
-          default: function_call
+          enum:
+          - function_call
         id:
           anyOf:
           - type: string
@@ -4748,9 +4834,9 @@ components:
           title: Id
         type:
           type: string
-          const: mcp_call
           title: Type
-          default: mcp_call
+          enum:
+          - mcp_call
         arguments:
           type: string
           title: Arguments
@@ -4782,9 +4868,9 @@ components:
           title: Id
         type:
           type: string
-          const: mcp_list_tools
           title: Type
-          default: mcp_list_tools
+          enum:
+          - mcp_list_tools
         server_label:
           type: string
           title: Server Label
@@ -4809,9 +4895,9 @@ components:
           title: Status
         type:
           type: string
-          const: web_search_call
           title: Type
-          default: web_search_call
+          enum:
+          - web_search_call
       required:
       - id
       - status
@@ -4841,6 +4927,8 @@ components:
                 title: OpenAIResponseOutputMessageMCPCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 title: OpenAIResponseOutputMessageMCPListTools
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                title: OpenAIResponseOutputMessageReasoningItem
               discriminator:
                 propertyName: type
                 mapping:
@@ -4852,8 +4940,9 @@ components:
                   mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                   mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                   message: '#/components/schemas/OpenAIResponseMessage-Input'
+                  reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                   web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Input | ... (9 variants)
+              title: OpenAIResponseMessage-Input | ... (10 variants)
             type: array
           - type: 'null'
           description: Initial items to include in the conversation context.
@@ -4874,10 +4963,10 @@ components:
           description: The unique ID of the conversation.
         object:
           type: string
-          const: conversation
           title: Object
           description: The object type, which is always conversation.
-          default: conversation
+          enum:
+          - conversation
         created_at:
           type: integer
           title: Created At
@@ -4962,6 +5051,8 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -4973,8 +5064,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Output'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (9 variants)
+            title: OpenAIResponseMessage-Output | ... (10 variants)
           type: array
           title: Data
           description: List of conversation items
@@ -5020,6 +5112,8 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -5031,8 +5125,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Input'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Input | ... (9 variants)
+            title: OpenAIResponseMessage-Input | ... (10 variants)
           type: array
           maxItems: 20
           title: Items
@@ -5121,10 +5216,10 @@ components:
       properties:
         object:
           type: string
-          const: embedding
           title: Object
           description: The object type.
-          default: embedding
+          enum:
+          - embedding
         embedding:
           anyOf:
           - items:
@@ -5163,10 +5258,10 @@ components:
       properties:
         object:
           type: string
-          const: list
           title: Object
           description: The object type.
-          default: list
+          enum:
+          - list
         data:
           items:
             $ref: '#/components/schemas/OpenAIEmbeddingData'
@@ -5216,10 +5311,10 @@ components:
           description: The ID of the last file in the list for pagination.
         object:
           type: string
-          const: list
           title: Object
           description: The object type, which is always 'list'.
-          default: list
+          enum:
+          - list
       required:
       - data
       - has_more
@@ -5231,10 +5326,10 @@ components:
       properties:
         object:
           type: string
-          const: file
           title: Object
           description: The object type, which is always 'file'.
-          default: file
+          enum:
+          - file
         id:
           type: string
           title: Id
@@ -5271,9 +5366,10 @@ components:
       properties:
         anchor:
           type: string
-          const: created_at
           title: Anchor
           description: The anchor point for expiration, must be 'created_at'.
+          enum:
+          - created_at
         seconds:
           type: integer
           maximum: 2592000.0
@@ -5293,10 +5389,10 @@ components:
           description: The file identifier that was deleted.
         object:
           type: string
-          const: file
           title: Object
           description: The object type, which is always 'file'.
-          default: file
+          enum:
+          - file
         deleted:
           type: boolean
           title: Deleted
@@ -5356,9 +5452,9 @@ components:
           title: Id
         object:
           type: string
-          const: model
           title: Object
-          default: model
+          enum:
+          - model
         created:
           type: integer
           title: Created
@@ -5412,9 +5508,9 @@ components:
           description: ID of the provider that owns this resource
         type:
           type: string
-          const: model
           title: Type
-          default: model
+          enum:
+          - model
         metadata:
           additionalProperties: true
           type: object
@@ -5696,9 +5792,9 @@ components:
           title: Last Id
         object:
           type: string
-          const: list
           title: Object
-          default: list
+          enum:
+          - list
       required:
       - data
       - has_more
@@ -5729,6 +5825,7 @@ components:
             mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
             mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
             message: '#/components/schemas/OpenAIResponseMessage'
+            reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
             web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
           propertyName: type
         oneOf:
@@ -5746,7 +5843,9 @@ components:
           title: OpenAIResponseOutputMessageMCPListTools
         - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
           title: OpenAIResponseMCPApprovalRequest
-        title: OpenAIResponseMessage | ... (7 variants)
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+          title: OpenAIResponseOutputMessageReasoningItem
+        title: OpenAIResponseMessage | ... (8 variants)
       - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
         title: OpenAIResponseInputFunctionToolCallOutput
       - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
@@ -5758,9 +5857,9 @@ components:
       properties:
         type:
           type: string
-          const: file_search
           title: Type
-          default: file_search
+          enum:
+          - file_search
         vector_store_ids:
           items:
             type: string
@@ -5792,9 +5891,9 @@ components:
       properties:
         type:
           type: string
-          const: function
           title: Type
-          default: function
+          enum:
+          - function
         name:
           type: string
           title: Name
@@ -5819,14 +5918,21 @@ components:
     OpenAIResponseInputToolWebSearch:
       properties:
         type:
-          title: Type
+          anyOf:
+          - type: string
+            enum:
+            - web_search
+          - type: string
+            enum:
+            - web_search_preview
+          - type: string
+            enum:
+            - web_search_preview_2025_03_11
+          - type: string
+            enum:
+            - web_search_2025_08_26
+          title: string
           default: web_search
-          type: string
-          enum:
-          - web_search
-          - web_search_preview
-          - web_search_preview_2025_03_11
-          - web_search_2025_08_26
         search_context_size:
           anyOf:
           - type: string
@@ -5871,9 +5977,9 @@ components:
           title: Model
         object:
           type: string
-          const: response
           title: Object
-          default: response
+          enum:
+          - response
         output:
           items:
             oneOf:
@@ -5891,6 +5997,8 @@ components:
               title: OpenAIResponseOutputMessageMCPListTools
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
               title: OpenAIResponseMCPApprovalRequest
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -5900,8 +6008,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Output'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (7 variants)
+            title: OpenAIResponseMessage-Output | ... (8 variants)
           type: array
           title: Output
         parallel_tool_calls:
@@ -6067,6 +6176,8 @@ components:
                 title: OpenAIResponseOutputMessageMCPListTools
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
                 title: OpenAIResponseMCPApprovalRequest
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                title: OpenAIResponseOutputMessageReasoningItem
               discriminator:
                 propertyName: type
                 mapping:
@@ -6076,8 +6187,9 @@ components:
                   mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                   mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                   message: '#/components/schemas/OpenAIResponseMessage-Output'
+                  reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                   web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Output | ... (7 variants)
+              title: OpenAIResponseMessage-Output | ... (8 variants)
             - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
               title: OpenAIResponseInputFunctionToolCallOutput
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
@@ -6106,6 +6218,7 @@ components:
           mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
           mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
           message: '#/components/schemas/OpenAIResponseMessage'
+          reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
           web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
         propertyName: type
       oneOf:
@@ -6123,7 +6236,9 @@ components:
         title: OpenAIResponseOutputMessageMCPListTools
       - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
         title: OpenAIResponseMCPApprovalRequest
-      title: OpenAIResponseMessage | ... (7 variants)
+      - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+        title: OpenAIResponseOutputMessageReasoningItem
+      title: OpenAIResponseMessage | ... (8 variants)
     OpenAIResponsePrompt:
       properties:
         id:
@@ -6191,9 +6306,9 @@ components:
       properties:
         type:
           type: string
-          const: mcp
           title: Type
-          default: mcp
+          enum:
+          - mcp
         server_label:
           type: string
           title: Server Label
@@ -6269,9 +6384,9 @@ components:
       properties:
         type:
           type: string
-          const: mcp
           title: Type
-          default: mcp
+          enum:
+          - mcp
         server_label:
           type: string
           title: Server Label
@@ -6295,9 +6410,11 @@ components:
         require_approval:
           anyOf:
           - type: string
-            const: always
+            enum:
+            - always
           - type: string
-            const: never
+            enum:
+            - never
           - $ref: '#/components/schemas/ApprovalFilter'
             title: ApprovalFilter
           title: string | ApprovalFilter
@@ -6352,9 +6469,9 @@ components:
           title: Model
         object:
           type: string
-          const: response
           title: Object
-          default: response
+          enum:
+          - response
         output:
           items:
             oneOf:
@@ -6372,6 +6489,8 @@ components:
               title: OpenAIResponseOutputMessageMCPListTools
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
               title: OpenAIResponseMCPApprovalRequest
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -6381,8 +6500,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Output'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (7 variants)
+            title: OpenAIResponseMessage-Output | ... (8 variants)
           type: array
           title: Output
         parallel_tool_calls:
@@ -6543,10 +6663,10 @@ components:
       description: Text content within a streamed response part.
       properties:
         type:
-          const: output_text
-          default: output_text
           title: Type
           type: string
+          enum:
+          - output_text
         text:
           title: Text
           type: string
@@ -6585,10 +6705,10 @@ components:
       description: Reasoning summary part in a streamed response.
       properties:
         type:
-          const: summary_text
-          default: summary_text
           title: Type
           type: string
+          enum:
+          - summary_text
         text:
           title: Text
           type: string
@@ -6599,10 +6719,10 @@ components:
       description: Reasoning text emitted as part of a streamed response.
       properties:
         type:
-          const: reasoning_text
-          default: reasoning_text
           title: Type
           type: string
+          enum:
+          - reasoning_text
         text:
           title: Text
           type: string
@@ -6732,10 +6852,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.completed
-          default: response.completed
           title: Type
           type: string
+          enum:
+          - response.completed
       required:
       - response
       - sequence_number
@@ -6774,10 +6894,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.content_part.added
-          default: response.content_part.added
           title: Type
           type: string
+          enum:
+          - response.content_part.added
       required:
       - content_index
       - response_id
@@ -6820,10 +6940,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.content_part.done
-          default: response.content_part.done
           title: Type
           type: string
+          enum:
+          - response.content_part.done
       required:
       - content_index
       - response_id
@@ -6841,10 +6961,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.created
-          default: response.created
           title: Type
           type: string
+          enum:
+          - response.created
       required:
       - response
       - sequence_number
@@ -6858,10 +6978,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.failed
-          default: response.failed
           title: Type
           type: string
+          enum:
+          - response.failed
       required:
       - response
       - sequence_number
@@ -6879,10 +6999,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.file_search_call.completed
-          default: response.file_search_call.completed
           title: Type
           type: string
+          enum:
+          - response.file_search_call.completed
       required:
       - item_id
       - output_index
@@ -6901,10 +7021,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.file_search_call.in_progress
-          default: response.file_search_call.in_progress
           title: Type
           type: string
+          enum:
+          - response.file_search_call.in_progress
       required:
       - item_id
       - output_index
@@ -6923,10 +7043,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.file_search_call.searching
-          default: response.file_search_call.searching
           title: Type
           type: string
+          enum:
+          - response.file_search_call.searching
       required:
       - item_id
       - output_index
@@ -6948,10 +7068,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.function_call_arguments.delta
-          default: response.function_call_arguments.delta
           title: Type
           type: string
+          enum:
+          - response.function_call_arguments.delta
       required:
       - delta
       - item_id
@@ -6974,10 +7094,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.function_call_arguments.done
-          default: response.function_call_arguments.done
           title: Type
           type: string
+          enum:
+          - response.function_call_arguments.done
       required:
       - arguments
       - item_id
@@ -6993,10 +7113,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.in_progress
-          default: response.in_progress
           title: Type
           type: string
+          enum:
+          - response.in_progress
       required:
       - response
       - sequence_number
@@ -7010,15 +7130,16 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.incomplete
-          default: response.incomplete
           title: Type
           type: string
+          enum:
+          - response.incomplete
       required:
       - response
       - sequence_number
       title: OpenAIResponseObjectStreamResponseIncomplete
     OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta:
+      description: Streaming event for incremental MCP call argument updates.
       properties:
         delta:
           title: Delta
@@ -7033,10 +7154,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.mcp_call.arguments.delta
-          default: response.mcp_call.arguments.delta
           title: Type
           type: string
+          enum:
+          - response.mcp_call.arguments.delta
       required:
       - delta
       - item_id
@@ -7044,6 +7165,7 @@ components:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta
     OpenAIResponseObjectStreamResponseMcpCallArgumentsDone:
+      description: Streaming event for completed MCP call arguments.
       properties:
         arguments:
           title: Arguments
@@ -7058,10 +7180,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.mcp_call.arguments.done
-          default: response.mcp_call.arguments.done
           title: Type
           type: string
+          enum:
+          - response.mcp_call.arguments.done
       required:
       - arguments
       - item_id
@@ -7075,10 +7197,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.mcp_call.completed
-          default: response.mcp_call.completed
           title: Type
           type: string
+          enum:
+          - response.mcp_call.completed
       required:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpCallCompleted
@@ -7089,10 +7211,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.mcp_call.failed
-          default: response.mcp_call.failed
           title: Type
           type: string
+          enum:
+          - response.mcp_call.failed
       required:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpCallFailed
@@ -7109,51 +7231,54 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.mcp_call.in_progress
-          default: response.mcp_call.in_progress
           title: Type
           type: string
+          enum:
+          - response.mcp_call.in_progress
       required:
       - item_id
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpCallInProgress
     OpenAIResponseObjectStreamResponseMcpListToolsCompleted:
+      description: Streaming event for a completed MCP list tools operation.
       properties:
         sequence_number:
           title: Sequence Number
           type: integer
         type:
-          const: response.mcp_list_tools.completed
-          default: response.mcp_list_tools.completed
           title: Type
           type: string
+          enum:
+          - response.mcp_list_tools.completed
       required:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpListToolsCompleted
     OpenAIResponseObjectStreamResponseMcpListToolsFailed:
+      description: Streaming event for a failed MCP list tools operation.
       properties:
         sequence_number:
           title: Sequence Number
           type: integer
         type:
-          const: response.mcp_list_tools.failed
-          default: response.mcp_list_tools.failed
           title: Type
           type: string
+          enum:
+          - response.mcp_list_tools.failed
       required:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpListToolsFailed
     OpenAIResponseObjectStreamResponseMcpListToolsInProgress:
+      description: Streaming event for MCP list tools operation in progress.
       properties:
         sequence_number:
           title: Sequence Number
           type: integer
         type:
-          const: response.mcp_list_tools.in_progress
-          default: response.mcp_list_tools.in_progress
           title: Type
           type: string
+          enum:
+          - response.mcp_list_tools.in_progress
       required:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpListToolsInProgress
@@ -7172,6 +7297,7 @@ components:
               mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
               mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               message: '#/components/schemas/OpenAIResponseMessage'
+              reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
               web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
             propertyName: type
           oneOf:
@@ -7189,7 +7315,9 @@ components:
             title: OpenAIResponseOutputMessageMCPListTools
           - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
             title: OpenAIResponseMCPApprovalRequest
-          title: OpenAIResponseMessage | ... (7 variants)
+          - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+            title: OpenAIResponseOutputMessageReasoningItem
+          title: OpenAIResponseMessage | ... (8 variants)
         output_index:
           title: Output Index
           type: integer
@@ -7197,10 +7325,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.output_item.added
-          default: response.output_item.added
           title: Type
           type: string
+          enum:
+          - response.output_item.added
       required:
       - response_id
       - item
@@ -7222,6 +7350,7 @@ components:
               mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
               mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               message: '#/components/schemas/OpenAIResponseMessage'
+              reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
               web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
             propertyName: type
           oneOf:
@@ -7239,7 +7368,9 @@ components:
             title: OpenAIResponseOutputMessageMCPListTools
           - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
             title: OpenAIResponseMCPApprovalRequest
-          title: OpenAIResponseMessage | ... (7 variants)
+          - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+            title: OpenAIResponseOutputMessageReasoningItem
+          title: OpenAIResponseMessage | ... (8 variants)
         output_index:
           title: Output Index
           type: integer
@@ -7247,10 +7378,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.output_item.done
-          default: response.output_item.done
           title: Type
           type: string
+          enum:
+          - response.output_item.done
       required:
       - response_id
       - item
@@ -7294,10 +7425,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.output_text.annotation.added
-          default: response.output_text.annotation.added
           title: Type
           type: string
+          enum:
+          - response.output_text.annotation.added
       required:
       - item_id
       - output_index
@@ -7332,10 +7463,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.output_text.delta
-          default: response.output_text.delta
           title: Type
           type: string
+          enum:
+          - response.output_text.delta
       required:
       - content_index
       - delta
@@ -7362,10 +7493,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.output_text.done
-          default: response.output_text.done
           title: Type
           type: string
+          enum:
+          - response.output_text.done
       required:
       - content_index
       - text
@@ -7391,10 +7522,10 @@ components:
           title: Summary Index
           type: integer
         type:
-          const: response.reasoning_summary_part.added
-          default: response.reasoning_summary_part.added
           title: Type
           type: string
+          enum:
+          - response.reasoning_summary_part.added
       required:
       - item_id
       - output_index
@@ -7420,10 +7551,10 @@ components:
           title: Summary Index
           type: integer
         type:
-          const: response.reasoning_summary_part.done
-          default: response.reasoning_summary_part.done
           title: Type
           type: string
+          enum:
+          - response.reasoning_summary_part.done
       required:
       - item_id
       - output_index
@@ -7450,10 +7581,10 @@ components:
           title: Summary Index
           type: integer
         type:
-          const: response.reasoning_summary_text.delta
-          default: response.reasoning_summary_text.delta
           title: Type
           type: string
+          enum:
+          - response.reasoning_summary_text.delta
       required:
       - delta
       - item_id
@@ -7480,10 +7611,10 @@ components:
           title: Summary Index
           type: integer
         type:
-          const: response.reasoning_summary_text.done
-          default: response.reasoning_summary_text.done
           title: Type
           type: string
+          enum:
+          - response.reasoning_summary_text.done
       required:
       - text
       - item_id
@@ -7510,10 +7641,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.reasoning_text.delta
-          default: response.reasoning_text.delta
           title: Type
           type: string
+          enum:
+          - response.reasoning_text.delta
       required:
       - content_index
       - delta
@@ -7540,10 +7671,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.reasoning_text.done
-          default: response.reasoning_text.done
           title: Type
           type: string
+          enum:
+          - response.reasoning_text.done
       required:
       - content_index
       - text
@@ -7570,10 +7701,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.refusal.delta
-          default: response.refusal.delta
           title: Type
           type: string
+          enum:
+          - response.refusal.delta
       required:
       - content_index
       - delta
@@ -7600,10 +7731,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.refusal.done
-          default: response.refusal.done
           title: Type
           type: string
+          enum:
+          - response.refusal.done
       required:
       - content_index
       - refusal
@@ -7624,10 +7755,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.web_search_call.completed
-          default: response.web_search_call.completed
           title: Type
           type: string
+          enum:
+          - response.web_search_call.completed
       required:
       - item_id
       - output_index
@@ -7646,16 +7777,17 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.web_search_call.in_progress
-          default: response.web_search_call.in_progress
           title: Type
           type: string
+          enum:
+          - response.web_search_call.in_progress
       required:
       - item_id
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseWebSearchCallInProgress
     OpenAIResponseObjectStreamResponseWebSearchCallSearching:
+      description: Streaming event for web search calls currently searching.
       properties:
         item_id:
           title: Item Id
@@ -7667,10 +7799,10 @@ components:
           title: Sequence Number
           type: integer
         type:
-          const: response.web_search_call.searching
-          default: response.web_search_call.searching
           title: Type
           type: string
+          enum:
+          - response.web_search_call.searching
       required:
       - item_id
       - output_index
@@ -7683,9 +7815,9 @@ components:
           title: Id
         object:
           type: string
-          const: response
           title: Object
-          default: response
+          enum:
+          - response
         deleted:
           type: boolean
           title: Deleted
@@ -7714,6 +7846,8 @@ components:
                 title: OpenAIResponseOutputMessageMCPListTools
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
                 title: OpenAIResponseMCPApprovalRequest
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                title: OpenAIResponseOutputMessageReasoningItem
               discriminator:
                 propertyName: type
                 mapping:
@@ -7723,8 +7857,9 @@ components:
                   mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                   mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                   message: '#/components/schemas/OpenAIResponseMessage-Output'
+                  reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                   web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Output | ... (7 variants)
+              title: OpenAIResponseMessage-Output | ... (8 variants)
             - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
               title: OpenAIResponseInputFunctionToolCallOutput
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
@@ -7736,9 +7871,9 @@ components:
           title: Data
         object:
           type: string
-          const: list
           title: Object
-          default: list
+          enum:
+          - list
       required:
       - data
       title: ListOpenAIResponseInputItem
@@ -7832,18 +7967,18 @@ components:
       properties:
         type:
           type: string
-          const: array
           title: Type
-          default: array
+          enum:
+          - array
       title: ArrayType
       description: Parameter type for array values.
     BasicScoringFnParams:
       properties:
         type:
           type: string
-          const: basic
           title: Type
-          default: basic
+          enum:
+          - basic
         aggregation_functions:
           items:
             $ref: '#/components/schemas/AggregationFunctionType'
@@ -7856,45 +7991,45 @@ components:
       properties:
         type:
           type: string
-          const: boolean
           title: Type
-          default: boolean
+          enum:
+          - boolean
       title: BooleanType
       description: Parameter type for boolean values.
     ChatCompletionInputType:
       properties:
         type:
           type: string
-          const: chat_completion_input
           title: Type
-          default: chat_completion_input
+          enum:
+          - chat_completion_input
       title: ChatCompletionInputType
       description: Parameter type for chat completion input.
     CompletionInputType:
       properties:
         type:
           type: string
-          const: completion_input
           title: Type
-          default: completion_input
+          enum:
+          - completion_input
       title: CompletionInputType
       description: Parameter type for completion input.
     JsonType:
       properties:
         type:
           type: string
-          const: json
           title: Type
-          default: json
+          enum:
+          - json
       title: JsonType
       description: Parameter type for JSON values.
     LLMAsJudgeScoringFnParams:
       properties:
         type:
           type: string
-          const: llm_as_judge
           title: Type
-          default: llm_as_judge
+          enum:
+          - llm_as_judge
         judge_model:
           type: string
           title: Judge Model
@@ -7922,27 +8057,27 @@ components:
       properties:
         type:
           type: string
-          const: number
           title: Type
-          default: number
+          enum:
+          - number
       title: NumberType
       description: Parameter type for numeric values.
     ObjectType:
       properties:
         type:
           type: string
-          const: object
           title: Type
-          default: object
+          enum:
+          - object
       title: ObjectType
       description: Parameter type for object values.
     RegexParserScoringFnParams:
       properties:
         type:
           type: string
-          const: regex_parser
           title: Type
-          default: regex_parser
+          enum:
+          - regex_parser
         parsing_regexes:
           items:
             type: string
@@ -7974,9 +8109,9 @@ components:
           description: ID of the provider that owns this resource
         type:
           type: string
-          const: scoring_function
           title: Type
-          default: scoring_function
+          enum:
+          - scoring_function
         description:
           anyOf:
           - type: string
@@ -8072,18 +8207,18 @@ components:
       properties:
         type:
           type: string
-          const: string
           title: Type
-          default: string
+          enum:
+          - string
       title: StringType
       description: Parameter type for string values.
     UnionType:
       properties:
         type:
           type: string
-          const: union
           title: Type
-          default: union
+          enum:
+          - union
       title: UnionType
       description: Parameter type for union values.
     ListScoringFunctionsResponse:
@@ -8237,9 +8372,9 @@ components:
           description: ID of the provider that owns this resource
         type:
           type: string
-          const: shield
           title: Type
-          default: shield
+          enum:
+          - shield
         params:
           anyOf:
           - additionalProperties: true
@@ -8266,10 +8401,10 @@ components:
       description: A image content item
       properties:
         type:
-          const: image
-          default: image
           title: Type
           type: string
+          enum:
+          - image
         image:
           $ref: '#/components/schemas/_URLOrData'
       required:
@@ -8320,9 +8455,9 @@ components:
       properties:
         type:
           type: string
-          const: text
           title: Type
-          default: text
+          enum:
+          - text
         text:
           type: string
           title: Text
@@ -8462,10 +8597,10 @@ components:
           title: Provider Id
           type: string
         type:
-          const: tool_group
-          default: tool_group
           title: Type
           type: string
+          enum:
+          - tool_group
         mcp_endpoint:
           anyOf:
           - $ref: '#/components/schemas/URL'
@@ -8793,18 +8928,18 @@ components:
       properties:
         type:
           type: string
-          const: auto
           title: Type
-          default: auto
+          enum:
+          - auto
       title: VectorStoreChunkingStrategyAuto
       description: Automatic chunking strategy for vector store files.
     VectorStoreChunkingStrategyStatic:
       properties:
         type:
           type: string
-          const: static
           title: Type
-          default: static
+          enum:
+          - static
         static:
           $ref: '#/components/schemas/VectorStoreChunkingStrategyStaticConfig'
       required:
@@ -8936,14 +9071,20 @@ components:
           type: string
           title: Vector Store Id
         status:
-          title: Status
-          type: string
-          enum:
-          - completed
-          - in_progress
-          - cancelled
-          - failed
-          default: completed
+          anyOf:
+          - type: string
+            enum:
+            - completed
+          - type: string
+            enum:
+            - in_progress
+          - type: string
+            enum:
+            - cancelled
+          - type: string
+            enum:
+            - failed
+          title: string
         file_counts:
           $ref: '#/components/schemas/VectorStoreFileCounts'
       required:
@@ -8955,22 +9096,31 @@ components:
       title: VectorStoreFileBatchObject
       description: OpenAI Vector Store File Batch object.
     VectorStoreFileStatus:
-      type: string
-      enum:
-      - completed
-      - in_progress
-      - cancelled
-      - failed
-      default: completed
+      anyOf:
+      - type: string
+        enum:
+        - completed
+      - type: string
+        enum:
+        - in_progress
+      - type: string
+        enum:
+        - cancelled
+      - type: string
+        enum:
+        - failed
+      title: string
     VectorStoreFileLastError:
       properties:
         code:
-          title: Code
-          type: string
-          enum:
-          - server_error
-          - rate_limit_exceeded
-          default: server_error
+          anyOf:
+          - type: string
+            enum:
+            - server_error
+          - type: string
+            enum:
+            - rate_limit_exceeded
+          title: string
         message:
           type: string
           title: Message
@@ -9029,14 +9179,20 @@ components:
           - type: 'null'
           title: VectorStoreFileLastError
         status:
-          title: Status
-          type: string
-          enum:
-          - completed
-          - in_progress
-          - cancelled
-          - failed
-          default: completed
+          anyOf:
+          - type: string
+            enum:
+            - completed
+          - type: string
+            enum:
+            - in_progress
+          - type: string
+            enum:
+            - cancelled
+          - type: string
+            enum:
+            - failed
+          title: string
         usage_bytes:
           type: integer
           title: Usage Bytes
@@ -9127,8 +9283,9 @@ components:
       properties:
         type:
           type: string
-          const: text
           title: Type
+          enum:
+          - text
         text:
           type: string
           title: Text
@@ -9158,9 +9315,9 @@ components:
       properties:
         object:
           type: string
-          const: vector_store.file_content.page
           title: Object
-          default: vector_store.file_content.page
+          enum:
+          - vector_store.file_content.page
         data:
           items:
             $ref: '#/components/schemas/VectorStoreContent'
@@ -9300,10 +9457,10 @@ components:
           description: ID of the provider that owns this resource
         type:
           type: string
-          const: dataset
           title: Type
           description: Type of resource, always 'dataset' for datasets
-          default: dataset
+          enum:
+          - dataset
         purpose:
           $ref: '#/components/schemas/DatasetPurpose'
           description: Purpose of the dataset indicating its intended use
@@ -9336,10 +9493,10 @@ components:
       properties:
         type:
           type: string
-          const: rows
           title: Type
           description: The type of data source.
-          default: rows
+          enum:
+          - rows
         rows:
           items:
             additionalProperties: true
@@ -9355,10 +9512,10 @@ components:
       properties:
         type:
           type: string
-          const: uri
           title: Type
           description: The type of data source.
-          default: uri
+          enum:
+          - uri
         uri:
           type: string
           title: Uri
@@ -9396,10 +9553,10 @@ components:
           description: ID of the provider that owns this resource
         type:
           type: string
-          const: benchmark
           title: Type
           description: The resource type, always benchmark.
-          default: benchmark
+          enum:
+          - benchmark
         dataset_id:
           type: string
           title: Dataset Id
@@ -9472,19 +9629,19 @@ components:
       properties:
         type:
           type: string
-          const: greedy
           title: Type
           description: Must be 'greedy' to identify this sampling strategy.
-          default: greedy
+          enum:
+          - greedy
       title: GreedySamplingStrategy
       description: Greedy sampling strategy that selects the highest probability token at each step.
     ModelCandidate:
       properties:
         type:
           type: string
-          const: model
           title: Type
-          default: model
+          enum:
+          - model
         model:
           type: string
           minLength: 1
@@ -9551,10 +9708,10 @@ components:
       properties:
         role:
           type: string
-          const: system
           title: Role
           description: Must be 'system' to identify this as a system message.
-          default: system
+          enum:
+          - system
         content:
           anyOf:
           - type: string
@@ -9593,10 +9750,10 @@ components:
       properties:
         type:
           type: string
-          const: top_k
           title: Type
           description: Must be 'top_k' to identify this sampling strategy.
-          default: top_k
+          enum:
+          - top_k
         top_k:
           type: integer
           minimum: 1.0
@@ -9610,10 +9767,10 @@ components:
       properties:
         type:
           type: string
-          const: top_p
           title: Type
           description: Must be 'top_p' to identify this sampling strategy.
-          default: top_p
+          enum:
+          - top_p
         temperature:
           type: number
           maximum: 2.0
@@ -9779,43 +9936,48 @@ components:
       title: RerankResponse
       description: Response from a reranking request.
     RegisterModelRequest:
+      description: Request model for registering a model.
       properties:
         model_id:
-          type: string
-          title: Model Id
           description: The identifier of the model to register.
+          title: Model Id
+          type: string
         provider_model_id:
           anyOf:
           - type: string
           - type: 'null'
           description: The identifier of the model in the provider.
+          nullable: true
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
           description: The identifier of the provider.
+          nullable: true
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
           description: Any additional metadata for this model.
+          nullable: true
         model_type:
           anyOf:
           - $ref: '#/components/schemas/ModelType'
             title: ModelType
           - type: 'null'
           description: The type of model to register.
+          nullable: true
           title: ModelType
         model_validation:
           anyOf:
           - type: boolean
           - type: 'null'
           description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
+          nullable: true
       required:
       - model_id
       title: RegisterModelRequest
-      description: Request model for registering a model.
     ParamType:
       discriminator:
         mapping:
@@ -10223,6 +10385,8 @@ components:
                   title: OpenAIResponseOutputMessageMCPListTools
                 - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
                   title: OpenAIResponseMCPApprovalRequest
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                  title: OpenAIResponseOutputMessageReasoningItem
                 discriminator:
                   propertyName: type
                   mapping:
@@ -10232,8 +10396,9 @@ components:
                     mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                     mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                     message: '#/components/schemas/OpenAIResponseMessage-Input'
+                    reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                     web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                title: OpenAIResponseMessage-Input | ... (7 variants)
+                title: OpenAIResponseMessage-Input | ... (8 variants)
               - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
                 title: OpenAIResponseInputFunctionToolCallOutput
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
@@ -10662,13 +10827,14 @@ components:
       - Error
       - Not Implemented
       title: HealthStatus
+      description: Health check status values for provider readiness.
     ImageContentItem-Input:
       properties:
         type:
           type: string
-          const: image
           title: Type
-          default: image
+          enum:
+          - image
         image:
           $ref: '#/components/schemas/_URLOrData'
       required:
@@ -10679,9 +10845,9 @@ components:
       properties:
         type:
           type: string
-          const: image
           title: Type
-          default: image
+          enum:
+          - image
         image:
           $ref: '#/components/schemas/_URLOrData'
       required:
@@ -10751,10 +10917,10 @@ components:
       properties:
         role:
           type: string
-          const: assistant
           title: Role
           description: Must be 'assistant' to identify this as the model's response.
-          default: assistant
+          enum:
+          - assistant
         content:
           anyOf:
           - type: string
@@ -10773,7 +10939,7 @@ components:
         tool_calls:
           anyOf:
           - items:
-              $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
+              $ref: '#/components/schemas/ChatCompletionMessageToolCall'
             type: array
           - type: 'null'
           description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
@@ -10784,10 +10950,10 @@ components:
       properties:
         role:
           type: string
-          const: assistant
           title: Role
           description: Must be 'assistant' to identify this as the model's response.
-          default: assistant
+          enum:
+          - assistant
         content:
           anyOf:
           - type: string
@@ -10806,7 +10972,7 @@ components:
         tool_calls:
           anyOf:
           - items:
-              $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
+              $ref: '#/components/schemas/ChatCompletionMessageToolCall'
             type: array
           - type: 'null'
           description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
@@ -10848,14 +11014,29 @@ components:
       - file_id
       title: OpenAIAttachFileRequest
       description: Request body for attaching a file to a vector store.
+    OpenAIChatCompletionCustomToolCallFunction:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: The name of the custom tool to call.
+        input:
+          type: string
+          title: Input
+          description: The input for the custom tool call generated by the model.
+      required:
+      - name
+      - input
+      title: OpenAIChatCompletionCustomToolCallFunction
+      description: Custom tool call details for OpenAI-compatible tool calls.
     OpenAIChatCompletionResponseMessage:
       properties:
         role:
           type: string
-          const: assistant
           title: Role
           description: The role of the message author, always 'assistant' in responses.
-          default: assistant
+          enum:
+          - assistant
         content:
           anyOf:
           - type: string
@@ -10863,7 +11044,14 @@ components:
           description: The content of the message.
         tool_calls:
           items:
-            $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
+            anyOf:
+            - $ref: '#/components/schemas/ChatCompletionMessageToolCall'
+              title: ChatCompletionMessageToolCall
+            - $ref: '#/components/schemas/ChatCompletionMessageCustomToolCall'
+              title: ChatCompletionMessageCustomToolCall
+            discriminator:
+              propertyName: type
+            title: ChatCompletionMessageToolCall | ChatCompletionMessageCustomToolCall
           type: array
           title: Tool Calls
           description: The tool calls generated by the model.
@@ -10873,7 +11061,18 @@ components:
           - type: 'null'
           description: The refusal message generated by the model.
         function_call:
-          $ref: '#/components/schemas/OpenAIChatCompletionToolCallFunction'
+          properties:
+            name:
+              type: string
+              title: Name
+              description: Name of the function to call.
+            arguments:
+              type: string
+              title: Arguments
+              description: Arguments to pass to the function as a JSON string.
+          required:
+          - name
+          - arguments
           description: 'Deprecated: the name and arguments of a function that should be called.'
         annotations:
           items:
@@ -10937,9 +11136,9 @@ components:
           title: Tools
         type:
           type: string
-          const: allowed_tools
           title: Type
-          default: allowed_tools
+          enum:
+          - allowed_tools
       required:
       - tools
       title: OpenAIResponseInputToolChoiceAllowedTools
@@ -10948,9 +11147,9 @@ components:
       properties:
         type:
           type: string
-          const: custom
           title: Type
-          default: custom
+          enum:
+          - custom
         name:
           type: string
           title: Name
@@ -10962,9 +11161,9 @@ components:
       properties:
         type:
           type: string
-          const: file_search
           title: Type
-          default: file_search
+          enum:
+          - file_search
       title: OpenAIResponseInputToolChoiceFileSearch
       description: Indicates that the model should use file search to generate a response.
     OpenAIResponseInputToolChoiceFunctionTool:
@@ -10974,9 +11173,9 @@ components:
           title: Name
         type:
           type: string
-          const: function
           title: Type
-          default: function
+          enum:
+          - function
       required:
       - name
       title: OpenAIResponseInputToolChoiceFunctionTool
@@ -10988,9 +11187,9 @@ components:
           title: Server Label
         type:
           type: string
-          const: mcp
           title: Type
-          default: mcp
+          enum:
+          - mcp
         name:
           anyOf:
           - type: string
@@ -11006,17 +11205,25 @@ components:
       - required
       - none
       title: OpenAIResponseInputToolChoiceMode
+      description: Enumeration of simple tool choice modes for response generation.
     OpenAIResponseInputToolChoiceWebSearch:
       properties:
         type:
-          title: Type
+          anyOf:
+          - type: string
+            enum:
+            - web_search
+          - type: string
+            enum:
+            - web_search_preview
+          - type: string
+            enum:
+            - web_search_preview_2025_03_11
+          - type: string
+            enum:
+            - web_search_2025_08_26
+          title: string
           default: web_search
-          type: string
-          enum:
-          - web_search
-          - web_search_preview
-          - web_search_preview_2025_03_11
-          - web_search_2025_08_26
       title: OpenAIResponseInputToolChoiceWebSearch
       description: Indicates that the model should use web search to generate a response
     OpenAIResponseMessage-Input:
@@ -11057,19 +11264,25 @@ components:
             title: list[OpenAIResponseOutputMessageContentOutputText-Input | OpenAIResponseContentPartRefusal]
           title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText-Input | OpenAIResponseContentPartRefusal]
         role:
-          title: Role
-          type: string
-          enum:
-          - system
-          - developer
-          - user
-          - assistant
-          default: system
+          anyOf:
+          - type: string
+            enum:
+            - system
+          - type: string
+            enum:
+            - developer
+          - type: string
+            enum:
+            - user
+          - type: string
+            enum:
+            - assistant
+          title: string
         type:
           type: string
-          const: message
           title: Type
-          default: message
+          enum:
+          - message
         id:
           anyOf:
           - type: string
@@ -11125,19 +11338,25 @@ components:
             title: list[OpenAIResponseOutputMessageContentOutputText-Output | OpenAIResponseContentPartRefusal]
           title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText-Output | OpenAIResponseContentPartRefusal]
         role:
-          title: Role
-          type: string
-          enum:
-          - system
-          - developer
-          - user
-          - assistant
-          default: system
+          anyOf:
+          - type: string
+            enum:
+            - system
+          - type: string
+            enum:
+            - developer
+          - type: string
+            enum:
+            - user
+          - type: string
+            enum:
+            - assistant
+          title: string
         type:
           type: string
-          const: message
           title: Type
-          default: message
+          enum:
+          - message
         id:
           anyOf:
           - type: string
@@ -11162,9 +11381,9 @@ components:
           title: Text
         type:
           type: string
-          const: output_text
           title: Type
-          default: output_text
+          enum:
+          - output_text
         annotations:
           items:
             oneOf:
@@ -11195,6 +11414,7 @@ components:
       required:
       - text
       title: OpenAIResponseOutputMessageContentOutputText
+      description: Text content within an output message of an OpenAI response.
     OpenAIResponseOutputMessageContentOutputText-Output:
       properties:
         text:
@@ -11202,9 +11422,9 @@ components:
           title: Text
         type:
           type: string
-          const: output_text
           title: Type
-          default: output_text
+          enum:
+          - output_text
         annotations:
           items:
             oneOf:
@@ -11235,6 +11455,7 @@ components:
       required:
       - text
       title: OpenAIResponseOutputMessageContentOutputText
+      description: Text content within an output message of an OpenAI response.
     OpenAIResponseOutputMessageFileSearchToolCallResults:
       properties:
         attributes:
@@ -11261,6 +11482,77 @@ components:
       - text
       title: OpenAIResponseOutputMessageFileSearchToolCallResults
       description: Search results returned by the file search operation.
+    OpenAIResponseOutputMessageReasoningContent:
+      properties:
+        text:
+          type: string
+          title: Text
+          description: The reasoning text content from the model.
+        type:
+          type: string
+          title: Type
+          description: The type identifier, always 'reasoning_text'.
+          enum:
+          - reasoning_text
+      required:
+      - text
+      title: OpenAIResponseOutputMessageReasoningContent
+      description: Reasoning text from the model.
+    OpenAIResponseOutputMessageReasoningItem:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Unique identifier for the reasoning output item.
+        summary:
+          items:
+            $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningSummary'
+          type: array
+          title: Summary
+          description: Summary of the reasoning output.
+        type:
+          type: string
+          title: Type
+          description: The type identifier, always 'reasoning'.
+          enum:
+          - reasoning
+        content:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningContent'
+            type: array
+          - type: 'null'
+          description: The reasoning content from the model.
+        status:
+          anyOf:
+          - type: string
+            enum:
+            - in_progress
+            - completed
+            - incomplete
+          - type: 'null'
+          description: The status of the reasoning output.
+      required:
+      - id
+      - summary
+      title: OpenAIResponseOutputMessageReasoningItem
+      description: Reasoning output from the model, representing the model's thinking process.
+    OpenAIResponseOutputMessageReasoningSummary:
+      properties:
+        text:
+          type: string
+          title: Text
+          description: The summary text of the reasoning output.
+        type:
+          type: string
+          title: Type
+          description: The type identifier, always 'summary_text'.
+          enum:
+          - summary_text
+      required:
+      - text
+      title: OpenAIResponseOutputMessageReasoningSummary
+      description: A summary of reasoning output from the model.
     OpenAIResponseReasoning:
       properties:
         effort:
@@ -11274,6 +11566,15 @@ components:
             - high
             - xhigh
           - type: 'null'
+        summary:
+          anyOf:
+          - type: string
+            enum:
+            - auto
+            - concise
+            - detailed
+          - type: 'null'
+          description: Summary mode for reasoning output. One of 'auto', 'concise', or 'detailed'.
       title: OpenAIResponseReasoning
       description: |-
         Configuration for reasoning effort in OpenAI responses.
@@ -11282,13 +11583,17 @@ components:
     OpenAIResponseTextFormat:
       properties:
         type:
-          title: Type
-          type: string
-          enum:
-          - text
-          - json_schema
-          - json_object
-          default: text
+          anyOf:
+          - type: string
+            enum:
+            - text
+          - type: string
+            enum:
+            - json_schema
+          - type: string
+            enum:
+            - json_object
+          title: string
         name:
           anyOf:
           - type: string
@@ -11408,10 +11713,10 @@ components:
       properties:
         role:
           type: string
-          const: user
           title: Role
           description: Must be 'user' to identify this as a user message.
-          default: user
+          enum:
+          - user
         content:
           anyOf:
           - type: string
@@ -11447,10 +11752,10 @@ components:
       properties:
         role:
           type: string
-          const: user
           title: Role
           description: Must be 'user' to identify this as a user message.
-          default: user
+          enum:
+          - user
         content:
           anyOf:
           - type: string
@@ -11657,10 +11962,10 @@ components:
       properties:
         type:
           type: string
-          const: contextual
           title: Type
           description: Strategy type identifier.
-          default: contextual
+          enum:
+          - contextual
         contextual:
           $ref: '#/components/schemas/VectorStoreChunkingStrategyContextualConfig'
           description: Configuration for contextual chunking.
@@ -11706,6 +12011,7 @@ components:
           - type: 'null'
           description: Maximum concurrent LLM calls. Falls back to config default if not provided.
       title: VectorStoreChunkingStrategyContextualConfig
+      description: Configuration for contextual chunking that uses an LLM to situate chunks within the document.
     _URLOrData:
       properties:
         url:
@@ -11740,11 +12046,11 @@ components:
       description: Configuration for grammar-guided response generation.
       properties:
         type:
-          const: grammar
-          default: grammar
           description: Must be 'grammar' to identify this format type.
           title: Type
           type: string
+          enum:
+          - grammar
         bnf:
           additionalProperties: true
           description: The BNF grammar specification the response should conform to.
@@ -11757,11 +12063,11 @@ components:
       description: Configuration for JSON schema-guided response generation.
       properties:
         type:
-          const: json_schema
-          default: json_schema
           description: Must be 'json_schema' to identify this format type.
           title: Type
           type: string
+          enum:
+          - json_schema
         json_schema:
           additionalProperties: true
           description: The JSON schema the response should conform to.
@@ -11783,6 +12089,7 @@ components:
         title: GrammarResponseFormat
       title: JsonSchemaResponseFormat | GrammarResponseFormat
     AllowedToolsConfig:
+      description: Configuration specifying which tools are allowed and their selection mode.
       properties:
         tools:
           description: List of allowed tools.
@@ -11813,6 +12120,7 @@ components:
       - name
       title: CustomToolConfig
     FunctionToolConfig:
+      description: Configuration for a function tool specifying the function name.
       properties:
         name:
           description: Name of the function.
@@ -11825,11 +12133,11 @@ components:
       description: Allowed tools response format for OpenAI-compatible chat completion requests.
       properties:
         type:
-          const: allowed_tools
-          default: allowed_tools
           description: Must be 'allowed_tools' to indicate allowed tools response format.
           title: Type
           type: string
+          enum:
+          - allowed_tools
         allowed_tools:
           $ref: '#/components/schemas/AllowedToolsConfig'
           description: Allowed tools configuration.
@@ -11840,11 +12148,11 @@ components:
       description: Custom tool choice for OpenAI-compatible chat completion requests.
       properties:
         type:
-          const: custom
-          default: custom
           description: Must be 'custom' to indicate custom tool choice.
           title: Type
           type: string
+          enum:
+          - custom
         custom:
           $ref: '#/components/schemas/CustomToolConfig'
           description: Custom tool configuration.
@@ -11855,11 +12163,11 @@ components:
       description: Function tool choice for OpenAI-compatible chat completion requests.
       properties:
         type:
-          const: function
-          default: function
           description: Must be 'function' to indicate function tool choice.
           title: Type
           type: string
+          enum:
+          - function
         function:
           $ref: '#/components/schemas/FunctionToolConfig'
           description: The function tool configuration.
@@ -12015,10 +12323,10 @@ components:
       description: Parameter type for dialog data with semantic output labels.
       properties:
         type:
-          const: dialog
-          default: dialog
           title: Type
           type: string
+          enum:
+          - dialog
       title: DialogType
     ListScoringFunctionsRequest:
       description: Request model for listing scoring functions.
@@ -12068,10 +12376,10 @@ components:
       description: A text content delta for streaming responses.
       properties:
         type:
-          const: text
-          default: text
           title: Type
           type: string
+          enum:
+          - text
         text:
           title: Text
           type: string
@@ -12082,10 +12390,10 @@ components:
       description: An image content delta for streaming responses.
       properties:
         type:
-          const: image
-          default: image
           title: Type
           type: string
+          enum:
+          - image
         image:
           format: binary
           title: Image
@@ -12139,7 +12447,7 @@ components:
       - providers
       - inference
       - safety
-      - agents
+      - responses
       - batches
       - vector_io
       - datasetio
@@ -12163,6 +12471,7 @@ components:
       title: Api
       type: string
     ProviderSpec:
+      description: Base specification for a Llama Stack provider including its config and dependencies.
       properties:
         api:
           $ref: '#/components/schemas/Api'
@@ -12242,6 +12551,7 @@ components:
       - config_class
       title: ProviderSpec
     InlineProviderSpec:
+      description: Provider specification for inline (built-in) providers with optional container support.
       properties:
         api:
           $ref: '#/components/schemas/Api'
@@ -12338,6 +12648,7 @@ components:
       - config_class
       title: InlineProviderSpec
     RemoteProviderSpec:
+      description: Provider specification for remote providers accessed via an adapter.
       properties:
         api:
           $ref: '#/components/schemas/Api'
@@ -12478,31 +12789,31 @@ components:
       description: Configuration for 8-bit floating point quantization.
       properties:
         type:
-          const: fp8_mixed
-          default: fp8_mixed
           description: Must be 'fp8_mixed' to identify this quantization type.
           title: Type
           type: string
+          enum:
+          - fp8_mixed
       title: Fp8QuantizationConfig
     Bf16QuantizationConfig:
       description: Configuration for BFloat16 precision (typically no quantization).
       properties:
         type:
-          const: bf16
-          default: bf16
           description: Must be 'bf16' to identify this quantization type.
           title: Type
           type: string
+          enum:
+          - bf16
       title: Bf16QuantizationConfig
     Int4QuantizationConfig:
       description: Configuration for 4-bit integer quantization.
       properties:
         type:
-          const: int4_mixed
-          default: int4_mixed
           description: Must be 'int4' to identify this quantization type.
           title: Type
           type: string
+          enum:
+          - int4_mixed
         scheme:
           anyOf:
           - type: string
@@ -12514,11 +12825,11 @@ components:
       description: A message from the user in a chat conversation.
       properties:
         role:
-          const: user
-          default: user
           description: Must be 'user' to identify this as a user message.
           title: Role
           type: string
+          enum:
+          - user
         content:
           anyOf:
           - type: string
@@ -12588,11 +12899,11 @@ components:
       description: A message representing the result of a tool invocation.
       properties:
         role:
-          const: tool
-          default: tool
           description: Must be 'tool' to identify this as a tool response.
           title: Role
           type: string
+          enum:
+          - tool
         call_id:
           description: Unique identifier for the tool call this response is for.
           title: Call Id
@@ -13030,15 +13341,15 @@ components:
           title: Status
           type: string
         type:
-          const: message
-          default: message
           title: Type
           type: string
+          enum:
+          - message
         object:
-          const: message
-          default: message
           title: Object
           type: string
+          enum:
+          - message
       required:
       - id
       - content
@@ -13061,6 +13372,7 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
               propertyName: type
             oneOf:
@@ -13082,7 +13394,9 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
-            title: OpenAIResponseMessage | ... (9 variants)
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
+            title: OpenAIResponseMessage | ... (10 variants)
           maxItems: 20
           title: Items
           type: array
@@ -13461,6 +13775,64 @@ components:
       required:
       - prompt_id
       title: DeletePromptRequest
+    ChatCompletionMessageToolCall:
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the tool call.
+        type:
+          type: string
+          description: Must be 'function' to identify this as a function call.
+          enum:
+          - function
+        function:
+          properties:
+            name:
+              type: string
+              title: Name
+              description: Name of the function to call.
+            arguments:
+              type: string
+              title: Arguments
+              description: Arguments to pass to the function as a JSON string.
+          required:
+          - name
+          - arguments
+          description: Function call details.
+      description: Tool call specification for OpenAI-compatible chat completion responses.
+      required:
+      - id
+      - type
+      - function
+    ChatCompletionMessageCustomToolCall:
+      properties:
+        id:
+          type: string
+          description: The ID of the tool call.
+        type:
+          type: string
+          description: The type of the tool. Always 'custom'.
+          enum:
+          - custom
+        custom:
+          properties:
+            name:
+              type: string
+              title: Name
+              description: The name of the custom tool to call.
+            input:
+              type: string
+              title: Input
+              description: The input for the custom tool call generated by the model.
+          required:
+          - name
+          - input
+          description: The custom tool that the model called.
+      required:
+      - id
+      - type
+      - custom
+      description: A call to a custom tool created by the model.
   responses:
     BadRequest400:
       description: The request was invalid or malformed
