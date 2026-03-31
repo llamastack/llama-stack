@@ -4,8 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from __future__ import annotations
-
 import json
 from typing import Any
 
@@ -14,6 +12,7 @@ from pydantic import BaseModel
 from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.storage.kvstore import KVStore, kvstore_impl
 from llama_stack_api import (
+    Api,
     CreatePromptRequest,
     DeletePromptRequest,
     GetPromptRequest,
@@ -35,7 +34,7 @@ class PromptServiceConfig(BaseModel):
     config: StackConfig
 
 
-async def get_provider_impl(config: PromptServiceConfig, deps: dict[Any, Any]) -> PromptServiceImpl:
+async def get_provider_impl(config: PromptServiceConfig, deps: dict[Api, Any]) -> "PromptServiceImpl":
     """Get the prompt service implementation."""
     impl = PromptServiceImpl(config, deps)
     await impl.initialize()
@@ -45,7 +44,7 @@ async def get_provider_impl(config: PromptServiceConfig, deps: dict[Any, Any]) -
 class PromptServiceImpl(Prompts):
     """Built-in prompt service implementation using KVStore."""
 
-    def __init__(self, config: PromptServiceConfig, deps: dict[Any, Any]):
+    def __init__(self, config: PromptServiceConfig, deps: dict[Api, Any]):
         self.stack_config = config.config
         self.deps = deps
         self.kvstore: KVStore

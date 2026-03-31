@@ -9,6 +9,8 @@ import json
 from contextlib import AbstractContextManager
 from typing import Any
 
+from starlette.types import Scope
+
 from llama_stack.core.datatypes import User
 from llama_stack.log import get_logger
 
@@ -28,7 +30,7 @@ class RequestProviderDataContext(AbstractContextManager[None]):
         if user:
             self.provider_data["__authenticated_user"] = user
 
-        self.token: Any = None
+        self.token: contextvars.Token[dict[str, Any] | None] | None = None
 
     def __enter__(self) -> None:
         # Save the current value and set the new one
@@ -102,7 +104,7 @@ def get_authenticated_user() -> User | None:
     return provider_data.get("__authenticated_user")
 
 
-def user_from_scope(scope: dict[str, Any]) -> User | None:
+def user_from_scope(scope: Scope) -> User | None:
     """Create a User object from ASGI scope data (set by authentication middleware)"""
     user_attributes = scope.get("user_attributes", {})
     principal = scope.get("principal", "")

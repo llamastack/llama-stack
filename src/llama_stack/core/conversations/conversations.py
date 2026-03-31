@@ -4,8 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from __future__ import annotations
-
 import secrets
 import time
 from typing import Any
@@ -19,6 +17,7 @@ from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlS
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
 from llama_stack.log import get_logger
 from llama_stack_api import (
+    Api,
     ConversationItemNotFoundError,
     ConversationNotFoundError,
     InvalidParameterError,
@@ -56,7 +55,7 @@ class ConversationServiceConfig(BaseModel):
     policy: list[AccessRule] = []
 
 
-async def get_provider_impl(config: ConversationServiceConfig, deps: dict[Any, Any]) -> ConversationServiceImpl:
+async def get_provider_impl(config: ConversationServiceConfig, deps: dict[Api, Any]) -> "ConversationServiceImpl":
     """Get the conversation service implementation."""
     impl = ConversationServiceImpl(config, deps)
     await impl.initialize()
@@ -66,7 +65,7 @@ async def get_provider_impl(config: ConversationServiceConfig, deps: dict[Any, A
 class ConversationServiceImpl(Conversations):
     """Built-in conversation service implementation using AuthorizedSqlStore."""
 
-    def __init__(self, config: ConversationServiceConfig, deps: dict[Any, Any]):
+    def __init__(self, config: ConversationServiceConfig, deps: dict[Api, Any]):
         self.config = config
         self.deps = deps
         self.policy = config.policy

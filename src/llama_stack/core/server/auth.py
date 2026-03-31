@@ -9,6 +9,7 @@ from typing import Any
 
 import httpx
 from aiohttp import hdrs
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from llama_stack.core.access_control.conditions import User as ProtocolUser
 from llama_stack.core.access_control.conditions import parse_conditions
@@ -18,6 +19,7 @@ from llama_stack.core.request_headers import user_from_scope
 from llama_stack.core.server.auth_providers import create_auth_provider
 from llama_stack.core.server.routes import find_matching_route, initialize_route_impls
 from llama_stack.log import get_logger
+from llama_stack_api import Api
 from llama_stack_api.common.errors import OpenAIErrorResponse
 
 logger = get_logger(name=__name__, category="core::auth")
@@ -91,12 +93,12 @@ class AuthenticationMiddleware:
     access resources that don't have access_attributes defined.
     """
 
-    def __init__(self, app: Any, auth_config: AuthenticationConfig, impls: Any) -> None:
+    def __init__(self, app: ASGIApp, auth_config: AuthenticationConfig, impls: dict[Api, Any]) -> None:
         self.app = app
         self.impls = impls
         self.auth_provider = create_auth_provider(auth_config)
 
-    async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> Any:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> Any:
         if scope["type"] == "http":
             # Find the route and check if authentication is required
             path = scope.get("path", "")
@@ -159,7 +161,7 @@ class AuthenticationMiddleware:
 
         return await self.app(scope, receive, send)
 
-    async def _send_auth_error(self, send: Any, message: str, status: int = 401) -> Any:
+    async def _send_auth_error(self, send: Send, message: str, status: int = 401) -> None:
         await send(
             {
                 "type": "http.response.start",
@@ -179,11 +181,11 @@ class RouteAuthorizationMiddleware:
 
     """
 
-    def __init__(self, app: Any, route_policy: list[RouteAccessRule]) -> None:
+    def __init__(self, app: ASGIApp, route_policy: list[RouteAccessRule]) -> None:
         self.app = app
         self.route_policy = route_policy
 
-    async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> Any:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> Any:
         # Only process HTTP requests
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
@@ -359,7 +361,7 @@ class RouteAuthorizationMiddleware:
         # No conditions specified - rule applies regardless of user
         return True
 
-    async def _send_error(self, send: Any, message: str, status: int = 403) -> Any:
+    async def _send_error(self, send: Send, message: str, status: int = 403) -> None:
         """Send an error response."""
         await send(
             {
