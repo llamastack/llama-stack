@@ -40,25 +40,9 @@ response = client.chat.completions.create(
 
 Llama Stack has a pluggable provider architecture. Develop locally with Ollama, deploy to production with vLLM, or connect to a managed service — the API stays the same.
 
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│                          Llama Stack Server                             │
-│               (same API, same code, any environment)                    │
-│                                                                         │
-│  /v1/chat/completions  /v1/responses  /v1/vector_stores  /v1/files      │
-│  /v1/embeddings        /v1/batches    /v1/models         /v1/connectors │
-├───────────────────┬──────────────────┬──────────────────────────────────┤
-│  Inference        │  Vector stores   │  Tools & connectors              │
-│    Ollama         │    FAISS         │    MCP servers                   │
-│    vLLM, TGI      │    Milvus        │    Brave, Tavily (web search)    │
-│    AWS Bedrock    │    Qdrant        │    File search (built-in RAG)    │
-│    Azure OpenAI   │    PGVector      │                                  │
-│    Fireworks      │    ChromaDB      │  File storage & processing       │
-│    Together       │    Weaviate      │    Local filesystem, S3          │
-│    ...15+ more    │    Elasticsearch │    PDF, HTML (file processors)   │
-│                   │    SQLite-vec    │                                  │
-└───────────────────┴──────────────────┴──────────────────────────────────┘
-```
+<p align="center">
+  <img src="docs/static/img/architecture-animated.svg" alt="Llama Stack Architecture" width="100%">
+</p>
 
 See the [provider documentation](https://llamastack.github.io/docs/providers) for the full list.
 
