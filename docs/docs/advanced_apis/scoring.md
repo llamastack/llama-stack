@@ -110,16 +110,16 @@ client = LlamaStackClient(base_url="http://localhost:8321")
 client.scoring_functions.register(
     scoring_function_id="basic_accuracy",
     provider_id="basic",
-    provider_scoring_function_id="accuracy"
+    provider_scoring_function_id="accuracy",
 )
 
 # Use the scoring function
 result = client.scoring.score(
     input_rows=[
         {"expected": "Paris", "actual": "Paris"},
-        {"expected": "London", "actual": "Paris"}
+        {"expected": "London", "actual": "Paris"},
     ],
-    scoring_function_id="basic_accuracy"
+    scoring_function_id="basic_accuracy",
 )
 print(f"Accuracy: {result.results[0].score}")
 ```
@@ -134,17 +134,19 @@ client.scoring_functions.register(
     provider_scoring_function_id="response_quality",
     params={
         "criteria": "Evaluate response quality, relevance, and helpfulness",
-        "scale": "1-10"
-    }
+        "scale": "1-10",
+    },
 )
 
 # Score responses using LLM judgment
 result = client.scoring.score(
-    input_rows=[{
-        "query": "What is machine learning?",
-        "response": "Machine learning is a subset of AI that enables computers to learn patterns from data..."
-    }],
-    scoring_function_id="quality_judge"
+    input_rows=[
+        {
+            "query": "What is machine learning?",
+            "response": "Machine learning is a subset of AI that enables computers to learn patterns from data...",
+        }
+    ],
+    scoring_function_id="quality_judge",
 )
 ```
 
@@ -155,16 +157,18 @@ result = client.scoring.score(
 client.scoring_functions.register(
     scoring_function_id="braintrust_eval",
     provider_id="braintrust",
-    provider_scoring_function_id="semantic_similarity"
+    provider_scoring_function_id="semantic_similarity",
 )
 
 # Run evaluation with Braintrust
 result = client.scoring.score(
-    input_rows=[{
-        "reference": "The capital of France is Paris",
-        "candidate": "Paris is the capital city of France"
-    }],
-    scoring_function_id="braintrust_eval"
+    input_rows=[
+        {
+            "reference": "The capital of France is Paris",
+            "candidate": "Paris is the capital city of France",
+        }
+    ],
+    scoring_function_id="braintrust_eval",
 )
 ```
 
@@ -178,7 +182,7 @@ result = client.scoring.score(
 
 ## Integration with Evaluation
 
-The Scoring API works closely with the [Evaluation](./evaluation.mdx) API to provide comprehensive evaluation workflows:
+The Scoring API works closely with the [Evaluation](./evaluation) API to provide comprehensive evaluation workflows:
 
 1. **Datasets** are loaded via the DatasetIO API
 2. **Evaluation** generates model outputs using the Eval API
@@ -187,7 +191,7 @@ The Scoring API works closely with the [Evaluation](./evaluation.mdx) API to pro
 
 ## Next Steps
 
-- Check out the [Evaluation](./evaluation.mdx) guide for running complete evaluations
-- See the [Building Applications - Evaluation](../building_applications/evals.mdx) guide for application examples
+- Check out the [Evaluation](./evaluation) guide for running complete evaluations
+- See the [Building Applications - Evaluation](../building_applications/evals) guide for application examples
 - Review the [Evaluation Reference](../references/evals_reference/) for comprehensive scoring function usage
 - Explore the [Evaluation Concepts](../concepts/evaluation_concepts) for detailed conceptual information

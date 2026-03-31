@@ -1,7 +1,7 @@
 ---
 slug: observability-for-llama-stack
 title: "Llama Stack Observability: Metrics, Traces, and Dashboards with OpenTelemetry"
-authors:[gyliu513]
+authors: [gyliu513]
 tags: [observability, opentelemetry, metrics, tracing, monitoring]
 date: 2026-03-30
 ---
