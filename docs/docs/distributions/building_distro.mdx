@@ -162,7 +162,7 @@ For deeper guidance, see the [External Providers documentation](../providers/ext
 
 If you are building images for **air-gapped or network-restricted clusters** (e.g. disconnected OpenShift / Kubernetes environments), you must pre-cache the tiktoken `cl100k_base` encoding during the image build. Without it, the first call to `vector_stores.files.create()` will attempt a runtime HTTP download from `openaipublic.blob.core.windows.net`, which will fail when outbound internet access is unavailable.
 
-The upstream `containers/Containerfile` already includes this step. When building a **custom Containerfile**, add the following after all Python packages have been installed:
+The  container `Dockerfile/Containerfile` already includes this step. When building a **custom Container**, add the following after all Python packages have been installed:
 
 ```dockerfile
 # Pre-cache tiktoken encoding for air-gapped deployments.
