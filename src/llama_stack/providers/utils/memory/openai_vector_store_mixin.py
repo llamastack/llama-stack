@@ -1220,6 +1220,7 @@ class OpenAIVectorStoreMixin(ABC):
             )
         return VectorStoreFileContentResponse(
             data=content,
+            has_more=False,
         )
 
     async def openai_update_vector_store_file(
