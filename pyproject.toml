@@ -327,7 +327,7 @@ exclude = [
     "^src/llama_stack/telemetry/__init__\\.py$",
     #
     # ============================================================================
-    # Section 2: Files that need strict typing issues fixed (133 files)
+    # Section 2: Files that need strict typing issues fixed (131 files)
     # ============================================================================
     # These files have some type hints but fail strict type checking due to
     # incomplete annotations, Any usage, or other strict mode violations.
@@ -335,28 +335,8 @@ exclude = [
     # llama_stack_api files (3 files)
     "^src/llama_stack_api/models/models\\.py$",
     "^src/llama_stack_api/prompts/models\\.py$",
-    # Core files (26 files)
-    "^src/llama_stack/core/build\\.py$",
-    "^src/llama_stack/core/configure\\.py$",
-    "^src/llama_stack/core/connectors/connectors\\.py$",
-    "^src/llama_stack/core/conversations/conversations\\.py$",
-    "^src/llama_stack/core/datatypes\\.py$",
-    "^src/llama_stack/core/distribution\\.py$",
-    "^src/llama_stack/core/library_client\\.py$",
-    "^src/llama_stack/core/prompts/prompts\\.py$",
-    "^src/llama_stack/core/request_headers\\.py$",
-    "^src/llama_stack/core/resolver\\.py$",
-    "^src/llama_stack/core/server/auth\\.py$",
-    "^src/llama_stack/core/server/auth_providers\\.py$",
-    "^src/llama_stack/core/server/metrics\\.py$",
-    "^src/llama_stack/core/server/quota\\.py$",
-    "^src/llama_stack/core/server/routes\\.py$",
-    "^src/llama_stack/core/server/server\\.py$",
+    # Core files (6 files)
     "^src/llama_stack/core/stack\\.py$",
-    "^src/llama_stack/core/storage/datatypes\\.py$",
-    "^src/llama_stack/core/storage/kvstore/kvstore\\.py$",
-    "^src/llama_stack/core/storage/kvstore/sqlite/sqlite\\.py$",
-    "^src/llama_stack/core/storage/sqlstore/sqlalchemy_sqlstore\\.py$",
     "^src/llama_stack/core/store/registry\\.py$",
     "^src/llama_stack/core/task\\.py$",
     "^src/llama_stack/core/testing_context\\.py$",

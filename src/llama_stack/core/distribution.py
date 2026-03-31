@@ -178,7 +178,7 @@ def get_provider_registry(
 
 
 def get_external_providers_from_dir(
-    registry: dict[Api, dict[str, ProviderSpec]], config
+    registry: dict[Api, dict[str, ProviderSpec]], config: StackConfig
 ) -> dict[Api, dict[str, ProviderSpec]]:
     """Load external provider specs from YAML files in the external providers directory.
 
@@ -192,7 +192,8 @@ def get_external_providers_from_dir(
     logger.warning(
         "Specifying external providers via `external_providers_dir` is being deprecated. Please specify `module:` in the provider instead."
     )
-    external_providers_dir = os.path.abspath(os.path.expanduser(config.external_providers_dir))
+    assert config.external_providers_dir is not None, "external_providers_dir must not be None"
+    external_providers_dir = os.path.abspath(os.path.expanduser(str(config.external_providers_dir)))
     if not os.path.exists(external_providers_dir):
         raise FileNotFoundError(f"External providers directory not found: {external_providers_dir}")
     logger.info("Loading external providers from", external_providers_dir=external_providers_dir)
@@ -248,7 +249,7 @@ def get_external_providers_from_dir(
 
 
 def get_external_providers_from_module(
-    registry: dict[Api, dict[str, ProviderSpec]], config, listing: bool
+    registry: dict[Api, dict[str, ProviderSpec]], config: StackConfig, listing: bool
 ) -> dict[Api, dict[str, ProviderSpec]]:
     """Load external provider specs from Python modules specified in provider configurations.
 
