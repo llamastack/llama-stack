@@ -20,10 +20,10 @@ inference provider, based on integration test results.
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
 | azure | 102 | 102 | 0 | 84% |
-| bedrock | 28 | 28 | 0 | 23% |
+| bedrock | 27 | 27 | 0 | 22% |
 | ollama | 2 | 2 | 0 | 2% |
-| openai | 122 | 122 | 0 | 100% |
-| vllm | 4 | 4 | 0 | 3% |
+| openai | 121 | 121 | 0 | 100% |
+| vllm | 3 | 3 | 0 | 2% |
 | watsonx | 56 | 56 | 0 | 46% |
 
 ## Provider Details
@@ -151,7 +151,6 @@ Models, endpoints, and versions used during test recordings.
 | reasoning basic streaming | ✅ | ✅ | ⏭️ | ✅ | ✅ | ✅ |
 | reasoning multi turn passthrough | ⏭️ | ✅ | ✅ | ✅ | ✅ | ⏭️ |
 | reasoning non streaming | ⏭️ | ✅ | ✅ | ✅ | ✅ | ⏭️ |
-| reasoning unsupported provider completes without error | ⏭️ | ✅ | ⏭️ | ✅ | ✅ | ⏭️ |
 
 ## Responses Access Control
 
