@@ -65,7 +65,16 @@ log = get_logger(name=__name__, category="providers::utils")
 
 @cache
 def _get_encoding(name: str) -> tiktoken.Encoding:
-    return tiktoken.get_encoding(name)
+    try:
+        return tiktoken.get_encoding(name)
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to load tiktoken encoding '{name}'. "
+            "In air-gapped or network-restricted environments, the encoding must be pre-cached "
+            "at image build time. Set TIKTOKEN_CACHE_DIR to a directory containing the cached "
+            f"encoding file, or ensure the container image was built with the encoding pre-cached. "
+            f"Original error: {e}"
+        ) from e
 
 
 # Constants for reranker types

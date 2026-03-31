@@ -158,6 +158,41 @@ For deeper guidance, see the [External Providers documentation](../providers/ext
 </TabItem>
 </Tabs>
 
+### Air-gapped and disconnected deployments
+
+If you are building images for **air-gapped or network-restricted clusters** (e.g. disconnected OpenShift / Kubernetes environments), you must pre-cache the tiktoken `cl100k_base` encoding during the image build. Without it, the first call to `vector_stores.files.create()` will attempt a runtime HTTP download from `openaipublic.blob.core.windows.net`, which will fail when outbound internet access is unavailable.
+
+The  container `Dockerfile/Containerfile` already includes this step. When building a **custom Container**, add the following after all Python packages have been installed:
+
+```dockerfile
+# Pre-cache tiktoken encoding for air-gapped deployments.
+# Must come after llama-stack (and tiktoken) are installed.
+ENV TIKTOKEN_CACHE_DIR="/.cache/tiktoken"
+RUN python3 -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
+```
+
+Ensure `/.cache/tiktoken` has appropriate permissions for the runtime user, or adjust `TIKTOKEN_CACHE_DIR` to a path your container user can read:
+
+```dockerfile
+RUN mkdir -p /.cache/tiktoken && chmod -R g+rw /.cache/tiktoken
+ENV TIKTOKEN_CACHE_DIR="/.cache/tiktoken"
+RUN python3 -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
+```
+
+:::note
+`TIKTOKEN_CACHE_DIR` must be set as a persistent `ENV` (not just a build-time `ARG`) so the server process can find the cached encoding files at runtime.
+:::
+
+If you need to add additional encodings (e.g. for a custom chunking strategy), pre-cache each one in the same `RUN` step:
+
+```dockerfile
+RUN python3 -c "
+import tiktoken
+tiktoken.get_encoding('cl100k_base')
+tiktoken.get_encoding('p50k_base')
+"
+```
+
 ### Run your stack server
 
 After building the image, launch it directly with Docker or Podman—the entrypoint calls `llama stack run` using the baked distribution or the bundled run config:

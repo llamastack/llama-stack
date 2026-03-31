@@ -183,5 +183,5 @@ class TestRequestMetricsMiddleware:
 class TestBuildRouteToApiMap:
     def test_builds_map_from_router_factories(self):
         """Smoke test that build_route_to_api_map doesn't crash with empty inputs."""
-        result = build_route_to_api_map({}, {}, {})
+        result = build_route_to_api_map({}, {})
         assert result == {}
