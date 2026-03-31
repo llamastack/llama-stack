@@ -582,7 +582,7 @@ def convert_mcp_tool_choice(
     server_label: str | None = None,
     server_label_to_tools: dict[str, list[str]] | None = None,
     tool_name: str | None = None,
-) -> dict[str, str] | list[dict[str, str]]:
+) -> dict[str, str | dict[str, str]] | list[dict[str, str | dict[str, str]]] | None:
     """Convert a responses tool choice of type mcp to a chat completions compatible function tool choice."""
 
     if tool_name:
@@ -597,6 +597,8 @@ def convert_mcp_tool_choice(
         tool_names = server_label_to_tools.get(server_label, [])
         if not tool_names:
             return None
-        matching_tools = [{"type": "function", "function": {"name": tool_name}} for tool_name in tool_names]
+        matching_tools: list[dict[str, str | dict[str, str]]] = [
+            {"type": "function", "function": {"name": name}} for name in tool_names
+        ]
         return matching_tools
     return []
