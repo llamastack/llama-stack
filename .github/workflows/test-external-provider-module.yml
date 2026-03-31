@@ -25,16 +25,22 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
 
-      - name: Install lmeval provider
+      - name: Install weather external API and kaze provider
         run: |
-          uv pip install llama-stack-provider-lmeval
+          uv pip install tests/external/llama-stack-api-weather
+          uv pip install tests/external/llama-stack-provider-kaze
+
+      - name: Configure external API and provider
+        run: |
+          mkdir -p ~/.llama/apis.d ~/.llama/providers.d
+          cp tests/external/weather.yaml ~/.llama/apis.d/
+          cp tests/external/kaze.yaml ~/.llama/providers.d/
 
       - name: Start Llama Stack server in background
         env:
-          TRUSTYAI_LMEVAL_USE_K8S: "false"
           LLAMA_STACK_LOG_FILE: "server.log"
         run: |
-          nohup uv run llama stack run tests/external/llama-stack-provider-lmeval/config.yaml > server.log 2>&1 &
+          nohup uv run llama stack run tests/external/config.yaml > server.log 2>&1 &
 
       - name: Wait for Llama Stack server to be ready
         run: |
@@ -54,10 +60,10 @@ jobs:
         run: |
           response=$(curl -s http://localhost:8321/v1/providers)
           echo "$response" | python3 -m json.tool
-          if echo "$response" | grep -q "trustyai_lmeval"; then
-            echo "lmeval external provider loaded successfully"
+          if echo "$response" | grep -q "kaze"; then
+            echo "kaze external provider loaded successfully"
           else
-            echo "ERROR: lmeval provider not found in providers list"
+            echo "ERROR: kaze provider not found in providers list"
             exit 1
           fi
 

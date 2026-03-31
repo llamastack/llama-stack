@@ -77,22 +77,6 @@ class TestPromptGuardLazyImports:
         )
 
 
-class TestBraintrustLazyImports:
-    """Test that braintrust scoring provider doesn't load autoevals/pyarrow at import time."""
-
-    def test_braintrust_import_no_autoevals(self):
-        """Verify braintrust module import doesn't load autoevals or pyarrow."""
-        result = _check_module_import_isolation(
-            "from llama_stack.providers.inline.scoring.braintrust import braintrust",
-            ["autoevals", "pyarrow"],
-        )
-
-        assert result.get("success"), f"Import failed: {result.get('error', 'unknown error')}"
-        assert not result["loaded"], (
-            f"Heavy modules loaded unexpectedly during braintrust import: {result['loaded']}. "
-            "These should be lazily loaded only when scoring is performed."
-        )
-
 
 def _check_no_forbidden_imports(module_path: str, forbidden: list[str]) -> tuple[bool, str]:
     """Import a module in a subprocess and check that forbidden modules are not loaded."""
