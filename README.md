@@ -1,4 +1,4 @@
-# Llama Stack
+<h1 align="center">Llama Stack</h1>
 
 <p align="center">
   <a href="https://pypi.org/project/llama_stack/"><img src="https://img.shields.io/pypi/v/llama_stack?logo=pypi" alt="PyPI Version"></a>
