@@ -7,16 +7,17 @@ Shared utilities used across multiple providers.
 ```text
 utils/
   inference/           # Inference utilities (OpenAI mixin, model registry, prompt adapter)
-  bedrock/             # AWS Bedrock-specific utilities (should be moved into the bedrock provider)
   common/              # Common utilities shared across provider types
   datasetio/           # Dataset I/O utilities
   files/               # File handling utilities
   memory/              # Memory/vector store utilities
   responses/           # Responses API store
+  safety.py            # Safety utilities
   scoring/             # Scoring utilities
   tools/               # Tool utilities (MCP client, TTL cache)
   vector_io/           # Vector I/O utilities
   __init__.py
+  forward_headers.py   # Provider data header forwarding
   pagination.py        # Pagination helpers for list endpoints
   scheduler.py         # Job scheduling for async operations
 ```

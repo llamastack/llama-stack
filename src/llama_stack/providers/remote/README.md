@@ -15,6 +15,7 @@ remote/
     fireworks/         # Fireworks AI
     gemini/            # Google Gemini
     groq/              # Groq
+    llama_cpp_server/  # llama.cpp server
     llama_openai_compat/ # Generic OpenAI-compatible endpoints
     nvidia/            # NVIDIA NIM
     oci/               # Oracle Cloud Infrastructure
@@ -23,19 +24,16 @@ remote/
     passthrough/       # Generic passthrough to any endpoint
     runpod/            # RunPod
     sambanova/         # SambaNova
-    tgi/               # HuggingFace TGI / Inference API
     together/          # Together AI
     vertexai/          # Google Vertex AI
     vllm/              # vLLM
     watsonx/           # IBM WatsonX
-  agents/              # Remote agent services
-  safety/              # Remote safety services
-  vector_io/           # Remote vector storage (e.g., chromadb, qdrant, weaviate)
-  datasetio/           # Remote dataset services
-  eval/                # Remote evaluation services
-  files/               # Remote file storage
-  tool_runtime/        # Remote tool runtimes
-  post_training/       # Remote training services
+  safety/              # Remote safety services (bedrock, nvidia, passthrough, sambanova)
+  vector_io/           # Remote vector storage (chroma, elasticsearch, milvus, pgvector, qdrant, weaviate, etc.)
+  datasetio/           # Remote dataset services (huggingface, nvidia)
+  eval/                # Remote evaluation services (nvidia)
+  files/               # Remote file storage (openai, s3)
+  tool_runtime/        # Remote tool runtimes (bing, brave, mcp, tavily, wolfram_alpha)
   __init__.py
 ```
 
