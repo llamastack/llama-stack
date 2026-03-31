@@ -634,7 +634,7 @@ class OpenAIResponsesImpl:
         presence_penalty: float | None = None,
         extra_body: dict | None = None,
         stream_options: ResponseStreamOptions | None = None,
-    ):
+    ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
         stream = bool(stream)
         background = bool(background)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
@@ -841,7 +841,9 @@ class OpenAIResponsesImpl:
         created_at = int(time.time())
 
         # Normalize input to list format for storage
-        input_items = [OpenAIResponseMessage(content=input, role="user")] if isinstance(input, str) else input
+        input_items: list[OpenAIResponseInput] = (
+            [OpenAIResponseMessage(content=input, role="user")] if isinstance(input, str) else input
+        )
 
         # Create initial queued response
         queued_response = OpenAIResponseObject(

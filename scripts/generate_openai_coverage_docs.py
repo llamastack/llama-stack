@@ -123,7 +123,7 @@ def generate_docs(
                 "",
                 "## Integration Test Coverage",
                 "",
-                f"**Overall Test Coverage Score: {test_score}%**",
+                f"Overall Test Coverage Score: {test_score}%",
                 "",
                 "| Category | Covered | Total | Score |",
                 "|----------|---------|-------|-------|",
