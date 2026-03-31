@@ -57,7 +57,6 @@ class RouteInfo:
 
 def build_route_to_api_map(
     router_factories: dict[str, Any],
-    api_routes: dict[Any, Any],
     impls: dict[Any, Any],
 ) -> dict[str, RouteInfo]:
     """Build a mapping from route path patterns to API and method names.
