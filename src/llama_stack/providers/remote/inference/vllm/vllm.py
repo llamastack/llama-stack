@@ -140,7 +140,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
         # Populate vLLM's expected reasoning field on assistant messages
         for msg in params.messages:
             if isinstance(msg, AssistantMessageWithReasoning) and msg.reasoning_content:
-                msg.reasoning = msg.reasoning_content
+                msg.reasoning = msg.reasoning_content  # type: ignore[attr-defined]
                 msg.reasoning_content = None
 
         result = await self.openai_chat_completion(params)
@@ -159,7 +159,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
                             choice.delta.reasoning_content = reasoning
                     yield chunk
 
-            return _map_reasoning()
+            return _map_reasoning()  # type: ignore[no-any-return]
         else:
             # Non-streaming reasoning is not tested — the Responses
             # layer always uses stream=True (streaming.py:518).
