@@ -16,6 +16,10 @@
 
 **Open-source agentic API server for building AI applications. OpenAI-compatible. Any model, any infrastructure.**
 
+<p align="center">
+  <img src="docs/static/img/architecture-animated.svg" alt="Llama Stack Architecture" width="100%">
+</p>
+
 Llama Stack is a drop-in replacement for the OpenAI API that you can run anywhere — your laptop, your datacenter, or the cloud. Use any OpenAI-compatible client or agentic framework. Swap between Llama, GPT, Gemini, Mistral, or any model without changing your application code.
 
 ```python
@@ -39,10 +43,6 @@ response = client.chat.completions.create(
 ## Use any model, use any infrastructure
 
 Llama Stack has a pluggable provider architecture. Develop locally with Ollama, deploy to production with vLLM, or connect to a managed service — the API stays the same.
-
-<p align="center">
-  <img src="docs/static/img/architecture-animated.svg" alt="Llama Stack Architecture" width="100%">
-</p>
 
 See the [provider documentation](https://llamastack.github.io/docs/providers) for the full list.
 
