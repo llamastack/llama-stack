@@ -799,15 +799,26 @@ class OpenAICompletion(BaseModel):
     object: Literal["text_completion"] = Field(default="text_completion", description="The object type.")
 
 
+def _embedding_field_schema(schema: dict) -> None:
+    """Override embedding field schema to match OpenAI spec (always array, not union)."""
+    if "properties" in schema and "embedding" in schema["properties"]:
+        schema["properties"]["embedding"] = {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "The embedding vector, which is a list of floats.",
+        }
+
+
 @json_schema_type
 class OpenAIEmbeddingData(BaseModel):
     """A single embedding data object from an OpenAI-compatible embeddings response."""
 
+    model_config = ConfigDict(json_schema_extra=_embedding_field_schema)
+
     object: Literal["embedding"] = Field(default="embedding", description="The object type.")
-    # TODO: consider dropping str and using openai.types.embeddings.Embedding instead of OpenAIEmbeddingData
     embedding: list[float] | str = Field(
         ...,
-        description="The embedding vector as a list of floats (when encoding_format='float') or as a base64-encoded string.",
+        description="The embedding vector, which is a list of floats.",
     )
     index: int = Field(..., ge=0, description="The index of the embedding in the input list.")
 
