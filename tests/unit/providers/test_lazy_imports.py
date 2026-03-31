@@ -77,7 +77,6 @@ class TestPromptGuardLazyImports:
         )
 
 
-
 def _check_no_forbidden_imports(module_path: str, forbidden: list[str]) -> tuple[bool, str]:
     """Import a module in a subprocess and check that forbidden modules are not loaded."""
     code = f"""
