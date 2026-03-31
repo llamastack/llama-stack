@@ -86,7 +86,7 @@ def get_provider_dependencies(
     return list(set(normal_deps)), list(set(special_deps)), list(set(external_provider_deps))
 
 
-def print_pip_install_help(config: StackConfig):
+def print_pip_install_help(config: StackConfig) -> None:
     """Print pip install commands needed for the given stack configuration's provider dependencies.
 
     Args:

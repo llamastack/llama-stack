@@ -292,7 +292,8 @@ class ModelRegistryHelper(ModelsProtocolPrivate):
         :return: True if the model is available dynamically, False otherwise.
         """
         logger.info(
-            f"check_model_availability is not implemented for {self.__class__.__name__}. Returning False by default."
+            "check_model_availability is not implemented for . Returning False by default.",
+            __name__=self.__class__.__name__,
         )
         return False
 

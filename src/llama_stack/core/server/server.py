@@ -14,7 +14,7 @@ import os
 import sys
 import traceback
 import warnings
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from importlib.metadata import version as parse_version
 from pathlib import Path
@@ -30,6 +30,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from openai import BadRequestError
 from pydantic import BaseModel
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import (
@@ -55,7 +56,7 @@ from llama_stack.core.stack import (
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
-from llama_stack.log import LoggingConfig, get_logger
+from llama_stack.log import LoggingConfig, get_logger, parse_yaml_config, setup_logging
 from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
 from llama_stack_api.common.errors import OpenAIErrorResponse
 
@@ -68,7 +69,14 @@ REPO_ROOT = Path(__file__).parent.parent.parent.parent
 logger = get_logger(name=__name__, category="core::server")
 
 
-def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
+def warn_with_traceback(
+    message: Warning | str,
+    category: type[Warning],
+    filename: str,
+    lineno: int,
+    file: Any = None,
+    line: str | None = None,
+) -> None:
     """Custom warning handler that prints a full stack traceback alongside the warning."""
     log = file if hasattr(file, "write") else sys.stderr
     traceback.print_stack(file=log)
@@ -96,7 +104,7 @@ def create_sse_event(data: Any) -> str:
     return f"data: {data}\n\n"
 
 
-async def global_exception_handler(request: Request, exc: Exception):
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle uncaught exceptions by translating them to JSON error responses.
 
     Args:
@@ -127,7 +135,7 @@ class StackApp(FastAPI):
     start background tasks (e.g. refresh model registry periodically) from the lifespan context manager.
     """
 
-    def __init__(self, config: StackConfig, *args, **kwargs):
+    def __init__(self, config: StackConfig, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.stack: Stack = Stack(config)
 
@@ -135,12 +143,12 @@ class StackApp(FastAPI):
         # Storage backends use lazy engine initialization, so connections are created on
         # first use in the correct event loop, avoiding event loop mismatch issues.
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(asyncio.run, self.stack.initialize())
+            future = executor.submit(asyncio.run, self.stack.initialize())  # type: ignore[no-untyped-call]
             future.result()
 
 
 @asynccontextmanager
-async def lifespan(app: StackApp):
+async def lifespan(app: StackApp) -> AsyncIterator[None]:
     """FastAPI lifespan context manager that starts background tasks and handles shutdown.
 
     Args:
@@ -148,15 +156,15 @@ async def lifespan(app: StackApp):
     """
     server_version = parse_version("llama-stack")
 
-    logger.info(f"Starting up Llama Stack server (version: {server_version})")
+    logger.info("Starting up Llama Stack server", version=server_version)
     assert app.stack is not None
-    app.stack.create_registry_refresh_task()
+    app.stack.create_registry_refresh_task()  # type: ignore[no-untyped-call]
     yield
     logger.info("Shutting down")
-    await app.stack.shutdown()
+    await app.stack.shutdown()  # type: ignore[no-untyped-call]
 
 
-def is_streaming_request(func_name: str, request: Request, **kwargs):
+def is_streaming_request(func_name: str, request: Request, **kwargs: Any) -> bool:
     """Determine if a request should use streaming based on its parameters.
 
     Args:
@@ -170,18 +178,18 @@ def is_streaming_request(func_name: str, request: Request, **kwargs):
     # TODO: pass the api method and punt it to the Protocol definition directly
     # If there's a stream parameter at top level, use it
     if "stream" in kwargs:
-        return kwargs["stream"]
+        return kwargs["stream"]  # type: ignore[no-any-return]
 
     # If there's a stream parameter inside a "params" parameter, e.g. openai_chat_completion() use it
     if "params" in kwargs:
         params = kwargs["params"]
         if hasattr(params, "stream"):
-            return params.stream
+            return params.stream  # type: ignore[no-any-return]
 
     return False
 
 
-async def maybe_await(value):
+async def maybe_await(value: Any) -> Any:
     """Await a value if it is a coroutine, otherwise return it directly.
 
     Args:
@@ -195,7 +203,7 @@ async def maybe_await(value):
     return value
 
 
-async def sse_generator(event_gen_coroutine):
+async def sse_generator(event_gen_coroutine: Any) -> AsyncIterator[str]:
     """Async generator that converts an event stream coroutine into SSE-formatted strings.
 
     Args:
@@ -215,7 +223,7 @@ async def sse_generator(event_gen_coroutine):
         yield create_sse_event(OpenAIErrorResponse.from_message(translate_exception(e)).to_dict())
 
 
-async def log_request_pre_validation(request: Request):
+async def log_request_pre_validation(request: Request) -> None:
     """Log the raw request body before FastAPI validation for debugging purposes.
 
     Args:
@@ -230,14 +238,16 @@ async def log_request_pre_validation(request: Request):
                     log_output = rich.pretty.pretty_repr(parsed_body)
                 except (json.JSONDecodeError, UnicodeDecodeError):
                     log_output = repr(body_bytes)
-                logger.debug(f"Incoming raw request body for {request.method} {request.url.path}:\n{log_output}")
+                logger.debug("Incoming raw request body", method=request.method, path=request.url.path, body=log_output)
             else:
-                logger.debug(f"Incoming {request.method} {request.url.path} request with empty body.")
+                logger.debug("Incoming request with empty body", method=request.method, path=request.url.path)
         except Exception as e:
-            logger.warning(f"Could not read or log request body for {request.method} {request.url.path}: {e}")
+            logger.warning(
+                "Could not read or log request body", method=request.method, path=request.url.path, error=str(e)
+            )
 
 
-def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
+def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable[..., Any]:
     """Create a FastAPI route handler that wraps an API method with streaming support and error handling.
 
     Args:
@@ -250,7 +260,7 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
     """
 
     @functools.wraps(func)
-    async def route_handler(request: Request, **kwargs):
+    async def route_handler(request: Request, **kwargs: Any) -> Any:
         await log_request_pre_validation(request)
 
         is_streaming = is_streaming_request(func.__name__, request, **kwargs)
@@ -258,12 +268,12 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
         try:
             if is_streaming:
                 # Preserve context vars across async generator boundaries
-                context_vars = [PROVIDER_DATA_VAR]
+                context_vars: list[Any] = [PROVIDER_DATA_VAR]
                 if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"):
                     from llama_stack.core.testing_context import TEST_CONTEXT
 
                     context_vars.append(TEST_CONTEXT)
-                gen = preserve_contexts_async_generator(sse_generator(func(**kwargs)), context_vars)
+                gen: Any = preserve_contexts_async_generator(sse_generator(func(**kwargs)), context_vars)  # type: ignore[arg-type]
                 return StreamingResponse(gen, media_type="text/event-stream")
             else:
                 value = func(**kwargs)
@@ -277,9 +287,9 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
                 return result
         except Exception as e:
             if logger.isEnabledFor(logging.INFO):
-                logger.exception(f"Error executing endpoint {route=} {method=}")
+                logger.exception("Error executing endpoint", route=route, method=method)
             else:
-                logger.error(f"Error executing endpoint {route=} {method=}: {str(e)}")
+                logger.error("Error executing endpoint", route=route, method=method, error=str(e))
             raise translate_exception(e) from e
 
     sig = inspect.signature(func)
@@ -307,7 +317,7 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
             ]
         )
 
-    route_handler.__signature__ = sig.replace(parameters=new_params)
+    route_handler.__signature__ = sig.replace(parameters=new_params)  # type: ignore[attr-defined]
 
     return route_handler
 
@@ -315,11 +325,11 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
 class ClientVersionMiddleware:
     """ASGI middleware that rejects requests from clients with incompatible major.minor versions."""
 
-    def __init__(self, app):
+    def __init__(self, app: ASGIApp) -> None:
         self.app = app
         self.server_version = parse_version("llama-stack")
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> Any:
         if scope["type"] == "http":
             headers = dict(scope.get("headers", []))
             client_version = headers.get(b"x-llamastack-client-version", b"").decode()
@@ -329,7 +339,7 @@ class ClientVersionMiddleware:
                     server_version_parts = tuple(map(int, self.server_version.split(".")[:2]))
                     if client_version_parts != server_version_parts:
 
-                        async def send_version_error(send):
+                        async def send_version_error(send: Send) -> None:
                             await send(
                                 {
                                     "type": "http.response.start",
@@ -358,13 +368,13 @@ class ProviderDataMiddleware:
     running in test mode for deterministic ID generation.
     """
 
-    def __init__(self, app):
+    def __init__(self, app: ASGIApp) -> None:
         self.app = app
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> Any:
         if scope["type"] == "http":
             headers = {k.decode(): v.decode() for k, v in scope.get("headers", [])}
-            user = user_from_scope(scope)
+            user = user_from_scope(dict(scope))
 
             with request_provider_data_context(headers, user):
                 test_context_token = None
@@ -375,7 +385,7 @@ class ProviderDataMiddleware:
                         sync_test_context_from_provider_data,
                     )
 
-                    test_context_token = sync_test_context_from_provider_data()
+                    test_context_token = sync_test_context_from_provider_data()  # type: ignore[no-untyped-call]
                     reset_fn = reset_test_context
                 try:
                     return await self.app(scope, receive, send)
@@ -395,11 +405,11 @@ def create_app() -> StackApp:
     Returns:
         Configured StackApp instance.
     """
-    config_file = os.getenv("LLAMA_STACK_CONFIG")
-    if config_file is None:
+    config_file_str = os.getenv("LLAMA_STACK_CONFIG")
+    if config_file_str is None:
         raise ValueError("LLAMA_STACK_CONFIG environment variable is required")
 
-    config_file = resolve_config_or_distro(config_file)
+    config_file = resolve_config_or_distro(config_file_str)
 
     # Load and process configuration
     logger_config = None
@@ -407,6 +417,14 @@ def create_app() -> StackApp:
         config_contents = yaml.safe_load(fp)
         if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
             logger_config = LoggingConfig(**cfg)
+
+        # Configure logging in each worker process
+        if logger_config:
+            category_levels = parse_yaml_config(logger_config)
+            setup_logging(category_levels)
+        else:
+            setup_logging()
+
         logger = get_logger(name=__name__, category="core::server", config=logger_config)
 
         config = replace_env_vars(config_contents)
@@ -428,6 +446,7 @@ def create_app() -> StackApp:
     app.add_middleware(ProviderDataMiddleware)
 
     impls = app.stack.impls
+    assert impls is not None
 
     if config.server.auth:
         # Add route authorization middleware if route_policy is configured
@@ -435,13 +454,13 @@ def create_app() -> StackApp:
         # NOTE: Add this FIRST because middleware wraps in reverse order (last added runs first)
         # We want: Request → Auth → RouteAuth → App
         if config.server.auth.route_policy:
-            logger.info(f"Enabling route-level authorization with {len(config.server.auth.route_policy)} rules")
+            logger.info("Enabling route-level authorization", rule_count=len(config.server.auth.route_policy))
             app.add_middleware(RouteAuthorizationMiddleware, route_policy=config.server.auth.route_policy)
 
         # Add authentication middleware only if provider is configured
         # This runs FIRST in the middleware chain (last added = first to run)
         if config.server.auth.provider_config:
-            logger.info(f"Enabling authentication with provider: {config.server.auth.provider_config.type.value}")
+            logger.info("Enabling authentication", provider=config.server.auth.provider_config.type.value)
             app.add_middleware(AuthenticationMiddleware, auth_config=config.server.auth, impls=impls)
     else:
         if config.server.quota:
@@ -482,6 +501,7 @@ def create_app() -> StackApp:
     # Load external APIs if configured
     external_apis = load_external_apis(config)
     all_routes = get_all_api_routes(external_apis)
+    assert all_routes is not None
 
     if config.apis:
         apis_to_serve = set(config.apis)
@@ -514,7 +534,7 @@ def create_app() -> StackApp:
         router = build_fastapi_router(api, impl)
         if router:
             app.include_router(router)
-            logger.debug(f"Registered FastAPIrouter for {api} API")
+            logger.debug("Registered FastAPI router", api=str(api))
             continue
 
         # Fall back to old webmethod-based route discovery until the migration is complete
@@ -532,7 +552,7 @@ def create_app() -> StackApp:
             if not available_methods:
                 raise ValueError(f"No methods found for {route.name} on {impl}")
             method = available_methods[0]
-            logger.debug(f"{method} {route.path}")
+            logger.debug("Registering route", method=method, path=route.path)
 
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._fields")
@@ -544,7 +564,7 @@ def create_app() -> StackApp:
                     )
                 )
 
-    logger.debug(f"serving APIs: {apis_to_serve}")
+    logger.debug("Serving APIs", apis=list(apis_to_serve))
 
     # Register specific exception handlers before the generic Exception handler
     # This prevents the re-raising behavior that causes connection resets
@@ -560,7 +580,7 @@ def create_app() -> StackApp:
     return app
 
 
-def _log_run_config(run_config: StackConfig):
+def _log_run_config(run_config: StackConfig) -> None:
     """Logs the run config with redacted fields and disabled providers removed."""
     logger.info("Stack Configuration:")
     safe_config = redact_sensitive_fields(run_config.model_dump(mode="json"))
@@ -584,7 +604,7 @@ def extract_path_params(route: str) -> list[str]:
     return params
 
 
-def remove_disabled_providers(obj):
+def remove_disabled_providers(obj: Any) -> Any:
     """Recursively remove disabled providers from a configuration dictionary.
 
     Args:

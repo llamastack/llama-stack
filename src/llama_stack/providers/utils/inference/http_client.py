@@ -214,7 +214,7 @@ def _merge_network_config_into_client(
 
         return new_client
     except Exception as e:
-        logger.debug(f"Could not merge network config into existing http_client: {e}. Using original client.")
+        logger.debug("Could not merge network config into existing http_client, using original client", error=str(e))
         return existing_client
 
 

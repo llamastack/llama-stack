@@ -6,6 +6,12 @@
 
 
 import pytest
+from openai.types.chat.chat_completion_chunk import (
+    ChatCompletionChunk,
+    Choice,
+    ChoiceDelta,
+)
+from openai.types.completion_usage import CompletionUsage
 
 # Fixtures imported from test_openai_responses via root conftest.py for pytest 8.4+ compatibility
 from llama_stack.providers.inline.responses.builtin.responses.openai_responses import (
@@ -255,3 +261,112 @@ class TestIntegrationWorkflow:
 
         assert "previous_response_id" in str(exc_info.value)
         assert "conversation" in str(exc_info.value)
+
+
+class TestStoreFalseConversationLeak:
+    """Regression tests for https://github.com/llamastack/llama-stack/issues/5304
+
+    When store=False, conversation messages must NOT be synced to the database.
+    """
+
+    @staticmethod
+    async def _fake_stream():
+        yield ChatCompletionChunk(
+            id="chatcmpl-store-test",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content="4", role="assistant"),
+                    finish_reason="stop",
+                )
+            ],
+            created=1234567890,
+            model="test-model",
+            object="chat.completion.chunk",
+            usage=CompletionUsage(prompt_tokens=10, completion_tokens=1, total_tokens=11),
+        )
+
+    async def test_store_false_does_not_sync_conversation(
+        self,
+        responses_impl_with_conversations,
+        mock_inference_api,
+        mock_responses_store,
+        mock_conversations_api,
+    ):
+        """store=False with a conversation ID must not write to the conversation store."""
+        conv_id = "conv_" + "a" * 48
+        mock_conversations_api.list_items.return_value = ConversationItemList(
+            data=[], first_id=None, has_more=False, last_id=None, object="list"
+        )
+        mock_responses_store.get_conversation_messages.return_value = None
+        mock_inference_api.openai_chat_completion.return_value = self._fake_stream()
+
+        result = await responses_impl_with_conversations.create_openai_response(
+            input="What is 2+2?",
+            model="test-model",
+            store=False,
+            conversation=conv_id,
+            stream=False,
+        )
+
+        assert result.status == "completed"
+        mock_responses_store.store_conversation_messages.assert_not_called()
+        mock_conversations_api.add_items.assert_not_called()
+        mock_responses_store.upsert_response_object.assert_not_called()
+
+    async def test_store_true_does_sync_conversation(
+        self,
+        responses_impl_with_conversations,
+        mock_inference_api,
+        mock_responses_store,
+        mock_conversations_api,
+    ):
+        """store=True with a conversation ID must write to the conversation store."""
+        conv_id = "conv_" + "b" * 48
+        mock_conversations_api.list_items.return_value = ConversationItemList(
+            data=[], first_id=None, has_more=False, last_id=None, object="list"
+        )
+        mock_responses_store.get_conversation_messages.return_value = None
+        mock_inference_api.openai_chat_completion.return_value = self._fake_stream()
+
+        result = await responses_impl_with_conversations.create_openai_response(
+            input="What is 2+2?",
+            model="test-model",
+            store=True,
+            conversation=conv_id,
+            stream=False,
+        )
+
+        assert result.status == "completed"
+        mock_responses_store.store_conversation_messages.assert_called_once()
+        mock_conversations_api.add_items.assert_called_once()
+        mock_responses_store.upsert_response_object.assert_called()
+
+    async def test_store_false_streaming_does_not_sync_conversation(
+        self,
+        responses_impl_with_conversations,
+        mock_inference_api,
+        mock_responses_store,
+        mock_conversations_api,
+    ):
+        """store=False in streaming mode must also not write to the conversation store."""
+        conv_id = "conv_" + "c" * 48
+        mock_conversations_api.list_items.return_value = ConversationItemList(
+            data=[], first_id=None, has_more=False, last_id=None, object="list"
+        )
+        mock_responses_store.get_conversation_messages.return_value = None
+        mock_inference_api.openai_chat_completion.return_value = self._fake_stream()
+
+        chunks = []
+        async for chunk in await responses_impl_with_conversations.create_openai_response(
+            input="What is 2+2?",
+            model="test-model",
+            store=False,
+            conversation=conv_id,
+            stream=True,
+        ):
+            chunks.append(chunk)
+
+        assert any(c.type == "response.completed" for c in chunks)
+        mock_responses_store.store_conversation_messages.assert_not_called()
+        mock_conversations_api.add_items.assert_not_called()

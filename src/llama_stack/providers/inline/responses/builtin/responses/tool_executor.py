@@ -148,7 +148,7 @@ class ToolExecutor:
                 )
                 return search_response.data
             except Exception as e:
-                logger.warning(f"Failed to search vector store {vector_store_id}: {e}")
+                logger.warning("Failed to search vector store", vector_store_id=vector_store_id, error=str(e))
                 return []
 
         # Run all searches in parallel using gather

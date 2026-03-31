@@ -164,7 +164,7 @@ def extract_openai_error(exc: Exception) -> tuple[str, str]:
     fallback_message = str(exc)
 
     if not isinstance(body, dict):
-        logger.warning(f"Unexpected body type {type(body)}, expected dict: {exc}")
+        logger.warning("Unexpected body type, expected dict", body_type=type(body), exc=exc)
         return ("server_error", fallback_message)
 
     # Try nested format first: {"error": {"code": "...", ...}}
@@ -182,7 +182,7 @@ def extract_openai_error(exc: Exception) -> tuple[str, str]:
         final_code = "server_error"
 
     if final_code not in _VALID_RESPONSE_ERROR_CODES:
-        logger.info(f"Unmapped provider error code '{final_code}', falling back to server_error")
+        logger.info("Unmapped provider error code, falling back to server_error", final_code=final_code)
         final_code = "server_error"
 
     message: str = raw_message if isinstance(raw_message, str) else fallback_message
@@ -402,7 +402,7 @@ class StreamingResponseOrchestrator:
             combined_text = interleaved_content_as_str([msg.content for msg in self.ctx.messages])
             input_violation_message = await run_guardrails(self.safety_api, combined_text, self.guardrail_ids)
             if input_violation_message:
-                logger.info(f"Input guardrail violation: {input_violation_message}")
+                logger.info("Input guardrail violation", input_violation_message=input_violation_message)
                 yield await self._create_refusal_response(input_violation_message)
                 return
 
@@ -467,8 +467,9 @@ class StreamingResponseOrchestrator:
                     and self.accumulated_builtin_output_tokens >= self.max_output_tokens
                 ):
                     logger.info(
-                        "Skipping inference call since max_output_tokens reached: "
-                        f"{self.accumulated_builtin_output_tokens}/{self.max_output_tokens}"
+                        "Skipping inference call since max_output_tokens reached: /",
+                        accumulated_builtin_output_tokens=self.accumulated_builtin_output_tokens,
+                        max_output_tokens=self.max_output_tokens,
                     )
                     final_status = "incomplete"
                     incomplete_reason = "max_output_tokens"
@@ -492,7 +493,7 @@ class StreamingResponseOrchestrator:
                         for tool in self.ctx.chat_tools
                         if tool.get("function", {}).get("name") in allowed_tool_names
                     ]
-                logger.debug(f"calling openai_chat_completion with tools: {effective_tools}")
+                logger.debug("calling openai_chat_completion with tools", effective_tools=effective_tools)
 
                 logprobs = (
                     True
@@ -621,7 +622,9 @@ class StreamingResponseOrchestrator:
 
                 if n_iter >= self.max_infer_iters:
                     logger.info(
-                        f"Exiting inference loop since iteration count({n_iter}) exceeds {self.max_infer_iters=}"
+                        "Exiting inference loop since iteration count() exceeds",
+                        n_iter=n_iter,
+                        max_infer_iters=self.max_infer_iters,
                     )
                     final_status = "incomplete"
                     incomplete_reason = "max_iterations_exceeded"
@@ -638,10 +641,12 @@ class StreamingResponseOrchestrator:
             self.sequence_number += 1
 
             if isinstance(exc, APIStatusError) or (hasattr(exc, "status_code") and hasattr(exc, "body")):
-                logger.warning(f"Provider SDK error during response generation: {exc}")
+                logger.warning("Provider SDK error during response generation", exc=exc)
                 error_code, error_message = extract_openai_error(exc)
             else:
-                logger.exception(f"Unexpected '{type(exc).__name__}' error during response generation", exc_info=exc)
+                logger.exception(
+                    "Unexpected error during response generation", error_type=type(exc).__name__, exc_info=exc
+                )
                 error_code, error_message = (
                     "server_error",
                     "An unexpected error occurred while generating the response.",
@@ -690,13 +695,16 @@ class StreamingResponseOrchestrator:
                     tool_calls=choice.message.tool_calls,
                 )
             )
-            logger.debug(f"Choice message content: {choice.message.content}")
-            logger.debug(f"Choice message tool_calls: {choice.message.tool_calls}")
+            logger.debug("Choice message content", content=choice.message.content)
+            logger.debug("Choice message tool_calls", tool_calls=choice.message.tool_calls)
 
             if choice.message.tool_calls and self.ctx.response_tools:
+                executed_tool_calls: list = []
+                has_deferred_or_denied = False
                 for tool_call in choice.message.tool_calls:
                     if is_function_tool_call(tool_call, self.ctx.response_tools):
                         function_tool_calls.append(tool_call)
+                        executed_tool_calls.append(tool_call)
                     elif (
                         tool_call.function
                         and tool_call.function.name not in _SERVER_SIDE_BUILTIN_TOOL_NAMES
@@ -707,10 +715,11 @@ class StreamingResponseOrchestrator:
                         # Return it to the client as a function_call output item rather than
                         # crashing the server with an unhandled ValueError.
                         logger.warning(
-                            f"Model called unrecognized tool '{tool_call.function.name}'; "
-                            "treating as a client-side function call."
+                            "Model called unrecognized tool ; treating as a client-side function call.",
+                            name=tool_call.function.name,
                         )
                         function_tool_calls.append(tool_call)
+                        executed_tool_calls.append(tool_call)
                     else:
                         if self._approval_required(tool_call.function.name):
                             approval_response = self.ctx.approval_response(
@@ -718,17 +727,29 @@ class StreamingResponseOrchestrator:
                             )
                             if approval_response:
                                 if approval_response.approve:
-                                    logger.info(f"Approval granted for {tool_call.id} on {tool_call.function.name}")
+                                    logger.info(
+                                        "Approval granted for on", id=tool_call.id, name=tool_call.function.name
+                                    )
                                     non_function_tool_calls.append(tool_call)
+                                    executed_tool_calls.append(tool_call)
                                 else:
-                                    logger.info(f"Approval denied for {tool_call.id} on {tool_call.function.name}")
-                                    next_turn_messages.pop()
+                                    logger.info("Approval denied", id=tool_call.id, name=tool_call.function.name)
+                                    has_deferred_or_denied = True
                             else:
-                                logger.info(f"Requesting approval for {tool_call.id} on {tool_call.function.name}")
+                                logger.info("Requesting approval for on", id=tool_call.id, name=tool_call.function.name)
                                 approvals.append(tool_call)
-                                next_turn_messages.pop()
+                                has_deferred_or_denied = True
                         else:
                             non_function_tool_calls.append(tool_call)
+                            executed_tool_calls.append(tool_call)
+                if has_deferred_or_denied:
+                    if executed_tool_calls:
+                        next_turn_messages[-1] = OpenAIAssistantMessageParam(
+                            content=choice.message.content,
+                            tool_calls=executed_tool_calls,
+                        )
+                    else:
+                        next_turn_messages.pop()
 
         return function_tool_calls, non_function_tool_calls, approvals, next_turn_messages
 
@@ -1112,7 +1133,7 @@ class StreamingResponseOrchestrator:
                 accumulated_text = "".join(chat_response_content)
                 violation_message = await run_guardrails(self.safety_api, accumulated_text, self.guardrail_ids)
                 if violation_message:
-                    logger.info(f"Output guardrail violation: {violation_message}")
+                    logger.info("Output guardrail violation", violation_message=violation_message)
                     chunk_events.clear()
                     yield await self._create_refusal_response(violation_message)
                     self.violation_detected = True
@@ -1271,7 +1292,9 @@ class StreamingResponseOrchestrator:
             # if total calls made to built-in and mcp tools exceed max_tool_calls
             # then create a tool response message indicating the call was skipped
             if self.max_tool_calls is not None and self.accumulated_builtin_tool_calls >= self.max_tool_calls:
-                logger.info(f"Ignoring built-in and mcp tool call since reached the limit of {self.max_tool_calls=}.")
+                logger.info(
+                    "Ignoring built-in and mcp tool call since reached the limit", max_tool_calls=self.max_tool_calls
+                )
                 skipped_call_message = OpenAIToolMessageParam(
                     content=f"Tool call skipped: maximum tool calls limit ({self.max_tool_calls}) reached.",
                     tool_call_id=tool_call.id,
@@ -1542,7 +1565,7 @@ class StreamingResponseOrchestrator:
 
         except Exception as e:
             # TODO: Emit mcp_list_tools.failed event if needed
-            logger.exception(f"Failed to list MCP tools from {mcp_tool.server_url}: {e}")
+            logger.exception("Failed to list MCP tools", server_url=mcp_tool.server_url, error=str(e))
             raise
 
     async def _process_tools(
@@ -1569,10 +1592,10 @@ class StreamingResponseOrchestrator:
             return True
         if mcp_server.require_approval == "never":
             return False
-        if isinstance(mcp_server, ApprovalFilter):
-            if mcp_server.always and tool_name in mcp_server.always:
+        if isinstance(mcp_server.require_approval, ApprovalFilter):
+            if mcp_server.require_approval.always and tool_name in mcp_server.require_approval.always:
                 return True
-            if mcp_server.never and tool_name in mcp_server.never:
+            if mcp_server.require_approval.never and tool_name in mcp_server.require_approval.never:
                 return False
         return True
 
@@ -1713,7 +1736,7 @@ async def _process_tool_choice(
                 case _ if tool["type"] in WebSearchToolTypes:
                     final_tools.append({"type": "function", "function": {"name": "web_search"}})
                 case _:
-                    logger.warning(f"Unsupported tool type: {tool['type']}, skipping tool choice enforcement for it")
+                    logger.warning("Unsupported tool type, skipping tool choice enforcement", tool_type=tool["type"])
                     continue
 
         return OpenAIChatCompletionToolChoiceAllowedTools(
@@ -1726,14 +1749,14 @@ async def _process_tool_choice(
         # Each case validates the tool exists in chat_tools before returning
         match tool_choice:
             case OpenAIResponseInputToolChoiceCustomTool():
-                if tool_choice.name not in chat_tool_names:
-                    logger.warning(f"Tool {tool_choice.name} not found in chat tools")
+                if tool_choice.name and tool_choice.name not in chat_tool_names:
+                    logger.warning("Tool not found in chat tools", tool_name=tool_choice.name)
                     return None
                 return OpenAIChatCompletionToolChoiceCustomTool(name=tool_choice.name)
 
             case OpenAIResponseInputToolChoiceFunctionTool():
-                if tool_choice.name not in chat_tool_names:
-                    logger.warning(f"Tool {tool_choice.name} not found in chat tools")
+                if tool_choice.name and tool_choice.name not in chat_tool_names:
+                    logger.warning("Tool not found in chat tools", tool_name=tool_choice.name)
                     return None
                 return OpenAIChatCompletionToolChoiceFunctionTool(name=tool_choice.name)
 
