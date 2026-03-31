@@ -30,6 +30,7 @@ remote/
     watsonx/           # IBM WatsonX
   safety/              # Remote safety services (bedrock, nvidia, passthrough, sambanova)
   vector_io/           # Remote vector storage (chroma, elasticsearch, milvus, pgvector, qdrant, weaviate, etc.)
+  agents/              # Remote agents adapters
   datasetio/           # Remote dataset services (huggingface, nvidia)
   eval/                # Remote evaluation services (nvidia)
   files/               # Remote file storage (openai, s3)
