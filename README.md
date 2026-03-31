@@ -1,9 +1,9 @@
 # Llama Stack
 
 <p align="center">
-  <a href="https://pypi.org/project/llama_stack/"><img src="https://img.shields.io/pypi/v/llama_stack?logo=pypi" alt="PyPI version"></a>
-  <a href="https://pypi.org/project/llama-stack/"><img src="https://img.shields.io/pypi/dm/llama-stack" alt="PyPI - Downloads"></a>
-  <a href="https://hub.docker.com/u/llamastack"><img src="https://img.shields.io/docker/pulls/llamastack/distribution-starter?logo=docker" alt="Docker Hub - Pulls"></a>
+  <a href="https://pypi.org/project/llama_stack/"><img src="https://img.shields.io/pypi/v/llama_stack?logo=pypi" alt="PyPI Version"></a>
+  <a href="https://pypi.org/project/llama-stack/"><img src="https://img.shields.io/pypi/dm/llama-stack" alt="PyPI Downloads"></a>
+  <a href="https://hub.docker.com/u/llamastack"><img src="https://img.shields.io/docker/pulls/llamastack/distribution-starter?logo=docker" alt="Docker Hub Pulls"></a>
   <a href="https://github.com/meta-llama/llama-stack/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/llama_stack.svg" alt="License"></a>
   <a href="https://discord.gg/llama-stack"><img src="https://img.shields.io/discord/1257833999603335178?color=6A7EC2&logo=discord&logoColor=ffffff" alt="Discord"></a>
   <a href="https://github.com/meta-llama/llama-stack/actions/workflows/unit-tests.yml?query=branch%3Amain"><img src="https://github.com/meta-llama/llama-stack/actions/workflows/unit-tests.yml/badge.svg?branch=main" alt="Unit Tests"></a>
