@@ -708,7 +708,7 @@ class StreamingResponseOrchestrator:
             )
 
     def _separate_tool_calls(
-        self, current_response: OpenAIChatCompletionResponseMessage, messages, reasoning_content: str | None = None
+        self, current_response, messages, reasoning_content: str | None = None
     ) -> tuple[list, list, list, list]:
         """Separate tool calls into function and non-function categories."""
         function_tool_calls = []
@@ -728,7 +728,7 @@ class StreamingResponseOrchestrator:
                     reasoning_content=reasoning_content,
                 )
             else:
-                message = OpenAIAssistantMessageParam(
+                message = OpenAIAssistantMessageParam(  # type: ignore[assignment]
                     content=choice.message.content,
                     tool_calls=choice.message.tool_calls,
                 )

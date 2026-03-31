@@ -323,7 +323,7 @@ async def convert_response_input_to_chat_messages(
                 if reasoning:
                     msg = AssistantMessageWithReasoning(tool_calls=[tool_call], reasoning_content=reasoning)
                 else:
-                    msg = OpenAIAssistantMessageParam(tool_calls=[tool_call])
+                    msg = OpenAIAssistantMessageParam(tool_calls=[tool_call])  # type: ignore[assignment]
                 messages.append(msg)
                 if input_item.call_id in tool_call_results:
                     messages.extend(tool_call_results[input_item.call_id])
@@ -341,7 +341,7 @@ async def convert_response_input_to_chat_messages(
                 if reasoning:
                     msg = AssistantMessageWithReasoning(tool_calls=[tool_call], reasoning_content=reasoning)
                 else:
-                    msg = OpenAIAssistantMessageParam(tool_calls=[tool_call])
+                    msg = OpenAIAssistantMessageParam(tool_calls=[tool_call])  # type: ignore[assignment]
                 messages.append(msg)
                 # Output can be None, use empty string as fallback
                 output_content = input_item.output if input_item.output is not None else ""
@@ -377,9 +377,9 @@ async def convert_response_input_to_chat_messages(
                 # This handles cases where input includes context for function_call_outputs
                 if previous_messages and input_item.role == "user":
                     last_user_msg = None
-                    for msg in reversed(previous_messages):
-                        if isinstance(msg, OpenAIUserMessageParam):
-                            last_user_msg = msg
+                    for prev_msg in reversed(previous_messages):
+                        if isinstance(prev_msg, OpenAIUserMessageParam):
+                            last_user_msg = prev_msg
                             break
                     if last_user_msg:
                         last_user_content = getattr(last_user_msg, "content", None)
@@ -389,7 +389,7 @@ async def convert_response_input_to_chat_messages(
                 if input_item.role == "assistant":
                     reasoning = _get_preceding_reasoning(input, i)
                     if reasoning:
-                        messages.append(AssistantMessageWithReasoning(content=content, reasoning_content=reasoning))
+                        messages.append(AssistantMessageWithReasoning(content=content, reasoning_content=reasoning))  # type: ignore[arg-type]
                         continue
                 # Dynamic message type call - different message types have different content expectations
                 messages.append(message_type(content=content))  # type: ignore[call-arg,arg-type]
@@ -433,11 +433,10 @@ def _extract_tool_call_ids(messages: list[OpenAIMessageParam]) -> set[str]:
 
 def _get_preceding_reasoning(input_items: list[OpenAIResponseInput], index: int) -> str | None:
     """If the item immediately before current index is a reasoning item, return its text."""
-    if index > 0 and isinstance(input_items[index - 1], OpenAIResponseOutputMessageReasoningItem):
-        item = input_items[index - 1]
-        # Use content to extract reasoning
-        if item.content:
-            return " ".join(c.text for c in item.content)
+    if index > 0:
+        preceding = input_items[index - 1]
+        if isinstance(preceding, OpenAIResponseOutputMessageReasoningItem) and preceding.content:
+            return " ".join(c.text for c in preceding.content)
     return None
 
 
