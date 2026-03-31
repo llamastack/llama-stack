@@ -12,7 +12,6 @@ const config: Config = {
   url: 'https://llamastack.github.io',
   baseUrl: '/',
   onBrokenLinks: "warn",
-  onBrokenMarkdownLinks: "warn",
   favicon: "img/favicon.ico",
 
   // Enhanced favicon and meta configuration
@@ -70,6 +69,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: require.resolve("./sidebars.ts"),
+          disableVersioning: true,
           docItemComponent: "@theme/ApiItem", // Derived from docusaurus-theme-openapi
           remarkPlugins: [
             [require('remark-code-import'), {
@@ -78,6 +78,7 @@ const config: Config = {
           ],
         },
         blog: {
+          onUntruncatedBlogPosts: 'ignore',
           showReadingTime: true,
           readingTime: ({content, frontMatter, defaultReadingTime}) =>
             defaultReadingTime({content, options: {wordsPerMinute: 300}}),
@@ -142,6 +143,11 @@ const config: Config = {
         {
           href: 'https://github.com/llamastack/llama-stack',
           label: 'GitHub',
+          position: 'right',
+        },
+        {
+          href: '/versions.html',
+          label: 'Versions',
           position: 'right',
         },
       ],
@@ -239,6 +245,23 @@ const config: Config = {
   } satisfies Preset.ThemeConfig,
 
   plugins: [
+    function webpackFallbackPlugin() {
+      return {
+        name: 'webpack-fallback',
+        configureWebpack() {
+          return {
+            resolve: {
+              fallback: {
+                path: false,
+                fs: false,
+                os: false,
+                crypto: false,
+              },
+            },
+          };
+        },
+      };
+    },
     [
       "docusaurus-plugin-openapi-docs",
       {
@@ -317,6 +340,10 @@ const config: Config = {
 
   markdown: {
     mermaid: true,
+    format: 'detect',
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
   },
 };
 

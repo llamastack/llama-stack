@@ -17,7 +17,7 @@ llama.cpp inference provider for connecting to llama.cpp servers with OpenAI-com
 | `allowed_models` | `list[str] \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
 | `refresh_models` | `bool` | No | False | Whether to refresh models periodically from the provider |
 | `api_key` | `SecretStr \| None` | No |  | Authentication credential for the provider |
-| `base_url` | `HttpUrl \| None` | No | http://localhost:8080/v1 |  |
+| `base_url` | `HttpUrl \| None` | No | <http://localhost:8080/v1> |  |
 
 ## Sample Configuration
 

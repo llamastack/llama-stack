@@ -273,7 +273,7 @@ class TestBuildSSLContext:
         assert result is False
 
     def test_verify_with_path(self):
-        """Test SSL context with CA path returns the path."""
+        """Test SSL context with CA path returns a string (httpx requires str, not Path)."""
         with tempfile.NamedTemporaryFile(suffix=".crt", delete=False) as f:
             f.write(b"fake cert")
             cert_path = f.name
@@ -281,7 +281,8 @@ class TestBuildSSLContext:
         try:
             tls_config = TLSConfig(verify=cert_path)
             result = _build_ssl_context(tls_config)
-            assert result.resolve() == Path(cert_path).resolve()
+            assert isinstance(result, str)
+            assert Path(result).resolve() == Path(cert_path).resolve()
         finally:
             Path(cert_path).unlink()
 

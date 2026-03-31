@@ -47,7 +47,10 @@ tests/
 - Good variable naming and clear code organization matters more than comments.
 - Do NOT remove existing comments unless they are factually wrong.
 - Error messages must be prefixed with "Failed to ...".
-- Use debug logging when appropriate via `from llama_stack.log import get_logger`.
+- Use structured logging via `from llama_stack.log import get_logger`. Always use
+  key-value style: `logger.info("Processing request", model=model_id, provider=provider)`
+  instead of f-strings or %-style formatting. The pre-commit hook
+  `Block f-string logging` enforces this.
 - The pre-commit hook `Ensure 'llama_stack.log' usage for logging` enforces that all
   logging uses the project's logger, not the standard library directly.
 

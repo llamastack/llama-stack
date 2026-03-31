@@ -13,156 +13,7 @@ info:
 servers:
 - url: http://any-hosted-llama-stack.com
 paths:
-  /v1/models:
-    get:
-      responses:
-        '200':
-          description: A list of OpenAI model objects.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OpenAIListModelsResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Models
-      summary: List models using the OpenAI API.
-      description: List models using the OpenAI API.
-      operationId: openai_list_models_v1_models_get
-    post:
-      responses:
-        '200':
-          description: The registered model object.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Model'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Models
-      summary: Register a model.
-      description: Register a model.
-      operationId: register_model_v1_models_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterModelRequest'
-        required: true
-      deprecated: true
-  /v1/models/{model_id}:
-    get:
-      responses:
-        '200':
-          description: The model object.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Model'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Models
-      summary: Get a model by its identifier.
-      description: Get a model by its identifier.
-      operationId: get_model_v1_models__model_id__get
-      parameters:
-      - name: model_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the model to get.
-          title: Model Id
-        description: The ID of the model to get.
-    delete:
-      responses:
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-        '204':
-          description: The model was successfully unregistered.
-      tags:
-      - Models
-      summary: Unregister a model.
-      description: Unregister a model.
-      operationId: unregister_model_v1_models__model_id__delete
-      parameters:
-      - name: model_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the model to unregister.
-          title: Model Id
-        description: The ID of the model to unregister.
-      deprecated: true
   /v1/scoring-functions:
-    get:
-      responses:
-        '200':
-          description: A ListScoringFunctionsResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListScoringFunctionsResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Scoring Functions
-      summary: List all scoring functions.
-      description: List all scoring functions.
-      operationId: list_scoring_functions_v1_scoring_functions_get
     post:
       responses:
         '400':
@@ -192,40 +43,6 @@ paths:
         required: true
       deprecated: true
   /v1/scoring-functions/{scoring_fn_id}:
-    get:
-      responses:
-        '200':
-          description: A ScoringFn.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ScoringFn'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Scoring Functions
-      summary: Get a scoring function by its ID.
-      description: Get a scoring function by its ID.
-      operationId: get_scoring_function_v1_scoring_functions__scoring_fn_id__get
-      parameters:
-      - name: scoring_fn_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the scoring function to get.
-          title: Scoring Fn Id
-        description: The ID of the scoring function to get.
     delete:
       responses:
         '400':
@@ -258,31 +75,6 @@ paths:
         description: The ID of the scoring function to unregister.
       deprecated: true
   /v1/shields:
-    get:
-      responses:
-        '200':
-          description: A ListShieldsResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListShieldsResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Shields
-      summary: List all shields.
-      description: List all shields.
-      operationId: list_shields_v1_shields_get
     post:
       responses:
         '200':
@@ -316,40 +108,6 @@ paths:
         required: true
       deprecated: true
   /v1/shields/{identifier}:
-    get:
-      responses:
-        '200':
-          description: A Shield.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Shield'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Shields
-      summary: Get a shield by its identifier.
-      description: Get a shield by its identifier.
-      operationId: get_shield_v1_shields__identifier__get
-      parameters:
-      - name: identifier
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The identifier of the shield to get.
-          title: Identifier
-        description: The identifier of the shield to get.
     delete:
       responses:
         '400':
@@ -382,31 +140,6 @@ paths:
         description: The identifier of the shield to unregister.
       deprecated: true
   /v1beta/datasets:
-    get:
-      responses:
-        '200':
-          description: A list of dataset objects.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListDatasetsResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Datasets
-      summary: List all datasets.
-      description: List all datasets.
-      operationId: list_datasets_v1beta_datasets_get
     post:
       responses:
         '200':
@@ -440,40 +173,6 @@ paths:
         required: true
       deprecated: true
   /v1beta/datasets/{dataset_id}:
-    get:
-      responses:
-        '200':
-          description: The dataset object.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Dataset'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Datasets
-      summary: Get a dataset by its ID.
-      description: Get a dataset by its ID.
-      operationId: get_dataset_v1beta_datasets__dataset_id__get
-      parameters:
-      - name: dataset_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the dataset to get.
-          title: Dataset Id
-        description: The ID of the dataset to get.
     delete:
       responses:
         '400':
@@ -506,31 +205,6 @@ paths:
         description: The ID of the dataset to unregister.
       deprecated: true
   /v1alpha/eval/benchmarks:
-    get:
-      responses:
-        '200':
-          description: A ListBenchmarksResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListBenchmarksResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Benchmarks
-      summary: List all benchmarks.
-      description: List all benchmarks.
-      operationId: list_benchmarks_v1alpha_eval_benchmarks_get
     post:
       responses:
         '400':
@@ -560,40 +234,6 @@ paths:
         required: true
       deprecated: true
   /v1alpha/eval/benchmarks/{benchmark_id}:
-    get:
-      responses:
-        '200':
-          description: A Benchmark.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Benchmark'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Benchmarks
-      summary: Get a benchmark by its ID.
-      description: Get a benchmark by its ID.
-      operationId: get_benchmark_v1alpha_eval_benchmarks__benchmark_id__get
-      parameters:
-      - name: benchmark_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the benchmark to get.
-          title: Benchmark Id
-        description: The ID of the benchmark to get.
     delete:
       responses:
         '400':
@@ -2069,6 +1709,7 @@ components:
           mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
           mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
           message: '#/components/schemas/OpenAIResponseMessage'
+          reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
           web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
         propertyName: type
       oneOf:
@@ -2090,7 +1731,9 @@ components:
         title: OpenAIResponseOutputMessageMCPCall
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
         title: OpenAIResponseOutputMessageMCPListTools
-      title: OpenAIResponseMessage | ... (9 variants)
+      - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+        title: OpenAIResponseOutputMessageReasoningItem
+      title: OpenAIResponseMessage | ... (10 variants)
     OpenAIResponseAnnotationCitation:
       properties:
         type:
@@ -2689,6 +2332,8 @@ components:
                 title: OpenAIResponseOutputMessageMCPCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 title: OpenAIResponseOutputMessageMCPListTools
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                title: OpenAIResponseOutputMessageReasoningItem
               discriminator:
                 propertyName: type
                 mapping:
@@ -2700,8 +2345,9 @@ components:
                   mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                   mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                   message: '#/components/schemas/OpenAIResponseMessage-Input'
+                  reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                   web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Input | ... (9 variants)
+              title: OpenAIResponseMessage-Input | ... (10 variants)
             type: array
           - type: 'null'
           description: Initial items to include in the conversation context.
@@ -2810,6 +2456,8 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -2821,8 +2469,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Output'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (9 variants)
+            title: OpenAIResponseMessage-Output | ... (10 variants)
           type: array
           title: Data
           description: List of conversation items
@@ -2868,6 +2517,8 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -2879,8 +2530,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Input'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Input | ... (9 variants)
+            title: OpenAIResponseMessage-Input | ... (10 variants)
           type: array
           maxItems: 20
           title: Items
@@ -3581,6 +3233,7 @@ components:
             mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
             mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
             message: '#/components/schemas/OpenAIResponseMessage'
+            reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
             web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
           propertyName: type
         oneOf:
@@ -3598,7 +3251,9 @@ components:
           title: OpenAIResponseOutputMessageMCPListTools
         - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
           title: OpenAIResponseMCPApprovalRequest
-        title: OpenAIResponseMessage | ... (7 variants)
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+          title: OpenAIResponseOutputMessageReasoningItem
+        title: OpenAIResponseMessage | ... (8 variants)
       - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
         title: OpenAIResponseInputFunctionToolCallOutput
       - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
@@ -3750,6 +3405,8 @@ components:
               title: OpenAIResponseOutputMessageMCPListTools
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
               title: OpenAIResponseMCPApprovalRequest
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -3759,8 +3416,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Output'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (7 variants)
+            title: OpenAIResponseMessage-Output | ... (8 variants)
           type: array
           title: Output
         parallel_tool_calls:
@@ -3926,6 +3584,8 @@ components:
                 title: OpenAIResponseOutputMessageMCPListTools
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
                 title: OpenAIResponseMCPApprovalRequest
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                title: OpenAIResponseOutputMessageReasoningItem
               discriminator:
                 propertyName: type
                 mapping:
@@ -3935,8 +3595,9 @@ components:
                   mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                   mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                   message: '#/components/schemas/OpenAIResponseMessage-Output'
+                  reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                   web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Output | ... (7 variants)
+              title: OpenAIResponseMessage-Output | ... (8 variants)
             - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
               title: OpenAIResponseInputFunctionToolCallOutput
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
@@ -3965,6 +3626,7 @@ components:
           mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
           mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
           message: '#/components/schemas/OpenAIResponseMessage'
+          reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
           web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
         propertyName: type
       oneOf:
@@ -3982,7 +3644,9 @@ components:
         title: OpenAIResponseOutputMessageMCPListTools
       - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
         title: OpenAIResponseMCPApprovalRequest
-      title: OpenAIResponseMessage | ... (7 variants)
+      - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+        title: OpenAIResponseOutputMessageReasoningItem
+      title: OpenAIResponseMessage | ... (8 variants)
     OpenAIResponsePrompt:
       properties:
         id:
@@ -4233,6 +3897,8 @@ components:
               title: OpenAIResponseOutputMessageMCPListTools
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
               title: OpenAIResponseMCPApprovalRequest
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -4242,8 +3908,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Output'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (7 variants)
+            title: OpenAIResponseMessage-Output | ... (8 variants)
           type: array
           title: Output
         parallel_tool_calls:
@@ -5038,6 +4705,7 @@ components:
               mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
               mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               message: '#/components/schemas/OpenAIResponseMessage'
+              reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
               web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
             propertyName: type
           oneOf:
@@ -5055,7 +4723,9 @@ components:
             title: OpenAIResponseOutputMessageMCPListTools
           - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
             title: OpenAIResponseMCPApprovalRequest
-          title: OpenAIResponseMessage | ... (7 variants)
+          - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+            title: OpenAIResponseOutputMessageReasoningItem
+          title: OpenAIResponseMessage | ... (8 variants)
         output_index:
           title: Output Index
           type: integer
@@ -5088,6 +4758,7 @@ components:
               mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
               mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               message: '#/components/schemas/OpenAIResponseMessage'
+              reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
               web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
             propertyName: type
           oneOf:
@@ -5105,7 +4776,9 @@ components:
             title: OpenAIResponseOutputMessageMCPListTools
           - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
             title: OpenAIResponseMCPApprovalRequest
-          title: OpenAIResponseMessage | ... (7 variants)
+          - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+            title: OpenAIResponseOutputMessageReasoningItem
+          title: OpenAIResponseMessage | ... (8 variants)
         output_index:
           title: Output Index
           type: integer
@@ -5581,6 +5254,8 @@ components:
                 title: OpenAIResponseOutputMessageMCPListTools
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
                 title: OpenAIResponseMCPApprovalRequest
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                title: OpenAIResponseOutputMessageReasoningItem
               discriminator:
                 propertyName: type
                 mapping:
@@ -5590,8 +5265,9 @@ components:
                   mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                   mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                   message: '#/components/schemas/OpenAIResponseMessage-Output'
+                  reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                   web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Output | ... (7 variants)
+              title: OpenAIResponseMessage-Output | ... (8 variants)
             - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
               title: OpenAIResponseInputFunctionToolCallOutput
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
@@ -7668,43 +7344,48 @@ components:
       title: RerankResponse
       description: Response from a reranking request.
     RegisterModelRequest:
+      description: Request model for registering a model.
       properties:
         model_id:
-          type: string
-          title: Model Id
           description: The identifier of the model to register.
+          title: Model Id
+          type: string
         provider_model_id:
           anyOf:
           - type: string
           - type: 'null'
           description: The identifier of the model in the provider.
+          nullable: true
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
           description: The identifier of the provider.
+          nullable: true
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
           description: Any additional metadata for this model.
+          nullable: true
         model_type:
           anyOf:
           - $ref: '#/components/schemas/ModelType'
             title: ModelType
           - type: 'null'
           description: The type of model to register.
+          nullable: true
           title: ModelType
         model_validation:
           anyOf:
           - type: boolean
           - type: 'null'
           description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
+          nullable: true
       required:
       - model_id
       title: RegisterModelRequest
-      description: Request model for registering a model.
     ParamType:
       discriminator:
         mapping:
@@ -8137,6 +7818,8 @@ components:
                   title: OpenAIResponseOutputMessageMCPListTools
                 - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
                   title: OpenAIResponseMCPApprovalRequest
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                  title: OpenAIResponseOutputMessageReasoningItem
                 discriminator:
                   propertyName: type
                   mapping:
@@ -8146,8 +7829,9 @@ components:
                     mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                     mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                     message: '#/components/schemas/OpenAIResponseMessage-Input'
+                    reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                     web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                title: OpenAIResponseMessage-Input | ... (7 variants)
+                title: OpenAIResponseMessage-Input | ... (8 variants)
               - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
                 title: OpenAIResponseInputFunctionToolCallOutput
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
@@ -9231,6 +8915,77 @@ components:
       - text
       title: OpenAIResponseOutputMessageFileSearchToolCallResults
       description: Search results returned by the file search operation.
+    OpenAIResponseOutputMessageReasoningContent:
+      properties:
+        text:
+          type: string
+          title: Text
+          description: The reasoning text content from the model.
+        type:
+          type: string
+          title: Type
+          description: The type identifier, always 'reasoning_text'.
+          enum:
+          - reasoning_text
+      required:
+      - text
+      title: OpenAIResponseOutputMessageReasoningContent
+      description: Reasoning text from the model.
+    OpenAIResponseOutputMessageReasoningItem:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Unique identifier for the reasoning output item.
+        summary:
+          items:
+            $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningSummary'
+          type: array
+          title: Summary
+          description: Summary of the reasoning output.
+        type:
+          type: string
+          title: Type
+          description: The type identifier, always 'reasoning'.
+          enum:
+          - reasoning
+        content:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningContent'
+            type: array
+          - type: 'null'
+          description: The reasoning content from the model.
+        status:
+          anyOf:
+          - type: string
+            enum:
+            - in_progress
+            - completed
+            - incomplete
+          - type: 'null'
+          description: The status of the reasoning output.
+      required:
+      - id
+      - summary
+      title: OpenAIResponseOutputMessageReasoningItem
+      description: Reasoning output from the model, representing the model's thinking process.
+    OpenAIResponseOutputMessageReasoningSummary:
+      properties:
+        text:
+          type: string
+          title: Text
+          description: The summary text of the reasoning output.
+        type:
+          type: string
+          title: Type
+          description: The type identifier, always 'summary_text'.
+          enum:
+          - summary_text
+      required:
+      - text
+      title: OpenAIResponseOutputMessageReasoningSummary
+      description: A summary of reasoning output from the model.
     OpenAIResponseReasoning:
       properties:
         effort:
@@ -9244,6 +8999,15 @@ components:
             - high
             - xhigh
           - type: 'null'
+        summary:
+          anyOf:
+          - type: string
+            enum:
+            - auto
+            - concise
+            - detailed
+          - type: 'null'
+          description: Summary mode for reasoning output. One of 'auto', 'concise', or 'detailed'.
       title: OpenAIResponseReasoning
       description: |-
         Configuration for reasoning effort in OpenAI responses.
@@ -11041,6 +10805,7 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
               propertyName: type
             oneOf:
@@ -11062,7 +10827,9 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
-            title: OpenAIResponseMessage | ... (9 variants)
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
+            title: OpenAIResponseMessage | ... (10 variants)
           maxItems: 20
           title: Items
           type: array

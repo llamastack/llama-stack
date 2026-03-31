@@ -46,7 +46,11 @@ class DatasetIORouter(DatasetIO):
         dataset_id: str | None = None,
     ) -> None:
         logger.debug(
-            f"DatasetIORouter.register_dataset: {purpose=} {source=} {metadata=} {dataset_id=}",
+            "DatasetIORouter.register_dataset",
+            purpose=purpose,
+            source=source,
+            metadata=metadata,
+            dataset_id=dataset_id,
         )
         await self.routing_table.register_dataset(
             purpose=purpose,
@@ -57,7 +61,10 @@ class DatasetIORouter(DatasetIO):
 
     async def iterrows(self, request: IterRowsRequest) -> PaginatedResponse:
         logger.debug(
-            f"DatasetIORouter.iterrows: {request.dataset_id}, start_index={request.start_index} limit={request.limit}",
+            "DatasetIORouter.iterrows: , start_index= limit",
+            dataset_id=request.dataset_id,
+            start_index=request.start_index,
+            limit=request.limit,
         )
         provider = await self.routing_table.get_provider_impl(request.dataset_id)
         return await provider.iterrows(
@@ -67,7 +74,7 @@ class DatasetIORouter(DatasetIO):
         )
 
     async def append_rows(self, params: AppendRowsParams) -> None:
-        logger.debug(f"DatasetIORouter.append_rows: {params.dataset_id}, {len(params.rows)} rows")
+        logger.debug("DatasetIORouter.append_rows", dataset_id=params.dataset_id, rows_count=len(params.rows))
         provider = await self.routing_table.get_provider_impl(params.dataset_id)
         return await provider.append_rows(
             dataset_id=params.dataset_id,

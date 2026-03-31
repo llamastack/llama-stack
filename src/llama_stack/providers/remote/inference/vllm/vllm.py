@@ -162,7 +162,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
         endpoint = self.get_base_url().replace("/v1", "") + "/rerank"  # TODO: find a better solution
 
         headers: dict[str, str] = {}
-        api_key = self.get_api_key()
+        api_key = self._get_api_key_from_config_or_provider_data()
         if api_key and api_key != "NO KEY REQUIRED":
             headers["Authorization"] = f"Bearer {api_key}"
 

@@ -2263,6 +2263,7 @@ components:
           mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
           mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
           message: '#/components/schemas/OpenAIResponseMessage'
+          reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
           web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
         propertyName: type
       oneOf:
@@ -2284,7 +2285,9 @@ components:
         title: OpenAIResponseOutputMessageMCPCall
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
         title: OpenAIResponseOutputMessageMCPListTools
-      title: OpenAIResponseMessage | ... (9 variants)
+      - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+        title: OpenAIResponseOutputMessageReasoningItem
+      title: OpenAIResponseMessage | ... (10 variants)
     OpenAIResponseAnnotationCitation:
       properties:
         type:
@@ -2883,6 +2886,8 @@ components:
                 title: OpenAIResponseOutputMessageMCPCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 title: OpenAIResponseOutputMessageMCPListTools
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                title: OpenAIResponseOutputMessageReasoningItem
               discriminator:
                 propertyName: type
                 mapping:
@@ -2894,8 +2899,9 @@ components:
                   mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                   mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                   message: '#/components/schemas/OpenAIResponseMessage-Input'
+                  reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                   web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Input | ... (9 variants)
+              title: OpenAIResponseMessage-Input | ... (10 variants)
             type: array
           - type: 'null'
           description: Initial items to include in the conversation context.
@@ -3004,6 +3010,8 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -3015,8 +3023,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Output'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (9 variants)
+            title: OpenAIResponseMessage-Output | ... (10 variants)
           type: array
           title: Data
           description: List of conversation items
@@ -3062,6 +3071,8 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -3073,8 +3084,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Input'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Input | ... (9 variants)
+            title: OpenAIResponseMessage-Input | ... (10 variants)
           type: array
           maxItems: 20
           title: Items
@@ -3772,6 +3784,7 @@ components:
             mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
             mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
             message: '#/components/schemas/OpenAIResponseMessage'
+            reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
             web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
           propertyName: type
         oneOf:
@@ -3789,7 +3802,9 @@ components:
           title: OpenAIResponseOutputMessageMCPListTools
         - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
           title: OpenAIResponseMCPApprovalRequest
-        title: OpenAIResponseMessage | ... (7 variants)
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+          title: OpenAIResponseOutputMessageReasoningItem
+        title: OpenAIResponseMessage | ... (8 variants)
       - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
         title: OpenAIResponseInputFunctionToolCallOutput
       - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
@@ -3941,6 +3956,8 @@ components:
               title: OpenAIResponseOutputMessageMCPListTools
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
               title: OpenAIResponseMCPApprovalRequest
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -3950,8 +3967,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Output'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (7 variants)
+            title: OpenAIResponseMessage-Output | ... (8 variants)
           type: array
           title: Output
         parallel_tool_calls:
@@ -4117,6 +4135,8 @@ components:
                 title: OpenAIResponseOutputMessageMCPListTools
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
                 title: OpenAIResponseMCPApprovalRequest
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                title: OpenAIResponseOutputMessageReasoningItem
               discriminator:
                 propertyName: type
                 mapping:
@@ -4126,8 +4146,9 @@ components:
                   mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                   mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                   message: '#/components/schemas/OpenAIResponseMessage-Output'
+                  reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                   web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Output | ... (7 variants)
+              title: OpenAIResponseMessage-Output | ... (8 variants)
             - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
               title: OpenAIResponseInputFunctionToolCallOutput
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
@@ -4156,6 +4177,7 @@ components:
           mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
           mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
           message: '#/components/schemas/OpenAIResponseMessage'
+          reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
           web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
         propertyName: type
       oneOf:
@@ -4173,7 +4195,9 @@ components:
         title: OpenAIResponseOutputMessageMCPListTools
       - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
         title: OpenAIResponseMCPApprovalRequest
-      title: OpenAIResponseMessage | ... (7 variants)
+      - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+        title: OpenAIResponseOutputMessageReasoningItem
+      title: OpenAIResponseMessage | ... (8 variants)
     OpenAIResponsePrompt:
       properties:
         id:
@@ -4414,6 +4438,8 @@ components:
               title: OpenAIResponseOutputMessageMCPListTools
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
               title: OpenAIResponseMCPApprovalRequest
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -4423,8 +4449,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Output'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (7 variants)
+            title: OpenAIResponseMessage-Output | ... (8 variants)
           type: array
           title: Output
         parallel_tool_calls:
@@ -5219,6 +5246,7 @@ components:
               mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
               mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               message: '#/components/schemas/OpenAIResponseMessage'
+              reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
               web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
             propertyName: type
           oneOf:
@@ -5236,7 +5264,9 @@ components:
             title: OpenAIResponseOutputMessageMCPListTools
           - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
             title: OpenAIResponseMCPApprovalRequest
-          title: OpenAIResponseMessage | ... (7 variants)
+          - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+            title: OpenAIResponseOutputMessageReasoningItem
+          title: OpenAIResponseMessage | ... (8 variants)
         output_index:
           title: Output Index
           type: integer
@@ -5269,6 +5299,7 @@ components:
               mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
               mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               message: '#/components/schemas/OpenAIResponseMessage'
+              reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
               web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
             propertyName: type
           oneOf:
@@ -5286,7 +5317,9 @@ components:
             title: OpenAIResponseOutputMessageMCPListTools
           - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
             title: OpenAIResponseMCPApprovalRequest
-          title: OpenAIResponseMessage | ... (7 variants)
+          - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+            title: OpenAIResponseOutputMessageReasoningItem
+          title: OpenAIResponseMessage | ... (8 variants)
         output_index:
           title: Output Index
           type: integer
@@ -5762,6 +5795,8 @@ components:
                 title: OpenAIResponseOutputMessageMCPListTools
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
                 title: OpenAIResponseMCPApprovalRequest
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                title: OpenAIResponseOutputMessageReasoningItem
               discriminator:
                 propertyName: type
                 mapping:
@@ -5771,8 +5806,9 @@ components:
                   mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                   mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                   message: '#/components/schemas/OpenAIResponseMessage-Output'
+                  reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                   web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Output | ... (7 variants)
+              title: OpenAIResponseMessage-Output | ... (8 variants)
             - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
               title: OpenAIResponseInputFunctionToolCallOutput
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
@@ -7849,43 +7885,48 @@ components:
       title: RerankResponse
       description: Response from a reranking request.
     RegisterModelRequest:
+      description: Request model for registering a model.
       properties:
         model_id:
-          type: string
-          title: Model Id
           description: The identifier of the model to register.
+          title: Model Id
+          type: string
         provider_model_id:
           anyOf:
           - type: string
           - type: 'null'
           description: The identifier of the model in the provider.
+          nullable: true
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
           description: The identifier of the provider.
+          nullable: true
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
           description: Any additional metadata for this model.
+          nullable: true
         model_type:
           anyOf:
           - $ref: '#/components/schemas/ModelType'
             title: ModelType
           - type: 'null'
           description: The type of model to register.
+          nullable: true
           title: ModelType
         model_validation:
           anyOf:
           - type: boolean
           - type: 'null'
           description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
+          nullable: true
       required:
       - model_id
       title: RegisterModelRequest
-      description: Request model for registering a model.
     ParamType:
       discriminator:
         mapping:
@@ -9108,6 +9149,77 @@ components:
       - text
       title: OpenAIResponseOutputMessageFileSearchToolCallResults
       description: Search results returned by the file search operation.
+    OpenAIResponseOutputMessageReasoningContent:
+      properties:
+        text:
+          type: string
+          title: Text
+          description: The reasoning text content from the model.
+        type:
+          type: string
+          title: Type
+          description: The type identifier, always 'reasoning_text'.
+          enum:
+          - reasoning_text
+      required:
+      - text
+      title: OpenAIResponseOutputMessageReasoningContent
+      description: Reasoning text from the model.
+    OpenAIResponseOutputMessageReasoningItem:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Unique identifier for the reasoning output item.
+        summary:
+          items:
+            $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningSummary'
+          type: array
+          title: Summary
+          description: Summary of the reasoning output.
+        type:
+          type: string
+          title: Type
+          description: The type identifier, always 'reasoning'.
+          enum:
+          - reasoning
+        content:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningContent'
+            type: array
+          - type: 'null'
+          description: The reasoning content from the model.
+        status:
+          anyOf:
+          - type: string
+            enum:
+            - in_progress
+            - completed
+            - incomplete
+          - type: 'null'
+          description: The status of the reasoning output.
+      required:
+      - id
+      - summary
+      title: OpenAIResponseOutputMessageReasoningItem
+      description: Reasoning output from the model, representing the model's thinking process.
+    OpenAIResponseOutputMessageReasoningSummary:
+      properties:
+        text:
+          type: string
+          title: Text
+          description: The summary text of the reasoning output.
+        type:
+          type: string
+          title: Type
+          description: The type identifier, always 'summary_text'.
+          enum:
+          - summary_text
+      required:
+      - text
+      title: OpenAIResponseOutputMessageReasoningSummary
+      description: A summary of reasoning output from the model.
     OpenAIResponseReasoning:
       properties:
         effort:
@@ -9121,6 +9233,15 @@ components:
             - high
             - xhigh
           - type: 'null'
+        summary:
+          anyOf:
+          - type: string
+            enum:
+            - auto
+            - concise
+            - detailed
+          - type: 'null'
+          description: Summary mode for reasoning output. One of 'auto', 'concise', or 'detailed'.
       title: OpenAIResponseReasoning
       description: |-
         Configuration for reasoning effort in OpenAI responses.
@@ -10889,6 +11010,7 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
               propertyName: type
             oneOf:
@@ -10910,7 +11032,9 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
-            title: OpenAIResponseMessage | ... (9 variants)
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
+            title: OpenAIResponseMessage | ... (10 variants)
           maxItems: 20
           title: Items
           type: array
