@@ -12,6 +12,7 @@ from openai.types.chat import ChatCompletionToolParam
 from pydantic import BaseModel
 
 from llama_stack_api import (
+    OpenAIAssistantMessageParam,
     OpenAIChatCompletionToolCall,
     OpenAIFinishReason,
     OpenAIMessageParam,
@@ -33,6 +34,18 @@ from llama_stack_api import (
     OpenAIResponseToolMCP,
     OpenAITokenLogProb,
 )
+
+
+class AssistantMessageWithReasoning(OpenAIAssistantMessageParam):
+    """Internal type for passing reasoning content between the Responses
+    layer and providers. NOT part of the public API.
+
+    The Responses layer creates this when converting input ReasoningItems
+    to CC messages. Providers check isinstance(msg, AssistantMessageWithReasoning)
+    and map reasoning_content to their own CC format (e.g. 'reasoning' for Ollama/vLLM).
+    """
+
+    reasoning_content: str | None = None
 
 
 def _json_equal(a: str, b: str) -> bool:
@@ -68,6 +81,7 @@ class ChatCompletionResult:
     content_part_emitted: bool  # Tracking state
     logprobs: list[OpenAITokenLogProb] | None = None
     service_tier: str | None = None  # The actual service tier used (may differ from input)
+    reasoning_content: str | None = None
 
     @property
     def content_text(self) -> str:

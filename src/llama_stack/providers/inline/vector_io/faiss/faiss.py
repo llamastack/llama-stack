@@ -150,7 +150,7 @@ class FaissIndex(EmbeddingIndex):
                     for key, val in chunk.metadata.items():
                         self._meta_index.setdefault(key, {}).setdefault(val, set()).add(pos)
             except Exception as e:
-                logger.debug(e, exc_info=True)
+                logger.debug("Failed to deserialize Faiss index", error=str(e), exc_info=True)
                 raise ValueError(
                     "Error deserializing Faiss index from storage. If you recently upgraded your Llama Stack, Faiss, "
                     "or NumPy versions, you may need to delete the index and re-create it again or downgrade versions.\n"

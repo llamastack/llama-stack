@@ -225,7 +225,9 @@ class ResponsesStore:
         )
 
         if not existing_row:
-            logger.critical(f"Response with id {response_object.id} not found during update - this should never happen")
+            logger.critical(
+                "Response not found during update - this should never happen", response_id=response_object.id
+            )
             raise RuntimeError(f"Response with id {response_object.id} not found during update")
 
         existing_data = existing_row["response_object"]
@@ -326,7 +328,7 @@ class ResponsesStore:
             update_columns=["messages"],
         )
 
-        logger.debug(f"Stored {len(messages)} messages for conversation {conversation_id}")
+        logger.debug("Stored messages for conversation", messages_count=len(messages), conversation_id=conversation_id)
 
     async def get_conversation_messages(self, conversation_id: str) -> list[OpenAIMessageParam] | None:
         """Get stored messages for a conversation.

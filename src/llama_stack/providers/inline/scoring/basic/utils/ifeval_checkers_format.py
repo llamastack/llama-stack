@@ -545,7 +545,7 @@ class CapitalLettersEnglishChecker(Instruction):
             return value.isupper() and langdetect.detect(value) == "en"
         except langdetect.LangDetectException as e:
             # Count as instruction is followed.
-            logger.info("Unable to detect language for text %s due to %s", value, e)  # refex: disable=pytotw.037
+            logger.info("Unable to detect language", text=value, error=str(e))
             return True
 
 
@@ -574,7 +574,7 @@ class LowercaseLettersEnglishChecker(Instruction):
             return value.islower() and langdetect.detect(value) == "en"
         except langdetect.LangDetectException as e:
             # Count as instruction is followed.
-            logger.info("Unable to detect language for text %s due to %s", value, e)  # refex: disable=pytotw.037
+            logger.info("Unable to detect language", text=value, error=str(e))
             return True
 
 

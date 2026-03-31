@@ -92,10 +92,10 @@ def configure_api_providers(config: StackConfig, build_spec: DistributionSpec) -
 
         existing_providers = config.providers.get(api_str, [])
         if existing_providers:
-            logger.info(f"Re-configuring existing providers for API `{api_str}`...")
+            logger.info("Re-configuring existing providers for API", api=api_str)
             updated_providers = []
             for p in existing_providers:
-                logger.info(f"> Configuring provider `({p.provider_type})`")
+                logger.info("Configuring provider", provider_type=p.provider_type)
                 updated_providers.append(configure_single_provider(provider_registry[api], p))
                 logger.info("")
         else:
@@ -106,17 +106,18 @@ def configure_api_providers(config: StackConfig, build_spec: DistributionSpec) -
             if not plist:
                 raise ValueError(f"No provider configured for API {api_str}?")
 
-            logger.info(f"Configuring API `{api_str}`...")
+            logger.info("Configuring API", api=api_str)
             updated_providers = []
             for i, provider in enumerate(plist):
                 if i >= 1:
                     others = ", ".join(p.provider_type for p in plist[i:])
                     logger.info(
-                        f"Not configuring other providers ({others}) interactively. Please edit the resulting YAML directly.\n"
+                        "Not configuring other providers () interactively. Please edit the resulting YAML directly.\n",
+                        others=others,
                     )
                     break
 
-                logger.info(f"> Configuring provider `({provider.provider_type})`")
+                logger.info("Configuring provider", provider_type=provider.provider_type)
                 pid = provider.provider_type.split("::")[-1]
                 updated_providers.append(
                     configure_single_provider(
@@ -147,7 +148,7 @@ def upgrade_from_routing_table(
         The upgraded configuration dictionary using the providers schema.
     """
 
-    def get_providers(entries):
+    def get_providers(entries: Any) -> list[Provider]:
         return [
             Provider(
                 provider_id=(f"{entry['provider_type']}-{i:02d}" if len(entries) > 1 else entry["provider_type"]),
