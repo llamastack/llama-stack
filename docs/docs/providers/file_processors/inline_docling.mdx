@@ -25,11 +25,10 @@ description: |
   Or add it to a custom `run.yaml`:
 
   ```yaml
-  providers:
-    file_processors:
-      - provider_id: docling
-        provider_type: inline::docling
-        config: {}
+  file_processors:
+    - provider_id: docling
+      provider_type: inline::docling
+      config: {}
   ```
 
   ## Installation
@@ -75,11 +74,10 @@ OLLAMA_URL=http://localhost:11434/v1 llama stack run \
 Or add it to a custom `run.yaml`:
 
 ```yaml
-providers:
-  file_processors:
-    - provider_id: docling
-      provider_type: inline::docling
-      config: {}
+file_processors:
+  - provider_id: docling
+    provider_type: inline::docling
+    config: {}
 ```
 
 ## Installation
