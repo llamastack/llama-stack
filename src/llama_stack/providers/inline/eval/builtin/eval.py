@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 import json
+from collections.abc import AsyncIterator
 from typing import Any
 
 from tqdm import tqdm
@@ -33,6 +34,7 @@ from llama_stack_api import (
     RunEvalRequest,
     ScoreRequest,
     Scoring,
+    SystemMessage,
 )
 
 from .config import BuiltinEvalConfig
@@ -63,9 +65,9 @@ class BuiltinEvalImpl(
         self.responses_api = responses_api
 
         # TODO: assume sync job, will need jobs API for async scheduling
-        self.jobs = {}
+        self.jobs: dict[str, EvaluateResponse] = {}
 
-        self.benchmarks = {}
+        self.benchmarks: dict[str, Benchmark] = {}
 
     async def initialize(self) -> None:
         self.kvstore = await kvstore_impl(self.config.kvstore)
@@ -74,8 +76,8 @@ class BuiltinEvalImpl(
         end_key = f"{EVAL_TASKS_PREFIX}\xff"
         stored_benchmarks = await self.kvstore.values_in_range(start_key, end_key)
 
-        for benchmark in stored_benchmarks:
-            benchmark = Benchmark.model_validate_json(benchmark)
+        for benchmark_json in stored_benchmarks:
+            benchmark = Benchmark.model_validate_json(benchmark_json)
             self.benchmarks[benchmark.identifier] = benchmark
 
     async def shutdown(self) -> None: ...
@@ -132,7 +134,7 @@ class BuiltinEvalImpl(
     ) -> list[dict[str, Any]]:
         candidate = request.benchmark_config.eval_candidate
         assert candidate.sampling_params.max_tokens is not None, "SamplingParams.max_tokens must be provided"
-        sampling_params = {"max_tokens": candidate.sampling_params.max_tokens}
+        sampling_params: dict[str, Any] = {"max_tokens": candidate.sampling_params.max_tokens}
 
         generations = []
         for x in tqdm(input_rows):
@@ -141,33 +143,37 @@ class BuiltinEvalImpl(
                     sampling_params["stop"] = candidate.sampling_params.stop
 
                 input_content = json.loads(x[ColumnName.completion_input.value])
-                params = OpenAICompletionRequestWithExtraBody(
+                completion_params = OpenAICompletionRequestWithExtraBody(
                     model=candidate.model,
                     prompt=input_content,
                     **sampling_params,
                 )
-                response = await self.inference_api.openai_completion(params)
-                generations.append({ColumnName.generated_answer.value: response.choices[0].text})
+                completion_response = await self.inference_api.openai_completion(completion_params)
+                assert not isinstance(completion_response, AsyncIterator), "Streaming not supported in eval"
+                generations.append({ColumnName.generated_answer.value: completion_response.choices[0].text})
             elif ColumnName.chat_completion_input.value in x:
                 chat_completion_input_json = json.loads(x[ColumnName.chat_completion_input.value])
                 input_messages = [
                     OpenAIUserMessageParam(**x) for x in chat_completion_input_json if x["role"] == "user"
                 ]
 
-                messages = []
+                messages: list[SystemMessage | OpenAISystemMessageParam | OpenAIUserMessageParam] = []
                 if candidate.system_message:
                     messages.append(candidate.system_message)
 
                 messages += [OpenAISystemMessageParam(**x) for x in chat_completion_input_json if x["role"] == "system"]
 
                 messages += input_messages
-                params = OpenAIChatCompletionRequestWithExtraBody(
+                chat_params = OpenAIChatCompletionRequestWithExtraBody(
                     model=candidate.model,
-                    messages=messages,
+                    messages=messages,  # type: ignore[arg-type]
                     **sampling_params,
                 )
-                response = await self.inference_api.openai_chat_completion(params)
-                generations.append({ColumnName.generated_answer.value: response.choices[0].message.content})
+                chat_response = await self.inference_api.openai_chat_completion(chat_params)
+                assert not isinstance(chat_response, AsyncIterator), "Streaming not supported in eval"
+                content = chat_response.choices[0].message.content
+                assert content is not None, "Expected content in chat response"
+                generations.append({ColumnName.generated_answer.value: content})
             else:
                 raise ValueError("Invalid input row")
 

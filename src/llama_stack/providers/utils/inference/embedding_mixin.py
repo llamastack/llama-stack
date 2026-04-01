@@ -8,7 +8,7 @@ import asyncio
 import base64
 import platform
 import struct
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from llama_stack.log import get_logger
 
@@ -36,7 +36,8 @@ log = get_logger(name=__name__, category="providers::utils")
 class SentenceTransformerEmbeddingMixin:
     """Mixin providing OpenAI-compatible embeddings via sentence-transformers models."""
 
-    model_store: ModelStore
+    config: Any
+    model_store: ModelStore | None
 
     async def openai_embeddings(
         self,
