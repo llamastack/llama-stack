@@ -104,7 +104,12 @@ from llama_stack_api import (
 )
 from llama_stack_api.inference import ServiceTier
 
-from .types import AssistantMessageWithReasoning, ChatCompletionContext, ChatCompletionResult
+from .types import (
+    AssistantMessageWithReasoning,
+    ChatCompletionContext,
+    ChatCompletionResult,
+    OpenAIChatCompletionChunkWithReasoning,
+)
 from .utils import (
     convert_chat_choice_to_response_message,
     convert_mcp_tool_choice,
@@ -988,7 +993,16 @@ class StreamingResponseOrchestrator:
         reasoning_text_accumulated = []
         refusal_text_accumulated = []
 
-        async for chunk in completion_result:
+        async for raw_chunk in completion_result:
+            # Providers returning OpenAIChatCompletionChunkWithReasoning wrap
+            # the chunk with a typed reasoning_content field. Unwrap here.
+            if isinstance(raw_chunk, OpenAIChatCompletionChunkWithReasoning):
+                chunk = raw_chunk.chunk
+                reasoning_content = raw_chunk.reasoning_content
+            else:
+                chunk = raw_chunk
+                reasoning_content = None
+
             chat_response_id = chunk.id
             chunk_created = chunk.created
             chunk_model = chunk.model
@@ -1065,11 +1079,11 @@ class StreamingResponseOrchestrator:
                     chunk_finish_reason = chunk_choice.finish_reason
 
                 # Handle reasoning content if present.
-                # When openai_chat_completions_with_reasoning is used, the provider
-                # maps reasoning outputs it receives to the `reasoning_content` on the delta.
-                if getattr(chunk_choice.delta, "reasoning_content", None):
+                # reasoning_content comes from the typed wrapper
+                # (OpenAIChatCompletionChunkWithReasoning) unwrapped above.
+                if reasoning_content:
                     async for event in self._handle_reasoning_content_chunk(
-                        reasoning_content=chunk_choice.delta.reasoning_content,
+                        reasoning_content=reasoning_content,
                         reasoning_part_emitted=reasoning_part_emitted,
                         reasoning_content_index=reasoning_content_index,
                         message_item_id=message_item_id,
@@ -1081,7 +1095,7 @@ class StreamingResponseOrchestrator:
                         else:
                             yield event
                     reasoning_part_emitted = True
-                    reasoning_text_accumulated.append(chunk_choice.delta.reasoning_content)
+                    reasoning_text_accumulated.append(reasoning_content)
 
                 # Handle refusal content if present
                 if chunk_choice.delta.refusal:
@@ -1097,9 +1111,12 @@ class StreamingResponseOrchestrator:
                     refusal_text_accumulated.append(chunk_choice.delta.refusal)
 
                 # Aggregate tool call arguments across chunks
+                # Note: The type: ignore comments below suppress pre-existing mypy 
+                # issues that surfaced when we added the 
+                # chunk: OpenAIChatCompletionChunk annotation above.
                 if chunk_choice.delta.tool_calls:
                     for tool_call in chunk_choice.delta.tool_calls:
-                        response_tool_call = chat_response_tool_calls.get(tool_call.index, None)
+                        response_tool_call = chat_response_tool_calls.get(tool_call.index, None)  # type: ignore[arg-type]
                         # Create new tool call entry if this is the first chunk for this index
                         is_new_tool_call = response_tool_call is None
                         if is_new_tool_call:
@@ -1109,16 +1126,16 @@ class StreamingResponseOrchestrator:
                             if tool_call_dict.get("function") and tool_call_dict["function"].get("arguments") is None:
                                 tool_call_dict["function"]["arguments"] = "{}"
                             response_tool_call = OpenAIChatCompletionToolCall(**tool_call_dict)
-                            chat_response_tool_calls[tool_call.index] = response_tool_call
+                            chat_response_tool_calls[tool_call.index] = response_tool_call  # type: ignore[index]
 
                             # Create item ID for this tool call for streaming events
                             tool_call_item_id = f"fc_{uuid.uuid4()}"
-                            tool_call_item_ids[tool_call.index] = tool_call_item_id
+                            tool_call_item_ids[tool_call.index] = tool_call_item_id  # type: ignore[index]
 
                             # Emit output_item.added event for the new function call
                             self.sequence_number += 1
-                            is_mcp_tool = tool_call.function.name and tool_call.function.name in self.mcp_tool_to_server
-                            if not is_mcp_tool and tool_call.function.name not in _SERVER_SIDE_BUILTIN_TOOL_NAMES:
+                            is_mcp_tool = tool_call.function.name and tool_call.function.name in self.mcp_tool_to_server  # type: ignore[union-attr]
+                            if not is_mcp_tool and tool_call.function.name not in _SERVER_SIDE_BUILTIN_TOOL_NAMES:  # type: ignore[union-attr]
                                 # for MCP tools (and even other non-function tools) we emit an output message item later
                                 function_call_item = OpenAIResponseOutputMessageFunctionToolCall(
                                     arguments="",  # Will be filled incrementally via delta events
@@ -1136,7 +1153,7 @@ class StreamingResponseOrchestrator:
 
                         # Stream tool call arguments as they arrive (differentiate between MCP and function calls)
                         if tool_call.function and tool_call.function.arguments:
-                            tool_call_item_id = tool_call_item_ids[tool_call.index]
+                            tool_call_item_id = tool_call_item_ids[tool_call.index]  # type: ignore[index]
                             self.sequence_number += 1
 
                             # Check if this is an MCP tool call
