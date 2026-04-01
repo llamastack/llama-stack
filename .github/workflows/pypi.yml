@@ -177,7 +177,7 @@ jobs:
             DATE=$(date -u +%Y%m%d)
             VERSION="${BASE}.dev${DATE}"
           fi
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Computed version: ${VERSION}"
 
   # Build and validate release artifacts
@@ -221,13 +221,13 @@ jobs:
           TYPE="${{ matrix.type }}"
 
           if [ "$PACKAGES" == "all" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           elif [ "$PACKAGES" == "llama-stack-only" ] && [ "$TYPE" == "local" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           elif [ "$PACKAGES" == "clients-only" ] && [ "$TYPE" == "external" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           else
-            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "::notice::Skipping $PACKAGE (packages=$PACKAGES)"
           fi
 
@@ -253,22 +253,22 @@ jobs:
         run: |
           if [ -n "${{ inputs.client_ref }}" ] && [ "${{ inputs.client_ref }}" != "main" ]; then
             # Explicit override from workflow_dispatch
-            echo "ref=${{ inputs.client_ref }}" >> $GITHUB_OUTPUT
+            echo "ref=${{ inputs.client_ref }}" >> "$GITHUB_OUTPUT"
             echo "Using explicit client_ref: ${{ inputs.client_ref }}"
           elif [[ "$GITHUB_REF" == refs/heads/release-* ]]; then
             # Running on a release branch — use the same branch name in client repos
             BRANCH="${GITHUB_REF#refs/heads/}"
-            echo "ref=$BRANCH" >> $GITHUB_OUTPUT
+            echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
             echo "Using release branch: $BRANCH"
           elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             # Running from a version tag — derive release branch (e.g., v0.5.1 -> release-0.5.x)
             TAG="${GITHUB_REF#refs/tags/v}"
             MAJOR_MINOR="${TAG%.*}"
             BRANCH="release-${MAJOR_MINOR}.x"
-            echo "ref=$BRANCH" >> $GITHUB_OUTPUT
+            echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
             echo "Using derived release branch from tag: $BRANCH"
           else
-            echo "ref=main" >> $GITHUB_OUTPUT
+            echo "ref=main" >> "$GITHUB_OUTPUT"
             echo "Using default: main"
           fi
 
@@ -291,7 +291,7 @@ jobs:
 
       - name: Install uv
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
-        uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
 
       - name: Install build dependencies
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
@@ -351,7 +351,7 @@ jobs:
           VERSION="${{ needs.compute-version.outputs.version }}"
           # Convert PEP 440 dev version to valid semver for npm
           # e.g. 0.4.5.dev20260202 -> 0.4.5-dev.20260202
-          NPM_VERSION=$(echo "$VERSION" | sed 's/\.dev/-dev./')
+          NPM_VERSION="${VERSION/.dev/-dev.}"
           echo "Setting version to $NPM_VERSION (from $VERSION)"
           npm version "$NPM_VERSION" --no-git-tag-version
           npm install
@@ -422,7 +422,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install uv
-        uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -579,13 +579,13 @@ jobs:
           TYPE="${{ matrix.type }}"
 
           if [ "$PACKAGES" == "all" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           elif [ "$PACKAGES" == "llama-stack-only" ] && [ "$TYPE" == "local" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           elif [ "$PACKAGES" == "clients-only" ] && [ "$TYPE" == "external" ]; then
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           else
-            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "::notice::Skipping publish for $PACKAGE (packages=$PACKAGES)"
           fi
 
@@ -603,11 +603,11 @@ jobs:
         id: check-artifacts
         run: |
           if [ -d "dist" ] && [ "$(ls -A dist 2>/dev/null)" ]; then
-            echo "has_artifacts=true" >> $GITHUB_OUTPUT
+            echo "has_artifacts=true" >> "$GITHUB_OUTPUT"
             echo "Artifacts found:"
             ls -la dist/
           else
-            echo "has_artifacts=false" >> $GITHUB_OUTPUT
+            echo "has_artifacts=false" >> "$GITHUB_OUTPUT"
             echo "::warning::No artifacts found for ${{ matrix.package }}. Skipping publish."
           fi
 
@@ -621,17 +621,23 @@ jobs:
 
           # Determine target registry
           if [ "$EVENT" == "release" ]; then
-            echo "url=https://upload.pypi.org/legacy/" >> $GITHUB_OUTPUT
-            echo "target=pypi.org" >> $GITHUB_OUTPUT
-            echo "is_production=true" >> $GITHUB_OUTPUT
+            {
+              echo "url=https://upload.pypi.org/legacy/"
+              echo "target=pypi.org"
+              echo "is_production=true"
+            } >> "$GITHUB_OUTPUT"
           elif [ "$DRY_RUN" == "off" ]; then
-            echo "url=https://upload.pypi.org/legacy/" >> $GITHUB_OUTPUT
-            echo "target=pypi.org" >> $GITHUB_OUTPUT
-            echo "is_production=true" >> $GITHUB_OUTPUT
+            {
+              echo "url=https://upload.pypi.org/legacy/"
+              echo "target=pypi.org"
+              echo "is_production=true"
+            } >> "$GITHUB_OUTPUT"
           else
-            echo "url=https://test.pypi.org/legacy/" >> $GITHUB_OUTPUT
-            echo "target=test.pypi.org" >> $GITHUB_OUTPUT
-            echo "is_production=false" >> $GITHUB_OUTPUT
+            {
+              echo "url=https://test.pypi.org/legacy/"
+              echo "target=test.pypi.org"
+              echo "is_production=false"
+            } >> "$GITHUB_OUTPUT"
           fi
 
       - name: Sign artifacts with Sigstore (production only)
@@ -640,7 +646,7 @@ jobs:
           matrix.registry == 'pypi' &&
           steps.check-artifacts.outputs.has_artifacts == 'true' &&
           steps.pypi-target.outputs.is_production == 'true'
-        uses: sigstore/gh-action-sigstore-python@a5caf349bc536fbef3668a10ed7f5cd309a4b53d # v3.2.0
+        uses: sigstore/gh-action-sigstore-python@04cffa1d795717b140764e8b640de88853c92acc # v3.3.0
         with:
           inputs: >-
             ./dist/*.tar.gz
@@ -709,14 +715,14 @@ jobs:
               exit 1
             fi
             # Extract and publish from the tarball
-            TARBALL=$(ls ./dist/*.tgz | head -1)
+            TARBALL=$(find ./dist -name '*.tgz' | head -1)
             npm publish "$TARBALL" --access public
           else
             echo "DRY RUN: Verifying npm package (not publishing)"
             echo "Package tarball:"
-            ls -la dist/*.tgz
+            find dist -name '*.tgz' -exec ls -la {} +
             # Verify the tarball is valid
-            TARBALL=$(ls ./dist/*.tgz | head -1)
+            TARBALL=$(find ./dist -name '*.tgz' | head -1)
             tar -tzf "$TARBALL" 2>/dev/null | head -20 || true
             echo "... (truncated)"
           fi
@@ -803,14 +809,18 @@ jobs:
           EVENT="${{ github.event_name }}"
 
           if [ "$EVENT" == "release" ] || [ "$DRY_RUN" == "off" ]; then
-            echo "install_mode=pypi" >> $GITHUB_OUTPUT
-            echo "tags=${IMAGE}:${VERSION},${IMAGE}:latest" >> $GITHUB_OUTPUT
-            echo "version_arg=PYPI_VERSION=${VERSION}" >> $GITHUB_OUTPUT
+            {
+              echo "install_mode=pypi"
+              echo "tags=${IMAGE}:${VERSION},${IMAGE}:latest"
+              echo "version_arg=PYPI_VERSION=${VERSION}"
+            } >> "$GITHUB_OUTPUT"
             echo "Publishing production image: ${IMAGE}:${VERSION} + latest"
           else
-            echo "install_mode=test-pypi" >> $GITHUB_OUTPUT
-            echo "tags=${IMAGE}:test-${VERSION}" >> $GITHUB_OUTPUT
-            echo "version_arg=TEST_PYPI_VERSION=${VERSION}" >> $GITHUB_OUTPUT
+            {
+              echo "install_mode=test-pypi"
+              echo "tags=${IMAGE}:test-${VERSION}"
+              echo "version_arg=TEST_PYPI_VERSION=${VERSION}"
+            } >> "$GITHUB_OUTPUT"
             echo "Publishing test image: ${IMAGE}:test-${VERSION}"
           fi
 

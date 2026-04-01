@@ -8,13 +8,10 @@ Pre-built distribution configurations that wire together specific providers for 
 distributions/
   starter/             # General-purpose distribution with many providers enabled
   ci-tests/            # Minimal distribution for CI testing
-  meta-reference-gpu/  # Local GPU inference with meta-reference provider
-  dell/                # Dell-optimized distribution
   nvidia/              # NVIDIA NIM-based distribution
   oci/                 # Oracle Cloud Infrastructure distribution
   open-benchmark/      # Benchmarking distribution
   postgres-demo/       # PostgreSQL-backed distribution demo
-  starter-gpu/         # Starter with local GPU inference
   watsonx/             # IBM WatsonX distribution
   __init__.py
   template.py          # Distribution template rendering engine

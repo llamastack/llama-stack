@@ -49,6 +49,8 @@ tracer = trace.get_tracer(__name__)
 
 
 class ToolExecutor:
+    """Executes tool calls including file search, web search, MCP, and function tools."""
+
     def __init__(
         self,
         tool_groups_api: ToolGroups,
@@ -146,7 +148,7 @@ class ToolExecutor:
                 )
                 return search_response.data
             except Exception as e:
-                logger.warning(f"Failed to search vector store {vector_store_id}: {e}")
+                logger.warning("Failed to search vector store", vector_store_id=vector_store_id, error=str(e))
                 return []
 
         # Run all searches in parallel using gather
@@ -326,6 +328,8 @@ class ToolExecutor:
                 from llama_stack.providers.utils.tools.mcp import invoke_mcp_tool
 
                 mcp_tool = mcp_tool_to_server[function_name]
+                if not mcp_tool.server_url:
+                    raise ValueError(f"Failed to invoke MCP tool {function_name}: server_url is not set")
                 attributes = {
                     "server_label": mcp_tool.server_label,
                     "server_url": mcp_tool.server_url,

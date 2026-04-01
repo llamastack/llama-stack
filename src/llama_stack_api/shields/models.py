@@ -19,6 +19,8 @@ from llama_stack_api.schema_utils import json_schema_type
 
 
 class CommonShieldFields(BaseModel):
+    """Common fields shared across shield creation and retrieval."""
+
     params: dict[str, Any] | None = None
 
 
@@ -38,6 +40,8 @@ class Shield(CommonShieldFields, Resource):
 
 
 class ShieldInput(CommonShieldFields):
+    """Input model for registering a new shield."""
+
     shield_id: str
     provider_id: str | None = None
     provider_shield_id: str | None = None

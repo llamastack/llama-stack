@@ -145,6 +145,8 @@ class OpenAIResponseAnnotationCitation(BaseModel):
 
 @json_schema_type
 class OpenAIResponseAnnotationContainerFileCitation(BaseModel):
+    """Container file citation annotation referencing a file within a container."""
+
     type: Literal["container_file_citation"] = "container_file_citation"
     container_id: str
     end_index: int
@@ -155,6 +157,8 @@ class OpenAIResponseAnnotationContainerFileCitation(BaseModel):
 
 @json_schema_type
 class OpenAIResponseAnnotationFilePath(BaseModel):
+    """File path annotation referencing a generated file in response content."""
+
     type: Literal["file_path"] = "file_path"
     file_id: str
     index: int
@@ -172,6 +176,8 @@ register_schema(OpenAIResponseAnnotations, name="OpenAIResponseAnnotations")
 
 @json_schema_type
 class OpenAIResponseOutputMessageContentOutputText(BaseModel):
+    """Text content within an output message of an OpenAI response."""
+
     text: str
     type: Literal["output_text"] = "output_text"
     annotations: list[OpenAIResponseAnnotations] = Field(default_factory=list)
@@ -361,6 +367,41 @@ class OpenAIResponseMCPApprovalResponse(BaseModel):
     reason: str | None = None
 
 
+@json_schema_type
+class OpenAIResponseOutputMessageReasoningSummary(BaseModel):
+    """A summary of reasoning output from the model."""
+
+    text: str = Field(description="The summary text of the reasoning output.")
+    type: Literal["summary_text"] = Field(
+        default="summary_text", description="The type identifier, always 'summary_text'."
+    )
+
+
+@json_schema_type
+class OpenAIResponseOutputMessageReasoningContent(BaseModel):
+    """Reasoning text from the model."""
+
+    text: str = Field(description="The reasoning text content from the model.")
+    type: Literal["reasoning_text"] = Field(
+        default="reasoning_text", description="The type identifier, always 'reasoning_text'."
+    )
+
+
+@json_schema_type
+class OpenAIResponseOutputMessageReasoningItem(BaseModel):
+    """Reasoning output from the model, representing the model's thinking process."""
+
+    id: str = Field(description="Unique identifier for the reasoning output item.")
+    summary: list[OpenAIResponseOutputMessageReasoningSummary] = Field(description="Summary of the reasoning output.")
+    type: Literal["reasoning"] = Field(default="reasoning", description="The type identifier, always 'reasoning'.")
+    content: list[OpenAIResponseOutputMessageReasoningContent] | None = Field(
+        default=None, description="The reasoning content from the model."
+    )
+    status: Literal["in_progress", "completed", "incomplete"] | None = Field(
+        default=None, description="The status of the reasoning output."
+    )
+
+
 OpenAIResponseOutput = Annotated[
     OpenAIResponseMessage
     | OpenAIResponseOutputMessageWebSearchToolCall
@@ -368,7 +409,8 @@ OpenAIResponseOutput = Annotated[
     | OpenAIResponseOutputMessageFunctionToolCall
     | OpenAIResponseOutputMessageMCPCall
     | OpenAIResponseOutputMessageMCPListTools
-    | OpenAIResponseMCPApprovalRequest,
+    | OpenAIResponseMCPApprovalRequest
+    | OpenAIResponseOutputMessageReasoningItem,
     Field(discriminator="type"),
 ]
 register_schema(OpenAIResponseOutput, name="OpenAIResponseOutput")
@@ -416,6 +458,9 @@ class OpenAIResponseReasoning(BaseModel):
     """
 
     effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = None
+    summary: Literal["auto", "concise", "detailed"] | None = Field(
+        default=None, description="Summary mode for reasoning output. One of 'auto', 'concise', or 'detailed'."
+    )
 
 
 # Must match type Literals of OpenAIResponseInputToolWebSearch below
@@ -641,6 +686,8 @@ class OpenAIResponseInputToolChoiceCustomTool(BaseModel):
 
 
 class OpenAIResponseInputToolChoiceMode(str, Enum):
+    """Enumeration of simple tool choice modes for response generation."""
+
     auto = "auto"
     required = "required"
     none = "none"
@@ -993,6 +1040,8 @@ class OpenAIResponseObjectStreamResponseWebSearchCallInProgress(BaseModel):
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseWebSearchCallSearching(BaseModel):
+    """Streaming event for web search calls currently searching."""
+
     item_id: str
     output_index: int
     sequence_number: int
@@ -1017,24 +1066,32 @@ class OpenAIResponseObjectStreamResponseWebSearchCallCompleted(BaseModel):
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpListToolsInProgress(BaseModel):
+    """Streaming event for MCP list tools operation in progress."""
+
     sequence_number: int
     type: Literal["response.mcp_list_tools.in_progress"] = "response.mcp_list_tools.in_progress"
 
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpListToolsFailed(BaseModel):
+    """Streaming event for a failed MCP list tools operation."""
+
     sequence_number: int
     type: Literal["response.mcp_list_tools.failed"] = "response.mcp_list_tools.failed"
 
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpListToolsCompleted(BaseModel):
+    """Streaming event for a completed MCP list tools operation."""
+
     sequence_number: int
     type: Literal["response.mcp_list_tools.completed"] = "response.mcp_list_tools.completed"
 
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta(BaseModel):
+    """Streaming event for incremental MCP call argument updates."""
+
     delta: str
     item_id: str
     output_index: int
@@ -1044,6 +1101,8 @@ class OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta(BaseModel):
 
 @json_schema_type
 class OpenAIResponseObjectStreamResponseMcpCallArgumentsDone(BaseModel):
+    """Streaming event for completed MCP call arguments."""
+
     arguments: str  # final arguments of the MCP call
     item_id: str
     output_index: int

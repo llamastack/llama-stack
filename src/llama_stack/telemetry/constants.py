@@ -58,6 +58,14 @@ REQUESTS_TOTAL = f"{REQUEST_PREFIX}s_total"
 REQUEST_DURATION_SECONDS = f"{REQUEST_PREFIX}_duration_seconds"
 CONCURRENT_REQUESTS = f"{llama_stack_prefix}.concurrent_requests"
 
+# Inference Metrics
+# These constants define the names for OpenTelemetry metrics tracking inference operations
+INFERENCE_PREFIX = f"{llama_stack_prefix}.inference"
+
+INFERENCE_DURATION = f"{INFERENCE_PREFIX}.duration_seconds"
+INFERENCE_TIME_TO_FIRST_TOKEN = f"{INFERENCE_PREFIX}.time_to_first_token_seconds"
+INFERENCE_TOKENS_PER_SECOND = f"{INFERENCE_PREFIX}.tokens_per_second"
+
 # Responses API Metrics
 RESPONSES_PREFIX = f"{llama_stack_prefix}.responses"
 RESPONSES_PARAMETER_USAGE_TOTAL = f"{RESPONSES_PREFIX}.parameter_usage_total"

@@ -26,6 +26,15 @@ def interleaved_content_as_str(
     content: Any,
     sep: str = " ",
 ) -> str:
+    """Convert interleaved content items to a single string.
+
+    Args:
+        content: string, content item, or list of content items
+        sep: separator between items when content is a list
+
+    Returns:
+        Concatenated string representation of the content
+    """
     if content is None:
         return ""
 
@@ -48,6 +57,14 @@ def interleaved_content_as_str(
 
 
 async def localize_image_content(uri: str) -> tuple[bytes, str] | None:
+    """Download or decode image content from a URI.
+
+    Args:
+        uri: HTTP URL or data URI containing the image
+
+    Returns:
+        Tuple of (raw_bytes, format_string) or None if URI scheme is unsupported
+    """
     if uri.startswith("http"):
         async with httpx.AsyncClient() as client:
             r = await client.get(uri)

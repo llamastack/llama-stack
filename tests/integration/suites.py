@@ -160,16 +160,6 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "text_model": "watsonx/meta-llama/llama-3-3-70b-instruct",
         },
     ),
-    "tgi": Setup(
-        name="tgi",
-        description="Text Generation Inference (TGI) provider with a text model",
-        env={
-            "TGI_URL": "http://localhost:8080",
-        },
-        defaults={
-            "text_model": "tgi/Qwen/Qwen3-0.6B",
-        },
-    ),
     "together": Setup(
         name="together",
         description="Together computer models",
@@ -288,6 +278,8 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         name="ollama-reasoning",
         roots=[
             "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_reasoning_passthrough",
+            "tests/integration/responses/test_reasoning.py::test_reasoning_non_streaming",
+            "tests/integration/responses/test_reasoning.py::test_reasoning_multi_turn_passthrough",
         ],
         default_setup="ollama-reasoning",
     ),

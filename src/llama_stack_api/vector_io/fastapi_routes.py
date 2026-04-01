@@ -8,8 +8,6 @@
 
 This module defines the FastAPI router for the VectorIO API using standard
 FastAPI route decorators.
-
-It replaces the legacy @webmethod-driven route discovery for VectorIO.
 """
 
 from __future__ import annotations

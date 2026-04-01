@@ -11,6 +11,8 @@ from llama_stack.core.storage.datatypes import KVStoreReference
 
 
 class HuggingfaceDatasetIOConfig(BaseModel):
+    """Configuration for the HuggingFace dataset I/O provider."""
+
     kvstore: KVStoreReference
 
     @classmethod

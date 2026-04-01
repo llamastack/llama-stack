@@ -25,6 +25,8 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 
 class ScoringFunctionsRoutingTable(CommonRoutingTableImpl, ScoringFunctions):
+    """Routing table for managing scoring function registrations and provider lookups."""
+
     async def list_scoring_functions(self, request: ListScoringFunctionsRequest) -> ListScoringFunctionsResponse:
         return ListScoringFunctionsResponse(data=await self.get_all_with_type(ResourceType.scoring_function.value))
 

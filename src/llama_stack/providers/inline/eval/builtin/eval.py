@@ -44,6 +44,8 @@ class BuiltinEvalImpl(
     Eval,
     BenchmarksProtocolPrivate,
 ):
+    """Built-in evaluation provider that runs benchmarks using inference, scoring, and datasets."""
+
     def __init__(
         self,
         config: BuiltinEvalConfig,

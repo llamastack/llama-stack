@@ -16,6 +16,7 @@ from llama_stack_api.openai_responses import (
 )
 
 from .models import (
+    CancelResponseRequest,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -26,6 +27,8 @@ from .models import (
 
 @runtime_checkable
 class Responses(Protocol):
+    """Protocol for managing OpenAI-compatible responses."""
+
     async def get_openai_response(
         self,
         request: RetrieveResponseRequest,
@@ -50,3 +53,8 @@ class Responses(Protocol):
         self,
         request: DeleteResponseRequest,
     ) -> OpenAIDeleteResponseObject: ...
+
+    async def cancel_openai_response(
+        self,
+        request: CancelResponseRequest,
+    ) -> OpenAIResponseObject: ...

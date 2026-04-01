@@ -32,10 +32,15 @@ class SentenceTransformersInferenceImpl(
     InferenceProvider,
     ModelsProtocolPrivate,
 ):
+    """Inference provider for text embeddings using sentence-transformers models."""
+
     __provider_id__: str
 
     def __init__(self, config: SentenceTransformersInferenceConfig) -> None:
         self.config = config
+
+    async def openai_chat_completions_with_reasoning(self, params: OpenAIChatCompletionRequestWithExtraBody) -> None:
+        raise NotImplementedError("SentenceTransformers provider does not support reasoning in chat completions")
 
     async def initialize(self) -> None:
         pass

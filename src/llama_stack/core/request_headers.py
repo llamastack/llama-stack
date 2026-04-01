@@ -9,6 +9,8 @@ import json
 from contextlib import AbstractContextManager
 from typing import Any
 
+from starlette.types import Scope
+
 from llama_stack.core.datatypes import User
 from llama_stack.log import get_logger
 
@@ -17,33 +19,34 @@ from .utils.dynamic import instantiate_class_type
 log = get_logger(name=__name__, category="core")
 
 # Context variable for request provider data and auth attributes
-PROVIDER_DATA_VAR = contextvars.ContextVar("provider_data", default=None)
+PROVIDER_DATA_VAR: contextvars.ContextVar[dict[str, Any] | None] = contextvars.ContextVar("provider_data", default=None)
 
 
-class RequestProviderDataContext(AbstractContextManager):
+class RequestProviderDataContext(AbstractContextManager[None]):
     """Context manager for request provider data"""
 
-    def __init__(self, provider_data: dict[str, Any] | None = None, user: User | None = None):
+    def __init__(self, provider_data: dict[str, Any] | None = None, user: User | None = None) -> None:
         self.provider_data = provider_data or {}
         if user:
             self.provider_data["__authenticated_user"] = user
 
-        self.token = None
+        self.token: contextvars.Token[dict[str, Any] | None] | None = None
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         # Save the current value and set the new one
         self.token = PROVIDER_DATA_VAR.set(self.provider_data)
-        return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         # Restore the previous value
         if self.token is not None:
             PROVIDER_DATA_VAR.reset(self.token)
 
 
 class NeedsRequestProviderData:
+    """Mixin for providers that require per-request provider data from request headers."""
+
     def get_request_provider_data(self) -> Any:
-        spec = self.__provider_spec__
+        spec = self.__provider_spec__  # type: ignore[attr-defined]
         if not spec:
             raise ValueError(f"Provider spec not set on {self.__class__}")
 
@@ -56,7 +59,7 @@ class NeedsRequestProviderData:
         if not val:
             return None
 
-        validator = instantiate_class_type(validator_class)
+        validator = instantiate_class_type(validator_class)  # type: ignore[no-untyped-call]
         try:
             provider_data = validator(**val)
             return provider_data
@@ -81,18 +84,16 @@ def parse_request_provider_data(headers: dict[str, str]) -> dict[str, Any] | Non
         return None
 
     try:
-        return json.loads(val)
+        return json.loads(val)  # type: ignore[no-any-return]
     except json.JSONDecodeError:
         log.error("Provider data not encoded as a JSON object!")
         return None
 
 
-def request_provider_data_context(
-    headers: dict[str, str], auth_attributes: dict[str, list[str]] | None = None
-) -> AbstractContextManager:
-    """Context manager that sets request provider data from headers and auth attributes for the duration of the context"""
+def request_provider_data_context(headers: dict[str, str], user: User | None = None) -> AbstractContextManager[None]:
+    """Context manager that sets request provider data from headers and user for the duration of the context"""
     provider_data = parse_request_provider_data(headers)
-    return RequestProviderDataContext(provider_data, auth_attributes)
+    return RequestProviderDataContext(provider_data, user)
 
 
 def get_authenticated_user() -> User | None:
@@ -103,7 +104,7 @@ def get_authenticated_user() -> User | None:
     return provider_data.get("__authenticated_user")
 
 
-def user_from_scope(scope: dict) -> User | None:
+def user_from_scope(scope: Scope) -> User | None:
     """Create a User object from ASGI scope data (set by authentication middleware)"""
     user_attributes = scope.get("user_attributes", {})
     principal = scope.get("principal", "")

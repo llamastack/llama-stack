@@ -8,6 +8,14 @@ import re
 
 
 def parse_data_url(data_url: str):
+    """Parse a data URL into its component parts.
+
+    Args:
+        data_url: a data URL string (e.g. "data:text/plain;base64,...")
+
+    Returns:
+        Dictionary with keys: mimetype, charset, encoding, base64, data, is_base64
+    """
     data_url_pattern = re.compile(
         r"^"
         r"data:"

@@ -14,6 +14,8 @@ from llama_stack_api import PaginatedResponse
 
 
 class ColumnType(Enum):
+    """Supported SQL column data types for table schema definitions."""
+
     INTEGER = "INTEGER"
     STRING = "STRING"
     TEXT = "TEXT"
@@ -24,6 +26,8 @@ class ColumnType(Enum):
 
 
 class ColumnDefinition(BaseModel):
+    """Schema definition for a single SQL table column."""
+
     type: ColumnType
     primary_key: bool = False
     nullable: bool = True

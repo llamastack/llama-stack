@@ -12,6 +12,9 @@ from openai.types.chat import ChatCompletionToolParam
 from pydantic import BaseModel
 
 from llama_stack_api import (
+    OpenAIAssistantMessageParam,
+    OpenAIChatCompletion,
+    OpenAIChatCompletionChunk,
     OpenAIChatCompletionToolCall,
     OpenAIFinishReason,
     OpenAIMessageParam,
@@ -35,10 +38,47 @@ from llama_stack_api import (
 )
 
 
+class AssistantMessageWithReasoning(OpenAIAssistantMessageParam):
+    """Internal type for passing reasoning content between the Responses
+    layer and providers. NOT part of the public API.
+
+    The Responses layer creates this when converting input ReasoningItems
+    to CC messages. Providers check isinstance(msg, AssistantMessageWithReasoning)
+    and map reasoning_content to their own CC format (e.g. 'reasoning' for Ollama/vLLM).
+    """
+
+    reasoning_content: str | None = None
+
+
+@dataclass
+class OpenAIChatCompletionWithReasoning:
+    """Internal wrapper: a CC response with extracted reasoning content.
+
+    Returned by openai_chat_completions_with_reasoning for non-streaming.
+    The Responses layer unwraps .completion and reads .reasoning_content.
+    """
+
+    completion: OpenAIChatCompletion
+    reasoning_content: str | None = None
+
+
+@dataclass
+class OpenAIChatCompletionChunkWithReasoning:
+    """Internal wrapper: a CC streaming chunk with extracted reasoning content.
+
+    Yielded by openai_chat_completions_with_reasoning for streaming.
+    The Responses layer unwraps .chunk and reads .reasoning_content.
+    """
+
+    chunk: OpenAIChatCompletionChunk
+    reasoning_content: str | None = None
+
+
 def _json_equal(a: str, b: str) -> bool:
     """Compare two JSON strings by value, falling back to string comparison."""
     try:
-        return json.loads(a) == json.loads(b)
+        # json.loads() returns Any, so == on two Any values is also Any
+        return cast(bool, json.loads(a) == json.loads(b))
     except (json.JSONDecodeError, TypeError):
         return a == b
 
@@ -68,6 +108,7 @@ class ChatCompletionResult:
     content_part_emitted: bool  # Tracking state
     logprobs: list[OpenAITokenLogProb] | None = None
     service_tier: str | None = None  # The actual service tier used (may differ from input)
+    reasoning_content: str | None = None
 
     @property
     def content_text(self) -> str:
@@ -167,6 +208,8 @@ class ToolContext(BaseModel):
 
 
 class ChatCompletionContext(BaseModel):
+    """Holds the accumulated state for a chat completion request within a response turn."""
+
     model: str
     messages: list[OpenAIMessageParam]
     response_tools: list[OpenAIResponseInputTool] | None = None

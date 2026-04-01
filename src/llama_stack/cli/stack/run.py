@@ -20,7 +20,7 @@ from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.stack import cast_distro_name_to_string, replace_env_vars, run_config_from_dynamic_config_spec
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
-from llama_stack.log import LoggingConfig, get_logger
+from llama_stack.log import get_logger
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 
@@ -28,6 +28,8 @@ logger = get_logger(name=__name__, category="cli")
 
 
 class StackRun(Subcommand):
+    """CLI subcommand to start a Llama Stack distribution server."""
+
     def __init__(self, subparsers: argparse._SubParsersAction):
         super().__init__()
         self.parser = subparsers.add_parser(
@@ -95,7 +97,7 @@ class StackRun(Subcommand):
             config_dict = run_config.model_dump(mode="json")
 
             config_file = distro_dir / "config.yaml"
-            logger.info(f"Writing generated config to: {config_file}")
+            logger.info("Writing generated config to", config_file=config_file)
             with open(config_file, "w") as f:
                 yaml.dump(config_dict, f, default_flow_style=False, sort_keys=False)
 
@@ -103,7 +105,7 @@ class StackRun(Subcommand):
             config_file = None
 
         if config_file:
-            logger.info(f"Using stack configuration: {config_file}")
+            logger.info("Using stack configuration", config_file=config_file)
 
             try:
                 config_dict = yaml.safe_load(config_file.read_text())
@@ -127,26 +129,31 @@ class StackRun(Subcommand):
         config_file = resolve_config_or_distro(str(config_file))
         with open(config_file) as fp:
             config_contents = yaml.safe_load(fp)
-            if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
-                logger_config = LoggingConfig(**cfg)
-            else:
-                logger_config = None
             config = StackConfig(**cast_distro_name_to_string(replace_env_vars(config_contents)))
 
         port = args.port or config.server.port
-        host = config.server.host or ["::", "0.0.0.0"]
+        workers = config.server.workers
+
+        # Dual-stack binding (IPv4+IPv6) depends on worker count:
+        # - workers>1: use "::" (creates single dual-stack socket)
+        # - workers=1: use "" (creates separate IPv4 and IPv6 sockets)
+        host = ""
+        if config.server.host:
+            host = config.server.host
+        elif workers and workers > 1:
+            host = "::"
 
         # Set the config file in environment so create_app can find it
         os.environ["LLAMA_STACK_CONFIG"] = str(config_file)
 
+        # Let create_app() handle logging setup instead of passing config to uvicorn
         uvicorn_config = {
             "factory": True,
             "host": host,
             "port": port,
             "lifespan": "on",
             "log_level": logger.getEffectiveLevel(),
-            "log_config": logger_config,
-            "workers": config.server.workers,
+            "workers": workers,
         }
 
         keyfile = config.server.tls_keyfile
@@ -159,12 +166,12 @@ class StackRun(Subcommand):
                 uvicorn_config["ssl_cert_reqs"] = ssl.CERT_REQUIRED
 
             logger.info(
-                f"HTTPS enabled with certificates:\n  Key: {keyfile}\n  Cert: {certfile}\n  CA: {config.server.tls_cafile}"
+                "HTTPS enabled with certificates", keyfile=keyfile, certfile=certfile, cafile=config.server.tls_cafile
             )
         else:
-            logger.info(f"HTTPS enabled with certificates:\n  Key: {keyfile}\n  Cert: {certfile}")
+            logger.info("HTTPS enabled with certificates", keyfile=keyfile, certfile=certfile)
 
-        logger.info(f"Listening on {host}:{port}")
+        logger.info("Listening on", host=host, port=port)
 
         # We need to catch KeyboardInterrupt because uvicorn's signal handling
         # re-raises SIGINT signals using signal.raise_signal(), which Python
@@ -177,6 +184,14 @@ class StackRun(Subcommand):
         # signal handling but this is quite intrusive and not worth the effort.
         try:
             uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)  # type: ignore[arg-type]
+        except OSError as e:
+            if e.errno in (97, 99):  # Address family not supported / Cannot assign requested address
+                logger.error(
+                    f"Failed to bind to {host}:{port}. "
+                    "If you're on an IPv4-only system, set 'server.host: \"0.0.0.0\"' in your config."
+                )
+                raise
+            raise
         except (KeyboardInterrupt, SystemExit):
             logger.info("Received interrupt signal, shutting down gracefully...")
 
@@ -186,7 +201,8 @@ class StackRun(Subcommand):
         npm_check = subprocess.run(["npm", "--version"], capture_output=True, text=True, check=False)
         if npm_check.returncode != 0:
             logger.warning(
-                f"'npm' command not found or not executable. UI development server will not be started. Error: {npm_check.stderr}"
+                "npm command not found or not executable, UI development server will not be started",
+                error=npm_check.stderr,
             )
             return
 
@@ -210,13 +226,13 @@ class StackRun(Subcommand):
                 stderr=stderr_log_file,
                 env={**os.environ, "NEXT_PUBLIC_LLAMA_STACK_BASE_URL": f"http://localhost:{stack_server_port}"},
             )
-            logger.info(f"UI development server process started in {ui_dir} with PID {process.pid}.")
-            logger.info(f"Logs: stdout -> {ui_stdout_log_path}, stderr -> {ui_stderr_log_path}")
-            logger.info(f"UI will be available at http://localhost:{os.getenv('LLAMA_STACK_UI_PORT', 8322)}")
+            logger.info("UI development server process started", ui_dir=ui_dir, pid=process.pid)
+            logger.info("UI server logs", stdout=ui_stdout_log_path, stderr=ui_stderr_log_path)
+            logger.info("UI will be available", port=os.getenv("LLAMA_STACK_UI_PORT", 8322))
 
         except FileNotFoundError:
             logger.error(
                 "Failed to start UI development server: 'npm' command not found. Make sure npm is installed and in your PATH."
             )
         except Exception as e:
-            logger.error(f"Failed to start UI development server in {ui_dir}: {e}")
+            logger.error("Failed to start UI development server", ui_dir=ui_dir, error=str(e))
