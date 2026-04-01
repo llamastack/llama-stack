@@ -7,7 +7,7 @@
 import pytest
 from pydantic import ValidationError
 
-from llama_stack.core.datatypes import QualifiedModel, RewriteQueryParams, VectorStoresConfig
+from llama_stack.core.datatypes import QualifiedModel, RerankerModel, RewriteQueryParams, VectorStoresConfig
 
 
 class TestVectorStoresConfigValidation:
@@ -24,7 +24,7 @@ class TestVectorStoresConfigValidation:
 
         # Verify required placeholders are present
         assert "{num_chunks}" in config.file_search_params.header_template
-        assert "knowledge_search" in config.file_search_params.header_template.lower()
+        assert "file_search" in config.file_search_params.header_template.lower()
         assert "{chunk.content}" in config.context_prompt_params.chunk_annotation_template
         assert "{query}" in config.context_prompt_params.context_template
 
@@ -40,7 +40,7 @@ class TestVectorStoresConfigValidation:
         with pytest.raises(ValidationError, match="must contain {num_chunks} placeholder"):
             FileSearchParams(header_template="search found results")
 
-        with pytest.raises(ValidationError, match="must contain 'knowledge_search' keyword"):
+        with pytest.raises(ValidationError, match="must contain 'file_search' keyword"):
             FileSearchParams(header_template="search found {num_chunks} results")
 
         with pytest.raises(ValidationError, match="must contain {chunk.content} placeholder"):
@@ -79,8 +79,9 @@ class TestVectorStoresConfigValidation:
         config = VectorStoresConfig(
             default_provider_id="test-provider",
             default_embedding_model=QualifiedModel(provider_id="test", model_id="embedding-model"),
+            default_reranker_model=RerankerModel(provider_id="test", model_id="reranker-model"),
             file_search_params=FileSearchParams(
-                header_template="Custom knowledge_search found {num_chunks} items:\nSTART\n", footer_template="END\n"
+                header_template="Custom file_search found {num_chunks} items:\nSTART\n", footer_template="END\n"
             ),
             context_prompt_params=ContextPromptParams(
                 chunk_annotation_template="Item {index}: {chunk.content} | Meta: {metadata}\n",
@@ -94,7 +95,7 @@ class TestVectorStoresConfigValidation:
         )
 
         assert config.default_provider_id == "test-provider"
-        assert "Custom knowledge_search" in config.file_search_params.header_template
+        assert "Custom file_search" in config.file_search_params.header_template
         assert config.annotation_prompt_params.enable_annotations is False
 
 
@@ -119,10 +120,7 @@ class TestOptionalArchitecture:
         header_template = config.file_search_params.header_template
         context_template = config.context_prompt_params.context_template
 
-        assert (
-            header_template
-            == "knowledge_search tool found {num_chunks} chunks:\nBEGIN of knowledge_search tool results.\n"
-        )
+        assert header_template == "file_search tool found {num_chunks} chunks:\nBEGIN of file_search tool results.\n"
         assert (
             context_template
             == 'The above results were retrieved to help answer the user\'s query: "{query}". Use them as supporting information only in answering this query. {annotation_instruction}\n'
@@ -131,7 +129,7 @@ class TestOptionalArchitecture:
         # Verify templates can be formatted successfully
         formatted_header = header_template.format(num_chunks=3)
         assert "3" in formatted_header
-        assert "knowledge_search" in formatted_header.lower()
+        assert "file_search" in formatted_header.lower()
 
         formatted_context = context_template.format(
             query="test query", annotation_instruction=" Cite sources properly."
@@ -166,6 +164,6 @@ class TestOptionalArchitecture:
 
         # Verify output is substantial and contains expected content
         assert len(complete_output) > 100
-        assert "knowledge_search" in complete_output.lower()
+        assert "file_search" in complete_output.lower()
         assert "Paris is the capital" in complete_output
         assert "London is the capital" in complete_output

@@ -45,12 +45,12 @@ client.initialize()
 
 ```python
 client.datasets.register(
-    purpose="post-training/messages",
-    dataset_id="my-training-dataset",
+    purpose="eval/question-answer",
+    dataset_id="my-eval-dataset",
     source={"type": "uri", "uri": "hf://datasets/default/sample-dataset"},
     metadata={
         "format": "json",
-        "description": "Dataset for LLM fine-tuning",
+        "description": "Dataset for evaluation",
         "provider": "nvidia",
     },
 )

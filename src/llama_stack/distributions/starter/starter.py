@@ -12,9 +12,9 @@ from llama_stack.core.datatypes import (
     Provider,
     ProviderSpec,
     QualifiedModel,
+    RerankerModel,
     SafetyConfig,
     ShieldInput,
-    ToolGroupInput,
     VectorStoresConfig,
 )
 from llama_stack.core.storage.kvstore.config import PostgresKVStoreConfig
@@ -26,14 +26,20 @@ from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplCo
 from llama_stack.providers.inline.inference.sentence_transformers import (
     SentenceTransformersInferenceConfig,
 )
+from llama_stack.providers.inline.inference.transformers.config import (
+    TransformersInferenceConfig,
+)
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
 from llama_stack.providers.inline.vector_io.milvus.config import MilvusVectorIOConfig
 from llama_stack.providers.inline.vector_io.sqlite_vec.config import (
     SQLiteVectorIOConfig,
 )
 from llama_stack.providers.registry.inference import available_providers
+from llama_stack.providers.remote.tool_runtime.brave_search.config import BraveSearchToolConfig
+from llama_stack.providers.remote.tool_runtime.tavily_search.config import TavilySearchToolConfig
 from llama_stack.providers.remote.vector_io.chroma.config import ChromaVectorIOConfig
 from llama_stack.providers.remote.vector_io.elasticsearch.config import ElasticsearchVectorIOConfig
+from llama_stack.providers.remote.vector_io.infinispan.config import InfinispanVectorIOConfig
 from llama_stack.providers.remote.vector_io.pgvector.config import (
     PGVectorVectorIOConfig,
 )
@@ -55,7 +61,6 @@ def _get_config_for_provider(provider_spec: ProviderSpec) -> dict[str, Any]:
 ENABLED_INFERENCE_PROVIDERS = [
     "ollama",
     "vllm",
-    "tgi",
     "fireworks",
     "together",
     "gemini",
@@ -73,7 +78,6 @@ ENABLED_INFERENCE_PROVIDERS = [
 INFERENCE_PROVIDER_IDS = {
     "ollama": "${env.OLLAMA_URL:+ollama}",
     "vllm": "${env.VLLM_URL:+vllm}",
-    "tgi": "${env.TGI_URL:+tgi}",
     "cerebras": "${env.CEREBRAS_API_KEY:+cerebras}",
     "nvidia": "${env.NVIDIA_API_KEY:+nvidia}",
     "vertexai": "${env.VERTEX_AI_PROJECT:+vertexai}",
@@ -82,6 +86,11 @@ INFERENCE_PROVIDER_IDS = {
 
 
 def get_remote_inference_providers() -> list[Provider]:
+    """Build the list of remote inference providers enabled in the starter distribution.
+
+    Returns:
+        A list of Provider instances for enabled remote inference backends.
+    """
     # Filter out inline providers and some others - the starter distro only exposes remote providers
     remote_providers = [
         provider
@@ -110,11 +119,22 @@ def get_remote_inference_providers() -> list[Provider]:
 
 
 def get_distribution_template(name: str = "starter") -> DistributionTemplate:
+    """Build the starter distribution template with multiple remote providers.
+
+    Args:
+        name: the distribution name.
+
+    Returns:
+        A DistributionTemplate configured for CPU-only environments with popular remote providers.
+    """
     remote_inference_providers = get_remote_inference_providers()
 
     providers = {
         "inference": [BuildProvider(provider_type=p.provider_type, module=p.module) for p in remote_inference_providers]
-        + [BuildProvider(provider_type="inline::sentence-transformers")],
+        + [
+            BuildProvider(provider_type="inline::sentence-transformers"),
+            BuildProvider(provider_type="inline::transformers"),
+        ],
         "vector_io": [
             BuildProvider(provider_type="inline::faiss"),
             BuildProvider(provider_type="inline::sqlite-vec"),
@@ -124,6 +144,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="remote::qdrant"),
             BuildProvider(provider_type="remote::weaviate"),
             BuildProvider(provider_type="remote::elasticsearch"),
+            BuildProvider(provider_type="remote::infinispan"),
         ],
         "files": [BuildProvider(provider_type="inline::localfs")],
         "file_processors": [BuildProvider(provider_type="inline::pypdf")],
@@ -131,9 +152,8 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::llama-guard"),
             BuildProvider(provider_type="inline::code-scanner"),
         ],
-        "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "post_training": [BuildProvider(provider_type="inline::torchtune-cpu")],
-        "eval": [BuildProvider(provider_type="inline::meta-reference")],
+        "responses": [BuildProvider(provider_type="inline::builtin")],
+        "eval": [BuildProvider(provider_type="inline::builtin")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),
             BuildProvider(provider_type="inline::localfs"),
@@ -146,7 +166,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
-            BuildProvider(provider_type="inline::rag-runtime"),
+            BuildProvider(provider_type="inline::file-search"),
             BuildProvider(provider_type="remote::model-context-protocol"),
         ],
         "batches": [
@@ -155,7 +175,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
     }
     files_config = LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}")
     files_provider = Provider(
-        provider_id="meta-reference-files",
+        provider_id="builtin-files",
         provider_type="inline::localfs",
         config=files_config,
     )
@@ -164,16 +184,11 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         provider_type="inline::sentence-transformers",
         config=SentenceTransformersInferenceConfig.sample_run_config(),
     )
-    default_tool_groups = [
-        ToolGroupInput(
-            toolgroup_id="builtin::websearch",
-            provider_id="tavily-search",
-        ),
-        ToolGroupInput(
-            toolgroup_id="builtin::rag",
-            provider_id="rag-runtime",
-        ),
-    ]
+    reranker_provider = Provider(
+        provider_id="transformers",
+        provider_type="inline::transformers",
+        config=TransformersInferenceConfig.sample_run_config(),
+    )
     default_shields = [
         # if the
         ShieldInput(
@@ -190,7 +205,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
     postgres_sql_config = PostgresSqlStoreConfig.sample_run_config()
     postgres_kv_config = PostgresKVStoreConfig.sample_run_config()
     default_overrides = {
-        "inference": remote_inference_providers + [embedding_provider],
+        "inference": remote_inference_providers + [embedding_provider, reranker_provider],
         "vector_io": [
             Provider(
                 provider_id="faiss",
@@ -250,6 +265,11 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                     elasticsearch_api_key="${env.ELASTICSEARCH_API_KEY:=}",
                 ),
             ),
+            Provider(
+                provider_id="${env.INFINISPAN_URL:+infinispan}",
+                provider_type="remote::infinispan",
+                config=InfinispanVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
         ],
         "files": [files_provider],
         "file_processors": [
@@ -259,12 +279,31 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 config=PyPDFFileProcessorConfig.sample_run_config(),
             ),
         ],
+        "tool_runtime": [
+            Provider(
+                provider_id="brave-search",
+                provider_type="remote::brave-search",
+                config=BraveSearchToolConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
+            Provider(
+                provider_id="tavily-search",
+                provider_type="remote::tavily-search",
+                config=TavilySearchToolConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
+            Provider(
+                provider_id="file-search",
+                provider_type="inline::file-search",
+            ),
+            Provider(
+                provider_id="model-context-protocol",
+                provider_type="remote::model-context-protocol",
+            ),
+        ],
     }
 
     base_run_settings = RunConfigSettings(
         provider_overrides=default_overrides,
         default_models=[],
-        default_tool_groups=default_tool_groups,
         default_shields=default_shields,
         default_connectors=[],
         vector_stores_config=VectorStoresConfig(
@@ -272,6 +311,10 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             default_embedding_model=QualifiedModel(
                 provider_id="sentence-transformers",
                 model_id="nomic-ai/nomic-embed-text-v1.5",
+            ),
+            default_reranker_model=RerankerModel(
+                provider_id="transformers",
+                model_id="Qwen/Qwen3-Reranker-0.6B",
             ),
         ),
         safety_config=SafetyConfig(

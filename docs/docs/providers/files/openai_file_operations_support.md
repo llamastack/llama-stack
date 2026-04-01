@@ -33,7 +33,7 @@ Some providers may support basic vector operations but lack full file operations
 
 | Provider | Status | Notes |
 |----------|--------|-------|
-| **Meta Reference** | 🔄 Basic | Core vector operations only |
+| **Builtin** | 🔄 Basic | Core vector operations only |
 
 ## File Operations Features
 
@@ -284,8 +284,8 @@ Planned improvements for file operations support:
 
 ## Support and Resources
 
-- **Documentation**: [File Operations and Vector Store Integration](../../concepts/file_operations_vector_stores.mdx)
-- **API Reference**: [Files API](files_api.md)
-- **Provider Docs**: [Vector Store Providers](../vector_io/index.md)
-- **Examples**: [Getting Started](../getting_started/index.md)
+- **Documentation**: [File Operations and Vector Store Integration](../../concepts/file_operations_vector_stores)
+- **API Reference**: Files API
+- **Provider Docs**: [Vector Store Providers](../vector_io/)
+- **Examples**: [Getting Started](../getting_started/)
 - **Community**: [GitHub Issues](https://github.com/meta-llama/llama-stack/issues)

@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
 title: Welcome to Llama Stack
-description: Llama Stack is the open-source framework for building generative AI applications
+description: Open-source agentic API server for building AI applications. OpenAI-compatible.
 sidebar_label: Intro
 tags:
   - getting-started
@@ -10,59 +10,60 @@ tags:
 
 # Welcome to Llama Stack
 
-Llama Stack is the open-source framework for building generative AI applications.
+**Open-source agentic API server for building AI applications. OpenAI-compatible. Any model, any infrastructure.**
 
-:::tip Llama 4 is here!
+Llama Stack is a drop-in replacement for the OpenAI API that you can run anywhere — your laptop, your datacenter, or the cloud. Use any OpenAI-compatible client or agentic framework. Swap between Llama, GPT, Gemini, Mistral, or any model without changing your application code.
 
-Check out [Getting Started with Llama 4](https://colab.research.google.com/github/llamastack/llama-stack/blob/main/docs/getting_started_llama4.ipynb)
+```python
+from openai import OpenAI
 
-:::
+client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+response = client.chat.completions.create(
+    model="llama-3.3-70b",
+    messages=[{"role": "user", "content": "Hello"}],
+)
+```
 
-:::tip News
+## What you get
 
-Llama Stack is now available! See the [release notes](https://github.com/llamastack/llama-stack/releases) for more details.
+| API | Endpoint | Description |
+|-----|----------|-------------|
+| **Chat Completions** | `/v1/chat/completions` | Text and vision inference, streaming, tool calling |
+| **Responses** | `/v1/responses` | Server-side agentic orchestration with tool calling, [MCP](https://modelcontextprotocol.io/) integration, and built-in file search (RAG) |
+| **Embeddings** | `/v1/embeddings` | Text embeddings for search and retrieval |
+| **Vector Stores** | `/v1/vector_stores` | Managed document storage and search |
+| **Files** | `/v1/files` | File upload and management |
+| **Batches** | `/v1/batches` | Offline batch processing |
+| **Models** | `/v1/models` | Model listing and management |
 
-:::
+Llama Stack also provides additional APIs beyond the OpenAI specification, including **Prompts** for prompt template management and **File Processors** for document ingestion pipelines.
 
+The Responses API implementation conforms to the [Open Responses](https://www.openresponses.org/) specification. See the [API conformance report](/docs/api-openai/conformance) for detailed coverage.
 
-## What is Llama Stack?
+## Use any model, use any infrastructure
 
-Llama Stack defines and standardizes the core building blocks needed to bring generative AI applications to market. It provides a unified set of APIs with implementations from leading service providers, enabling seamless transitions between development and production environments. More specifically, it provides:
+Llama Stack has a pluggable provider architecture. Develop locally with Ollama, deploy to production with vLLM, or connect to a managed service — the API stays the same.
 
-- **Unified API layer** for Inference, RAG, Agents, Tools, Safety, Evals.
-- **Plugin architecture** to support the rich ecosystem of implementations of the different APIs in different environments like local development, on-premises, cloud, and mobile.
-- **Prepackaged verified distributions** which offer a one-stop solution for developers to get started quickly and reliably in any environment
-- **Multiple developer interfaces** like CLI and SDKs for Python, Node, iOS, and Android
-- **Standalone applications** as examples for how to build production-grade AI applications with Llama Stack
+**Inference providers:** Ollama, vLLM, TGI, Fireworks, Together, AWS Bedrock, Azure OpenAI, NVIDIA NIM, OpenAI, Anthropic, Gemini, Groq, SambaNova, Cerebras, WatsonX, and more.
 
-<img src="/img/llama-stack.png" alt="Llama Stack" width="400px" />
+**Vector store providers:** FAISS, SQLite-vec, Milvus, ChromaDB, PGVector, Qdrant, Weaviate, Elasticsearch, Infinispan.
 
-Our goal is to provide pre-packaged implementations (aka "distributions") which can be run in a variety of deployment environments. LlamaStack can assist you in your entire app development lifecycle - start iterating on local, mobile or desktop and seamlessly transition to on-prem or public cloud deployments. At every point in this transition, the same set of APIs and the same developer experience is available.
+See the [provider documentation](/docs/providers/) for the full list and the [provider compatibility matrix](./api-openai/provider_matrix.md) for tested feature coverage across providers.
 
-## How does Llama Stack work?
+## Get started
 
-Llama Stack consists of a server (with multiple pluggable API providers) and Client SDKs meant to be used in your applications. The server can be run in a variety of environments, including local (inline) development, on-premises, and cloud. The client SDKs are available for Python, Swift, Node, and Kotlin.
+```bash
+# One-line install
+curl -LsSf https://github.com/llamastack/llama-stack/raw/main/scripts/install.sh | bash
 
-## Quick Links
+# Or install via pip
+pip install llama-stack
 
-- Ready to build? Check out the [Getting Started Guide](/docs/getting_started/quickstart) to get started.
-- Want to contribute? See the [Contributing Guide](https://github.com/llamastack/llama-stack/blob/main/CONTRIBUTING.md).
-- Explore [Example Applications](https://github.com/llamastack/llama-stack-apps) built with Llama Stack.
+# Start the server
+llama stack run
+```
 
-## Rich Ecosystem Support
-
-Llama Stack provides adapters for popular providers across all API categories:
-
-- **Inference**: Meta Reference, Ollama, Fireworks, Together, NVIDIA, vLLM, AWS Bedrock, OpenAI, Anthropic, and more
-- **Vector Databases**: FAISS, Chroma, Milvus, Postgres, Weaviate, Qdrant, Elasticsearch and others
-- **Safety**: Llama Guard, Prompt Guard, Code Scanner, AWS Bedrock
-- **Training & Evaluation**: HuggingFace, TorchTune, NVIDIA NEMO
-
-:::info Provider Details
-For complete provider compatibility and setup instructions, see our [Providers Documentation](https://llamastack.github.io/docs/providers/).
-:::
-
-## Get Started Today
+Then connect with any OpenAI-compatible client.
 
 <div style={{display: 'flex', gap: '1rem', flexWrap: 'wrap', margin: '2rem 0'}}>
   <a href="/docs/getting_started/quickstart"
@@ -74,9 +75,9 @@ For complete provider compatibility and setup instructions, see our [Providers D
        textDecoration: 'none',
        fontWeight: 'bold'
      }}>
-    🚀 Quick Start Guide
+    Quick Start Guide
   </a>
-  <a href="https://github.com/llamastack/llama-stack-apps"
+  <a href="./api-openai"
      style={{
        border: '2px solid var(--ifm-color-primary)',
        color: 'var(--ifm-color-primary)',
@@ -85,7 +86,7 @@ For complete provider compatibility and setup instructions, see our [Providers D
        textDecoration: 'none',
        fontWeight: 'bold'
      }}>
-    📚 Example Apps
+    OpenAI API Compatibility
   </a>
   <a href="https://github.com/llamastack/llama-stack"
      style={{
@@ -96,6 +97,6 @@ For complete provider compatibility and setup instructions, see our [Providers D
        textDecoration: 'none',
        fontWeight: 'bold'
      }}>
-    ⭐ Star on GitHub
+    GitHub
   </a>
 </div>

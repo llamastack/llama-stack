@@ -13,6 +13,14 @@ from llama_stack.providers.utils.common.data_url import parse_data_url
 
 
 async def get_dataframe_from_uri(uri: str):
+    """Load a pandas DataFrame from a URI pointing to CSV, Excel, or data URL.
+
+    Args:
+        uri: file path, URL, or data URL to load
+
+    Returns:
+        A pandas DataFrame with the loaded data
+    """
     import pandas
 
     df = None

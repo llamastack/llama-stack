@@ -51,6 +51,8 @@ DEFAULT_STORAGE_DIR = REPO_ROOT / "tests/integration/common"
 
 
 class APIRecordingMode(StrEnum):
+    """Enumeration of modes for API request recording and replay in tests."""
+
     LIVE = "live"
     RECORD = "record"
     REPLAY = "replay"
@@ -78,13 +80,22 @@ def _normalize_numeric_literal_strings(value: str) -> str:
     return _FLOAT_IN_STRING_PATTERN.sub(_replace, value)
 
 
-def _normalize_body_for_hash(value: Any, exclude_stream_options: bool = False) -> Any:
+def _normalize_body_for_hash(value: Any, exclude_stream_options: bool = False, *, _is_root: bool = True) -> Any:
     """Recursively normalize a JSON-like value to improve hash stability."""
 
     if isinstance(value, dict):
-        normalized = {key: _normalize_body_for_hash(item) for key, item in value.items()}
+        normalized = {key: _normalize_body_for_hash(item, _is_root=False) for key, item in value.items()}
         if exclude_stream_options and "stream_options" in normalized:
             del normalized["stream_options"]
+        # Strip provider-config values that differ between record (real creds)
+        # and replay (dummy creds).  Only strip specific keys (project_id) rather
+        # than entire extra_body/extra_query dicts because extra_body can carry
+        # legitimate request params (e.g. guided_choice for vllm).
+        if _is_root:
+            for extra_key in ("extra_body", "extra_query"):
+                extra = normalized.get(extra_key)
+                if isinstance(extra, dict):
+                    extra.pop("project_id", None)
         return normalized
     if isinstance(value, list):
         return [_normalize_body_for_hash(item) for item in value]
@@ -298,6 +309,11 @@ def unpatch_httpx_for_test_id():
 
 
 def get_api_recording_mode() -> APIRecordingMode:
+    """Return the current API recording mode from the LLAMA_STACK_TEST_INFERENCE_MODE environment variable.
+
+    Returns:
+        The active APIRecordingMode, defaulting to REPLAY if not set.
+    """
     return APIRecordingMode(os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE", "replay").lower())
 
 
@@ -802,6 +818,66 @@ def _patched_aiohttp_post(original_post, session_self, url: str, **kwargs):
         raise AssertionError(f"Invalid mode: {_current_mode}")
 
 
+_cached_provider_metadata: dict[str, dict[str, str]] = {}
+
+
+def _extract_provider_metadata(client: Any, client_type: str, base_url: str = "") -> dict[str, str]:
+    """Extract version and configuration metadata from the inference client.
+
+    This captures provider-specific version info that helps track which API
+    versions were used during test recordings (e.g., Azure API version, vLLM
+    server version).
+
+    Results are cached per base_url to avoid repeated HTTP calls.
+    """
+    cache_key = f"{client_type}:{base_url}"
+    if cache_key in _cached_provider_metadata:
+        return _cached_provider_metadata[cache_key]
+
+    metadata: dict[str, str] = {}
+
+    if client_type == "openai":
+        try:
+            import openai
+
+            metadata["openai_sdk_version"] = openai.__version__
+        except (ImportError, AttributeError):
+            pass
+
+        # For Azure: capture api_version from env (same source as AzureConfig)
+        azure_api_version = os.environ.get("AZURE_API_VERSION")
+        if azure_api_version:
+            metadata["azure_api_version"] = azure_api_version
+
+        # For vLLM: query the /version endpoint to get server version
+        if base_url:
+            try:
+                import urllib.request
+
+                # Strip /v1 suffix to get the base server URL
+                server_url = base_url.rstrip("/")
+                if server_url.endswith("/v1"):
+                    server_url = server_url[:-3]
+                version_url = server_url + "/version"
+                with urllib.request.urlopen(version_url, timeout=5) as resp:
+                    version_data = json.loads(resp.read().decode())
+                    if "version" in version_data:
+                        metadata["vllm_server_version"] = version_data["version"]
+            except Exception:
+                pass
+
+    elif client_type == "ollama":
+        try:
+            import ollama
+
+            metadata["ollama_sdk_version"] = getattr(ollama, "__version__", "unknown")
+        except (ImportError, AttributeError):
+            pass
+
+    _cached_provider_metadata[cache_key] = metadata
+    return metadata
+
+
 async def _patched_inference_method(original_method, self, client_type, endpoint, *args, **kwargs):
     global _current_mode, _current_storage
 
@@ -908,6 +984,7 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
             "body": body,
             "endpoint": endpoint,
             "model": body.get("model", ""),
+            "provider_metadata": _extract_provider_metadata(self, client_type, base_url),
         }
 
         try:

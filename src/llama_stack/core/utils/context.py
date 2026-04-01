@@ -6,12 +6,13 @@
 
 from collections.abc import AsyncGenerator
 from contextvars import ContextVar
+from typing import Any
 
 _MISSING = object()
 
 
 def preserve_contexts_async_generator[T](
-    gen: AsyncGenerator[T, None], context_vars: list[ContextVar]
+    gen: AsyncGenerator[T, None], context_vars: list[ContextVar[Any]]
 ) -> AsyncGenerator[T, None]:
     """
     Wraps an async generator to preserve context variables across iterations.
@@ -23,8 +24,8 @@ def preserve_contexts_async_generator[T](
 
     async def wrapper() -> AsyncGenerator[T, None]:
         while True:
-            previous_values: dict[ContextVar, object] = {}
-            tokens: dict[ContextVar, object] = {}
+            previous_values: dict[ContextVar[Any], object] = {}
+            tokens: dict[ContextVar[Any], object] = {}
 
             # Restore ALL context values before any await and capture previous state
             # This is needed to propagate context across async generator boundaries
@@ -35,12 +36,17 @@ def preserve_contexts_async_generator[T](
                     previous_values[context_var] = _MISSING
                 tokens[context_var] = context_var.set(initial_context_values[context_var.name])
 
-            def _restore_context_var(context_var: ContextVar, *, _tokens=tokens, _prev=previous_values) -> None:
+            def _restore_context_var(
+                context_var: ContextVar[Any],
+                *,
+                _tokens: dict[ContextVar[Any], object] = tokens,
+                _prev: dict[ContextVar[Any], object] = previous_values,
+            ) -> None:
                 token = _tokens.get(context_var)
                 previous_value = _prev.get(context_var, _MISSING)
                 if token is not None:
                     try:
-                        context_var.reset(token)
+                        context_var.reset(token)  # type: ignore[arg-type]
                         return
                     except (RuntimeError, ValueError):
                         pass

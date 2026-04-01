@@ -12,7 +12,7 @@ from llama_stack_api import (
     RemoteProviderSpec,
 )
 
-META_REFERENCE_DEPS = [
+BUILTIN_DEPS = [
     "accelerate",
     "fairscale",
     "torch",
@@ -27,6 +27,11 @@ META_REFERENCE_DEPS = [
 
 
 def available_providers() -> list[ProviderSpec]:
+    """Return the list of available inference provider specifications.
+
+    Returns:
+        List of ProviderSpec objects describing available providers
+    """
     return [
         InlineProviderSpec(
             api=Api.inference,
@@ -45,6 +50,19 @@ def available_providers() -> list[ProviderSpec]:
             module="llama_stack.providers.inline.inference.sentence_transformers",
             config_class="llama_stack.providers.inline.inference.sentence_transformers.config.SentenceTransformersInferenceConfig",
             description="Sentence Transformers inference provider for text embeddings and similarity search.",
+        ),
+        InlineProviderSpec(
+            api=Api.inference,
+            provider_type="inline::transformers",
+            pip_packages=[
+                "torch --extra-index-url https://download.pytorch.org/whl/cpu",
+                "transformers",
+                "tokenizers",
+                "safetensors",
+            ],
+            module="llama_stack.providers.inline.inference.transformers",
+            config_class="llama_stack.providers.inline.inference.transformers.config.TransformersInferenceConfig",
+            description="Transformers inference provider for neural rerank.",
         ),
         RemoteProviderSpec(
             api=Api.inference,
@@ -74,33 +92,6 @@ def available_providers() -> list[ProviderSpec]:
             config_class="llama_stack.providers.remote.inference.vllm.VLLMInferenceAdapterConfig",
             provider_data_validator="llama_stack.providers.remote.inference.vllm.VLLMProviderDataValidator",
             description="Remote vLLM inference provider for connecting to vLLM servers.",
-        ),
-        RemoteProviderSpec(
-            api=Api.inference,
-            adapter_type="tgi",
-            provider_type="remote::tgi",
-            pip_packages=["huggingface_hub", "aiohttp"],
-            module="llama_stack.providers.remote.inference.tgi",
-            config_class="llama_stack.providers.remote.inference.tgi.TGIImplConfig",
-            description="Text Generation Inference (TGI) provider for HuggingFace model serving.",
-        ),
-        RemoteProviderSpec(
-            api=Api.inference,
-            adapter_type="hf::serverless",
-            provider_type="remote::hf::serverless",
-            pip_packages=["huggingface_hub", "aiohttp"],
-            module="llama_stack.providers.remote.inference.tgi",
-            config_class="llama_stack.providers.remote.inference.tgi.InferenceAPIImplConfig",
-            description="HuggingFace Inference API serverless provider for on-demand model inference.",
-        ),
-        RemoteProviderSpec(
-            api=Api.inference,
-            provider_type="remote::hf::endpoint",
-            adapter_type="hf::endpoint",
-            pip_packages=["huggingface_hub", "aiohttp"],
-            module="llama_stack.providers.remote.inference.tgi",
-            config_class="llama_stack.providers.remote.inference.tgi.InferenceEndpointImplConfig",
-            description="HuggingFace Inference Endpoints provider for dedicated model serving.",
         ),
         RemoteProviderSpec(
             api=Api.inference,
@@ -271,7 +262,7 @@ Available Models:
             api=Api.inference,
             adapter_type="watsonx",
             provider_type="remote::watsonx",
-            pip_packages=["litellm"],
+            pip_packages=[],
             module="llama_stack.providers.remote.inference.watsonx",
             config_class="llama_stack.providers.remote.inference.watsonx.WatsonXConfig",
             provider_data_validator="llama_stack.providers.remote.inference.watsonx.config.WatsonXProviderDataValidator",

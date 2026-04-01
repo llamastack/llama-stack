@@ -5,13 +5,21 @@
 # the root directory of this source tree.
 
 
-from llama_stack.core.datatypes import BuildProvider, Provider, ToolGroupInput
+from llama_stack.core.datatypes import BuildProvider, Provider
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.remote.inference.watsonx import WatsonXConfig
 
 
 def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
+    """Build the WatsonX distribution template.
+
+    Args:
+        name: the distribution name.
+
+    Returns:
+        A DistributionTemplate configured for IBM WatsonX inference.
+    """
     providers = {
         "inference": [
             BuildProvider(provider_type="remote::watsonx"),
@@ -19,8 +27,8 @@ def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
         ],
         "vector_io": [BuildProvider(provider_type="inline::faiss")],
         "safety": [BuildProvider(provider_type="inline::llama-guard")],
-        "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "eval": [BuildProvider(provider_type="inline::meta-reference")],
+        "responses": [BuildProvider(provider_type="inline::builtin")],
+        "eval": [BuildProvider(provider_type="inline::builtin")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),
             BuildProvider(provider_type="inline::localfs"),
@@ -33,7 +41,7 @@ def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
-            BuildProvider(provider_type="inline::rag-runtime"),
+            BuildProvider(provider_type="inline::file-search"),
             BuildProvider(provider_type="remote::model-context-protocol"),
         ],
         "files": [BuildProvider(provider_type="inline::localfs")],
@@ -45,19 +53,8 @@ def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
         config=WatsonXConfig.sample_run_config(),
     )
 
-    default_tool_groups = [
-        ToolGroupInput(
-            toolgroup_id="builtin::websearch",
-            provider_id="tavily-search",
-        ),
-        ToolGroupInput(
-            toolgroup_id="builtin::rag",
-            provider_id="rag-runtime",
-        ),
-    ]
-
     files_provider = Provider(
-        provider_id="meta-reference-files",
+        provider_id="builtin-files",
         provider_type="inline::localfs",
         config=LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}"),
     )
@@ -75,7 +72,6 @@ def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
                     "files": [files_provider],
                 },
                 default_models=[],
-                default_tool_groups=default_tool_groups,
             ),
         },
         run_config_env_vars={

@@ -12,6 +12,7 @@ from llama_stack_api import (
     URL,
     ListToolDefsResponse,
     ListToolGroupsResponse,
+    ListToolsRequest,
     ToolDef,
     ToolGroup,
     ToolGroupNotFoundError,
@@ -24,7 +25,15 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 
 def parse_toolgroup_from_toolgroup_name_pair(toolgroup_name_with_maybe_tool_name: str) -> str | None:
-    # handle the funny case like "builtin::rag/knowledge_search"
+    """Extract the tool group name from a 'toolgroup/tool' pair string.
+
+    Args:
+        toolgroup_name_with_maybe_tool_name: A string that may contain 'toolgroup/tool' format.
+
+    Returns:
+        The tool group name if a slash separator is found, or None for plain tool group names.
+    """
+    # handle the case like "builtin::file_search/file_search"
     parts = toolgroup_name_with_maybe_tool_name.split("/")
     if len(parts) == 2:
         return parts[0]
@@ -33,6 +42,8 @@ def parse_toolgroup_from_toolgroup_name_pair(toolgroup_name_with_maybe_tool_name
 
 
 class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
+    """Routing table for managing tool group registrations, tool indexing, and provider lookups."""
+
     toolgroups_to_tools: dict[str, list[ToolDef]] = {}
     tool_to_toolgroup: dict[str, str] = {}
 
@@ -49,9 +60,8 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
             routing_key = self.tool_to_toolgroup[routing_key]
         return await super().get_provider_impl(routing_key, provider_id)
 
-    async def list_tools(
-        self, toolgroup_id: str | None = None, authorization: str | None = None
-    ) -> ListToolDefsResponse:
+    async def list_tools(self, request: ListToolsRequest, authorization: str | None = None) -> ListToolDefsResponse:
+        toolgroup_id = request.toolgroup_id
         if toolgroup_id:
             if group_id := parse_toolgroup_from_toolgroup_name_pair(toolgroup_id):
                 toolgroup_id = group_id
@@ -71,7 +81,7 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
                 except Exception as e:
                     # Other errors that the client cannot fix are logged and
                     # those specific toolgroups are skipped.
-                    logger.warning(f"Error listing tools for toolgroup {toolgroup.identifier}: {e}")
+                    logger.warning("Error listing tools for toolgroup", identifier=toolgroup.identifier, error=str(e))
                     logger.debug(e, exc_info=True)
                     continue
             all_tools.extend(self.toolgroups_to_tools[toolgroup.identifier])

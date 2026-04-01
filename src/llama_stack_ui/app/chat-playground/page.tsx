@@ -442,9 +442,9 @@ export default function ChatPlaygroundPage() {
     ) => {
       try {
         const processedToolgroups = toolgroups.map(toolgroup => {
-          if (toolgroup === "builtin::rag" && vectorDBs.length > 0) {
+          if (toolgroup === "builtin::file_search" && vectorDBs.length > 0) {
             return {
-              name: "builtin::rag/knowledge_search",
+              name: "builtin::file_search/file_search",
               args: {
                 vector_db_ids: vectorDBs,
               },
@@ -808,7 +808,7 @@ export default function ChatPlaygroundPage() {
         const containsToolCall = (content: string): boolean => {
           return (
             content.includes('"type": "function"') ||
-            content.includes('"name": "knowledge_search"') ||
+            content.includes('"name": "file_search"') ||
             content.includes('"parameters":') ||
             !!content.match(/\{"type":\s*"function".*?\}/)
           );
@@ -1054,7 +1054,7 @@ export default function ChatPlaygroundPage() {
         const { text: deltaText } = processChunk(chunk);
 
         // logging for debugging function calls
-        // if (deltaText && deltaText.includes("knowledge_search")) {
+        // if (deltaText && deltaText.includes("file_search")) {
         //   console.log("🔍 Function call detected in text output:", deltaText);
         //   console.log("🔍 Original chunk:", JSON.stringify(chunk, null, 2));
         // }
@@ -1072,7 +1072,7 @@ export default function ChatPlaygroundPage() {
           ).event;
           if (event?.payload?.event_type === "turn_complete") {
             const content = event?.payload?.turn?.output_message?.content;
-            if (content && content.includes("knowledge_search")) {
+            if (content && content.includes("file_search")) {
               console.log("🔍 Function call found in turn_complete:", content);
             }
           }
@@ -1775,7 +1775,7 @@ export default function ChatPlaygroundPage() {
               </div>
 
               {/* Vector DB Configuration for RAG */}
-              {selectedToolgroups.includes("builtin::rag") && (
+              {selectedToolgroups.includes("builtin::file_search") && (
                 <div>
                   <label className="text-sm font-medium block mb-2">
                     Vector Databases for RAG
@@ -1839,7 +1839,7 @@ export default function ChatPlaygroundPage() {
                     )}
                   </div>
                   {selectedVectorDBs.length === 0 &&
-                    selectedToolgroups.includes("builtin::rag") && (
+                    selectedToolgroups.includes("builtin::file_search") && (
                       <p className="text-xs text-muted-foreground mt-1">
                         ⚠️ RAG tool selected but no vector databases chosen.
                         Create or select a vector database.

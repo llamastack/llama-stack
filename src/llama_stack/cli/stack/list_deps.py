@@ -9,6 +9,8 @@ from llama_stack.cli.subcommand import Subcommand
 
 
 class StackListDeps(Subcommand):
+    """CLI subcommand to list pip dependencies for a Llama Stack distribution."""
+
     def __init__(self, subparsers: argparse._SubParsersAction):
         super().__init__()
         self.parser = subparsers.add_parser(

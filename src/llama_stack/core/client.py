@@ -17,25 +17,43 @@ from termcolor import cprint
 
 from llama_stack_api import RemoteProviderConfig
 
-_CLIENT_CLASSES = {}
+_CLIENT_CLASSES: dict[type[Any], type[Any]] = {}
 
 
-async def get_client_impl(protocol, config: RemoteProviderConfig, _deps: Any):
+async def get_client_impl(protocol: type[Any], config: RemoteProviderConfig, _deps: Any) -> Any:
+    """Create and initialize an API client for a remote provider.
+
+    Args:
+        protocol: The protocol class defining the API interface.
+        config: Remote provider configuration containing the URL.
+        _deps: Unused dependency dictionary (kept for interface compatibility).
+
+    Returns:
+        An initialized API client instance for the given protocol.
+    """
     client_class = create_api_client_class(protocol)
     impl = client_class(config.url)
     await impl.initialize()
     return impl
 
 
-def create_api_client_class(protocol) -> type:
+def create_api_client_class(protocol: type[Any]) -> type[Any]:
+    """Dynamically create an API client class for the given protocol.
+
+    Args:
+        protocol: The protocol class whose webmethod-decorated methods define the API.
+
+    Returns:
+        A dynamically generated client class implementing the protocol's methods.
+    """
     if protocol in _CLIENT_CLASSES:
         return _CLIENT_CLASSES[protocol]
 
     class APIClient:
-        def __init__(self, base_url: str):
+        def __init__(self, base_url: str) -> None:
             print(f"({protocol.__name__}) Connecting to {base_url}")
             self.base_url = base_url.rstrip("/")
-            self.routes = {}
+            self.routes: dict[str, tuple[Any, inspect.Signature]] = {}
 
             # Store routes for this protocol
             for name, method in inspect.getmembers(protocol):
@@ -43,13 +61,13 @@ def create_api_client_class(protocol) -> type:
                     sig = inspect.signature(method)
                     self.routes[name] = (method.__webmethod__, sig)
 
-        async def initialize(self):
+        async def initialize(self) -> None:
             pass
 
-        async def shutdown(self):
+        async def shutdown(self) -> None:
             pass
 
-        async def __acall__(self, method_name: str, *args, **kwargs) -> Any:
+        async def __acall__(self, method_name: str, *args: Any, **kwargs: Any) -> Any:
             assert method_name in self.routes, f"Unknown endpoint: {method_name}"
 
             # TODO: make this more precise, same thing needs to happen in server.py
@@ -59,7 +77,7 @@ def create_api_client_class(protocol) -> type:
             else:
                 return await self._call_non_streaming(method_name, *args, **kwargs)
 
-        async def _call_non_streaming(self, method_name: str, *args, **kwargs) -> Any:
+        async def _call_non_streaming(self, method_name: str, *args: Any, **kwargs: Any) -> Any:
             _, sig = self.routes[method_name]
 
             if sig.return_annotation is None:
@@ -77,9 +95,9 @@ def create_api_client_class(protocol) -> type:
                 if j is None:
                     return None
                 # print(f"({protocol.__name__}) Returning {j}, type {return_type}")
-                return parse_obj_as(return_type, j)
+                return parse_obj_as(return_type, j)  # type: ignore[arg-type]
 
-        async def _call_streaming(self, method_name: str, *args, **kwargs) -> Any:
+        async def _call_streaming(self, method_name: str, *args: Any, **kwargs: Any) -> Any:
             webmethod, sig = self.routes[method_name]
 
             return_type = extract_async_iterator_type(sig.return_annotation)
@@ -104,7 +122,7 @@ def create_api_client_class(protocol) -> type:
                                 cprint(f"Error with parsing or validation: {e}", color="red", file=sys.stderr)
                                 cprint(data, color="red", file=sys.stderr)
 
-        def httpx_request_params(self, method_name: str, *args, **kwargs) -> dict:
+        def httpx_request_params(self, method_name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
             webmethod, sig = self.routes[method_name]
 
             parameters = list(sig.parameters.values())[1:]  # skip `self`
@@ -132,7 +150,7 @@ def create_api_client_class(protocol) -> type:
 
             url = f"{self.base_url}/{preferred_webmethod.level}/{preferred_webmethod.route.lstrip('/')}"
 
-            def convert(value):
+            def convert(value: Any) -> Any:
                 if isinstance(value, list):
                     return [convert(v) for v in value]
                 elif isinstance(value, dict):
@@ -171,12 +189,12 @@ def create_api_client_class(protocol) -> type:
     for name, method in inspect.getmembers(protocol):
         if hasattr(method, "__webmethod__"):
 
-            async def method_impl(self, *args, method_name=name, **kwargs):
+            async def method_impl(self: Any, *args: Any, method_name: str = name, **kwargs: Any) -> Any:
                 return await self.__acall__(method_name, *args, **kwargs)
 
             method_impl.__name__ = name
             method_impl.__qualname__ = f"APIClient.{name}"
-            method_impl.__signature__ = inspect.signature(method)
+            method_impl.__signature__ = inspect.signature(method)  # type: ignore[attr-defined]
             setattr(APIClient, name, method_impl)
 
     # Name the class after the protocol
@@ -185,8 +203,15 @@ def create_api_client_class(protocol) -> type:
     return APIClient
 
 
-# not quite general these methods are
-def extract_non_async_iterator_type(type_hint):
+def extract_non_async_iterator_type(type_hint: Any) -> Any:
+    """Extract the non-AsyncIterator type from a Union type hint.
+
+    Args:
+        type_hint: A type hint, potentially a Union containing an AsyncIterator.
+
+    Returns:
+        The non-AsyncIterator type from the Union, or the original type hint.
+    """
     if get_origin(type_hint) is Union:
         args = get_args(type_hint)
         for arg in args:
@@ -195,7 +220,15 @@ def extract_non_async_iterator_type(type_hint):
     return type_hint
 
 
-def extract_async_iterator_type(type_hint):
+def extract_async_iterator_type(type_hint: Any) -> Any | None:
+    """Extract the inner type from an AsyncIterator within a Union type hint.
+
+    Args:
+        type_hint: A type hint, potentially a Union containing an AsyncIterator.
+
+    Returns:
+        The inner type of the AsyncIterator, or None if not found.
+    """
     if get_origin(type_hint) is Union:
         args = get_args(type_hint)
         for arg in args:

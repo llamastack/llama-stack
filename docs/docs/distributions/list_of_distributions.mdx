@@ -34,16 +34,16 @@ docker pull llamastack/distribution-starter
 
 ### 🖥️ Self-Hosted with GPU
 
-**Use `distribution-meta-reference-gpu` if you:**
+**Use `distribution-builtin-gpu` if you:**
 - Have access to GPU hardware
 - Want maximum performance and control
 - Need to run inference locally
 
 ```bash
-docker pull llamastack/distribution-meta-reference-gpu
+docker pull llamastack/distribution-builtin-gpu
 ```
 
-**Guides:** [Meta Reference GPU Guide](self_hosted_distro/meta-reference-gpu)
+**Guides:** [Builtin GPU Guide](self_hosted_distro/starter)
 
 ### 🖥️ Self-Hosted with NVIDA NeMo Microservices
 
@@ -90,7 +90,7 @@ docker pull llamastack/distribution-meta-reference-gpu
 :maxdepth: 1
 
 self_hosted_distro/starter
-self_hosted_distro/meta-reference-gpu
+self_hosted_distro/starter
 ```
 
 ### Remote-Hosted Solutions
@@ -117,7 +117,7 @@ graph TD
     A[What's your use case?] --> B{Need mobile app?}
     B -->|Yes| C[Use Mobile SDKs]
     B -->|No| D{Have GPU hardware?}
-    D -->|Yes| E[Use Meta Reference GPU]
+    D -->|Yes| E[Use Builtin GPU]
     D -->|No| F{Want managed hosting?}
     F -->|Yes| G[Use Remote-Hosted]
     F -->|No| H[Use Starter Distribution]

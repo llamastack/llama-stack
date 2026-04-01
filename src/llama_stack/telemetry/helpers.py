@@ -21,6 +21,14 @@ from .constants import (
 
 
 def safety_span_name(shield_id: str) -> str:
+    """Build the OpenTelemetry span name for a safety shield invocation.
+
+    Args:
+        shield_id: Identifier of the shield being invoked.
+
+    Returns:
+        The formatted span name combining the operation name and shield id.
+    """
     return f"{RUN_SHIELD_OPERATION_NAME} {shield_id}"
 
 
@@ -29,6 +37,13 @@ def safety_span_name(shield_id: str) -> str:
 def safety_request_span_attributes(
     shield_id: str, messages: list[OpenAIMessageParam], response: RunShieldResponse
 ) -> None:
+    """Set OpenTelemetry span attributes for a safety shield request and response.
+
+    Args:
+        shield_id: Identifier of the shield that was invoked.
+        messages: The list of messages that were checked by the shield.
+        response: The shield's response, potentially containing violation details.
+    """
     span = trace.get_current_span()
     span.set_attribute(SAFETY_REQUEST_SHIELD_ID_ATTRIBUTE, shield_id)
     messages_json = json.dumps([msg.model_dump() for msg in messages])

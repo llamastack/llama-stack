@@ -19,9 +19,16 @@ from llama_stack_api import (
 )
 
 
+def _mock_routing_table(**kwargs):
+    """Create a mock routing table with dist_registry.get_cached properly configured."""
+    rt = Mock(**kwargs)
+    rt.dist_registry.get_cached.return_value = Mock(provider_id="test-provider")
+    return rt
+
+
 async def test_single_provider_auto_selection():
     # provider_id automatically selected during vector store create() when only one provider available
-    mock_routing_table = Mock()
+    mock_routing_table = _mock_routing_table()
     mock_routing_table.impls_by_provider_id = {"inline::faiss": "mock_provider"}
     mock_routing_table.get_all_with_type = AsyncMock(
         return_value=[
@@ -46,7 +53,7 @@ async def test_single_provider_auto_selection():
 
 async def test_create_vector_stores_multiple_providers_missing_provider_id_error():
     # if multiple providers are available, vector store create will error without provider_id
-    mock_routing_table = Mock()
+    mock_routing_table = _mock_routing_table()
     mock_routing_table.impls_by_provider_id = {
         "inline::faiss": "mock_provider_1",
         "inline::sqlite-vec": "mock_provider_2",
@@ -68,7 +75,7 @@ async def test_create_vector_stores_multiple_providers_missing_provider_id_error
 
 async def test_update_vector_store_provider_id_change_fails():
     """Test that updating a vector store with a different provider_id fails with clear error."""
-    mock_routing_table = Mock()
+    mock_routing_table = _mock_routing_table()
 
     # Mock an existing vector store with provider_id "faiss"
     mock_existing_store = Mock()
@@ -101,7 +108,7 @@ async def test_update_vector_store_provider_id_change_fails():
 
 async def test_update_vector_store_same_provider_id_succeeds():
     """Test that updating a vector store with the same provider_id succeeds."""
-    mock_routing_table = Mock()
+    mock_routing_table = _mock_routing_table()
 
     # Mock an existing vector store with provider_id "faiss"
     mock_existing_store = Mock()
@@ -129,7 +136,7 @@ async def test_register_vector_store_only_once():
     mock_provider.register_vector_store = AsyncMock()
     mock_provider.openai_create_vector_store = AsyncMock(return_value=Mock(id="vs_123"))
 
-    mock_routing_table = Mock()
+    mock_routing_table = _mock_routing_table()
     mock_routing_table.impls_by_provider_id = {"inline::faiss": mock_provider}
     mock_routing_table.get_object_by_identifier = AsyncMock(return_value=Mock(model_type=ModelType.embedding))
     mock_routing_table.register_vector_store = AsyncMock(
@@ -153,7 +160,7 @@ async def test_register_vector_store_only_once():
 async def test_create_vector_store_with_unknown_embedding_model_raises_error():
     """Test that creating a vector store with an unknown embedding model raises
     FoundError."""
-    mock_routing_table = Mock(impls_by_provider_id={"provider": "mock"})
+    mock_routing_table = _mock_routing_table(impls_by_provider_id={"provider": "mock"})
     mock_routing_table.get_object_by_identifier = AsyncMock(return_value=None)
 
     router = VectorIORouter(mock_routing_table)
@@ -167,7 +174,7 @@ async def test_create_vector_store_with_unknown_embedding_model_raises_error():
 
 async def test_create_vector_store_with_wrong_model_type_raises_error():
     """Test that creating a vector store with a non-embedding model raises ModelTypeError."""
-    mock_routing_table = Mock(impls_by_provider_id={"provider": "mock"})
+    mock_routing_table = _mock_routing_table(impls_by_provider_id={"provider": "mock"})
     mock_routing_table.get_object_by_identifier = AsyncMock(return_value=Mock(model_type=ModelType.llm))
 
     router = VectorIORouter(mock_routing_table)
@@ -186,7 +193,7 @@ async def test_query_rewrite_functionality():
     from llama_stack.core.datatypes import QualifiedModel, RewriteQueryParams, VectorStoresConfig
     from llama_stack_api import VectorStoreSearchResponsePage
 
-    mock_routing_table = Mock()
+    mock_routing_table = _mock_routing_table()
 
     # Mock routing table method that returns search results
     mock_search_response = VectorStoreSearchResponsePage(search_query=["rewritten test query"], data=[], has_more=False)
@@ -243,7 +250,7 @@ async def test_query_rewrite_functionality():
 
 async def test_query_rewrite_error_when_not_configured():
     """Test that query rewriting fails with proper error when not configured."""
-    mock_routing_table = Mock()
+    mock_routing_table = _mock_routing_table()
     mock_provider = Mock()
     mock_routing_table.get_provider_impl = AsyncMock(return_value=mock_provider)
 
@@ -268,7 +275,7 @@ async def test_query_rewrite_with_custom_prompt():
     from llama_stack.core.datatypes import QualifiedModel, RewriteQueryParams, VectorStoresConfig
     from llama_stack_api import VectorStoreSearchResponsePage
 
-    mock_routing_table = Mock()
+    mock_routing_table = _mock_routing_table()
 
     mock_search_response = VectorStoreSearchResponsePage(search_query=["custom rewrite"], data=[], has_more=False)
     mock_routing_table.openai_search_vector_store = AsyncMock(return_value=mock_search_response)
@@ -309,7 +316,7 @@ async def test_search_without_rewrite():
     """Test that search without rewrite_query doesn't call inference API."""
     from llama_stack_api import VectorStoreSearchResponsePage
 
-    mock_routing_table = Mock()
+    mock_routing_table = _mock_routing_table()
 
     mock_search_response = VectorStoreSearchResponsePage(search_query=["test query"], data=[], has_more=False)
     mock_routing_table.openai_search_vector_store = AsyncMock(return_value=mock_search_response)

@@ -4,8 +4,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import httpx
 import litellm
-import requests
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
@@ -29,6 +29,8 @@ CANNED_RESPONSE_TEXT = "I can't answer that. Can I help with something else?"
 
 
 class SambaNovaSafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPrivate, NeedsRequestProviderData):
+    """Safety adapter for content moderation using SambaNova AI services."""
+
     def __init__(self, config: SambaNovaSafetyConfig) -> None:
         self.config = config
         self.environment_available_models = []
@@ -55,16 +57,21 @@ class SambaNovaSafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPri
         list_models_url = self.config.url + "/models"
         if len(self.environment_available_models) == 0:
             try:
-                response = requests.get(list_models_url)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as e:
+                async with httpx.AsyncClient(timeout=httpx.Timeout(30.0)) as client:
+                    response = await client.get(list_models_url)
+                    response.raise_for_status()
+            except httpx.HTTPError as e:
                 raise RuntimeError(f"Request to {list_models_url} failed") from e
             self.environment_available_models = [model.get("id") for model in response.json().get("data", {})]
         if (
             "guard" not in shield.provider_resource_id.lower()
             or shield.provider_resource_id.split("sambanova/")[-1] not in self.environment_available_models
         ):
-            logger.warning(f"Shield {shield.provider_resource_id} not available in {list_models_url}")
+            logger.warning(
+                "Shield not available in",
+                provider_resource_id=shield.provider_resource_id,
+                list_models_url=list_models_url,
+            )
 
     async def unregister_shield(self, identifier: str) -> None:
         pass
@@ -75,9 +82,9 @@ class SambaNovaSafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPri
             raise ValueError(f"Shield {request.shield_id} not found")
 
         shield_params = shield.params
-        logger.debug(f"run_shield::{shield_params}::messages={request.messages}")
+        logger.debug("run_shield", shield_params=shield_params, messages=request.messages)
 
-        response = litellm.completion(
+        response = await litellm.acompletion(
             model=shield.provider_resource_id,
             messages=request.messages,
             api_key=self._get_api_key(),

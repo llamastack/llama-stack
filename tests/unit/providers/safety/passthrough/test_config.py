@@ -35,10 +35,23 @@ def test_config_forward_headers_accepts_mapping():
     assert cfg.forward_headers == {"maas_api_token": "Authorization"}
 
 
+def test_config_extra_blocked_headers_accepts_list():
+    cfg = PassthroughSafetyConfig(
+        base_url="https://safety.example.com/v1",
+        extra_blocked_headers=["x-internal-debug"],
+    )
+    assert cfg.extra_blocked_headers == ["x-internal-debug"]
+
+
 def test_config_sample_run_config():
     sample = PassthroughSafetyConfig.sample_run_config()
     assert "base_url" in sample
     assert "api_key" in sample
+
+
+def test_config_sample_run_config_includes_extra_blocked_headers_when_set():
+    sample = PassthroughSafetyConfig.sample_run_config(extra_blocked_headers=["x-internal-debug"])
+    assert sample["extra_blocked_headers"] == ["x-internal-debug"]
 
 
 def test_provider_data_validator_allows_extra_keys():

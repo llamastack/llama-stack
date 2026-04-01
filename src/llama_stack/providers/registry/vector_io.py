@@ -17,10 +17,15 @@ DEFAULT_VECTOR_IO_DEPS = ["chardet", "pypdf>=6.7.2"]
 
 
 def available_providers() -> list[ProviderSpec]:
+    """Return the list of available vector I/O provider specifications.
+
+    Returns:
+        List of ProviderSpec objects describing available providers
+    """
     return [
         InlineProviderSpec(
             api=Api.vector_io,
-            provider_type="inline::meta-reference",
+            provider_type="inline::builtin",
             pip_packages=["faiss-cpu"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.inline.vector_io.faiss",
             config_class="llama_stack.providers.inline.vector_io.faiss.FaissVectorIOConfig",
@@ -631,7 +636,7 @@ Please refer to the inline provider documentation.
             api=Api.vector_io,
             adapter_type="milvus",
             provider_type="remote::milvus",
-            pip_packages=["pymilvus>=2.4.10"] + DEFAULT_VECTOR_IO_DEPS,
+            pip_packages=["pymilvus>=2.6.2"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.remote.vector_io.milvus",
             config_class="llama_stack.providers.remote.vector_io.milvus.MilvusVectorIOConfig",
             api_dependencies=[Api.inference],
@@ -942,6 +947,125 @@ vector_io:
 ## Documentation
 See the [Oracle 26ai documentation](https://docs.oracle.com/en/database/oracle/oracle-database/26/index.html)
 for more details about Oracle 26ai in general.
+""",
+        ),
+        RemoteProviderSpec(
+            api=Api.vector_io,
+            adapter_type="infinispan",
+            provider_type="remote::infinispan",
+            pip_packages=DEFAULT_VECTOR_IO_DEPS,
+            module="llama_stack.providers.remote.vector_io.infinispan",
+            config_class="llama_stack.providers.remote.vector_io.infinispan.InfinispanVectorIOConfig",
+            api_dependencies=[Api.inference],
+            optional_api_dependencies=[Api.files, Api.models],
+            description="""
+[Infinispan](https://infinispan.org/) is a remote vector database provider for Llama Stack. It
+allows you to store and query vectors in a distributed Infinispan cluster via HTTP REST API.
+Infinispan provides high-performance, scalable data storage with support for both vector similarity
+search and full-text search capabilities.
+
+## Features
+
+- **Vector Similarity Search** - Store and query embedding vectors with cosine similarity
+- **Full-text/Keyword Search** - Query documents using Infinispan Query DSL or Ickle queries
+- **Hybrid Search** - Combine vector and keyword search with configurable reranking (RRF or weighted)
+- **Authentication** - Supports both Basic and Digest authentication mechanisms
+- **HTTPS/TLS Support** - Secure connections with SSL certificate verification
+- **Distributed Storage** - Leverage Infinispan's distributed caching for scalability
+- **HTTP REST API** - Simple integration using standard HTTP protocol
+
+## Search Modes
+
+**Supported:**
+- **Vector Search** (`mode="vector"`): Performs vector similarity search using embeddings
+- **Keyword Search** (`mode="keyword"`): Full-text search using Infinispan Query DSL/Ickle
+- **Hybrid Search** (`mode="hybrid"`): Combines vector and keyword search with configurable reranking
+
+## Configuration
+
+### Basic Configuration (HTTP)
+
+```yaml
+vector_io:
+  - provider_id: infinispan
+    provider_type: remote::infinispan
+    config:
+      url: "http://localhost:11222"
+      username: "admin"
+      password: "password"
+      auth_mechanism: "digest"
+      persistence:
+        backend: "kv_default"
+        namespace: "vector_io::infinispan"
+```
+
+### HTTPS Configuration with TLS
+
+```yaml
+vector_io:
+  - provider_id: infinispan
+    provider_type: remote::infinispan
+    config:
+      url: "https://infinispan.example.com:11222"
+      username: "admin"
+      password: "password"
+      use_https: true
+      auth_mechanism: "basic"
+      verify_tls: true
+      persistence:
+        backend: "kv_default"
+        namespace: "vector_io::infinispan"
+```
+
+### Environment Variables
+
+You can use environment variables for sensitive configuration:
+
+```yaml
+vector_io:
+  - provider_id: infinispan
+    provider_type: remote::infinispan
+    config:
+      url: "${env.INFINISPAN_URL}"
+      username: "${env.INFINISPAN_USERNAME}"
+      password: "${env.INFINISPAN_PASSWORD}"
+      persistence:
+        backend: "kv_default"
+        namespace: "vector_io::infinispan"
+```
+
+## Usage
+
+### Starting Infinispan Server
+
+The easiest way to get started is using Docker:
+
+```bash
+docker run -it -p 11222:11222 \\
+  -e USER="admin" \\
+  -e PASS="password" \\
+  infinispan/server:latest
+```
+
+## Authentication
+
+Infinispan supports two authentication mechanisms:
+
+- **Digest Authentication** (recommended for HTTP): More secure than basic auth over HTTP
+- **Basic Authentication** (HTTPS only): Simple username/password authentication
+
+Set the `auth_mechanism` parameter to either `"digest"` or `"basic"`.
+
+## Documentation
+
+- [Infinispan Documentation](https://infinispan.org/documentation/)
+- [Infinispan REST API Guide](https://infinispan.org/docs/stable/titles/rest/rest.html)
+- [Infinispan Vector Search](https://infinispan.org/docs/stable/titles/developing/developing.html#vector-search)
+- [Infinispan Query DSL](https://infinispan.org/docs/stable/titles/query/query.html)
+
+## Requirements
+
+- Infinispan Server 16.0+ (with vector search support)
 """,
         ),
     ]

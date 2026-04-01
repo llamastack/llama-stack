@@ -27,7 +27,7 @@ Release 0.5 brings significant improvements to API consistency, OpenAI conforman
 | Post-Training API endpoints restructured (path params) | Hard | [#4606](https://github.com/meta-llama/llama-stack/pull/4606) |
 | Embeddings API rejects explicit `null` for optional fields | Hard | [#4644](https://github.com/meta-llama/llama-stack/pull/4644) |
 | Safety API provider interface changed to request objects | Hard | [#4643](https://github.com/meta-llama/llama-stack/pull/4643) |
-| Meta-Reference GPU inference provider removed | Hard | [#4828](https://github.com/meta-llama/llama-stack/pull/4828) |
+| Builtin GPU inference provider removed | Hard | [#4828](https://github.com/meta-llama/llama-stack/pull/4828) |
 | Scope-based endpoint authorization removed | Hard | [#4734](https://github.com/meta-llama/llama-stack/pull/4734) |
 | `image_name` renamed to `distro_name` | Deprecated | [#4396](https://github.com/meta-llama/llama-stack/pull/4396) |
 | Eval API calling convention uses request objects | Deprecated | [#4425](https://github.com/meta-llama/llama-stack/pull/4425) |

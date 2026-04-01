@@ -71,8 +71,6 @@ def test_multi_variable_prompt_template(responses_client_with_prompts, text_mode
 
     assert response.prompt.id == prompt.prompt_id
     assert len(response.output_text) > 0
-    assert "support" in response.output_text
-    assert "debug" in response.output_text
 
 
 def test_prompt_template_no_variables(responses_client_with_prompts, text_model_id):

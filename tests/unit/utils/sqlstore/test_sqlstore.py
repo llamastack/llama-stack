@@ -4,13 +4,18 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import sys
 import time
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 import pytest
 
+from llama_stack.core.storage.datatypes import PostgresSqlStoreConfig
 from llama_stack.core.storage.sqlstore.sqlalchemy_sqlstore import SqlAlchemySqlStoreImpl
 from llama_stack.core.storage.sqlstore.sqlstore import SqliteSqlStoreConfig
+
+_SQLSTORE_MODULE = sys.modules[SqlAlchemySqlStoreImpl.__module__]
 from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
 
 
@@ -25,15 +30,16 @@ async def test_sqlstore_shutdown_disposes_engine():
         db_path = tmp_dir + "/shutdown_test.db"
         store = SqlAlchemySqlStoreImpl(SqliteSqlStoreConfig(db_path=db_path))
 
-        # Verify engine exists
-        assert store._engine is not None
-
         # Create a table and insert data to ensure connections are established
+        # (this triggers lazy engine initialization)
         await store.create_table(
             "test",
             {"id": ColumnType.INTEGER, "name": ColumnType.STRING},
         )
         await store.insert("test", {"id": 1, "name": "test"})
+
+        # Verify engine exists (after lazy init)
+        assert store._engine is not None
 
         # Shutdown should dispose the engine and close connections
         await store.shutdown()
@@ -525,3 +531,74 @@ async def test_sqlstore_pagination_custom_key_column():
         assert len(result2.data) == 1
         assert result2.data[0]["uuid"] == "uuid-alpha"
         assert result2.has_more is False
+
+
+@pytest.mark.parametrize("pre_ping", [True, False])
+async def test_pool_pre_ping_propagates_to_engine(pre_ping):
+    """pool_pre_ping config value is forwarded to create_async_engine."""
+    with patch.object(_SQLSTORE_MODULE, "create_async_engine") as mock_create:
+        config = PostgresSqlStoreConfig(user="test", password="test", pool_pre_ping=pre_ping)
+        store = SqlAlchemySqlStoreImpl(config)
+        await store._ensure_engine()
+        mock_create.assert_called_once()
+        _, kwargs = mock_create.call_args
+        assert kwargs["pool_pre_ping"] is pre_ping
+
+
+async def test_pool_pre_ping_defaults_to_true():
+    """Both SQLite and Postgres configs default pool_pre_ping to True."""
+    sqlite_cfg = SqliteSqlStoreConfig(db_path="/tmp/test.db")
+    assert sqlite_cfg.pool_pre_ping is True
+
+    pg_cfg = PostgresSqlStoreConfig(user="test", password="test")
+    assert pg_cfg.pool_pre_ping is True
+
+
+async def test_postgres_pool_config_defaults():
+    """PostgresSqlStoreConfig exposes pool tuning knobs with sensible defaults."""
+    cfg = PostgresSqlStoreConfig(user="test", password="test")
+    assert cfg.pool_size == 10
+    assert cfg.max_overflow == 20
+    assert cfg.pool_recycle == -1
+
+
+async def test_postgres_pool_kwargs_propagate_to_engine():
+    """Postgres pool_size, max_overflow, and pool_recycle are forwarded to create_async_engine."""
+    with patch.object(_SQLSTORE_MODULE, "create_async_engine") as mock_create:
+        config = PostgresSqlStoreConfig(
+            user="test",
+            password="test",
+            pool_size=15,
+            max_overflow=25,
+            pool_recycle=300,
+        )
+        store = SqlAlchemySqlStoreImpl(config)
+        await store._ensure_engine()
+        _, kwargs = mock_create.call_args
+        assert kwargs["pool_size"] == 15
+        assert kwargs["max_overflow"] == 25
+        assert kwargs["pool_recycle"] == 300
+
+
+async def test_postgres_pool_recycle_omitted_when_disabled():
+    """pool_recycle kwarg is not passed to create_async_engine when set to -1."""
+    with patch.object(_SQLSTORE_MODULE, "create_async_engine") as mock_create:
+        config = PostgresSqlStoreConfig(
+            user="test",
+            password="test",
+            pool_recycle=-1,
+        )
+        store = SqlAlchemySqlStoreImpl(config)
+        await store._ensure_engine()
+        _, kwargs = mock_create.call_args
+        assert "pool_recycle" not in kwargs
+
+
+async def test_pool_recycle_is_configurable():
+    """pool_recycle interval can be customized."""
+    cfg = PostgresSqlStoreConfig(
+        user="test",
+        password="test",
+        pool_recycle=300,
+    )
+    assert cfg.pool_recycle == 300
