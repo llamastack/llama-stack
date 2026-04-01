@@ -674,7 +674,7 @@ class VectorStoreFileBatchObject(BaseModel):
     """OpenAI Vector Store File Batch object.
 
     :param id: Unique identifier for the file batch
-    :param object: Object type identifier, always "vector_store.files_batch"
+    :param object: Object type identifier, always "vector_store.file_batch"
     :param created_at: Timestamp when the file batch was created
     :param vector_store_id: ID of the vector store containing the file batch
     :param status: Current processing status of the file batch
@@ -682,7 +682,7 @@ class VectorStoreFileBatchObject(BaseModel):
     """
 
     id: str
-    object: Literal["vector_store.files_batch"] = "vector_store.files_batch"
+    object: Literal["vector_store.file_batch"] = "vector_store.file_batch"
     created_at: int
     vector_store_id: str
     status: VectorStoreFileStatus
