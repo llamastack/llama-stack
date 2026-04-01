@@ -79,7 +79,9 @@ const config: Config = {
         },
         blog: {
           onUntruncatedBlogPosts: 'ignore',
+          blogSidebarCount: 'ALL',
           showReadingTime: true,
+          postsPerPage: 10,
           readingTime: ({content, frontMatter, defaultReadingTime}) =>
             defaultReadingTime({content, options: {wordsPerMinute: 300}}),
           feedOptions: {
@@ -100,11 +102,8 @@ const config: Config = {
   themeConfig: {
     image: 'img/llama-stack.png',
     navbar: {
+      hideOnScroll: true,
       title: 'Llama Stack',
-      logo: {
-        alt: 'Llama Stack Logo',
-        src: 'img/llama-stack-logo.png',
-      },
       items: [
         {
           type: 'docSidebar',
@@ -121,17 +120,17 @@ const config: Config = {
             {
               type: 'docSidebar',
               sidebarId: 'stableApiSidebar',
-              label: '🟢 Stable APIs',
+              label: 'Stable',
             },
             {
               type: 'docSidebar',
               sidebarId: 'experimentalApiSidebar',
-              label: '🟡 Experimental APIs',
+              label: 'Experimental',
             },
             {
               type: 'docSidebar',
               sidebarId: 'deprecatedApiSidebar',
-              label: '🔴 Deprecated APIs',
+              label: 'Deprecated',
             },
           ],
         },
@@ -146,9 +145,12 @@ const config: Config = {
           position: 'right',
         },
         {
-          href: '/versions.html',
-          label: 'Versions',
+          type: 'docsVersionDropdown',
           position: 'right',
+          dropdownActiveClassDisabled: true,
+          dropdownItemsAfter: [
+            { to: '/versions.html', label: 'All versions' },
+          ],
         },
       ],
     },
@@ -222,7 +224,8 @@ const config: Config = {
     },
     docs: {
       sidebar: {
-        hideable: true,
+        hideable: false,
+        autoCollapseCategories: true,
       },
     },
     // Language tabs for API documentation

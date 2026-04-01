@@ -1,0 +1,50 @@
+---
+title: API Reference
+---
+
+import ApiSurfaceGrid from '@site/src/components/ApiSurfaceGrid';
+
+# API Reference
+
+Llama Stack implements the OpenAI API and organizes endpoints by stability level. Use any OpenAI-compatible client to access these APIs.
+
+<ApiSurfaceGrid
+  sections={[
+    {
+      title: 'Stable APIs',
+      tone: 'stable',
+      items: [
+        { title: 'Inference', endpoint: '/v1/chat/completions, /v1/completions, /v1/embeddings', href: '/docs/api/inference', blurb: 'Chat completions, text completions, and embeddings' },
+        { title: 'Models', endpoint: '/v1/models', href: '/docs/api/models', blurb: 'Model listing and management' },
+        { title: 'Files', endpoint: '/v1/files', href: '/docs/api/files', blurb: 'File upload and management' },
+        { title: 'Vector IO', endpoint: '/v1/vector_stores', href: '/docs/api/vector-io', blurb: 'Document storage and semantic search' },
+        { title: 'Batches', endpoint: '/v1/batches', href: '/docs/api/batches', blurb: 'Offline batch processing' },
+        { title: 'Safety', endpoint: '/v1/moderations', href: '/docs/api/safety', blurb: 'Content safety via Llama Guard' },
+        { title: 'Conversations', endpoint: '/v1/conversations', href: '/docs/api/conversations', blurb: 'Conversation state management' },
+        { title: 'Prompts', endpoint: '/v1/prompts', href: '/docs/api/prompts', blurb: 'Prompt templates and versioning' },
+        { title: 'Scoring', endpoint: '/v1/scoring', href: '/docs/api/scoring', blurb: 'Scoring functions for evaluation' },
+      ],
+    },
+    {
+      title: 'Experimental APIs',
+      tone: 'experimental',
+      items: [
+        { title: 'Eval', endpoint: 'v1alpha', href: '/docs/api-experimental/eval', blurb: 'Evaluation pipelines and benchmark execution' },
+        { title: 'Benchmarks', endpoint: 'v1alpha', href: '/docs/api-experimental/benchmarks', blurb: 'Benchmark registration and management' },
+        { title: 'Datasets', endpoint: 'v1alpha', href: '/docs/api-experimental/datasets', blurb: 'Dataset management for eval workflows' },
+        { title: 'Dataset IO', endpoint: 'v1alpha', href: '/docs/api-experimental/dataset-io', blurb: 'Dataset read/write operations' },
+      ],
+    },
+    {
+      title: 'Deprecated APIs',
+      tone: 'deprecated',
+      items: [
+        { title: 'Benchmarks', endpoint: 'deprecated', href: '/docs/api-deprecated/benchmarks', blurb: 'Legacy benchmark endpoints' },
+        { title: 'Datasets', endpoint: 'deprecated', href: '/docs/api-deprecated/datasets', blurb: 'Legacy dataset endpoints' },
+        { title: 'Shields', endpoint: 'deprecated', href: '/docs/api-deprecated/shields', blurb: 'Legacy shield endpoints' },
+      ],
+    },
+  ]}
+/>
+
+These APIs follow semantic versioning and maintain backward compatibility within major versions.
