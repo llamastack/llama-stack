@@ -682,3 +682,14 @@ footer.row .col {
 [data-theme='dark'] [class*='yearGroupHeading'] {
   border-bottom-color: rgba(255, 255, 255, 0.06);
 }
+
+/* Hide emoji icons on API doc category cards */
+h2[class*="cardTitle"] {
+  overflow: hidden;
+}
+
+h2[class*="cardTitle"] a {
+  display: block;
+  text-indent: -1.5em;
+  padding-left: 1.5em;
+}

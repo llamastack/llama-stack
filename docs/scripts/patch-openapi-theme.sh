@@ -1,4 +1,10 @@
 #!/bin/bash
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the terms described in the LICENSE file in
+# the root directory of this source tree.
+
 # Patch docusaurus-theme-openapi-docs to hide auto-generated code variants
 # (http.client, requests) when x-codeSamples are provided in the OpenAPI spec.
 # Only the OpenAI SDK examples will show for endpoints that have x-codeSamples.
