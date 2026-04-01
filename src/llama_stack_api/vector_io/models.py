@@ -172,7 +172,7 @@ class VectorStoreObject(BaseModel):
     object: Literal["vector_store"] = "vector_store"
     created_at: int
     name: str
-    usage_bytes: int
+    usage_bytes: int = 0
     file_counts: VectorStoreFileCounts
     status: VectorStoreStatus
     expires_after: VectorStoreExpirationAfter | None = None
@@ -625,7 +625,7 @@ class VectorStoreFileObject(BaseModel):
     created_at: int
     last_error: VectorStoreFileLastError | None = None
     status: VectorStoreFileStatus
-    usage_bytes: int
+    usage_bytes: int = 0
     vector_store_id: str
 
     @field_validator("attributes", mode="before")
