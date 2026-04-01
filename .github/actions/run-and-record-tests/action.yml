@@ -56,7 +56,6 @@ runs:
         INPUT_SUITE: ${{ inputs.suite }}
         INPUT_SUBDIRS: ${{ inputs.subdirs }}
         INPUT_PATTERN: ${{ inputs.pattern }}
-        HF_HUB_OFFLINE: "1"
       run: |
         SCRIPT_ARGS="--stack-config ${INPUT_STACK_CONFIG} --inference-mode ${INPUT_INFERENCE_MODE}"
 
