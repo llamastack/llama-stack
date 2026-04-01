@@ -111,6 +111,7 @@ class BuiltinResponsesImpl(Responses):
             files_api=self.files_api,
             vector_stores_config=self.config.vector_stores_config,
             connectors_api=self.connectors_api,
+            compaction_config=self.config.compaction_config,
         )
         await self.openai_responses_impl.initialize()
 

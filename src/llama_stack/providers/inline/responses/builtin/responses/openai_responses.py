@@ -126,6 +126,7 @@ class OpenAIResponsesImpl:
         files_api: Files,
         connectors_api: Connectors,
         vector_stores_config=None,
+        compaction_config=None,
     ):
         self.inference_api = inference_api
         self.tool_groups_api = tool_groups_api
@@ -143,6 +144,10 @@ class OpenAIResponsesImpl:
         self.prompts_api = prompts_api
         self.files_api = files_api
         self.connectors_api = connectors_api
+
+        from llama_stack.providers.inline.responses.builtin.config import CompactionConfig
+
+        self.compaction_config = compaction_config or CompactionConfig()
         self._background_queue: asyncio.Queue[_BackgroundWorkItem] = asyncio.Queue(maxsize=BACKGROUND_QUEUE_MAX_SIZE)
         self._background_worker_tasks: set[asyncio.Task] = set()
         self._background_response_tasks: dict[str, asyncio.Task] = {}
@@ -1254,24 +1259,17 @@ class OpenAIResponsesImpl:
         else:
             messages = await convert_response_input_to_chat_messages(all_input, files_api=self.files_api)
 
-        # Add summarization prompt
-        summarization_prompt = (
-            "You are performing a CONTEXT CHECKPOINT COMPACTION. Create a concise handoff summary "
-            "of the conversation so far. Include:\n"
-            "- Current progress and key decisions made\n"
-            "- Important context, constraints, or user preferences\n"
-            "- What remains to be done (clear next steps)\n"
-            "- Any critical data, examples, or references needed to continue\n\n"
-            "Be concise, structured, and focused on helping seamlessly continue the work."
-        )
+        # Add summarization prompt (use config template, prepend instructions if provided)
+        summarization_prompt = self.compaction_config.summarization_prompt
         if instructions:
             summarization_prompt = f"{instructions}\n\n{summarization_prompt}"
 
         messages.append(OpenAIUserMessageParam(role="user", content=summarization_prompt))
 
-        # Call inference to generate the summary
+        # Call inference to generate the summary (use configured model or fall back to conversation model)
+        summarization_model = self.compaction_config.summarization_model or model
         params = OpenAIChatCompletionRequestWithExtraBody(
-            model=model,
+            model=summarization_model,
             messages=messages,
             stream=False,
             prompt_cache_key=prompt_cache_key,
@@ -1362,6 +1360,8 @@ class OpenAIResponsesImpl:
             threshold = (
                 entry.compact_threshold if hasattr(entry, "compact_threshold") else entry.get("compact_threshold")
             )
+            if threshold is None:
+                threshold = self.compaction_config.default_compact_threshold
             if threshold is None:
                 continue
 

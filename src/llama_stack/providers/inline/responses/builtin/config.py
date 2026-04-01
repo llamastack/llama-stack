@@ -11,6 +11,33 @@ from pydantic import BaseModel, Field
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.storage.datatypes import KVStoreReference, ResponsesStoreReference
 
+DEFAULT_SUMMARIZATION_PROMPT = (
+    "You are performing a CONTEXT CHECKPOINT COMPACTION. Create a concise handoff summary "
+    "of the conversation so far. Include:\n"
+    "- Current progress and key decisions made\n"
+    "- Important context, constraints, or user preferences\n"
+    "- What remains to be done (clear next steps)\n"
+    "- Any critical data, examples, or references needed to continue\n\n"
+    "Be concise, structured, and focused on helping seamlessly continue the work."
+)
+
+
+class CompactionConfig(BaseModel):
+    """Configuration for conversation compaction behavior and prompt templates."""
+
+    summarization_prompt: str = Field(
+        default=DEFAULT_SUMMARIZATION_PROMPT,
+        description="Prompt template used to instruct the model to summarize conversation history during compaction.",
+    )
+    summarization_model: str | None = Field(
+        default=None,
+        description="Model to use for generating compaction summaries. If not set, uses the same model as the conversation.",
+    )
+    default_compact_threshold: int | None = Field(
+        default=None,
+        description="Default token threshold for auto-compaction via context_management. If set, conversations exceeding this estimated token count will be automatically compacted.",
+    )
+
 
 class ResponsesPersistenceConfig(BaseModel):
     """Nested persistence configuration for the responses provider."""
@@ -27,6 +54,11 @@ class BuiltinResponsesImplConfig(BaseModel):
     vector_stores_config: VectorStoresConfig | None = Field(
         default=None,
         description="Configuration for vector store prompt templates and behavior",
+    )
+
+    compaction_config: CompactionConfig = Field(
+        default_factory=CompactionConfig,
+        description="Configuration for conversation compaction behavior and prompt templates",
     )
 
     @classmethod
