@@ -19,7 +19,13 @@ Sub-module imports (e.g., from llama_stack_api.responses import Responses) are N
 and considered a code smell. All exported symbols are explicitly listed in __all__.
 """
 
-__version__ = "0.4.0.dev0"
+try:
+    from importlib.metadata import PackageNotFoundError
+    from importlib.metadata import version as _metadata_version
+
+    __version__ = _metadata_version("llama-stack-api")
+except PackageNotFoundError:
+    __version__ = "0.0.0.dev0"
 
 # Import submodules for those who need them
 from .schema_utils import (  # noqa: I001
