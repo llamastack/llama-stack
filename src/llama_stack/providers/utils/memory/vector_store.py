@@ -77,6 +77,19 @@ def _get_encoding(name: str) -> tiktoken.Encoding:
         ) from e
 
 
+def validate_tiktoken_encoding(name: str = "cl100k_base") -> None:
+    """Validate that the tiktoken encoding is available.
+
+    Call this during provider initialization so a misconfigured environment
+    fails fast with a clear operator-facing message to end users on their first vector store file operation.
+
+    Raises:
+        RuntimeError: if the encoding cannot be loaded (e.g. air-gapped env
+            without a pre-cached encoding file).
+    """
+    _get_encoding(name)
+
+
 # Constants for reranker types
 RERANKER_TYPE_RRF = "rrf"
 RERANKER_TYPE_WEIGHTED = "weighted"
