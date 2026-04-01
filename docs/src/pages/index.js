@@ -2,110 +2,51 @@ import React from 'react';
 import clsx from 'clsx';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import styles from './index.module.css';
 
-function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
+const FEATURES = [
+  { label: 'Chat Completions', path: '/v1/chat/completions', desc: 'Standard OpenAI-compatible chat and completion endpoints' },
+  { label: 'Responses API', path: '/v1/responses', desc: 'Server-side agentic orchestration with tool calling and MCP' },
+  { label: 'Embeddings', path: '/v1/embeddings', desc: 'Text embeddings from any provider' },
+  { label: 'Vector Stores', path: '/v1/vector_stores', desc: 'Managed document storage and semantic search' },
+  { label: 'Files & Batches', path: '/v1/files', desc: 'File upload, processing, and batch operations' },
+  { label: 'Models', path: '/v1/models', desc: 'Model discovery and management' },
+];
+
+const PROVIDERS = {
+  inference: ['Ollama', 'vLLM', 'AWS Bedrock', 'Azure OpenAI', 'OpenAI', 'Anthropic', 'Gemini', '15+ more'],
+  vector: ['PGVector', 'Qdrant', 'ChromaDB', 'Milvus', 'Weaviate', '4+ more'],
+  tools: ['MCP Servers', 'Web Search', 'File Search (RAG)', 'PDF / Docling'],
+};
+
+function Hero() {
   return (
-    <header className={clsx('hero hero--primary', styles.heroBanner)}>
+    <section className={styles.hero}>
+      <div className={styles.heroGlow} />
       <div className="container">
-        <div className={styles.heroContent}>
-          <h1 className={styles.heroTitle}>Build AI Applications with Llama Stack</h1>
-          <p className={styles.heroSubtitle}>
-            Unified APIs for Inference, RAG, Agents, Tools, and Safety
+        <div className={styles.heroInner}>
+          <div className={styles.badge}>OpenAI-Compatible API Server</div>
+          <h1 className={styles.title}>
+            Build AI apps with<br />
+            <span className={styles.gradient}>any model, anywhere</span>
+          </h1>
+          <p className={styles.subtitle}>
+            Drop-in replacement for the OpenAI API. Use any client, any framework,
+            any model. Swap providers without changing code.
           </p>
-          <div className={styles.buttons}>
-            <Link
-              className={clsx('button button--primary button--lg', styles.getStartedButton)}
-              to="/docs/getting_started/quickstart">
-              🚀 Get Started
-            </Link>
-            <Link
-              className={clsx('button button--primary button--lg', styles.apiButton)}
-              to="/docs/api/llama-stack-specification">
-              📚 API Reference
-            </Link>
-            <Link
-              className={clsx('button button--primary button--lg', styles.apiButton)}
-              to="/blog">
-              📝 Blogs
-            </Link>
+          <div className={styles.actions}>
+            <Link className={styles.primaryBtn} to="/docs/getting_started/quickstart">Get Started</Link>
+            <Link className={styles.secondaryBtn} to="/docs/api-openai">API Reference</Link>
+            <a className={styles.ghostBtn} href="https://github.com/llamastack/llama-stack" target="_blank" rel="noopener noreferrer">GitHub</a>
           </div>
-        </div>
-      </div>
-    </header>
-  );
-}
+          <div className={styles.codeBlock}>
+            <pre><code>{`from openai import OpenAI
 
-function QuickStart() {
-  return (
-    <section className={styles.quickStart}>
-      <div className="container">
-        <div className="row">
-          <div className="col col--6">
-            <h2 className={styles.sectionTitle}>Quick Start</h2>
-            <p className={styles.sectionDescription}>
-              Get up and running with Llama Stack in just a few commands. Build your first RAG application locally.
-            </p>
-            <div className={styles.codeBlock}>
-              <pre><code>{`# Install uv and start Ollama
-ollama run llama3.2:3b --keepalive 60m
-
-# Install server dependencies
-uv run --with llama-stack llama stack list-deps starter | xargs -L1 uv pip install
-
-# Run Llama Stack server
-OLLAMA_URL=http://localhost:11434/v1 uv run --with llama-stack llama stack run starter
-
-# Try the Python SDK
-from llama_stack_client import LlamaStackClient
-
-client = LlamaStackClient(
-  base_url="http://localhost:8321"
-)
-
+client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
 response = client.chat.completions.create(
-  model="Llama3.2-3B-Instruct",
-  messages=[{
-    "role": "user",
-    "content": "What is machine learning?"
-  }]
+    model="llama-3.3-70b",
+    messages=[{"role": "user", "content": "Hello"}],
 )`}</code></pre>
-            </div>
-          </div>
-          <div className="col col--6">
-            <h2 className={styles.sectionTitle}>Why Llama Stack?</h2>
-            <div className={styles.features}>
-              <div className={styles.feature}>
-                <div className={styles.featureIcon}>🔗</div>
-                <div>
-                  <h4>Unified APIs</h4>
-                  <p>One consistent interface for all your AI needs - inference, safety, agents, and more.</p>
-                </div>
-              </div>
-              <div className={styles.feature}>
-                <div className={styles.featureIcon}>🔄</div>
-                <div>
-                  <h4>Provider Flexibility</h4>
-                  <p>Swap between providers without code changes. Start local, deploy anywhere.</p>
-                </div>
-              </div>
-              <div className={styles.feature}>
-                <div className={styles.featureIcon}>🛡️</div>
-                <div>
-                  <h4>Production Ready</h4>
-                  <p>Built-in safety, monitoring, and evaluation tools for enterprise applications.</p>
-                </div>
-              </div>
-              <div className={styles.feature}>
-                <div className={styles.featureIcon}>📱</div>
-                <div>
-                  <h4>Multi-Platform</h4>
-                  <p>SDKs for Python, Node.js, iOS, Android, and REST APIs for any language.</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -113,92 +54,67 @@ response = client.chat.completions.create(
   );
 }
 
-function Ecosystem() {
+function Endpoints() {
   return (
-    <section className={styles.ecosystem}>
+    <section className={styles.endpoints}>
       <div className="container">
-        <div className="text--center">
-          <h2 className={styles.sectionTitle}>Llama Stack Ecosystem</h2>
-          <p className={styles.sectionDescription}>
-            Complete toolkit for building AI applications with Llama Stack
-          </p>
-        </div>
-
-        <div className="row margin-top--lg">
-          <div className="col col--4">
-            <div className={styles.ecosystemCard}>
-              <div className={styles.ecosystemIcon}>🛠️</div>
-              <h3>SDKs & Clients</h3>
-              <p>Official client libraries for multiple programming languages</p>
-              <div className={styles.linkGroup}>
-                <a href="https://github.com/llamastack/llama-stack-client-python" target="_blank" rel="noopener noreferrer">Python SDK</a>
-                <a href="https://github.com/llamastack/llama-stack-client-typescript" target="_blank" rel="noopener noreferrer">TypeScript SDK</a>
-                <a href="https://github.com/llamastack/llama-stack-client-kotlin" target="_blank" rel="noopener noreferrer">Kotlin SDK</a>
-                <a href="https://github.com/llamastack/llama-stack-client-swift" target="_blank" rel="noopener noreferrer">Swift SDK</a>
-                <a href="https://github.com/llamastack/llama-stack-client-go" target="_blank" rel="noopener noreferrer">Go SDK</a>
-              </div>
+        <div className={styles.sectionHead}><h2>OpenAI-compatible endpoints</h2><p>Use any OpenAI client library. Zero code changes.</p></div>
+        <div className={styles.grid}>
+          {FEATURES.map(f => (
+            <div key={f.path} className={styles.card}>
+              <code className={styles.path}>{f.path}</code>
+              <h3>{f.label}</h3>
+              <p>{f.desc}</p>
             </div>
-          </div>
-
-          <div className="col col--4">
-            <div className={styles.ecosystemCard}>
-              <div className={styles.ecosystemIcon}>🚀</div>
-              <h3>Example Applications</h3>
-              <p>Ready-to-run examples to jumpstart your AI projects</p>
-              <div className={styles.linkGroup}>
-                <a href="https://github.com/llamastack/llama-stack-apps" target="_blank" rel="noopener noreferrer">Browse Example Apps</a>
-              </div>
-            </div>
-          </div>
-
-          <div className="col col--4">
-            <div className={styles.ecosystemCard}>
-              <div className={styles.ecosystemIcon}>☸️</div>
-              <h3>Kubernetes Operator</h3>
-              <p>Deploy and manage Llama Stack on Kubernetes clusters</p>
-              <div className={styles.linkGroup}>
-                <a href="https://github.com/llamastack/llama-stack-k8s-operator" target="_blank" rel="noopener noreferrer">K8s Operator</a>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-function CommunityLinks() {
+function Architecture() {
+  return (
+    <section className={styles.arch}>
+      <div className="container">
+        <div className={styles.sectionHead}><h2>How it works</h2><p>One API surface, pluggable providers, deploy anywhere</p></div>
+        <div className={styles.archImg}><img src="/img/architecture-animated.svg" alt="Llama Stack Architecture" loading="lazy" /></div>
+      </div>
+    </section>
+  );
+}
+
+function ProviderSection() {
+  return (
+    <section className={styles.providers}>
+      <div className="container">
+        <div className={styles.sectionHead}><h2>Plug in any provider</h2><p>Develop locally with Ollama, deploy to production with vLLM or a managed service</p></div>
+        <div className={styles.providerCols}>
+          {Object.entries(PROVIDERS).map(([cat, items]) => (
+            <div key={cat} className={styles.providerCol}>
+              <h4>{cat === 'inference' ? 'Inference' : cat === 'vector' ? 'Vector Stores' : 'Tools'}</h4>
+              <div className={styles.tags}>{items.map(n => <span key={n} className={styles.tag}>{n}</span>)}</div>
+            </div>
+          ))}
+        </div>
+        <div className={styles.providerLink}><Link to="/docs/providers">See all providers</Link></div>
+      </div>
+    </section>
+  );
+}
+
+function Community() {
   return (
     <section className={styles.community}>
       <div className="container">
-        <div className={styles.communityContent}>
-          <h2 className={styles.sectionTitle}>Join the Community</h2>
-          <p className={styles.sectionDescription}>
-            Connect with developers building the future of AI applications
-          </p>
-          <div className={styles.communityLinks}>
-            <a
-              href="https://github.com/llamastack/llama-stack"
-              className={clsx('button button--outline button--lg', styles.communityButton)}
-              target="_blank"
-              rel="noopener noreferrer">
-              <span className={styles.communityIcon}>⭐</span>
-              Star on GitHub
-            </a>
-            <a
-              href="https://discord.gg/llama-stack"
-              className={clsx('button button--outline button--lg', styles.communityButton)}
-              target="_blank"
-              rel="noopener noreferrer">
-              <span className={styles.communityIcon}>💬</span>
-              Join Discord
-            </a>
-            <Link
-              to="/docs/"
-              className={clsx('button button--outline button--lg', styles.communityButton)}>
-              <span className={styles.communityIcon}>📚</span>
-              Read Docs
-            </Link>
+        <div className={styles.communityInner}>
+          <h2>Open source. Community driven.</h2>
+          <p>Join thousands of developers building with Llama Stack</p>
+          <div className={styles.links}>
+            <a href="https://github.com/llamastack/llama-stack" className={styles.linkCard} target="_blank" rel="noopener noreferrer"><strong>GitHub</strong><span>Star & contribute</span></a>
+            <a href="https://discord.gg/llama-stack" className={styles.linkCard} target="_blank" rel="noopener noreferrer"><strong>Discord</strong><span>Chat with the community</span></a>
+            <Link to="/docs/" className={styles.linkCard}><strong>Documentation</strong><span>Read the docs</span></Link>
+            <Link to="/blog" className={styles.linkCard}><strong>Blog</strong><span>Latest updates</span></Link>
           </div>
         </div>
       </div>
@@ -207,16 +123,14 @@ function CommunityLinks() {
 }
 
 export default function Home() {
-  const {siteConfig} = useDocusaurusContext();
   return (
-    <Layout
-      title="Build AI Applications"
-      description="The open-source framework for building generative AI applications with unified APIs for Inference, RAG, Agents, Tools, Safety, and Evals.">
-      <HomepageHeader />
+    <Layout title="OpenAI-Compatible AI Server" description="Drop-in replacement for the OpenAI API. Any model, any infrastructure.">
       <main>
-        <QuickStart />
-        <Ecosystem />
-        <CommunityLinks />
+        <Hero />
+        <Endpoints />
+        <Architecture />
+        <ProviderSection />
+        <Community />
       </main>
     </Layout>
   );

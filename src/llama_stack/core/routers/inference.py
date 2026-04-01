@@ -18,6 +18,10 @@ from llama_stack.core.access_control.access_control import is_action_allowed
 from llama_stack.core.datatypes import ModelWithOwner
 from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.log import get_logger
+from llama_stack.providers.inline.responses.builtin.responses.types import (
+    OpenAIChatCompletionChunkWithReasoning,
+    OpenAIChatCompletionWithReasoning,
+)
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
 from llama_stack.telemetry.inference_metrics import (
     create_inference_metric_attributes,
@@ -266,6 +270,23 @@ class InferenceRouter(Inference):
             asyncio.create_task(self.store.store_chat_completion(response, params.messages))
 
         return response
+
+    async def openai_chat_completions_with_reasoning(
+        self,
+        params: OpenAIChatCompletionRequestWithExtraBody,
+    ) -> OpenAIChatCompletionWithReasoning | AsyncIterator[OpenAIChatCompletionChunkWithReasoning]:
+        """Called by the Responses layer when a user requests reasoning.
+
+        Routes to the provider's reasoning-aware CC implementation, which
+        handles mapping reasoning fields to/from the provider's format.
+        If the provider doesn't support reasoning, raises an error.
+        """
+        provider, provider_resource_id = await self._get_model_provider(params.model, ModelType.llm)
+        params.model = provider_resource_id
+        # Not all providers implement openai_chat_completions_with_reasoning.
+        # the Responses layer catches them and falls back to regular CC
+        # with a warning.
+        return await provider.openai_chat_completions_with_reasoning(params)
 
     async def openai_embeddings(
         self,

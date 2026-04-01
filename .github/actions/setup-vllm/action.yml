@@ -16,6 +16,7 @@ runs:
           --port 8000 \
           --enable-auto-tool-choice \
           --tool-call-parser hermes \
+          --reasoning-parser deepseek_r1 \
           --model /root/.cache/Qwen3-0.6B \
           --served-model-name Qwen/Qwen3-0.6B \
           --max-model-len 8192

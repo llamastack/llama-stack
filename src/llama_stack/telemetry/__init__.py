@@ -17,7 +17,7 @@ from llama_stack.log import get_logger
 logger = get_logger(__name__, category="telemetry")
 
 
-def setup_telemetry():
+def setup_telemetry() -> None:
     """Initialize OpenTelemetry metrics exporter if configured via environment.
 
     This function checks for OTEL_EXPORTER_OTLP_ENDPOINT and configures the

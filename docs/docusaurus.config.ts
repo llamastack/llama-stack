@@ -69,7 +69,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: require.resolve("./sidebars.ts"),
-          disableVersioning: true,
+          // disableVersioning: true,
           docItemComponent: "@theme/ApiItem", // Derived from docusaurus-theme-openapi
           remarkPlugins: [
             [require('remark-code-import'), {
@@ -201,7 +201,13 @@ const config: Config = {
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Meta Platforms, Inc. Built with Docusaurus.`,
     },
+    colorMode: {
+      defaultMode: 'dark',
+      respectPrefersColorScheme: true,
+    },
     prism: {
+      theme: require('prism-react-renderer').themes.oneDark,
+      darkTheme: require('prism-react-renderer').themes.oneDark,
       additionalLanguages: [
         'ruby',
         'csharp',

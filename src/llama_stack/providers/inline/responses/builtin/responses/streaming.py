@@ -85,6 +85,8 @@ from llama_stack_api import (
     OpenAIResponseOutputMessageFunctionToolCall,
     OpenAIResponseOutputMessageMCPCall,
     OpenAIResponseOutputMessageMCPListTools,
+    OpenAIResponseOutputMessageReasoningContent,
+    OpenAIResponseOutputMessageReasoningItem,
     OpenAIResponseOutputMessageWebSearchToolCall,
     OpenAIResponsePrompt,
     OpenAIResponseReasoning,
@@ -102,7 +104,12 @@ from llama_stack_api import (
 )
 from llama_stack_api.inference import ServiceTier
 
-from .types import ChatCompletionContext, ChatCompletionResult
+from .types import (
+    AssistantMessageWithReasoning,
+    ChatCompletionContext,
+    ChatCompletionResult,
+    OpenAIChatCompletionChunkWithReasoning,
+)
 from .utils import (
     convert_chat_choice_to_response_message,
     convert_mcp_tool_choice,
@@ -535,7 +542,23 @@ class StreamingResponseOrchestrator:
                     presence_penalty=self.presence_penalty,
                     **(self.extra_body or {}),
                 )
-                completion_result = await self.inference_api.openai_chat_completion(params)
+                # Use reasoning-aware method when reasoning is explicitly requested
+                if self.reasoning and self.reasoning.effort and self.reasoning.effort != "none":
+                    try:
+                        # Pass a copy — the router mutates params.model (strips provider prefix).
+                        # Keep original params intact in-case of fallback to regular CC.
+                        # NOTE : Is a deep-copy necessary ?
+                        completion_result = await self.inference_api.openai_chat_completions_with_reasoning(
+                            params.model_copy()
+                        )
+                    except (NotImplementedError, AttributeError, ValueError):
+                        logger.critical(
+                            "Provider does not support reasoning in chat completions. "
+                            "Falling back to regular chat completion."
+                        )
+                        completion_result = await self.inference_api.openai_chat_completion(params)
+                else:
+                    completion_result = await self.inference_api.openai_chat_completion(params)
 
                 # Process streaming chunks and build complete response
                 completion_result_data = None
@@ -544,7 +567,6 @@ class StreamingResponseOrchestrator:
                         completion_result_data = stream_event_or_result
                     else:
                         yield stream_event_or_result
-
                 # If violation detected, skip the rest of processing since we already sent refusal
                 if self.violation_detected:
                     return
@@ -563,16 +585,13 @@ class StreamingResponseOrchestrator:
                     # Update service_tier with actual value from provider response
                     # This is especially important when "auto" was used as input
                     self.service_tier = completion_result_data.service_tier
-
                 current_response = self._build_chat_completion(completion_result_data)
-
                 (
                     function_tool_calls,
                     non_function_tool_calls,
                     approvals,
                     next_turn_messages,
-                ) = self._separate_tool_calls(current_response, messages)
-
+                ) = self._separate_tool_calls(current_response, messages, completion_result_data.reasoning_content)
                 # add any approval requests required
                 for tool_call in approvals:
                     async for evt in self._add_mcp_approval_request(
@@ -580,7 +599,23 @@ class StreamingResponseOrchestrator:
                     ):
                         yield evt
 
-                # Handle choices with no tool calls
+                # Reasoning is independent of the response type — whether the assistant
+                # response is a tool call or a content message, reasoning (if present)
+                # is added to output_messages before processing choices.
+                # The reasoning_content field is populated by the provider via
+                # openai_chat_completions_with_reasoning, which maps provider-specific
+                # reasoning fields to the standard reasoning_content attribute.
+                if completion_result_data.reasoning_content:
+                    reasoning_item = OpenAIResponseOutputMessageReasoningItem(
+                        id=f"rs_{uuid.uuid4().hex}",
+                        summary=[],
+                        content=[
+                            OpenAIResponseOutputMessageReasoningContent(text=completion_result_data.reasoning_content)
+                        ],
+                        status="completed",
+                    )
+                    output_messages.append(reasoning_item)
+
                 for choice in current_response.choices:
                     has_tool_calls = choice.message.tool_calls and self.ctx.response_tools
                     if not has_tool_calls:
@@ -591,7 +626,6 @@ class StreamingResponseOrchestrator:
                                 message_id=completion_result_data.message_item_id,
                             )
                         )
-
                 # Execute tool calls and coordinate results
                 async for stream_event in self._coordinate_tool_execution(
                     function_tool_calls,
@@ -601,9 +635,7 @@ class StreamingResponseOrchestrator:
                     next_turn_messages,
                 ):
                     yield stream_event
-
                 messages = next_turn_messages
-
                 if not function_tool_calls and not non_function_tool_calls:
                     break
 
@@ -680,7 +712,9 @@ class StreamingResponseOrchestrator:
                 response=final_response, sequence_number=self.sequence_number
             )
 
-    def _separate_tool_calls(self, current_response, messages) -> tuple[list, list, list, list]:
+    def _separate_tool_calls(
+        self, current_response, messages, reasoning_content: str | None = None
+    ) -> tuple[list, list, list, list]:
         """Separate tool calls into function and non-function categories."""
         function_tool_calls = []
         non_function_tool_calls = []
@@ -688,13 +722,22 @@ class StreamingResponseOrchestrator:
         next_turn_messages = messages.copy()
 
         for choice in current_response.choices:
-            # Convert response message to input message format for multi-turn
-            next_turn_messages.append(
-                OpenAIAssistantMessageParam(
+            # Convert response message to input message format for multi-turn.
+            # Use AssistantMessageWithReasoning if reasoning was present in the
+            # CC response. Providers will be check for this AssistantMessageWithReasoning
+            # message
+            if reasoning_content:
+                message = AssistantMessageWithReasoning(
+                    content=choice.message.content,
+                    tool_calls=choice.message.tool_calls,
+                    reasoning_content=reasoning_content,
+                )
+            else:
+                message = OpenAIAssistantMessageParam(  # type: ignore[assignment]
                     content=choice.message.content,
                     tool_calls=choice.message.tool_calls,
                 )
-            )
+            next_turn_messages.append(message)
             logger.debug("Choice message content", content=choice.message.content)
             logger.debug("Choice message tool_calls", tool_calls=choice.message.tool_calls)
 
@@ -950,7 +993,16 @@ class StreamingResponseOrchestrator:
         reasoning_text_accumulated = []
         refusal_text_accumulated = []
 
-        async for chunk in completion_result:
+        async for raw_chunk in completion_result:
+            # Providers returning OpenAIChatCompletionChunkWithReasoning wrap
+            # the chunk with a typed reasoning_content field. Unwrap here.
+            if isinstance(raw_chunk, OpenAIChatCompletionChunkWithReasoning):
+                chunk = raw_chunk.chunk
+                reasoning_content = raw_chunk.reasoning_content
+            else:
+                chunk = raw_chunk
+                reasoning_content = None
+
             chat_response_id = chunk.id
             chunk_created = chunk.created
             chunk_model = chunk.model
@@ -1026,10 +1078,12 @@ class StreamingResponseOrchestrator:
                 if chunk_choice.finish_reason:
                     chunk_finish_reason = chunk_choice.finish_reason
 
-                # Handle reasoning content if present (non-standard field for o1/o3 models)
-                if hasattr(chunk_choice.delta, "reasoning") and chunk_choice.delta.reasoning:
+                # Handle reasoning content if present.
+                # reasoning_content comes from the typed wrapper
+                # (OpenAIChatCompletionChunkWithReasoning) unwrapped above.
+                if reasoning_content:
                     async for event in self._handle_reasoning_content_chunk(
-                        reasoning_content=chunk_choice.delta.reasoning,
+                        reasoning_content=reasoning_content,
                         reasoning_part_emitted=reasoning_part_emitted,
                         reasoning_content_index=reasoning_content_index,
                         message_item_id=message_item_id,
@@ -1041,7 +1095,7 @@ class StreamingResponseOrchestrator:
                         else:
                             yield event
                     reasoning_part_emitted = True
-                    reasoning_text_accumulated.append(chunk_choice.delta.reasoning)
+                    reasoning_text_accumulated.append(reasoning_content)
 
                 # Handle refusal content if present
                 if chunk_choice.delta.refusal:
@@ -1057,9 +1111,12 @@ class StreamingResponseOrchestrator:
                     refusal_text_accumulated.append(chunk_choice.delta.refusal)
 
                 # Aggregate tool call arguments across chunks
+                # Note: The type: ignore comments below suppress pre-existing mypy
+                # issues that surfaced when we added the
+                # chunk: OpenAIChatCompletionChunk annotation above.
                 if chunk_choice.delta.tool_calls:
                     for tool_call in chunk_choice.delta.tool_calls:
-                        response_tool_call = chat_response_tool_calls.get(tool_call.index, None)
+                        response_tool_call = chat_response_tool_calls.get(tool_call.index, None)  # type: ignore[arg-type]
                         # Create new tool call entry if this is the first chunk for this index
                         is_new_tool_call = response_tool_call is None
                         if is_new_tool_call:
@@ -1069,16 +1126,16 @@ class StreamingResponseOrchestrator:
                             if tool_call_dict.get("function") and tool_call_dict["function"].get("arguments") is None:
                                 tool_call_dict["function"]["arguments"] = "{}"
                             response_tool_call = OpenAIChatCompletionToolCall(**tool_call_dict)
-                            chat_response_tool_calls[tool_call.index] = response_tool_call
+                            chat_response_tool_calls[tool_call.index] = response_tool_call  # type: ignore[index]
 
                             # Create item ID for this tool call for streaming events
                             tool_call_item_id = f"fc_{uuid.uuid4()}"
-                            tool_call_item_ids[tool_call.index] = tool_call_item_id
+                            tool_call_item_ids[tool_call.index] = tool_call_item_id  # type: ignore[index]
 
                             # Emit output_item.added event for the new function call
                             self.sequence_number += 1
-                            is_mcp_tool = tool_call.function.name and tool_call.function.name in self.mcp_tool_to_server
-                            if not is_mcp_tool and tool_call.function.name not in _SERVER_SIDE_BUILTIN_TOOL_NAMES:
+                            is_mcp_tool = tool_call.function.name and tool_call.function.name in self.mcp_tool_to_server  # type: ignore[union-attr]
+                            if not is_mcp_tool and tool_call.function.name not in _SERVER_SIDE_BUILTIN_TOOL_NAMES:  # type: ignore[union-attr]
                                 # for MCP tools (and even other non-function tools) we emit an output message item later
                                 function_call_item = OpenAIResponseOutputMessageFunctionToolCall(
                                     arguments="",  # Will be filled incrementally via delta events
@@ -1096,7 +1153,7 @@ class StreamingResponseOrchestrator:
 
                         # Stream tool call arguments as they arrive (differentiate between MCP and function calls)
                         if tool_call.function and tool_call.function.arguments:
-                            tool_call_item_id = tool_call_item_ids[tool_call.index]
+                            tool_call_item_id = tool_call_item_ids[tool_call.index]  # type: ignore[index]
                             self.sequence_number += 1
 
                             # Check if this is an MCP tool call
@@ -1249,6 +1306,7 @@ class StreamingResponseOrchestrator:
             content_part_emitted=content_part_emitted,
             logprobs=chat_response_logprobs if chat_response_logprobs else None,
             service_tier=chunk_service_tier,
+            reasoning_content="".join(reasoning_text_accumulated) if reasoning_text_accumulated else None,
         )
 
     def _build_chat_completion(self, result: ChatCompletionResult) -> OpenAIChatCompletion:
