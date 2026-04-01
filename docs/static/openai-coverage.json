@@ -128,10 +128,10 @@
       ]
     },
     "conformance": {
-      "score": 89.7,
-      "issues": 226,
+      "score": 89.5,
+      "issues": 235,
       "missing_properties": 128,
-      "total_problems": 354,
+      "total_problems": 363,
       "total_properties": 3441
     }
   },
@@ -1941,8 +1941,8 @@
       ]
     },
     "Vector stores": {
-      "score": 81.9,
-      "issues": 44,
+      "score": 79.0,
+      "issues": 53,
       "missing_properties": 12,
       "total_properties": 310,
       "endpoints": [
@@ -1974,10 +1974,16 @@
                   "details": [
                     "Type removed: ['object']"
                   ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.usage_bytes",
+                  "details": [
+                    "Default changed: None -> 0"
+                  ]
                 }
               ],
               "missing_count": 2,
-              "issues_count": 3
+              "issues_count": 4
             },
             {
               "method": "POST",
@@ -2038,10 +2044,16 @@
                   "details": [
                     "Type removed: ['object']"
                   ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.usage_bytes",
+                  "details": [
+                    "Default changed: None -> 0"
+                  ]
                 }
               ],
               "missing_count": 4,
-              "issues_count": 7
+              "issues_count": 8
             }
           ]
         },
@@ -2074,10 +2086,16 @@
                   "details": [
                     "Type removed: ['object']"
                   ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.usage_bytes",
+                  "details": [
+                    "Default changed: None -> 0"
+                  ]
                 }
               ],
               "missing_count": 2,
-              "issues_count": 2
+              "issues_count": 3
             },
             {
               "method": "POST",
@@ -2112,10 +2130,16 @@
                   "details": [
                     "Type removed: ['object']"
                   ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.usage_bytes",
+                  "details": [
+                    "Default changed: None -> 0"
+                  ]
                 }
               ],
               "missing_count": 2,
-              "issues_count": 4
+              "issues_count": 5
             }
           ]
         },
@@ -2236,10 +2260,16 @@
                     "Union variants added: 1",
                     "Union variants removed: 1"
                   ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.usage_bytes",
+                  "details": [
+                    "Default changed: None -> 0"
+                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 3
+              "issues_count": 4
             }
           ]
         },
@@ -2270,10 +2300,16 @@
                     "Union variants added: 1",
                     "Union variants removed: 1"
                   ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.usage_bytes",
+                  "details": [
+                    "Default changed: None -> 0"
+                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 3
+              "issues_count": 4
             },
             {
               "method": "POST",
@@ -2300,10 +2336,16 @@
                     "Union variants added: 1",
                     "Union variants removed: 1"
                   ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.usage_bytes",
+                  "details": [
+                    "Default changed: None -> 0"
+                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 3
+              "issues_count": 4
             }
           ]
         },
@@ -2335,10 +2377,16 @@
                     "Union variants added: 1",
                     "Union variants removed: 1"
                   ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.usage_bytes",
+                  "details": [
+                    "Default changed: None -> 0"
+                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 2
+              "issues_count": 3
             },
             {
               "method": "POST",
@@ -2366,10 +2414,16 @@
                     "Union variants added: 1",
                     "Union variants removed: 1"
                   ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.usage_bytes",
+                  "details": [
+                    "Default changed: None -> 0"
+                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 3
+              "issues_count": 4
             }
           ]
         },

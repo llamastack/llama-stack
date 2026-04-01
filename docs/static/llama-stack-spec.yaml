@@ -8874,6 +8874,7 @@ components:
         usage_bytes:
           type: integer
           title: Usage Bytes
+          default: 0
         file_counts:
           $ref: '#/components/schemas/VectorStoreFileCounts'
         status:
@@ -8906,7 +8907,6 @@ components:
       - id
       - created_at
       - name
-      - usage_bytes
       - file_counts
       - status
       title: VectorStoreObject
@@ -9199,6 +9199,7 @@ components:
         usage_bytes:
           type: integer
           title: Usage Bytes
+          default: 0
         vector_store_id:
           type: string
           title: Vector Store Id
@@ -9207,7 +9208,6 @@ components:
       - chunking_strategy
       - created_at
       - status
-      - usage_bytes
       - vector_store_id
       title: VectorStoreFileObject
       description: OpenAI Vector Store File object.
