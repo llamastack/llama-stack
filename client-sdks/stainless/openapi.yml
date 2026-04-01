@@ -9923,6 +9923,7 @@ components:
         name:
           type: string
           title: Name
+          default: ''
         usage_bytes:
           type: integer
           title: Usage Bytes
@@ -9958,7 +9959,6 @@ components:
       required:
       - id
       - created_at
-      - name
       - file_counts
       - status
       title: VectorStoreObject
