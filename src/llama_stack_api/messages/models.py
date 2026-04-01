@@ -16,7 +16,6 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # -- Content blocks --
 
 
@@ -72,7 +71,11 @@ class AnthropicThinkingBlock(BaseModel):
 
 
 AnthropicContentBlock = Annotated[
-    AnthropicTextBlock | AnthropicImageBlock | AnthropicToolUseBlock | AnthropicToolResultBlock | AnthropicThinkingBlock,
+    AnthropicTextBlock
+    | AnthropicImageBlock
+    | AnthropicToolUseBlock
+    | AnthropicToolResultBlock
+    | AnthropicThinkingBlock,
     Field(discriminator="type"),
 ]
 

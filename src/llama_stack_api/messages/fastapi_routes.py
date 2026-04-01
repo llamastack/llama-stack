@@ -153,7 +153,7 @@ def create_router(impl: Messages) -> APIRouter:
             return _anthropic_error_response(400, str(e))
         except HTTPException as e:
             return _anthropic_error_response(e.status_code, e.detail)
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to create message")
             return _anthropic_error_response(500, "Internal server error")
 
@@ -187,7 +187,7 @@ def create_router(impl: Messages) -> APIRouter:
             result = await impl.count_message_tokens(params)
         except NotImplementedError as e:
             return _anthropic_error_response(501, str(e))
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to count message tokens")
             return _anthropic_error_response(500, "Internal server error")
 

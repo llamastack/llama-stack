@@ -144,10 +144,10 @@ class BuiltinMessagesImpl(Messages):
                 # Ollama's /v1/messages sits at the root, not under /v1
                 if base_url.endswith("/v1"):
                     base_url = base_url[:-3]
-                logger.info(f"Using native /v1/messages passthrough for model {model} via {base_url}")
+                logger.info("Using native /v1/messages passthrough", model=model, base_url=base_url)
                 return base_url
         except Exception:
-            logger.debug(f"Failed to resolve passthrough for model {model}, falling back to translation")
+            logger.debug("Failed to resolve passthrough, falling back to translation", model=model)
 
         return None
 
@@ -248,9 +248,7 @@ class BuiltinMessagesImpl(Messages):
 
     # -- Request translation --
 
-    def _anthropic_to_openai(
-        self, request: AnthropicCreateMessageRequest
-    ) -> OpenAIChatCompletionRequestWithExtraBody:
+    def _anthropic_to_openai(self, request: AnthropicCreateMessageRequest) -> OpenAIChatCompletionRequestWithExtraBody:
         messages = self._convert_messages_to_openai(request.system, request.messages)
         tools = self._convert_tools_to_openai(request.tools) if request.tools else None
         tool_choice = self._convert_tool_choice_to_openai(request.tool_choice) if request.tool_choice else None
@@ -324,20 +322,24 @@ class BuiltinMessagesImpl(Messages):
                 content = block.content
                 if isinstance(content, list):
                     content = "\n".join(b.text for b in content if isinstance(b, AnthropicTextBlock))
-                result.append({
-                    "role": "tool",
-                    "tool_call_id": block.tool_use_id,
-                    "content": content,
-                })
+                result.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": block.tool_use_id,
+                        "content": content,
+                    }
+                )
             elif isinstance(block, AnthropicTextBlock):
                 text_parts.append({"type": "text", "text": block.text})
             elif isinstance(block, AnthropicImageBlock):
-                text_parts.append({
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:{block.source.media_type};base64,{block.source.data}",
-                    },
-                })
+                text_parts.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{block.source.media_type};base64,{block.source.data}",
+                        },
+                    }
+                )
 
         if text_parts:
             result.append({"role": "user", "content": text_parts if len(text_parts) > 1 else text_parts[0]})
@@ -353,14 +355,16 @@ class BuiltinMessagesImpl(Messages):
             if isinstance(block, AnthropicTextBlock):
                 text_parts.append(block.text)
             elif isinstance(block, AnthropicToolUseBlock):
-                tool_calls.append({
-                    "id": block.id,
-                    "type": "function",
-                    "function": {
-                        "name": block.name,
-                        "arguments": json.dumps(block.input),
-                    },
-                })
+                tool_calls.append(
+                    {
+                        "id": block.id,
+                        "type": "function",
+                        "function": {
+                            "name": block.name,
+                            "arguments": json.dumps(block.input),
+                        },
+                    }
+                )
 
         msg: dict[str, Any] = {"role": "assistant"}
         if text_parts:
@@ -405,9 +409,7 @@ class BuiltinMessagesImpl(Messages):
 
     # -- Response translation --
 
-    def _openai_to_anthropic(
-        self, response: OpenAIChatCompletion, request_model: str
-    ) -> AnthropicMessageResponse:
+    def _openai_to_anthropic(self, response: OpenAIChatCompletion, request_model: str) -> AnthropicMessageResponse:
         content: list[AnthropicContentBlock] = []
 
         if response.choices:
@@ -426,11 +428,13 @@ class BuiltinMessagesImpl(Messages):
                     except json.JSONDecodeError:
                         tool_input = {}
 
-                    content.append(AnthropicToolUseBlock(
-                        id=tc.id or f"toolu_{uuid.uuid4().hex[:24]}",
-                        name=tc.function.name or "",
-                        input=tool_input,
-                    ))
+                    content.append(
+                        AnthropicToolUseBlock(
+                            id=tc.id or f"toolu_{uuid.uuid4().hex[:24]}",
+                            name=tc.function.name or "",
+                            input=tool_input,
+                        )
+                    )
 
             finish_reason = choice.finish_reason or "stop"
             stop_reason = _FINISH_TO_STOP_REASON.get(finish_reason, "end_turn")
@@ -547,7 +551,7 @@ class BuiltinMessagesImpl(Messages):
         if in_text_block:
             yield ContentBlockStopEvent(index=content_block_index)
 
-        for tc_idx, block_idx in tool_call_index_to_block_index.items():
+        for _tc_idx, block_idx in tool_call_index_to_block_index.items():
             yield ContentBlockStopEvent(index=block_idx)
 
         # Final events

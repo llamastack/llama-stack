@@ -15,11 +15,8 @@ from llama_stack.providers.inline.messages.config import MessagesConfig
 from llama_stack.providers.inline.messages.impl import BuiltinMessagesImpl
 from llama_stack_api.messages.models import (
     AnthropicCreateMessageRequest,
-    AnthropicImageBlock,
-    AnthropicImageSource,
     AnthropicMessage,
     AnthropicTextBlock,
-    AnthropicThinkingConfig,
     AnthropicToolDef,
     AnthropicToolResultBlock,
     AnthropicToolUseBlock,
@@ -257,7 +254,6 @@ class TestResponseTranslation:
 
 
 class TestStreamingTranslation:
-    @pytest.mark.asyncio
     async def test_text_streaming(self, impl):
         chunks = []
 
@@ -293,7 +289,6 @@ class TestStreamingTranslation:
         assert events[6].delta.stop_reason == "end_turn"
         assert events[7].type == "message_stop"
 
-    @pytest.mark.asyncio
     async def test_tool_call_streaming(self, impl):
         chunks = []
 
