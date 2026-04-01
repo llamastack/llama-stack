@@ -1038,7 +1038,6 @@ class RerankRequest(BaseModel):
     )
 
 
-@json_schema_type
 class OpenAIChatCompletionWithReasoning(BaseModel):
     """Internal wrapper: a CC response with extracted reasoning content.
 
@@ -1052,7 +1051,6 @@ class OpenAIChatCompletionWithReasoning(BaseModel):
     reasoning_content: str | None = Field(None, description="Extracted reasoning content, if any.")
 
 
-@json_schema_type
 class OpenAIChatCompletionChunkWithReasoning(BaseModel):
     """Internal wrapper: a CC streaming chunk with extracted reasoning content.
 
