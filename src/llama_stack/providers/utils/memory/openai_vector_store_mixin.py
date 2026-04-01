@@ -952,7 +952,7 @@ class OpenAIVectorStoreMixin(ABC):
                     "Please ensure a file_processors provider is registered in your stack configuration."
                 )
 
-            logger.debug(f"Using FileProcessor API to process file {file_id}")
+            logger.debug("Using FileProcessor API to process file", file_id=file_id)
             pf_resp = await self.file_processor_api.process_file(
                 ProcessFileRequest(file_id=file_id, chunking_strategy=chunking_strategy)
             )
@@ -976,7 +976,7 @@ class OpenAIVectorStoreMixin(ABC):
                 )
                 chunks.append(enhanced_chunk)
 
-            logger.debug(f"FileProcessor generated {len(chunks)} chunks for file {file_id}")
+            logger.debug("FileProcessor generated chunks for file", chunk_count=len(chunks), file_id=file_id)
 
             if isinstance(chunking_strategy, VectorStoreChunkingStrategyContextual):
                 mime_type, _ = mimetypes.guess_type(file_response.filename)

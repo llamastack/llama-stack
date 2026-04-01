@@ -12,17 +12,43 @@ from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIV
 from llama_stack_api import (
     VectorStoreChunkingStrategyAuto,
 )
+from llama_stack_api.vector_io.models import OpenAIAttachFileRequest
+
+
+def _make_store_info():
+    """Build a minimal in-memory vector store dict matching the mixin's expectations."""
+    return {
+        "file_ids": [],
+        "file_counts": {"total": 0, "completed": 0, "cancelled": 0, "failed": 0, "in_progress": 0},
+        "metadata": {},
+    }
 
 
 class MockVectorStoreMixin(OpenAIVectorStoreMixin):
     """Mock implementation of OpenAIVectorStoreMixin for testing."""
 
-    def __init__(self, inference_api, files_api, file_processor_api=None):
-        self.inference_api = inference_api
-        self.files_api = files_api
-        self.file_processor_api = file_processor_api
-        self.vector_stores_config = MagicMock()
-        self.vector_stores_config.contextual_retrieval_params = MagicMock()
+    def __init__(self, inference_api, files_api, kvstore=None, file_processor_api=None):
+        super().__init__(
+            inference_api=inference_api,
+            files_api=files_api,
+            kvstore=kvstore,
+            file_processor_api=file_processor_api,
+        )
+
+    async def register_vector_store(self, vector_store):
+        pass
+
+    async def unregister_vector_store(self, vector_store_id):
+        pass
+
+    async def insert_chunks(self, request):
+        pass
+
+    async def query_chunks(self, request):
+        pass
+
+    async def delete_chunks(self, request):
+        pass
 
 
 class TestOpenAIVectorStoreMixin:
@@ -30,7 +56,6 @@ class TestOpenAIVectorStoreMixin:
 
     @pytest.fixture
     def mock_files_api(self):
-        """Create a mock files API."""
         mock = AsyncMock()
         mock.openai_retrieve_file = AsyncMock()
         mock.openai_retrieve_file.return_value = MagicMock(filename="test.pdf")
@@ -38,70 +63,67 @@ class TestOpenAIVectorStoreMixin:
 
     @pytest.fixture
     def mock_inference_api(self):
-        """Create a mock inference API."""
         return AsyncMock()
 
-    async def test_missing_file_processor_api_raises_runtime_error(
-        self, mock_inference_api, mock_files_api
+    @pytest.fixture
+    def mock_kvstore(self):
+        kv = AsyncMock()
+        kv.set = AsyncMock()
+        kv.get = AsyncMock(return_value=None)
+        return kv
+
+    async def test_missing_file_processor_api_returns_failed_status(
+        self, mock_inference_api, mock_files_api, mock_kvstore
     ):
-        """Test that missing file_processor_api raises clear RuntimeError."""
-        # Create mixin WITHOUT file_processor_api
+        """Test that missing file_processor_api marks the file as failed with a clear error."""
         mixin = MockVectorStoreMixin(
             inference_api=mock_inference_api,
             files_api=mock_files_api,
-            file_processor_api=None,  # Not configured
+            kvstore=mock_kvstore,
+            file_processor_api=None,
         )
 
-        # Mock vector store ID
         vector_store_id = "test_vector_store"
         file_id = "test_file_id"
+        mixin.openai_vector_stores[vector_store_id] = _make_store_info()
 
-        # Attempt to add file to vector store should fail with clear error
-        with pytest.raises(
-            RuntimeError,
-            match="FileProcessor API is required for file processing but is not configured",
-        ):
-            await mixin.openai_add_file_to_vector_store(
-                vector_store_id=vector_store_id,
+        result = await mixin.openai_attach_file_to_vector_store(
+            vector_store_id=vector_store_id,
+            request=OpenAIAttachFileRequest(
                 file_id=file_id,
                 chunking_strategy=VectorStoreChunkingStrategyAuto(),
-            )
-
-    async def test_file_processor_api_configured_succeeds(
-        self, mock_inference_api, mock_files_api
-    ):
-        """Test that with file_processor_api configured, processing proceeds."""
-        # Create mock file processor API
-        mock_file_processor_api = AsyncMock()
-        mock_file_processor_api.process_file = AsyncMock()
-        mock_file_processor_api.process_file.return_value = MagicMock(
-            chunks=[], metadata={"processor": "pypdf"}
+            ),
         )
 
-        # Create mixin WITH file_processor_api
+        assert result.status == "failed"
+        assert result.last_error is not None
+        assert "FileProcessor API is required" in result.last_error.message
+
+    async def test_file_processor_api_configured_succeeds(self, mock_inference_api, mock_files_api, mock_kvstore):
+        """Test that with file_processor_api configured, processing proceeds past the check."""
+        mock_file_processor_api = AsyncMock()
+        mock_file_processor_api.process_file = AsyncMock()
+        mock_file_processor_api.process_file.return_value = MagicMock(chunks=[], metadata={"processor": "pypdf"})
+
         mixin = MockVectorStoreMixin(
             inference_api=mock_inference_api,
             files_api=mock_files_api,
+            kvstore=mock_kvstore,
             file_processor_api=mock_file_processor_api,
         )
 
-        # This should NOT raise the RuntimeError
-        # Note: This test will fail later due to other missing dependencies,
-        # but we're only testing that the file_processor_api check passes
         vector_store_id = "test_vector_store"
         file_id = "test_file_id"
+        mixin.openai_vector_stores[vector_store_id] = _make_store_info()
 
-        # The call should get past the file_processor_api check
-        # (will fail later due to missing vector store, but that's expected)
-        try:
-            await mixin.openai_add_file_to_vector_store(
-                vector_store_id=vector_store_id,
+        result = await mixin.openai_attach_file_to_vector_store(
+            vector_store_id=vector_store_id,
+            request=OpenAIAttachFileRequest(
                 file_id=file_id,
                 chunking_strategy=VectorStoreChunkingStrategyAuto(),
-            )
-        except RuntimeError as e:
-            # Should NOT be the file_processor_api error
-            assert "FileProcessor API is required" not in str(e)
-        except Exception:
-            # Other exceptions are fine, we're just testing file_processor_api check
-            pass
+            ),
+        )
+
+        # Should not fail with the file_processor_api error
+        if result.last_error:
+            assert "FileProcessor API is required" not in result.last_error.message

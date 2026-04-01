@@ -289,6 +289,8 @@ class WeaviateIndex(EmbeddingIndex):
 
 
 class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+    """VectorIO adapter that uses Weaviate for similarity search and vector storage."""
+
     def __init__(
         self, config: WeaviateVectorIOConfig, inference_api: Inference, files_api: Files | None, file_processor_api=None
     ) -> None:
