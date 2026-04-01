@@ -339,7 +339,7 @@
   font-size: 2.2rem;
   font-weight: 700;
   letter-spacing: -0.03em;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .sectionHead p {
@@ -502,7 +502,7 @@
   font-size: 2rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .communityInner > p {
@@ -522,15 +522,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 1.5rem 1rem;
-  border-radius: 1rem;
+  gap: 0.15rem;
+  padding: 0.75rem 0.75rem;
+  border-radius: 0.5rem;
   border: 1px solid rgba(0, 0, 0, 0.06);
   background: var(--ifm-background-color);
   text-decoration: none !important;
-  transition: all 0.25s ease;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.2s;
 }
 
 [data-theme='dark'] .linkCard {
@@ -539,7 +537,7 @@
 }
 
 .linkCard:hover {
-  transform: translateY(-4px);
+  transform: translateY(-1px);
   border-color: var(--ifm-color-primary-lighter);
   box-shadow: 0 12px 32px rgba(109, 40, 217, 0.1);
 }
@@ -553,12 +551,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 0.75rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
   background: rgba(109, 40, 217, 0.08);
   color: var(--ifm-color-primary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 [data-theme='dark'] .linkIcon {
@@ -566,12 +565,12 @@
 }
 
 .linkCard strong {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: var(--ifm-font-color-base);
 }
 
 .linkCard span:not(.linkIcon) {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: var(--ifm-font-color-secondary);
 }
 
