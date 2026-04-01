@@ -115,9 +115,15 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
     ),
     "bedrock": Setup(
         name="bedrock",
-        description="AWS Bedrock provider with OpenAI GPT-OSS model (us-west-2)",
+        description=(
+            "AWS Bedrock via OpenAI-compatible Mantle API (OpenAI GPT-OSS; "
+            "see AWS Chat Completions docs). No default vision model — GPT-OSS is text-only; "
+            "tests that require vision_model_id skip unless you pass --vision-model."
+        ),
         defaults={
             "text_model": "bedrock/openai.gpt-oss-20b",
+            "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
+            "embedding_dimension": 768,
         },
     ),
     "gpt": Setup(
@@ -152,16 +158,6 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         description="IBM WatsonX AI models",
         defaults={
             "text_model": "watsonx/meta-llama/llama-3-3-70b-instruct",
-        },
-    ),
-    "tgi": Setup(
-        name="tgi",
-        description="Text Generation Inference (TGI) provider with a text model",
-        env={
-            "TGI_URL": "http://localhost:8080",
-        },
-        defaults={
-            "text_model": "tgi/Qwen/Qwen3-0.6B",
         },
     ),
     "together": Setup(
@@ -282,6 +278,8 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         name="ollama-reasoning",
         roots=[
             "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_reasoning_passthrough",
+            "tests/integration/responses/test_reasoning.py::test_reasoning_non_streaming",
+            "tests/integration/responses/test_reasoning.py::test_reasoning_multi_turn_passthrough",
         ],
         default_setup="ollama-reasoning",
     ),
@@ -292,6 +290,21 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
             "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_non_streaming",
             "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_streaming",
             "tests/integration/inference/test_openai_completion.py::test_inference_store",
+        ],
+        default_setup="bedrock",
+    ),
+    # Bedrock responses suite — subset of tests that reliably pass with GPT-OSS via
+    # the Mantle API. Structured output, parallel tool calls, and some multi-turn
+    # tool tests are excluded due to model capability gaps.
+    "bedrock-responses": Suite(
+        name="bedrock-responses",
+        roots=[
+            "tests/integration/responses/test_basic_responses.py",
+            "tests/integration/responses/test_conversation_responses.py",
+            "tests/integration/responses/test_mcp_authentication.py",
+            "tests/integration/responses/test_prompt_templates.py",
+            "tests/integration/responses/test_reasoning.py",
+            "tests/integration/responses/test_responses_errors.py",
         ],
         default_setup="bedrock",
     ),

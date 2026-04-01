@@ -27,6 +27,8 @@ from .models import (
 
 
 class ModelStore(Protocol):
+    """Protocol for storing and retrieving model definitions."""
+
     async def get_model(self, identifier: str) -> Model: ...
 
 
@@ -61,6 +63,24 @@ class InferenceProvider(Protocol):
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         """Generate an OpenAI-compatible chat completion for the given messages using the specified model."""
         ...
+
+    async def openai_chat_completions_with_reasoning(
+        self,
+        params: OpenAIChatCompletionRequestWithExtraBody,
+    ) -> object:
+        """Chat completion with reasoning token extraction.
+
+        Internal method used by the Responses implementation when reasoning
+        is requested. Returns internal wrapper types that carry reasoning
+        alongside the CC response:
+        - OpenAIChatCompletionWithReasoning (non-streaming)
+        - AsyncIterator[OpenAIChatCompletionChunkWithReasoning] (streaming)
+        These are defined in llama_stack.providers.inline.responses.builtin.responses.types.
+
+        Default raises NotImplementedError so unsupported providers fail
+        loudly instead of silently returning no reasoning.
+        """
+        raise NotImplementedError(f"{self.__class__.__name__} does not support reasoning in chat completions")
 
     async def openai_embeddings(
         self,

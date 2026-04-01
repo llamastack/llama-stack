@@ -9,9 +9,10 @@ import uuid
 from typing import Any
 
 import httpx
-from pydantic import SecretStr
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.forward_headers import build_forwarded_headers
 from llama_stack_api import (
     GetShieldRequest,
     ModerationObject,
@@ -27,6 +28,8 @@ from llama_stack_api import (
 )
 
 from .config import PassthroughSafetyConfig
+
+logger = get_logger(__name__, category="safety")
 
 
 class PassthroughSafetyAdapter(
@@ -69,37 +72,27 @@ class PassthroughSafetyAdapter(
 
     def _build_forward_headers(self) -> dict[str, str]:
         """Build outbound headers from provider data using the forward_headers mapping."""
-        if not self.config.forward_headers:
-            return {}
-
         provider_data = self.get_request_provider_data()
-        if provider_data is None:
-            return {}
-
-        headers: dict[str, str] = {}
-        raw = provider_data.model_dump()
-        for provider_key, header_name in self.config.forward_headers.items():
-            value = raw.get(provider_key)
-            if value is not None:
-                # unwrap SecretStr so we forward the real value, not '**********'
-                if isinstance(value, SecretStr):
-                    value = value.get_secret_value()
-                # strip control chars that could enable header injection
-                sanitized = str(value).replace("\r", "").replace("\n", "")
-                headers[header_name] = sanitized
-        return headers
+        forwarded = build_forwarded_headers(provider_data, self.config.forward_headers)
+        if self.config.forward_headers and not forwarded:
+            logger.warning(
+                "forward_headers is configured but no matching keys found in provider data — "
+                "outbound request may be unauthenticated"
+            )
+        return forwarded
 
     def _build_request_headers(self) -> dict[str, str]:
-        """Combine auth + forwarded headers for the downstream request."""
+        """Combine auth + forwarded headers for the downstream request.
+
+        Forwarded headers go first; static api_key overwrites Authorization if set.
+        build_forwarded_headers() normalizes header names case-insensitively so
+        there are no duplicate Authorization variants in the forwarded dict.
+        """
         headers: dict[str, str] = {"Content-Type": "application/json"}
-
-        # forwarded headers go first so config api_key can't be overwritten
         headers.update(self._build_forward_headers())
-
         api_key = self._get_api_key()
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
-
         return headers
 
     async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse:

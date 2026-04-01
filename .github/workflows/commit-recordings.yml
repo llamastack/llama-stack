@@ -154,8 +154,12 @@ jobs:
             core.setOutput('head_sha', headSha);
             core.setOutput('is_fork_pr', headRepo !== `${context.repo.owner}/${context.repo.repo}`);
 
-      - name: Checkout PR branch
-        if: steps.pr-info.outputs.skip != 'true'
+      - name: Preserve artifacts before checkout
+        if: steps.pr-info.outputs.skip != 'true' && steps.pr-info.outputs.is_fork_pr != 'true'
+        run: mv recordings-temp /tmp/recordings-temp 2>/dev/null || true
+
+      - name: Checkout PR branch (same-repo)
+        if: steps.pr-info.outputs.skip != 'true' && steps.pr-info.outputs.is_fork_pr != 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ steps.pr-info.outputs.head_repo }}
@@ -163,30 +167,74 @@ jobs:
           fetch-depth: 0
           token: ${{ github.token }}
 
+      - name: Restore artifacts after checkout
+        if: steps.pr-info.outputs.skip != 'true' && steps.pr-info.outputs.is_fork_pr != 'true'
+        run: mv /tmp/recordings-temp recordings-temp 2>/dev/null || true
+
+      - name: Checkout PR branch (fork)
+        if: steps.pr-info.outputs.skip != 'true' && steps.pr-info.outputs.is_fork_pr == 'true'
+        env:
+          # RELEASE_PAT has repo scope, which allows cloning and pushing to fork
+          # PR branches when maintainerCanModify is enabled. github.token can't do this.
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+          HEAD_REPO: ${{ steps.pr-info.outputs.head_repo }}
+          HEAD_REF: ${{ steps.pr-info.outputs.head_ref }}
+        run: |
+          # Move artifacts out of the way before cloning, then restore after.
+          mv recordings-temp /tmp/recordings-temp 2>/dev/null || true
+          # Clean up workspace files (artifacts, metadata) to ensure empty directory for clone
+          rm -f recordings-*.zip pr-metadata.zip pr-info.json
+          git clone --depth 1 --branch "${HEAD_REF}" "https://x-access-token:${GH_TOKEN}@github.com/${HEAD_REPO}.git" .
+          mv /tmp/recordings-temp recordings-temp 2>/dev/null || true
+
       - name: Copy recordings to repo
         if: steps.pr-info.outputs.skip != 'true'
         run: |
           if [ -d "recordings-temp" ]; then
             echo "Copying recordings from artifacts to repo"
-            # Copy all recordings, preserving directory structure
-            if [ -d "recordings-temp/tests" ]; then
-              cp -r recordings-temp/tests/integration/recordings/* tests/integration/recordings/ 2>/dev/null || true
 
-              # Handle provider-specific recording directories
+            # Handle old artifact structure (if tests/integration path exists)
+            if [ -d "recordings-temp/tests/integration" ]; then
+              echo "Using old artifact structure (tests/integration/...)"
+              if [ -d "recordings-temp/tests/integration/recordings" ]; then
+                mkdir -p "tests/integration/recordings"
+                cp -r recordings-temp/tests/integration/recordings/* tests/integration/recordings/ 2>/dev/null || true
+              fi
+
               for dir in recordings-temp/tests/integration/*/recordings/; do
                 if [ -d "$dir" ]; then
-                  provider_dir=$(basename $(dirname "$dir"))
-                  mkdir -p "tests/integration/$provider_dir/recordings"
-                  cp -r "$dir"* "tests/integration/$provider_dir/recordings/" 2>/dev/null || true
+                  module_dir=$(basename "$(dirname "$dir")")
+                  echo "Copying recordings for $module_dir"
+                  mkdir -p "tests/integration/$module_dir/recordings"
+                  cp -r "$dir"* "tests/integration/$module_dir/recordings/" 2>/dev/null || true
                 fi
               done
+            else
+              # Handle new flattened artifact structure (*/recordings/)
+              echo "Using flattened artifact structure (*/recordings/)"
+              for dir in recordings-temp/*/recordings/; do
+                if [ -d "$dir" ]; then
+                  module_dir=$(basename "$(dirname "$dir")")
+                  echo "Copying recordings for $module_dir"
+                  mkdir -p "tests/integration/$module_dir/recordings"
+                  cp -r "$dir"* "tests/integration/$module_dir/recordings/" 2>/dev/null || true
+                fi
+              done
+
+              # Also handle top-level recordings directory if it exists
+              if [ -d "recordings-temp/recordings" ]; then
+                echo "Copying top-level recordings"
+                mkdir -p "tests/integration/recordings"
+                cp -r recordings-temp/recordings/* tests/integration/recordings/ 2>/dev/null || true
+              fi
             fi
           fi
 
       - name: Commit and push recordings
+        id: commit
         if: steps.pr-info.outputs.skip != 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.pr-info.outputs.is_fork_pr == 'true' && secrets.RELEASE_PAT || github.token }}
           PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}
           HEAD_REPO: ${{ steps.pr-info.outputs.head_repo }}
           HEAD_REF: ${{ steps.pr-info.outputs.head_ref }}
@@ -200,6 +248,7 @@ jobs:
           # Check if there are recording changes
           if [[ -z $(git status --porcelain tests/integration/recordings/ tests/integration/*/recordings/) ]]; then
             echo "No recording changes to commit"
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -221,19 +270,22 @@ jobs:
               echo "Maintainer can modify - pushing to fork PR branch"
               git push "https://x-access-token:${GH_TOKEN}@github.com/${HEAD_REPO}.git" "HEAD:${HEAD_REF}"
               echo "Successfully pushed recordings to fork PR"
+              echo "pushed=true" >> "$GITHUB_OUTPUT"
             else
               echo "::warning::Cannot push to fork PR: 'Allow edits from maintainers' is not enabled"
               echo "::warning::Contributor needs to check 'Allow edits from maintainers' when creating the PR"
+              echo "pushed=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi
           else
             echo "Pushing to same-repo PR branch: $HEAD_REF"
             git push origin "HEAD:${HEAD_REF}"
             echo "Successfully pushed recordings"
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Comment on PR
-        if: steps.pr-info.outputs.skip != 'true'
+        if: steps.commit.outputs.pushed == 'true'
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}

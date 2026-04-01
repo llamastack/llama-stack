@@ -67,8 +67,6 @@ def pytest_configure(config):
     # Import plugins dynamically
     if running_unit:
         config.pluginmanager.import_plugin("tests.unit.fixtures")
-        # Load shared fixtures from openai_responses test file (used by conversations tests)
-        config.pluginmanager.import_plugin("tests.unit.providers.agents.builtin.test_openai_responses")
 
     if running_integration:
         config.pluginmanager.import_plugin("tests.integration.fixtures.common")

@@ -1,10 +1,10 @@
 version: 2
 distro_name: open-benchmark
 apis:
-- agents
 - datasetio
 - eval
 - inference
+- responses
 - safety
 - scoring
 - tool_runtime
@@ -71,7 +71,7 @@ providers:
     provider_type: inline::llama-guard
     config:
       excluded_categories: []
-  agents:
+  responses:
   - provider_id: builtin
     provider_type: inline::builtin
     config:
@@ -253,10 +253,5 @@ registered_resources:
     - basic::docvqa
     metadata: {}
     benchmark_id: builtin-docvqa
-  tool_groups:
-  - toolgroup_id: builtin::websearch
-    provider_id: tavily-search
-  - toolgroup_id: builtin::file_search
-    provider_id: file-search
 server:
   port: 8321

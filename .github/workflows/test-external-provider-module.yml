@@ -38,7 +38,7 @@ jobs:
 
       - name: Wait for Llama Stack server to be ready
         run: |
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if curl -s http://localhost:8321/v1/health | grep -q "OK"; then
               echo "Server is ready"
               exit 0
@@ -63,7 +63,7 @@ jobs:
 
       - name: Upload all logs to artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: logs-${{ github.run_id }}-${{ github.run_attempt }}-external-provider-module-test
           path: |

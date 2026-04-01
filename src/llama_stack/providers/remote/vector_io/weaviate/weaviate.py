@@ -53,6 +53,8 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 
 class WeaviateIndex(EmbeddingIndex):
+    """Embedding index backed by a Weaviate collection."""
+
     def __init__(self, client: weaviate.WeaviateClient, collection_name: str, kvstore: KVStore | None = None):
         self.client = client
         self.collection_name = sanitize_collection_name(collection_name, weaviate_format=True)

@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-from llama_stack.core.datatypes import BuildProvider, Provider, ToolGroupInput
+from llama_stack.core.datatypes import BuildProvider, Provider
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
@@ -14,6 +14,14 @@ from llama_stack.providers.remote.inference.oci.config import OCIConfig
 
 
 def get_distribution_template(name: str = "oci") -> DistributionTemplate:
+    """Build the OCI Generative AI distribution template.
+
+    Args:
+        name: the distribution name.
+
+    Returns:
+        A DistributionTemplate configured for OCI inference.
+    """
     providers = {
         "inference": [BuildProvider(provider_type="remote::oci")],
         "vector_io": [
@@ -22,7 +30,7 @@ def get_distribution_template(name: str = "oci") -> DistributionTemplate:
             BuildProvider(provider_type="remote::pgvector"),
         ],
         "safety": [BuildProvider(provider_type="inline::llama-guard")],
-        "agents": [BuildProvider(provider_type="inline::builtin")],
+        "responses": [BuildProvider(provider_type="inline::builtin")],
         "eval": [BuildProvider(provider_type="inline::builtin")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),
@@ -59,13 +67,6 @@ def get_distribution_template(name: str = "oci") -> DistributionTemplate:
         provider_type="inline::localfs",
         config=LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}"),
     )
-    default_tool_groups = [
-        ToolGroupInput(
-            toolgroup_id="builtin::websearch",
-            provider_id="tavily-search",
-        ),
-    ]
-
     return DistributionTemplate(
         name=name,
         distro_type="remote_hosted",
@@ -80,7 +81,6 @@ def get_distribution_template(name: str = "oci") -> DistributionTemplate:
                     "vector_io": [vector_io_provider],
                     "files": [files_provider],
                 },
-                default_tool_groups=default_tool_groups,
             ),
         },
         run_config_env_vars={

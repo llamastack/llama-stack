@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import asyncio
 import time
 from typing import Any
 
@@ -16,6 +17,7 @@ from llama_stack.telemetry.tool_runtime_metrics import (
 from llama_stack_api import (
     URL,
     ListToolDefsResponse,
+    ListToolsRequest,
     ToolRuntime,
 )
 
@@ -25,6 +27,8 @@ logger = get_logger(name=__name__, category="core::routers")
 
 
 class ToolRuntimeRouter(ToolRuntime):
+    """Router that delegates tool runtime operations to the appropriate provider via a routing table."""
+
     def __init__(
         self,
         routing_table: ToolGroupsRoutingTable,
@@ -41,7 +45,7 @@ class ToolRuntimeRouter(ToolRuntime):
         pass
 
     async def invoke_tool(self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None) -> Any:
-        logger.debug(f"ToolRuntimeRouter.invoke_tool: {tool_name}")
+        logger.debug("ToolRuntimeRouter.invoke_tool", tool_name=tool_name)
         start_time = time.perf_counter()
         metric_attrs = None
 
@@ -80,6 +84,19 @@ class ToolRuntimeRouter(ToolRuntime):
 
             return result
 
+        except asyncio.CancelledError:
+            # Record cancellation metrics
+            duration = time.perf_counter() - start_time
+            if metric_attrs:
+                error_attrs = {**metric_attrs, "status": "error"}
+            else:
+                error_attrs = create_tool_metric_attributes(
+                    tool_name=tool_name,
+                    status="error",
+                )
+            tool_invocations_total.add(1, error_attrs)
+            tool_duration.record(duration, error_attrs)
+            raise
         except Exception:
             # Record error metrics
             duration = time.perf_counter() - start_time
@@ -98,4 +115,6 @@ class ToolRuntimeRouter(ToolRuntime):
     async def list_runtime_tools(
         self, tool_group_id: str | None = None, mcp_endpoint: URL | None = None, authorization: str | None = None
     ) -> ListToolDefsResponse:
-        return await self.routing_table.list_tools(tool_group_id, authorization=authorization)
+        return await self.routing_table.list_tools(
+            ListToolsRequest(toolgroup_id=tool_group_id), authorization=authorization
+        )

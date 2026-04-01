@@ -43,6 +43,8 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 
 class ElasticsearchIndex(EmbeddingIndex):
+    """Embedding index backed by an Elasticsearch index."""
+
     def __init__(self, client: AsyncElasticsearch, collection_name: str):
         self.client = client
         self.collection_name = collection_name
@@ -376,6 +378,8 @@ class ElasticsearchIndex(EmbeddingIndex):
 
 
 class ElasticsearchVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+    """Vector I/O adapter for remote Elasticsearch instances."""
+
     def __init__(
         self,
         config: ElasticsearchVectorIOConfig,

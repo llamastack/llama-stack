@@ -67,12 +67,25 @@ _VALID_KEY_PATTERN = re.compile(r"^[a-zA-Z0-9_\-]+$")
 
 
 def check_extension_version(cur):
+    """Query the installed pgvector extension version.
+
+    Args:
+        cur: database cursor
+
+    Returns:
+        Version string if the extension is installed, otherwise None
+    """
     cur.execute("SELECT extversion FROM pg_extension WHERE extname = 'vector'")
     result = cur.fetchone()
     return result[0] if result else None
 
 
 def create_vector_extension(cur: cursor) -> None:
+    """Create the pgvector extension in the database.
+
+    Args:
+        cur: database cursor
+    """
     try:
         log.info("Vector extension not found, creating...")
         cur.execute("CREATE EXTENSION vector;")
@@ -84,6 +97,12 @@ def create_vector_extension(cur: cursor) -> None:
 
 
 def upsert_models(conn, keys_models: list[tuple[str, BaseModel]]):
+    """Insert or update serialized Pydantic models in the metadata_store table.
+
+    Args:
+        conn: active PostgreSQL connection
+        keys_models: list of (key, model) tuples to upsert
+    """
     with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         query = sql.SQL(
             """
@@ -119,12 +138,23 @@ def remove_vector_store_metadata(conn: psycopg2.extensions.connection, vector_st
 
 
 def load_models(cur, cls):
+    """Load and deserialize all models from the metadata_store table.
+
+    Args:
+        cur: database cursor
+        cls: Pydantic model class to deserialize into
+
+    Returns:
+        List of validated model instances
+    """
     cur.execute("SELECT key, data FROM metadata_store")
     rows = cur.fetchall()
     return [TypeAdapter(cls).validate_python(row["data"]) for row in rows]
 
 
 class PGVectorIndex(EmbeddingIndex):
+    """Embedding index backed by PostgreSQL with the pgvector extension."""
+
     # reference: https://github.com/pgvector/pgvector?tab=readme-ov-file#querying
     # Llama Stack supports only search functions that are applied for embeddings with vector type
     PGVECTOR_DISTANCE_METRIC_TO_SEARCH_FUNCTION: dict[str, str] = {
@@ -747,6 +777,8 @@ class PGVectorIndex(EmbeddingIndex):
 
 
 class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+    """Vector I/O adapter for PostgreSQL with pgvector."""
+
     def __init__(
         self,
         config: PGVectorVectorIOConfig,

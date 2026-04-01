@@ -15,18 +15,23 @@ server implementation.
 All imports from this package MUST use the form:
     from llama_stack_api import <symbol>
 
-Sub-module imports (e.g., from llama_stack_api.agents import Agents) are NOT supported
+Sub-module imports (e.g., from llama_stack_api.responses import Responses) are NOT supported
 and considered a code smell. All exported symbols are explicitly listed in __all__.
 """
 
-__version__ = "0.4.0.dev0"
+try:
+    from importlib.metadata import PackageNotFoundError
+    from importlib.metadata import version as _metadata_version
+
+    __version__ = _metadata_version("llama-stack-api")
+except PackageNotFoundError:
+    __version__ = "0.0.0.dev0"
 
 # Import submodules for those who need them
 from .schema_utils import (  # noqa: I001
     CallableT,
     ExtraBodyField,
     SchemaInfo,
-    WebMethod,
     clear_dynamic_schema_types,
     get_registered_schema_info,
     iter_dynamic_schema_types,
@@ -35,7 +40,6 @@ from .schema_utils import (  # noqa: I001
     json_schema_type,
     register_dynamic_schema_type,
     register_schema,
-    webmethod,
 )
 from .admin import (
     Admin,
@@ -51,8 +55,9 @@ from .admin import (
 )
 
 # Import all public API symbols
-from .agents import (
-    Agents,
+from .responses import (
+    Responses,
+    CancelResponseRequest,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -258,6 +263,8 @@ from .inference import (
     OpenAIChatCompletionMessageContent,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionTextOnlyMessageContent,
+    OpenAIChatCompletionCustomToolCall,
+    OpenAIChatCompletionCustomToolCallFunction,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChatCompletionToolChoice,
@@ -418,6 +425,9 @@ from .openai_responses import (
     OpenAIResponseOutputMessageFunctionToolCall,
     OpenAIResponseOutputMessageMCPCall,
     OpenAIResponseOutputMessageMCPListTools,
+    OpenAIResponseOutputMessageReasoningContent,
+    OpenAIResponseOutputMessageReasoningItem,
+    OpenAIResponseOutputMessageReasoningSummary,
     OpenAIResponseOutputMessageWebSearchToolCall,
     OpenAIResponsePrompt,
     OpenAIResponseReasoning,
@@ -510,6 +520,7 @@ from .shields import (
 from .tools import (
     ListToolDefsResponse,
     ListToolGroupsResponse,
+    ListToolsRequest,
     SpecialToolGroup,
     ToolDef,
     ToolGroup,
@@ -584,9 +595,10 @@ __all__ = [
     "LLAMA_STACK_API_V1ALPHA",
     "LLAMA_STACK_API_V1BETA",
     # API Symbols
-    "Agents",
+    "Responses",
     "AggregationFunctionType",
-    # Agents Request Models
+    # Responses Request Models
+    "CancelResponseRequest",
     "CreateResponseRequest",
     "DeleteResponseRequest",
     "ListResponseInputItemsRequest",
@@ -766,6 +778,7 @@ __all__ = [
     "ListShieldsResponse",
     "ListToolDefsResponse",
     "ListToolGroupsResponse",
+    "ListToolsRequest",
     "ListToolsResponse",
     "LogProbConfig",
     "MAX_PAGINATION_LIMIT",
@@ -796,6 +809,8 @@ __all__ = [
     "OpenAIChatCompletionMessageContent",
     "OpenAIChatCompletionRequestWithExtraBody",
     "OpenAIChatCompletionTextOnlyMessageContent",
+    "OpenAIChatCompletionCustomToolCall",
+    "OpenAIChatCompletionCustomToolCallFunction",
     "OpenAIChatCompletionToolCall",
     "OpenAIChatCompletionToolCallFunction",
     "OpenAIChatCompletionUsage",
@@ -926,6 +941,9 @@ __all__ = [
     "OpenAIResponseOutputMessageFunctionToolCall",
     "OpenAIResponseOutputMessageMCPCall",
     "OpenAIResponseOutputMessageMCPListTools",
+    "OpenAIResponseOutputMessageReasoningContent",
+    "OpenAIResponseOutputMessageReasoningItem",
+    "OpenAIResponseOutputMessageReasoningSummary",
     "OpenAIResponseOutputMessageWebSearchToolCall",
     "OpenAIResponsePrompt",
     "OpenAIResponseReasoning",
@@ -1098,8 +1116,6 @@ __all__ = [
     "VectorStoresProtocolPrivate",
     "VersionInfo",
     "ViolationLevel",
-    "webmethod",
-    "WebMethod",
     "WebSearchToolTypes",
     "WeightedRanker",
     # Validators

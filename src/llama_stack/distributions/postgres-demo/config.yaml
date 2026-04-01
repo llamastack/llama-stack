@@ -1,7 +1,7 @@
 version: 2
 distro_name: postgres-demo
 apis:
-- agents
+- responses
 - inference
 - safety
 - tool_runtime
@@ -32,13 +32,13 @@ providers:
     provider_type: inline::llama-guard
     config:
       excluded_categories: []
-  agents:
+  responses:
   - provider_id: builtin
     provider_type: inline::builtin
     config:
       persistence:
         agent_state:
-          namespace: agents
+          namespace: responses
           backend: kv_default
         responses:
           table_name: responses
@@ -113,10 +113,5 @@ registered_resources:
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups:
-  - toolgroup_id: builtin::websearch
-    provider_id: tavily-search
-  - toolgroup_id: builtin::file_search
-    provider_id: file-search
 server:
   port: 8321

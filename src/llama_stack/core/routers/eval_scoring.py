@@ -33,6 +33,8 @@ logger = get_logger(name=__name__, category="core::routers")
 
 
 class ScoringRouter(Scoring):
+    """Router that delegates scoring operations to the appropriate provider via a routing table."""
+
     def __init__(
         self,
         routing_table: RoutingTable,
@@ -52,7 +54,7 @@ class ScoringRouter(Scoring):
         self,
         request: ScoreBatchRequest,
     ) -> ScoreBatchResponse:
-        logger.debug(f"ScoringRouter.score_batch: {request.dataset_id}")
+        logger.debug("ScoringRouter.score_batch", dataset_id=request.dataset_id)
         res = {}
         for fn_identifier in request.scoring_functions.keys():
             provider = await self.routing_table.get_provider_impl(fn_identifier)
@@ -76,7 +78,11 @@ class ScoringRouter(Scoring):
         self,
         request: ScoreRequest,
     ) -> ScoreResponse:
-        logger.debug(f"ScoringRouter.score: {len(request.input_rows)} rows, {len(request.scoring_functions)} functions")
+        logger.debug(
+            "ScoringRouter.score: rows, functions",
+            input_rows_count=len(request.input_rows),
+            scoring_functions_count=len(request.scoring_functions),
+        )
         res = {}
         # look up and map each scoring function to its provider impl
         for fn_identifier in request.scoring_functions.keys():
@@ -93,6 +99,8 @@ class ScoringRouter(Scoring):
 
 
 class EvalRouter(Eval):
+    """Router that delegates evaluation operations to the appropriate provider via a routing table."""
+
     def __init__(
         self,
         routing_table: RoutingTable,
@@ -131,7 +139,7 @@ class EvalRouter(Eval):
         resolved_request = resolve_run_eval_request(
             request, benchmark_id=benchmark_id, benchmark_config=benchmark_config
         )
-        logger.debug(f"EvalRouter.run_eval: {resolved_request.benchmark_id}")
+        logger.debug("EvalRouter.run_eval", benchmark_id=resolved_request.benchmark_id)
         provider = await self.routing_table.get_provider_impl(resolved_request.benchmark_id)
         return await provider.run_eval(resolved_request)
 
@@ -167,7 +175,9 @@ class EvalRouter(Eval):
             benchmark_config=benchmark_config,
         )
         logger.debug(
-            f"EvalRouter.evaluate_rows: {resolved_request.benchmark_id}, {len(resolved_request.input_rows)} rows"
+            "EvalRouter.evaluate_rows: , rows",
+            benchmark_id=resolved_request.benchmark_id,
+            input_rows_count=len(resolved_request.input_rows),
         )
         provider = await self.routing_table.get_provider_impl(resolved_request.benchmark_id)
         return await provider.evaluate_rows(resolved_request)
@@ -193,7 +203,9 @@ class EvalRouter(Eval):
             Job object with the current status
         """
         resolved_request = resolve_job_status_request(request, benchmark_id=benchmark_id, job_id=job_id)
-        logger.debug(f"EvalRouter.job_status: {resolved_request.benchmark_id}, {resolved_request.job_id}")
+        logger.debug(
+            "EvalRouter.job_status", benchmark_id=resolved_request.benchmark_id, job_id=resolved_request.job_id
+        )
         provider = await self.routing_table.get_provider_impl(resolved_request.benchmark_id)
         return await provider.job_status(resolved_request)
 
@@ -218,7 +230,9 @@ class EvalRouter(Eval):
             None
         """
         resolved_request = resolve_job_cancel_request(request, benchmark_id=benchmark_id, job_id=job_id)
-        logger.debug(f"EvalRouter.job_cancel: {resolved_request.benchmark_id}, {resolved_request.job_id}")
+        logger.debug(
+            "EvalRouter.job_cancel", benchmark_id=resolved_request.benchmark_id, job_id=resolved_request.job_id
+        )
         provider = await self.routing_table.get_provider_impl(resolved_request.benchmark_id)
         await provider.job_cancel(resolved_request)
 
@@ -243,6 +257,8 @@ class EvalRouter(Eval):
             EvaluateResponse object with the job results
         """
         resolved_request = resolve_job_result_request(request, benchmark_id=benchmark_id, job_id=job_id)
-        logger.debug(f"EvalRouter.job_result: {resolved_request.benchmark_id}, {resolved_request.job_id}")
+        logger.debug(
+            "EvalRouter.job_result", benchmark_id=resolved_request.benchmark_id, job_id=resolved_request.job_id
+        )
         provider = await self.routing_table.get_provider_impl(resolved_request.benchmark_id)
         return await provider.job_result(resolved_request)

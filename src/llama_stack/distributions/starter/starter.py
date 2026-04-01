@@ -15,7 +15,6 @@ from llama_stack.core.datatypes import (
     RerankerModel,
     SafetyConfig,
     ShieldInput,
-    ToolGroupInput,
     VectorStoresConfig,
 )
 from llama_stack.core.storage.kvstore.config import PostgresKVStoreConfig
@@ -36,8 +35,11 @@ from llama_stack.providers.inline.vector_io.sqlite_vec.config import (
     SQLiteVectorIOConfig,
 )
 from llama_stack.providers.registry.inference import available_providers
+from llama_stack.providers.remote.tool_runtime.brave_search.config import BraveSearchToolConfig
+from llama_stack.providers.remote.tool_runtime.tavily_search.config import TavilySearchToolConfig
 from llama_stack.providers.remote.vector_io.chroma.config import ChromaVectorIOConfig
 from llama_stack.providers.remote.vector_io.elasticsearch.config import ElasticsearchVectorIOConfig
+from llama_stack.providers.remote.vector_io.infinispan.config import InfinispanVectorIOConfig
 from llama_stack.providers.remote.vector_io.pgvector.config import (
     PGVectorVectorIOConfig,
 )
@@ -59,7 +61,6 @@ def _get_config_for_provider(provider_spec: ProviderSpec) -> dict[str, Any]:
 ENABLED_INFERENCE_PROVIDERS = [
     "ollama",
     "vllm",
-    "tgi",
     "fireworks",
     "together",
     "gemini",
@@ -72,22 +73,24 @@ ENABLED_INFERENCE_PROVIDERS = [
     "nvidia",
     "bedrock",
     "azure",
-    "watsonx",
 ]
 
 INFERENCE_PROVIDER_IDS = {
     "ollama": "${env.OLLAMA_URL:+ollama}",
     "vllm": "${env.VLLM_URL:+vllm}",
-    "tgi": "${env.TGI_URL:+tgi}",
     "cerebras": "${env.CEREBRAS_API_KEY:+cerebras}",
     "nvidia": "${env.NVIDIA_API_KEY:+nvidia}",
     "vertexai": "${env.VERTEX_AI_PROJECT:+vertexai}",
     "azure": "${env.AZURE_API_KEY:+azure}",
-    "watsonx": "${env.WATSONX_API_KEY:+watsonx}",
 }
 
 
 def get_remote_inference_providers() -> list[Provider]:
+    """Build the list of remote inference providers enabled in the starter distribution.
+
+    Returns:
+        A list of Provider instances for enabled remote inference backends.
+    """
     # Filter out inline providers and some others - the starter distro only exposes remote providers
     remote_providers = [
         provider
@@ -116,6 +119,14 @@ def get_remote_inference_providers() -> list[Provider]:
 
 
 def get_distribution_template(name: str = "starter") -> DistributionTemplate:
+    """Build the starter distribution template with multiple remote providers.
+
+    Args:
+        name: the distribution name.
+
+    Returns:
+        A DistributionTemplate configured for CPU-only environments with popular remote providers.
+    """
     remote_inference_providers = get_remote_inference_providers()
 
     providers = {
@@ -133,6 +144,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="remote::qdrant"),
             BuildProvider(provider_type="remote::weaviate"),
             BuildProvider(provider_type="remote::elasticsearch"),
+            BuildProvider(provider_type="remote::infinispan"),
         ],
         "files": [BuildProvider(provider_type="inline::localfs")],
         "file_processors": [BuildProvider(provider_type="inline::pypdf")],
@@ -140,7 +152,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::llama-guard"),
             BuildProvider(provider_type="inline::code-scanner"),
         ],
-        "agents": [BuildProvider(provider_type="inline::builtin")],
+        "responses": [BuildProvider(provider_type="inline::builtin")],
         "eval": [BuildProvider(provider_type="inline::builtin")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),
@@ -177,16 +189,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         provider_type="inline::transformers",
         config=TransformersInferenceConfig.sample_run_config(),
     )
-    default_tool_groups = [
-        ToolGroupInput(
-            toolgroup_id="builtin::websearch",
-            provider_id="tavily-search",
-        ),
-        ToolGroupInput(
-            toolgroup_id="builtin::file_search",
-            provider_id="file-search",
-        ),
-    ]
     default_shields = [
         # if the
         ShieldInput(
@@ -263,6 +265,11 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                     elasticsearch_api_key="${env.ELASTICSEARCH_API_KEY:=}",
                 ),
             ),
+            Provider(
+                provider_id="${env.INFINISPAN_URL:+infinispan}",
+                provider_type="remote::infinispan",
+                config=InfinispanVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
         ],
         "files": [files_provider],
         "file_processors": [
@@ -272,12 +279,31 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 config=PyPDFFileProcessorConfig.sample_run_config(),
             ),
         ],
+        "tool_runtime": [
+            Provider(
+                provider_id="brave-search",
+                provider_type="remote::brave-search",
+                config=BraveSearchToolConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
+            Provider(
+                provider_id="tavily-search",
+                provider_type="remote::tavily-search",
+                config=TavilySearchToolConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
+            Provider(
+                provider_id="file-search",
+                provider_type="inline::file-search",
+            ),
+            Provider(
+                provider_id="model-context-protocol",
+                provider_type="remote::model-context-protocol",
+            ),
+        ],
     }
 
     base_run_settings = RunConfigSettings(
         provider_overrides=default_overrides,
         default_models=[],
-        default_tool_groups=default_tool_groups,
         default_shields=default_shields,
         default_connectors=[],
         vector_stores_config=VectorStoresConfig(
@@ -381,18 +407,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             "AZURE_API_TYPE": (
                 "azure",
                 "Azure API Type",
-            ),
-            "WATSONX_API_KEY": (
-                "",
-                "WatsonX API Key",
-            ),
-            "WATSONX_BASE_URL": (
-                "https://us-south.ml.cloud.ibm.com",
-                "WatsonX Base URL",
-            ),
-            "WATSONX_PROJECT_ID": (
-                "",
-                "WatsonX Project ID",
             ),
         },
     )

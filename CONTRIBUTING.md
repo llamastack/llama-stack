@@ -1,4 +1,5 @@
 # Contributing to Llama Stack
+
 We want to make contributing to this project as easy and transparent as
 possible.
 
@@ -17,16 +18,15 @@ uv pip install -e .
 source .venv/bin/activate
 ```
 
-```{note}
-If you are making changes to Llama Stack, it is essential that you use Python 3.12 as shown above.
+**Note:** If you are making changes to Llama Stack, it is essential that you use Python 3.12 as shown above.
 Llama Stack can work with Python 3.13 but the pre-commit hooks used to validate code changes only work with Python 3.12.
 If you don't specify a Python version, `uv` will automatically select a Python version according to the `requires-python`
 section of the `pyproject.toml`, which is fine for running Llama Stack but not for committing changes.
 For more info, see the [uv docs around Python versions](https://docs.astral.sh/uv/concepts/python-versions/).
-```
 
 Note that you can create a dotenv file `.env` that includes necessary environment variables:
-```
+
+```text
 LLAMA_STACK_BASE_URL=http://localhost:8321
 LLAMA_STACK_CLIENT_LOG=debug
 LLAMA_STACK_PORT=8321
@@ -36,6 +36,7 @@ BRAVE_SEARCH_API_KEY=
 ```
 
 And then use this dotenv file when running client SDK tests via the following:
+
 ```bash
 uv run --env-file .env -- pytest -v tests/integration/conversations/test_openai_conversations.py --setup=gpt
 ```
@@ -74,8 +75,8 @@ or invoke mypy directly with all optional dependencies:
 uv run --group dev --group type_checking mypy
 ```
 
-```{caution}
-Before pushing your changes, make sure that the pre-commit hooks have passed successfully.
+```text
+**Caution:** Before pushing your changes, make sure that the pre-commit hooks have passed successfully.
 ```
 
 ## Issues and Pull Requests
@@ -85,6 +86,7 @@ We actively welcome your pull requests. However, please read the following. This
 If in doubt, please open a [issue](https://github.com/llamastack/llama-stack/issues).
 
 ### Issues
+
 We use GitHub issues to track public bugs. Please ensure your description is
 clear and has sufficient instructions to be able to reproduce the issue.
 
@@ -93,12 +95,13 @@ disclosure of security bugs. In those cases, please go through the process
 outlined on that page and do not file a public issue.
 
 ### Contributor License Agreement ("CLA")
+
 In order to accept your pull request, we need you to submit a CLA. You only need
 to do this once to work on any of Meta's open source projects.
 
 Complete your CLA here: <https://code.facebook.com/cla>
 
-**I'd like to contribute!**
+### I'd like to contribute
 
 If you are new to the project, start by looking at the issues tagged with "good first issue". If you're interested
 leave a comment on the issue and a triager will assign it to you.
@@ -109,26 +112,26 @@ Please avoid picking up too many issues at once. This helps you stay focused and
 - Before taking an issue, check if it’s already assigned or being actively discussed.
 - If you’re blocked or can’t continue with an issue, feel free to unassign yourself or leave a comment so others can step in.
 
-**I have a bug!**
+### I have a bug
 
 1. Search the issue tracker for similar issues.
 2. If you don't have steps to reproduce, open a "discussion-type" issue.
 3. If you have steps to reproduce, open a "bug-type" issue.
 
-**I have an idea for a feature!**
+### I have an idea for a feature
 
 1. Open a "discussion-type" issue.
 
-**I've implemented a feature!**
+### I've implemented a feature
 
 1. If there is an issue for the feature, open a pull request.
 2. If there is no issue, open a "discussion-type" issue and link to your branch.
 
-**I have a question!**
+### I have a question
 
 1. Open a "discussion-type" issue or use [Discord](https://discord.gg/llama-stack).
 
-**Opening a Pull Request**
+### Opening a Pull Request
 
 1. Fork the repo and create your branch from `main`.
 2. If you've changed APIs, update the documentation.
@@ -138,16 +141,14 @@ Please avoid picking up too many issues at once. This helps you stay focused and
 6. Ensure your pull request follows the [conventional commits format](https://www.conventionalcommits.org/en/v1.0.0/).
 7. Ensure your pull request follows the [coding style](#coding-style).
 
-
 Please keep pull requests (PRs) small and focused. If you have a large set of changes, consider splitting them into logically grouped, smaller PRs to facilitate review and testing.
 
-```{tip}
-As a general guideline:
+**Tip:** As a general guideline:
+
 - Experienced contributors should try to keep no more than 5 open PRs at a time.
 - New contributors are encouraged to have only one open PR at a time until they're familiar with the codebase and process.
-```
 
-**Handling Pull Request Reviews**
+### Handling Pull Request Reviews
 
 To ensure a smooth review process for both reviewers and contributors, please follow these guidelines:
 
@@ -171,6 +172,7 @@ Your Test Plan should include:
 2. **Execution output**: Include the actual output from running your test script. This proves your implementation works and gives reviewers a clear picture of the expected behavior.
 
 This practice:
+
 - Validates that your implementation works end-to-end
 - Provides reviewers with reproducible verification steps
 - Serves as documentation for the new API behavior
@@ -194,27 +196,28 @@ This process helps ensure that new providers are well-designed, avoid duplicatio
 
 ### Coding Style
 
-* Comments should provide meaningful insights into the code. Avoid filler comments that simply
+- Comments should provide meaningful insights into the code. Avoid filler comments that simply
   describe the next step, as they create unnecessary clutter, same goes for docstrings.
-* Prefer comments to clarify surprising behavior and/or relationships between parts of the code
+- Prefer comments to clarify surprising behavior and/or relationships between parts of the code
   rather than explain what the next line of code does.
-* Catching exceptions, prefer using a specific exception type rather than a broad catch-all like
+- Catching exceptions, prefer using a specific exception type rather than a broad catch-all like
   `Exception`.
-* Error messages should be prefixed with "Failed to ..."
-* 4 spaces for indentation rather than tab
-* When using `# noqa` to suppress a style or linter warning, include a comment explaining the
+- Error messages should be prefixed with "Failed to ..."
+- 4 spaces for indentation rather than tab
+- When using `# noqa` to suppress a style or linter warning, include a comment explaining the
   justification for bypassing the check.
-* When using `# type: ignore` to suppress a mypy warning, include a comment explaining the
+- When using `# type: ignore` to suppress a mypy warning, include a comment explaining the
   justification for bypassing the check.
-* Don't use unicode characters in the codebase. ASCII-only is preferred for compatibility or
+- Don't use unicode characters in the codebase. ASCII-only is preferred for compatibility or
   readability reasons.
-* Providers configuration class should be Pydantic Field class. It should have a `description` field
+- Providers configuration class should be Pydantic Field class. It should have a `description` field
   that describes the configuration. These descriptions will be used to generate the provider
   documentation.
-* When possible, use keyword arguments only when calling functions.
-* Llama Stack utilizes [custom Exception classes](llama_stack/apis/common/errors.py) for certain Resources that should be used where applicable.
+- When possible, use keyword arguments only when calling functions.
+- Llama Stack utilizes [custom Exception classes](src/llama_stack_api/common/errors.py) for certain Resources that should be used where applicable.
 
 ### License
+
 By contributing to Llama, you agree that your contributions will be licensed
 under the LICENSE file in the root directory of this source tree.
 
@@ -227,6 +230,7 @@ Some tips about common tasks you work on while contributing to Llama Stack:
 When installing dependencies for a distribution, you can use `llama stack list-deps` to view and install the required packages.
 
 Example:
+
 ```bash
 cd work/
 git clone https://github.com/llamastack/llama-stack.git

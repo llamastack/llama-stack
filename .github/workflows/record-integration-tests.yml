@@ -31,7 +31,7 @@ on:
         description: 'Comma-separated list of providers to record'
         type: string
         required: false
-        default: 'gpt,azure,watsonx'
+        default: 'gpt,azure,watsonx,vertexai'
       suite:
         description: 'Test suite override (default: per-provider from matrix)'
         type: string
@@ -53,9 +53,11 @@ concurrency:
   cancel-in-progress: true
 
 # Read-only permissions - no write access
+# id-token: write is required for GCP Workload Identity Federation (OIDC token exchange)
 permissions:
   contents: read
   pull-requests: read
+  id-token: write
 
 jobs:
   # Compute PR information for both pull_request and workflow_dispatch
@@ -89,11 +91,12 @@ jobs:
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             if [ -n "$INPUT_PR_NUMBER" ]; then
               # Fetch PR info via API
-              PR_DATA=$(gh pr view "$INPUT_PR_NUMBER" --repo "$REPO" --json number,headRefName,headRefOid,headRepository)
+              PR_DATA=$(gh pr view "$INPUT_PR_NUMBER" --repo "$REPO" --json number,headRefName,headRefOid,headRepository,headRepositoryOwner)
               PR_NUMBER="$INPUT_PR_NUMBER"
               HEAD_REF=$(echo "$PR_DATA" | jq -r '.headRefName')
               HEAD_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid')
-              HEAD_REPO=$(echo "$PR_DATA" | jq -r '.headRepository.nameWithOwner')
+              # headRepository.nameWithOwner can be empty for fork PRs, so construct it manually
+              HEAD_REPO=$(echo "$PR_DATA" | jq -r '"\(.headRepositoryOwner.login)/\(.headRepository.name)"')
             else
               # Use current branch
               PR_NUMBER="manual"
@@ -126,12 +129,14 @@ jobs:
             PROVIDERS="ollama"
           fi
 
-          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
-          echo "pr_head_ref=${HEAD_REF}" >> $GITHUB_OUTPUT
-          echo "pr_head_sha=${HEAD_SHA}" >> $GITHUB_OUTPUT
-          echo "pr_head_repo=${HEAD_REPO}" >> $GITHUB_OUTPUT
-          echo "is_fork_pr=${IS_FORK_PR}" >> $GITHUB_OUTPUT
-          echo "providers_to_run=${PROVIDERS}" >> $GITHUB_OUTPUT
+          {
+            echo "pr_number=${PR_NUMBER}"
+            echo "pr_head_ref=${HEAD_REF}"
+            echo "pr_head_sha=${HEAD_SHA}"
+            echo "pr_head_repo=${HEAD_REPO}"
+            echo "is_fork_pr=${IS_FORK_PR}"
+            echo "providers_to_run=${PROVIDERS}"
+          } >> "$GITHUB_OUTPUT"
 
           echo "Recording for PR #${PR_NUMBER}"
           echo "  Branch: ${HEAD_REF}"
@@ -167,7 +172,7 @@ jobs:
           cat pr-metadata/pr-info.json
 
       - name: Upload PR metadata
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: pr-metadata-${{ github.run_id }}
           path: pr-metadata/
@@ -189,8 +194,10 @@ jobs:
           - setup: azure
             suite: responses
           - setup: bedrock
-            suite: responses
+            suite: bedrock-responses
           - setup: watsonx
+            suite: responses
+          - setup: vertexai
             suite: responses
     steps:
       - name: Check if provider should run
@@ -204,10 +211,10 @@ jobs:
           CURRENT="$CURRENT_PROVIDER"
 
           if [[ ",$PROVIDERS," == *",$CURRENT,"* ]]; then
-            echo "run=true" >> $GITHUB_OUTPUT
+            echo "run=true" >> "$GITHUB_OUTPUT"
             echo "Recording for provider: $CURRENT"
           else
-            echo "run=false" >> $GITHUB_OUTPUT
+            echo "run=false" >> "$GITHUB_OUTPUT"
             echo "Skipping provider: $CURRENT"
           fi
 
@@ -219,11 +226,18 @@ jobs:
           ref: ${{ needs.compute-pr-info.outputs.pr_head_sha }}
           fetch-depth: 0
 
+      - name: Authenticate to Google Cloud (Vertex AI)
+        if: steps.should_run.outputs.run == 'true' && matrix.provider.setup == 'vertexai' && needs.compute-pr-info.outputs.is_fork_pr != 'true'
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ secrets.VERTEX_AI_PROJECT }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+
       # Note: Using full repo path with pinned SHA ensures actions are loaded from
       # a trusted commit, not from PR checkout. This is critical for security.
       - name: Setup test environment
         if: steps.should_run.outputs.run == 'true'
-        uses: llamastack/llama-stack/.github/actions/setup-test-environment@4a4f48ffda71163aba27360a8cb172d4fddb398c
+        uses: llamastack/llama-stack/.github/actions/setup-test-environment@2b0ece2628d4edc18912ffb7fbbb014da08a37ad
         with:
           python-version: "3.12"
           client-version: "latest"
@@ -233,7 +247,7 @@ jobs:
 
       - name: Run and record tests
         if: steps.should_run.outputs.run == 'true'
-        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@4a4f48ffda71163aba27360a8cb172d4fddb398c
+        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@2b0ece2628d4edc18912ffb7fbbb014da08a37ad
         env:
           OPENAI_API_KEY: ${{ matrix.provider.setup == 'gpt' && secrets.OPENAI_API_KEY || '' }}
           AZURE_API_KEY: ${{ matrix.provider.setup == 'azure' && secrets.AZURE_API_KEY || '' }}
@@ -244,6 +258,8 @@ jobs:
           TAVILY_SEARCH_API_KEY: ${{ contains(fromJSON('["gpt","azure"]'), matrix.provider.setup) && secrets.TAVILY_SEARCH_API_KEY || '' }}
           AWS_BEARER_TOKEN_BEDROCK: ${{ matrix.provider.setup == 'bedrock' && secrets.AWS_BEARER_TOKEN_BEDROCK || '' }}
           AWS_DEFAULT_REGION: ${{ matrix.provider.setup == 'bedrock' && 'us-west-2' || '' }}
+          VERTEX_AI_PROJECT: ${{ matrix.provider.setup == 'vertexai' && secrets.VERTEX_AI_PROJECT || '' }}
+          VERTEX_AI_LOCATION: ${{ matrix.provider.setup == 'vertexai' && 'global' || '' }}
         with:
           stack-config: 'server:ci-tests'
           setup: ${{ matrix.provider.setup }}
@@ -257,7 +273,7 @@ jobs:
       # Upload recordings as artifacts for the companion workflow to commit
       - name: Upload recordings as artifacts
         if: steps.should_run.outputs.run == 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: recordings-${{ matrix.provider.setup }}-${{ github.run_id }}-${{ github.run_attempt || '1' }}
           path: |

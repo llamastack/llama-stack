@@ -103,6 +103,8 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 
 class FaissIndex(EmbeddingIndex):
+    """FAISS-based embedding index with optional KV store persistence."""
+
     def __init__(self, dimension: int, kvstore: KVStore | None = None, bank_id: str | None = None):
         self.index = _get_faiss().IndexFlatL2(dimension)
         self.chunk_by_index: dict[int, EmbeddedChunk] = {}
@@ -148,7 +150,7 @@ class FaissIndex(EmbeddingIndex):
                     for key, val in chunk.metadata.items():
                         self._meta_index.setdefault(key, {}).setdefault(val, set()).add(pos)
             except Exception as e:
-                logger.debug(e, exc_info=True)
+                logger.debug("Failed to deserialize Faiss index", error=str(e), exc_info=True)
                 raise ValueError(
                     "Error deserializing Faiss index from storage. If you recently upgraded your Llama Stack, Faiss, "
                     "or NumPy versions, you may need to delete the index and re-create it again or downgrade versions.\n"

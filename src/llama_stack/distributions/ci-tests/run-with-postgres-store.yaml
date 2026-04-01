@@ -1,13 +1,13 @@
 version: 2
 distro_name: ci-tests
 apis:
-- agents
 - batches
 - datasetio
 - eval
 - file_processors
 - files
 - inference
+- responses
 - safety
 - scoring
 - tool_runtime
@@ -32,10 +32,6 @@ providers:
       network:
         tls:
           verify: ${env.VLLM_TLS_VERIFY:=true}
-  - provider_id: ${env.TGI_URL:+tgi}
-    provider_type: remote::tgi
-    config:
-      base_url: ${env.TGI_URL:=}
   - provider_id: fireworks
     provider_type: remote::fireworks
     config:
@@ -84,12 +80,6 @@ providers:
     config:
       base_url: https://api.sambanova.ai/v1
       api_key: ${env.SAMBANOVA_API_KEY:=}
-  - provider_id: ${env.WATSONX_API_KEY:+watsonx}
-    provider_type: remote::watsonx
-    config:
-      base_url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
-      api_key: ${env.WATSONX_API_KEY:=}
-      project_id: ${env.WATSONX_PROJECT_ID:=}
   - provider_id: ${env.AZURE_API_KEY:+azure}
     provider_type: remote::azure
     config:
@@ -99,6 +89,8 @@ providers:
       api_type: ${env.AZURE_API_TYPE:=}
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
+    config:
+      trust_remote_code: true
   - provider_id: transformers
     provider_type: inline::transformers
   - provider_id: ${env.WATSONX_API_KEY:+watsonx}
@@ -175,6 +167,18 @@ providers:
       persistence:
         namespace: vector_io::elasticsearch
         backend: kv_default
+  - provider_id: ${env.INFINISPAN_URL:+infinispan}
+    provider_type: remote::infinispan
+    config:
+      url: ${env.INFINISPAN_URL:=http://localhost:11222}
+      username: ${env.INFINISPAN_USERNAME:=admin}
+      password: ${env.INFINISPAN_PASSWORD:=}
+      use_https: false
+      auth_mechanism: digest
+      verify_tls: true
+      persistence:
+        namespace: vector_io::infinispan
+        backend: kv_default
   files:
   - provider_id: builtin-files
     provider_type: inline::localfs
@@ -193,7 +197,7 @@ providers:
       excluded_categories: []
   - provider_id: code-scanner
     provider_type: inline::code-scanner
-  agents:
+  responses:
   - provider_id: builtin
     provider_type: inline::builtin
     config:
@@ -308,6 +312,11 @@ registered_resources:
     provider_id: ${env.WATSONX_API_KEY:+watsonx}
     provider_model_id: meta-llama/llama-3-3-70b-instruct
     model_type: llm
+  - metadata: {}
+    model_id: bedrock/openai.gpt-oss-20b
+    provider_id: ${env.AWS_BEARER_TOKEN_BEDROCK:+bedrock}
+    provider_model_id: openai.gpt-oss-20b
+    model_type: llm
   shields:
   - shield_id: llama-guard
     provider_id: ${env.SAFETY_MODEL:+llama-guard}
@@ -319,11 +328,6 @@ registered_resources:
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups:
-  - toolgroup_id: builtin::websearch
-    provider_id: tavily-search
-  - toolgroup_id: builtin::file_search
-    provider_id: file-search
 server:
   port: 8321
   auth:

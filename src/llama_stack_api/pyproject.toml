@@ -44,7 +44,7 @@ package-dir = {"llama_stack_api" = "."}
 # WARNING: Update this list when adding/removing API directories (e.g., new FastAPI routers)
 packages = [
     "llama_stack_api.admin",
-    "llama_stack_api.agents",
+    "llama_stack_api.responses",
     "llama_stack_api.batches",
     "llama_stack_api.benchmarks",
     "llama_stack_api.common",
@@ -65,6 +65,7 @@ packages = [
     "llama_stack_api.prompts",
     "llama_stack_api.scoring",
     "llama_stack_api.safety",
+    "llama_stack_api.tools",
     "llama_stack_api.vector_io",
     "llama_stack_api.connectors",
 ]
@@ -80,7 +81,6 @@ py-modules = [
     "llama_stack_api.resource",
     "llama_stack_api.router_utils",
     "llama_stack_api.schema_utils",
-    "llama_stack_api.tools",
     "llama_stack_api.vector_stores",
     "llama_stack_api.version",
     "llama_stack_api.validators",
@@ -92,7 +92,7 @@ llama_stack_api = ["py.typed", "**/*.json", "**/*.yaml"]
 
 [tool.setuptools_scm]
 root = "../.."
-fallback_version = "0.6.1.dev0"
+fallback_version = "0.6.2.dev0"
 
 [tool.ruff]
 line-length = 120

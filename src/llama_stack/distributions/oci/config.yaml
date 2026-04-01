@@ -1,11 +1,11 @@
 version: 2
 distro_name: oci
 apis:
-- agents
 - datasetio
 - eval
 - files
 - inference
+- responses
 - safety
 - scoring
 - tool_runtime
@@ -32,7 +32,7 @@ providers:
     provider_type: inline::llama-guard
     config:
       excluded_categories: []
-  agents:
+  responses:
   - provider_id: builtin
     provider_type: inline::builtin
     config:
@@ -130,8 +130,5 @@ registered_resources:
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups:
-  - toolgroup_id: builtin::websearch
-    provider_id: tavily-search
 server:
   port: 8321

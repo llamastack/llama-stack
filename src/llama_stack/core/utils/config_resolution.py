@@ -34,14 +34,14 @@ def resolve_config_or_distro(
     # Strategy 1: Try as file path first
     config_path = Path(config_or_distro)
     if config_path.exists() and config_path.is_file():
-        logger.debug(f"Using file path: {config_path}")
+        logger.debug("Using file path", config_path=config_path)
         return config_path.resolve()
 
     # Strategy 2: Try as distribution name (if no .yaml extension)
     if not config_or_distro.endswith(".yaml"):
         distro_config = _get_distro_config_path(config_or_distro)
         if distro_config.exists():
-            logger.debug(f"Using distribution: {distro_config}")
+            logger.debug("Using distribution", distro_config=distro_config)
             return distro_config
 
     # Strategy 3: Try as distro config path (if no .yaml extension and contains a slash)
@@ -51,18 +51,18 @@ def resolve_config_or_distro(
         distro_name, config_name = config_or_distro.split("::")
         distro_config = _get_distro_config_path(distro_name, config_name)
         if distro_config.exists():
-            logger.info(f"Using distribution: {distro_config}")
+            logger.info("Using distribution", distro_config=distro_config)
             return distro_config
 
     # Strategy 4: Try as built distribution name
     distrib_config = DISTRIBS_BASE_DIR / f"llamastack-{config_or_distro}" / f"{config_or_distro}-config.yaml"
     if distrib_config.exists():
-        logger.debug(f"Using built distribution: {distrib_config}")
+        logger.debug("Using built distribution", distrib_config=distrib_config)
         return distrib_config
 
     distrib_config = DISTRIBS_BASE_DIR / f"{config_or_distro}" / "config.yaml"
     if distrib_config.exists():
-        logger.debug(f"Using built distribution: {distrib_config}")
+        logger.debug("Using built distribution", distrib_config=distrib_config)
         return distrib_config
 
     # Strategy 5: Failed - provide helpful error

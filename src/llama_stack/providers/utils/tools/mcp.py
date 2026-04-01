@@ -71,6 +71,8 @@ protocol_cache = TTLDict(ttl_seconds=3600)
 
 
 class MCPProtol(Enum):
+    """Enumeration of supported MCP transport protocols."""
+
     UNKNOWN = 0
     STREAMABLE_HTTP = 1
     SSE = 2
@@ -143,7 +145,7 @@ class MCPSessionManager:
             # Create new session
             session, client_ctx, session_ctx = await self._create_session(endpoint, headers)
             self._sessions[key] = (session, client_ctx, session_ctx)
-            logger.debug(f"Created new MCP session for {endpoint} (key: {key[:32]}...)")
+            logger.debug("Created new MCP session", endpoint=endpoint, key=key[:32])
             return session
 
     async def _create_session(self, endpoint: str, headers: dict[str, str]) -> tuple[ClientSession, Any, Any]:
@@ -198,41 +200,49 @@ class MCPSessionManager:
             except* httpx.ConnectError as eg:
                 if i == len(connection_strategies) - 1:
                     error_msg = f"Failed to connect to MCP server at {endpoint}: Connection refused"
-                    logger.error(f"MCP connection error: {error_msg}")
+                    logger.error("MCP connection error", error=error_msg)
                     raise ConnectionError(error_msg) from eg
                 else:
                     logger.warning(
-                        f"failed to connect to MCP server at {endpoint} via {strategy.name}, "
-                        f"falling back to {connection_strategies[i + 1].name}"
+                        "failed to connect to MCP server at via , falling back to",
+                        endpoint=endpoint,
+                        name=strategy.name,
+                        connection_strategies_i_1_name=connection_strategies[i + 1].name,
                     )
                 last_exception = eg
             except* httpx.TimeoutException as eg:
                 if i == len(connection_strategies) - 1:
                     error_msg = f"MCP server at {endpoint} timed out"
-                    logger.error(f"MCP timeout error: {error_msg}")
+                    logger.error("MCP timeout error", error=error_msg)
                     raise TimeoutError(error_msg) from eg
                 else:
                     logger.warning(
-                        f"MCP server at {endpoint} timed out via {strategy.name}, "
-                        f"falling back to {connection_strategies[i + 1].name}"
+                        "MCP server at timed out via , falling back to",
+                        endpoint=endpoint,
+                        name=strategy.name,
+                        connection_strategies_i_1_name=connection_strategies[i + 1].name,
                     )
                 last_exception = eg
             except* httpx.RequestError as eg:
                 if i == len(connection_strategies) - 1:
                     exc_msg = str(eg.exceptions[0]) if eg.exceptions else "Unknown error"
                     error_msg = f"Network error connecting to MCP server at {endpoint}: {exc_msg}"
-                    logger.error(f"MCP network error: {error_msg}")
+                    logger.error("MCP network error", error=error_msg)
                     raise ConnectionError(error_msg) from eg
                 else:
                     logger.warning(
-                        f"network error connecting to MCP server at {endpoint} via {strategy.name}, "
-                        f"falling back to {connection_strategies[i + 1].name}"
+                        "network error connecting to MCP server at via , falling back to",
+                        endpoint=endpoint,
+                        name=strategy.name,
+                        connection_strategies_i_1_name=connection_strategies[i + 1].name,
                     )
                 last_exception = eg
             except* McpError:
                 if i < len(connection_strategies) - 1:
                     logger.warning(
-                        f"failed to connect via {strategy.name}, falling back to {connection_strategies[i + 1].name}"
+                        "failed to connect via , falling back to",
+                        name=strategy.name,
+                        connection_strategies_i_1_name=connection_strategies[i + 1].name,
                     )
                 else:
                     raise
@@ -263,26 +273,37 @@ class MCPSessionManager:
             except BaseException as e:
                 # Debug level since these errors are expected in streaming scenarios
                 # where cleanup runs in a different async context than session creation
-                logger.debug(f"Error closing MCP session {key}: {e}")
+                logger.debug("Error closing MCP session", key=key, error=str(e))
                 errors.append(e)
             try:
                 await client_ctx.__aexit__(None, None, None)
             except BaseException as e:
-                logger.debug(f"Error closing MCP client context {key}: {e}")
+                logger.debug("Error closing MCP client context", key=key, error=str(e))
                 errors.append(e)
 
         self._sessions.clear()
         self._locks.clear()
-        logger.debug(f"Closed {session_count} MCP sessions")
+        logger.debug("Closed MCP sessions", session_count=session_count)
 
         if errors:
-            logger.debug(f"Encountered {len(errors)} errors while closing MCP sessions (expected in streaming)")
+            logger.debug(
+                "Encountered errors while closing MCP sessions (expected in streaming)", errors_count=len(errors)
+            )
 
         return False
 
 
 @asynccontextmanager
 async def client_wrapper(endpoint: str, headers: dict[str, str]) -> AsyncGenerator[ClientSession, Any]:
+    """Create an MCP client session for the given endpoint with protocol auto-detection.
+
+    Args:
+        endpoint: MCP server endpoint URL
+        headers: HTTP headers to include in the connection
+
+    Returns:
+        An async context manager yielding an initialized ClientSession
+    """
     # we use a ttl'd dict to cache the happy path protocol for each endpoint
     # but, we always fall back to trying the other protocol if we cannot initialize the session
     connection_strategies = [MCPProtol.STREAMABLE_HTTP, MCPProtol.SSE]
@@ -318,21 +339,27 @@ async def client_wrapper(endpoint: str, headers: dict[str, str]) -> AsyncGenerat
             # Connection refused, server down, network unreachable
             if i == len(connection_strategies) - 1:
                 error_msg = f"Failed to connect to MCP server at {endpoint}: Connection refused"
-                logger.error(f"MCP connection error: {error_msg}")
+                logger.error("MCP connection error", error=error_msg)
                 raise ConnectionError(error_msg) from eg
             else:
                 logger.warning(
-                    f"failed to connect to MCP server at {endpoint} via {strategy.name}, falling back to {connection_strategies[i + 1].name}"
+                    "failed to connect to MCP server at via , falling back to",
+                    endpoint=endpoint,
+                    name=strategy.name,
+                    connection_strategies_i_1_name=connection_strategies[i + 1].name,
                 )
         except* httpx.TimeoutException as eg:
             # Request timeout, server too slow
             if i == len(connection_strategies) - 1:
                 error_msg = f"MCP server at {endpoint} timed out"
-                logger.error(f"MCP timeout error: {error_msg}")
+                logger.error("MCP timeout error", error=error_msg)
                 raise TimeoutError(error_msg) from eg
             else:
                 logger.warning(
-                    f"MCP server at {endpoint} timed out via {strategy.name}, falling back to {connection_strategies[i + 1].name}"
+                    "MCP server at timed out via , falling back to",
+                    endpoint=endpoint,
+                    name=strategy.name,
+                    connection_strategies_i_1_name=connection_strategies[i + 1].name,
                 )
         except* httpx.RequestError as eg:
             # DNS resolution failures, network errors, invalid URLs
@@ -340,16 +367,21 @@ async def client_wrapper(endpoint: str, headers: dict[str, str]) -> AsyncGenerat
                 # Get the first exception's message for the error string
                 exc_msg = str(eg.exceptions[0]) if eg.exceptions else "Unknown error"
                 error_msg = f"Network error connecting to MCP server at {endpoint}: {exc_msg}"
-                logger.error(f"MCP network error: {error_msg}")
+                logger.error("MCP network error", error=error_msg)
                 raise ConnectionError(error_msg) from eg
             else:
                 logger.warning(
-                    f"network error connecting to MCP server at {endpoint} via {strategy.name}, falling back to {connection_strategies[i + 1].name}"
+                    "network error connecting to MCP server at via , falling back to",
+                    endpoint=endpoint,
+                    name=strategy.name,
+                    connection_strategies_i_1_name=connection_strategies[i + 1].name,
                 )
         except* McpError:
             if i < len(connection_strategies) - 1:
                 logger.warning(
-                    f"failed to connect via {strategy.name}, falling back to {connection_strategies[i + 1].name}"
+                    "failed to connect via , falling back to",
+                    name=strategy.name,
+                    connection_strategies_i_1_name=connection_strategies[i + 1].name,
                 )
             else:
                 raise
@@ -427,7 +459,7 @@ def _parse_mcp_result(result) -> ToolInvocationResult:
         elif isinstance(item, mcp_types.ImageContent):
             content.append(ImageContentItem(image=_URLOrData(data=item.data)))
         elif isinstance(item, mcp_types.EmbeddedResource):
-            logger.warning(f"EmbeddedResource is not supported: {item}")
+            logger.warning("EmbeddedResource is not supported", item=item)
         else:
             raise ValueError(f"Unknown content type: {type(item)}")
     return ToolInvocationResult(
