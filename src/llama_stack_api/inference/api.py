@@ -77,7 +77,7 @@ class InferenceProvider(Protocol):
         alongside the CC response:
         - OpenAIChatCompletionWithReasoning (non-streaming)
         - AsyncIterator[OpenAIChatCompletionChunkWithReasoning] (streaming)
-        These are defined in llama_stack.providers.inline.responses.builtin.responses.types.
+        These are defined in llama_stack_api.inference.models.
 
         Default raises NotImplementedError so unsupported providers fail
         loudly instead of silently returning no reasoning.
