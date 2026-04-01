@@ -551,7 +551,7 @@ class StreamingResponseOrchestrator:
                         completion_result = await self.inference_api.openai_chat_completions_with_reasoning(
                             params.model_copy()
                         )
-                    except (NotImplementedError, AttributeError):
+                    except (NotImplementedError, AttributeError, ValueError):
                         logger.critical(
                             "Provider does not support reasoning in chat completions. "
                             "Falling back to regular chat completion."
@@ -1111,8 +1111,8 @@ class StreamingResponseOrchestrator:
                     refusal_text_accumulated.append(chunk_choice.delta.refusal)
 
                 # Aggregate tool call arguments across chunks
-                # Note: The type: ignore comments below suppress pre-existing mypy 
-                # issues that surfaced when we added the 
+                # Note: The type: ignore comments below suppress pre-existing mypy
+                # issues that surfaced when we added the
                 # chunk: OpenAIChatCompletionChunk annotation above.
                 if chunk_choice.delta.tool_calls:
                     for tool_call in chunk_choice.delta.tool_calls:
