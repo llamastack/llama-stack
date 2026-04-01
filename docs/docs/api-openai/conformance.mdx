@@ -18,12 +18,12 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 89.8% |
+| **Overall Conformance Score** | 89.7% |
 | **Endpoints Implemented** | 28/146 |
 | **Total Properties Checked** | 3441 |
-| **Schema/Type Issues** | 223 |
+| **Schema/Type Issues** | 226 |
 | **Missing Properties** | 128 |
-| **Total Issues to Fix** | 351 |
+| **Total Issues to Fix** | 354 |
 
 ## Integration Test Coverage
 
@@ -50,7 +50,7 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Embeddings | 64.3% | 14 | 5 | 0 |
 | Files | 66.7% | 42 | 8 | 6 |
 | Models | 66.7% | 15 | 0 | 5 |
-| Vector stores | 82.9% | 310 | 41 | 12 |
+| Vector stores | 81.9% | 310 | 44 | 12 |
 | Chat | 87.1% | 403 | 33 | 19 |
 | Responses | 87.1% | 225 | 29 | 0 |
 | Conversations | 98.8% | 2165 | 22 | 4 |
@@ -624,7 +624,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Vector stores
 
-**Score:** 82.9% · **Issues:** 41 · **Missing:** 12
+**Score:** 81.9% · **Issues:** 44 · **Missing:** 12
 
 #### `/vector_stores`
 
@@ -725,13 +725,14 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **POST**
 
 <details>
-<summary>Schema Issues (3)</summary>
+<summary>Schema Issues (4)</summary>
 
 | Property | Issues |
 |----------|--------|
 | `requestBody.content.application/json.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 2 |
 | `requestBody.content.application/json.properties.files` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.application/json.properties.file_counts` | Type removed: ['object'] |
+| `responses.200.content.application/json.properties.object` | Enum values removed: ['vector_store.files_batch'] |
 
 </details>
 
@@ -740,11 +741,12 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **GET**
 
 <details>
-<summary>Schema Issues (1)</summary>
+<summary>Schema Issues (2)</summary>
 
 | Property | Issues |
 |----------|--------|
 | `responses.200.content.application/json.properties.file_counts` | Type removed: ['object'] |
+| `responses.200.content.application/json.properties.object` | Enum values removed: ['vector_store.files_batch'] |
 
 </details>
 
@@ -753,11 +755,12 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **POST**
 
 <details>
-<summary>Schema Issues (1)</summary>
+<summary>Schema Issues (2)</summary>
 
 | Property | Issues |
 |----------|--------|
 | `responses.200.content.application/json.properties.file_counts` | Type removed: ['object'] |
+| `responses.200.content.application/json.properties.object` | Enum values removed: ['vector_store.files_batch'] |
 
 </details>
 

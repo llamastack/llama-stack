@@ -128,10 +128,10 @@
       ]
     },
     "conformance": {
-      "score": 89.8,
-      "issues": 223,
+      "score": 89.7,
+      "issues": 226,
       "missing_properties": 128,
-      "total_problems": 351,
+      "total_problems": 354,
       "total_properties": 3441
     }
   },
@@ -1941,8 +1941,8 @@
       ]
     },
     "Vector stores": {
-      "score": 82.9,
-      "issues": 41,
+      "score": 81.9,
+      "issues": 44,
       "missing_properties": 12,
       "total_properties": 310,
       "endpoints": [
@@ -2146,10 +2146,16 @@
                   "details": [
                     "Type removed: ['object']"
                   ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.object",
+                  "details": [
+                    "Enum values removed: ['vector_store.files_batch']"
+                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 3
+              "issues_count": 4
             }
           ]
         },
@@ -2165,10 +2171,16 @@
                   "details": [
                     "Type removed: ['object']"
                   ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.object",
+                  "details": [
+                    "Enum values removed: ['vector_store.files_batch']"
+                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 1
+              "issues_count": 2
             }
           ]
         },
@@ -2184,10 +2196,16 @@
                   "details": [
                     "Type removed: ['object']"
                   ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.object",
+                  "details": [
+                    "Enum values removed: ['vector_store.files_batch']"
+                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 1
+              "issues_count": 2
             }
           ]
         },
