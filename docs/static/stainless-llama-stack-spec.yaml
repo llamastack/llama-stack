@@ -14122,6 +14122,44 @@ components:
       required:
       - completion_id
       title: GetChatCompletionRequest
+    OpenAIChatCompletionWithReasoning:
+      description: |-
+        Internal wrapper: a CC response with extracted reasoning content.
+
+        Returned by openai_chat_completions_with_reasoning for non-streaming.
+        The Responses layer unwraps .completion and reads .reasoning_content.
+      properties:
+        completion:
+          $ref: '#/components/schemas/OpenAIChatCompletion'
+          description: The chat completion response.
+        reasoning_content:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Extracted reasoning content, if any.
+          nullable: true
+      required:
+      - completion
+      title: OpenAIChatCompletionWithReasoning
+    OpenAIChatCompletionChunkWithReasoning:
+      description: |-
+        Internal wrapper: a CC streaming chunk with extracted reasoning content.
+
+        Yielded by openai_chat_completions_with_reasoning for streaming.
+        The Responses layer unwraps .chunk and reads .reasoning_content.
+      properties:
+        chunk:
+          $ref: '#/components/schemas/OpenAIChatCompletionChunk'
+          description: The chat completion chunk.
+        reasoning_content:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Extracted reasoning content, if any.
+          nullable: true
+      required:
+      - chunk
+      title: OpenAIChatCompletionChunkWithReasoning
     EmbeddedChunk:
       description: |-
         A chunk of content with its embedding vector for vector database operations.

@@ -13,8 +13,6 @@ from pydantic import BaseModel
 
 from llama_stack_api import (
     OpenAIAssistantMessageParam,
-    OpenAIChatCompletion,
-    OpenAIChatCompletionChunk,
     OpenAIChatCompletionToolCall,
     OpenAIFinishReason,
     OpenAIMessageParam,
@@ -47,30 +45,6 @@ class AssistantMessageWithReasoning(OpenAIAssistantMessageParam):
     and map reasoning_content to their own CC format (e.g. 'reasoning' for Ollama/vLLM).
     """
 
-    reasoning_content: str | None = None
-
-
-@dataclass
-class OpenAIChatCompletionWithReasoning:
-    """Internal wrapper: a CC response with extracted reasoning content.
-
-    Returned by openai_chat_completions_with_reasoning for non-streaming.
-    The Responses layer unwraps .completion and reads .reasoning_content.
-    """
-
-    completion: OpenAIChatCompletion
-    reasoning_content: str | None = None
-
-
-@dataclass
-class OpenAIChatCompletionChunkWithReasoning:
-    """Internal wrapper: a CC streaming chunk with extracted reasoning content.
-
-    Yielded by openai_chat_completions_with_reasoning for streaming.
-    The Responses layer unwraps .chunk and reads .reasoning_content.
-    """
-
-    chunk: OpenAIChatCompletionChunk
     reasoning_content: str | None = None
 
 

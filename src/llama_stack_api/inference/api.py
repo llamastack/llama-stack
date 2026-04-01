@@ -15,7 +15,9 @@ from .models import (
     ListOpenAIChatCompletionResponse,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionChunkWithReasoning,
     OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionWithReasoning,
     OpenAICompletion,
     OpenAICompletionRequestWithExtraBody,
     OpenAICompletionWithInputMessages,
@@ -67,7 +69,7 @@ class InferenceProvider(Protocol):
     async def openai_chat_completions_with_reasoning(
         self,
         params: OpenAIChatCompletionRequestWithExtraBody,
-    ) -> object:
+    ) -> OpenAIChatCompletionWithReasoning | AsyncIterator[OpenAIChatCompletionChunkWithReasoning]:
         """Chat completion with reasoning token extraction.
 
         Internal method used by the Responses implementation when reasoning

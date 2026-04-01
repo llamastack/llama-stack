@@ -1038,6 +1038,34 @@ class RerankRequest(BaseModel):
     )
 
 
+@json_schema_type
+class OpenAIChatCompletionWithReasoning(BaseModel):
+    """Internal wrapper: a CC response with extracted reasoning content.
+
+    Returned by openai_chat_completions_with_reasoning for non-streaming.
+    The Responses layer unwraps .completion and reads .reasoning_content.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    completion: Any = Field(..., description="The chat completion response.")
+    reasoning_content: str | None = Field(None, description="Extracted reasoning content, if any.")
+
+
+@json_schema_type
+class OpenAIChatCompletionChunkWithReasoning(BaseModel):
+    """Internal wrapper: a CC streaming chunk with extracted reasoning content.
+
+    Yielded by openai_chat_completions_with_reasoning for streaming.
+    The Responses layer unwraps .chunk and reads .reasoning_content.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    chunk: Any = Field(..., description="The chat completion chunk.")
+    reasoning_content: str | None = Field(None, description="Extracted reasoning content, if any.")
+
+
 __all__ = [
     # Sampling
     "GreedySamplingStrategy",
@@ -1071,6 +1099,8 @@ __all__ = [
     "RerankResponse",
     # OpenAI Compatibility
     "OpenAIChatCompletionContentPartTextParam",
+    "OpenAIChatCompletionWithReasoning",
+    "OpenAIChatCompletionChunkWithReasoning",
     "OpenAIImageURL",
     "OpenAIChatCompletionContentPartImageParam",
     "OpenAIFileFile",
