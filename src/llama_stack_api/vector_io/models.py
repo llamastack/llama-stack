@@ -171,7 +171,7 @@ class VectorStoreObject(BaseModel):
     id: str
     object: Literal["vector_store"] = "vector_store"
     created_at: int
-    name: str
+    name: str = ""
     usage_bytes: int = 0
     file_counts: VectorStoreFileCounts
     status: VectorStoreStatus
