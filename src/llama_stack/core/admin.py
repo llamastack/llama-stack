@@ -42,7 +42,7 @@ class AdminImplConfig(BaseModel):
     config: StackConfig
 
 
-async def get_provider_impl(config, deps):
+async def get_provider_impl(config: AdminImplConfig, deps: dict[str, Any]) -> "AdminImpl":
     """Create and initialize an AdminImpl instance.
 
     Args:
@@ -60,7 +60,7 @@ async def get_provider_impl(config, deps):
 class AdminImpl(Admin):
     """Implementation of the Admin API providing provider management, route listing, health, and version endpoints."""
 
-    def __init__(self, config: AdminImplConfig, deps):
+    def __init__(self, config: AdminImplConfig, deps: dict[str, Any]) -> None:
         self.config = config
         self.deps = deps
 
@@ -180,7 +180,9 @@ class AdminImpl(Admin):
             return [p.provider_type for p in providers] if providers else []
 
         # Helper function to determine if a router route should be included based on api_filter
-        def _should_include_router_route(route, router_prefix: str | None) -> bool:
+        def _should_include_router_route(route: Any, router_prefix: str | None) -> bool:
+            """Check if a router-based route should be included based on api_filter."""
+            # Check deprecated status
             route_deprecated = getattr(route, "deprecated", False) or False
 
             if api_filter is None:
