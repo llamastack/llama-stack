@@ -2,18 +2,10 @@ name: Test External Providers Installed via Module
 
 run-name: Test External Provider installation via Python module
 
+# Disabled until we find a suitable external provider for CI.
+# The lmeval provider depends on the eval API which is being removed.
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'src/llama_stack/**'
-      - 'tests/integration/**'
-      - 'uv.lock'
-      - 'pyproject.toml'
-      - 'tests/external/*'
-      - '.github/workflows/test-external-provider-module.yml' # This workflow
+  workflow_dispatch: {}
 
 jobs:
   test-external-providers-from-module:
