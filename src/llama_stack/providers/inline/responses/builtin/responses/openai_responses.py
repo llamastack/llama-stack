@@ -318,15 +318,16 @@ class OpenAIResponsesImpl:
                 messages = await convert_response_input_to_chat_messages(input, files_api=self.files_api)
             else:
                 if not stored_messages:
-                    all_input = conversation_items.data
+                    conv_items: list[OpenAIResponseInput] = list(conversation_items.data)
                     if isinstance(input, str):
-                        all_input.append(
+                        conv_items.append(
                             OpenAIResponseMessage(
                                 role="user", content=[OpenAIResponseInputMessageContentText(text=input)]
                             )
                         )
                     else:
-                        all_input.extend(input)
+                        conv_items.extend(input)
+                    all_input = conv_items
                 else:
                     all_input = input
 
@@ -640,7 +641,7 @@ class OpenAIResponsesImpl:
         extra_body: dict | None = None,
         stream_options: ResponseStreamOptions | None = None,
         context_management: list | None = None,
-    ):
+    ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
         stream = bool(stream)
         background = bool(background)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
@@ -848,7 +849,9 @@ class OpenAIResponsesImpl:
         created_at = int(time.time())
 
         # Normalize input to list format for storage
-        input_items = [OpenAIResponseMessage(content=input, role="user")] if isinstance(input, str) else input
+        input_items: list[OpenAIResponseInput] = (
+            [OpenAIResponseMessage(content=input, role="user")] if isinstance(input, str) else input
+        )
 
         # Create initial queued response
         queued_response = OpenAIResponseObject(
@@ -1274,6 +1277,7 @@ class OpenAIResponsesImpl:
             prompt_cache_key=prompt_cache_key,
         )
         completion = await self.inference_api.openai_chat_completion(params)
+        assert not isinstance(completion, AsyncIterator)
 
         # Extract summary text from the completion
         summary_text = ""
@@ -1320,7 +1324,7 @@ class OpenAIResponsesImpl:
         )
 
     def _estimate_token_count(self, input: str | list[OpenAIResponseInput]) -> int:
-        """Estimate token count using a rough character-based heuristic (4 chars ≈ 1 token)."""
+        """Estimate token count using a rough character-based heuristic (4 chars ~= 1 token)."""
         if isinstance(input, str):
             return len(input) // 4
 
@@ -1427,7 +1431,7 @@ class OpenAIResponsesImpl:
                 OpenAIResponseMessage(role="user", content=[OpenAIResponseInputMessageContentText(text=input)])
             )
         elif isinstance(input, list):
-            conversation_items.extend(input)
+            conversation_items.extend(item for item in input if not isinstance(item, OpenAIResponseCompaction))
 
         conversation_items.extend(output_items)
 

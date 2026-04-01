@@ -192,8 +192,13 @@ async def invoke_with_optional_request(method: Any) -> Any:
     return await method()
 
 
-async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
-    """Register all resources defined in the run configuration with their respective providers."""
+async def register_resources(run_config: StackConfig, impls: dict[Api, Any]) -> None:
+    """Register all resources defined in the run configuration with their respective providers.
+
+    Args:
+        run_config: The stack run configuration containing registered_resources.
+        impls: Dictionary mapping APIs to their provider implementations.
+    """
     for rsrc, api, register_method, list_method, request_class in RESOURCES:
         objects = getattr(run_config.registered_resources, rsrc)
         if api not in impls:
@@ -239,7 +244,7 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
             )
 
 
-async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, Any]):
+async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, Any]) -> None:
     """Auto-register built-in tool groups based on configured tool_runtime providers.
 
     For each tool_runtime provider whose spec declares a toolgroup_id,
@@ -293,7 +298,7 @@ async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, An
         )
 
 
-async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
+async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]) -> None:
     """Register connectors from config"""
     if Api.connectors not in impls:
         return
@@ -321,7 +326,7 @@ async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
             await connectors_impl.unregister_connector(connector.connector_id)
 
 
-async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig | None, impls: dict[Api, Any]):
+async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig | None, impls: dict[Api, Any]) -> None:
     """Validate vector stores configuration."""
     if vector_stores_config is None:
         return
@@ -420,8 +425,16 @@ async def _validate_rewrite_query_model(rewrite_query_model: QualifiedModel, imp
     logger.debug("Validated rewrite query model", model_identifier=model_identifier)
 
 
-async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict[Api, Any]):
-    """Validate that the configured default shield exists among registered shields."""
+async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict[Api, Any]) -> None:
+    """Validate that the configured default shield exists among registered shields.
+
+    Args:
+        safety_config: Optional safety configuration with a default_shield_id.
+        impls: Dictionary mapping APIs to their provider implementations.
+
+    Raises:
+        ValueError: If the default shield ID is not found among registered shields.
+    """
     if safety_config is None or safety_config.default_shield_id is None:
         return
 

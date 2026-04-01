@@ -148,7 +148,7 @@ def upgrade_from_routing_table(
         The upgraded configuration dictionary using the providers schema.
     """
 
-    def get_providers(entries):
+    def get_providers(entries: Any) -> list[Provider]:
         return [
             Provider(
                 provider_id=(f"{entry['provider_type']}-{i:02d}" if len(entries) > 1 else entry["provider_type"]),

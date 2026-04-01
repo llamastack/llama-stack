@@ -48,6 +48,7 @@ from llama_stack_api import (
     OpenAIResponseOutputMessageFunctionToolCall,
     OpenAIResponseOutputMessageMCPCall,
     OpenAIResponseOutputMessageMCPListTools,
+    OpenAIResponseOutputMessageReasoningItem,
     OpenAIResponseOutputMessageWebSearchToolCall,
     OpenAIResponseText,
     OpenAISystemMessageParam,
@@ -306,6 +307,9 @@ async def convert_response_input_to_chat_messages(
             if isinstance(input_item, OpenAIResponseInputFunctionToolCallOutput):
                 # skip as these have been extracted and inserted in order
                 pass
+            elif isinstance(input_item, OpenAIResponseOutputMessageReasoningItem):
+                # skip for now — reasoning items will be handled in Stage 2
+                pass
             elif isinstance(input_item, OpenAIResponseOutputMessageFunctionToolCall):
                 tool_call = OpenAIChatCompletionToolCall(
                     index=0,
@@ -376,6 +380,10 @@ async def convert_response_input_to_chat_messages(
                             continue  # Skip duplicate user message
                 # Dynamic message type call - different message types have different content expectations
                 messages.append(message_type(content=content))  # type: ignore[call-arg,arg-type]
+            else:
+                # Fail loudly on unknown types so future additions to
+                # OpenAIResponseInput don't silently drop data.
+                raise ValueError(f"Unexpected input item type: {type(input_item).__name__}")
         if len(tool_call_results):
             # Check if unpaired function_call_outputs reference function_calls from previous messages
             if previous_messages:
@@ -578,7 +586,7 @@ def convert_mcp_tool_choice(
     server_label: str | None = None,
     server_label_to_tools: dict[str, list[str]] | None = None,
     tool_name: str | None = None,
-) -> dict[str, str] | list[dict[str, str]]:
+) -> dict[str, str | dict[str, str]] | list[dict[str, str | dict[str, str]]] | None:
     """Convert a responses tool choice of type mcp to a chat completions compatible function tool choice."""
 
     if tool_name:
@@ -593,6 +601,8 @@ def convert_mcp_tool_choice(
         tool_names = server_label_to_tools.get(server_label, [])
         if not tool_names:
             return None
-        matching_tools = [{"type": "function", "function": {"name": tool_name}} for tool_name in tool_names]
+        matching_tools: list[dict[str, str | dict[str, str]]] = [
+            {"type": "function", "function": {"name": name}} for name in tool_names
+        ]
         return matching_tools
     return []

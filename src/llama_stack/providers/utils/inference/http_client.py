@@ -22,13 +22,13 @@ from llama_stack.providers.utils.inference.model_registry import (
 logger = get_logger(name=__name__, category="providers::utils")
 
 
-def _build_ssl_context(tls_config: TLSConfig) -> ssl.SSLContext | bool | Path:
+def _build_ssl_context(tls_config: TLSConfig) -> ssl.SSLContext | bool | str:
     """
     Build an SSL context from TLS configuration.
 
     Returns:
         - ssl.SSLContext if advanced options (min_version, ciphers, or mTLS) are configured
-        - Path if only a CA bundle path is specified
+        - str if only a CA bundle path is specified (httpx requires str, not Path)
         - bool if only verify is specified as boolean
     """
     has_advanced_options = (
@@ -36,6 +36,8 @@ def _build_ssl_context(tls_config: TLSConfig) -> ssl.SSLContext | bool | Path:
     )
 
     if not has_advanced_options:
+        if isinstance(tls_config.verify, Path):
+            return str(tls_config.verify)
         return tls_config.verify
 
     ctx = ssl.create_default_context()
