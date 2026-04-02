@@ -744,13 +744,4 @@ footer.row .col {
   border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 
-/* Hide emoji icons on API doc category cards */
-h2[class*="cardTitle"] {
-  overflow: hidden;
-}
-
-h2[class*="cardTitle"] a {
-  display: block;
-  text-indent: -1.5em;
-  padding-left: 1.5em;
-}
+/* Emoji icons on doc cards are removed via swizzled DocCard component */
