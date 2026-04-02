@@ -26,8 +26,7 @@ FastAPI Server  (src/llama_stack/core/server/server.py)
   v
 Route Dispatch
   |
-  |-- FastAPI Router routes     (e.g. /v1/openai/* via fastapi_router_registry.py)
-  |-- Legacy @webmethod routes  (protocol methods with @webmethod decorator)
+  |-- FastAPI Router routes     (auto-discovered via fastapi_router_registry.py)
   |
   v
 Router  (src/llama_stack/core/routers/)
@@ -48,7 +47,7 @@ External Service or Local Computation
 
 ### Detailed Flow Example: Chat Completion
 
-1. Client sends `POST /v1/openai/chat/completions` with `model: "ollama/llama3.2:3b-instruct-fp16"`.
+1. Client sends `POST /v1/chat/completions` with `model: "ollama/llama3.2:3b-instruct-fp16"`.
 2. `server.py` dispatches to the inference FastAPI router.
 3. The `InferenceRouter` (`core/routers/inference.py`) calls `routing_table.get_provider_impl(model_id)`.
 4. `CommonRoutingTableImpl` looks up the model in `DistributionRegistry`, finds it belongs to provider `ollama`.
@@ -121,7 +120,7 @@ The full list of auto-routed pairs is defined in `builtin_automatically_routed_a
 
 The `llama_stack_api` package defines all public-facing types and protocols:
 
-- **Protocols** -- Python `Protocol` classes like `Inference`, `Safety`, `Agents` that define the API contract. Methods are annotated with `@webmethod` to specify HTTP routes.
+- **Protocols** -- Python `Protocol` classes like `Inference`, `Safety` that define the API contract. HTTP routes are defined via FastAPI routers in `fastapi_routes.py` modules.
 - **Data Types** -- Pydantic models for requests, responses, and resources (e.g., `Model`, `Shield`, `ChatCompletionRequest`).
 - **Provider Specs** -- `InlineProviderSpec`, `RemoteProviderSpec`, and related types that define how providers are declared.
 - **Internal utilities** -- KVStore and SqlStore abstract interfaces live here so third-party providers can use them without depending on the full server.
@@ -264,8 +263,9 @@ For more details, see `tests/README.md` and `tests/integration/README.md`.
 ```text
 src/
   llama_stack_api/          # API definitions package (separate pip package)
-    inference.py            # Inference protocol
-    agents.py               # Agents protocol
+    inference/              # Inference protocol, models, FastAPI routes
+    responses/              # Responses API protocol and routes
+    safety/                 # Safety protocol and routes
     datatypes.py            # Shared data types
     providers/              # Provider spec types
     internal/               # KVStore/SqlStore interfaces

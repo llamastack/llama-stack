@@ -11,8 +11,9 @@ server/
   auth.py                      # AuthenticationMiddleware (Bearer token validation)
   auth_providers.py            # Auth provider implementations (Kubernetes, custom endpoint)
   quota.py                     # QuotaMiddleware (rate limiting per client)
-  routes.py                    # Route discovery from @webmethod protocols
-  fastapi_router_registry.py   # FastAPI router registry for migrated APIs
+  metrics.py                   # RequestMetricsMiddleware (per-API request metrics)
+  routes.py                    # Route initialization and matching from FastAPI routers
+  fastapi_router_registry.py   # Auto-discovery of FastAPI routers from llama_stack_api packages
 ```
 
 ## How It Works
@@ -25,15 +26,16 @@ server/
 
 ### Route Registration
 
-Routes come from two sources:
-
-- **Legacy `@webmethod` routes**: Discovered by `get_all_api_routes()` in `routes.py`, which inspects protocol methods for `@webmethod` decorators.
-- **FastAPI router routes**: Registered via `fastapi_router_registry.py` for APIs that have been migrated to native FastAPI routers.
+Routes are defined as native FastAPI routers. `fastapi_router_registry.py` auto-discovers router factories by scanning `llama_stack_api.<api>.fastapi_routes` modules for `create_router` functions. At startup, `server.py` calls `build_fastapi_router()` for each enabled API and includes the resulting router in the FastAPI app. External APIs can also register router factories via `register_external_api_routers()`.
 
 ### Middleware
 
-- **`AuthenticationMiddleware`** (`auth.py`): Validates Bearer tokens using a configured auth provider (Kubernetes, custom endpoint). Extracts user identity and attributes for access control. Endpoints can opt out with `require_authentication=False`.
+- **`RequestMetricsMiddleware`** (`metrics.py`): Tracks per-API request counts and latency metrics. Runs as the outermost middleware.
+- **`AuthenticationMiddleware`** (`auth.py`): Validates Bearer tokens using a configured auth provider (Kubernetes, custom endpoint). Extracts user identity and attributes for access control. Endpoints can opt out by setting `openapi_extra={PUBLIC_ROUTE_KEY: True}` on their route.
+- **`RouteAuthorizationMiddleware`** (`auth.py`): Enforces route-level access policies based on user roles.
 - **`QuotaMiddleware`** (`quota.py`): Enforces per-client rate limits (separate limits for authenticated vs. anonymous). Uses KVStore for tracking request counts.
+- **`ClientVersionMiddleware`** (`server.py`): Rejects requests from clients with incompatible major.minor versions.
+- **`ProviderDataMiddleware`** (`server.py`): Sets up request context for provider data propagation and test context.
 
 ### Response Handling
 

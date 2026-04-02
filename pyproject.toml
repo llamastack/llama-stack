@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-fallback_version = "0.6.2.dev0"
+fallback_version = "0.7.1.dev0"
 
 [tool.uv]
 required-version = ">=0.7.0"
@@ -68,7 +68,7 @@ dependencies = [
 
 [project.optional-dependencies]
 client = [
-    "llama-stack-client>=0.6.1", # Optional for library-only usage
+    "llama-stack-client>=0.7.0", # Optional for library-only usage
 ]
 
 [dependency-groups]
@@ -122,7 +122,7 @@ type_checking = [
     "langchain-openai",
     "langchain-core",
     "langgraph",
-    "llama-stack-client>=0.6.1",
+    "llama-stack-client>=0.7.0",
 ]
 # These are the dependencies required for running unit tests.
 unit = [
@@ -316,21 +316,9 @@ follow_imports = "silent"
 # to exclude the entire directory.
 exclude = [
     # ============================================================================
-    # Section 1: Files that need type hints added (8 files)
+    # Section 1: Files that need type hints added (0 files)
     # ============================================================================
-    # These files are missing type annotations on functions/methods. Functions
-    # lack parameter and/or return type hints.
-    #
-    # Core files (7 files)
-    "^src/llama_stack/core/admin\\.py$",
-    "^src/llama_stack/core/client\\.py$",
-    "^src/llama_stack/core/inspect\\.py$",
-    "^src/llama_stack/core/providers\\.py$",
-    "^src/llama_stack/core/utils/context\\.py$",
-    "^src/llama_stack/core/utils/dynamic\\.py$",
-    "^src/llama_stack/core/utils/prompt_for_config\\.py$",
-    # Other (1 files)
-    "^src/llama_stack/telemetry/__init__\\.py$",
+    # All files now have type annotations! 🎉
     #
     # ============================================================================
     # Section 2: Files that need strict typing issues fixed (131 files)
@@ -341,7 +329,12 @@ exclude = [
     # llama_stack_api files (3 files)
     "^src/llama_stack_api/models/models\\.py$",
     "^src/llama_stack_api/prompts/models\\.py$",
-    # Core files (6 files)
+    # Core files (15 files)
+    "^src/llama_stack/core/distribution\\.py$",
+    "^src/llama_stack/core/library_client\\.py$",
+    "^src/llama_stack/core/server/quota\\.py$",
+    "^src/llama_stack/core/server/routes\\.py$",
+    "^src/llama_stack/core/server/server\\.py$",
     "^src/llama_stack/core/stack\\.py$",
     "^src/llama_stack/core/store/registry\\.py$",
     "^src/llama_stack/core/task\\.py$",

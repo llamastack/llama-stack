@@ -763,11 +763,6 @@ jobs:
             platforms: linux/amd64,linux/arm64
           - distro: postgres-demo
             platforms: linux/amd64,linux/arm64
-          - distro: dell
-            platforms: linux/amd64,linux/arm64
-          # GPU distributions — amd64 only
-          - distro: starter-gpu
-            platforms: linux/amd64
 
     steps:
       - name: Free disk space

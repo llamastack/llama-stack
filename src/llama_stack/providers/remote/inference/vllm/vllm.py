@@ -10,6 +10,9 @@ import httpx
 from pydantic import ConfigDict
 
 from llama_stack.log import get_logger
+from llama_stack.providers.inline.responses.builtin.responses.types import (
+    AssistantMessageWithReasoning,
+)
 from llama_stack.providers.utils.inference.http_client import _build_network_client_kwargs
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import (
@@ -19,9 +22,11 @@ from llama_stack_api import (
     ModelType,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionChunkWithReasoning,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartTextParam,
     OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionWithReasoning,
     RerankData,
     RerankResponse,
 )
@@ -111,6 +116,59 @@ class VLLMInferenceAdapter(OpenAIMixin):
             params.max_tokens = self.config.max_tokens
 
         return await super().openai_chat_completion(params)
+
+    def _prepare_reasoning_params(self, params: OpenAIChatCompletionRequestWithExtraBody) -> None:
+        """Adapt CC request params to match what vLLM expects for reasoning.
+
+        No-op for now. Override if vLLM needs specific param adjustments,
+        e.g. mapping effort levels or moving params to extra_body.
+        """
+        pass
+
+    async def openai_chat_completions_with_reasoning(
+        self,
+        params: OpenAIChatCompletionRequestWithExtraBody,
+    ) -> OpenAIChatCompletionWithReasoning | AsyncIterator[OpenAIChatCompletionChunkWithReasoning]:
+        """Chat completion with reasoning support for vLLM.
+
+        Extracts reasoning from vLLM's response and wraps it in internal
+        types (OpenAIChatCompletionChunkWithReasoning / OpenAIChatCompletionWithReasoning)
+        so the Responses layer can read reasoning as a typed field.
+        """
+        if not params.stream:
+            raise NotImplementedError("Non-streaming reasoning is not yet supported for vLLM")
+
+        params = params.model_copy()
+        self._prepare_reasoning_params(params)
+
+        # vLLM's CC endpoint expects 'reasoning' on assistant messages, but
+        # that field isn't part of the official CC spec. Convert to dicts so we
+        # can rename reasoning_content → reasoning.
+        mapped_messages: list = []
+        for msg in params.messages:
+            if isinstance(msg, AssistantMessageWithReasoning) and msg.reasoning_content:
+                msg_dict = msg.model_dump(exclude_none=True)
+                msg_dict["reasoning"] = msg_dict.pop("reasoning_content")
+                mapped_messages.append(msg_dict)
+            else:
+                mapped_messages.append(msg)
+        params.messages = mapped_messages
+
+        result = await self.openai_chat_completion(params)
+
+        async def _wrap_chunks() -> AsyncIterator[OpenAIChatCompletionChunkWithReasoning]:
+            async for chunk in result:  # type: ignore[union-attr]
+                reasoning = None
+                for choice in chunk.choices or []:
+                    reasoning = getattr(choice.delta, "reasoning", None) or getattr(
+                        choice.delta, "reasoning_content", None
+                    )
+                yield OpenAIChatCompletionChunkWithReasoning(
+                    chunk=chunk,
+                    reasoning_content=reasoning,
+                )
+
+        return _wrap_chunks()
 
     def construct_model_from_identifier(self, identifier: str) -> Model:
         # vLLM's /v1/models response does not expose a model task/type field, so classify by name.
