@@ -51,6 +51,8 @@ jobs:
         run: uv pip install docling
 
       - name: Start Llama Stack server with docling
+        env:
+          LLAMA_STACK_DISABLE_VERSION_CHECK: "1"
         run: |
           uv run --no-sync llama stack run \
             --providers "file_processors=inline::docling,files=inline::localfs" \
