@@ -28,6 +28,7 @@ from llama_stack_api import (
     CompoundFilter,
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     InsertChunksRequest,
@@ -292,7 +293,11 @@ class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
     """VectorIO adapter that uses Weaviate for similarity search and vector storage."""
 
     def __init__(
-        self, config: WeaviateVectorIOConfig, inference_api: Inference, files_api: Files | None, file_processor_api=None
+        self,
+        config: WeaviateVectorIOConfig,
+        inference_api: Inference,
+        files_api: Files | None,
+        file_processor_api: FileProcessors | None = None,
     ) -> None:
         super().__init__(
             inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api

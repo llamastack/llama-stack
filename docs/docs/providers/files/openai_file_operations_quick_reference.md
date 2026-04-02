@@ -79,6 +79,6 @@ results = await client.vector_stores.search(
 ## Resources
 
 - [Full Documentation](openai_file_operations_support.md)
-- [Integration Guide](../concepts/file_operations_vector_stores)
+- [Integration Guide](../../concepts/file_operations_vector_stores)
 - Files API
 - [Provider Details](../vector_io/)

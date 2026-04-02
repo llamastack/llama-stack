@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import clsx from 'clsx';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
+import InstallBlock from '../components/InstallBlock';
 import styles from './index.module.css';
 
 const Icons = {
@@ -150,6 +151,7 @@ function Hero() {
             Drop-in replacement for the OpenAI API. Use any client, any framework,
             any model. Swap providers without changing code.
           </p>
+          <InstallBlock />
           <div className={styles.actions}>
             <Link className={styles.primaryBtn} to="/docs/getting_started/quickstart">Get Started</Link>
             <Link className={styles.secondaryBtn} to="/docs/api-openai">API Reference</Link>

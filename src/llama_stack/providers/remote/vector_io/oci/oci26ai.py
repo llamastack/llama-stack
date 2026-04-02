@@ -31,6 +31,7 @@ from llama_stack.providers.utils.vector_io.vector_utils import (
 from llama_stack_api import (
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     InsertChunksRequest,
@@ -457,7 +458,7 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
         config: OCI26aiVectorIOConfig,
         inference_api: Inference,
         files_api: Files | None,
-        file_processor_api=None,
+        file_processor_api: FileProcessors | None = None,
     ) -> None:
         super().__init__(
             inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api

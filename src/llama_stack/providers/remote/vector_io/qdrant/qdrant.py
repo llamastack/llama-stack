@@ -25,6 +25,7 @@ from llama_stack_api import (
     CompoundFilter,
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     InsertChunksRequest,
@@ -332,7 +333,7 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         config: RemoteQdrantVectorIOConfig | InlineQdrantVectorIOConfig,
         inference_api: Inference,
         files_api: Files | None = None,
-        file_processor_api=None,
+        file_processor_api: FileProcessors | None = None,
     ) -> None:
         super().__init__(
             inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api
