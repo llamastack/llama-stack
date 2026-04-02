@@ -19,12 +19,12 @@ inference provider, based on integration test results.
 
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
-| azure | 102 | 102 | 0 | 80% |
-| bedrock | 27 | 27 | 0 | 21% |
+| azure | 102 | 102 | 0 | 84% |
+| bedrock | 27 | 27 | 0 | 22% |
 | ollama | 2 | 2 | 0 | 2% |
-| openai | 128 | 128 | 0 | 100% |
+| openai | 121 | 121 | 0 | 100% |
 | vllm | 3 | 3 | 0 | 2% |
-| watsonx | 56 | 56 | 0 | 44% |
+| watsonx | 56 | 56 | 0 | 46% |
 
 ## Provider Details
 
@@ -76,23 +76,6 @@ Models, endpoints, and versions used during test recordings.
 | file search filter compound or | ✅ | — | — | ✅ | — | ⏭️ |
 | file search streaming events | ✅ | — | — | ✅ | — | ⏭️ |
 | text format | ✅ | — | — | ✅ | — | ✅ |
-
-## Langchain Responses
-
-| Feature | azure | bedrock | ollama | openai | vllm | watsonx |
-| --- | --- | --- | --- | --- | --- | --- |
-| langchain basic | — | — | — | ✅ | — | — |
-| langchain chain | — | — | — | ✅ | — | — |
-| langchain multi turn | — | — | — | ✅ | — | — |
-| langchain streaming | — | — | — | ✅ | — | — |
-
-## Langgraph Responses
-
-| Feature | azure | bedrock | ollama | openai | vllm | watsonx |
-| --- | --- | --- | --- | --- | --- | --- |
-| langgraph basic | — | — | — | ✅ | — | — |
-| langgraph multi node | — | — | — | ✅ | — | — |
-| langgraph multi turn | — | — | — | ✅ | — | — |
 
 ## Mcp Authentication
 
