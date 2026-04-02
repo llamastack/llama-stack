@@ -98,6 +98,18 @@ def _get_braintrust_evaluators() -> dict[str, Any]:
         return _braintrust_evaluators
 
 
+class SimpleScoringFunctionStore:
+    """Simple scoring function store implementation."""
+
+    def __init__(self, supported_fn_defs_registry: dict[str, ScoringFn]) -> None:
+        self.supported_fn_defs_registry = supported_fn_defs_registry
+
+    def get_scoring_function(self, scoring_fn_id: str) -> ScoringFn:
+        if scoring_fn_id not in self.supported_fn_defs_registry:
+            raise KeyError(f"Scoring function {scoring_fn_id} not found")
+        return self.supported_fn_defs_registry[scoring_fn_id]
+
+
 class BraintrustScoringImpl(
     Scoring,
     ScoringFunctionsProtocolPrivate,
@@ -115,6 +127,7 @@ class BraintrustScoringImpl(
         self.datasetio_api = datasetio_api
         self.datasets_api = datasets_api
         self.supported_fn_defs_registry = SUPPORTED_BRAINTRUST_SCORING_FN_DEFS
+        self.scoring_function_store = SimpleScoringFunctionStore(self.supported_fn_defs_registry)
 
     async def initialize(self) -> None: ...
 
@@ -195,15 +208,16 @@ class BraintrustScoringImpl(
                 raise ValueError(f"Scoring function {scoring_fn_id} is not supported.")
 
             score_results = [await self.score_row(input_row, scoring_fn_id) for input_row in request.input_rows]
-            aggregation_functions = self.supported_fn_defs_registry[scoring_fn_id].params.aggregation_functions
+            fn_def = self.supported_fn_defs_registry[scoring_fn_id]
+            aggregation_functions = fn_def.params.aggregation_functions if fn_def.params else None
 
             # override scoring_fn params if provided
-            if request.scoring_functions[scoring_fn_id] is not None:
-                override_params = request.scoring_functions[scoring_fn_id]
+            override_params = request.scoring_functions[scoring_fn_id]
+            if override_params is not None and hasattr(override_params, "aggregation_functions"):
                 if override_params.aggregation_functions:
                     aggregation_functions = override_params.aggregation_functions
 
-            agg_results = aggregate_metrics(score_results, aggregation_functions)
+            agg_results = aggregate_metrics(score_results, aggregation_functions or [])
             res[scoring_fn_id] = ScoringResult(
                 score_rows=score_results,
                 aggregated_results=agg_results,
