@@ -354,9 +354,7 @@ LEGACY_TAGS = [
         "\n"
         "Note: This API is currently under active development and may undergo changes.",
         "name": "Batches",
-        "x-displayName": "The Batches API enables efficient processing of multiple requests in a single operation, "
-        "particularly useful for processing large datasets, batch evaluation workflows, and cost-effective "
-        "inference at scale.",
+        "x-displayName": "Batches",
     },
     {"description": "", "name": "Benchmarks"},
     {

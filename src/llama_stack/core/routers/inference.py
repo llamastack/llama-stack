@@ -18,10 +18,6 @@ from llama_stack.core.access_control.access_control import is_action_allowed
 from llama_stack.core.datatypes import ModelWithOwner
 from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.log import get_logger
-from llama_stack.providers.inline.responses.builtin.responses.types import (
-    OpenAIChatCompletionChunkWithReasoning,
-    OpenAIChatCompletionWithReasoning,
-)
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
 from llama_stack.telemetry.inference_metrics import (
     create_inference_metric_attributes,
@@ -41,10 +37,12 @@ from llama_stack_api import (
     ModelTypeError,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionChunkWithReasoning,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
+    OpenAIChatCompletionWithReasoning,
     OpenAIChoice,
     OpenAIChoiceLogprobs,
     OpenAICompletion,

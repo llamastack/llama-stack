@@ -29,10 +29,12 @@ Llama Stack implements the OpenAI API and organizes endpoints by stability level
       title: 'Experimental APIs',
       tone: 'experimental',
       items: [
-        { title: 'Eval', endpoint: 'v1alpha', href: '/docs/api-experimental/eval', blurb: 'Evaluation pipelines and benchmark execution' },
-        { title: 'Benchmarks', endpoint: 'v1alpha', href: '/docs/api-experimental/benchmarks', blurb: 'Benchmark registration and management' },
-        { title: 'Datasets', endpoint: 'v1alpha', href: '/docs/api-experimental/datasets', blurb: 'Dataset management for eval workflows' },
-        { title: 'Dataset IO', endpoint: 'v1alpha', href: '/docs/api-experimental/dataset-io', blurb: 'Dataset read/write operations' },
+        { title: 'Admin', endpoint: '/v1alpha/admin', href: '/docs/api-experimental/llama-stack-specification-experimental-apis', blurb: 'Providers, routes, health, and version' },
+        { title: 'Rerank', endpoint: '/v1alpha/inference/rerank', href: '/docs/api-experimental/rerank-v-1-alpha-inference-rerank-post', blurb: 'Document reranking for search relevance' },
+        { title: 'File Processors', endpoint: '/v1alpha/file_processors', href: '/docs/api-experimental/process-file-v-1-alpha-file-processors-process-post', blurb: 'Document ingestion and chunking' },
+        { title: 'Connectors', endpoint: '/v1beta/connectors', href: '/docs/api-experimental/llama-stack-specification-experimental-apis', blurb: 'External tool and service connectors' },
+        { title: 'Eval', endpoint: '/v1alpha/eval', href: '/docs/api-experimental/eval', blurb: 'Evaluation pipelines and benchmarks' },
+        { title: 'Datasets', endpoint: '/v1beta/datasets', href: '/docs/api-experimental/datasets', blurb: 'Dataset management' },
       ],
     },
     {

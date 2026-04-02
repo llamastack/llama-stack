@@ -282,29 +282,68 @@ div[class*='expandButton'] {
 /* Better table styling */
 table {
   display: table;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   width: 100%;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  margin: 1.5rem 0;
+}
+
+[data-theme='dark'] table {
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 table th {
-  background: rgba(109, 40, 217, 0.05);
+  background: rgba(109, 40, 217, 0.06);
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
+  color: var(--ifm-color-primary);
+  border-bottom: 2px solid rgba(109, 40, 217, 0.12);
 }
 
 [data-theme='dark'] table th {
   background: rgba(167, 139, 250, 0.08);
+  color: var(--ifm-color-primary-light);
+  border-bottom-color: rgba(167, 139, 250, 0.15);
 }
 
 table td, table th {
   padding: 0.75rem 1rem;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  border-right: none;
+  border-left: none;
 }
 
-[data-theme='dark'] table td, [data-theme='dark'] table th {
-  border-color: rgba(255, 255, 255, 0.06);
+table tr:last-child td {
+  border-bottom: none;
+}
+
+table tbody tr {
+  transition: background 0.15s;
+}
+
+table tbody tr:hover {
+  background: rgba(109, 40, 217, 0.02);
+}
+
+[data-theme='dark'] table tbody tr:hover {
+  background: rgba(167, 139, 250, 0.04);
+}
+
+[data-theme='dark'] table td {
+  border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+table tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.01);
+}
+
+[data-theme='dark'] table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.015);
 }
 
 /* ========== CODE BLOCKS ========== */
@@ -642,4 +681,15 @@ footer.row .col {
 
 [data-theme='dark'] [class*='yearGroupHeading'] {
   border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Hide emoji icons on API doc category cards */
+h2[class*="cardTitle"] {
+  overflow: hidden;
+}
+
+h2[class*="cardTitle"] a {
+  display: block;
+  text-indent: -1.5em;
+  padding-left: 1.5em;
 }

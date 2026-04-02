@@ -28,6 +28,7 @@ from llama_stack_api import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionChunkWithReasoning,
     OpenAIChatCompletionCustomToolCall,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionResponseMessage,
@@ -36,6 +37,7 @@ from llama_stack_api import (
     OpenAIChatCompletionToolChoiceAllowedTools,
     OpenAIChatCompletionToolChoiceCustomTool,
     OpenAIChatCompletionToolChoiceFunctionTool,
+    OpenAIChatCompletionWithReasoning,
     OpenAIChoice,
     OpenAIChoiceLogprobs,
     OpenAIFinishReason,
@@ -108,7 +110,6 @@ from .types import (
     AssistantMessageWithReasoning,
     ChatCompletionContext,
     ChatCompletionResult,
-    OpenAIChatCompletionChunkWithReasoning,
 )
 from .utils import (
     convert_chat_choice_to_response_message,
@@ -543,6 +544,12 @@ class StreamingResponseOrchestrator:
                     **(self.extra_body or {}),
                 )
                 # Use reasoning-aware method when reasoning is explicitly requested
+                completion_result: (
+                    OpenAIChatCompletion
+                    | AsyncIterator[OpenAIChatCompletionChunk]
+                    | OpenAIChatCompletionWithReasoning
+                    | AsyncIterator[OpenAIChatCompletionChunkWithReasoning]
+                )
                 if self.reasoning and self.reasoning.effort and self.reasoning.effort != "none":
                     try:
                         # Pass a copy — the router mutates params.model (strips provider prefix).
