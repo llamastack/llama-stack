@@ -4,6 +4,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+
+from llama_stack.providers.utils.scoring.base_scoring_fn import RegisteredBaseScoringFn
 from llama_stack_api import (
     DatasetIO,
     Datasets,
@@ -38,6 +40,22 @@ FIXED_FNS = [
 ]
 
 
+class SimpleScoringFunctionStore:
+    """Simple scoring function store implementation."""
+
+    def __init__(self, scoring_fn_id_impls: dict[str, RegisteredBaseScoringFn]) -> None:
+        self.scoring_fn_id_impls = scoring_fn_id_impls
+
+    def get_scoring_function(self, scoring_fn_id: str) -> ScoringFn:
+        if scoring_fn_id not in self.scoring_fn_id_impls:
+            raise KeyError(f"Scoring function {scoring_fn_id} not found")
+        impl = self.scoring_fn_id_impls[scoring_fn_id]
+        for fn in impl.get_supported_scoring_fn_defs():
+            if fn.identifier == scoring_fn_id:
+                return fn
+        raise KeyError(f"Scoring function {scoring_fn_id} not found")
+
+
 class BasicScoringImpl(
     Scoring,
     ScoringFunctionsProtocolPrivate,
@@ -53,13 +71,14 @@ class BasicScoringImpl(
         self.config = config
         self.datasetio_api = datasetio_api
         self.datasets_api = datasets_api
-        self.scoring_fn_id_impls = {}
+        self.scoring_fn_id_impls: dict[str, RegisteredBaseScoringFn] = {}
 
     async def initialize(self) -> None:
         for fn in FIXED_FNS:
-            impl = fn()
+            impl = fn()  # type: ignore[abstract]
             for fn_defs in impl.get_supported_scoring_fn_defs():
                 self.scoring_fn_id_impls[fn_defs.identifier] = impl
+        self.scoring_function_store = SimpleScoringFunctionStore(self.scoring_fn_id_impls)
 
     async def shutdown(self) -> None: ...
 

@@ -368,7 +368,7 @@ exclude = [
     # All files now have type annotations! 🎉
     #
     # ============================================================================
-    # Section 2: Files that need strict typing issues fixed (131 files)
+    # Section 2: Files that need strict typing issues fixed (137 files)
     # ============================================================================
     # These files have some type hints but fail strict type checking due to
     # incomplete annotations, Any usage, or other strict mode violations.
@@ -397,7 +397,7 @@ exclude = [
     "^src/llama_stack/cli/stack/utils\\.py$",
     "^src/llama_stack/cli/subcommand\\.py$",
     "^src/llama_stack/cli/utils\\.py$",
-    # Providers - Inline (27 files)
+    # Providers - Inline (33 files)
     "^src/llama_stack/providers/inline/batches/reference/__init__\\.py$",
     "^src/llama_stack/providers/inline/batches/reference/batches\\.py$",
     "^src/llama_stack/providers/inline/eval/builtin/__init__\\.py$",
@@ -415,6 +415,12 @@ exclude = [
     "^src/llama_stack/providers/inline/safety/prompt_guard/__init__\\.py$",
     "^src/llama_stack/providers/inline/safety/prompt_guard/config\\.py$",
     "^src/llama_stack/providers/inline/safety/prompt_guard/prompt_guard\\.py$",
+    "^src/llama_stack/providers/inline/scoring/basic/__init__\\.py$",
+    "^src/llama_stack/providers/inline/scoring/basic/config\\.py$",
+    "^src/llama_stack/providers/inline/scoring/braintrust/__init__\\.py$",
+    "^src/llama_stack/providers/inline/scoring/braintrust/config\\.py$",
+    "^src/llama_stack/providers/inline/scoring/llm_as_judge/__init__\\.py$",
+    "^src/llama_stack/providers/inline/scoring/llm_as_judge/config\\.py$",
     "^src/llama_stack/providers/inline/tool_runtime/file_search/__init__\\.py$",
     "^src/llama_stack/providers/inline/tool_runtime/file_search/context_retriever\\.py$",
     "^src/llama_stack/providers/inline/tool_runtime/file_search/file_search\\.py$",
@@ -517,9 +523,10 @@ exclude = [
     "^src/llama_stack/providers/inline/datasetio/localfs/",
     "^src/llama_stack/providers/inline/safety/code_scanner/",
     "^src/llama_stack/providers/inline/safety/llama_guard/",
-    "^src/llama_stack/providers/inline/scoring/basic/",
-    "^src/llama_stack/providers/inline/scoring/braintrust/",
-    "^src/llama_stack/providers/inline/scoring/llm_as_judge/",
+    "^src/llama_stack/providers/inline/scoring/basic/scoring_fn/",
+    "^src/llama_stack/providers/inline/scoring/basic/utils/",
+    "^src/llama_stack/providers/inline/scoring/braintrust/scoring_fn/",
+    "^src/llama_stack/providers/inline/scoring/llm_as_judge/scoring_fn/",
     # Provider directories - Remote
     "^src/llama_stack/providers/remote/agents/sample/",
     "^src/llama_stack/providers/remote/datasetio/huggingface/",
@@ -558,6 +565,8 @@ module = [
     "psycopg2",
     "psycopg2.extras",
     "psycopg2.extensions",
+    "codeshield.*",
+    "autoevals.*",
     "torchtune.*",
     "fairscale.*",
     "torchvision.*",
