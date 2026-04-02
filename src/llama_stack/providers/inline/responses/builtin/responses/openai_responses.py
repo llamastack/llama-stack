@@ -646,6 +646,10 @@ class OpenAIResponsesImpl:
         if background and store is False:
             raise ValueError("Cannot use 'background' with 'store=False'. Background responses must be stored.")
 
+        # Validate: reasoning.encrypted_content is not supported
+        if include and any(str(item) == "reasoning.encrypted_content" for item in include):
+            raise ValueError("reasoning.encrypted_content is not supported by Llama Stack.")
+
         # Validate MCP tools: ensure Authorization header is not passed via headers dict
         if tools:
             from llama_stack_api.openai_responses import OpenAIResponseInputToolMCP
