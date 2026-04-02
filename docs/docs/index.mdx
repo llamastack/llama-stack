@@ -38,7 +38,7 @@ response = client.chat.completions.create(
 
 Llama Stack also provides additional APIs beyond the OpenAI specification, including **Prompts** for prompt template management and **File Processors** for document ingestion pipelines.
 
-The Responses API implementation conforms to the [Open Responses](https://www.openresponses.org/) specification. See the [API conformance report](./api-openai/conformance.mdx) for detailed coverage.
+The Responses API implementation conforms to the [Open Responses](https://www.openresponses.org/) specification. See the [API conformance report](/docs/api-openai/conformance) for detailed coverage.
 
 ## Use any model, use any infrastructure
 
@@ -48,7 +48,7 @@ Llama Stack has a pluggable provider architecture. Develop locally with Ollama, 
 
 **Vector store providers:** FAISS, SQLite-vec, Milvus, ChromaDB, PGVector, Qdrant, Weaviate, Elasticsearch, Infinispan.
 
-See the [provider documentation](./providers/index.mdx) for the full list and the [provider compatibility matrix](./api-openai/provider_matrix.md) for tested feature coverage across providers.
+See the [provider documentation](/docs/providers/) for the full list and the [provider compatibility matrix](./api-openai/provider_matrix.md) for tested feature coverage across providers.
 
 ## Get started
 
@@ -65,38 +65,4 @@ llama stack run
 
 Then connect with any OpenAI-compatible client.
 
-<div style={{display: 'flex', gap: '1rem', flexWrap: 'wrap', margin: '2rem 0'}}>
-  <a href="/docs/getting_started/quickstart"
-     style={{
-       background: 'var(--ifm-color-primary)',
-       color: 'white',
-       padding: '0.75rem 1.5rem',
-       borderRadius: '0.5rem',
-       textDecoration: 'none',
-       fontWeight: 'bold'
-     }}>
-    Quick Start Guide
-  </a>
-  <a href="./api-openai"
-     style={{
-       border: '2px solid var(--ifm-color-primary)',
-       color: 'var(--ifm-color-primary)',
-       padding: '0.75rem 1.5rem',
-       borderRadius: '0.5rem',
-       textDecoration: 'none',
-       fontWeight: 'bold'
-     }}>
-    OpenAI API Compatibility
-  </a>
-  <a href="https://github.com/llamastack/llama-stack"
-     style={{
-       border: '2px solid #666',
-       color: '#666',
-       padding: '0.75rem 1.5rem',
-       borderRadius: '0.5rem',
-       textDecoration: 'none',
-       fontWeight: 'bold'
-     }}>
-    GitHub
-  </a>
-</div>
+[Quick Start Guide](/docs/getting_started/quickstart) | [OpenAI API Compatibility](./api-openai) | [GitHub](https://github.com/llamastack/llama-stack)

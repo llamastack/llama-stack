@@ -6,6 +6,7 @@
 
 """Unit tests for tool runtime metrics."""
 
+import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -190,3 +191,25 @@ class TestToolRuntimeIntegration:
         mock_provider.invoke_tool.assert_called_once()
 
         # Note: Error metrics (status="error") would be recorded and exported
+
+    async def test_tool_runtime_metrics_cancelled_error(self):
+        """Test that cancelled tool invocations record error metrics correctly."""
+        mock_routing_table = MagicMock()
+
+        mock_provider = AsyncMock()
+        mock_provider.__provider_id__ = "brave-search::impl"
+        mock_provider.invoke_tool.side_effect = asyncio.CancelledError()
+
+        mock_routing_table.get_provider_impl = AsyncMock(return_value=mock_provider)
+        mock_routing_table.tool_to_toolgroup = {"web_search": "websearch"}
+
+        router = ToolRuntimeRouter(routing_table=mock_routing_table)
+
+        with pytest.raises(asyncio.CancelledError):
+            await router.invoke_tool(
+                tool_name="web_search",
+                kwargs={"query": "test query"},
+                authorization=None,
+            )
+
+        mock_provider.invoke_tool.assert_called_once()

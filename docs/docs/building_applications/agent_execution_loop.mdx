@@ -25,7 +25,7 @@ Each agent turn follows these key steps:
 
 3. **Inference Loop**: The agent enters its main execution loop:
    - The LLM receives a user prompt (with previous tool outputs)
-   - The LLM generates a response, potentially with [tool calls](./tools)
+   - The LLM generates a response, potentially with [tool calls](/docs/building_applications/tools)
    - If tool calls are present:
      - Tool inputs are safety-checked
      - Tools are executed (e.g., web search, code execution)
@@ -179,7 +179,7 @@ pprint(f"Steps: {response.steps}")
 
 ## Related Resources
 
-- **[Agents](./agent)** - Understanding agent fundamentals
-- **[Tools Integration](./tools)** - Adding capabilities to agents
-- **[Safety Guardrails](./safety)** - Implementing safety measures
-- **[RAG (Retrieval Augmented Generation)](./rag)** - Building knowledge-enhanced workflows
+- **[Agents](/docs/building_applications/agent)** - Understanding agent fundamentals
+- **[Tools Integration](/docs/building_applications/tools)** - Adding capabilities to agents
+- **[Safety Guardrails](/docs/building_applications/safety)** - Implementing safety measures
+- **[RAG (Retrieval Augmented Generation)](/docs/building_applications/rag)** - Building knowledge-enhanced workflows

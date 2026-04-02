@@ -56,6 +56,9 @@ class TransformersInferenceImpl(
     def __init__(self, config: TransformersInferenceConfig) -> None:
         self.config = config
 
+    async def openai_chat_completions_with_reasoning(self, params: OpenAIChatCompletionRequestWithExtraBody) -> None:
+        raise NotImplementedError("Transformers provider does not support reasoning in chat completions")
+
     async def initialize(self) -> None:
         pass
 

@@ -5,6 +5,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import inspect
 import subprocess
 import sys
 from pathlib import Path
@@ -30,7 +31,7 @@ def get_api_docstring(api_name: str) -> str | None:
         protocol_class_name = api_name.title()
         if hasattr(api_module, protocol_class_name):
             protocol_class = getattr(api_module, protocol_class_name)
-            return protocol_class.__doc__
+            return inspect.cleandoc(protocol_class.__doc__) if protocol_class.__doc__ else None
     except (ImportError, AttributeError):
         pass
 
@@ -620,12 +621,12 @@ def generate_index_docs(api_name: str, api_docstring: str | None, provider_entri
             clean_desc = api_docstring.strip().replace('"', '\\"')
             md_lines.append(f'description: "{clean_desc}"')
     md_lines.append(f"sidebar_label: {sidebar_label}")
-    md_lines.append(f"title: {api_name.title()}")
+    md_lines.append(f"title: {sidebar_label}")
     md_lines.append("---")
     md_lines.append("")
 
     # Add main content
-    md_lines.append(f"# {api_name.title()}")
+    md_lines.append(f"# {sidebar_label}")
     md_lines.append("")
     md_lines.append("## Overview")
     md_lines.append("")

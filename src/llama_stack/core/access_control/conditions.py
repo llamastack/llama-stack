@@ -57,7 +57,7 @@ class UserInOwnersList:
                 return True
         return False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"user in owners {self.name}"
 
 
@@ -70,7 +70,7 @@ class UserNotInOwnersList(UserInOwnersList):
     def matches(self, resource: ProtectedResource, user: User) -> bool:
         return not super().matches(resource, user)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"user not in owners {self.name}"
 
 
@@ -87,7 +87,7 @@ class UserWithValueInList:
         print(f"User does not have {self.value} in {self.name}")
         return False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"user with {self.value} in {self.name}"
 
 
@@ -100,7 +100,7 @@ class UserWithValueNotInList(UserWithValueInList):
     def matches(self, resource: ProtectedResource, user: User) -> bool:
         return not super().matches(resource, user)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"user with {self.value} not in {self.name}"
 
 
@@ -110,7 +110,7 @@ class UserIsOwner:
     def matches(self, resource: ProtectedResource, user: User) -> bool:
         return resource.owner.principal == user.principal if resource.owner else False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "user is owner"
 
 
@@ -120,7 +120,7 @@ class UserIsNotOwner:
     def matches(self, resource: ProtectedResource, user: User) -> bool:
         return not resource.owner or resource.owner.principal != user.principal
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "user is not owner"
 
 
@@ -130,7 +130,7 @@ class ResourceIsUnowned:
     def matches(self, resource: ProtectedResource, user: User) -> bool:
         return not resource.owner
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "resource is unowned"
 
 

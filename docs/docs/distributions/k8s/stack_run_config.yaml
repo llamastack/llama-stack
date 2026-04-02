@@ -1,7 +1,7 @@
 version: '2'
 distro_name: kubernetes-demo
 apis:
-- agents
+- responses
 - inference
 - files
 - safety
@@ -50,7 +50,7 @@ providers:
     provider_type: inline::llama-guard
     config:
       excluded_categories: []
-  agents:
+  responses:
   - provider_id: builtin
     provider_type: inline::builtin
     config:
@@ -74,8 +74,8 @@ providers:
     config:
       api_key: ${env.TAVILY_SEARCH_API_KEY:+}
       max_results: 3
-  - provider_id: rag-runtime
-    provider_type: inline::rag-runtime
+  - provider_id: file-search
+    provider_type: inline::file-search
     config: {}
   - provider_id: model-context-protocol
     provider_type: remote::model-context-protocol

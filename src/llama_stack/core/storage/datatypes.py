@@ -52,7 +52,7 @@ class RedisKVStoreConfig(CommonConfig):
         return ["redis"]
 
     @classmethod
-    def sample_run_config(cls):
+    def sample_run_config(cls) -> dict[str, str]:
         return {
             "type": StorageBackendType.KV_REDIS.value,
             "host": "${env.REDIS_HOST:=localhost}",
@@ -73,7 +73,7 @@ class SqliteKVStoreConfig(CommonConfig):
         return ["aiosqlite"]
 
     @classmethod
-    def sample_run_config(cls, __distro_dir__: str, db_name: str = "kvstore.db"):
+    def sample_run_config(cls, __distro_dir__: str, db_name: str = "kvstore.db") -> dict[str, str]:
         return {
             "type": StorageBackendType.KV_SQLITE.value,
             "db_path": "${env.SQLITE_STORE_DIR:=" + __distro_dir__ + "}/" + db_name,
@@ -94,7 +94,7 @@ class PostgresKVStoreConfig(CommonConfig):
     table_name: str = "llamastack_kvstore"
 
     @classmethod
-    def sample_run_config(cls, table_name: str = "llamastack_kvstore", **kwargs):
+    def sample_run_config(cls, table_name: str = "llamastack_kvstore", **kwargs: object) -> dict[str, str]:
         return {
             "type": StorageBackendType.KV_POSTGRES.value,
             "host": "${env.POSTGRES_HOST:=localhost}",
@@ -142,7 +142,7 @@ class MongoDBKVStoreConfig(CommonConfig):
         return ["pymongo"]
 
     @classmethod
-    def sample_run_config(cls, collection_name: str = "llamastack_kvstore"):
+    def sample_run_config(cls, collection_name: str = "llamastack_kvstore") -> dict[str, str]:
         return {
             "type": StorageBackendType.KV_MONGODB.value,
             "host": "${env.MONGODB_HOST:=localhost}",
@@ -182,7 +182,7 @@ class SqliteSqlStoreConfig(SqlAlchemySqlStoreConfig):
         return "sqlite+aiosqlite:///" + Path(self.db_path).expanduser().as_posix()
 
     @classmethod
-    def sample_run_config(cls, __distro_dir__: str, db_name: str = "sqlstore.db"):
+    def sample_run_config(cls, __distro_dir__: str, db_name: str = "sqlstore.db") -> dict[str, str]:
         return {
             "type": StorageBackendType.SQL_SQLITE.value,
             "db_path": "${env.SQLITE_STORE_DIR:=" + __distro_dir__ + "}/" + db_name,
@@ -215,7 +215,7 @@ class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
         return super().pip_packages() + ["asyncpg"]
 
     @classmethod
-    def sample_run_config(cls, **kwargs):
+    def sample_run_config(cls, **kwargs: object) -> dict[str, str]:
         return {
             "type": StorageBackendType.SQL_POSTGRES.value,
             "host": "${env.POSTGRES_HOST:=localhost}",
