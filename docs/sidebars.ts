@@ -86,15 +86,6 @@ const sidebars: SidebarsConfig = {
             'distributions/remote_hosted_distro/watsonx',
           ],
         },
-        {
-          type: 'category',
-          label: 'On-Device Distributions',
-          collapsed: false,
-          items: [
-            'distributions/ondevice_distro/ios_sdk',
-            'distributions/ondevice_distro/android_sdk',
-          ],
-        },
       ],
     },
     {
@@ -103,6 +94,10 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'providers/index',
+        'providers/external/index',
+        'providers/external/external-providers-guide',
+        'providers/external/external-providers-list',
+        'providers/openai',
         {
           type: 'category',
           label: 'Inference',
@@ -125,11 +120,13 @@ const sidebars: SidebarsConfig = {
             'providers/inference/remote_passthrough',
             'providers/inference/remote_runpod',
             'providers/inference/remote_sambanova',
-            'providers/inference/remote_sambanova-openai-compat',
             'providers/inference/remote_together',
             'providers/inference/remote_vertexai',
             'providers/inference/remote_vllm',
-            'providers/inference/remote_watsonx'
+            'providers/inference/remote_watsonx',
+            'providers/inference/inline_transformers',
+            'providers/inference/remote_oci',
+            'providers/inference/remote_llama-cpp-server'
           ],
         },
         {
@@ -143,7 +140,8 @@ const sidebars: SidebarsConfig = {
             'providers/safety/inline_prompt-guard',
             'providers/safety/remote_bedrock',
             'providers/safety/remote_nvidia',
-            'providers/safety/remote_sambanova'
+            'providers/safety/remote_sambanova',
+            'providers/safety/remote_passthrough'
           ],
         },
         {
@@ -185,21 +183,6 @@ const sidebars: SidebarsConfig = {
 
         {
           type: 'category',
-          label: 'Post Training',
-          collapsed: false,
-          items: [
-            'providers/post_training/index',
-            'providers/post_training/inline_huggingface',
-            'providers/post_training/inline_huggingface-cpu',
-            'providers/post_training/inline_huggingface-gpu',
-            'providers/post_training/inline_torchtune',
-            'providers/post_training/inline_torchtune-cpu',
-            'providers/post_training/inline_torchtune-gpu',
-            'providers/post_training/remote_nvidia'
-          ],
-        },
-        {
-          type: 'category',
           label: 'DatasetIO',
           collapsed: false,
           items: [
@@ -227,7 +210,27 @@ const sidebars: SidebarsConfig = {
           items: [
             'providers/files/index',
             'providers/files/inline_localfs',
-            'providers/files/remote_s3'
+            'providers/files/remote_s3',
+            'providers/files/remote_openai'
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Responses',
+          collapsed: false,
+          items: [
+            'providers/responses/index',
+            'providers/responses/inline_builtin'
+          ],
+        },
+        {
+          type: 'category',
+          label: 'File Processors',
+          collapsed: false,
+          items: [
+            'providers/file_processors/index',
+            'providers/file_processors/inline_docling',
+            'providers/file_processors/inline_pypdf'
           ],
         },
         {
@@ -249,17 +252,6 @@ const sidebars: SidebarsConfig = {
             'providers/batches/inline_reference'
           ],
         },
-        {
-          type: 'category',
-          label: 'External Providers',
-          collapsed: false,
-          items: [
-            'providers/external/index',
-            'providers/external/external-providers-guide',
-            'providers/external/external-providers-list'
-          ],
-        },
-        'providers/openai'
       ],
     },
     {

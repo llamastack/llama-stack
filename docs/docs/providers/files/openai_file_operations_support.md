@@ -287,5 +287,5 @@ Planned improvements for file operations support:
 - **Documentation**: [File Operations and Vector Store Integration](../../concepts/file_operations_vector_stores)
 - **API Reference**: Files API
 - **Provider Docs**: [Vector Store Providers](../vector_io/)
-- **Examples**: [Getting Started](../getting_started/)
+- **Examples**: [Getting Started](../../getting_started/)
 - **Community**: [GitHub Issues](https://github.com/meta-llama/llama-stack/issues)
