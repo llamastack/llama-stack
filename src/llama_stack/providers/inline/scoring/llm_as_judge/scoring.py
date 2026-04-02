@@ -25,6 +25,19 @@ from .scoring_fn.llm_as_judge_scoring_fn import LlmAsJudgeScoringFn
 LLM_JUDGE_FN = LlmAsJudgeScoringFn
 
 
+class SimpleScoringFunctionStore:
+    """Simple scoring function store implementation."""
+
+    def __init__(self, scoring_fn: LlmAsJudgeScoringFn) -> None:
+        self.scoring_fn = scoring_fn
+
+    def get_scoring_function(self, scoring_fn_id: str) -> ScoringFn:
+        for fn in self.scoring_fn.get_supported_scoring_fn_defs():
+            if fn.identifier == scoring_fn_id:
+                return fn
+        raise KeyError(f"Scoring function {scoring_fn_id} not found")
+
+
 class LlmAsJudgeScoringImpl(
     Scoring,
     ScoringFunctionsProtocolPrivate,
@@ -46,6 +59,7 @@ class LlmAsJudgeScoringImpl(
     async def initialize(self) -> None:
         impl = LLM_JUDGE_FN(inference_api=self.inference_api)
         self.llm_as_judge_fn = impl
+        self.scoring_function_store = SimpleScoringFunctionStore(self.llm_as_judge_fn)
 
     async def shutdown(self) -> None: ...
 

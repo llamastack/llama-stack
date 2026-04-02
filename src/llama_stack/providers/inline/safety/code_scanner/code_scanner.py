@@ -5,10 +5,10 @@
 # the root directory of this source tree.
 
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from codeshield.cs import CodeShieldScanResult
+    from codeshield.cs import CodeShieldScanResult  # type: ignore[import-not-found]
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import (
@@ -37,11 +37,28 @@ ALLOWED_CODE_SCANNER_MODEL_IDS = [
 ]
 
 
+class SimpleShieldStore:
+    """Simple shield store implementation."""
+
+    def __init__(self, deps: Any) -> None:
+        self.deps = deps
+        self.shields: dict[str, Shield] = {}
+
+    async def get_shield(self, request: GetShieldRequest) -> Shield:
+        if request.identifier in self.shields:
+            return self.shields[request.identifier]
+        raise ValueError(f"Shield {request.identifier} not found")
+
+    def register_shield(self, shield: Shield) -> None:
+        self.shields[shield.identifier] = shield
+
+
 class BuiltinCodeScannerSafetyImpl(Safety):
     """Safety provider that scans generated code for security vulnerabilities using CodeShield."""
 
-    def __init__(self, config: CodeScannerConfig, deps) -> None:
+    def __init__(self, config: CodeScannerConfig, deps: Any) -> None:
         self.config = config
+        self.shield_store = SimpleShieldStore(deps)
 
     async def initialize(self) -> None:
         pass
@@ -54,6 +71,7 @@ class BuiltinCodeScannerSafetyImpl(Safety):
             raise ValueError(
                 f"Unsupported Code Scanner ID: {shield.provider_resource_id}. Allowed IDs: {ALLOWED_CODE_SCANNER_MODEL_IDS}"
             )
+        self.shield_store.register_shield(shield)
 
     async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse:
         shield = await self.shield_store.get_shield(GetShieldRequest(identifier=request.shield_id))

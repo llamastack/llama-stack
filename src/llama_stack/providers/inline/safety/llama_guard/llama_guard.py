@@ -7,6 +7,7 @@
 import re
 import uuid
 from string import Template
+from typing import Any
 
 from llama_stack.core.datatypes import Api
 from llama_stack.log import get_logger
@@ -19,6 +20,9 @@ from llama_stack_api import (
     Inference,
     ModerationObject,
     ModerationObjectResults,
+    OpenAIChatCompletion,
+    OpenAIChatCompletionContentPartImageParam,
+    OpenAIChatCompletionContentPartTextParam,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIMessageParam,
     OpenAIUserMessageParam,
@@ -140,12 +144,32 @@ PROMPT_TEMPLATE = Template(f"{PROMPT_TASK}{SAFETY_CATEGORIES}{PROMPT_CONVERSATIO
 logger = get_logger(name=__name__, category="safety")
 
 
+class SimpleShieldStore:
+    """Simple shield store implementation."""
+
+    def __init__(self) -> None:
+        self.shields: dict[str, Shield] = {}
+
+    async def get_shield(self, request: GetShieldRequest) -> Shield:
+        if request.identifier in self.shields:
+            return self.shields[request.identifier]
+        raise ValueError(f"Shield {request.identifier} not found")
+
+    def register_shield(self, shield: Shield) -> None:
+        self.shields[shield.identifier] = shield
+
+    def unregister_shield(self, identifier: str) -> None:
+        if identifier in self.shields:
+            del self.shields[identifier]
+
+
 class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
     """Safety provider implementation using Llama Guard models for content moderation."""
 
-    def __init__(self, config: LlamaGuardConfig, deps) -> None:
+    def __init__(self, config: LlamaGuardConfig, deps: Any) -> None:
         self.config = config
         self.inference_api = deps[Api.inference]
+        self.shield_store = SimpleShieldStore()
 
     async def initialize(self) -> None:
         pass
@@ -157,11 +181,10 @@ class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
         model_id = shield.provider_resource_id
         if not model_id:
             raise ValueError("Llama Guard shield must have a model id")
+        self.shield_store.register_shield(shield)
 
     async def unregister_shield(self, identifier: str) -> None:
-        # LlamaGuard doesn't need to do anything special for unregistration
-        # The routing table handles the removal from the registry
-        pass
+        self.shield_store.unregister_shield(identifier)
 
     async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse:
         shield = await self.shield_store.get_shield(GetShieldRequest(identifier=request.shield_id))
@@ -172,11 +195,17 @@ class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
         # some shields like llama-guard require the first message to be a user message
         # since this might be a tool call, first role might not be user
         if len(messages) > 0 and messages[0].role != "user":
-            messages[0] = OpenAIUserMessageParam(content=messages[0].content)
+            content = messages[0].content
+            # Convert content to the expected type
+            if content is None:
+                content = ""
+            messages[0] = OpenAIUserMessageParam(content=content)  # type: ignore[arg-type]
 
         # Use the inference API's model resolution instead of hardcoded mappings
         # This allows the shield to work with any registered model
         model_id = shield.provider_resource_id
+        if not model_id:
+            raise ValueError("Shield must have a provider_resource_id")
 
         # Determine safety categories based on the model type
         # For known Llama Guard models, use specific categories
@@ -202,12 +231,12 @@ class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
             raise ValueError("Llama Guard moderation requires a model identifier.")
 
         if isinstance(request.input, list):
-            messages = request.input.copy()
+            input_list = request.input.copy()
         else:
-            messages = [request.input]
+            input_list = [request.input]
 
         # convert to user messages format with role
-        messages = [OpenAIUserMessageParam(content=m) for m in messages]
+        messages: list[OpenAIMessageParam] = [OpenAIUserMessageParam(content=m) for m in input_list]
 
         # Determine safety categories based on the model type
         # For known Llama Guard models, use specific categories
@@ -307,7 +336,9 @@ class LlamaGuardShield:
             temperature=0.0,  # default is 1, which is too high for safety
         )
         response = await self.inference_api.openai_chat_completion(params)
+        assert isinstance(response, OpenAIChatCompletion), "Streaming not supported for shield"
         content = response.choices[0].message.content
+        assert content is not None, "Expected content in shield response"
         content = content.strip()
         return self.get_shield_response(content)
 
@@ -326,7 +357,9 @@ class LlamaGuardShield:
                     most_recent_img = m.content
                     conversation.append(m)
             elif isinstance(m.content, list):
-                content = []
+                content: list[
+                    str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam
+                ] = []
                 for c in m.content:
                     if isinstance(c, str) or isinstance(c, TextContentItem):
                         content.append(c)
@@ -337,16 +370,21 @@ class LlamaGuardShield:
                     else:
                         raise ValueError(f"Unknown content type: {c}")
 
-                conversation.append(OpenAIUserMessageParam(content=content))
+                conversation.append(OpenAIUserMessageParam(content=content))  # type: ignore[arg-type]
             else:
                 raise ValueError(f"Unknown content type: {m.content}")
 
-        prompt = []
+        prompt: list[
+            str
+            | OpenAIChatCompletionContentPartTextParam
+            | OpenAIChatCompletionContentPartImageParam
+            | ImageContentItem
+        ] = []
         if most_recent_img is not None:
             prompt.append(most_recent_img)
         prompt.append(self.build_prompt(conversation[::-1]))
 
-        return OpenAIUserMessageParam(content=prompt)
+        return OpenAIUserMessageParam(content=prompt)  # type: ignore[arg-type]
 
     def build_prompt(self, messages: list[OpenAIMessageParam]) -> str:
         categories = self.get_safety_categories()
@@ -395,7 +433,9 @@ class LlamaGuardShield:
             temperature=0.0,  # default is 1, which is too high for safety
         )
         response = await self.inference_api.openai_chat_completion(params)
+        assert isinstance(response, OpenAIChatCompletion), "Streaming not supported for moderation"
         content = response.choices[0].message.content
+        assert content is not None, "Expected content in moderation response"
         content = content.strip()
         return self.get_moderation_object(content)
 
@@ -412,10 +452,10 @@ class LlamaGuardShield:
         # Set default values for safe case
         categories = dict.fromkeys(SAFETY_CATEGORIES_TO_CODE_MAP.keys(), False)
         category_scores = dict.fromkeys(SAFETY_CATEGORIES_TO_CODE_MAP.keys(), 1.0)
-        category_applied_input_types = {key: [] for key in SAFETY_CATEGORIES_TO_CODE_MAP.keys()}
+        category_applied_input_types: dict[str, list[str]] = {key: [] for key in SAFETY_CATEGORIES_TO_CODE_MAP.keys()}
         flagged = False
         user_message = None
-        metadata = {}
+        metadata: dict[str, Any] = {}
 
         # Handle unsafe case
         if unsafe_code:
