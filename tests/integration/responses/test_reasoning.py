@@ -103,6 +103,81 @@ def test_reasoning_non_streaming(client_with_models, text_model_id):
     assert len(_get_attr(content[0], "text", "")) > 0, "Reasoning content text should not be empty"
 
 
+def test_reasoning_multi_turn_with_tool_call(openai_client, client_with_models, text_model_id):
+    """Test reasoning + tool call multi-turn flow.
+
+    Turn 1: model should return reasoning + a function_call.
+    Turn 2: pass tool result back, model responds with a final message.
+
+    Only tested with ollama/gpt-oss:20b so far.
+    """
+
+    skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
+
+    if text_model_id != "ollama/gpt-oss:20b":
+        pytest.skip(f"Reasoning + tool call multi-turn only tested with ollama/gpt-oss:20b, got {text_model_id}")
+
+    tools = [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get current temperature for a given location.",
+            "parameters": {
+                "additionalProperties": False,
+                "properties": {
+                    "location": {
+                        "description": "City and country e.g. Bogotá, Colombia",
+                        "type": "string",
+                    }
+                },
+                "required": ["location"],
+                "type": "object",
+            },
+        }
+    ]
+
+    # Turn 1: expect reasoning + tool call
+    input_list = [{"role": "user", "content": "What is the weather in San Francisco? Think step by step."}]
+    resp1 = openai_client.responses.create(
+        model=text_model_id,
+        input=input_list,
+        tools=tools,
+        reasoning={"effort": "medium"},
+        stream=False,
+    )
+
+    output_types = [item.type for item in resp1.output]
+    reasoning_items = [item for item in resp1.output if item.type == "reasoning"]
+    function_calls = [item for item in resp1.output if item.type == "function_call"]
+
+    assert len(reasoning_items) > 0, f"Expected reasoning items in turn 1, got types: {output_types}"
+    assert len(function_calls) > 0, f"Expected function_call in turn 1, got types: {output_types}"
+
+    # Turn 2: pass full output back (includes reasoning + function_call),
+    # then append function_call_output for each tool call.
+    input_list += resp1.output
+    for fc in function_calls:
+        input_list.append(
+            {
+                "type": "function_call_output",
+                "call_id": fc.call_id,
+                "output": "65°F and sunny",
+            }
+        )
+
+    resp2 = openai_client.responses.create(
+        model=text_model_id,
+        input=input_list,
+        tools=tools,
+        reasoning={"effort": "medium"},
+        stream=False,
+    )
+
+    assert resp2.output, "Expected non-empty output in turn 2"
+    message_items = [item for item in resp2.output if item.type == "message"]
+    assert len(message_items) > 0, "Expected a message in turn 2 output"
+
+
 def test_reasoning_multi_turn_passthrough(client_with_models, text_model_id):
     """Test that reasoning output survives a round-trip when passed back as input.
 
