@@ -86,15 +86,6 @@ const sidebars: SidebarsConfig = {
             'distributions/remote_hosted_distro/watsonx',
           ],
         },
-        {
-          type: 'category',
-          label: 'On-Device Distributions',
-          collapsed: false,
-          items: [
-            'distributions/ondevice_distro/ios_sdk',
-            'distributions/ondevice_distro/android_sdk',
-          ],
-        },
       ],
     },
     {
@@ -103,6 +94,10 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'providers/index',
+        'providers/external/index',
+        'providers/external/external-providers-guide',
+        'providers/external/external-providers-list',
+        'providers/openai',
         {
           type: 'category',
           label: 'Inference',
@@ -257,17 +252,6 @@ const sidebars: SidebarsConfig = {
             'providers/batches/inline_reference'
           ],
         },
-        {
-          type: 'category',
-          label: 'External Providers',
-          collapsed: false,
-          items: [
-            'providers/external/index',
-            'providers/external/external-providers-guide',
-            'providers/external/external-providers-list'
-          ],
-        },
-        'providers/openai'
       ],
     },
     {
