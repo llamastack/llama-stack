@@ -15,6 +15,8 @@ Make sure you have [uv](https://docs.astral.sh/uv/getting-started/installation/)
 <Tabs>
 <TabItem value="ollama" label="Ollama (local)" default>
 
+Install [Ollama](https://ollama.com/download), then pull a model and start the server:
+
 ```bash
 ollama pull llama3.2:3b
 uvx --from 'llama-stack[starter]' llama stack run starter
