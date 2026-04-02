@@ -94,6 +94,31 @@
   color: #94a3b8;
 }
 
+/* ========== INSTALL BLOCK ========== */
+.installBlock {
+  margin: 0 auto 1.5rem;
+  max-width: 560px;
+}
+
+.installCmd {
+  display: block;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  user-select: all;
+  cursor: text;
+}
+
+[data-theme='dark'] .installCmd {
+  background: rgba(0, 0, 0, 0.4);
+}
+
 .actions {
   display: flex;
   gap: 0.75rem;

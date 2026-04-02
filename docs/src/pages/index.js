@@ -150,6 +150,9 @@ function Hero() {
             Drop-in replacement for the OpenAI API. Use any client, any framework,
             any model. Swap providers without changing code.
           </p>
+          <div className={styles.installBlock}>
+            <code className={styles.installCmd}>uvx --from 'llama-stack[starter]' llama stack run starter</code>
+          </div>
           <div className={styles.actions}>
             <Link className={styles.primaryBtn} to="/docs/getting_started/quickstart">Get Started</Link>
             <Link className={styles.secondaryBtn} to="/docs/api-openai">API Reference</Link>

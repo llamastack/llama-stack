@@ -70,6 +70,12 @@ dependencies = [
 client = [
     "llama-stack-client>=0.7.0", # Optional for library-only usage
 ]
+starter = [
+    "ollama",
+    "faiss-cpu",
+    "sentence-transformers",
+    "pypdf>=6.7.2",
+]
 
 [dependency-groups]
 dev = [
