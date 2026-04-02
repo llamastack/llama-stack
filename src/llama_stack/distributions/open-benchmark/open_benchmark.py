@@ -99,7 +99,7 @@ def get_distribution_template() -> DistributionTemplate:
     """Build the open-benchmark distribution template for running evaluations.
 
     Returns:
-        A DistributionTemplate configured with benchmark datasets and scoring functions.
+        A DistributionTemplate configured for open benchmarking.
     """
     inference_providers, available_models = get_inference_providers()
     providers = {
