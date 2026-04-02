@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, urljoin, urlparse
 import httpx
 import jwt
 from pydantic import BaseModel, Field
+from starlette.types import Scope
 
 from llama_stack.core.datatypes import (
     AuthenticationConfig,
@@ -60,21 +61,21 @@ class AuthProvider(ABC):
     """Abstract base class for authentication providers."""
 
     @abstractmethod
-    async def validate_token(self, token: str, scope: dict | None = None) -> User:
+    async def validate_token(self, token: str, scope: Scope | None = None) -> User:
         """Validate a token and return access attributes."""
         pass
 
     @abstractmethod
-    async def close(self):
+    async def close(self) -> None:
         """Clean up any resources."""
         pass
 
-    def get_auth_error_message(self, scope: dict | None = None) -> str:
+    def get_auth_error_message(self, scope: Scope | None = None) -> str:
         """Return provider-specific authentication error message."""
         return "Authentication required"
 
 
-def get_attributes_from_claims(claims: dict[str, str], mapping: dict[str, str]) -> dict[str, list[str]]:
+def get_attributes_from_claims(claims: dict[str, Any], mapping: dict[str, str]) -> dict[str, list[str]]:
     """Extract user attributes from token claims using the configured claims-to-attributes mapping.
 
     Args:
@@ -125,11 +126,11 @@ class OAuth2TokenAuthProvider(AuthProvider):
     This should be the standard authentication provider for most use cases.
     """
 
-    def __init__(self, config: OAuth2TokenAuthConfig):
+    def __init__(self, config: OAuth2TokenAuthConfig) -> None:
         self.config = config
         self._jwks_client: jwt.PyJWKClient | None = None
 
-    async def validate_token(self, token: str, scope: dict | None = None) -> User:
+    async def validate_token(self, token: str, scope: Scope | None = None) -> User:
         if self.config.jwks:
             return await self.validate_jwt_token(token, scope)
         if self.config.introspection:
@@ -174,7 +175,7 @@ class OAuth2TokenAuthProvider(AuthProvider):
             self._jwks_client = jwt.PyJWKClient(self.config.jwks.uri, **jwks_kwargs)
         return self._jwks_client
 
-    async def validate_jwt_token(self, token: str, scope: dict | None = None) -> User:
+    async def validate_jwt_token(self, token: str, scope: Scope | None = None) -> User:
         """Validate a token using the JWT token."""
         try:
             jwks_client: jwt.PyJWKClient = self._get_jwks_client()
@@ -202,7 +203,7 @@ class OAuth2TokenAuthProvider(AuthProvider):
             attributes=access_attributes,
         )
 
-    async def introspect_token(self, token: str, scope: dict | None = None) -> User:
+    async def introspect_token(self, token: str, scope: Scope | None = None) -> User:
         """Validate a token using token introspection as defined by RFC 7662."""
         form = {
             "token": token,
@@ -258,10 +259,10 @@ class OAuth2TokenAuthProvider(AuthProvider):
             logger.exception("Error during token introspection")
             raise ValueError("Token introspection error") from e
 
-    async def close(self):
+    async def close(self) -> None:
         pass
 
-    def get_auth_error_message(self, scope: dict | None = None) -> str:
+    def get_auth_error_message(self, scope: Scope | None = None) -> str:
         """Return OAuth2-specific authentication error message."""
         if self.config.issuer:
             return f"Authentication required. Please provide a valid OAuth2 Bearer token from {self.config.issuer}"
@@ -276,11 +277,11 @@ class OAuth2TokenAuthProvider(AuthProvider):
 class CustomAuthProvider(AuthProvider):
     """Custom authentication provider that uses an external endpoint."""
 
-    def __init__(self, config: CustomAuthConfig):
+    def __init__(self, config: CustomAuthConfig) -> None:
         self.config = config
-        self._client = None
+        self._client: httpx.AsyncClient | None = None
 
-    async def validate_token(self, token: str, scope: dict | None = None) -> User:
+    async def validate_token(self, token: str, scope: Scope | None = None) -> User:
         """Validate a token using the custom authentication endpoint."""
         if scope is None:
             scope = {}
@@ -337,13 +338,13 @@ class CustomAuthProvider(AuthProvider):
             logger.exception("Error during authentication")
             raise ValueError("Authentication service error") from e
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the HTTP client."""
         if self._client:
             await self._client.aclose()
             self._client = None
 
-    def get_auth_error_message(self, scope: dict | None = None) -> str:
+    def get_auth_error_message(self, scope: Scope | None = None) -> str:
         """Return custom auth provider-specific authentication error message."""
         domain = urlparse(self.config.endpoint).netloc
         if domain:
@@ -360,10 +361,10 @@ class GitHubTokenAuthProvider(AuthProvider):
     them against the GitHub API to get user information.
     """
 
-    def __init__(self, config: GitHubTokenAuthConfig):
+    def __init__(self, config: GitHubTokenAuthConfig) -> None:
         self.config = config
 
-    async def validate_token(self, token: str, scope: dict | None = None) -> User:
+    async def validate_token(self, token: str, scope: Scope | None = None) -> User:
         """Validate a GitHub token by calling the GitHub API.
 
         This validates tokens issued by GitHub (personal access tokens or OAuth tokens).
@@ -389,16 +390,16 @@ class GitHubTokenAuthProvider(AuthProvider):
             attributes=access_attributes,
         )
 
-    async def close(self):
+    async def close(self) -> None:
         """Clean up any resources."""
         pass
 
-    def get_auth_error_message(self, scope: dict | None = None) -> str:
+    def get_auth_error_message(self, scope: Scope | None = None) -> str:
         """Return GitHub-specific authentication error message."""
         return "Authentication required. Please provide a valid GitHub access token (https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) in the Authorization header (Bearer <token>)"
 
 
-async def _get_github_user_info(access_token: str, github_api_base_url: str) -> dict:
+async def _get_github_user_info(access_token: str, github_api_base_url: str) -> dict[str, Any]:
     """Fetch user info and organizations from GitHub API."""
     headers = {
         "Authorization": f"Bearer {access_token}",
@@ -423,7 +424,7 @@ class KubernetesAuthProvider(AuthProvider):
     /apis/authentication.k8s.io/v1/selfsubjectreviews endpoint to validate tokens and extract user information.
     """
 
-    def __init__(self, config: KubernetesAuthProviderConfig):
+    def __init__(self, config: KubernetesAuthProviderConfig) -> None:
         self.config = config
 
     def _httpx_verify_value(self) -> bool | str:
@@ -439,7 +440,7 @@ class KubernetesAuthProvider(AuthProvider):
             return self.config.tls_cafile.as_posix()
         return True
 
-    async def validate_token(self, token: str, scope: dict | None = None) -> User:
+    async def validate_token(self, token: str, scope: Scope | None = None) -> User:
         """Validate a token using Kubernetes SelfSubjectReview API endpoint."""
         # Build the Kubernetes SelfSubjectReview API endpoint URL
         review_api_url = urljoin(self.config.api_server_url, "/apis/authentication.k8s.io/v1/selfsubjectreviews")
@@ -496,7 +497,7 @@ class KubernetesAuthProvider(AuthProvider):
             logger.warning("Error during token validation", error=str(e))
             raise ValueError(f"Token validation error: {str(e)}") from e
 
-    async def close(self):
+    async def close(self) -> None:
         """Close any resources."""
         pass
 

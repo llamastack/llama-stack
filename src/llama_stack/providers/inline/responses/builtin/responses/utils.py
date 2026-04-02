@@ -11,6 +11,7 @@ import re
 import uuid
 from collections.abc import Sequence
 
+from llama_stack.providers.inline.responses.builtin.responses.types import AssistantMessageWithReasoning
 from llama_stack_api import (
     Files,
     OpenAIAssistantMessageParam,
@@ -302,12 +303,12 @@ async def convert_response_input_to_chat_messages(
             if isinstance(input_item, OpenAIResponseInputFunctionToolCallOutput):
                 tool_call_results[input_item.call_id] = await _build_tool_result_messages(input_item, files_api)
 
-        for input_item in input:
+        for i, input_item in enumerate(input):
             if isinstance(input_item, OpenAIResponseInputFunctionToolCallOutput):
                 # skip as these have been extracted and inserted in order
                 pass
             elif isinstance(input_item, OpenAIResponseOutputMessageReasoningItem):
-                # skip for now — reasoning items will be handled in Stage 2
+                # skip — reasoning items are consumed by the next assistant message via look-back
                 pass
             elif isinstance(input_item, OpenAIResponseOutputMessageFunctionToolCall):
                 tool_call = OpenAIChatCompletionToolCall(
@@ -318,7 +319,12 @@ async def convert_response_input_to_chat_messages(
                         arguments=input_item.arguments,
                     ),
                 )
-                messages.append(OpenAIAssistantMessageParam(tool_calls=[tool_call]))
+                reasoning = _get_preceding_reasoning(input, i)
+                if reasoning:
+                    msg = AssistantMessageWithReasoning(tool_calls=[tool_call], reasoning_content=reasoning)
+                else:
+                    msg = OpenAIAssistantMessageParam(tool_calls=[tool_call])  # type: ignore[assignment]
+                messages.append(msg)
                 if input_item.call_id in tool_call_results:
                     messages.extend(tool_call_results[input_item.call_id])
                     del tool_call_results[input_item.call_id]
@@ -331,7 +337,12 @@ async def convert_response_input_to_chat_messages(
                         arguments=input_item.arguments,
                     ),
                 )
-                messages.append(OpenAIAssistantMessageParam(tool_calls=[tool_call]))
+                reasoning = _get_preceding_reasoning(input, i)
+                if reasoning:
+                    msg = AssistantMessageWithReasoning(tool_calls=[tool_call], reasoning_content=reasoning)
+                else:
+                    msg = OpenAIAssistantMessageParam(tool_calls=[tool_call])  # type: ignore[assignment]
+                messages.append(msg)
                 # Output can be None, use empty string as fallback
                 output_content = input_item.output if input_item.output is not None else ""
                 messages.append(
@@ -366,14 +377,20 @@ async def convert_response_input_to_chat_messages(
                 # This handles cases where input includes context for function_call_outputs
                 if previous_messages and input_item.role == "user":
                     last_user_msg = None
-                    for msg in reversed(previous_messages):
-                        if isinstance(msg, OpenAIUserMessageParam):
-                            last_user_msg = msg
+                    for prev_msg in reversed(previous_messages):
+                        if isinstance(prev_msg, OpenAIUserMessageParam):
+                            last_user_msg = prev_msg
                             break
                     if last_user_msg:
                         last_user_content = getattr(last_user_msg, "content", None)
                         if last_user_content == content:
                             continue  # Skip duplicate user message
+                # Attach preceding reasoning to assistant messages
+                if input_item.role == "assistant":
+                    reasoning = _get_preceding_reasoning(input, i)
+                    if reasoning:
+                        messages.append(AssistantMessageWithReasoning(content=content, reasoning_content=reasoning))  # type: ignore[arg-type]
+                        continue
                 # Dynamic message type call - different message types have different content expectations
                 messages.append(message_type(content=content))  # type: ignore[call-arg,arg-type]
             else:
@@ -412,6 +429,15 @@ def _extract_tool_call_ids(messages: list[OpenAIMessageParam]) -> set[str]:
                     # tool_call is a Pydantic model, use attribute access
                     call_ids.add(tool_call.id)
     return call_ids
+
+
+def _get_preceding_reasoning(input_items: list[OpenAIResponseInput], index: int) -> str | None:
+    """If the item immediately before current index is a reasoning item, return its text."""
+    if index > 0:
+        preceding = input_items[index - 1]
+        if isinstance(preceding, OpenAIResponseOutputMessageReasoningItem) and preceding.content:
+            return " ".join(c.text for c in preceding.content)
+    return None
 
 
 async def convert_response_text_to_chat_response_format(
@@ -582,7 +608,7 @@ def convert_mcp_tool_choice(
     server_label: str | None = None,
     server_label_to_tools: dict[str, list[str]] | None = None,
     tool_name: str | None = None,
-) -> dict[str, str] | list[dict[str, str]]:
+) -> dict[str, str | dict[str, str]] | list[dict[str, str | dict[str, str]]] | None:
     """Convert a responses tool choice of type mcp to a chat completions compatible function tool choice."""
 
     if tool_name:
@@ -597,6 +623,8 @@ def convert_mcp_tool_choice(
         tool_names = server_label_to_tools.get(server_label, [])
         if not tool_names:
             return None
-        matching_tools = [{"type": "function", "function": {"name": tool_name}} for tool_name in tool_names]
+        matching_tools: list[dict[str, str | dict[str, str]]] = [
+            {"type": "function", "function": {"name": name}} for name in tool_names
+        ]
         return matching_tools
     return []

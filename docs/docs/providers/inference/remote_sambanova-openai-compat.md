@@ -9,7 +9,7 @@ SambaNova OpenAI-compatible provider for using SambaNova models with OpenAI API 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `api_key` | `str \| None` | No |  | The SambaNova API key |
-| `openai_compat_api_base` | `<class 'str'>` | No | https://api.sambanova.ai/v1 | The URL for the SambaNova API server |
+| `openai_compat_api_base` | `<class 'str'>` | No | <https://api.sambanova.ai/v1> | The URL for the SambaNova API server |
 
 ## Sample Configuration
 

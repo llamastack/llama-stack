@@ -2,9 +2,7 @@
 slug: responses-api
 title: "Your Agent, Your Rules: Building Powerful Agents with the Responses API in Llama Stack"
 authors:
-  - name: Bill Murdock
-    url: https://github.com/jwm4
-    image_url: https://github.com/jwm4.png
+  - jwm4
 tags: [responses-api, agents, rag, mcp, open-responses]
 date: 2026-03-18
 ---

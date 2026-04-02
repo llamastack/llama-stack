@@ -19,6 +19,12 @@ from llama_stack.core.datatypes import ModelWithOwner
 from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
+from llama_stack.telemetry.inference_metrics import (
+    create_inference_metric_attributes,
+    inference_duration,
+    inference_time_to_first_token,
+    inference_tokens_per_second,
+)
 from llama_stack_api import (
     GetChatCompletionRequest,
     HealthResponse,
@@ -31,10 +37,12 @@ from llama_stack_api import (
     ModelTypeError,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionChunkWithReasoning,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
+    OpenAIChatCompletionWithReasoning,
     OpenAIChoice,
     OpenAIChoiceLogprobs,
     OpenAICompletion,
@@ -221,14 +229,62 @@ class InferenceRouter(Inference):
                 messages=params.messages,
             )
 
-        response = await self._nonstream_openai_chat_completion(provider, params)
+        start_time = time.perf_counter()
+        status = "success"
+        try:
+            response = await self._nonstream_openai_chat_completion(provider, params)
+        except asyncio.CancelledError:
+            status = "error"
+            raise
+        except Exception:
+            status = "error"
+            raise
+        finally:
+            duration = time.perf_counter() - start_time
+            attrs = create_inference_metric_attributes(
+                model=request_model_id,
+                provider=provider.__provider_id__,
+                stream=False,
+                status=status,
+            )
+            inference_duration.record(duration, attributes=attrs)
+
         response.model = request_model_id
+
+        if response.usage and response.usage.completion_tokens and duration > 0:
+            tokens_per_sec = response.usage.completion_tokens / duration
+            inference_tokens_per_second.record(
+                tokens_per_sec,
+                attributes=create_inference_metric_attributes(
+                    model=request_model_id,
+                    provider=provider.__provider_id__,
+                    stream=False,
+                    status="success",
+                ),
+            )
 
         # Store the response with the ID that will be returned to the client
         if self.store:
             asyncio.create_task(self.store.store_chat_completion(response, params.messages))
 
         return response
+
+    async def openai_chat_completions_with_reasoning(
+        self,
+        params: OpenAIChatCompletionRequestWithExtraBody,
+    ) -> OpenAIChatCompletionWithReasoning | AsyncIterator[OpenAIChatCompletionChunkWithReasoning]:
+        """Called by the Responses layer when a user requests reasoning.
+
+        Routes to the provider's reasoning-aware CC implementation, which
+        handles mapping reasoning fields to/from the provider's format.
+        If the provider doesn't support reasoning, raises an error.
+        """
+        provider, provider_resource_id = await self._get_model_provider(params.model, ModelType.llm)
+        params.model = provider_resource_id
+        # Not all providers implement openai_chat_completions_with_reasoning.
+        # the Responses layer catches them and falls back to regular CC
+        # with a warning.
+        return await provider.openai_chat_completions_with_reasoning(params)
 
     async def openai_embeddings(
         self,
@@ -312,6 +368,10 @@ class InferenceRouter(Inference):
         id = None
         created = None
         choices_data: dict[int, dict[str, Any]] = {}
+        start_time = time.perf_counter()
+        first_token_time: float | None = None
+        completion_tokens: int | None = None
+        status = "success"
 
         try:
             async for chunk in response:
@@ -343,6 +403,8 @@ class InferenceRouter(Inference):
                         if choice_delta.delta:
                             delta = choice_delta.delta
                             if delta.content:
+                                if first_token_time is None:
+                                    first_token_time = time.perf_counter()
                                 current_choice_data["content_parts"].append(delta.content)
                             if delta.tool_calls:
                                 for tool_call_delta in delta.tool_calls:
@@ -397,6 +459,10 @@ class InferenceRouter(Inference):
                             choice_delta.logprobs.content = converted_logprobs
                             current_choice_data["logprobs_content_parts"].extend(converted_logprobs)
 
+                # Capture usage from the final chunk (providers send usage in the last chunk)
+                if chunk.usage and chunk.usage.completion_tokens:
+                    completion_tokens = chunk.usage.completion_tokens
+
                 # Compute metrics on final chunk
                 if chunk.choices and chunk.choices[0].finish_reason:
                     completion_text = ""
@@ -404,7 +470,30 @@ class InferenceRouter(Inference):
                         completion_text += "".join(choice_data["content_parts"])
 
                 yield chunk
+        except asyncio.CancelledError:
+            status = "error"
+            raise
+        except Exception:
+            status = "error"
+            raise
         finally:
+            duration = time.perf_counter() - start_time
+            attrs = create_inference_metric_attributes(
+                model=fully_qualified_model_id,
+                provider=provider_id,
+                stream=True,
+                status=status,
+            )
+            inference_duration.record(duration, attributes=attrs)
+
+            if first_token_time is not None:
+                ttft = first_token_time - start_time
+                inference_time_to_first_token.record(ttft, attributes=attrs)
+
+            if completion_tokens and duration > 0:
+                tokens_per_sec = completion_tokens / duration
+                inference_tokens_per_second.record(tokens_per_sec, attributes=attrs)
+
             # Store the final assembled completion
             if id and self.store and messages:
                 assembled_choices: list[OpenAIChoice] = []

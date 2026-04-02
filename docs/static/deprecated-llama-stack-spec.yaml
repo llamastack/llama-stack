@@ -1522,6 +1522,7 @@ components:
           mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
           mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
           message: '#/components/schemas/OpenAIResponseMessage'
+          reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
           web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
         propertyName: type
       oneOf:
@@ -1543,7 +1544,9 @@ components:
         title: OpenAIResponseOutputMessageMCPCall
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
         title: OpenAIResponseOutputMessageMCPListTools
-      title: OpenAIResponseMessage | ... (9 variants)
+      - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+        title: OpenAIResponseOutputMessageReasoningItem
+      title: OpenAIResponseMessage | ... (10 variants)
     OpenAIResponseAnnotationCitation:
       properties:
         type:
@@ -2142,6 +2145,8 @@ components:
                 title: OpenAIResponseOutputMessageMCPCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 title: OpenAIResponseOutputMessageMCPListTools
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                title: OpenAIResponseOutputMessageReasoningItem
               discriminator:
                 propertyName: type
                 mapping:
@@ -2153,8 +2158,9 @@ components:
                   mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                   mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                   message: '#/components/schemas/OpenAIResponseMessage-Input'
+                  reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                   web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Input | ... (9 variants)
+              title: OpenAIResponseMessage-Input | ... (10 variants)
             type: array
           - type: 'null'
           description: Initial items to include in the conversation context.
@@ -2263,6 +2269,8 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -2274,8 +2282,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Output'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (9 variants)
+            title: OpenAIResponseMessage-Output | ... (10 variants)
           type: array
           title: Data
           description: List of conversation items
@@ -2321,6 +2330,8 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -2332,8 +2343,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Input'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Input | ... (9 variants)
+            title: OpenAIResponseMessage-Input | ... (10 variants)
           type: array
           maxItems: 20
           title: Items
@@ -9717,6 +9729,7 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
               propertyName: type
             oneOf:
@@ -9738,7 +9751,9 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
-            title: OpenAIResponseMessage | ... (9 variants)
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
+            title: OpenAIResponseMessage | ... (10 variants)
           maxItems: 20
           title: Items
           type: array
@@ -10140,7 +10155,7 @@ tags:
 
     Note: This API is currently under active development and may undergo changes.
   name: Batches
-  x-displayName: The Batches API enables efficient processing of multiple requests in a single operation, particularly useful for processing large datasets, batch evaluation workflows, and cost-effective inference at scale.
+  x-displayName: Batches
 - description: ''
   name: Benchmarks
 - description: Protocol for conversation management operations.

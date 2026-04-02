@@ -17,7 +17,7 @@ HuggingFace-based post-training provider for fine-tuning models using the Huggin
 | `device` | `str` | No | cuda |  |
 | `distributed_backend` | `Literal[fsdp, deepspeed] \| None` | No |  |  |
 | `checkpoint_format` | `Literal[full_state, huggingface] \| None` | No | huggingface |  |
-| `chat_template` | `str` | No | &lt;|user|&gt;<br/>&#123;input&#125;<br/>&lt;|assistant|&gt;<br/>&#123;output&#125; |  |
+| `chat_template` | `str` | No | &lt;&#124;user&#124;&gt;<br/>&#123;input&#125;<br/>&lt;&#124;assistant&#124;&gt;<br/>&#123;output&#125; |  |
 | `model_specific_config` | `dict` | No | &#123;'trust_remote_code': True, 'attn_implementation': 'sdpa'&#125; |  |
 | `max_seq_length` | `int` | No | 2048 |  |
 | `gradient_checkpointing` | `bool` | No | False |  |

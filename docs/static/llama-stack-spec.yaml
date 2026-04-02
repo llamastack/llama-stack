@@ -58,6 +58,17 @@ paths:
           default: 20
           title: Limit
         description: Maximum number of batches to return. Defaults to 20.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          batches = client.batches.list()
+          for batch in batches:
+              print(batch.id, batch.status)
     post:
       responses:
         '200':
@@ -91,6 +102,20 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateBatchRequest'
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          batch = client.batches.create(
+              input_file_id="file-abc123",
+              endpoint="/v1/chat/completions",
+              completion_window="24h",
+          )
+          print(batch.id)
   /v1/batches/{batch_id}:
     get:
       responses:
@@ -126,6 +151,16 @@ paths:
           description: The ID of the batch to retrieve.
           title: Batch Id
         description: The ID of the batch to retrieve.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          batch = client.batches.retrieve("batch_abc123")
+          print(batch)
   /v1/batches/{batch_id}/cancel:
     post:
       responses:
@@ -161,6 +196,16 @@ paths:
           description: The ID of the batch to cancel.
           title: Batch Id
         description: The ID of the batch to cancel.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          batch = client.batches.cancel("batch_abc123")
+          print(batch)
   /v1/chat/completions:
     get:
       responses:
@@ -230,6 +275,16 @@ paths:
           default: desc
           title: Order
         description: 'The order to sort the chat completions by: "asc" or "desc". Defaults to "desc".'
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          response = client.chat.completions.list()
+          print(response)
     post:
       responses:
         '200':
@@ -264,6 +319,21 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/OpenAIChatCompletionRequestWithExtraBody'
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          response = client.chat.completions.create(
+              model="meta-llama/Llama-3.1-8B-Instruct",
+              messages=[
+                  {"role": "user", "content": "What is the capital of France?"},
+              ],
+          )
+          print(response.choices[0].message.content)
   /v1/chat/completions/{completion_id}:
     get:
       responses:
@@ -299,6 +369,16 @@ paths:
           description: ID of the chat completion.
           title: Completion Id
         description: ID of the chat completion.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          completion = client.chat.completions.retrieve("completion_id")
+          print(completion)
   /v1/completions:
     post:
       responses:
@@ -334,6 +414,19 @@ paths:
             schema:
               $ref: '#/components/schemas/OpenAICompletionRequestWithExtraBody'
         required: true
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          response = client.completions.create(
+              model="meta-llama/Llama-3.1-8B-Instruct",
+              prompt="The capital of France is",
+          )
+          print(response.choices[0].text)
   /v1/conversations:
     post:
       responses:
@@ -605,6 +698,7 @@ paths:
                 - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
                 - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 discriminator:
                   propertyName: type
                   mapping:
@@ -617,6 +711,7 @@ paths:
                     mcp_approval_response: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
                     mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                     mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                    reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 title: Response Retrieve Item V1 Conversations  Conversation Id  Items  Item Id  Get
         '400':
           $ref: '#/components/responses/BadRequest400'
@@ -726,6 +821,19 @@ paths:
             schema:
               $ref: '#/components/schemas/OpenAIEmbeddingsRequestWithExtraBody'
         required: true
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          response = client.embeddings.create(
+              model="all-MiniLM-L6-v2",
+              input="Llama Stack is awesome",
+          )
+          print(response.data[0].embedding[:5])
   /v1/files:
     get:
       responses:
@@ -795,6 +903,17 @@ paths:
           description: Filter files by purpose.
           title: Purpose
         description: Filter files by purpose.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          files = client.files.list()
+          for f in files:
+              print(f.id, f.filename)
     post:
       responses:
         '200':
@@ -826,6 +945,19 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Body_upload_file_v1_files_post'
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          file = client.files.create(
+              file=open("data.jsonl", "rb"),
+              purpose="batch",
+          )
+          print(file.id)
   /v1/files/{file_id}:
     get:
       responses:
@@ -861,6 +993,16 @@ paths:
           description: The ID of the file to retrieve.
           title: File Id
         description: The ID of the file to retrieve.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          file = client.files.retrieve("file-abc123")
+          print(file)
     delete:
       responses:
         '200':
@@ -895,6 +1037,16 @@ paths:
           description: The ID of the file to delete.
           title: File Id
         description: The ID of the file to delete.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          response = client.files.delete("file-abc123")
+          print(response)
   /v1/files/{file_id}/content:
     get:
       responses:
@@ -930,6 +1082,16 @@ paths:
           description: The ID of the file to retrieve content from.
           title: File Id
         description: The ID of the file to retrieve content from.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          content = client.files.content("file-abc123")
+          print(content.text)
   /v1/health:
     get:
       responses:
@@ -1025,6 +1187,17 @@ paths:
       summary: List models using the OpenAI API.
       description: List models using the OpenAI API.
       operationId: openai_list_models_v1_models_get
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          models = client.models.list()
+          for model in models:
+              print(model.id)
   /v1/models/{model_id}:
     get:
       responses:
@@ -1060,6 +1233,16 @@ paths:
           description: The ID of the model to get.
           title: Model Id
         description: The ID of the model to get.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          model = client.models.retrieve("meta-llama/Llama-3.1-8B-Instruct")
+          print(model)
   /v1/moderations:
     post:
       responses:
@@ -1092,6 +1275,19 @@ paths:
             schema:
               $ref: '#/components/schemas/RunModerationRequest'
         required: true
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          response = client.moderations.create(
+              model="meta-llama/Llama-Guard-3-8B",
+              input="Some text to classify",
+          )
+          print(response.results[0].flagged)
   /v1/prompts:
     get:
       responses:
@@ -1470,6 +1666,17 @@ paths:
           default: desc
           title: Order
         description: The order to sort responses by when sorted by created_at ('asc' or 'desc').
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          responses = client.responses.list()
+          for r in responses:
+              print(r.id)
     post:
       responses:
         '200':
@@ -1505,6 +1712,19 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateResponseRequest'
           application/x-www-form-urlencoded: {}
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          response = client.responses.create(
+              model="meta-llama/Llama-3.1-8B-Instruct",
+              input="What is the capital of France?",
+          )
+          print(response.output_text)
   /v1/responses/{response_id}:
     get:
       responses:
@@ -1540,6 +1760,16 @@ paths:
           description: The ID of the OpenAI response to retrieve.
           title: Response Id
         description: The ID of the OpenAI response to retrieve.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          response = client.responses.retrieve("resp_abc123")
+          print(response)
     delete:
       responses:
         '200':
@@ -1574,6 +1804,16 @@ paths:
           description: The ID of the OpenAI response to delete.
           title: Response Id
         description: The ID of the OpenAI response to delete.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          response = client.responses.delete("resp_abc123")
+          print(response)
   /v1/responses/{response_id}/input_items:
     get:
       responses:
@@ -1663,6 +1903,17 @@ paths:
           default: desc
           title: Order
         description: The order to return the input items in.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          input_items = client.responses.input_items.list("resp_abc123")
+          for item in input_items:
+              print(item)
   /v1/safety/run-shield:
     post:
       responses:
@@ -1924,6 +2175,17 @@ paths:
           description: Pagination cursor (before).
           title: Before
         description: Pagination cursor (before).
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          vector_stores = client.vector_stores.list()
+          for vs in vector_stores:
+              print(vs.id, vs.name)
     post:
       responses:
         '200':
@@ -1955,6 +2217,18 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/OpenAICreateVectorStoreRequestWithExtraBody'
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          vector_store = client.vector_stores.create(
+              name="my-vector-store",
+          )
+          print(vector_store.id)
   /v1/vector_stores/{vector_store_id}:
     get:
       responses:
@@ -1990,6 +2264,16 @@ paths:
           description: The vector store identifier.
           title: Vector Store Id
         description: The vector store identifier.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          vector_store = client.vector_stores.retrieve("vs_abc123")
+          print(vector_store)
     post:
       responses:
         '200':
@@ -2030,6 +2314,19 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/OpenAIUpdateVectorStoreRequest'
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          vector_store = client.vector_stores.update(
+              "vs_abc123",
+              name="updated-name",
+          )
+          print(vector_store)
     delete:
       responses:
         '200':
@@ -2064,6 +2361,16 @@ paths:
           description: The vector store identifier.
           title: Vector Store Id
         description: The vector store identifier.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          response = client.vector_stores.delete("vs_abc123")
+          print(response)
   /v1/vector_stores/{vector_store_id}/file_batches:
     post:
       responses:
@@ -2105,6 +2412,19 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/OpenAICreateVectorStoreFileBatchRequestWithExtraBody'
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          batch = client.vector_stores.file_batches.create(
+              vector_store_id="vs_abc123",
+              file_ids=["file-abc123", "file-def456"],
+          )
+          print(batch)
   /v1/vector_stores/{vector_store_id}/file_batches/{batch_id}:
     get:
       responses:
@@ -2148,6 +2468,19 @@ paths:
           description: The file batch identifier.
           title: Batch Id
         description: The file batch identifier.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          batch = client.vector_stores.file_batches.retrieve(
+              vector_store_id="vs_abc123",
+              batch_id="vsfb_abc123",
+          )
+          print(batch)
   /v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/cancel:
     post:
       responses:
@@ -2191,6 +2524,19 @@ paths:
           description: The file batch identifier.
           title: Batch Id
         description: The file batch identifier.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          batch = client.vector_stores.file_batches.cancel(
+              vector_store_id="vs_abc123",
+              batch_id="vsfb_abc123",
+          )
+          print(batch)
   /v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/files:
     get:
       responses:
@@ -2288,6 +2634,20 @@ paths:
           default: desc
           title: Order
         description: 'Sort order by created_at: asc or desc.'
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          files = client.vector_stores.file_batches.list_files(
+              vector_store_id="vs_abc123",
+              batch_id="vsfb_abc123",
+          )
+          for f in files:
+              print(f.id)
   /v1/vector_stores/{vector_store_id}/files:
     get:
       responses:
@@ -2388,6 +2748,17 @@ paths:
           description: Filter by file status.
           title: Filter
         description: Filter by file status.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          files = client.vector_stores.files.list("vs_abc123")
+          for f in files:
+              print(f.id)
     post:
       responses:
         '200':
@@ -2428,6 +2799,19 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/OpenAIAttachFileRequest'
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          file = client.vector_stores.files.create(
+              vector_store_id="vs_abc123",
+              file_id="file-abc123",
+          )
+          print(file)
   /v1/vector_stores/{vector_store_id}/files/{file_id}:
     get:
       responses:
@@ -2471,6 +2855,19 @@ paths:
           description: The file identifier.
           title: File Id
         description: The file identifier.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          file = client.vector_stores.files.retrieve(
+              vector_store_id="vs_abc123",
+              file_id="file-abc123",
+          )
+          print(file)
     post:
       responses:
         '200':
@@ -2561,6 +2958,19 @@ paths:
           description: The file identifier.
           title: File Id
         description: The file identifier.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          response = client.vector_stores.files.delete(
+              vector_store_id="vs_abc123",
+              file_id="file-abc123",
+          )
+          print(response)
   /v1/vector_stores/{vector_store_id}/files/{file_id}/content:
     get:
       responses:
@@ -2626,6 +3036,19 @@ paths:
           default: false
           title: Include Metadata
         description: Include chunk metadata.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          content = client.vector_stores.files.content(
+              vector_store_id="vs_abc123",
+              file_id="file-abc123",
+          )
+          print(content)
   /v1/vector_stores/{vector_store_id}/search:
     post:
       responses:
@@ -2667,6 +3090,20 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/OpenAISearchVectorStoreRequest'
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          results = client.vector_stores.search(
+              vector_store_id="vs_abc123",
+              query="What is Llama Stack?",
+          )
+          for result in results:
+              print(result)
   /v1/version:
     get:
       responses:
@@ -2733,6 +3170,16 @@ paths:
           description: The ID of the OpenAI response to cancel.
           title: Response Id
         description: The ID of the OpenAI response to cancel.
+      x-codeSamples:
+      - lang: Python
+        label: OpenAI
+        source: |-
+          from openai import OpenAI
+
+          client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
+
+          response = client.responses.cancel("resp_abc123")
+          print(response)
 components:
   schemas:
     Error:
@@ -4177,6 +4624,7 @@ components:
           mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
           mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
           message: '#/components/schemas/OpenAIResponseMessage'
+          reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
           web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
         propertyName: type
       oneOf:
@@ -4198,7 +4646,9 @@ components:
         title: OpenAIResponseOutputMessageMCPCall
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
         title: OpenAIResponseOutputMessageMCPListTools
-      title: OpenAIResponseMessage | ... (9 variants)
+      - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+        title: OpenAIResponseOutputMessageReasoningItem
+      title: OpenAIResponseMessage | ... (10 variants)
     OpenAIResponseAnnotationCitation:
       properties:
         type:
@@ -4797,6 +5247,8 @@ components:
                 title: OpenAIResponseOutputMessageMCPCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 title: OpenAIResponseOutputMessageMCPListTools
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                title: OpenAIResponseOutputMessageReasoningItem
               discriminator:
                 propertyName: type
                 mapping:
@@ -4808,8 +5260,9 @@ components:
                   mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                   mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                   message: '#/components/schemas/OpenAIResponseMessage-Input'
+                  reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                   web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Input | ... (9 variants)
+              title: OpenAIResponseMessage-Input | ... (10 variants)
             type: array
           - type: 'null'
           description: Initial items to include in the conversation context.
@@ -4918,6 +5371,8 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -4929,8 +5384,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Output'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (9 variants)
+            title: OpenAIResponseMessage-Output | ... (10 variants)
           type: array
           title: Data
           description: List of conversation items
@@ -4976,6 +5432,8 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
             discriminator:
               propertyName: type
               mapping:
@@ -4987,8 +5445,9 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Input'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Input | ... (9 variants)
+            title: OpenAIResponseMessage-Input | ... (10 variants)
           type: array
           maxItems: 20
           title: Items
@@ -12344,6 +12803,7 @@ components:
                 mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage'
+                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
               propertyName: type
             oneOf:
@@ -12365,7 +12825,9 @@ components:
               title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
               title: OpenAIResponseOutputMessageMCPListTools
-            title: OpenAIResponseMessage | ... (9 variants)
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+              title: OpenAIResponseOutputMessageReasoningItem
+            title: OpenAIResponseMessage | ... (10 variants)
           maxItems: 20
           title: Items
           type: array
@@ -12767,7 +13229,7 @@ tags:
 
     Note: This API is currently under active development and may undergo changes.
   name: Batches
-  x-displayName: The Batches API enables efficient processing of multiple requests in a single operation, particularly useful for processing large datasets, batch evaluation workflows, and cost-effective inference at scale.
+  x-displayName: Batches
 - description: ''
   name: Benchmarks
 - description: Protocol for conversation management operations.

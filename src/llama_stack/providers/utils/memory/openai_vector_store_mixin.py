@@ -26,6 +26,7 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 from llama_stack.providers.utils.memory.vector_store import (
     content_from_data_and_mime_type,
     make_overlapped_chunks,
+    validate_tiktoken_encoding,
 )
 from llama_stack.providers.utils.vector_io.filters import parse_filter
 from llama_stack_api import (
@@ -400,6 +401,7 @@ class OpenAIVectorStoreMixin(ABC):
 
     async def initialize_openai_vector_stores(self) -> None:
         """Load existing OpenAI vector stores and file batches into the in-memory cache."""
+        validate_tiktoken_encoding()
         if not self.files_api:
             logger.warning(
                 "Files API is not available. File attachment operations on vector stores will fail. "

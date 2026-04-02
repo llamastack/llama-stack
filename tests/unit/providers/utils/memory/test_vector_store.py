@@ -8,8 +8,25 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from llama_stack.providers.utils.memory.vector_store import content_from_data_and_mime_type
+from llama_stack.providers.utils.memory.vector_store import (
+    content_from_data_and_mime_type,
+    validate_tiktoken_encoding,
+)
 from llama_stack_api import URL, RAGDocument
+
+
+def test_validate_tiktoken_encoding_succeeds():
+    """validate_tiktoken_encoding does not raise when tiktoken is available."""
+    validate_tiktoken_encoding("cl100k_base")
+
+
+def test_validate_tiktoken_encoding_raises_on_failure():
+    """validate_tiktoken_encoding raises RuntimeError with operator context on failure."""
+    import llama_stack.providers.utils.memory.vector_store as vs_module
+
+    with patch.object(vs_module, "_get_encoding", side_effect=RuntimeError("encoding unavailable")):
+        with pytest.raises(RuntimeError, match="encoding unavailable"):
+            validate_tiktoken_encoding("cl100k_base")
 
 
 def test_content_from_data_and_mime_type_success_utf8():

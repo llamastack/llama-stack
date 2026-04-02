@@ -634,7 +634,7 @@ class OpenAIResponsesImpl:
         presence_penalty: float | None = None,
         extra_body: dict | None = None,
         stream_options: ResponseStreamOptions | None = None,
-    ):
+    ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
         stream = bool(stream)
         background = bool(background)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
@@ -645,6 +645,10 @@ class OpenAIResponsesImpl:
 
         if background and store is False:
             raise ValueError("Cannot use 'background' with 'store=False'. Background responses must be stored.")
+
+        # Validate: reasoning.encrypted_content is not supported
+        if include and any(str(item) == "reasoning.encrypted_content" for item in include):
+            raise ValueError("reasoning.encrypted_content is not supported by Llama Stack.")
 
         # Validate MCP tools: ensure Authorization header is not passed via headers dict
         if tools:
@@ -841,7 +845,9 @@ class OpenAIResponsesImpl:
         created_at = int(time.time())
 
         # Normalize input to list format for storage
-        input_items = [OpenAIResponseMessage(content=input, role="user")] if isinstance(input, str) else input
+        input_items: list[OpenAIResponseInput] = (
+            [OpenAIResponseMessage(content=input, role="user")] if isinstance(input, str) else input
+        )
 
         # Create initial queued response
         queued_response = OpenAIResponseObject(

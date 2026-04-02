@@ -5,10 +5,13 @@
 # the root directory of this source tree.
 
 import re
+from typing import Any
 
 import httpx
 from aiohttp import hdrs
+from starlette.types import ASGIApp, Receive, Scope, Send
 
+from llama_stack.core.access_control.conditions import User as ProtocolUser
 from llama_stack.core.access_control.conditions import parse_conditions
 from llama_stack.core.access_control.datatypes import RouteAccessRule
 from llama_stack.core.datatypes import AuthenticationConfig, User
@@ -16,6 +19,7 @@ from llama_stack.core.request_headers import user_from_scope
 from llama_stack.core.server.auth_providers import create_auth_provider
 from llama_stack.core.server.routes import find_matching_route, initialize_route_impls
 from llama_stack.log import get_logger
+from llama_stack_api import Api
 from llama_stack_api.common.errors import OpenAIErrorResponse
 
 logger = get_logger(name=__name__, category="core::auth")
@@ -31,11 +35,9 @@ class AuthenticationMiddleware:
     4. Makes these attributes available to the route handlers for access control
 
     Unauthenticated Access:
-    Endpoints can opt out of authentication by:
-    - For legacy @webmethod routes: setting require_authentication=False in the decorator
-    - For FastAPI router routes: setting openapi_extra={PUBLIC_ROUTE_KEY: True}
-    This is typically used for operational endpoints like /health and /version to support
-    monitoring, load balancers, and observability tools.
+    Endpoints can opt out of authentication by setting openapi_extra={PUBLIC_ROUTE_KEY: True}
+    on their FastAPI route. This is typically used for operational endpoints like /health
+    and /version to support monitoring, load balancers, and observability tools.
 
     The middleware supports multiple authentication providers through the AuthProvider interface:
     - Kubernetes: Validates tokens against the Kubernetes API server
@@ -91,12 +93,12 @@ class AuthenticationMiddleware:
     access resources that don't have access_attributes defined.
     """
 
-    def __init__(self, app, auth_config: AuthenticationConfig, impls):
+    def __init__(self, app: ASGIApp, auth_config: AuthenticationConfig, impls: dict[Api, Any]) -> None:
         self.app = app
         self.impls = impls
         self.auth_provider = create_auth_provider(auth_config)
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> Any:
         if scope["type"] == "http":
             # Find the route and check if authentication is required
             path = scope.get("path", "")
@@ -154,12 +156,12 @@ class AuthenticationMiddleware:
             logger.debug(
                 "Authentication successful: with attributes",
                 principal=validation_result.principal,
-                attributes_count=len(validation_result.attributes),
+                attributes_count=len(validation_result.attributes) if validation_result.attributes else 0,
             )
 
         return await self.app(scope, receive, send)
 
-    async def _send_auth_error(self, send, message, status=401):
+    async def _send_auth_error(self, send: Send, message: str, status: int = 401) -> None:
         await send(
             {
                 "type": "http.response.start",
@@ -179,11 +181,11 @@ class RouteAuthorizationMiddleware:
 
     """
 
-    def __init__(self, app, route_policy: list[RouteAccessRule]):
+    def __init__(self, app: ASGIApp, route_policy: list[RouteAccessRule]) -> None:
         self.app = app
         self.route_policy = route_policy
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> Any:
         # Only process HTTP requests
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
@@ -359,7 +361,7 @@ class RouteAuthorizationMiddleware:
         # No conditions specified - rule applies regardless of user
         return True
 
-    async def _send_error(self, send, message: str, status: int = 403):
+    async def _send_error(self, send: Send, message: str, status: int = 403) -> None:
         """Send an error response."""
         await send(
             {
@@ -380,7 +382,7 @@ class _RouteContext:
     user attributes (e.g., "user with admin in roles") and don't require resource properties.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.type = "route"
         self.identifier = "route"
-        self.owner = None
+        self.owner: ProtocolUser | None = None
