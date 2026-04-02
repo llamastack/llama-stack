@@ -368,7 +368,7 @@ exclude = [
     # All files now have type annotations! 🎉
     #
     # ============================================================================
-    # Section 2: Files that need strict typing issues fixed (131 files)
+    # Section 2: Files that need strict typing issues fixed (133 files)
     # ============================================================================
     # These files have some type hints but fail strict type checking due to
     # incomplete annotations, Any usage, or other strict mode violations.
@@ -397,9 +397,11 @@ exclude = [
     "^src/llama_stack/cli/stack/utils\\.py$",
     "^src/llama_stack/cli/subcommand\\.py$",
     "^src/llama_stack/cli/utils\\.py$",
-    # Providers - Inline (27 files)
+    # Providers - Inline (29 files)
     "^src/llama_stack/providers/inline/batches/reference/__init__\\.py$",
     "^src/llama_stack/providers/inline/batches/reference/batches\\.py$",
+    "^src/llama_stack/providers/inline/datasetio/localfs/__init__\\.py$",
+    "^src/llama_stack/providers/inline/datasetio/localfs/config\\.py$",
     "^src/llama_stack/providers/inline/eval/builtin/__init__\\.py$",
     "^src/llama_stack/providers/inline/eval/builtin/eval\\.py$",
     "^src/llama_stack/providers/inline/file_processor/pypdf/__init__\\.py$",
@@ -514,7 +516,6 @@ exclude = [
     "^src/llama_stack/core/routers/",
     "^src/llama_stack/core/routing_tables/",
     # Provider directories - Inline
-    "^src/llama_stack/providers/inline/datasetio/localfs/",
     "^src/llama_stack/providers/inline/safety/code_scanner/",
     "^src/llama_stack/providers/inline/safety/llama_guard/",
     "^src/llama_stack/providers/inline/scoring/basic/",

@@ -950,15 +950,24 @@ class OpenAIResponsesImpl:
         extra_body: dict | None = None,
     ) -> None:
         """Inner loop for background response processing, separated for timeout wrapping."""
-        # Check if response was cancelled before starting
+        # Check if response was cancelled before starting and update to in_progress atomically
         existing = await self.responses_store.get_response_object(response_id)
         if existing.status == "cancelled":
             logger.info("Background response was cancelled before processing started", response_id=response_id)
             return
 
-        # Update status to in_progress
-        existing.status = "in_progress"
-        await self.responses_store.update_response_object(existing)
+        # Only update to in_progress if still queued (avoid overwriting cancelled status)
+        if existing.status == "queued":
+            existing.status = "in_progress"
+            await self.responses_store.update_response_object(existing)
+        else:
+            # If not queued (e.g., already cancelled), exit
+            logger.info(
+                "Background response no longer in queued state, exiting",
+                response_id=response_id,
+                status=existing.status,
+            )
+            return
 
         # Process the response using existing streaming logic
         stream_gen = self._create_streaming_response(

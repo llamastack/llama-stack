@@ -3,16 +3,30 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
-from llama_stack.core.storage.kvstore import kvstore_impl
+from llama_stack.core.storage.kvstore import KVStore, kvstore_impl
 from llama_stack.providers.utils.datasetio.url_utils import get_dataframe_from_uri
 from llama_stack.providers.utils.pagination import paginate_records
 from llama_stack_api import Dataset, DatasetIO, DatasetsProtocolPrivate, PaginatedResponse
+from llama_stack_api.datasetio import AppendRowsParams, IterRowsRequest
+
+if TYPE_CHECKING:
+    import pandas
 
 from .config import LocalFSDatasetIOConfig
 
 DATASETS_PREFIX = "localfs_datasets:"
+
+
+class SimpleDatasetStore:
+    """Simple dataset store implementation."""
+
+    def __init__(self, dataset_infos: dict[str, Dataset]) -> None:
+        self.dataset_infos = dataset_infos
+
+    def get_dataset(self, dataset_id: str) -> Dataset:
+        return self.dataset_infos[dataset_id]
 
 
 class PandasDataframeDataset:
@@ -21,7 +35,7 @@ class PandasDataframeDataset:
     def __init__(self, dataset_def: Dataset, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.dataset_def = dataset_def
-        self.df = None
+        self.df: pandas.DataFrame | None = None
 
     def __len__(self) -> int:
         assert self.df is not None, "Dataset not loaded. Please call .load() first"
@@ -48,7 +62,8 @@ class PandasDataframeDataset:
             raise ValueError(f"Unsupported dataset source type: {self.dataset_def.source.type}")
 
         if self.df is None:
-            raise ValueError(f"Failed to load dataset from {self.dataset_def.url}")
+            source_type = self.dataset_def.source.type
+            raise ValueError(f"Failed to load dataset from source type: {source_type}")
 
 
 class LocalFSDatasetIOImpl(DatasetIO, DatasetsProtocolPrivate):
@@ -57,8 +72,9 @@ class LocalFSDatasetIOImpl(DatasetIO, DatasetsProtocolPrivate):
     def __init__(self, config: LocalFSDatasetIOConfig) -> None:
         self.config = config
         # local registry for keeping track of datasets within the provider
-        self.dataset_infos = {}
-        self.kvstore = None
+        self.dataset_infos: dict[str, Dataset] = {}
+        self.dataset_store = SimpleDatasetStore(self.dataset_infos)
+        self.kvstore: KVStore | None = None
 
     async def initialize(self) -> None:
         self.kvstore = await kvstore_impl(self.config.kvstore)
@@ -67,8 +83,8 @@ class LocalFSDatasetIOImpl(DatasetIO, DatasetsProtocolPrivate):
         end_key = f"{DATASETS_PREFIX}\xff"
         stored_datasets = await self.kvstore.values_in_range(start_key, end_key)
 
-        for dataset in stored_datasets:
-            dataset = Dataset.model_validate_json(dataset)
+        for dataset_json in stored_datasets:
+            dataset = Dataset.model_validate_json(dataset_json)
             self.dataset_infos[dataset.identifier] = dataset
 
     async def shutdown(self) -> None: ...
@@ -77,6 +93,7 @@ class LocalFSDatasetIOImpl(DatasetIO, DatasetsProtocolPrivate):
         self,
         dataset_def: Dataset,
     ) -> None:
+        assert self.kvstore is not None, "KVStore must be initialized"
         # Store in kvstore
         key = f"{DATASETS_PREFIX}{dataset_def.identifier}"
         await self.kvstore.set(
@@ -86,29 +103,30 @@ class LocalFSDatasetIOImpl(DatasetIO, DatasetsProtocolPrivate):
         self.dataset_infos[dataset_def.identifier] = dataset_def
 
     async def unregister_dataset(self, dataset_id: str) -> None:
+        assert self.kvstore is not None, "KVStore must be initialized"
         key = f"{DATASETS_PREFIX}{dataset_id}"
         await self.kvstore.delete(key=key)
         del self.dataset_infos[dataset_id]
 
     async def iterrows(
         self,
-        dataset_id: str,
-        start_index: int | None = None,
-        limit: int | None = None,
+        request: IterRowsRequest,
     ) -> PaginatedResponse:
-        dataset_def = self.dataset_infos[dataset_id]
+        dataset_def = self.dataset_infos[request.dataset_id]
         dataset_impl = PandasDataframeDataset(dataset_def)
         await dataset_impl.load()
 
-        records = dataset_impl.df.to_dict("records")
-        return paginate_records(records, start_index, limit)
+        assert dataset_impl.df is not None, "Dataset DataFrame should be loaded"
+        records = cast(list[dict[str, Any]], dataset_impl.df.to_dict("records"))
+        return paginate_records(records, request.start_index, request.limit)
 
-    async def append_rows(self, dataset_id: str, rows: list[dict[str, Any]]) -> None:
+    async def append_rows(self, params: AppendRowsParams) -> None:
         import pandas
 
-        dataset_def = self.dataset_infos[dataset_id]
+        dataset_def = self.dataset_infos[params.dataset_id]
         dataset_impl = PandasDataframeDataset(dataset_def)
         await dataset_impl.load()
 
-        new_rows_df = pandas.DataFrame(rows)
+        new_rows_df = pandas.DataFrame(params.rows)
+        assert dataset_impl.df is not None, "Dataset DataFrame should be loaded"
         dataset_impl.df = pandas.concat([dataset_impl.df, new_rows_df], ignore_index=True)
