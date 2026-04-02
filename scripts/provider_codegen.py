@@ -621,12 +621,12 @@ def generate_index_docs(api_name: str, api_docstring: str | None, provider_entri
             clean_desc = api_docstring.strip().replace('"', '\\"')
             md_lines.append(f'description: "{clean_desc}"')
     md_lines.append(f"sidebar_label: {sidebar_label}")
-    md_lines.append(f"title: {api_name.title()}")
+    md_lines.append(f"title: {sidebar_label}")
     md_lines.append("---")
     md_lines.append("")
 
     # Add main content
-    md_lines.append(f"# {api_name.title()}")
+    md_lines.append(f"# {sidebar_label}")
     md_lines.append("")
     md_lines.append("## Overview")
     md_lines.append("")
