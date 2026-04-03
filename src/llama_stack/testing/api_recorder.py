@@ -204,24 +204,6 @@ def normalize_tool_request(provider_name: str, tool_name: str, kwargs: dict[str,
     return hashlib.sha256(normalized_json.encode()).hexdigest()
 
 
-def normalize_file_processor_request(request: Any) -> str:
-    """Create a normalized hash of a file processor request for consistent matching."""
-    test_id = get_test_context()
-    normalized: dict[str, Any] = {
-        "test_id": test_id,
-        "api": "file_processors",
-        "file_id": getattr(request, "file_id", None),
-    }
-    chunking = getattr(request, "chunking_strategy", None)
-    if chunking and hasattr(chunking, "model_dump"):
-        normalized["chunking_strategy"] = chunking.model_dump(mode="json")
-    options = getattr(request, "options", None)
-    if options:
-        normalized["options"] = options
-
-    normalized_json = json.dumps(normalized, sort_keys=True)
-    return hashlib.sha256(normalized_json.encode()).hexdigest()
-
 
 def normalize_http_request(url: str, method: str, payload: dict[str, Any]) -> str:
     """Create a normalized hash of an HTTP request for consistent matching.
@@ -735,47 +717,14 @@ async def _patched_tool_invoke_method(
 
 
 async def _patched_file_processor_method(original_method, provider_name: str, self, request, file=None):
-    """Patched version of file processor process_file method for recording/replay.
+    """Patched version of file processor process_file method.
 
-    Only intercepts calls that reference a file_id (internal calls from the
-    OpenAIVectorStoreMixin). Direct HTTP uploads to the file-processors
-    endpoint have file_id=None and are passed through unmodified.
+    File processors are local, deterministic operations (no network calls)
+    so they always execute the real method. Recording/replaying them is
+    unreliable because file_id values are randomly generated per test run,
+    making hash-based lookup fail on replay.
     """
-    global _current_mode, _current_storage
-
-    file_id = getattr(request, "file_id", None)
-    if _current_mode == APIRecordingMode.LIVE or _current_storage is None or not file_id:
-        return await original_method(self, request, file)
-
-    request_hash = normalize_file_processor_request(request)
-
-    if _current_mode in (APIRecordingMode.REPLAY, APIRecordingMode.RECORD_IF_MISSING):
-        recording = _current_storage.find_recording(request_hash)
-        if recording:
-            return recording["response"]["body"]
-        elif _current_mode == APIRecordingMode.REPLAY:
-            raise RuntimeError(
-                f"Recording not found for {provider_name}.process_file | file_id: {getattr(request, 'file_id', None)}\n"
-                f"\n"
-                f"Run './scripts/integration-tests.sh --inference-mode record-if-missing' with required API keys to generate."
-            )
-
-    if _current_mode in (APIRecordingMode.RECORD, APIRecordingMode.RECORD_IF_MISSING):
-        result = await original_method(self, request, file)
-
-        request_data = {
-            "test_id": get_test_context(),
-            "provider": provider_name,
-            "api": "file_processors",
-            "file_id": getattr(request, "file_id", None),
-        }
-        response_data = {"body": result, "is_streaming": False}
-
-        _current_storage.store_recording(request_hash, request_data, response_data)
-        return result
-
-    else:
-        raise AssertionError(f"Invalid mode: {_current_mode}")
+    return await original_method(self, request, file)
 
 
 def _patched_aiohttp_post(original_post, session_self, url: str, **kwargs):
