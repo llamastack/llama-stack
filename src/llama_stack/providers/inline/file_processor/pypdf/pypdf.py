@@ -31,6 +31,8 @@ log = get_logger(name=__name__, category="providers::file_processors")
 # Large enough to fit any reasonable document in one chunk
 SINGLE_CHUNK_WINDOW_TOKENS = 1_000_000
 
+UPLOAD_READ_CHUNK_BYTES = 64 * 1024
+
 
 class PyPDFFileProcessor:
     """PyPDF-based file processor for PDF documents."""
@@ -64,7 +66,7 @@ class PyPDFFileProcessor:
             content_parts = []
             bytes_read = 0
             while True:
-                chunk = await file.read(64 * 1024)  # 64KB chunks for efficient I/O
+                chunk = await file.read(UPLOAD_READ_CHUNK_BYTES)
                 if not chunk:
                     break
                 bytes_read += len(chunk)
