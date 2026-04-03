@@ -23,7 +23,7 @@ inference provider, based on integration test results.
 | bedrock | 27 | 27 | 0 | 22% |
 | ollama | 4 | 4 | 0 | 3% |
 | openai | 121 | 121 | 0 | 99% |
-| vllm | 3 | 3 | 0 | 2% |
+| vllm | 4 | 4 | 0 | 3% |
 | watsonx | 56 | 56 | 0 | 46% |
 
 ## Provider Details
@@ -36,7 +36,7 @@ Models, endpoints, and versions used during test recordings.
 | bedrock | openai.gpt-oss-20b | bedrock-mantle.us-east-2.api.aws, bedrock-mantle.us-west-2.api.aws | openai sdk: 2.5.0 |
 | ollama | gpt-oss:20b | — | openai sdk: 2.5.0, vllm server: 0.17.2rc1.dev79+g5ce2d10e4 |
 | openai | gpt-4o, o4-mini, text-embedding-3-small | api.openai.com | openai sdk: 2.5.0 |
-| vllm | Qwen/Qwen3-0.6B | — | openai sdk: 2.5.0, vllm server: 0.18.1rc1.dev197+g0e9358c11 |
+| vllm | Qwen/Qwen3-0.6B | — | openai sdk: 2.5.0, vllm server: 0.17.2rc1.dev79+g5ce2d10e4 |
 | watsonx | meta-llama/llama-3-3-70b-instruct | us-south.ml.cloud.ibm.com | openai sdk: 2.5.0 |
 
 ## Basic Responses
@@ -150,7 +150,7 @@ Models, endpoints, and versions used during test recordings.
 | --- | --- | --- | --- | --- | --- | --- |
 | reasoning basic streaming | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | reasoning multi turn passthrough | ⏭️ | ✅ | ✅ | ✅ | ✅ | ⏭️ |
-| reasoning multi turn with tool call | ⏭️ | ⏭️ | ✅ | ⏭️ | ⏭️ | ⏭️ |
+| reasoning multi turn with tool call | ⏭️ | ⏭️ | ✅ | ⏭️ | ✅ | ⏭️ |
 | reasoning non streaming | ⏭️ | ✅ | ✅ | ✅ | ✅ | ⏭️ |
 
 ## Responses Access Control
