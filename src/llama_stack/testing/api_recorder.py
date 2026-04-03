@@ -204,7 +204,6 @@ def normalize_tool_request(provider_name: str, tool_name: str, kwargs: dict[str,
     return hashlib.sha256(normalized_json.encode()).hexdigest()
 
 
-
 def normalize_http_request(url: str, method: str, payload: dict[str, Any]) -> str:
     """Create a normalized hash of an HTTP request for consistent matching.
 
