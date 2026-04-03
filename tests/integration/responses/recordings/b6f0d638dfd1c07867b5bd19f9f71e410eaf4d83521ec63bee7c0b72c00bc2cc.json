@@ -1,0 +1,50 @@
+{
+  "test_id": "tests/integration/responses/test_file_search.py::test_response_file_search_filter_by_region[client_with_models-txt=openai/gpt-4o]",
+  "request": {
+    "test_id": "tests/integration/responses/test_file_search.py::test_response_file_search_filter_by_region[client_with_models-txt=openai/gpt-4o]",
+    "provider": "pypdf",
+    "api": "file_processors",
+    "file_id": "file-446066738450"
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.file_processors.models.ProcessFileResponse",
+      "__data__": {
+        "chunks": [
+          {
+            "content": "US technical updates for Q2 2023. New features deployed in the US region.",
+            "chunk_id": "084e15ad-480a-eae8-9242-391c53854867",
+            "metadata": {
+              "document_id": "7c8ce5b8-52a2-492a-b8a3-8f4900fd71f0",
+              "filename": "us_engineering_q2.txt",
+              "file_id": "file-446066738450",
+              "chunk_id": "084e15ad-480a-eae8-9242-391c53854867",
+              "token_count": 18,
+              "metadata_token_count": 56,
+              "chunk_tokenizer": "tiktoken:cl100k_base"
+            },
+            "chunk_metadata": {
+              "chunk_id": "084e15ad-480a-eae8-9242-391c53854867",
+              "document_id": "7c8ce5b8-52a2-492a-b8a3-8f4900fd71f0",
+              "source": null,
+              "created_timestamp": 1775237907,
+              "updated_timestamp": 1775237907,
+              "chunk_window": "0-18",
+              "chunk_tokenizer": "tiktoken:cl100k_base",
+              "content_token_count": 18,
+              "metadata_token_count": 56
+            }
+          }
+        ],
+        "metadata": {
+          "processor": "text",
+          "processing_time_ms": 1,
+          "extraction_method": "text",
+          "file_size_bytes": 73
+        }
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

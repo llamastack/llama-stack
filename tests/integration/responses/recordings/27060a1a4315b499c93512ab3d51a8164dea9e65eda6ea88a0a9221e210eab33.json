@@ -1,0 +1,50 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_non_streaming_file_search[openai_client-txt=openai/gpt-4o:emb=sentence-transformers/nomic-ai/nomic-embed-text-v1.5:dim=768-llama_experts]",
+  "request": {
+    "test_id": "tests/integration/responses/test_tool_responses.py::test_response_non_streaming_file_search[openai_client-txt=openai/gpt-4o:emb=sentence-transformers/nomic-ai/nomic-embed-text-v1.5:dim=768-llama_experts]",
+    "provider": "pypdf",
+    "api": "file_processors",
+    "file_id": "file-861837565219"
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.file_processors.models.ProcessFileResponse",
+      "__data__": {
+        "chunks": [
+          {
+            "content": "Llama 4 Maverick has 128 experts",
+            "chunk_id": "869ae0c0-ab85-ca6f-e5d0-024381443c27",
+            "metadata": {
+              "document_id": "412565d0-9995-4590-9f79-052f61c75403",
+              "filename": "test_response_non_streaming_file_search.txt",
+              "file_id": "file-861837565219",
+              "chunk_id": "869ae0c0-ab85-ca6f-e5d0-024381443c27",
+              "token_count": 10,
+              "metadata_token_count": 52,
+              "chunk_tokenizer": "tiktoken:cl100k_base"
+            },
+            "chunk_metadata": {
+              "chunk_id": "869ae0c0-ab85-ca6f-e5d0-024381443c27",
+              "document_id": "412565d0-9995-4590-9f79-052f61c75403",
+              "source": null,
+              "created_timestamp": 1775237880,
+              "updated_timestamp": 1775237880,
+              "chunk_window": "0-10",
+              "chunk_tokenizer": "tiktoken:cl100k_base",
+              "content_token_count": 10,
+              "metadata_token_count": 52
+            }
+          }
+        ],
+        "metadata": {
+          "processor": "text",
+          "processing_time_ms": 1,
+          "extraction_method": "text",
+          "file_size_bytes": 32
+        }
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

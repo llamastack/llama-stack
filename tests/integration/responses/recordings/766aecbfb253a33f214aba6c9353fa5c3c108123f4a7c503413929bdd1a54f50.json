@@ -1,0 +1,50 @@
+{
+  "test_id": "tests/integration/responses/test_file_search.py::test_response_file_search_streaming_events[openai_client-txt=openai/gpt-4o]",
+  "request": {
+    "test_id": "tests/integration/responses/test_file_search.py::test_response_file_search_streaming_events[openai_client-txt=openai/gpt-4o]",
+    "provider": "pypdf",
+    "api": "file_processors",
+    "file_id": "file-284290576319"
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.file_processors.models.ProcessFileResponse",
+      "__data__": {
+        "chunks": [
+          {
+            "content": "Asia Pacific revenue figures for Q3 2023. Record breaking quarter in Asia.",
+            "chunk_id": "fc497e92-16bb-9869-2360-de27e3da396f",
+            "metadata": {
+              "document_id": "ab7fc3e7-a533-486f-aea3-ef7bf15f1526",
+              "filename": "asia_sales_q3.txt",
+              "file_id": "file-284290576319",
+              "chunk_id": "fc497e92-16bb-9869-2360-de27e3da396f",
+              "token_count": 17,
+              "metadata_token_count": 50,
+              "chunk_tokenizer": "tiktoken:cl100k_base"
+            },
+            "chunk_metadata": {
+              "chunk_id": "fc497e92-16bb-9869-2360-de27e3da396f",
+              "document_id": "ab7fc3e7-a533-486f-aea3-ef7bf15f1526",
+              "source": null,
+              "created_timestamp": 1775237877,
+              "updated_timestamp": 1775237877,
+              "chunk_window": "0-17",
+              "chunk_tokenizer": "tiktoken:cl100k_base",
+              "content_token_count": 17,
+              "metadata_token_count": 50
+            }
+          }
+        ],
+        "metadata": {
+          "processor": "text",
+          "processing_time_ms": 1,
+          "extraction_method": "text",
+          "file_size_bytes": 74
+        }
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

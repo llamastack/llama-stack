@@ -1,0 +1,50 @@
+{
+  "test_id": "tests/integration/responses/test_file_search.py::test_response_file_search_filter_compound_or[client_with_models-txt=openai/gpt-4o]",
+  "request": {
+    "test_id": "tests/integration/responses/test_file_search.py::test_response_file_search_filter_compound_or[client_with_models-txt=openai/gpt-4o]",
+    "provider": "pypdf",
+    "api": "file_processors",
+    "file_id": "file-66545595857"
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.file_processors.models.ProcessFileResponse",
+      "__data__": {
+        "chunks": [
+          {
+            "content": "European advertising campaign results for Q1 2023. Strong growth in EU markets.",
+            "chunk_id": "a1b887d4-0741-1542-6e7d-0e156f032a31",
+            "metadata": {
+              "document_id": "9628cd6a-488a-4a9a-844c-4338f30581a1",
+              "filename": "eu_marketing_q1.txt",
+              "file_id": "file-66545595857",
+              "chunk_id": "a1b887d4-0741-1542-6e7d-0e156f032a31",
+              "token_count": 17,
+              "metadata_token_count": 53,
+              "chunk_tokenizer": "tiktoken:cl100k_base"
+            },
+            "chunk_metadata": {
+              "chunk_id": "a1b887d4-0741-1542-6e7d-0e156f032a31",
+              "document_id": "9628cd6a-488a-4a9a-844c-4338f30581a1",
+              "source": null,
+              "created_timestamp": 1775237917,
+              "updated_timestamp": 1775237917,
+              "chunk_window": "0-17",
+              "chunk_tokenizer": "tiktoken:cl100k_base",
+              "content_token_count": 17,
+              "metadata_token_count": 53
+            }
+          }
+        ],
+        "metadata": {
+          "processor": "text",
+          "processing_time_ms": 1,
+          "extraction_method": "text",
+          "file_size_bytes": 79
+        }
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

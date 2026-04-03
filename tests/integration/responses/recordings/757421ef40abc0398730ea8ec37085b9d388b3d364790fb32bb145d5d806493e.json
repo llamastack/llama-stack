@@ -1,0 +1,50 @@
+{
+  "test_id": "tests/integration/responses/test_file_search.py::test_response_file_search_filter_by_date_range[client_with_models-txt=openai/gpt-4o]",
+  "request": {
+    "test_id": "tests/integration/responses/test_file_search.py::test_response_file_search_filter_by_date_range[client_with_models-txt=openai/gpt-4o]",
+    "provider": "pypdf",
+    "api": "file_processors",
+    "file_id": "file-664068282482"
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.file_processors.models.ProcessFileResponse",
+      "__data__": {
+        "chunks": [
+          {
+            "content": "US promotional campaigns for Q1 2023. Revenue increased by 15% in the US region.",
+            "chunk_id": "a40d303b-40f6-42c8-a616-7a6276329426",
+            "metadata": {
+              "document_id": "c8962de5-1310-401b-b907-2fc29acefc2a",
+              "filename": "us_marketing_q1.txt",
+              "file_id": "file-664068282482",
+              "chunk_id": "a40d303b-40f6-42c8-a616-7a6276329426",
+              "token_count": 21,
+              "metadata_token_count": 50,
+              "chunk_tokenizer": "tiktoken:cl100k_base"
+            },
+            "chunk_metadata": {
+              "chunk_id": "a40d303b-40f6-42c8-a616-7a6276329426",
+              "document_id": "c8962de5-1310-401b-b907-2fc29acefc2a",
+              "source": null,
+              "created_timestamp": 1775237913,
+              "updated_timestamp": 1775237913,
+              "chunk_window": "0-21",
+              "chunk_tokenizer": "tiktoken:cl100k_base",
+              "content_token_count": 21,
+              "metadata_token_count": 50
+            }
+          }
+        ],
+        "metadata": {
+          "processor": "text",
+          "processing_time_ms": 1,
+          "extraction_method": "text",
+          "file_size_bytes": 80
+        }
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
