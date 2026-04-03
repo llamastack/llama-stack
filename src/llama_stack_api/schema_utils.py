@@ -61,7 +61,7 @@ class SchemaInfo:
 _json_schema_types: dict[type, SchemaInfo] = {}
 
 
-def json_schema_type(cls):
+def json_schema_type[T](cls: type[T]) -> type[T]:
     """
     Decorator to mark a Pydantic model for top-level component registration.
 
@@ -71,9 +71,7 @@ def json_schema_type(cls):
     This provides control over schema registration to avoid unnecessary indirection
     for simple one-off types while keeping complex reusable types as components.
     """
-    cls._llama_stack_schema_type = True
     schema_name = getattr(cls, "__name__", f"Anonymous_{id(cls)}")
-    cls._llama_stack_schema_name = schema_name
     _json_schema_types.setdefault(cls, SchemaInfo(name=schema_name, type=cls, source="json_schema_type"))
     return cls
 
@@ -83,7 +81,7 @@ _registered_schemas: dict[Any, SchemaInfo] = {}
 _dynamic_schema_types: dict[type, SchemaInfo] = {}
 
 
-def register_schema(schema_type, name: str | None = None):
+def register_schema[T](schema_type: T, name: str | None = None) -> T:
     """
     Register a schema type for top-level component registration.
 
@@ -121,6 +119,11 @@ def iter_json_schema_types() -> Iterable[type]:
     return tuple(info.type for info in _json_schema_types.values())
 
 
+def get_json_schema_type_info(schema_type: type) -> SchemaInfo | None:
+    """Return the registration metadata for a @json_schema_type decorated model if present."""
+    return _json_schema_types.get(schema_type)
+
+
 def iter_dynamic_schema_types() -> Iterable[type]:
     """Iterate over dynamic models registered at generation time."""
     return tuple(info.type for info in _dynamic_schema_types.values())
@@ -140,6 +143,8 @@ def clear_dynamic_schema_types() -> None:
 
 @dataclass
 class WebMethod:
+    """Metadata container for an API endpoint operation's routing and configuration."""
+
     level: str | None = None
     route: str | None = None
     public: bool = False
@@ -204,7 +209,7 @@ def webmethod(
     return wrap
 
 
-def remove_null_from_anyof(schema: dict, *, add_nullable: bool = False) -> None:
+def remove_null_from_anyof(schema: dict[str, Any], *, add_nullable: bool = False) -> None:
     """Remove null type from anyOf and optionally add nullable flag.
 
     Converts Pydantic's default OpenAPI 3.1 style:
@@ -243,7 +248,7 @@ def remove_null_from_anyof(schema: dict, *, add_nullable: bool = False) -> None:
             schema["nullable"] = True
 
 
-def nullable_openai_style(schema: dict) -> None:
+def nullable_openai_style(schema: dict[str, Any]) -> None:
     """Shorthand for remove_null_from_anyof with add_nullable=True.
 
     Use this for fields that need OpenAPI 3.0 nullable style to match OpenAI's spec.

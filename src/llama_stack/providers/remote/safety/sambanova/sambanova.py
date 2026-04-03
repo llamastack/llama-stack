@@ -29,6 +29,8 @@ CANNED_RESPONSE_TEXT = "I can't answer that. Can I help with something else?"
 
 
 class SambaNovaSafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPrivate, NeedsRequestProviderData):
+    """Safety adapter for content moderation using SambaNova AI services."""
+
     def __init__(self, config: SambaNovaSafetyConfig) -> None:
         self.config = config
         self.environment_available_models = []
@@ -65,7 +67,11 @@ class SambaNovaSafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPri
             "guard" not in shield.provider_resource_id.lower()
             or shield.provider_resource_id.split("sambanova/")[-1] not in self.environment_available_models
         ):
-            logger.warning(f"Shield {shield.provider_resource_id} not available in {list_models_url}")
+            logger.warning(
+                "Shield not available in",
+                provider_resource_id=shield.provider_resource_id,
+                list_models_url=list_models_url,
+            )
 
     async def unregister_shield(self, identifier: str) -> None:
         pass
@@ -76,7 +82,7 @@ class SambaNovaSafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPri
             raise ValueError(f"Shield {request.shield_id} not found")
 
         shield_params = shield.params
-        logger.debug(f"run_shield::{shield_params}::messages={request.messages}")
+        logger.debug("run_shield", shield_params=shield_params, messages=request.messages)
 
         response = await litellm.acompletion(
             model=shield.provider_resource_id,

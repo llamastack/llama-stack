@@ -51,7 +51,7 @@ jobs:
           cache-dependency-path: 'src/llama_stack_ui/'
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
 
       - name: Install npm dependencies
         run: npm ci
@@ -69,7 +69,11 @@ jobs:
       # Install oasdiff: https://github.com/oasdiff/oasdiff, a tool for detecting breaking changes in OpenAPI specs.
       - name: Install oasdiff
         run: |
-          curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh
+          for i in 1 2 3; do
+            curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh && break
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
           cp /usr/local/bin/oasdiff ~/oasdiff
 
       - name: Run pre-commit
@@ -78,7 +82,7 @@ jobs:
           set +e
           pre-commit run --show-diff-on-failure --color=always --all-files 2>&1 | tee /tmp/precommit.log
           status=${PIPESTATUS[0]}
-          echo "status=$status" >> $GITHUB_OUTPUT
+          echo "status=$status" >> "$GITHUB_OUTPUT"
           exit 0
         env:
           SKIP: no-commit-to-branch,mypy
@@ -100,21 +104,23 @@ jobs:
 
       - name: Commit changes for dependabot PRs
         if: github.actor == 'dependabot[bot]'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           if ! git diff --exit-code || [ -n "$(git ls-files --others --exclude-standard)" ]; then
             git config --local user.email "github-actions[bot]@users.noreply.github.com"
             git config --local user.name "github-actions[bot]"
 
             # Ensure we're on the correct branch
-            git checkout -B ${{ github.head_ref }}
+            git checkout -B "$HEAD_REF"
             git add -A
             git commit -m "Apply pre-commit fixes"
 
             # Pull latest changes from the PR branch and rebase our commit on top
-            git pull --rebase origin ${{ github.head_ref }}
+            git pull --rebase origin "$HEAD_REF"
 
             # Push to the PR branch
-            git push origin ${{ github.head_ref }}
+            git push origin "$HEAD_REF"
             echo "Pre-commit fixes committed and pushed"
           else
             echo "No changes to commit"

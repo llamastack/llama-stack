@@ -43,11 +43,11 @@ jobs:
               grep '\.x$' | \
               sed 's|^[[:space:]]*origin/||' | \
               sort -V | \
-              tail -2 | \
+              tail -3 | \
               jq -R -s -c 'split("\n") | map(select(length > 0) | ltrimstr(" ") | rtrimstr(" "))')
           fi
 
-          echo "branches=$branches" >> $GITHUB_OUTPUT
+          echo "branches=$branches" >> "$GITHUB_OUTPUT"
           echo "Testing branches: $branches"
 
   unit-tests:
@@ -119,9 +119,9 @@ jobs:
         id: check-ts-client
         run: |
           if [ -d "tests/integration/client-typescript" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Setup Node.js for TypeScript client tests
@@ -170,7 +170,7 @@ jobs:
           ref: ${{ matrix.branch }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           python-version: ${{ matrix.python-version }}
           activate-environment: true

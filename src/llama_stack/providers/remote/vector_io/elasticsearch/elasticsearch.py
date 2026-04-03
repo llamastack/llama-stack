@@ -18,6 +18,7 @@ from llama_stack.providers.utils.vector_io.filters import Filter
 from llama_stack_api import (
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     InsertChunksRequest,
@@ -43,6 +44,8 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 
 class ElasticsearchIndex(EmbeddingIndex):
+    """Embedding index backed by an Elasticsearch index."""
+
     def __init__(self, client: AsyncElasticsearch, collection_name: str):
         self.client = client
         self.collection_name = collection_name
@@ -376,13 +379,18 @@ class ElasticsearchIndex(EmbeddingIndex):
 
 
 class ElasticsearchVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+    """Vector I/O adapter for remote Elasticsearch instances."""
+
     def __init__(
         self,
         config: ElasticsearchVectorIOConfig,
         inference_api: Inference,
         files_api: Files | None = None,
+        file_processor_api: FileProcessors | None = None,
     ) -> None:
-        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
+        super().__init__(
+            inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api
+        )
         self.config = config
         self.client: AsyncElasticsearch = None
         self.cache = {}

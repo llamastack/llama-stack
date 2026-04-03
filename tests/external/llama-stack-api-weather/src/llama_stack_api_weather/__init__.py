@@ -6,6 +6,6 @@
 
 """Weather API for Llama Stack."""
 
-from .weather import WeatherProvider, available_providers
+from .weather import WeatherProvider, available_providers, create_router
 
-__all__ = ["WeatherProvider", "available_providers"]
+__all__ = ["WeatherProvider", "available_providers", "create_router"]

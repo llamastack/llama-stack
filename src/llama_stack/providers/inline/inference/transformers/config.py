@@ -10,6 +10,8 @@ from pydantic import BaseModel
 
 
 class TransformersInferenceConfig(BaseModel):
+    """Configuration for the transformers inference provider."""
+
     @classmethod
     def sample_run_config(cls, **kwargs) -> dict[str, Any]:
         return {}

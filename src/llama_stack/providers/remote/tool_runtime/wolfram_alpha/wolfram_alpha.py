@@ -24,6 +24,8 @@ from .config import WolframAlphaToolConfig
 
 
 class WolframAlphaToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRequestProviderData):
+    """Tool runtime for querying Wolfram Alpha computational knowledge engine."""
+
     def __init__(self, config: WolframAlphaToolConfig):
         self.config = config
         self.url = "https://api.wolframalpha.com/v2/query"

@@ -25,6 +25,7 @@ from llama_stack_api import (
     CompoundFilter,
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     InsertChunksRequest,
@@ -63,6 +64,8 @@ def convert_id(_id: str) -> str:
 
 
 class QdrantIndex(EmbeddingIndex):
+    """Embedding index backed by a Qdrant collection."""
+
     def __init__(self, client: AsyncQdrantClient, collection_name: str):
         self.client = client
         self.collection_name = collection_name
@@ -323,13 +326,18 @@ class QdrantIndex(EmbeddingIndex):
 
 
 class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+    """Vector I/O adapter for remote Qdrant instances."""
+
     def __init__(
         self,
         config: RemoteQdrantVectorIOConfig | InlineQdrantVectorIOConfig,
         inference_api: Inference,
         files_api: Files | None = None,
+        file_processor_api: FileProcessors | None = None,
     ) -> None:
-        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
+        super().__init__(
+            inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api
+        )
         self.config = config
         self.client: AsyncQdrantClient = None
         self.cache = {}

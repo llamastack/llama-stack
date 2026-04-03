@@ -24,6 +24,7 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageFunctionToolCall,
     OpenAIResponseOutputMessageMCPCall,
     OpenAIResponseOutputMessageMCPListTools,
+    OpenAIResponseOutputMessageReasoningItem,
     OpenAIResponseOutputMessageWebSearchToolCall,
 )
 from llama_stack_api.schema_utils import json_schema_type, register_schema
@@ -74,8 +75,7 @@ ConversationItem = Annotated[
     | OpenAIResponseMCPApprovalResponse
     | OpenAIResponseOutputMessageMCPCall
     | OpenAIResponseOutputMessageMCPListTools
-    | OpenAIResponseOutputMessageMCPCall
-    | OpenAIResponseOutputMessageMCPListTools,
+    | OpenAIResponseOutputMessageReasoningItem,
     Field(discriminator="type"),
 ]
 register_schema(ConversationItem, name="ConversationItem")

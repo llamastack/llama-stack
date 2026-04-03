@@ -11,6 +11,7 @@ import logging  # allow-direct-logging
 import os
 import sys
 import typing
+from collections.abc import AsyncGenerator, Generator
 from enum import Enum
 from io import BytesIO
 from pathlib import Path
@@ -57,6 +58,14 @@ T = TypeVar("T")
 
 
 def convert_pydantic_to_json_value(value: Any) -> Any:
+    """Recursively convert Pydantic models, enums, and nested structures to JSON-serializable values.
+
+    Args:
+        value: A value that may be an Enum, list, dict, BaseModel, or primitive.
+
+    Returns:
+        A JSON-serializable representation of the value.
+    """
     if isinstance(value, Enum):
         return value.value
     elif isinstance(value, list):
@@ -70,6 +79,15 @@ def convert_pydantic_to_json_value(value: Any) -> Any:
 
 
 def convert_to_pydantic(annotation: Any, value: Any) -> Any:
+    """Convert a raw value to the appropriate Pydantic model based on the type annotation.
+
+    Args:
+        annotation: The type annotation to validate against.
+        value: The raw value to convert.
+
+    Returns:
+        The validated and converted value matching the annotation type.
+    """
     if isinstance(annotation, type) and annotation in {str, int, float, bool}:
         return value
 
@@ -80,7 +98,7 @@ def convert_to_pydantic(annotation: Any, value: Any) -> Any:
         try:
             return [convert_to_pydantic(item_type, item) for item in value]
         except Exception:
-            logger.error(f"Error converting list {value} into {item_type}")
+            logger.error("Error converting list", value=value, item_type=item_type)
             return value
 
     elif origin is dict:
@@ -88,7 +106,7 @@ def convert_to_pydantic(annotation: Any, value: Any) -> Any:
         try:
             return {k: convert_to_pydantic(val_type, v) for k, v in value.items()}
         except Exception:
-            logger.error(f"Error converting dict {value} into {val_type}")
+            logger.error("Error converting dict", value=value, val_type=val_type)
             return value
 
     try:
@@ -105,7 +123,10 @@ def convert_to_pydantic(annotation: Any, value: Any) -> Any:
                 except Exception:
                     continue
             logger.warning(
-                f"Warning: direct client failed to convert parameter {value} into {annotation}: {e}",
+                "Warning: direct client failed to convert parameter into",
+                value=value,
+                annotation=annotation,
+                error=str(e),
             )
         raise ValueError(f"Failed to convert parameter {value} into {annotation}: {e}") from e
 
@@ -125,13 +146,20 @@ class LibraryClientUploadFile:
 class LibraryClientHttpxResponse:
     """LibraryClient httpx Response object for FastAPI Response conversion."""
 
-    def __init__(self, response):
-        self.content = response.body if isinstance(response.body, bytes) else response.body.encode()
+    def __init__(self, response: FastAPIResponse) -> None:
+        if isinstance(response.body, bytes):
+            self.content = response.body
+        elif isinstance(response.body, memoryview):
+            self.content = bytes(response.body)
+        else:
+            self.content = response.body.encode()
         self.status_code = response.status_code
         self.headers = response.headers
 
 
 class LlamaStackAsLibraryClient(LlamaStackClient):
+    """Synchronous client that runs a Llama Stack distribution in-process as a library."""
+
     def __init__(
         self,
         config_path_or_distro_name: str,
@@ -155,7 +183,7 @@ class LlamaStackAsLibraryClient(LlamaStackClient):
         finally:
             asyncio.set_event_loop(None)
 
-    def initialize(self):
+    def initialize(self) -> None:
         """
         Deprecated method for backward compatibility.
         """
@@ -196,17 +224,17 @@ class LlamaStackAsLibraryClient(LlamaStackClient):
         """
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit the context manager and shut down the client."""
         self.shutdown()
 
-    def request(self, *args, **kwargs):
+    def request(self, *args: Any, **kwargs: Any) -> Any:
         loop = self.loop
         asyncio.set_event_loop(loop)
 
         if kwargs.get("stream"):
 
-            def sync_generator():
+            def sync_generator() -> Generator[Any, None, None]:
                 try:
                     async_stream = loop.run_until_complete(self.async_client.request(*args, **kwargs))
                     while True:
@@ -231,6 +259,8 @@ class LlamaStackAsLibraryClient(LlamaStackClient):
 
 
 class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
+    """Async client that runs a Llama Stack distribution in-process as a library."""
+
     def __init__(
         self,
         config_path_or_distro_name: str,
@@ -241,7 +271,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         super().__init__()
         # Initialize logging from environment variables first
         setup_logging()
-        if in_notebook():
+        if in_notebook():  # type: ignore[no-untyped-call]
             import nest_asyncio
 
             nest_asyncio.apply()
@@ -265,7 +295,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         self.route_impls: RouteImpls | None = None  # Initialize to None to prevent AttributeError
         self.stack: Stack | None = None
 
-    def _remove_root_logger_handlers(self):
+    def _remove_root_logger_handlers(self) -> None:
         """
         Remove all handlers from the root logger. Needed to avoid polluting the console with logs.
         """
@@ -273,7 +303,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
 
         for handler in root_logger.handlers[:]:
             root_logger.removeHandler(handler)
-            logger.info(f"Removed handler {handler.__class__.__name__} from root logger")
+            logger.info("Removed handler from root logger", handler_name=handler.__class__.__name__)
 
     async def initialize(self) -> bool:
         """
@@ -287,7 +317,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             self.route_impls = None
 
             self.stack = Stack(self.config, self.custom_provider_registry)
-            await self.stack.initialize()
+            await self.stack.initialize()  # type: ignore[no-untyped-call]
             self.impls = self.stack.impls
         except ModuleNotFoundError as _e:
             cprint(_e.msg, color="red", file=sys.stderr)
@@ -299,7 +329,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             if self.config_path_or_distro_name.endswith(".yaml"):
                 print_pip_install_help(self.config)
             else:
-                prefix = "!" if in_notebook() else ""
+                prefix = "!" if in_notebook() else ""  # type: ignore[no-untyped-call]
                 cprint(
                     f"Please run:\n\n{prefix}llama stack list-deps {self.config_path_or_distro_name} | xargs -L1 uv pip install\n\n",
                     "yellow",
@@ -340,7 +370,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             await client.shutdown()
         """
         if self.stack:
-            await self.stack.shutdown()
+            await self.stack.shutdown()  # type: ignore[no-untyped-call]
             self.stack = None
 
     async def __aenter__(self) -> "AsyncLlamaStackAsLibraryClient":
@@ -356,7 +386,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         await self.initialize()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit the async context manager and shut down the client."""
         await self.shutdown()
 
@@ -365,9 +395,9 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         cast_to: Any,
         options: Any,
         *,
-        stream=False,
-        stream_cls=None,
-    ):
+        stream: bool = False,
+        stream_cls: Any = None,
+    ) -> Any:
         if self.route_impls is None:
             raise ValueError("Client not initialized. Please call initialize() first.")
 
@@ -393,7 +423,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                 )
             return response
 
-    def _handle_file_uploads(self, options: Any, body: dict) -> tuple[dict, list[str]]:
+    def _handle_file_uploads(self, options: Any, body: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
         """Handle file uploads from OpenAI client and add them to the request body."""
         if not (hasattr(options, "files") and options.files):
             return body, []
@@ -423,7 +453,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         *,
         cast_to: Any,
         options: Any,
-    ):
+    ) -> Any:
         assert self.route_impls is not None  # Should be guaranteed by request() method, assertion for mypy
         path = options.url
         body = options.params or {}
@@ -494,7 +524,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         cast_to: Any,
         options: Any,
         stream_cls: Any,
-    ):
+    ) -> Any:
         assert self.route_impls is not None  # Should be guaranteed by request() method, assertion for mypy
         path = options.url
         body = options.params or {}
@@ -511,7 +541,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         if isinstance(result, FastAPIResponse):
             content_type = result.media_type or content_type
 
-        async def gen():
+        async def gen() -> AsyncGenerator[bytes, None]:
             # Handle FastAPI StreamingResponse (returned by router endpoints)
             # Extract the async generator from the StreamingResponse body
             from fastapi.responses import StreamingResponse
@@ -522,6 +552,8 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                     # Chunk is already SSE-formatted string from sse_generator, encode to bytes
                     if isinstance(chunk, str):
                         yield chunk.encode("utf-8")
+                    elif isinstance(chunk, memoryview):
+                        yield bytes(chunk)
                     else:
                         yield chunk
             else:
@@ -564,7 +596,9 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         )
         return await response.parse()
 
-    def _convert_body(self, func: Any, body: dict | None = None, exclude_params: set[str] | None = None) -> dict:
+    def _convert_body(
+        self, func: Any, body: dict[str, Any] | None = None, exclude_params: set[str] | None = None
+    ) -> dict[str, Any]:
         body = body or {}
         exclude_params = exclude_params or set()
         sig = inspect.signature(func)
@@ -575,11 +609,11 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             type_hints = typing.get_type_hints(func, include_extras=True)
         except NameError as e:
             # Forward reference could not be resolved - fall back to raw annotations
-            logger.debug(f"Could not resolve type hints for {func.__name__}: {e}")
+            logger.debug("Could not resolve type hints", func_name=func.__name__, error=str(e))
             type_hints = {}
         except Exception as e:
             # Unexpected error - log and fall back
-            logger.warning(f"Failed to resolve type hints for {func.__name__}: {e}")
+            logger.warning("Failed to resolve type hints", func_name=func.__name__, error=str(e))
             type_hints = {}
 
         # Helper to get the resolved type for a parameter

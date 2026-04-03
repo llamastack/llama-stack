@@ -52,8 +52,8 @@ jobs:
       - name: Generate Distribution List
         id: set-matrix
         run: |
-          distros=$(ls -d src/llama_stack/distributions/*/ 2>/dev/null | \
-            awk -F'/' '{print $(NF-1)}' | \
+          distros=$(find src/llama_stack/distributions -mindepth 1 -maxdepth 1 -type d 2>/dev/null | \
+            awk -F'/' '{print $NF}' | \
             grep -v '^__pycache__$' | \
             grep -v '^ci-tests$' | \
             jq -R -s -c 'split("\n") | map(select(length > 0))')
@@ -83,16 +83,16 @@ jobs:
       - name: Build container image
         if: matrix.image-type == 'container'
         run: |
-          BUILD_ARGS="--build-arg INSTALL_MODE=editable --build-arg DISTRO_NAME=${{ matrix.distro }}"
+          BUILD_ARGS=(--build-arg "INSTALL_MODE=editable" --build-arg "DISTRO_NAME=${{ matrix.distro }}")
           if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
-            BUILD_ARGS="$BUILD_ARGS --build-arg UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL"
+            BUILD_ARGS+=(--build-arg "UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL")
           fi
           if [ -n "${UV_INDEX_STRATEGY:-}" ]; then
-            BUILD_ARGS="$BUILD_ARGS --build-arg UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY"
+            BUILD_ARGS+=(--build-arg "UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY")
           fi
           docker build . \
             -f containers/Containerfile \
-            $BUILD_ARGS \
+            "${BUILD_ARGS[@]}" \
             --tag llama-stack:${{ matrix.distro }}-ci
 
   build-arm64:
@@ -116,16 +116,16 @@ jobs:
 
       - name: Build ARM64 container image
         run: |
-          BUILD_ARGS="--build-arg INSTALL_MODE=editable --build-arg DISTRO_NAME=${{ matrix.distro }}"
+          BUILD_ARGS=(--build-arg "INSTALL_MODE=editable" --build-arg "DISTRO_NAME=${{ matrix.distro }}")
           if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
-            BUILD_ARGS="$BUILD_ARGS --build-arg UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL"
+            BUILD_ARGS+=(--build-arg "UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL")
           fi
           if [ -n "${UV_INDEX_STRATEGY:-}" ]; then
-            BUILD_ARGS="$BUILD_ARGS --build-arg UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY"
+            BUILD_ARGS+=(--build-arg "UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY")
           fi
           docker buildx build --platform linux/arm64 --load . \
             -f containers/Containerfile \
-            $BUILD_ARGS \
+            "${BUILD_ARGS[@]}" \
             --tag llama-stack:${{ matrix.distro }}-arm64-ci
 
   build-single-provider:
@@ -153,18 +153,18 @@ jobs:
       - name: Build container image
         run: |
           BASE_IMAGE=$(yq -r '.distribution_spec.container_image // "python:3.12-slim"' src/llama_stack/distributions/ci-tests/config.yaml)
-          BUILD_ARGS="--build-arg INSTALL_MODE=editable --build-arg DISTRO_NAME=ci-tests"
-          BUILD_ARGS="$BUILD_ARGS --build-arg BASE_IMAGE=$BASE_IMAGE"
-          BUILD_ARGS="$BUILD_ARGS --build-arg RUN_CONFIG_PATH=/workspace/src/llama_stack/distributions/ci-tests/config.yaml"
+          BUILD_ARGS=(--build-arg "INSTALL_MODE=editable" --build-arg "DISTRO_NAME=ci-tests")
+          BUILD_ARGS+=(--build-arg "BASE_IMAGE=$BASE_IMAGE")
+          BUILD_ARGS+=(--build-arg "RUN_CONFIG_PATH=/workspace/src/llama_stack/distributions/ci-tests/config.yaml")
           if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
-            BUILD_ARGS="$BUILD_ARGS --build-arg UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL"
+            BUILD_ARGS+=(--build-arg "UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL")
           fi
           if [ -n "${UV_INDEX_STRATEGY:-}" ]; then
-            BUILD_ARGS="$BUILD_ARGS --build-arg UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY"
+            BUILD_ARGS+=(--build-arg "UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY")
           fi
           docker build . \
             -f containers/Containerfile \
-            $BUILD_ARGS \
+            "${BUILD_ARGS[@]}" \
             -t llama-stack:ci-tests
 
       - name: Inspect the container image entrypoint
@@ -174,7 +174,7 @@ jobs:
             echo "No image found"
             exit 1
           fi
-          entrypoint=$(docker inspect --format '{{ .Config.Entrypoint }}' $IMAGE_ID)
+          entrypoint=$(docker inspect --format '{{ .Config.Entrypoint }}' "$IMAGE_ID")
           echo "Entrypoint: $entrypoint"
           if [ "$entrypoint" != "[/usr/local/bin/llama-stack-entrypoint.sh]" ]; then
             echo "Entrypoint is not correct"
@@ -199,18 +199,18 @@ jobs:
       - name: Build UBI9 container image
         run: |
           BASE_IMAGE=$(yq -r '.distribution_spec.container_image // "registry.access.redhat.com/ubi9:latest"' src/llama_stack/distributions/ci-tests/config.yaml)
-          BUILD_ARGS="--build-arg INSTALL_MODE=editable --build-arg DISTRO_NAME=ci-tests"
-          BUILD_ARGS="$BUILD_ARGS --build-arg BASE_IMAGE=$BASE_IMAGE"
-          BUILD_ARGS="$BUILD_ARGS --build-arg RUN_CONFIG_PATH=/workspace/src/llama_stack/distributions/ci-tests/config.yaml"
+          BUILD_ARGS=(--build-arg "INSTALL_MODE=editable" --build-arg "DISTRO_NAME=ci-tests")
+          BUILD_ARGS+=(--build-arg "BASE_IMAGE=$BASE_IMAGE")
+          BUILD_ARGS+=(--build-arg "RUN_CONFIG_PATH=/workspace/src/llama_stack/distributions/ci-tests/config.yaml")
           if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
-            BUILD_ARGS="$BUILD_ARGS --build-arg UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL"
+            BUILD_ARGS+=(--build-arg "UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL")
           fi
           if [ -n "${UV_INDEX_STRATEGY:-}" ]; then
-            BUILD_ARGS="$BUILD_ARGS --build-arg UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY"
+            BUILD_ARGS+=(--build-arg "UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY")
           fi
           docker build . \
             -f containers/Containerfile \
-            $BUILD_ARGS \
+            "${BUILD_ARGS[@]}" \
             -t llama-stack:ci-tests-ubi9
 
       - name: Inspect UBI9 image
@@ -220,7 +220,7 @@ jobs:
             echo "No image found"
             exit 1
           fi
-          entrypoint=$(docker inspect --format '{{ .Config.Entrypoint }}' $IMAGE_ID)
+          entrypoint=$(docker inspect --format '{{ .Config.Entrypoint }}' "$IMAGE_ID")
           echo "Entrypoint: $entrypoint"
           if [ "$entrypoint" != "[/usr/local/bin/llama-stack-entrypoint.sh]" ]; then
             echo "Entrypoint is not correct"
@@ -252,17 +252,17 @@ jobs:
       - name: Build starter distribution on UBI9 ARM64
         run: |
           BASE_IMAGE="registry.access.redhat.com/ubi9:latest"
-          BUILD_ARGS="--build-arg INSTALL_MODE=editable --build-arg DISTRO_NAME=starter"
-          BUILD_ARGS="$BUILD_ARGS --build-arg BASE_IMAGE=$BASE_IMAGE"
+          BUILD_ARGS=(--build-arg "INSTALL_MODE=editable" --build-arg "DISTRO_NAME=starter")
+          BUILD_ARGS+=(--build-arg "BASE_IMAGE=$BASE_IMAGE")
           if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
-            BUILD_ARGS="$BUILD_ARGS --build-arg UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL"
+            BUILD_ARGS+=(--build-arg "UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL")
           fi
           if [ -n "${UV_INDEX_STRATEGY:-}" ]; then
-            BUILD_ARGS="$BUILD_ARGS --build-arg UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY"
+            BUILD_ARGS+=(--build-arg "UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY")
           fi
           docker buildx build --platform linux/arm64 --load . \
             -f containers/Containerfile \
-            $BUILD_ARGS \
+            "${BUILD_ARGS[@]}" \
             --tag llama-stack:starter-ubi9-arm64
 
       - name: Inspect starter UBI9 ARM64 image
@@ -272,7 +272,7 @@ jobs:
             echo "No image found"
             exit 1
           fi
-          entrypoint=$(docker inspect --format '{{ .Config.Entrypoint }}' $IMAGE_ID)
+          entrypoint=$(docker inspect --format '{{ .Config.Entrypoint }}' "$IMAGE_ID")
           echo "Entrypoint: $entrypoint"
           if [ "$entrypoint" != "[/usr/local/bin/llama-stack-entrypoint.sh]" ]; then
             echo "Entrypoint is not correct"

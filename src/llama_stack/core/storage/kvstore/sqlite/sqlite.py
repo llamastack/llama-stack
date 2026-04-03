@@ -12,25 +12,27 @@ import aiosqlite
 from llama_stack.log import get_logger
 from llama_stack_api.internal.kvstore import KVStore
 
-from ..config import SqliteKVStoreConfig
+from ..config import SqliteKVStoreConfig  # type: ignore[attr-defined]
 
 logger = get_logger(name=__name__, category="providers::utils")
 
 
 class SqliteKVStoreImpl(KVStore):
-    def __init__(self, config: SqliteKVStoreConfig):
+    """SQLite-backed key-value store implementation."""
+
+    def __init__(self, config: SqliteKVStoreConfig) -> None:
         self.db_path = config.db_path
         self.table_name = "kvstore"
         self._conn: aiosqlite.Connection | None = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"SqliteKVStoreImpl(db_path={self.db_path}, table_name={self.table_name})"
 
     def _is_memory_db(self) -> bool:
         """Check if this is an in-memory database."""
         return self.db_path == ":memory:" or "mode=memory" in self.db_path
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         # Skip directory creation for in-memory databases and file: URIs
         if not self._is_memory_db() and not self.db_path.startswith("file:"):
             db_dir = os.path.dirname(self.db_path)
@@ -65,7 +67,7 @@ class SqliteKVStoreImpl(KVStore):
                 )
                 await db.commit()
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Close the persistent connection (only for in-memory databases)."""
         if self._conn:
             await self._conn.close()
@@ -99,7 +101,7 @@ class SqliteKVStoreImpl(KVStore):
                     return None
                 value, expiration = row
                 if not isinstance(value, str):
-                    logger.warning(f"Expected string value for key {key}, got {type(value)}, returning None")
+                    logger.warning("Expected string value for key, returning None", key=key, value_type=type(value))
                     return None
                 return value
         else:
@@ -113,7 +115,7 @@ class SqliteKVStoreImpl(KVStore):
                         return None
                     value, expiration = row
                     if not isinstance(value, str):
-                        logger.warning(f"Expected string value for key {key}, got {type(value)}, returning None")
+                        logger.warning("Expected string value for key, returning None", key=key, value_type=type(value))
                         return None
                     return value
 

@@ -14,6 +14,11 @@ from llama_stack_api import (
 
 
 def available_providers() -> list[ProviderSpec]:
+    """Return the list of available safety provider specifications.
+
+    Returns:
+        List of ProviderSpec objects describing available providers
+    """
     return [
         InlineProviderSpec(
             api=Api.safety,

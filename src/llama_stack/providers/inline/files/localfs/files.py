@@ -58,6 +58,8 @@ logger = get_logger(name=__name__, category="files")
 
 
 class LocalfsFilesImpl(Files):
+    """Files provider that stores uploaded files on the local filesystem."""
+
     def __init__(self, config: LocalfsFilesImplConfig, policy: list[AccessRule]) -> None:
         self.config = config
         self.policy = policy
@@ -153,7 +155,8 @@ class LocalfsFilesImpl(Files):
 
         if expires_after is not None:
             logger.warning(
-                f"File expiration is not supported by this provider, ignoring expires_after: {expires_after}"
+                "File expiration is not supported by this provider, ignoring expires_after",
+                expires_after=expires_after,
             )
 
         file_id = self._generate_file_id()
@@ -268,7 +271,7 @@ class LocalfsFilesImpl(Files):
         file_obj, file_path = await self._lookup_file_id(file_id)
 
         if not file_path.exists():
-            logger.warning(f"File '{file_id}'s underlying '{file_path}' is missing, deleting metadata.")
+            logger.warning("File underlying path is missing, deleting metadata", file_id=file_id, file_path=file_path)
             await self.openai_delete_file(DeleteFileRequest(file_id=file_id))
             raise OpenAIFileObjectNotFoundError(file_id)
 

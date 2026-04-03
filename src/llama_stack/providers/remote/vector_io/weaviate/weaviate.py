@@ -28,6 +28,7 @@ from llama_stack_api import (
     CompoundFilter,
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     InsertChunksRequest,
@@ -53,6 +54,8 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 
 class WeaviateIndex(EmbeddingIndex):
+    """Embedding index backed by a Weaviate collection."""
+
     def __init__(self, client: weaviate.WeaviateClient, collection_name: str, kvstore: KVStore | None = None):
         self.client = client
         self.collection_name = sanitize_collection_name(collection_name, weaviate_format=True)
@@ -287,8 +290,18 @@ class WeaviateIndex(EmbeddingIndex):
 
 
 class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
-    def __init__(self, config: WeaviateVectorIOConfig, inference_api: Inference, files_api: Files | None) -> None:
-        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
+    """Vector I/O adapter for remote Weaviate instances."""
+
+    def __init__(
+        self,
+        config: WeaviateVectorIOConfig,
+        inference_api: Inference,
+        files_api: Files | None,
+        file_processor_api: FileProcessors | None = None,
+    ) -> None:
+        super().__init__(
+            inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api
+        )
         self.config = config
         self.client_cache = {}
         self.cache = {}

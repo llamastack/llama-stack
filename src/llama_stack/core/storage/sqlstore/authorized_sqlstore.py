@@ -66,6 +66,8 @@ def _enhance_item_with_access_control(item: Mapping[str, Any], current_user: Use
 
 
 class SqlRecord(ProtectedResource):
+    """A SQL record wrapped as a protected resource for access control checks."""
+
     def __init__(self, record_id: str, table_name: str, owner: User | None):
         self.type = f"sql_record::{table_name}"
         self.identifier = record_id
@@ -111,9 +113,9 @@ class AuthorizedSqlStore:
 
         if SQL_OPTIMIZED_POLICY != actual_default:
             logger.warning(
-                f"SQL_OPTIMIZED_POLICY does not match default_policy(). "
-                f"SQL filtering will use conservative mode. "
-                f"Expected: {SQL_OPTIMIZED_POLICY}, Got: {actual_default}",
+                "SQL_OPTIMIZED_POLICY does not match default_policy(). SQL filtering will use conservative mode. Expected: , Got",
+                sql_optimized_policy=SQL_OPTIMIZED_POLICY,
+                actual_default=actual_default,
             )
 
     async def create_table(self, table: str, schema: Mapping[str, ColumnType | ColumnDefinition]) -> None:

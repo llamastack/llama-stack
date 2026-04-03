@@ -14,6 +14,8 @@ from .config import CerebrasImplConfig
 
 
 class CerebrasInferenceAdapter(OpenAIMixin):
+    """Inference adapter for the Cerebras Cloud platform."""
+
     config: CerebrasImplConfig
 
     provider_data_api_key_field: str = "cerebras_api_key"

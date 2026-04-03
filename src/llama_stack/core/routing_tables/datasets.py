@@ -32,6 +32,8 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 
 class DatasetsRoutingTable(CommonRoutingTableImpl, Datasets):
+    """Routing table for managing dataset registrations and provider lookups."""
+
     async def list_datasets(self) -> ListDatasetsResponse:
         return ListDatasetsResponse(data=await self.get_all_with_type(ResourceType.dataset.value))
 
