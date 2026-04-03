@@ -17,7 +17,6 @@ from .models import (
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionChunkWithReasoning,
     OpenAIChatCompletionRequestWithExtraBody,
-    OpenAIChatCompletionWithReasoning,
     OpenAICompletion,
     OpenAICompletionRequestWithExtraBody,
     OpenAICompletionWithInputMessages,
