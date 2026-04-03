@@ -64,6 +64,7 @@ from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryA
 from llama_stack_api import (
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     InsertChunksRequest,
@@ -523,8 +524,16 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
     and creates a cache of VectorStoreWithIndex instances (each wrapping a SQLiteVecIndex).
     """
 
-    def __init__(self, config, inference_api: Inference, files_api: Files | None) -> None:
-        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
+    def __init__(
+        self,
+        config,
+        inference_api: Inference,
+        files_api: Files | None,
+        file_processor_api: FileProcessors | None = None,
+    ) -> None:
+        super().__init__(
+            inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api
+        )
         self.config = config
         self.cache: dict[str, VectorStoreWithIndex] = {}
         self.vector_store_table = None
