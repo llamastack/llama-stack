@@ -269,6 +269,9 @@ class PyPDFFileProcessor:
         elif chunking_strategy.type == "static":
             chunk_size = chunking_strategy.static.max_chunk_size_tokens
             overlap_size = chunking_strategy.static.chunk_overlap_tokens
+        elif chunking_strategy.type == "contextual":
+            chunk_size = chunking_strategy.contextual.max_chunk_size_tokens
+            overlap_size = chunking_strategy.contextual.chunk_overlap_tokens
         else:
             chunk_size = self.config.default_chunk_size_tokens
             overlap_size = self.config.default_chunk_overlap_tokens
