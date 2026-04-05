@@ -113,6 +113,9 @@ def _create_sqlite_connection(db_path: str):
     connection.enable_load_extension(True)
     _get_sqlite_vec().load(connection)
     connection.enable_load_extension(False)
+    # Enable WAL mode and busy timeout for concurrent access (consistent with sqlalchemy_sqlstore)
+    connection.execute("PRAGMA journal_mode=WAL")
+    connection.execute("PRAGMA busy_timeout=5000")
     return connection
 
 
