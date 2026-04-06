@@ -88,7 +88,7 @@ sequenceDiagram
     participant UI as MLflow UI
 
     App->>SDK: mlflow.openai.autolog()
-    App->>SDK: client.chat.completions.create()
+    App->>SDK: client.responses.create()
     SDK->>SDK: Capture span (inputs, outputs, tokens)
     SDK->>Server: POST trace via MLflow Tracking API
     Server->>UI: Trace visible in dashboard
@@ -96,10 +96,11 @@ sequenceDiagram
 
 ### Step 1: Instrument Your Code
 
-Add MLflow tracing to your LlamaStack client code:
+Add MLflow tracing to your LlamaStack client code. The example below uses the [Responses API](https://platform.openai.com/docs/api-reference/responses) (`client.responses.create`), which is the recommended way to interact with LlamaStack:
 
 ```python
 import mlflow
+import mlflow.tracing as mlflow_tracing
 from openai import OpenAI
 
 # Configure MLflow
@@ -107,23 +108,23 @@ mlflow.set_tracking_uri("http://localhost:5000")
 mlflow.set_experiment("LlamaStack Demo")
 
 # Enable tracing and OpenAI autologging
-mlflow.tracing.enable()
+mlflow_tracing.enable()
 mlflow.openai.autolog()
 
 # Create an OpenAI-compatible client pointing to LlamaStack
 client = OpenAI(
     base_url="http://localhost:8321/v1",
-    api_key="unused",  # LlamaStack doesn't require an API key
+    api_key="fake",
 )
 
-# Make a chat completion request — MLflow captures the trace automatically
-response = client.chat.completions.create(
+response = client.responses.create(
     model="meta-llama/Llama-3.1-8B-Instruct",
-    messages=[{"role": "user", "content": "What is LlamaStack?"}],
+    input="Give a one-sentence description of LlamaStack.",
 )
-
-print(response.choices[0].message.content)
+print(response.output_text)
 ```
+
+MLflow's `openai.autolog()` automatically captures every `client.responses.create()` call as a trace, including inputs, outputs, token usage, and latency — with zero additional instrumentation code.
 
 ### Step 2: Run the Application
 
@@ -141,7 +142,7 @@ Open [http://localhost:5000](http://localhost:5000), navigate to your experiment
 - Latency breakdown
 - Span hierarchy
 
-![MLflow distributed traces for Llama Stack via SDK](./images/mlflow-sdk.png)
+![MLflow distributed traces for LlamaStack via SDK](./images/mlflow-sdk.png)
 
 ### Pros and Cons
 
@@ -259,7 +260,7 @@ sqlite3 mlflow.db "SELECT count(*) FROM trace_info;"
 
 Then open the MLflow UI at [http://localhost:5000](http://localhost:5000) to explore the traces visually.
 
-![MLflow distributed traces for Llama Stack via OTEL](./images/otel-mlflow.png)
+![MLflow distributed traces for LlamaStack via OTEL](./images/otel-mlflow.png)
 
 ### Pros and Cons
 
@@ -270,6 +271,10 @@ Then open the MLflow UI at [http://localhost:5000](http://localhost:5000) to exp
 | **Production-ready** | OTel Collector provides buffering, retry, and batching |
 | **Complexity** | Requires running and configuring an additional service (the collector) |
 | **Data richness** | OTel OpenAI instrumentation may capture different fields than MLflow autolog |
+
+### Responses API Support
+
+**Note:** OpenTelemetry auto-instrumentation for the Responses API is not yet available upstream. Progress is tracked in [llamastack/llama-stack#5192](https://github.com/llamastack/llama-stack/issues/5192). In the meantime, Approach 1 (MLflow SDK) fully supports tracing Responses API calls via `mlflow.openai.autolog()`.
 
 ## Approach Comparison
 
@@ -314,6 +319,8 @@ opentelemetry-instrument llama stack run starter
 
 This gives you end-to-end visibility: client-side spans showing the request lifecycle, and server-side spans showing internal LlamaStack processing.
 
+> **Important:** MLflow SDK tracing only instruments the **client side**. The LlamaStack server itself is not instrumented by MLflow, so server-side spans (inference routing, tool execution, etc.) are only visible through OpenTelemetry auto-instrumentation (Approach 2).
+>
 ## Common Gotchas
 
 1. **MLflow OTLP endpoint path**: Use `/v1/traces`, not `/api/2.0/otlp/v1/traces` (the latter returns 404 in MLflow 3.10+).
@@ -335,7 +342,7 @@ Both approaches get your LlamaStack traces into MLflow, but they serve different
 
 The good news: since LlamaStack exposes an OpenAI-compatible API, both paths leverage existing, well-maintained instrumentation libraries. You're not writing custom tracing code — you're plugging into an ecosystem.
 
-## Quick start with containers
+## Quick Start With Containers
 
 A pending PR, [feat: add MLflow support for LlamaStack](https://github.com/llamastack/llama-stack/pull/5409), will let you run LlamaStack alongside MLflow, Grafana, and Prometheus in containers with a single command. Once that PR lands, use the [telemetry scripts](https://github.com/llamastack/llama-stack/tree/main/scripts/telemetry) in the LlamaStack repository for the full walkthrough.
 
