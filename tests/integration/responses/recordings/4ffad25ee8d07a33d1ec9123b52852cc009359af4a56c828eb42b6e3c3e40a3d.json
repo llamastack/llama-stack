@@ -1,0 +1,359 @@
+{
+  "test_id": "tests/integration/responses/test_reasoning.py::test_reasoning_no_summary_without_request[txt=bedrock/openai.gpt-oss-20b]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is 2 + 2? Think step by step."
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "reasoning_effort": "high"
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4ffad25ee8d0",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "dnwoE2cOcR1iDWiVufe18s0gIjm6n0sBhMHEmsIYFkxO1ilMXHEw0v1pnVps31ODzsv2WpYHyLkc3WOHVQ0PpKkZ4mNrKxzV8ndB"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4ffad25ee8d0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "The user asks: \"What is 2 + 2? Think step by step.\" Simple: 2 + 2 = 4. They want step-by-step explanation. So as ChatGPT we need to respond with a step-by-step reasoning for addition of 2 + 2. I'm instructed to output simple answer with step by step reasoning: 2 is added to"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "6GtKz8lWdofeNRFuFZFfdbeGh23IQ386cSfhT3ZDaAgXiTuqJJe9rjr2ffkBDC4qQme3lfX4fjbtoUNQqFQLVTZS8inTrobYMoN3ju74KnxgUwbDXfIWWRsoL4yJDj"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4ffad25ee8d0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " 2 resulting in 4. If want deeper representation: Counting approach, grouping or the base-10 system. Explanation: two ones and two ones yields 4. Step 1: Write down 2. Step 2: Add number 2. Step 3: Combine = 4. So answer: 4.\n\nMaybe"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "TDB2oUrNKsgs8GEyQtHgcF3t2OyAO3hhHbzL6egSCO6LVWUI5TNctLXxdgSYlKVHCvjxTP58sThR03ZFChLbIlqNZnYTMQQbfudl"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4ffad25ee8d0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " can illustrate with enumeration, adding each by each: 2+0=2, 2+1=3, 2+2=4. Paper and pencil: 2+2=4. Or base-10 addition: 2 plus 2 = 4. Or use"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "B0ihTRtmhI4j763qllBGxQz706GsuItoLaCTew9gAGGAB5NTWiRpluaSMyNkhzhh4hLiEzVhqZnVX"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4ffad25ee8d0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": " the concept of addition as combining sets: add group of 2 items twice yields 4 items.\n\nThus answer should be succinct but step wise. Provide steps.\n\nGiven relatively simple question, we simply answer: 4.\n\nWe can just respond with step by step: \""
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "upWHYDXwp9hAnio0brc4Ac8H3riO5RgVIRirU0MP4LxPfzCTxKaWQp1uWpzatZXkhpSl0QLPhsLw0fy0CwKic6Uk"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4ffad25ee8d0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "Step 1: Start with 2. Step 2: Add 2. Step 3: 2 + 2 = 4.\"\n\nGiven the user explicitly said: \"Think step by step.\" So we can show steps. Provide answer accordingly.\n\nWe need to not mention policy. We can produce the answer. Use straightforward tone.\n\nThe question is extremely trivial"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "NawvbFMvmeeVg7W7w5Mwy97MoidFmP12xEVC3rChVvDFXRq7svY7rhu"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4ffad25ee8d0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": ", no policy concerns. So proceed.\n\nWe should be too sure? Yes.\n\nWe answer.\n\nWe can also optionally add explanation of addition. But likely just want 4. Provide steps: 2+2=4.\n\n"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "cDLcjL8DlWwBYfVG4LApyRLjZCXibniV8LiRLxqbO0HRKsTe9VcFIqcIqqoY3AlOBUkdJvlxXjngL0"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4ffad25ee8d0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "Ok."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "WoJpmnIolqEbYZYt5BOe8KrNt4PPlfaJF30z92wsD3TkZcdegNchbhVnDM0JMiv9UfqYJmwccWX6dzRA5qrIMqoW2RUc9iP7q9ug4fAEpYg"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4ffad25ee8d0",
+          "choices": [
+            {
+              "delta": {
+                "content": "Sure! Let\u2019s break it down step by step:\n\n1. **Start with the first number.**  \n   - We have **2**.\n\n2. **Add the second number to the first.**  \n   - Add **2** to the 2 we started with.\n\n3. **Perform the addition.**  \n   - \\( 2 + 2 = 4 \\)\n\nSo, \\( ",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "l2dhbQ1Z5ARXX8KtX1OUNkpFO4r88EkH8Bw5DIROrcxkZiVbscTCOqntczdpPqr3lzc5Qdn0fWrO8zloS2OPHDsjkImKN"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4ffad25ee8d0",
+          "choices": [
+            {
+              "delta": {
+                "content": "2 + 2 \\) equals **4**.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "2P8OEpeOORNbivZoqhZUghjtVbQA3ZtJix0DsmB59l34v3WCCeoShEtKpUfWrmDDo3GrwAGNAzEhPmaGeZTPyRDLvgu92qr"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4ffad25ee8d0",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "YKBXjoQCwLkUqTRplUbDSereRaQHCyOpLfBRlZkzp289SGHTpdiy4uHoq5ULRLQToWZ69JlEJs8MF2WtaicMPzVBpztnywEnt7HDfboOhT2zbe9kp"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-4ffad25ee8d0",
+          "choices": [],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 482,
+            "prompt_tokens": 78,
+            "total_tokens": 560,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 48
+            }
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}
