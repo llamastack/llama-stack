@@ -594,6 +594,47 @@ class TestConvertOpenAIMessagesToGemini:
         assert model_msg["parts"][0] == {"text": "Let me check."}
         assert "function_call" in model_msg["parts"][1]
 
+    def test_assistant_with_reasoning_content_creates_thinking_part(self):
+        """Assistant message with reasoning_content emits a Gemini thinking part."""
+        messages = [
+            {"role": "user", "content": "Hi"},
+            {
+                "role": "assistant",
+                "content": "The answer is 42.",
+                "reasoning_content": "I need to think about this carefully.",
+            },
+        ]
+        system, contents = convert_openai_messages_to_gemini(messages)
+        assert len(contents) == 2
+        model_msg = contents[1]
+        assert model_msg["role"] == "model"
+        # Thinking part comes first, then text part
+        assert len(model_msg["parts"]) == 2
+        assert model_msg["parts"][0] == {"text": "I need to think about this carefully.", "thought": True}
+        assert model_msg["parts"][1] == {"text": "The answer is 42."}
+
+    def test_assistant_with_reasoning_content_only(self):
+        """Assistant message with only reasoning_content and no text content."""
+        messages = [
+            {
+                "role": "assistant",
+                "content": None,
+                "reasoning_content": "Deep thinking here.",
+            },
+        ]
+        system, contents = convert_openai_messages_to_gemini(messages)
+        assert len(contents) == 1
+        model_msg = contents[0]
+        assert model_msg["parts"] == [{"text": "Deep thinking here.", "thought": True}]
+
+    def test_assistant_without_reasoning_content_unchanged(self):
+        """Regular assistant message without reasoning_content works as before."""
+        messages = [
+            {"role": "assistant", "content": "Hello!"},
+        ]
+        system, contents = convert_openai_messages_to_gemini(messages)
+        assert contents[0]["parts"] == [{"text": "Hello!"}]
+
     def test_tool_call_id_not_found(self):
         """When tool_call_id doesn't match any assistant message, use 'unknown' as name."""
         messages = [

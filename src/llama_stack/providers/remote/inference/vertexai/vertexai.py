@@ -44,6 +44,10 @@ from llama_stack_api import (
     validate_embeddings_input_is_text,
 )
 from llama_stack_api.inference import RerankRequest
+from llama_stack_api.inference.models import (
+    OpenAIChatCompletionChunkWithReasoning,
+    OpenAIChatCompletionWithReasoning,
+)
 
 logger = get_logger(__name__, category="inference")
 
@@ -652,6 +656,44 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
             tool_choice = converters.convert_deprecated_function_call_to_tool_choice(params.function_call)
 
         return tools, tool_choice
+
+    async def openai_chat_completions_with_reasoning(
+        self,
+        params: OpenAIChatCompletionRequestWithExtraBody,
+    ) -> OpenAIChatCompletionWithReasoning | AsyncIterator[OpenAIChatCompletionChunkWithReasoning]:
+        """Chat completion with reasoning support for Vertex AI.
+
+        Delegates to the regular chat completion flow (which already maps
+        ``reasoning_effort`` to Gemini's ``ThinkingConfig`` and extracts
+        thinking parts from responses).  The returned streaming chunks are
+        wrapped in the internal reasoning types so the Responses layer can
+        read ``reasoning_content`` as a typed field.
+
+        Non-streaming is not supported because the non-streaming converter
+        merges thinking text into the ``content`` field (the standard
+        ``OpenAIChatCompletionResponseMessage`` has no ``reasoning_content``
+        attribute).  The Responses layer always calls this method with
+        streaming enabled.
+        """
+        if not params.stream:
+            raise NotImplementedError("Non-streaming reasoning is not yet supported for VertexAI")
+
+        result = await self.openai_chat_completion(params)
+
+        async def _wrap_chunks() -> AsyncIterator[OpenAIChatCompletionChunkWithReasoning]:
+            async for chunk in result:  # type: ignore[union-attr]
+                # NOTE: When n>1, this keeps only the last choice's reasoning.
+                # This matches bedrock/ollama/vllm behavior. The Responses
+                # layer does not request n>1.
+                reasoning = None
+                for choice in chunk.choices or []:
+                    reasoning = getattr(choice.delta, "reasoning_content", None)
+                yield OpenAIChatCompletionChunkWithReasoning(
+                    chunk=chunk,
+                    reasoning_content=reasoning,
+                )
+
+        return _wrap_chunks()
 
     async def openai_chat_completion(
         self,

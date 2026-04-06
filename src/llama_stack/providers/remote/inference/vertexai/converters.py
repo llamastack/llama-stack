@@ -250,8 +250,22 @@ def _convert_assistant_message(msg: dict[str, Any]) -> dict[str, Any] | None:
     """Convert an OpenAI assistant message to a Gemini Content dict.
 
     Returns ``None`` when the message has no text content and no tool calls.
+
+    When the message carries ``reasoning_content`` (from a prior turn with
+    thinking enabled), emit it as a Gemini thinking part (``thought: True``)
+    so the model treats it as prior reasoning rather than regular text.
     """
     parts: list[dict[str, Any]] = []
+
+    # Limitation: Gemini's thinking API supports opaque ``thought_signature``
+    # tokens for faithful reasoning replay, but the llama-stack Responses
+    # layer does not capture or propagate them.  We replay reasoning as
+    # plain text with ``thought: True``, which is a lossy approximation.
+    # This matches what other providers (bedrock, ollama, vllm) do with
+    # their own reasoning fields.
+    reasoning = msg.get("reasoning_content")
+    if reasoning:
+        parts.append({"text": reasoning, "thought": True})
 
     text = _extract_text_content(msg.get("content"))
     if text:
