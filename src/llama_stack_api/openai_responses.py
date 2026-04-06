@@ -442,9 +442,11 @@ class OpenAIResponseText(BaseModel):
     """Text response configuration for OpenAI responses.
 
     :param format: (Optional) Text format configuration specifying output format requirements
+    :param verbosity: (Optional) Controls response verbosity level
     """
 
     format: OpenAIResponseTextFormat | None = None
+    verbosity: Literal["low", "medium", "high"] | None = None
 
 
 @json_schema_type

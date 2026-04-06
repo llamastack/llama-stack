@@ -6278,6 +6278,14 @@ components:
             title: OpenAIResponseTextFormat
           - type: 'null'
           title: OpenAIResponseTextFormat
+        verbosity:
+          anyOf:
+          - type: string
+            enum:
+            - low
+            - medium
+            - high
+          - type: 'null'
       title: OpenAIResponseText
       description: Text response configuration for OpenAI responses.
     OpenAIResponseTool:
@@ -10345,6 +10353,51 @@ components:
             maxLength: 64
           - type: 'null'
           description: A key to use when reading from or writing to the prompt cache.
+        tools:
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                title: OpenAIResponseInputToolWebSearch
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                title: OpenAIResponseInputToolFileSearch
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
+                title: OpenAIResponseInputToolFunction
+              - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
+                title: OpenAIResponseInputToolMCP
+              discriminator:
+                propertyName: type
+                mapping:
+                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
+                  mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
+                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
+            type: array
+          - type: 'null'
+          description: List of tools available to the model. Accepted for compatibility but not used during compaction.
+        parallel_tool_calls:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to enable parallel tool calls. Accepted for compatibility but not used during compaction.
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          description: Configuration for reasoning effort. Accepted for compatibility but not used during compaction.
+          title: OpenAIResponseReasoning
+        text:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseText'
+            title: OpenAIResponseText
+          - type: 'null'
+          description: Configuration for text response generation. Accepted for compatibility but not used during compaction.
+          title: OpenAIResponseText
       additionalProperties: false
       required:
       - model

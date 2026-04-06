@@ -279,6 +279,22 @@ class CompactResponseRequest(BaseModel):
         max_length=64,
         description="A key to use when reading from or writing to the prompt cache.",
     )
+    tools: list[OpenAIResponseInputTool] | None = Field(
+        default=None,
+        description="List of tools available to the model. Accepted for compatibility but not used during compaction.",
+    )
+    parallel_tool_calls: bool | None = Field(
+        default=None,
+        description="Whether to enable parallel tool calls. Accepted for compatibility but not used during compaction.",
+    )
+    reasoning: OpenAIResponseReasoning | None = Field(
+        default=None,
+        description="Configuration for reasoning effort. Accepted for compatibility but not used during compaction.",
+    )
+    text: OpenAIResponseText | None = Field(
+        default=None,
+        description="Configuration for text response generation. Accepted for compatibility but not used during compaction.",
+    )
 
 
 class DeleteResponseRequest(BaseModel):

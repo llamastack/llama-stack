@@ -4204,6 +4204,14 @@ components:
             title: OpenAIResponseTextFormat
           - type: 'null'
           title: OpenAIResponseTextFormat
+        verbosity:
+          anyOf:
+          - type: string
+            enum:
+            - low
+            - medium
+            - high
+          - type: 'null'
       title: OpenAIResponseText
       description: Text response configuration for OpenAI responses.
     OpenAIResponseTool:
