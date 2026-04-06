@@ -43,7 +43,6 @@ from llama_stack_api import (
     OpenAIFinishReason,
     OpenAIMessageParam,
     OpenAIResponseContentPartOutputText,
-    OpenAIResponseContentPartReasoningSummary,
     OpenAIResponseContentPartReasoningText,
     OpenAIResponseContentPartRefusal,
     OpenAIResponseError,
@@ -78,9 +77,6 @@ from llama_stack_api import (
     OpenAIResponseObjectStreamResponseOutputItemAdded,
     OpenAIResponseObjectStreamResponseOutputItemDone,
     OpenAIResponseObjectStreamResponseOutputTextDelta,
-    OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded,
-    OpenAIResponseObjectStreamResponseReasoningSummaryPartDone,
-    OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta,
     OpenAIResponseObjectStreamResponseReasoningSummaryTextDone,
     OpenAIResponseObjectStreamResponseReasoningTextDelta,
     OpenAIResponseObjectStreamResponseReasoningTextDone,
@@ -102,9 +98,7 @@ from llama_stack_api import (
     OpenAIResponseUsage,
     OpenAIResponseUsageInputTokensDetails,
     OpenAIResponseUsageOutputTokensDetails,
-    OpenAISystemMessageParam,
     OpenAIToolMessageParam,
-    OpenAIUserMessageParam,
     ResponseItemInclude,
     ResponseStreamOptions,
     ResponseTruncation,
@@ -124,6 +118,8 @@ from .utils import (
     convert_mcp_tool_choice,
     is_function_tool_call,
     run_guardrails,
+    should_summarize_reasoning,
+    summarize_reasoning,
 )
 
 logger = get_logger(name=__name__, category="agents::builtin")
@@ -631,20 +627,32 @@ class StreamingResponseOrchestrator:
                     )
                     output_messages.append(reasoning_item)
 
-                    if self._should_summarize_reasoning():
+                    if should_summarize_reasoning(self.reasoning):
                         reasoning_output_index = len(output_messages) - 1
+                        summary_mode = (
+                            self.reasoning.summary if self.reasoning and self.reasoning.summary else "concise"
+                        )
                         summary_text_parts: list[str] = []
-                        async for summary_event in self._summarize_reasoning(
-                            completion_result_data.reasoning_content,
-                            reasoning_item.id,
-                            reasoning_output_index,
+                        summary_usage_chunks: list[OpenAIChatCompletionChunk] = []
+                        async for summary_event in summarize_reasoning(
+                            inference_api=self.inference_api,
+                            model=self.ctx.model,
+                            reasoning_text=completion_result_data.reasoning_content,
+                            reasoning_item_id=reasoning_item.id,
+                            output_index=reasoning_output_index,
+                            summary_mode=summary_mode,
+                            start_sequence_number=self.sequence_number,
+                            usage_chunks=summary_usage_chunks,
                         ):
+                            self.sequence_number = summary_event.sequence_number
                             yield summary_event
                             if isinstance(
                                 summary_event,
                                 OpenAIResponseObjectStreamResponseReasoningSummaryTextDone,
                             ):
                                 summary_text_parts.append(summary_event.text)
+                        for usage_chunk in summary_usage_chunks:
+                            self._accumulate_chunk_usage(usage_chunk)
                         if summary_text_parts:
                             reasoning_item.summary = [
                                 OpenAIResponseOutputMessageReasoningSummary(text=t) for t in summary_text_parts
@@ -996,108 +1004,6 @@ class StreamingResponseOrchestrator:
             ),
             sequence_number=self.sequence_number,
         )
-
-    def _should_summarize_reasoning(self) -> bool:
-        """Check whether reasoning summaries were requested."""
-        return bool(self.reasoning and self.reasoning.summary)
-
-    def _build_summary_prompt(self, reasoning_text: str, summary_mode: str) -> str:
-        if summary_mode == "detailed":
-            return (
-                "Summarize the following chain-of-thought reasoning. "
-                "Preserve the key logical steps, decisions, and conclusions. "
-                "Be thorough but remove redundancy.\n\n"
-                f"Reasoning:\n{reasoning_text}"
-            )
-        return (
-            "Summarize the following chain-of-thought reasoning in one or two sentences. "
-            "Focus only on the final conclusion and the most important reasoning step.\n\n"
-            f"Reasoning:\n{reasoning_text}"
-        )
-
-    async def _summarize_reasoning(
-        self,
-        reasoning_text: str,
-        reasoning_item_id: str,
-        output_index: int,
-    ) -> AsyncIterator[OpenAIResponseObjectStream]:
-        """Make a second inference call to summarize reasoning content.
-
-        Streams summary events and yields them. Returns the final summary text
-        via the last yielded event (reasoning_summary_text.done).
-        """
-        summary_mode = self.reasoning.summary if self.reasoning and self.reasoning.summary else "concise"
-        prompt_text = self._build_summary_prompt(reasoning_text, summary_mode)
-
-        summary_params = OpenAIChatCompletionRequestWithExtraBody(
-            model=self.ctx.model,
-            messages=[
-                OpenAISystemMessageParam(
-                    content="You are a helpful assistant that summarizes reasoning traces.",
-                ),
-                OpenAIUserMessageParam(content=prompt_text),
-            ],
-            stream=True,
-            temperature=0.3,
-        )
-
-        try:
-            summary_result = await self.inference_api.openai_chat_completion(summary_params)
-        except Exception:
-            logger.exception("Failed to generate reasoning summary")
-            return
-
-        if not isinstance(summary_result, AsyncIterator):
-            return
-
-        summary_index = 0
-        summary_part_emitted = False
-        summary_text_accumulated: list[str] = []
-
-        async for chunk in summary_result:
-            for chunk_choice in chunk.choices:
-                if not chunk_choice.delta.content:
-                    continue
-
-                if not summary_part_emitted:
-                    summary_part_emitted = True
-                    self.sequence_number += 1
-                    yield OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded(
-                        item_id=reasoning_item_id,
-                        output_index=output_index,
-                        part=OpenAIResponseContentPartReasoningSummary(text=""),
-                        sequence_number=self.sequence_number,
-                        summary_index=summary_index,
-                    )
-
-                self.sequence_number += 1
-                yield OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta(
-                    delta=chunk_choice.delta.content,
-                    item_id=reasoning_item_id,
-                    output_index=output_index,
-                    sequence_number=self.sequence_number,
-                    summary_index=summary_index,
-                )
-                summary_text_accumulated.append(chunk_choice.delta.content)
-
-        if summary_part_emitted:
-            final_summary_text = "".join(summary_text_accumulated)
-            self.sequence_number += 1
-            yield OpenAIResponseObjectStreamResponseReasoningSummaryTextDone(
-                text=final_summary_text,
-                item_id=reasoning_item_id,
-                output_index=output_index,
-                sequence_number=self.sequence_number,
-                summary_index=summary_index,
-            )
-            self.sequence_number += 1
-            yield OpenAIResponseObjectStreamResponseReasoningSummaryPartDone(
-                item_id=reasoning_item_id,
-                output_index=output_index,
-                part=OpenAIResponseContentPartReasoningSummary(text=final_summary_text),
-                sequence_number=self.sequence_number,
-                summary_index=summary_index,
-            )
 
     async def _process_streaming_chunks(
         self, completion_result, output_messages: list[OpenAIResponseOutput]

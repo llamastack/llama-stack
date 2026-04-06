@@ -142,3 +142,177 @@ def test_reasoning_multi_turn_passthrough(client_with_models, text_model_id):
     assert resp2.output, "Expected non-empty output in turn 2"
     message_items = [item for item in resp2.output if _get_attr(item, "type") == "message"]
     assert len(message_items) > 0, "Expected a message in turn 2 output"
+
+
+# ---------------------------------------------------------------------------
+# Reasoning summary integration tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("summary_mode", ["concise", "detailed", "auto"])
+def test_reasoning_summary_streaming(client_with_models, text_model_id, summary_mode):
+    """Test that reasoning summary events are emitted when summary is requested in streaming mode."""
+
+    skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
+
+    stream = client_with_models.responses.create(
+        model=text_model_id,
+        input="What is 2 + 2? Think step by step.",
+        stream=True,
+        reasoning={"effort": "high", "summary": summary_mode},
+    )
+
+    chunks = list(stream)
+    event_types = [chunk.type for chunk in chunks]
+
+    validator = StreamingValidator(chunks)
+    validator.assert_basic_event_sequence()
+    validator.assert_response_consistency()
+
+    reasoning_text_done = [c for c in chunks if c.type == "response.reasoning_text.done"]
+    assert len(reasoning_text_done) > 0, f"Expected reasoning text events before summary, got types: {event_types}"
+
+    summary_part_added = [c for c in chunks if c.type == "response.reasoning_summary_part.added"]
+    summary_text_delta = [c for c in chunks if c.type == "response.reasoning_summary_text.delta"]
+    summary_text_done = [c for c in chunks if c.type == "response.reasoning_summary_text.done"]
+    summary_part_done = [c for c in chunks if c.type == "response.reasoning_summary_part.done"]
+
+    assert len(summary_part_added) > 0, f"Expected reasoning_summary_part.added events, got types: {event_types}"
+    assert len(summary_text_delta) > 0, f"Expected reasoning_summary_text.delta events, got types: {event_types}"
+    assert len(summary_text_done) > 0, f"Expected reasoning_summary_text.done events, got types: {event_types}"
+    assert len(summary_part_done) > 0, f"Expected reasoning_summary_part.done events, got types: {event_types}"
+
+    final_text = summary_text_done[-1].text
+    assert len(final_text) > 0, "Summary text should not be empty"
+
+    accumulated_deltas = "".join(c.delta for c in summary_text_delta)
+    assert accumulated_deltas == final_text, "Concatenated summary deltas should equal the final summary text"
+
+
+def test_reasoning_summary_non_streaming(client_with_models, text_model_id):
+    """Test that reasoning summary appears in non-streaming response output."""
+
+    skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
+
+    response = client_with_models.responses.create(
+        model=text_model_id,
+        input="What is 2 + 2? Think step by step.",
+        reasoning={"effort": "medium", "summary": "concise"},
+        stream=False,
+    )
+
+    reasoning_items = [item for item in response.output if _get_attr(item, "type") == "reasoning"]
+    assert len(reasoning_items) > 0, "Expected reasoning items in output"
+
+    reasoning_item = reasoning_items[0]
+    summary = _get_attr(reasoning_item, "summary")
+    assert summary is not None, "Reasoning item should have a summary when summary is requested"
+    assert len(summary) > 0, "Summary list should not be empty"
+
+    summary_entry = summary[0]
+    summary_text = _get_attr(summary_entry, "text", "")
+    assert len(summary_text) > 0, "Summary text should not be empty"
+
+
+def test_reasoning_summary_event_ordering(client_with_models, text_model_id):
+    """Test that summary events appear after reasoning text events in the stream."""
+
+    skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
+
+    stream = client_with_models.responses.create(
+        model=text_model_id,
+        input="What is 2 + 2? Think step by step.",
+        stream=True,
+        reasoning={"effort": "high", "summary": "concise"},
+    )
+
+    chunks = list(stream)
+    event_types = [chunk.type for chunk in chunks]
+
+    last_reasoning_done_idx = None
+    first_summary_idx = None
+    for i, t in enumerate(event_types):
+        if t == "response.reasoning_text.done":
+            last_reasoning_done_idx = i
+        if t == "response.reasoning_summary_part.added" and first_summary_idx is None:
+            first_summary_idx = i
+
+    assert last_reasoning_done_idx is not None, "Expected reasoning_text.done events"
+    assert first_summary_idx is not None, f"Expected summary events, got types: {event_types}"
+    assert first_summary_idx > last_reasoning_done_idx, "Summary events should appear after all reasoning text events"
+
+
+def test_reasoning_summary_sequence_numbers(client_with_models, text_model_id):
+    """Test that sequence numbers in summary events are strictly increasing."""
+
+    skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
+
+    stream = client_with_models.responses.create(
+        model=text_model_id,
+        input="What is 2 + 2? Think step by step.",
+        stream=True,
+        reasoning={"effort": "high", "summary": "concise"},
+    )
+
+    chunks = list(stream)
+
+    summary_events = [c for c in chunks if hasattr(c, "type") and "reasoning_summary" in c.type]
+    assert len(summary_events) > 0, "Expected summary streaming events"
+
+    seq_nums = [c.sequence_number for c in summary_events]
+    for i in range(1, len(seq_nums)):
+        assert seq_nums[i] > seq_nums[i - 1], f"Summary sequence numbers must be strictly increasing: {seq_nums}"
+
+
+def test_reasoning_no_summary_without_request(client_with_models, text_model_id):
+    """Verify that no summary events are emitted when summary is not requested."""
+
+    skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
+
+    stream = client_with_models.responses.create(
+        model=text_model_id,
+        input="What is 2 + 2? Think step by step.",
+        stream=True,
+        reasoning={"effort": "high"},
+    )
+
+    chunks = list(stream)
+    summary_events = [c for c in chunks if hasattr(c, "type") and "reasoning_summary" in c.type]
+    assert len(summary_events) == 0, (
+        f"Expected no summary events when summary not requested, got: {[c.type for c in summary_events]}"
+    )
+
+
+def test_reasoning_summary_usage_included(client_with_models, text_model_id):
+    """Test that token usage in the final response accounts for the summary inference call."""
+
+    skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
+
+    response_without = client_with_models.responses.create(
+        model=text_model_id,
+        input="What is 2 + 2? Think step by step.",
+        reasoning={"effort": "medium"},
+        stream=False,
+    )
+
+    response_with = client_with_models.responses.create(
+        model=text_model_id,
+        input="What is 2 + 2? Think step by step.",
+        reasoning={"effort": "medium", "summary": "concise"},
+        stream=False,
+    )
+
+    usage_without = _get_attr(response_without, "usage")
+    usage_with = _get_attr(response_with, "usage")
+
+    assert usage_with is not None, "Response with summary should have usage data"
+    assert usage_without is not None, "Response without summary should have usage data"
+
+    total_with = _get_attr(usage_with, "total_tokens", 0)
+    total_without = _get_attr(usage_without, "total_tokens", 0)
+
+    assert total_with > total_without, (
+        f"Total tokens with summary ({total_with}) should exceed "
+        f"total tokens without summary ({total_without}) due to the "
+        f"second inference call"
+    )

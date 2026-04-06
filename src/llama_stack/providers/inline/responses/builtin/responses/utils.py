@@ -9,15 +9,19 @@ import base64
 import mimetypes
 import re
 import uuid
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
 
+from llama_stack.log import get_logger
 from llama_stack.providers.inline.responses.builtin.responses.types import AssistantMessageWithReasoning
 from llama_stack_api import (
     Files,
+    Inference,
     OpenAIAssistantMessageParam,
+    OpenAIChatCompletionChunk,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartParam,
     OpenAIChatCompletionContentPartTextParam,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChoice,
@@ -28,6 +32,7 @@ from llama_stack_api import (
     OpenAIJSONSchema,
     OpenAIMessageParam,
     OpenAIResponseAnnotationFileCitation,
+    OpenAIResponseContentPartReasoningSummary,
     OpenAIResponseFormatJSONObject,
     OpenAIResponseFormatJSONSchema,
     OpenAIResponseFormatParam,
@@ -42,6 +47,11 @@ from llama_stack_api import (
     OpenAIResponseMCPApprovalRequest,
     OpenAIResponseMCPApprovalResponse,
     OpenAIResponseMessage,
+    OpenAIResponseObjectStream,
+    OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded,
+    OpenAIResponseObjectStreamResponseReasoningSummaryPartDone,
+    OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta,
+    OpenAIResponseObjectStreamResponseReasoningSummaryTextDone,
     OpenAIResponseOutputMessageContent,
     OpenAIResponseOutputMessageContentOutputText,
     OpenAIResponseOutputMessageFileSearchToolCall,
@@ -50,6 +60,7 @@ from llama_stack_api import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseOutputMessageReasoningItem,
     OpenAIResponseOutputMessageWebSearchToolCall,
+    OpenAIResponseReasoning,
     OpenAIResponseText,
     OpenAISystemMessageParam,
     OpenAIToolMessageParam,
@@ -628,3 +639,133 @@ def convert_mcp_tool_choice(
         ]
         return matching_tools
     return []
+
+
+logger = get_logger("llama_stack.providers.inline.responses.builtin.responses.utils", category="agents::builtin")
+
+
+def should_summarize_reasoning(reasoning: OpenAIResponseReasoning | None) -> bool:
+    """Check whether reasoning summaries were requested."""
+    return bool(reasoning and reasoning.summary)
+
+
+def build_summary_prompt(reasoning_text: str, summary_mode: str) -> str:
+    """Build the prompt for the reasoning summarization inference call.
+
+    "concise" targets a 1-2 sentence distillation — enough for a log line or
+    tooltip without scrolling through the full chain-of-thought.
+    "detailed" preserves the logical skeleton so developers can audit *why*
+    the model reached its conclusion without reading raw stream-of-consciousness.
+    """
+    if summary_mode == "detailed":
+        return (
+            "Summarize the following chain-of-thought reasoning. "
+            "Preserve the key logical steps, decisions, and conclusions. "
+            "Be thorough but remove redundancy.\n\n"
+            f"Reasoning:\n{reasoning_text}"
+        )
+    return (
+        "Summarize the following chain-of-thought reasoning in one or two sentences. "
+        "Focus only on the final conclusion and the most important reasoning step.\n\n"
+        f"Reasoning:\n{reasoning_text}"
+    )
+
+
+async def summarize_reasoning(
+    inference_api: Inference,
+    model: str,
+    reasoning_text: str,
+    reasoning_item_id: str,
+    output_index: int,
+    summary_mode: str,
+    start_sequence_number: int,
+    usage_chunks: list[OpenAIChatCompletionChunk] | None = None,
+) -> AsyncIterator[OpenAIResponseObjectStream]:
+    """Make a second inference call to summarize reasoning content.
+
+    Yields streaming summary events with properly sequenced sequence_numbers.
+    The caller should update its own sequence_number by reading the last
+    yielded event's sequence_number.
+
+    If ``usage_chunks`` is provided, raw streaming chunks that carry usage
+    data are appended to it so the caller can fold them into the response
+    usage totals.
+    """
+    prompt_text = build_summary_prompt(reasoning_text, summary_mode)
+
+    # Low temperature to produce faithful, deterministic summaries rather than
+    # creative reinterpretations of the reasoning trace.
+    summary_params = OpenAIChatCompletionRequestWithExtraBody(
+        model=model,
+        messages=[
+            OpenAISystemMessageParam(
+                content="You are a helpful assistant that summarizes reasoning traces.",
+            ),
+            OpenAIUserMessageParam(content=prompt_text),
+        ],
+        stream=True,
+        stream_options={"include_usage": True},
+        temperature=0.3,
+    )
+
+    try:
+        summary_result = await inference_api.openai_chat_completion(summary_params)
+    except Exception:
+        logger.exception("Failed to generate reasoning summary")
+        raise
+
+    if not isinstance(summary_result, AsyncIterator):
+        return
+
+    seq = start_sequence_number
+    summary_index = 0
+    summary_part_emitted = False
+    summary_text_accumulated: list[str] = []
+
+    async for chunk in summary_result:
+        if usage_chunks is not None and chunk.usage:
+            usage_chunks.append(chunk)
+
+        for chunk_choice in chunk.choices:
+            if not chunk_choice.delta.content:
+                continue
+
+            if not summary_part_emitted:
+                summary_part_emitted = True
+                seq += 1
+                yield OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded(
+                    item_id=reasoning_item_id,
+                    output_index=output_index,
+                    part=OpenAIResponseContentPartReasoningSummary(text=""),
+                    sequence_number=seq,
+                    summary_index=summary_index,
+                )
+
+            seq += 1
+            yield OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta(
+                delta=chunk_choice.delta.content,
+                item_id=reasoning_item_id,
+                output_index=output_index,
+                sequence_number=seq,
+                summary_index=summary_index,
+            )
+            summary_text_accumulated.append(chunk_choice.delta.content)
+
+    if summary_part_emitted:
+        final_summary_text = "".join(summary_text_accumulated)
+        seq += 1
+        yield OpenAIResponseObjectStreamResponseReasoningSummaryTextDone(
+            text=final_summary_text,
+            item_id=reasoning_item_id,
+            output_index=output_index,
+            sequence_number=seq,
+            summary_index=summary_index,
+        )
+        seq += 1
+        yield OpenAIResponseObjectStreamResponseReasoningSummaryPartDone(
+            item_id=reasoning_item_id,
+            output_index=output_index,
+            part=OpenAIResponseContentPartReasoningSummary(text=final_summary_text),
+            sequence_number=seq,
+            summary_index=summary_index,
+        )

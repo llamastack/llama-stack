@@ -13,15 +13,31 @@ from llama_stack.providers.inline.responses.builtin.responses.streaming import (
     convert_tooldef_to_chat_tool,
 )
 from llama_stack.providers.inline.responses.builtin.responses.types import ChatCompletionContext, ToolContext
+from llama_stack.providers.inline.responses.builtin.responses.utils import (
+    build_summary_prompt,
+    should_summarize_reasoning,
+    summarize_reasoning,
+)
 from llama_stack_api import ToolDef
 from llama_stack_api.inference.models import (
     OpenAIAssistantMessageParam,
+    OpenAIChatCompletionChunk,
     OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
+    OpenAIChatCompletionUsage,
     OpenAIChoice,
+    OpenAIChoiceDelta,
+    OpenAIChunkChoice,
 )
-from llama_stack_api.openai_responses import OpenAIResponseInputToolMCP
+from llama_stack_api.openai_responses import (
+    OpenAIResponseInputToolMCP,
+    OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded,
+    OpenAIResponseObjectStreamResponseReasoningSummaryPartDone,
+    OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta,
+    OpenAIResponseObjectStreamResponseReasoningSummaryTextDone,
+    OpenAIResponseReasoning,
+)
 
 
 @pytest.fixture
@@ -405,3 +421,286 @@ class TestAllExecuted:
         assistant_msg = result_messages[2]
         assert isinstance(assistant_msg, OpenAIAssistantMessageParam)
         assert len(assistant_msg.tool_calls) == 2
+
+
+# ---------------------------------------------------------------------------
+# Reasoning summary tests
+# ---------------------------------------------------------------------------
+
+
+class TestShouldSummarizeReasoning:
+    def test_returns_false_when_reasoning_is_none(self):
+        assert should_summarize_reasoning(None) is False
+
+    def test_returns_true_for_concise(self):
+        reasoning = OpenAIResponseReasoning(summary="concise")
+        assert should_summarize_reasoning(reasoning) is True
+
+    def test_returns_true_for_detailed(self):
+        reasoning = OpenAIResponseReasoning(summary="detailed")
+        assert should_summarize_reasoning(reasoning) is True
+
+    def test_returns_true_for_auto(self):
+        reasoning = OpenAIResponseReasoning(summary="auto")
+        assert should_summarize_reasoning(reasoning) is True
+
+
+class TestBuildSummaryPrompt:
+    def test_concise_prompt_asks_for_short_summary(self):
+        prompt = build_summary_prompt("Some reasoning text", "concise")
+        assert "one or two sentences" in prompt
+        assert "Some reasoning text" in prompt
+
+    def test_detailed_prompt_preserves_logical_steps(self):
+        prompt = build_summary_prompt("Some reasoning text", "detailed")
+        assert "Preserve the key logical steps" in prompt
+        assert "Some reasoning text" in prompt
+
+    def test_auto_falls_through_to_concise(self):
+        prompt_auto = build_summary_prompt("text", "auto")
+        prompt_concise = build_summary_prompt("text", "concise")
+        assert prompt_auto == prompt_concise
+
+
+def _make_streaming_chunk(content: str) -> OpenAIChatCompletionChunk:
+    """Build a mock streaming chunk with a single delta containing content."""
+    return OpenAIChatCompletionChunk(
+        id="chunk_1",
+        choices=[
+            OpenAIChunkChoice(
+                index=0,
+                delta=OpenAIChoiceDelta(content=content),
+            )
+        ],
+        created=0,
+        model="test-model",
+        object="chat.completion.chunk",
+    )
+
+
+async def _to_async_iter(items):
+    """Convert a list into an async iterator."""
+    for item in items:
+        yield item
+
+
+class TestSummarizeReasoning:
+    async def test_emits_correct_event_sequence(self):
+        """Summary stream should emit: part_added, text_delta(s), text_done, part_done."""
+        mock_inference = AsyncMock()
+        mock_inference.openai_chat_completion.return_value = _to_async_iter(
+            [
+                _make_streaming_chunk("The answer"),
+                _make_streaming_chunk(" is 4."),
+            ]
+        )
+
+        events = []
+        async for event in summarize_reasoning(
+            inference_api=mock_inference,
+            model="test-model",
+            reasoning_text="Simple math.",
+            reasoning_item_id="rs_test123",
+            output_index=0,
+            summary_mode="concise",
+            start_sequence_number=10,
+        ):
+            events.append(event)
+
+        assert len(events) == 5
+        assert isinstance(events[0], OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded)
+        assert isinstance(events[1], OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta)
+        assert isinstance(events[2], OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta)
+        assert isinstance(events[3], OpenAIResponseObjectStreamResponseReasoningSummaryTextDone)
+        assert isinstance(events[4], OpenAIResponseObjectStreamResponseReasoningSummaryPartDone)
+
+    async def test_accumulates_text_across_deltas(self):
+        """Final text_done and part_done events should contain the full concatenated summary."""
+        mock_inference = AsyncMock()
+        mock_inference.openai_chat_completion.return_value = _to_async_iter(
+            [
+                _make_streaming_chunk("Hello"),
+                _make_streaming_chunk(" world"),
+                _make_streaming_chunk("!"),
+            ]
+        )
+
+        events = []
+        async for event in summarize_reasoning(
+            inference_api=mock_inference,
+            model="test-model",
+            reasoning_text="reasoning",
+            reasoning_item_id="rs_abc",
+            output_index=0,
+            summary_mode="concise",
+            start_sequence_number=0,
+        ):
+            events.append(event)
+
+        text_done = [e for e in events if isinstance(e, OpenAIResponseObjectStreamResponseReasoningSummaryTextDone)]
+        assert len(text_done) == 1
+        assert text_done[0].text == "Hello world!"
+
+        part_done = [e for e in events if isinstance(e, OpenAIResponseObjectStreamResponseReasoningSummaryPartDone)]
+        assert len(part_done) == 1
+        assert part_done[0].part.text == "Hello world!"
+
+    async def test_sequence_numbers_increment(self):
+        """Each event should have a strictly increasing sequence_number."""
+        mock_inference = AsyncMock()
+        mock_inference.openai_chat_completion.return_value = _to_async_iter(
+            [
+                _make_streaming_chunk("A"),
+                _make_streaming_chunk("B"),
+            ]
+        )
+
+        events = []
+        async for event in summarize_reasoning(
+            inference_api=mock_inference,
+            model="test-model",
+            reasoning_text="reasoning",
+            reasoning_item_id="rs_seq",
+            output_index=0,
+            summary_mode="concise",
+            start_sequence_number=5,
+        ):
+            events.append(event)
+
+        seq_numbers = [e.sequence_number for e in events]
+        assert seq_numbers == [6, 7, 8, 9, 10]
+
+    async def test_propagates_item_id_and_output_index(self):
+        """All events should carry the correct item_id and output_index."""
+        mock_inference = AsyncMock()
+        mock_inference.openai_chat_completion.return_value = _to_async_iter(
+            [
+                _make_streaming_chunk("summary"),
+            ]
+        )
+
+        events = []
+        async for event in summarize_reasoning(
+            inference_api=mock_inference,
+            model="test-model",
+            reasoning_text="reasoning",
+            reasoning_item_id="rs_myid",
+            output_index=3,
+            summary_mode="detailed",
+            start_sequence_number=0,
+        ):
+            events.append(event)
+
+        for event in events:
+            assert event.item_id == "rs_myid"
+            assert event.output_index == 3
+
+    async def test_inference_failure_raises(self):
+        """If the inference call raises, the error should propagate to the caller."""
+        mock_inference = AsyncMock()
+        mock_inference.openai_chat_completion.side_effect = RuntimeError("provider down")
+
+        with pytest.raises(RuntimeError, match="provider down"):
+            async for _ in summarize_reasoning(
+                inference_api=mock_inference,
+                model="test-model",
+                reasoning_text="reasoning",
+                reasoning_item_id="rs_fail",
+                output_index=0,
+                summary_mode="concise",
+                start_sequence_number=0,
+            ):
+                pass
+
+    async def test_empty_stream_yields_nothing(self):
+        """If the provider returns empty chunks, no events should be yielded."""
+        mock_inference = AsyncMock()
+        empty_chunk = OpenAIChatCompletionChunk(
+            id="chunk_empty",
+            choices=[
+                OpenAIChunkChoice(
+                    index=0,
+                    delta=OpenAIChoiceDelta(content=None),
+                )
+            ],
+            created=0,
+            model="test-model",
+            object="chat.completion.chunk",
+        )
+        mock_inference.openai_chat_completion.return_value = _to_async_iter([empty_chunk])
+
+        events = []
+        async for event in summarize_reasoning(
+            inference_api=mock_inference,
+            model="test-model",
+            reasoning_text="reasoning",
+            reasoning_item_id="rs_empty",
+            output_index=0,
+            summary_mode="concise",
+            start_sequence_number=0,
+        ):
+            events.append(event)
+
+        assert events == []
+
+    async def test_non_streaming_response_yields_nothing(self):
+        """If the inference API returns a non-streaming response, no events should be yielded."""
+        mock_inference = AsyncMock()
+        mock_inference.openai_chat_completion.return_value = MagicMock()  # not an AsyncIterator
+
+        events = []
+        async for event in summarize_reasoning(
+            inference_api=mock_inference,
+            model="test-model",
+            reasoning_text="reasoning",
+            reasoning_item_id="rs_nonstream",
+            output_index=0,
+            summary_mode="concise",
+            start_sequence_number=0,
+        ):
+            events.append(event)
+
+        assert events == []
+
+    async def test_usage_chunks_collected(self):
+        """Chunks with usage data should be appended to the usage_chunks list."""
+        usage_data = OpenAIChatCompletionUsage(
+            prompt_tokens=10,
+            completion_tokens=5,
+            total_tokens=15,
+        )
+
+        chunk_with_usage = OpenAIChatCompletionChunk(
+            id="chunk_u",
+            choices=[
+                OpenAIChunkChoice(
+                    index=0,
+                    delta=OpenAIChoiceDelta(content="summary"),
+                )
+            ],
+            created=0,
+            model="test-model",
+            object="chat.completion.chunk",
+            usage=usage_data,
+        )
+
+        mock_inference = AsyncMock()
+        mock_inference.openai_chat_completion.return_value = _to_async_iter([chunk_with_usage])
+
+        usage_chunks: list = []
+        events = []
+        async for event in summarize_reasoning(
+            inference_api=mock_inference,
+            model="test-model",
+            reasoning_text="reasoning",
+            reasoning_item_id="rs_usage",
+            output_index=0,
+            summary_mode="concise",
+            start_sequence_number=0,
+            usage_chunks=usage_chunks,
+        ):
+            events.append(event)
+
+        assert len(usage_chunks) == 1
+        assert usage_chunks[0].usage.prompt_tokens == 10
+        assert usage_chunks[0].usage.completion_tokens == 5
