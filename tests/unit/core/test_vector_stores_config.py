@@ -7,7 +7,13 @@
 import pytest
 from pydantic import ValidationError
 
-from llama_stack.core.datatypes import QualifiedModel, RerankerModel, RewriteQueryParams, VectorStoresConfig
+from llama_stack.core.datatypes import (
+    ChunkRetrievalParams,
+    QualifiedModel,
+    RerankerModel,
+    RewriteQueryParams,
+    VectorStoresConfig,
+)
 
 
 class TestVectorStoresConfigValidation:
@@ -27,6 +33,23 @@ class TestVectorStoresConfigValidation:
         assert "file_search" in config.file_search_params.header_template.lower()
         assert "{chunk.content}" in config.context_prompt_params.chunk_annotation_template
         assert "{query}" in config.context_prompt_params.context_template
+
+    def test_default_search_mode_defaults_to_vector(self):
+        """Test that default_search_mode defaults to 'vector' for backward compatibility."""
+        config = VectorStoresConfig()
+        assert config.chunk_retrieval_params.default_search_mode == "vector"
+
+    def test_default_search_mode_can_be_set_to_hybrid(self):
+        """Test that default_search_mode can be configured to 'hybrid'."""
+        config = VectorStoresConfig(
+            chunk_retrieval_params=ChunkRetrievalParams(default_search_mode="hybrid"),
+        )
+        assert config.chunk_retrieval_params.default_search_mode == "hybrid"
+
+    def test_default_search_mode_can_be_set_to_keyword(self):
+        """Test that default_search_mode can be configured to 'keyword'."""
+        params = ChunkRetrievalParams(default_search_mode="keyword")
+        assert params.default_search_mode == "keyword"
 
     def test_template_validation_errors(self):
         """Test that templates fail validation for common errors."""

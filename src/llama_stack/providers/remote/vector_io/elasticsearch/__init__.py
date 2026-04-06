@@ -12,6 +12,6 @@ from .config import ElasticsearchVectorIOConfig
 async def get_adapter_impl(config: ElasticsearchVectorIOConfig, deps: dict[Api, ProviderSpec]):
     from .elasticsearch import ElasticsearchVectorIOAdapter
 
-    impl = ElasticsearchVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files))
+    impl = ElasticsearchVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files), deps.get(Api.file_processors))
     await impl.initialize()
     return impl
