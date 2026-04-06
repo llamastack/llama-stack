@@ -3260,7 +3260,9 @@ components:
         title: OpenAIResponseMCPApprovalResponse
       - $ref: '#/components/schemas/OpenAIResponseMessage'
         title: OpenAIResponseMessage
-      title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage
+      - $ref: '#/components/schemas/OpenAIResponseInputUnknown'
+        title: OpenAIResponseInputUnknown
+      title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
     OpenAIResponseInputToolFileSearch:
       properties:
         type:
@@ -3463,7 +3465,7 @@ components:
         tools:
           anyOf:
           - items:
-              oneOf:
+              anyOf:
               - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
                 title: OpenAIResponseInputToolWebSearch
               - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
@@ -3472,17 +3474,9 @@ components:
                 title: OpenAIResponseInputToolFunction
               - $ref: '#/components/schemas/OpenAIResponseToolMCP'
                 title: OpenAIResponseToolMCP
-              discriminator:
-                propertyName: type
-                mapping:
-                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
-                  mcp: '#/components/schemas/OpenAIResponseToolMCP'
-                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
+              - $ref: '#/components/schemas/OpenAIResponseInputToolCustom'
+                title: OpenAIResponseInputToolCustom
+              title: OpenAIResponseInputToolWebSearch | ... (5 variants)
             type: array
           - type: 'null'
         tool_choice:
@@ -3604,7 +3598,9 @@ components:
               title: OpenAIResponseMCPApprovalResponse
             - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
               title: OpenAIResponseMessage-Output
-            title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Output
+            - $ref: '#/components/schemas/OpenAIResponseInputUnknown'
+              title: OpenAIResponseInputUnknown
+            title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
           type: array
           title: Input
       required:
@@ -3687,20 +3683,18 @@ components:
             title: OpenAIResponseTextFormat
           - type: 'null'
           title: OpenAIResponseTextFormat
+        verbosity:
+          anyOf:
+          - type: string
+            enum:
+            - low
+            - medium
+            - high
+          - type: 'null'
       title: OpenAIResponseText
       description: Text response configuration for OpenAI responses.
     OpenAIResponseTool:
-      discriminator:
-        mapping:
-          file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-          function: '#/components/schemas/OpenAIResponseInputToolFunction'
-          mcp: '#/components/schemas/OpenAIResponseToolMCP'
-          web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-          web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-          web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-          web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-        propertyName: type
-      oneOf:
+      anyOf:
       - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
         title: OpenAIResponseInputToolWebSearch
       - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
@@ -3709,7 +3703,9 @@ components:
         title: OpenAIResponseInputToolFunction
       - $ref: '#/components/schemas/OpenAIResponseToolMCP'
         title: OpenAIResponseToolMCP
-      title: OpenAIResponseInputToolWebSearch | ... (4 variants)
+      - $ref: '#/components/schemas/OpenAIResponseInputToolCustom'
+        title: OpenAIResponseInputToolCustom
+      title: OpenAIResponseInputToolWebSearch | ... (5 variants)
     OpenAIResponseToolMCP:
       properties:
         type:
@@ -3768,17 +3764,7 @@ components:
       title: ResponseGuardrailSpec
       description: Specification for a guardrail to apply during response generation.
     OpenAIResponseInputTool:
-      discriminator:
-        mapping:
-          file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-          function: '#/components/schemas/OpenAIResponseInputToolFunction'
-          mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
-          web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-          web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-          web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-          web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-        propertyName: type
-      oneOf:
+      anyOf:
       - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
         title: OpenAIResponseInputToolWebSearch
       - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
@@ -3787,7 +3773,9 @@ components:
         title: OpenAIResponseInputToolFunction
       - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
         title: OpenAIResponseInputToolMCP
-      title: OpenAIResponseInputToolWebSearch | ... (4 variants)
+      - $ref: '#/components/schemas/OpenAIResponseInputToolCustom'
+        title: OpenAIResponseInputToolCustom
+      title: OpenAIResponseInputToolWebSearch | ... (5 variants)
     OpenAIResponseInputToolMCP:
       properties:
         type:
@@ -3955,7 +3943,7 @@ components:
         tools:
           anyOf:
           - items:
-              oneOf:
+              anyOf:
               - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
                 title: OpenAIResponseInputToolWebSearch
               - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
@@ -3964,17 +3952,9 @@ components:
                 title: OpenAIResponseInputToolFunction
               - $ref: '#/components/schemas/OpenAIResponseToolMCP'
                 title: OpenAIResponseToolMCP
-              discriminator:
-                propertyName: type
-                mapping:
-                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
-                  mcp: '#/components/schemas/OpenAIResponseToolMCP'
-                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
+              - $ref: '#/components/schemas/OpenAIResponseInputToolCustom'
+                title: OpenAIResponseInputToolCustom
+              title: OpenAIResponseInputToolWebSearch | ... (5 variants)
             type: array
           - type: 'null'
         tool_choice:
@@ -5274,7 +5254,9 @@ components:
               title: OpenAIResponseMCPApprovalResponse
             - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
               title: OpenAIResponseMessage-Output
-            title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Output
+            - $ref: '#/components/schemas/OpenAIResponseInputUnknown'
+              title: OpenAIResponseInputUnknown
+            title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
           type: array
           title: Data
         object:
@@ -7838,7 +7820,9 @@ components:
                 title: OpenAIResponseMCPApprovalResponse
               - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
                 title: OpenAIResponseMessage-Input
-              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Input
+              - $ref: '#/components/schemas/OpenAIResponseInputUnknown'
+                title: OpenAIResponseInputUnknown
+              title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
             type: array
             title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
           title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
@@ -7961,7 +7945,7 @@ components:
         tools:
           anyOf:
           - items:
-              oneOf:
+              anyOf:
               - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
                 title: OpenAIResponseInputToolWebSearch
               - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
@@ -7970,17 +7954,9 @@ components:
                 title: OpenAIResponseInputToolFunction
               - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
                 title: OpenAIResponseInputToolMCP
-              discriminator:
-                propertyName: type
-                mapping:
-                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
-                  mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
-                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
+              - $ref: '#/components/schemas/OpenAIResponseInputToolCustom'
+                title: OpenAIResponseInputToolCustom
+              title: OpenAIResponseInputToolWebSearch | ... (5 variants)
             type: array
           - type: 'null'
           description: List of tools available to the model.
@@ -8659,6 +8635,49 @@ components:
           default: web_search
       title: OpenAIResponseInputToolChoiceWebSearch
       description: Indicates that the model should use web search to generate a response
+    OpenAIResponseInputToolCustom:
+      properties:
+        type:
+          type: string
+          title: Type
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+      additionalProperties: true
+      required:
+      - type
+      title: OpenAIResponseInputToolCustom
+      description: |-
+        Catch-all tool configuration for non-standard tool types.
+
+        Accepts arbitrary fields for compatibility with custom tool definitions
+        from external clients (e.g., Codex sends ``local_shell``, ``tool_search``,
+        ``image_generation``, and ``custom`` tool types).
+    OpenAIResponseInputUnknown:
+      properties:
+        type:
+          type: string
+          title: Type
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+      additionalProperties: true
+      required:
+      - type
+      title: OpenAIResponseInputUnknown
+      description: |-
+        Catch-all for unrecognized input item types.
+
+        Accepts items with unknown ``type`` values (e.g. ``local_shell_call``,
+        ``custom_tool_call``, ``tool_search_call``) so that external clients like
+        Codex can pass their full conversation history through without validation
+        errors.  These items are forwarded to the upstream inference provider as-is.
     OpenAIResponseMessage-Input:
       properties:
         content:

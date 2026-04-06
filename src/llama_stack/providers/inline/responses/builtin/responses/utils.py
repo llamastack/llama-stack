@@ -39,6 +39,7 @@ from llama_stack_api import (
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
     OpenAIResponseInputTool,
+    OpenAIResponseInputUnknown,
     OpenAIResponseMCPApprovalRequest,
     OpenAIResponseMCPApprovalResponse,
     OpenAIResponseMessage,
@@ -393,6 +394,11 @@ async def convert_response_input_to_chat_messages(
                         continue
                 # Dynamic message type call - different message types have different content expectations
                 messages.append(message_type(content=content))  # type: ignore[call-arg,arg-type]
+            elif isinstance(input_item, OpenAIResponseInputUnknown):
+                # Unknown input types (e.g. local_shell_call, custom_tool_call) from
+                # external clients like Codex are silently skipped during chat conversion.
+                # These are client-side items that the model doesn't need to see.
+                pass
             else:
                 # Fail loudly on unknown types so future additions to
                 # OpenAIResponseInput don't silently drop data.
@@ -534,7 +540,7 @@ def is_function_tool_call(
     if not tool_call.function:
         return False
     for t in tools:
-        if t.type == "function" and t.name == tool_call.function.name:
+        if t.type == "function" and t.name == tool_call.function.name:  # type: ignore[union-attr]
             return True
     return False
 

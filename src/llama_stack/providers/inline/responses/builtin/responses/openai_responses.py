@@ -321,7 +321,7 @@ class OpenAIResponsesImpl:
                             )
                         )
                     else:
-                        all_input.extend(input)
+                        all_input.extend(input)  # type: ignore[arg-type]
                 else:
                     all_input = input
 
@@ -1248,7 +1248,7 @@ class OpenAIResponsesImpl:
                 OpenAIResponseMessage(role="user", content=[OpenAIResponseInputMessageContentText(text=input)])
             )
         elif isinstance(input, list):
-            conversation_items.extend(input)
+            conversation_items.extend(input)  # type: ignore[arg-type]
 
         conversation_items.extend(output_items)
 

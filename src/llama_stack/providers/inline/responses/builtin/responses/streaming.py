@@ -1527,8 +1527,13 @@ class StreamingResponseOrchestrator:
                 )
                 self.ctx.chat_tools.append(make_openai_tool(tool_name, file_search_tool_def))
             elif input_tool.type == "mcp":
-                async for stream_event in self._process_mcp_tool(input_tool, output_messages):
+                async for stream_event in self._process_mcp_tool(input_tool, output_messages):  # type: ignore[arg-type]
                     yield stream_event
+            elif input_tool.type in ("custom", "local_shell", "tool_search", "image_generation"):
+                # These tool types are client-side only (e.g., Codex local_shell,
+                # freeform/custom tools, tool_search) and don't need to be forwarded
+                # to the inference provider.
+                pass
             else:
                 raise ValueError(f"Llama Stack OpenAI Responses does not yet support tool type: {input_tool.type}")
 
