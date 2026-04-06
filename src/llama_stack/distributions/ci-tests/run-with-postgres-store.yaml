@@ -389,6 +389,7 @@ vector_stores:
     default_reranker_strategy: rrf
     rrf_impact_factor: 60.0
     weighted_search_alpha: 0.5
+    default_search_mode: vector
   file_batch_params:
     max_concurrent_files_per_batch: 3
     file_batch_chunk_size: 10
