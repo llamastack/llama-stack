@@ -14,6 +14,7 @@ from fastapi import UploadFile
 
 from llama_stack.providers.inline.file_processor.pypdf import PyPDFFileProcessorConfig
 from llama_stack.providers.inline.file_processor.pypdf.pypdf import PyPDFFileProcessor
+from llama_stack_api.common.errors import OpenAIFileObjectNotFoundError
 from llama_stack_api.vector_io import (
     VectorStoreChunkingStrategyAuto,
     VectorStoreChunkingStrategyStatic,
@@ -308,15 +309,15 @@ class TestPyPDFFileProcessor:
         with pytest.raises(ValueError, match="Cannot provide both file and file_id"):
             await processor.process_file(file=upload_file, file_id="test_id")
 
-    async def test_nonexistent_file_id_raises_value_error(self):
-        """Test that a non-existent file_id raises a clear ValueError."""
+    async def test_nonexistent_file_id_raises_error(self):
+        """Test that a non-existent file_id raises a clear error."""
         mock_files_api = AsyncMock()
-        mock_files_api.openai_retrieve_file.side_effect = ValueError("Could not find file with id 'nonexistent_id'")
+        mock_files_api.openai_retrieve_file.side_effect = OpenAIFileObjectNotFoundError("nonexistent_id")
 
         config = PyPDFFileProcessorConfig()
         processor = PyPDFFileProcessor(config, files_api=mock_files_api)
 
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(OpenAIFileObjectNotFoundError, match="not found"):
             await processor.process_file(file_id="nonexistent_id")
 
     async def test_minimal_pdf_processing(self, processor: PyPDFFileProcessor):
