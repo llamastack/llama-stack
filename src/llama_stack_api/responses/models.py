@@ -266,7 +266,7 @@ class ListResponseInputItemsRequest(BaseModel):
 class CompactResponseRequest(BaseModel):
     """Request model for compacting a conversation."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="allow")
 
     model: str = Field(..., description="The model to use for generating the compacted summary.")
     input: str | list[OpenAIResponseInput] | None = Field(default=None, description="Input message(s) to compact.")

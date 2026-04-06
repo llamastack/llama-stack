@@ -355,6 +355,61 @@ def create_app() -> StackApp:
 
     logger.debug("Serving APIs", apis=list(apis_to_serve))
 
+    # Decompress zstd-encoded request bodies (e.g. from Codex CLI)
+    # Must be a raw ASGI middleware to intercept the body before Starlette reads it
+    class ZstdDecompressionMiddleware:
+        def __init__(self, app: ASGIApp) -> None:
+            self.app = app
+
+        async def __call__(self, scope: Scope, receive: Receive, send: Send) -> Any:
+            if scope["type"] != "http":
+                return await self.app(scope, receive, send)
+
+            headers = dict(scope.get("headers", []))
+            content_encoding = headers.get(b"content-encoding", b"").decode().lower()
+
+            if content_encoding != "zstd":
+                return await self.app(scope, receive, send)
+
+            try:
+                import zstandard
+
+                # Collect the full request body
+                body_parts: list[bytes] = []
+                while True:
+                    message = await receive()
+                    body_parts.append(message.get("body", b""))
+                    if not message.get("more_body", False):
+                        break
+
+                compressed_body = b"".join(body_parts)
+                decompressor = zstandard.ZstdDecompressor()
+                decompressed_body = decompressor.decompress(compressed_body)
+
+                # Strip content-encoding header and update content-length
+                new_headers = [
+                    (k, v) for k, v in scope["headers"] if k.lower() not in (b"content-encoding", b"content-length")
+                ]
+                new_headers.append((b"content-length", str(len(decompressed_body)).encode()))
+                scope["headers"] = new_headers
+
+                # Feed the decompressed body back
+                body_sent = False
+
+                async def receive_decompressed() -> dict:  # type: ignore[type-arg]
+                    nonlocal body_sent
+                    if not body_sent:
+                        body_sent = True
+                        return {"type": "http.request", "body": decompressed_body, "more_body": False}
+                    return {"type": "http.disconnect"}
+
+                return await self.app(scope, receive_decompressed, send)
+            except Exception:
+                logger.warning("Failed to decompress zstd request body")
+                return await self.app(scope, receive, send)
+
+    app.add_middleware(ZstdDecompressionMiddleware)
+
     # Register specific exception handlers before the generic Exception handler
     # This prevents the re-raising behavior that causes connection resets
     app.exception_handler(RequestValidationError)(global_exception_handler)

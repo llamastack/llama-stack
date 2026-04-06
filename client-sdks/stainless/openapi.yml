@@ -11918,7 +11918,7 @@ components:
           - type: 'null'
           description: Configuration for text response generation. Accepted for compatibility but not used during compaction.
           title: OpenAIResponseText
-      additionalProperties: false
+      additionalProperties: true
       required:
       - model
       title: CompactResponseRequest
