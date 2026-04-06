@@ -31,8 +31,6 @@ log = get_logger(name=__name__, category="providers::file_processors")
 # Large enough to fit any reasonable document in one chunk
 SINGLE_CHUNK_WINDOW_TOKENS = 1_000_000
 
-UPLOAD_READ_CHUNK_BYTES = 64 * 1024
-
 
 class PyPDFFileProcessor:
     """PyPDF-based file processor for PDF documents."""
@@ -50,7 +48,6 @@ class PyPDFFileProcessor:
     ) -> ProcessFileResponse:
         """Process a file and return chunks. Supports PDF and text-based files."""
 
-        # Validate input
         if not file and not file_id:
             raise ValueError("Either file or file_id must be provided")
         if file and file_id:
@@ -58,38 +55,20 @@ class PyPDFFileProcessor:
 
         start_time = time.time()
 
-        # Get file content
+        # Upload size limits are enforced by the router layer (upload_safety.py).
+        # The provider trusts that `file` has already been bounded-read and
+        # `file_id` references a file accepted by the Files API.
         if file:
-            # Read file in chunks to enable early termination on oversized files
-            # This prevents reading gigabytes before discovering the file exceeds limits
-            # Note: Full content is still assembled in memory for PDF/text processing
-            content_parts = []
-            bytes_read = 0
-            while True:
-                chunk = await file.read(UPLOAD_READ_CHUNK_BYTES)
-                if not chunk:
-                    break
-                bytes_read += len(chunk)
-                if bytes_read > self.config.max_file_size_bytes:
-                    raise ValueError(f"File size exceeds maximum of {self.config.max_file_size_bytes} bytes")
-                content_parts.append(chunk)
-            content = b"".join(content_parts)
+            content = await file.read()
             filename = file.filename or f"{uuid.uuid4()}.pdf"
         elif file_id:
-            try:
-                file_info = await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
-            except Exception as e:
-                raise ValueError(f"File with id '{file_id}' not found") from e
+            file_info = await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
             filename = file_info.filename
 
             content_response = await self.files_api.openai_retrieve_file_content(
                 RetrieveFileContentRequest(file_id=file_id)
             )
             content = content_response.body
-            if len(content) > self.config.max_file_size_bytes:
-                raise ValueError(
-                    f"File size {len(content)} bytes exceeds maximum of {self.config.max_file_size_bytes} bytes"
-                )
 
         mime_type, _ = mimetypes.guess_type(filename)
         mime_category = mime_type.split("/")[0] if (mime_type and "/" in mime_type) else None
@@ -100,7 +79,7 @@ class PyPDFFileProcessor:
             return self._process_text(content, filename, file_id, chunking_strategy, start_time)
         else:
             # Attempt text decoding as a fallback for unknown types
-            log.warning(f"Unknown mime type '{mime_type}' for file '{filename}', attempting text extraction")
+            log.warning("Unknown mime type, attempting text extraction", mime_type=mime_type, filename=filename)
             return self._process_text(content, filename, file_id, chunking_strategy, start_time)
 
     def _process_pdf(
