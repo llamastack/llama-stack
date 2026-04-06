@@ -365,7 +365,7 @@ def create_app() -> StackApp:
             if scope["type"] != "http":
                 return await self.app(scope, receive, send)
 
-            headers = dict(scope.get("headers", []))
+            headers = {k.lower(): v for k, v in scope.get("headers", [])}
             content_encoding = headers.get(b"content-encoding", b"").decode().lower()
 
             if content_encoding != "zstd":
@@ -384,7 +384,10 @@ def create_app() -> StackApp:
 
                 compressed_body = b"".join(body_parts)
                 decompressor = zstandard.ZstdDecompressor()
-                decompressed_body = decompressor.decompress(compressed_body)
+                # Use streaming decompression to handle frames without content size
+                reader = decompressor.stream_reader(compressed_body)
+                decompressed_body = reader.read()
+                reader.close()
 
                 # Strip content-encoding header and update content-length
                 new_headers = [
@@ -393,7 +396,9 @@ def create_app() -> StackApp:
                 new_headers.append((b"content-length", str(len(decompressed_body)).encode()))
                 scope["headers"] = new_headers
 
-                # Feed the decompressed body back
+                # Feed the decompressed body back, then delegate to the
+                # original receive for disconnect detection so streaming
+                # responses stay alive until the client actually disconnects.
                 body_sent = False
 
                 async def receive_decompressed() -> dict:  # type: ignore[type-arg]
@@ -401,11 +406,11 @@ def create_app() -> StackApp:
                     if not body_sent:
                         body_sent = True
                         return {"type": "http.request", "body": decompressed_body, "more_body": False}
-                    return {"type": "http.disconnect"}
+                    return await receive()
 
                 return await self.app(scope, receive_decompressed, send)
-            except Exception:
-                logger.warning("Failed to decompress zstd request body")
+            except Exception as e:
+                logger.warning("Failed to decompress zstd request body", error=str(e))
                 return await self.app(scope, receive, send)
 
     app.add_middleware(ZstdDecompressionMiddleware)
