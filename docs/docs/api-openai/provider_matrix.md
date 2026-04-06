@@ -19,12 +19,12 @@ inference provider, based on integration test results.
 
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
-| azure | 102 | 102 | 0 | 84% |
-| bedrock | 27 | 27 | 0 | 22% |
+| azure | 102 | 102 | 0 | 80% |
+| bedrock | 33 | 33 | 0 | 26% |
 | ollama | 2 | 2 | 0 | 2% |
-| openai | 121 | 121 | 0 | 100% |
+| openai | 121 | 121 | 0 | 95% |
 | vllm | 3 | 3 | 0 | 2% |
-| watsonx | 56 | 56 | 0 | 46% |
+| watsonx | 56 | 56 | 0 | 44% |
 
 ## Provider Details
 
@@ -33,7 +33,7 @@ Models, endpoints, and versions used during test recordings.
 | Provider | Model(s) | Endpoint | Version Info |
 |----------|----------|----------|--------------|
 | azure | gpt-4o | llama-stack-test.openai.azure.com, lls-test.openai.azure.com | openai sdk: 2.5.0 |
-| bedrock | openai.gpt-oss-20b | bedrock-mantle.us-east-2.api.aws, bedrock-mantle.us-west-2.api.aws | openai sdk: 2.5.0 |
+| bedrock | openai.gpt-oss-20b | bedrock-mantle.us-east-2.api.aws, bedrock-mantle.us-west-2.api.aws | openai sdk: 2.5.0, vllm server: 0.14.0rc2.dev173+g13f6630a9 |
 | ollama | gpt-oss:20b | — | openai sdk: 2.5.0, vllm server: 0.9.2rc2.dev136+g0b382b53a.d20250924 |
 | openai | gpt-4o, o4-mini, text-embedding-3-small | api.openai.com | openai sdk: 2.5.0 |
 | vllm | Qwen/Qwen3-0.6B | — | openai sdk: 2.5.0, vllm server: 0.18.1rc1.dev197+g0e9358c11 |
@@ -150,7 +150,13 @@ Models, endpoints, and versions used during test recordings.
 | --- | --- | --- | --- | --- | --- | --- |
 | reasoning basic streaming | ✅ | ✅ | ⏭️ | ✅ | ✅ | ✅ |
 | reasoning multi turn passthrough | ⏭️ | ✅ | ✅ | ✅ | ✅ | ⏭️ |
+| reasoning no summary without request | ⏭️ | ✅ | ⏭️ | ⏭️ | ⏭️ | ⏭️ |
 | reasoning non streaming | ⏭️ | ✅ | ✅ | ✅ | ✅ | ⏭️ |
+| reasoning summary event ordering | ⏭️ | ✅ | ⏭️ | ⏭️ | ⏭️ | ⏭️ |
+| reasoning summary non streaming | ⏭️ | ✅ | ⏭️ | ⏭️ | ⏭️ | ⏭️ |
+| reasoning summary sequence numbers | ⏭️ | ✅ | ⏭️ | ⏭️ | ⏭️ | ⏭️ |
+| reasoning summary streaming | ⏭️ | ✅ | ⏭️ | ⏭️ | ⏭️ | ⏭️ |
+| reasoning summary usage included | ⏭️ | ✅ | ⏭️ | ⏭️ | ⏭️ | ⏭️ |
 
 ## Responses Access Control
 
