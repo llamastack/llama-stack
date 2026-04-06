@@ -7,9 +7,12 @@
 import asyncio
 import re
 import time
+from collections.abc import MutableMapping
+from typing import Any
 
 from opentelemetry import metrics
 from opentelemetry.metrics import Counter, Histogram, UpDownCounter
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from llama_stack.log import get_logger
 from llama_stack.telemetry.constants import (
@@ -55,8 +58,8 @@ class RouteInfo:
 
 
 def build_route_to_api_map(
-    router_factories: dict,
-    impls: dict,
+    router_factories: dict[str, Any],
+    impls: dict[Any, Any],
 ) -> dict[str, RouteInfo]:
     """Build a mapping from route path patterns to API and method names.
 
@@ -100,7 +103,7 @@ def build_route_to_api_map(
 
 def _compile_route_patterns(
     route_to_api: dict[str, RouteInfo],
-) -> list[tuple[re.Pattern, RouteInfo]]:
+) -> list[tuple[re.Pattern[str], RouteInfo]]:
     """Compile route path templates into regex patterns for matching.
 
     Keys are "HTTP_METHOD:/v1/models/{model_id}" format.
@@ -138,9 +141,9 @@ class RequestMetricsMiddleware:
     - llama_stack.concurrent_requests: up-down counter by api
     """
 
-    def __init__(self, app, route_to_api: dict[str, RouteInfo] | None = None):
+    def __init__(self, app: ASGIApp, route_to_api: dict[str, RouteInfo] | None = None) -> None:
         self.app = app
-        self._patterns = _compile_route_patterns(route_to_api or {})
+        self._patterns: list[tuple[re.Pattern[str], RouteInfo]] = _compile_route_patterns(route_to_api or {})
 
     def _resolve_route(self, http_method: str, path: str) -> RouteInfo:
         """Resolve HTTP method + path to RouteInfo using compiled route patterns."""
@@ -150,7 +153,7 @@ class RequestMetricsMiddleware:
                 return route_info
         return _UNKNOWN_ROUTE
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> Any:
         if scope.get("type") != "http":
             return await self.app(scope, receive, send)
 
@@ -164,7 +167,7 @@ class RequestMetricsMiddleware:
         base_attrs = {"api": route_info.api, "method": route_info.method}
         status_code = 500
 
-        async def send_wrapper(message):
+        async def send_wrapper(message: MutableMapping[str, Any]) -> None:
             nonlocal status_code
             if message.get("type") == "http.response.start":
                 status_code = message.get("status", 200)

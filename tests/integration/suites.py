@@ -278,6 +278,8 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         name="ollama-reasoning",
         roots=[
             "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_reasoning_passthrough",
+            "tests/integration/responses/test_reasoning.py::test_reasoning_non_streaming",
+            "tests/integration/responses/test_reasoning.py::test_reasoning_multi_turn_passthrough",
         ],
         default_setup="ollama-reasoning",
     ),

@@ -10,12 +10,14 @@ from typing import Any
 
 from pydantic import BaseModel, TypeAdapter
 
+from llama_stack.core.access_control.datatypes import AccessRule
 from llama_stack.core.conversations.validation import CONVERSATION_ID_PATTERN
-from llama_stack.core.datatypes import AccessRule, StackConfig
+from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
 from llama_stack.log import get_logger
 from llama_stack_api import (
+    Api,
     ConversationItemNotFoundError,
     ConversationNotFoundError,
     InvalidParameterError,
@@ -53,7 +55,7 @@ class ConversationServiceConfig(BaseModel):
     policy: list[AccessRule] = []
 
 
-async def get_provider_impl(config: ConversationServiceConfig, deps: dict[Any, Any]):
+async def get_provider_impl(config: ConversationServiceConfig, deps: dict[Api, Any]) -> "ConversationServiceImpl":
     """Get the conversation service implementation."""
     impl = ConversationServiceImpl(config, deps)
     await impl.initialize()
@@ -63,7 +65,7 @@ async def get_provider_impl(config: ConversationServiceConfig, deps: dict[Any, A
 class ConversationServiceImpl(Conversations):
     """Built-in conversation service implementation using AuthorizedSqlStore."""
 
-    def __init__(self, config: ConversationServiceConfig, deps: dict[Any, Any]):
+    def __init__(self, config: ConversationServiceConfig, deps: dict[Api, Any]):
         self.config = config
         self.deps = deps
         self.policy = config.policy
@@ -191,7 +193,7 @@ class ConversationServiceImpl(Conversations):
                 "Conversation ID must match format 'conv_' followed by 48 lowercase hex characters.",
             )
 
-    def _get_or_generate_item_id(self, item: ConversationItem, item_dict: dict) -> str:
+    def _get_or_generate_item_id(self, item: ConversationItem, item_dict: dict[str, Any]) -> str:
         """Get existing item ID or generate one if missing."""
         if item.id is None:
             random_bytes = secrets.token_bytes(24)
