@@ -87,10 +87,10 @@ class BuiltinMessagesImpl(Messages):
         self.inference_api = inference_api
 
     async def initialize(self) -> None:
-        pass
+        self._client = httpx.AsyncClient()
 
     async def shutdown(self) -> None:
-        pass
+        await self._client.aclose()
 
     async def create_message(
         self,
@@ -180,10 +180,9 @@ class BuiltinMessagesImpl(Messages):
         if request.stream:
             return self._passthrough_stream(url, headers, body)
 
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(url, json=body, headers=headers, timeout=300)
-            resp.raise_for_status()
-            return AnthropicMessageResponse(**resp.json())
+        resp = await self._client.post(url, json=body, headers=headers, timeout=300)
+        resp.raise_for_status()
+        return AnthropicMessageResponse(**resp.json())
 
     async def _passthrough_stream(
         self,
@@ -192,20 +191,19 @@ class BuiltinMessagesImpl(Messages):
         body: dict[str, Any],
     ) -> AsyncIterator[AnthropicStreamEvent]:
         """Stream SSE events directly from the provider."""
-        async with httpx.AsyncClient() as client:
-            async with client.stream("POST", url, json=body, headers=headers, timeout=300) as resp:
-                resp.raise_for_status()
-                event_type = None
-                async for line in resp.aiter_lines():
-                    line = line.strip()
-                    if line.startswith("event: "):
-                        event_type = line[7:]
-                    elif line.startswith("data: ") and event_type:
-                        data = json.loads(line[6:])
-                        event = self._parse_sse_event(event_type, data)
-                        if event:
-                            yield event
-                        event_type = None
+        async with self._client.stream("POST", url, json=body, headers=headers, timeout=300) as resp:
+            resp.raise_for_status()
+            event_type = None
+            async for line in resp.aiter_lines():
+                line = line.strip()
+                if line.startswith("event: "):
+                    event_type = line[7:]
+                elif line.startswith("data: ") and event_type:
+                    data = json.loads(line[6:])
+                    event = self._parse_sse_event(event_type, data)
+                    if event:
+                        yield event
+                    event_type = None
 
     def _parse_sse_event(self, event_type: str, data: dict[str, Any]) -> AnthropicStreamEvent | None:
         """Parse an Anthropic SSE event from its type and data."""
