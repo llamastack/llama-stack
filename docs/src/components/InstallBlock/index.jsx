@@ -4,7 +4,7 @@ import styles from './styles.module.css';
 const EXAMPLES = [
   {
     label: 'Local (Ollama)',
-    command: "uvx --from 'llama-stack[starter]' llama stack run starter",
+    command: "export OLLAMA_URL=http://your-ollama-url/v1\nuvx --from 'llama-stack[starter]' llama stack run starter",
     tokens: [
       { text: 'uvx', style: 'tokenBinary' },
       { text: '--from', style: 'tokenFlag' },
