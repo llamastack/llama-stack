@@ -7600,6 +7600,470 @@ components:
           - type: 'null'
       title: AllowedToolsFilter
       description: Filter configuration for restricting which MCP tools can be used.
+    AnthropicCountTokensRequest:
+      properties:
+        model:
+          type: string
+          title: Model
+          description: The model to use for token counting.
+        messages:
+          items:
+            $ref: '#/components/schemas/AnthropicMessage'
+          type: array
+          title: Messages
+          description: The messages to count tokens for.
+        system:
+          anyOf:
+          - type: string
+          - items:
+              $ref: '#/components/schemas/AnthropicTextBlock'
+            type: array
+            title: list[AnthropicTextBlock]
+          - type: 'null'
+          title: string | list[AnthropicTextBlock]
+          description: System prompt.
+        tools:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/AnthropicToolDef'
+            type: array
+          - type: 'null'
+          description: Tools to include in token count.
+      required:
+      - model
+      - messages
+      title: AnthropicCountTokensRequest
+      description: Request body for POST /v1/messages/count_tokens.
+    AnthropicCountTokensResponse:
+      properties:
+        input_tokens:
+          type: integer
+          title: Input Tokens
+      required:
+      - input_tokens
+      title: AnthropicCountTokensResponse
+      description: Response from POST /v1/messages/count_tokens.
+    AnthropicCreateMessageRequest:
+      properties:
+        model:
+          type: string
+          title: Model
+          description: The model to use for generation.
+        messages:
+          items:
+            $ref: '#/components/schemas/AnthropicMessage'
+          type: array
+          title: Messages
+          description: The messages in the conversation.
+        max_tokens:
+          type: integer
+          minimum: 1.0
+          title: Max Tokens
+          description: The maximum number of tokens to generate.
+        system:
+          anyOf:
+          - type: string
+          - items:
+              $ref: '#/components/schemas/AnthropicTextBlock'
+            type: array
+            title: list[AnthropicTextBlock]
+          - type: 'null'
+          title: string | list[AnthropicTextBlock]
+          description: System prompt. A string or list of text blocks.
+        tools:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/AnthropicToolDef'
+            type: array
+          - type: 'null'
+          description: Tools available to the model.
+        tool_choice:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Tool Choice
+          description: "How the model should select tools. One of: 'auto', 'any', 'none', or {type: 'tool', name: '...'}."
+        stream:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to stream the response.
+          default: false
+        temperature:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          description: Sampling temperature.
+        top_p:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          description: Nucleus sampling parameter.
+        top_k:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          description: Top-k sampling parameter.
+        stop_sequences:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: Custom stop sequences.
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          description: Request metadata.
+        thinking:
+          anyOf:
+          - $ref: '#/components/schemas/AnthropicThinkingConfig'
+            title: AnthropicThinkingConfig
+          - type: 'null'
+          description: Extended thinking configuration.
+          title: AnthropicThinkingConfig
+        service_tier:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Service tier to use.
+      additionalProperties: true
+      required:
+      - model
+      - messages
+      - max_tokens
+      title: AnthropicCreateMessageRequest
+      description: Request body for POST /v1/messages.
+    AnthropicImageBlock:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - image
+        source:
+          $ref: '#/components/schemas/AnthropicImageSource'
+      required:
+      - source
+      title: AnthropicImageBlock
+      description: An image content block.
+    AnthropicImageSource:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - base64
+        media_type:
+          type: string
+          title: Media Type
+          description: MIME type of the image (e.g. image/png).
+        data:
+          type: string
+          title: Data
+          description: Base64-encoded image data.
+      required:
+      - media_type
+      - data
+      title: AnthropicImageSource
+      description: Source for an image content block.
+    AnthropicMessage:
+      properties:
+        role:
+          type: string
+          enum:
+          - user
+          - assistant
+          title: Role
+        content:
+          anyOf:
+          - type: string
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/AnthropicTextBlock'
+                title: AnthropicTextBlock
+              - $ref: '#/components/schemas/AnthropicImageBlock'
+                title: AnthropicImageBlock
+              - $ref: '#/components/schemas/AnthropicToolUseBlock'
+                title: AnthropicToolUseBlock
+              - $ref: '#/components/schemas/AnthropicToolResultBlock-Input'
+                title: AnthropicToolResultBlock-Input
+              - $ref: '#/components/schemas/AnthropicThinkingBlock'
+                title: AnthropicThinkingBlock
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/AnthropicImageBlock'
+                  text: '#/components/schemas/AnthropicTextBlock'
+                  thinking: '#/components/schemas/AnthropicThinkingBlock'
+                  tool_result: '#/components/schemas/AnthropicToolResultBlock-Input'
+                  tool_use: '#/components/schemas/AnthropicToolUseBlock'
+              title: AnthropicTextBlock | ... (5 variants)
+            type: array
+            title: list[AnthropicTextBlock | AnthropicImageBlock | ...]
+          title: string | list[AnthropicTextBlock | AnthropicImageBlock | ...]
+          description: 'Message content: a string for simple text, or a list of content blocks.'
+      required:
+      - role
+      - content
+      title: AnthropicMessage
+      description: A message in the conversation.
+    AnthropicMessageResponse:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Unique message ID (msg_ prefix).
+        type:
+          type: string
+          title: Type
+          enum:
+          - message
+        role:
+          type: string
+          title: Role
+          enum:
+          - assistant
+        content:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/AnthropicTextBlock'
+              title: AnthropicTextBlock
+            - $ref: '#/components/schemas/AnthropicImageBlock'
+              title: AnthropicImageBlock
+            - $ref: '#/components/schemas/AnthropicToolUseBlock'
+              title: AnthropicToolUseBlock
+            - $ref: '#/components/schemas/AnthropicToolResultBlock-Output'
+              title: AnthropicToolResultBlock-Output
+            - $ref: '#/components/schemas/AnthropicThinkingBlock'
+              title: AnthropicThinkingBlock
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/AnthropicImageBlock'
+                text: '#/components/schemas/AnthropicTextBlock'
+                thinking: '#/components/schemas/AnthropicThinkingBlock'
+                tool_result: '#/components/schemas/AnthropicToolResultBlock-Output'
+                tool_use: '#/components/schemas/AnthropicToolUseBlock'
+            title: AnthropicTextBlock | ... (5 variants)
+          type: array
+          title: Content
+          description: Response content blocks.
+        model:
+          type: string
+          title: Model
+        stop_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: 'Why the model stopped: end_turn, stop_sequence, tool_use, or max_tokens.'
+        stop_sequence:
+          anyOf:
+          - type: string
+          - type: 'null'
+        usage:
+          $ref: '#/components/schemas/AnthropicUsage'
+      required:
+      - id
+      - content
+      - model
+      title: AnthropicMessageResponse
+      description: Response from POST /v1/messages (non-streaming).
+    AnthropicTextBlock:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - text
+        text:
+          type: string
+          title: Text
+      required:
+      - text
+      title: AnthropicTextBlock
+      description: A text content block.
+    AnthropicThinkingBlock:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - thinking
+        thinking:
+          type: string
+          title: Thinking
+          description: The model's thinking text.
+        signature:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Signature for the thinking block.
+      required:
+      - thinking
+      title: AnthropicThinkingBlock
+      description: A thinking content block (extended thinking).
+    AnthropicThinkingConfig:
+      properties:
+        type:
+          type: string
+          enum:
+          - enabled
+          - disabled
+          - adaptive
+          title: Type
+          default: enabled
+        budget_tokens:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          description: Maximum tokens for thinking.
+      title: AnthropicThinkingConfig
+      description: Configuration for extended thinking.
+    AnthropicToolDef:
+      properties:
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+        input_schema:
+          additionalProperties: true
+          type: object
+          title: Input Schema
+          description: JSON Schema for the tool's input.
+      required:
+      - name
+      - input_schema
+      title: AnthropicToolDef
+      description: Definition of a tool available to the model.
+    AnthropicToolResultBlock-Input:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - tool_result
+        tool_use_id:
+          type: string
+          title: Tool Use Id
+          description: The ID of the tool_use block this result corresponds to.
+        content:
+          anyOf:
+          - type: string
+          - items:
+              anyOf:
+              - $ref: '#/components/schemas/AnthropicTextBlock'
+                title: AnthropicTextBlock
+              - $ref: '#/components/schemas/AnthropicImageBlock'
+                title: AnthropicImageBlock
+              title: AnthropicTextBlock | AnthropicImageBlock
+            type: array
+            title: list[AnthropicTextBlock | AnthropicImageBlock]
+          title: string | list[AnthropicTextBlock | AnthropicImageBlock]
+          description: The result content.
+          default: ''
+        is_error:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether the tool call resulted in an error.
+      required:
+      - tool_use_id
+      title: AnthropicToolResultBlock
+      description: A tool result content block in a user message.
+    AnthropicToolResultBlock-Output:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - tool_result
+        tool_use_id:
+          type: string
+          title: Tool Use Id
+          description: The ID of the tool_use block this result corresponds to.
+        content:
+          anyOf:
+          - type: string
+          - items:
+              anyOf:
+              - $ref: '#/components/schemas/AnthropicTextBlock'
+                title: AnthropicTextBlock
+              - $ref: '#/components/schemas/AnthropicImageBlock'
+                title: AnthropicImageBlock
+              title: AnthropicTextBlock | AnthropicImageBlock
+            type: array
+            title: list[AnthropicTextBlock | AnthropicImageBlock]
+          title: string | list[AnthropicTextBlock | AnthropicImageBlock]
+          description: The result content.
+          default: ''
+        is_error:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether the tool call resulted in an error.
+      required:
+      - tool_use_id
+      title: AnthropicToolResultBlock
+      description: A tool result content block in a user message.
+    AnthropicToolUseBlock:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - tool_use
+        id:
+          type: string
+          title: Id
+          description: Unique ID for this tool invocation.
+        name:
+          type: string
+          title: Name
+          description: Name of the tool being called.
+        input:
+          additionalProperties: true
+          type: object
+          title: Input
+          description: Tool input arguments.
+      required:
+      - id
+      - name
+      - input
+      title: AnthropicToolUseBlock
+      description: A tool use content block in an assistant message.
+    AnthropicUsage:
+      properties:
+        input_tokens:
+          type: integer
+          title: Input Tokens
+          default: 0
+        output_tokens:
+          type: integer
+          title: Output Tokens
+          default: 0
+        cache_creation_input_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
+        cache_read_input_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
+      title: AnthropicUsage
+      description: Token usage statistics.
     ApprovalFilter:
       properties:
         always:
@@ -9918,6 +10382,7 @@ components:
       - prompts
       - conversations
       - connectors
+      - messages
       - inspect
       - admin
       title: Api

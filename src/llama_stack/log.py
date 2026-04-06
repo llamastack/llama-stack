@@ -56,6 +56,7 @@ CATEGORIES = [
     "tests",
     "telemetry",
     "connectors",
+    "messages",
 ]
 UNCATEGORIZED = "uncategorized"
 

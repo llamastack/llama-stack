@@ -325,6 +325,25 @@ from .inference import (
     UserMessage,
 )
 from .inspect_api import Inspect
+from .messages import (
+    Messages,
+    AnthropicContentBlock,
+    AnthropicCountTokensRequest,
+    AnthropicCountTokensResponse,
+    AnthropicCreateMessageRequest,
+    AnthropicErrorResponse,
+    AnthropicImageBlock,
+    AnthropicImageSource,
+    AnthropicMessage,
+    AnthropicMessageResponse,
+    AnthropicTextBlock,
+    AnthropicThinkingBlock,
+    AnthropicThinkingConfig,
+    AnthropicToolDef,
+    AnthropicToolResultBlock,
+    AnthropicToolUseBlock,
+    AnthropicUsage,
+)
 from .models import (
     CommonModelFields,
     GetModelRequest,
@@ -1126,6 +1145,24 @@ __all__ = [
     "ViolationLevel",
     "WebSearchToolTypes",
     "WeightedRanker",
+    # Messages API
+    "Messages",
+    "AnthropicContentBlock",
+    "AnthropicCountTokensRequest",
+    "AnthropicCountTokensResponse",
+    "AnthropicCreateMessageRequest",
+    "AnthropicErrorResponse",
+    "AnthropicImageBlock",
+    "AnthropicImageSource",
+    "AnthropicMessage",
+    "AnthropicMessageResponse",
+    "AnthropicTextBlock",
+    "AnthropicThinkingBlock",
+    "AnthropicThinkingConfig",
+    "AnthropicToolDef",
+    "AnthropicToolResultBlock",
+    "AnthropicToolUseBlock",
+    "AnthropicUsage",
     # Validators
     "validate_embeddings_input_is_text",
     # helpers
