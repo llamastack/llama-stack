@@ -256,7 +256,7 @@ class BuiltinMessagesImpl(Messages):
         extra_body: dict[str, Any] = {}
         if request.top_k is not None:
             extra_body["top_k"] = request.top_k
-        if request.thinking is not None and request.thinking.type == "enabled":
+        if request.thinking is not None and request.thinking.type in ("enabled", "adaptive"):
             extra_body["thinking"] = {
                 "type": "enabled",
                 "budget_tokens": request.thinking.budget_tokens,

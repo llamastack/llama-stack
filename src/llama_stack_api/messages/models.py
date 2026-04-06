@@ -109,7 +109,7 @@ class AnthropicToolDef(BaseModel):
 class AnthropicThinkingConfig(BaseModel):
     """Configuration for extended thinking."""
 
-    type: Literal["enabled", "disabled"] = "enabled"
+    type: Literal["enabled", "disabled", "adaptive"] = "enabled"
     budget_tokens: int | None = Field(default=None, ge=1, description="Maximum tokens for thinking.")
 
 
