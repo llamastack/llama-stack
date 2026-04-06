@@ -254,11 +254,8 @@ class BuiltinMessagesImpl(Messages):
         extra_body: dict[str, Any] = {}
         if request.top_k is not None:
             extra_body["top_k"] = request.top_k
-        if request.thinking is not None and request.thinking.type in ("enabled", "adaptive"):
-            extra_body["thinking"] = {
-                "type": "enabled",
-                "budget_tokens": request.thinking.budget_tokens,
-            }
+        # Note: Anthropic's "thinking" parameter has no equivalent in the OpenAI
+        # chat completions API and is intentionally not forwarded.
 
         params = OpenAIChatCompletionRequestWithExtraBody(
             model=request.model,
@@ -314,17 +311,21 @@ class BuiltinMessagesImpl(Messages):
             if isinstance(block, AnthropicToolResultBlock):
                 # Flush accumulated text first
                 if text_parts:
-                    result.append({"role": "user", "content": text_parts if len(text_parts) > 1 else text_parts[0]})
+                    if len(text_parts) == 1 and text_parts[0].get("type") == "text":
+                        flush_content: str | list[dict[str, Any]] = text_parts[0]["text"]
+                    else:
+                        flush_content = text_parts
+                    result.append({"role": "user", "content": flush_content})
                     text_parts = []
                 # Tool results become separate tool messages
-                content = block.content
-                if isinstance(content, list):
-                    content = "\n".join(b.text for b in content if isinstance(b, AnthropicTextBlock))
+                tool_content = block.content
+                if isinstance(tool_content, list):
+                    tool_content = "\n".join(b.text for b in tool_content if isinstance(b, AnthropicTextBlock))
                 result.append(
                     {
                         "role": "tool",
                         "tool_call_id": block.tool_use_id,
-                        "content": content,
+                        "content": tool_content,
                     }
                 )
             elif isinstance(block, AnthropicTextBlock):
@@ -340,7 +341,12 @@ class BuiltinMessagesImpl(Messages):
                 )
 
         if text_parts:
-            result.append({"role": "user", "content": text_parts if len(text_parts) > 1 else text_parts[0]})
+            # OpenAI content must be a string or a list, never a single dict
+            if len(text_parts) == 1 and text_parts[0].get("type") == "text":
+                user_content: str | list[dict[str, Any]] = text_parts[0]["text"]
+            else:
+                user_content = text_parts
+            result.append({"role": "user", "content": user_content})
 
         return result if result else [{"role": "user", "content": ""}]
 

@@ -21,6 +21,7 @@ from fastapi import APIRouter, Body, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
+from llama_stack_api.common.errors import ModelNotFoundError
 from llama_stack_api.router_utils import standard_responses
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
@@ -149,6 +150,8 @@ def create_router(impl: Messages) -> APIRouter:
             result = await impl.create_message(params)
         except NotImplementedError as e:
             return _anthropic_error_response(501, str(e))
+        except ModelNotFoundError as e:
+            return _anthropic_error_response(404, str(e))
         except ValueError as e:
             return _anthropic_error_response(400, str(e))
         except HTTPException as e:
