@@ -142,27 +142,31 @@
     <!-- API endpoint groups -->
     <!-- OpenAI API -->
     <g transform="translate(237, 88)">
-      <rect width="186" height="72" rx="6" fill="#172554" stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.3"/>
-      <text x="93" y="16" text-anchor="middle" fill="#60a5fa" font-size="9" font-weight="600">OpenAI API</text>
-      <text x="93" y="32" text-anchor="middle" fill="#93c5fd" font-size="7.5">chat/completions, responses,</text>
-      <text x="93" y="44" text-anchor="middle" fill="#93c5fd" font-size="7.5">embeddings, moderations, files,</text>
-      <text x="93" y="56" text-anchor="middle" fill="#93c5fd" font-size="7.5">batches, vector_stores, models</text>
-      <text x="176" y="68" text-anchor="end" fill="#475569" font-size="7">9 endpoints</text>
+      <rect width="186" height="90" rx="6" fill="#172554" stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.3"/>
+      <text x="93" y="18" text-anchor="middle" fill="#60a5fa" font-size="9" font-weight="600">OpenAI API</text>
+      <line x1="20" y1="26" x2="166" y2="26" stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.15"/>
+      <text x="93" y="42" text-anchor="middle" fill="#93c5fd" font-size="7.5">chat/completions, responses,</text>
+      <text x="93" y="55" text-anchor="middle" fill="#93c5fd" font-size="7.5">embeddings, moderations, files,</text>
+      <text x="93" y="68" text-anchor="middle" fill="#93c5fd" font-size="7.5">batches, vector_stores, models</text>
+      <text x="176" y="84" text-anchor="end" fill="#475569" font-size="7">9 endpoints</text>
     </g>
 
     <!-- Anthropic API -->
-    <g transform="translate(237, 170)">
-      <rect width="186" height="44" rx="6" fill="#172554" stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.3"/>
-      <text x="93" y="16" text-anchor="middle" fill="#60a5fa" font-size="9" font-weight="600">Anthropic API</text>
-      <text x="93" y="32" text-anchor="middle" fill="#93c5fd" font-size="7.5">messages, count_tokens</text>
+    <g transform="translate(237, 190)">
+      <rect width="186" height="48" rx="6" fill="#172554" stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.3"/>
+      <text x="93" y="18" text-anchor="middle" fill="#60a5fa" font-size="9" font-weight="600">Anthropic API</text>
+      <line x1="20" y1="26" x2="166" y2="26" stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.15"/>
+      <text x="93" y="40" text-anchor="middle" fill="#93c5fd" font-size="7.5">messages</text>
     </g>
 
     <!-- Native APIs -->
-    <g transform="translate(237, 224)">
-      <rect width="186" height="56" rx="6" fill="#172554" stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.3"/>
-      <text x="93" y="16" text-anchor="middle" fill="#60a5fa" font-size="9" font-weight="600">Llama Stack Native</text>
-      <text x="93" y="32" text-anchor="middle" fill="#93c5fd" font-size="7.5">conversations, connectors,</text>
-      <text x="93" y="44" text-anchor="middle" fill="#93c5fd" font-size="7.5">tools, safety/run-shield</text>
+    <g transform="translate(237, 250)">
+      <rect width="186" height="72" rx="6" fill="#172554" stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.3"/>
+      <text x="93" y="18" text-anchor="middle" fill="#60a5fa" font-size="9" font-weight="600">Llama Stack Native</text>
+      <line x1="20" y1="26" x2="166" y2="26" stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.15"/>
+      <text x="93" y="42" text-anchor="middle" fill="#93c5fd" font-size="7.5">conversations, connectors,</text>
+      <text x="93" y="55" text-anchor="middle" fill="#93c5fd" font-size="7.5">tools, file_processors,</text>
+      <text x="93" y="68" text-anchor="middle" fill="#93c5fd" font-size="7.5">safety/run-shield</text>
     </g>
 
     <!-- Middleware -->
