@@ -194,13 +194,6 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Scoring',
-          collapsed: false,
-          items: [
-          ],
-        },
-        {
-          type: 'category',
           label: 'Files',
           collapsed: false,
           items: [
@@ -265,13 +258,6 @@ const sidebars: SidebarsConfig = {
         'building_applications/telemetry',
         'building_applications/safety',
         'building_applications/playground',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Advanced APIs',
-      collapsed: false,
-      items: [
       ],
     },
     {
