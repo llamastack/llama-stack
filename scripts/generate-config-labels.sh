@@ -24,8 +24,13 @@ if [ ! -d "$DISTRO_DIR" ]; then
     exit 1
 fi
 
+# Validate default config exists before processing
+if [ ! -f "$DISTRO_DIR/$DEFAULT_CONFIG" ]; then
+    echo "ERROR: Default config '$DEFAULT_CONFIG' not found in $DISTRO_DIR" >&2
+    exit 1
+fi
+
 CONFIG_LIST=""
-DEFAULT_CONFIG_FOUND=""
 
 # Process each YAML file (excluding build.yaml)
 for yaml_file in "$DISTRO_DIR"/*.yaml; do
@@ -54,20 +59,9 @@ for yaml_file in "$DISTRO_DIR"/*.yaml; do
         CONFIG_LIST="${CONFIG_LIST},${filename}"
     fi
 
-    # Check if this is the default config
-    if [ "$filename" = "$DEFAULT_CONFIG" ]; then
-        DEFAULT_CONFIG_FOUND="$filename"
-    fi
-
     echo "Generated label for: $filename (${encoded_size} bytes)" >&2
 done
 
-# Verify default config was found
-if [ -z "$DEFAULT_CONFIG_FOUND" ]; then
-    echo "WARNING: Default config '$DEFAULT_CONFIG' not found in distribution, using first config" >&2
-    # Use first config in the list as fallback
-    DEFAULT_CONFIG_FOUND=$(echo "$CONFIG_LIST" | cut -d',' -f1)
-fi
 
 # Output metadata labels (one per line)
 echo "--label"
@@ -75,7 +69,7 @@ echo "com.llamastack.distribution.name=${DISTRO_NAME}"
 echo "--label"
 echo "com.llamastack.distribution.version=${VERSION}"
 echo "--label"
-echo "com.llamastack.distribution.default-config=${DEFAULT_CONFIG_FOUND}"
+echo "com.llamastack.distribution.default-config=${DEFAULT_CONFIG}"
 echo "--label"
 echo "com.llamastack.distribution.configs=${CONFIG_LIST}"
 
