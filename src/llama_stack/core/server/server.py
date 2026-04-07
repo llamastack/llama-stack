@@ -25,6 +25,11 @@ from fastapi.responses import JSONResponse
 from openai import BadRequestError
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+try:
+    import zstandard
+except ImportError:
+    zstandard = None
+
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import (
     AuthenticationRequiredError,
@@ -382,7 +387,8 @@ def create_app() -> StackApp:
             compressed_body = b"".join(body_parts)
 
             try:
-                import zstandard
+                if zstandard is None:
+                    raise ImportError("zstandard library not available")
 
                 decompressor = zstandard.ZstdDecompressor()
                 # Use streaming decompression to handle frames without content size
@@ -411,7 +417,7 @@ def create_app() -> StackApp:
 
                 return await self.app(scope, receive_decompressed, send)
             except Exception as e:
-                logger.warning("Failed to decompress zstd request body", error=str(e))
+                logger.warning("Failed to decompress zstd request body, falling back to compressed data", error=str(e))
 
                 # Replay the original compressed body since decompression failed
                 body_sent = False
