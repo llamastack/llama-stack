@@ -213,8 +213,12 @@ build_image() {
         exit 1
     fi
 
-    # Determine version for labels (uses git describe or falls back to "dev")
-    local version=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
+    # Determine version for labels
+    local version
+    if ! version=$(git describe --tags --always --dirty 2>&1); then
+        echo "❌ Failed to determine version from git: $version"
+        exit 1
+    fi
 
     # Generate config labels (one per line, read into array)
     echo "Generating config labels for distribution: $DISTRO"
