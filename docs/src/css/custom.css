@@ -125,11 +125,18 @@ h3 {
 
 /* ========== NAVBAR ========== */
 .navbar {
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   padding: 0.15rem 0;
   transition: all 0.3s;
+}
+
+/* backdrop-filter on desktop only - it creates a containing block
+   that traps .navbar-sidebar (position: fixed) inside the 56px navbar */
+@media (min-width: 997px) {
+  .navbar {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
 }
 
 /* Gradient accent line at top of page */
