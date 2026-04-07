@@ -88,20 +88,25 @@ const Icons = {
   ),
 };
 
-const FEATURE_ICONS = [Icons.chat, Icons.zap, Icons.layers, Icons.database, Icons.shield, Icons.message, Icons.conversation, Icons.plug, Icons.file, Icons.stack, Icons.cpu];
+const OPENAI_ENDPOINTS = [
+  { icon: Icons.chat, label: 'Chat Completions', path: '/v1/chat/completions', desc: 'Chat and text completion endpoints' },
+  { icon: Icons.zap, label: 'Responses', path: '/v1/responses', desc: 'Agentic orchestration with tool calling and MCP' },
+  { icon: Icons.layers, label: 'Embeddings', path: '/v1/embeddings', desc: 'Text embeddings from any provider' },
+  { icon: Icons.database, label: 'Vector Stores', path: '/v1/vector_stores', desc: 'Document storage and semantic search' },
+  { icon: Icons.shield, label: 'Moderations', path: '/v1/moderations', desc: 'Content moderation and safety shields' },
+  { icon: Icons.file, label: 'Files', path: '/v1/files', desc: 'File upload, processing, and extraction' },
+  { icon: Icons.stack, label: 'Batches', path: '/v1/batches', desc: 'Async batch processing at scale' },
+  { icon: Icons.conversation, label: 'Conversations', path: '/v1/conversations', desc: 'Multi-turn conversation state and history' },
+  { icon: Icons.cpu, label: 'Models', path: '/v1/models', desc: 'Model discovery and management' },
+];
 
-const FEATURES = [
-  { label: 'Chat Completions', path: '/v1/chat/completions', desc: 'Standard OpenAI-compatible chat and completion endpoints' },
-  { label: 'Responses API', path: '/v1/responses', desc: 'Server-side agentic orchestration with tool calling and MCP' },
-  { label: 'Embeddings', path: '/v1/embeddings', desc: 'Text embeddings from any provider' },
-  { label: 'Vector Stores', path: '/v1/vector_stores', desc: 'Managed document storage and semantic search' },
-  { label: 'Moderations', path: '/v1/moderations', desc: 'Content moderation and safety with configurable shields' },
-  { label: 'Messages API', path: '/v1/messages', desc: 'Native Anthropic Messages API support' },
-  { label: 'Conversations', path: '/v1/conversations', desc: 'Multi-turn conversation state management and history' },
-  { label: 'Connectors', path: '/v1/connectors', desc: 'External connectors like MCP servers and tool integrations' },
-  { label: 'Files', path: '/v1/files', desc: 'File upload, processing, and content extraction' },
-  { label: 'Batches', path: '/v1/batches', desc: 'Async batch processing for large-scale workloads' },
-  { label: 'Models', path: '/v1/models', desc: 'Model discovery and management' },
+const ANTHROPIC_ENDPOINTS = [
+  { icon: Icons.message, label: 'Messages API', path: '/v1/messages', desc: 'Chat completions with native Anthropic format' },
+];
+
+const NATIVE_ENDPOINTS = [
+  { icon: Icons.plug, label: 'Connectors', path: '/v1/connectors', desc: 'External connectors like MCP servers' },
+  { icon: Icons.zap, label: 'Tools', path: '/v1/tools', desc: 'Tool discovery and runtime invocation' },
 ];
 
 const PROVIDERS = {
@@ -222,7 +227,7 @@ function Hero() {
             <span className={styles.gradient}>any model, anywhere</span>
           </h1>
           <p className={styles.subtitle}>
-            Drop-in replacement for the OpenAI API. Use any client, any framework,
+            OpenAI and Anthropic compatible API server. Use any client, any framework,
             any model. Swap providers without changing code.
           </p>
           <InstallBlock />
@@ -271,7 +276,7 @@ const STATS = [
   { value: '20+', label: 'Inference Providers' },
   { value: '11+', label: 'API Endpoints' },
   { value: '4', label: 'Client Languages' },
-  { value: '100%', label: 'OpenAI Compatible' },
+  { value: '100%', label: 'Open Source' },
 ];
 
 function StatsRibbon() {
@@ -291,26 +296,46 @@ function StatsRibbon() {
   );
 }
 
+function EndpointCard({endpoint}) {
+  return (
+    <div className={styles.card}>
+      <div className={styles.cardTop}>
+        <div className={styles.cardIcon}>{endpoint.icon}</div>
+        <code className={styles.path}>{endpoint.path}</code>
+      </div>
+      <h3>{endpoint.label}</h3>
+      <p>{endpoint.desc}</p>
+    </div>
+  );
+}
+
 function Endpoints() {
   return (
     <section className={styles.endpoints}>
       <div className="container">
         <div className={styles.sectionHead}>
-          <span className={styles.sectionTag}>API Surface</span>
+          <span className={styles.sectionTag}>OpenAI API</span>
           <h2>OpenAI-compatible endpoints</h2>
           <p>Use any OpenAI client library. Zero code changes.</p>
         </div>
         <div className={styles.grid}>
-          {FEATURES.map((f, i) => (
-            <div key={f.path} className={styles.card}>
-              <div className={styles.cardTop}>
-                <div className={styles.cardIcon}>{FEATURE_ICONS[i]}</div>
-                <code className={styles.path}>{f.path}</code>
-              </div>
-              <h3>{f.label}</h3>
-              <p>{f.desc}</p>
-            </div>
-          ))}
+          {OPENAI_ENDPOINTS.map(f => <EndpointCard key={f.path} endpoint={f} />)}
+        </div>
+        <div className={styles.sectionHead}>
+          <span className={styles.sectionTag}>Anthropic API</span>
+          <h2>Anthropic-compatible endpoint</h2>
+          <p>Use the Anthropic client library directly.</p>
+        </div>
+        <div className={styles.gridNative}>
+          {ANTHROPIC_ENDPOINTS.map(f => <EndpointCard key={f.path} endpoint={f} />)}
+        </div>
+        <div className={styles.sectionHead}>
+          <span className={styles.sectionTag}>Native APIs</span>
+          <h2>Llama Stack native APIs</h2>
+          <p>Additional endpoints beyond the OpenAI and Anthropic specs.</p>
+        </div>
+        <div className={styles.gridNative}>
+          {NATIVE_ENDPOINTS.map(f => <EndpointCard key={f.path} endpoint={f} />)}
         </div>
       </div>
     </section>

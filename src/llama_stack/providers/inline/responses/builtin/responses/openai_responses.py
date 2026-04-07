@@ -21,6 +21,7 @@ from llama_stack.core.task import (
     create_detached_background_task,
 )
 from llama_stack.log import get_logger
+from llama_stack.providers.inline.responses.builtin.config import CompactionConfig
 from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
     _OpenAIResponseObjectWithInputAndMessages,
@@ -144,8 +145,6 @@ class OpenAIResponsesImpl:
         self.prompts_api = prompts_api
         self.files_api = files_api
         self.connectors_api = connectors_api
-
-        from llama_stack.providers.inline.responses.builtin.config import CompactionConfig
 
         self.compaction_config = compaction_config or CompactionConfig()
         self._background_queue: asyncio.Queue[_BackgroundWorkItem] = asyncio.Queue(maxsize=BACKGROUND_QUEUE_MAX_SIZE)
