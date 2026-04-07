@@ -432,31 +432,31 @@ h3 {
   padding-left: 0.75rem;
 }
 
-/* Hide sidebar collapse/expand buttons */
-button[class*='collapseSidebarButton'],
-div[class*='expandButton'] {
-  display: none !important;
-}
-
-/* Hide all chevrons/arrows in sidebar */
-.menu__link--sublist-caret::after,
-.menu__caret::before,
-.menu__list-item-collapsible .menu__link--sublist::after {
-  display: none !important;
-}
-
-/* Prevent categories from collapsing - always expanded (desktop only) */
+/* Hide sidebar collapse/expand buttons (desktop doc sidebar only) */
 @media (min-width: 997px) {
-  .menu__list-item-collapsible {
+  button[class*='collapseSidebarButton'],
+  div[class*='expandButton'] {
+    display: none !important;
+  }
+
+  /* Hide all chevrons/arrows in doc sidebar */
+  .theme-doc-sidebar-container .menu__link--sublist-caret::after,
+  .theme-doc-sidebar-container .menu__caret::before,
+  .theme-doc-sidebar-container .menu__list-item-collapsible .menu__link--sublist::after {
+    display: none !important;
+  }
+
+  /* Prevent categories from collapsing - always expanded */
+  .theme-doc-sidebar-container .menu__list-item-collapsible {
     pointer-events: none;
   }
 
-  .menu__list-item-collapsible .menu__link {
+  .theme-doc-sidebar-container .menu__list-item-collapsible .menu__link {
     pointer-events: auto;
     cursor: default;
   }
 
-  .menu__list-item-collapsible + .menu__list {
+  .theme-doc-sidebar-container .menu__list-item-collapsible + .menu__list {
     display: block !important;
     height: auto !important;
     overflow: visible !important;
@@ -464,7 +464,7 @@ div[class*='expandButton'] {
   }
 
   /* But keep child links clickable */
-  .menu__list .menu__link:not(.menu__link--sublist) {
+  .theme-doc-sidebar-container .menu__list .menu__link:not(.menu__link--sublist) {
     pointer-events: auto;
     cursor: pointer;
   }
