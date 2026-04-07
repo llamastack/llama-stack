@@ -445,27 +445,29 @@ div[class*='expandButton'] {
   display: none !important;
 }
 
-/* Prevent categories from collapsing - always expanded */
-.menu__list-item-collapsible {
-  pointer-events: none;
-}
+/* Prevent categories from collapsing - always expanded (desktop only) */
+@media (min-width: 997px) {
+  .menu__list-item-collapsible {
+    pointer-events: none;
+  }
 
-.menu__list-item-collapsible .menu__link {
-  pointer-events: auto;
-  cursor: default;
-}
+  .menu__list-item-collapsible .menu__link {
+    pointer-events: auto;
+    cursor: default;
+  }
 
-.menu__list-item-collapsible + .menu__list {
-  display: block !important;
-  height: auto !important;
-  overflow: visible !important;
-  opacity: 1 !important;
-}
+  .menu__list-item-collapsible + .menu__list {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+  }
 
-/* But keep child links clickable */
-.menu__list .menu__link:not(.menu__link--sublist) {
-  pointer-events: auto;
-  cursor: pointer;
+  /* But keep child links clickable */
+  .menu__list .menu__link:not(.menu__link--sublist) {
+    pointer-events: auto;
+    cursor: pointer;
+  }
 }
 
 /* ========== CONTENT ========== */
