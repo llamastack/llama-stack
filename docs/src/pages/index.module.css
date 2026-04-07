@@ -622,6 +622,18 @@
   line-height: 1.5;
 }
 
+/* Sub-sections within endpoints area */
+.endpoints .sectionHead + .grid + .sectionHead,
+.endpoints .gridNative + .sectionHead {
+  margin-top: 4rem;
+}
+
+.gridNative {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
 /* ========== ARCHITECTURE ========== */
 .arch {
   padding: 5rem 0;
@@ -841,6 +853,7 @@
 
 @media (max-width: 900px) {
   .grid { grid-template-columns: repeat(2, 1fr); }
+  .gridNative { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 996px) {
@@ -856,6 +869,7 @@
   .subtitle { font-size: 1rem; }
   .actions { flex-direction: column; align-items: center; }
   .grid { grid-template-columns: 1fr; }
+  .gridNative { grid-template-columns: 1fr; }
   .links { grid-template-columns: 1fr; }
   .codeBlock { padding: 0 1rem 1rem; }
   .codeBlock code { font-size: 0.75rem; }
