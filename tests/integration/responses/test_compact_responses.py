@@ -23,17 +23,20 @@ class TestCompactResponses:
     Note: These tests use responses_client.post() instead of the native OpenAI
     client.responses.compact() method for several reasons:
 
-    1. Model name flexibility: OpenAI's compact() method has strict Literal typing
-       for model names, but our tests use dynamic model IDs (e.g. "azure/gpt-4o")
+    1. Raw response inspection: .post(cast_to=object) allows direct JSON access
+       to test specific response structure and field validation. The OpenAI
+       client's typed response would make dict-style access more complex.
 
-    2. Raw response inspection: .post(cast_to=object) allows direct JSON access
-       for comprehensive integration testing of response structure
+    2. HTTP layer testing: Tests the full request/response pipeline including
+       URL routing, serialization, and error handling at the HTTP level,
+       providing comprehensive integration coverage.
 
-    3. HTTP layer testing: Tests the full request/response pipeline including
-       URL routing, serialization, and error handling at the HTTP level
+    3. Implementation flexibility: Supports testing custom parameters during
+       active development without OpenAI client type constraints or changes
+       to method signatures that might not yet be available in the SDK.
 
-    4. Implementation flexibility: Supports testing custom parameters during
-       active development without OpenAI client type constraints
+    4. Compatibility: Ensures tests work with both OpenAI and LlamaStack clients,
+       while native client.responses.compact() is OpenAI-specific.
     """
 
     @pytest.fixture(autouse=True)
