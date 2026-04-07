@@ -371,18 +371,19 @@ def create_app() -> StackApp:
             if content_encoding != "zstd":
                 return await self.app(scope, receive, send)
 
+            # Collect the full request body first (needed for both success and fallback)
+            body_parts: list[bytes] = []
+            while True:
+                message = await receive()
+                body_parts.append(message.get("body", b""))
+                if not message.get("more_body", False):
+                    break
+
+            compressed_body = b"".join(body_parts)
+
             try:
                 import zstandard
 
-                # Collect the full request body
-                body_parts: list[bytes] = []
-                while True:
-                    message = await receive()
-                    body_parts.append(message.get("body", b""))
-                    if not message.get("more_body", False):
-                        break
-
-                compressed_body = b"".join(body_parts)
                 decompressor = zstandard.ZstdDecompressor()
                 # Use streaming decompression to handle frames without content size
                 reader = decompressor.stream_reader(compressed_body)
@@ -411,7 +412,18 @@ def create_app() -> StackApp:
                 return await self.app(scope, receive_decompressed, send)
             except Exception as e:
                 logger.warning("Failed to decompress zstd request body", error=str(e))
-                return await self.app(scope, receive, send)
+
+                # Replay the original compressed body since decompression failed
+                body_sent = False
+
+                async def receive_original() -> dict:  # type: ignore[type-arg]
+                    nonlocal body_sent
+                    if not body_sent:
+                        body_sent = True
+                        return {"type": "http.request", "body": compressed_body, "more_body": False}
+                    return await receive()
+
+                return await self.app(scope, receive_original, send)
 
     app.add_middleware(ZstdDecompressionMiddleware)
 

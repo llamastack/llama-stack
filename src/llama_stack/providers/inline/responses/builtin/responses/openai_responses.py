@@ -658,9 +658,9 @@ class OpenAIResponsesImpl:
         if background and store is False:
             raise ValueError("Cannot use 'background' with 'store=False'. Background responses must be stored.")
 
-        # Validate: reasoning.encrypted_content is not supported
-        if include and any(str(item) == "reasoning.encrypted_content" for item in include):
-            raise ValueError("reasoning.encrypted_content is not supported by Llama Stack.")
+        # Filter out unsupported include items instead of rejecting the request
+        if include:
+            include = [item for item in include if str(item) != "reasoning.encrypted_content"]
 
         # Validate MCP tools: ensure Authorization header is not passed via headers dict
         if tools:
@@ -731,6 +731,7 @@ class OpenAIResponsesImpl:
                 truncation=truncation,
                 presence_penalty=presence_penalty,
                 extra_body=extra_body,
+                context_management=context_management,
             )
 
         stream_gen = self._create_streaming_response(
@@ -846,6 +847,7 @@ class OpenAIResponsesImpl:
         truncation: ResponseTruncation | None = None,
         presence_penalty: float | None = None,
         extra_body: dict | None = None,
+        context_management: list | None = None,
     ) -> OpenAIResponseObject:
         """Create a response that processes in the background.
 
@@ -923,6 +925,7 @@ class OpenAIResponsesImpl:
                         truncation=truncation,
                         presence_penalty=presence_penalty,
                         extra_body=extra_body,
+                        context_management=context_management,
                     ),
                 )
             )
@@ -961,6 +964,7 @@ class OpenAIResponsesImpl:
         truncation: ResponseTruncation | None = None,
         presence_penalty: float | None = None,
         extra_body: dict | None = None,
+        context_management: list | None = None,
     ) -> None:
         """Inner loop for background response processing, separated for timeout wrapping."""
         # Check if response was cancelled before starting
@@ -1001,6 +1005,7 @@ class OpenAIResponsesImpl:
             response_id=response_id,
             presence_penalty=presence_penalty,
             extra_body=extra_body,
+            context_management=context_management,
         )
 
         result_response = None
@@ -1233,11 +1238,11 @@ class OpenAIResponsesImpl:
             else:
                 all_input = list(previous_response.input) + list(previous_response.output)
 
-            # Use stored messages for full conversation context when the caller also
-            # provides new input. In conversation= mode, .input only contains the last
-            # turn's items while .messages has the complete chat history. When input is
-            # None, .input + .output (set above) already captures the full context.
-            if previous_response.messages and input is not None:
+            # Use stored messages for full conversation context. In conversation= mode,
+            # .input only contains the last turn's items while .messages has the complete
+            # chat history. We need full history for both cases: when adding new input
+            # AND when compacting by previous_response_id only.
+            if previous_response.messages:
                 message_adapter = TypeAdapter(list[OpenAIMessageParam])
                 resolved_messages = message_adapter.validate_python(previous_response.messages)
         elif input is not None:
