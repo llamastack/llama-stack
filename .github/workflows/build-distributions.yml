@@ -104,7 +104,8 @@ jobs:
 
           # Generate config labels (one per line, read into array)
           echo "Generating config labels..."
-          mapfile -t LABEL_ARGS < <(bash scripts/generate-config-labels.sh "$DISTRO_NAME" "$IMAGE_TAG")
+          CONFIG_LABELS=$(bash scripts/generate-config-labels.sh "$DISTRO_NAME" "$IMAGE_TAG")
+          mapfile -t LABEL_ARGS <<< "$CONFIG_LABELS"
 
           # Build arguments
           BUILD_ARGS=(--build-arg "INSTALL_MODE=pypi" --build-arg "DISTRO_NAME=${DISTRO_NAME}")

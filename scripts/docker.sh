@@ -222,8 +222,13 @@ build_image() {
 
     # Generate config labels (one per line, read into array)
     echo "Generating config labels for distribution: $DISTRO"
+    local config_labels_output
+    if ! config_labels_output=$("$script_dir/generate-config-labels.sh" "$DISTRO" "$version"); then
+        echo "❌ Failed to generate config labels"
+        exit 1
+    fi
     local config_labels
-    mapfile -t config_labels < <("$script_dir/generate-config-labels.sh" "$DISTRO" "$version")
+    mapfile -t config_labels <<< "$config_labels_output"
 
     # Determine if we should use buildx for multi-arch builds
     local use_buildx=false
