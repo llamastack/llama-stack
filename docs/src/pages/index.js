@@ -101,7 +101,7 @@ const OPENAI_ENDPOINTS = [
 ];
 
 const ANTHROPIC_ENDPOINTS = [
-  { icon: Icons.message, label: 'Messages API', path: '/v1/messages', desc: 'Chat completions with native Anthropic format', link: '/docs/api/create-message-v-1-messages-post' },
+  { icon: Icons.message, label: 'Messages API', path: '/v1/messages', desc: 'Chat completions with native Anthropic format', link: '/docs/api-openai/anthropic_messages' },
 ];
 
 const NATIVE_ENDPOINTS = [
