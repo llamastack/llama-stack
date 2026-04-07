@@ -314,6 +314,35 @@ def _extract_duplicate_union_types(openapi_schema: dict[str, Any]) -> dict[str, 
                     # Replace with reference
                     output_prop["items"] = {"$ref": f"#/components/schemas/{output_union_schema_name}"}
 
+    # Extract the response output union type (used in OpenAIResponseObject.output and
+    # OpenAIResponseObjectWithInput.output). Both schemas have identical inline oneOf unions
+    # which causes Stainless to generate duplicate type names like
+    # "ResponseListResponseInputOpenAIResponseMessageOutput".
+    response_output_union_name = "OpenAIResponseOutputItem"
+
+    # Extract from OpenAIResponseObject.output first to create the shared schema
+    if "OpenAIResponseObject" in schemas:
+        schema = schemas["OpenAIResponseObject"]
+        if isinstance(schema, dict) and "properties" in schema:
+            output_prop = schema["properties"].get("output")
+            if isinstance(output_prop, dict) and "items" in output_prop:
+                items = output_prop["items"]
+                if isinstance(items, dict) and "oneOf" in items:
+                    if response_output_union_name not in schemas:
+                        schemas[response_output_union_name] = copy.deepcopy(items)
+                        schemas[response_output_union_name]["x-stainless-naming"] = response_output_union_name
+                    output_prop["items"] = {"$ref": f"#/components/schemas/{response_output_union_name}"}
+
+    # Replace the same union in OpenAIResponseObjectWithInput.output
+    if "OpenAIResponseObjectWithInput" in schemas and response_output_union_name in schemas:
+        schema = schemas["OpenAIResponseObjectWithInput"]
+        if isinstance(schema, dict) and "properties" in schema:
+            output_prop = schema["properties"].get("output")
+            if isinstance(output_prop, dict) and "items" in output_prop:
+                items = output_prop["items"]
+                if isinstance(items, dict) and "oneOf" in items:
+                    output_prop["items"] = {"$ref": f"#/components/schemas/{response_output_union_name}"}
+
     # Extract the Input union type (used in _responses_Request.input.anyOf[1].items.anyOf)
     input_union_schema_name = "OpenAIResponseMessageInputUnion"
 
