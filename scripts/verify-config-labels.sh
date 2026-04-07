@@ -1,0 +1,149 @@
+#!/usr/bin/env bash
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the terms described in the LICENSE file in
+# the root directory of this source tree.
+
+# Verify that config labels are properly embedded in an image
+set -euo pipefail
+
+IMAGE_NAME="${1:-}"
+
+if [ -z "$IMAGE_NAME" ]; then
+    echo "Usage: $0 IMAGE_NAME" >&2
+    exit 1
+fi
+
+echo "Verifying config labels in: $IMAGE_NAME"
+echo
+
+# Extract llamastack labels
+if ! docker inspect "$IMAGE_NAME" &>/dev/null; then
+    echo "❌ Image not found: $IMAGE_NAME" >&2
+    exit 1
+fi
+
+labels=$(docker inspect "$IMAGE_NAME" --format='{{ range $k, $v := .Config.Labels }}{{ $k }}={{ $v }}{{ "\n" }}{{ end }}' | grep '^com\.llamastack')
+
+if [ -z "$labels" ]; then
+    echo "❌ No llamastack labels found"
+    exit 1
+fi
+
+# Extract and validate required metadata labels
+distro_name=$(echo "$labels" | grep "^com.llamastack.distribution.name=" | cut -d= -f2)
+if [ -z "$distro_name" ]; then
+    echo "❌ Missing or empty label: com.llamastack.distribution.name"
+    exit 1
+fi
+
+version=$(echo "$labels" | grep "^com.llamastack.distribution.version=" | cut -d= -f2)
+if [ -z "$version" ]; then
+    echo "❌ Missing or empty label: com.llamastack.distribution.version"
+    exit 1
+fi
+
+default_config=$(echo "$labels" | grep "^com.llamastack.distribution.default-config=" | cut -d= -f2)
+if [ -z "$default_config" ]; then
+    echo "❌ Missing or empty label: com.llamastack.distribution.default-config"
+    exit 1
+fi
+
+config_list=$(echo "$labels" | grep "^com.llamastack.distribution.configs=" | cut -d= -f2)
+if [ -z "$config_list" ]; then
+    echo "❌ Missing or empty label: com.llamastack.distribution.configs"
+    exit 1
+fi
+
+echo "Distribution: $distro_name"
+echo "Version: $version"
+echo "Default config: $default_config"
+echo "Available configs: $config_list"
+echo
+
+echo "✅ Required metadata labels present"
+echo
+
+# Validate default config is in the configs list
+if ! echo "$config_list" | grep -qE "(^|,)${default_config}(,|$)"; then
+    echo "❌ Default config '$default_config' not found in configs list: $config_list"
+    exit 1
+fi
+
+# Validate each config in the list has a corresponding label
+IFS=',' read -ra CONFIGS <<< "$config_list"
+for config in "${CONFIGS[@]}"; do
+    echo "🔍 Config '$config'"
+
+    label_key="com.llamastack.config.${config}"
+    encoded=$(docker inspect "$IMAGE_NAME" --format="{{ index .Config.Labels \"$label_key\" }}")
+
+    if [ -z "$encoded" ]; then
+        echo "❌ Config label not found: $label_key"
+        exit 1
+    fi
+
+    # Decode base64 and validate
+    if ! decoded=$(echo "$encoded" | base64 -d 2>/dev/null); then
+        echo "❌ Failed to decode config: $config"
+        exit 1
+    fi
+
+    # Count lines and bytes (strip whitespace from counts only)
+    line_count=$(echo "$decoded" | wc -l | tr -d '[:space:]')
+    char_count=$(echo -n "$decoded" | wc -c | tr -d '[:space:]')
+
+    # Validate non-empty
+    if [ -z "$line_count" ] || [ "$line_count" -eq 0 ]; then
+        echo "❌ Config '$config' is empty (0 lines)"
+        exit 1
+    fi
+
+    if [ -z "$char_count" ] || [ "$char_count" -eq 0 ]; then
+        echo "❌ Config '$config' is empty (0 bytes)"
+        exit 1
+    fi
+
+    echo "   ✅ Lines: $line_count"
+    echo "   ✅ Bytes: $char_count"
+
+    # Validate YAML syntax if Python and PyYAML available
+    PYTHON_CMD=""
+    if command -v python3 &>/dev/null && python3 -c 'import yaml' 2>/dev/null; then
+        PYTHON_CMD="python3"
+    elif [ -x ".venv/bin/python3" ] && .venv/bin/python3 -c 'import yaml' 2>/dev/null; then
+        PYTHON_CMD=".venv/bin/python3"
+    fi
+
+    if [ -n "$PYTHON_CMD" ]; then
+        # Write to temp file to avoid shell interpretation issues
+        temp_yaml=$(mktemp)
+        printf '%s' "$decoded" > "$temp_yaml"
+        if $PYTHON_CMD -c "import yaml; yaml.safe_load(open('$temp_yaml'))" 2>/dev/null; then
+            echo "   ✅ Valid YAML syntax"
+        else
+            echo "   ❌ Invalid YAML syntax"
+        fi
+        rm -f "$temp_yaml"
+    fi
+
+    # Compare with source file
+    source_file="src/llama_stack/distributions/${distro_name}/${config}"
+    if [ ! -f "$source_file" ]; then
+        echo "   ⚠️  Source file not found: $source_file (skipping comparison)"
+        continue
+    fi
+
+    if ! diff -q <(echo "$decoded") "$source_file" >/dev/null 2>&1; then
+        echo "   ❌ Does NOT match source file: $source_file"
+        echo "   Showing diff:"
+        diff <(echo "$decoded") "$source_file" || true
+        exit 1
+    fi
+
+    echo "   ✅ Matches source file"
+done
+
+echo
+echo "✅ All config labels verified successfully"
