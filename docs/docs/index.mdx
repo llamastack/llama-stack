@@ -8,6 +8,8 @@ tags:
   - overview
 ---
 
+import DocCardList from '@theme/DocCardList';
+
 # Welcome to Llama Stack
 
 **Open-source agentic API server for building AI applications. OpenAI-compatible. Any model, any infrastructure.**
@@ -23,6 +25,47 @@ response = client.chat.completions.create(
     messages=[{"role": "user", "content": "Hello"}],
 )
 ```
+
+## Choose your path
+
+<DocCardList items={[
+  {
+    type: 'link',
+    label: 'Quickstart',
+    href: '/docs/getting_started/quickstart',
+    description: 'Install and run Llama Stack in under 5 minutes',
+  },
+  {
+    type: 'link',
+    label: 'API Reference',
+    href: '/docs/api-openai',
+    description: 'OpenAI-compatible API endpoints and usage',
+  },
+  {
+    type: 'link',
+    label: 'Providers',
+    href: '/docs/providers/',
+    description: 'Inference, vector store, safety, and tool providers',
+  },
+  {
+    type: 'link',
+    label: 'Core Concepts',
+    href: '/docs/concepts/',
+    description: 'Architecture, APIs, distributions, and resources',
+  },
+  {
+    type: 'link',
+    label: 'Building Applications',
+    href: '/docs/building_applications/',
+    description: 'RAG, agents, tools, evals, and more',
+  },
+  {
+    type: 'link',
+    label: 'Distributions',
+    href: '/docs/distributions/',
+    description: 'Pre-packaged deployment configurations',
+  },
+]} />
 
 ## What you get
 
@@ -63,6 +106,8 @@ pip install llama-stack
 llama stack run
 ```
 
-Then connect with any OpenAI-compatible client.
+:::tip
+Llama Stack works with any OpenAI-compatible client. Point your existing code at `http://localhost:8321/v1` and you're ready to go.
+:::
 
 [Quick Start Guide](/docs/getting_started/quickstart) | [OpenAI API Compatibility](./api-openai) | [GitHub](https://github.com/llamastack/llama-stack)
