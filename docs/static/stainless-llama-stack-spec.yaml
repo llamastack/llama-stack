@@ -1948,190 +1948,6 @@ paths:
             schema:
               $ref: '#/components/schemas/RunShieldRequest'
         required: true
-  /v1/scoring-functions:
-    get:
-      responses:
-        '200':
-          description: A ListScoringFunctionsResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListScoringFunctionsResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Scoring Functions
-      summary: List all scoring functions.
-      description: List all scoring functions.
-      operationId: list_scoring_functions_v1_scoring_functions_get
-    post:
-      responses:
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-        '204':
-          description: The scoring function was successfully registered.
-      tags:
-      - Scoring Functions
-      summary: Register a scoring function.
-      description: Register a scoring function.
-      operationId: register_scoring_function_v1_scoring_functions_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterScoringFunctionRequest'
-        required: true
-      deprecated: true
-  /v1/scoring-functions/{scoring_fn_id}:
-    get:
-      responses:
-        '200':
-          description: A ScoringFn.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ScoringFn'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Scoring Functions
-      summary: Get a scoring function by its ID.
-      description: Get a scoring function by its ID.
-      operationId: get_scoring_function_v1_scoring_functions__scoring_fn_id__get
-      parameters:
-      - name: scoring_fn_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the scoring function to get.
-          title: Scoring Fn Id
-        description: The ID of the scoring function to get.
-    delete:
-      responses:
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-        '204':
-          description: The scoring function was successfully unregistered.
-      tags:
-      - Scoring Functions
-      summary: Unregister a scoring function.
-      description: Unregister a scoring function.
-      operationId: unregister_scoring_function_v1_scoring_functions__scoring_fn_id__delete
-      parameters:
-      - name: scoring_fn_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the scoring function to unregister.
-          title: Scoring Fn Id
-        description: The ID of the scoring function to unregister.
-      deprecated: true
-  /v1/scoring/score:
-    post:
-      responses:
-        '200':
-          description: A ScoreResponse object containing rows and aggregated results.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ScoreResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Scoring
-      summary: Score a list of rows.
-      description: Score a list of rows.
-      operationId: score_v1_scoring_score_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ScoreRequest'
-        required: true
-  /v1/scoring/score-batch:
-    post:
-      responses:
-        '200':
-          description: A ScoreBatchResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ScoreBatchResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Scoring
-      summary: Score a batch of rows.
-      description: Score a batch of rows.
-      operationId: score_batch_v1_scoring_score_batch_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ScoreBatchRequest'
-        required: true
   /v1/shields:
     get:
       responses:
@@ -3380,545 +3196,6 @@ paths:
       description: Get the version of the service.
       operationId: version_v1_version_get
       x-public: true
-  /v1beta/datasetio/append-rows/{dataset_id}:
-    post:
-      responses:
-        '204':
-          description: Rows were successfully appended.
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - DatasetIO
-      summary: Append rows to a dataset.
-      description: Append rows to a dataset.
-      operationId: append_rows_v1beta_datasetio_append_rows__dataset_id__post
-      parameters:
-      - name: dataset_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the dataset to append the rows to.
-          title: Dataset Id
-        description: The ID of the dataset to append the rows to.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AppendRowsRequest'
-  /v1beta/datasetio/iterrows/{dataset_id}:
-    get:
-      responses:
-        '200':
-          description: A PaginatedResponse containing the rows.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - DatasetIO
-      summary: Get a paginated list of rows from a dataset.
-      description: |-
-        Get a paginated list of rows from a dataset.
-
-        Uses offset-based pagination where:
-        - start_index: The starting index (0-based). If None, starts from beginning.
-        - limit: Number of items to return. If None or -1, returns all items.
-
-        The response includes:
-        - data: List of items for the current page.
-        - has_more: Whether there are more items available after this set.
-      operationId: iterrows_v1beta_datasetio_iterrows__dataset_id__get
-      parameters:
-      - name: dataset_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the dataset to get the rows from.
-          title: Dataset Id
-        description: The ID of the dataset to get the rows from.
-      - name: start_index
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          description: Index into dataset for the first row to get. Get all rows if None.
-          title: Start Index
-        description: Index into dataset for the first row to get. Get all rows if None.
-      - name: limit
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          description: The number of rows to get.
-          title: Limit
-        description: The number of rows to get.
-  /v1beta/datasets:
-    get:
-      responses:
-        '200':
-          description: A list of dataset objects.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListDatasetsResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Datasets
-      summary: List all datasets.
-      description: List all datasets.
-      operationId: list_datasets_v1beta_datasets_get
-    post:
-      responses:
-        '200':
-          description: The registered dataset object.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Dataset'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Datasets
-      summary: Register a new dataset.
-      description: Register a new dataset.
-      operationId: register_dataset_v1beta_datasets_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterDatasetRequest'
-        required: true
-      deprecated: true
-  /v1beta/datasets/{dataset_id}:
-    get:
-      responses:
-        '200':
-          description: The dataset object.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Dataset'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Datasets
-      summary: Get a dataset by its ID.
-      description: Get a dataset by its ID.
-      operationId: get_dataset_v1beta_datasets__dataset_id__get
-      parameters:
-      - name: dataset_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the dataset to get.
-          title: Dataset Id
-        description: The ID of the dataset to get.
-    delete:
-      responses:
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-        '204':
-          description: The dataset was successfully unregistered.
-      tags:
-      - Datasets
-      summary: Unregister a dataset by its ID.
-      description: Unregister a dataset by its ID.
-      operationId: unregister_dataset_v1beta_datasets__dataset_id__delete
-      parameters:
-      - name: dataset_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the dataset to unregister.
-          title: Dataset Id
-        description: The ID of the dataset to unregister.
-      deprecated: true
-  /v1alpha/eval/benchmarks:
-    get:
-      responses:
-        '200':
-          description: A ListBenchmarksResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListBenchmarksResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Benchmarks
-      summary: List all benchmarks.
-      description: List all benchmarks.
-      operationId: list_benchmarks_v1alpha_eval_benchmarks_get
-    post:
-      responses:
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-        '204':
-          description: The benchmark was successfully registered.
-      tags:
-      - Benchmarks
-      summary: Register a benchmark.
-      description: Register a benchmark.
-      operationId: register_benchmark_v1alpha_eval_benchmarks_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterBenchmarkRequest'
-        required: true
-      deprecated: true
-  /v1alpha/eval/benchmarks/{benchmark_id}:
-    get:
-      responses:
-        '200':
-          description: A Benchmark.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Benchmark'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Benchmarks
-      summary: Get a benchmark by its ID.
-      description: Get a benchmark by its ID.
-      operationId: get_benchmark_v1alpha_eval_benchmarks__benchmark_id__get
-      parameters:
-      - name: benchmark_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the benchmark to get.
-          title: Benchmark Id
-        description: The ID of the benchmark to get.
-    delete:
-      responses:
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-        '204':
-          description: The benchmark was successfully unregistered.
-      tags:
-      - Benchmarks
-      summary: Unregister a benchmark.
-      description: Unregister a benchmark.
-      operationId: unregister_benchmark_v1alpha_eval_benchmarks__benchmark_id__delete
-      parameters:
-      - name: benchmark_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the benchmark to unregister.
-          title: Benchmark Id
-        description: The ID of the benchmark to unregister.
-      deprecated: true
-  /v1alpha/eval/benchmarks/{benchmark_id}/evaluations:
-    post:
-      responses:
-        '200':
-          description: EvaluateResponse object containing generations and scores.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EvaluateResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Eval
-      summary: Evaluate Rows
-      description: Evaluate a list of rows on a benchmark.
-      operationId: evaluate_rows_v1alpha_eval_benchmarks__benchmark_id__evaluations_post
-      parameters:
-      - name: benchmark_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the benchmark
-          title: Benchmark Id
-        description: The ID of the benchmark
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EvaluateRowsBodyRequest'
-  /v1alpha/eval/benchmarks/{benchmark_id}/jobs:
-    post:
-      responses:
-        '200':
-          description: The job that was created to run the evaluation.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Job'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Eval
-      summary: Run Eval
-      description: Run an evaluation on a benchmark.
-      operationId: run_eval_v1alpha_eval_benchmarks__benchmark_id__jobs_post
-      parameters:
-      - name: benchmark_id
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The ID of the benchmark
-          title: Benchmark Id
-        description: The ID of the benchmark
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RunEvalBodyRequest'
-  /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}:
-    get:
-      responses:
-        '200':
-          description: The status of the evaluation job.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Job'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Eval
-      summary: Job Status
-      description: Get the status of a job.
-      operationId: job_status_v1alpha_eval_benchmarks__benchmark_id__jobs__job_id__get
-      parameters:
-      - name: benchmark_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Benchmark Id
-      - name: job_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Job Id
-    delete:
-      responses:
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-        '204':
-          description: Successful Response
-      tags:
-      - Eval
-      summary: Job Cancel
-      description: Cancel a job.
-      operationId: job_cancel_v1alpha_eval_benchmarks__benchmark_id__jobs__job_id__delete
-      parameters:
-      - name: benchmark_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Benchmark Id
-      - name: job_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Job Id
-  /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result:
-    get:
-      responses:
-        '200':
-          description: The result of the job.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EvaluateResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Eval
-      summary: Job Result
-      description: Get the result of a job.
-      operationId: job_result_v1alpha_eval_benchmarks__benchmark_id__jobs__job_id__result_get
-      parameters:
-      - name: benchmark_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Benchmark Id
-      - name: job_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Job Id
   /v1alpha/inference/rerank:
     post:
       responses:
@@ -9515,408 +8792,87 @@ components:
       - error
       title: ViolationLevel
       description: Severity level of a safety violation.
-    AggregationFunctionType:
-      type: string
-      enum:
-      - average
-      - weighted_average
-      - median
-      - categorical_count
-      - accuracy
-      title: AggregationFunctionType
-      description: Types of aggregation functions for scoring results.
     ArrayType:
+      description: Parameter type for array values.
       properties:
         type:
-          type: string
           title: Type
+          type: string
           enum:
           - array
       title: ArrayType
-      description: Parameter type for array values.
-    BasicScoringFnParams:
-      properties:
-        type:
-          type: string
-          title: Type
-          enum:
-          - basic
-        aggregation_functions:
-          items:
-            $ref: '#/components/schemas/AggregationFunctionType'
-          type: array
-          title: Aggregation Functions
-          description: Aggregation functions to apply to the scores of each row
-      title: BasicScoringFnParams
-      description: Parameters for basic scoring function configuration.
     BooleanType:
+      description: Parameter type for boolean values.
       properties:
         type:
-          type: string
           title: Type
+          type: string
           enum:
           - boolean
       title: BooleanType
-      description: Parameter type for boolean values.
     ChatCompletionInputType:
+      description: Parameter type for chat completion input.
       properties:
         type:
-          type: string
           title: Type
+          type: string
           enum:
           - chat_completion_input
       title: ChatCompletionInputType
-      description: Parameter type for chat completion input.
     CompletionInputType:
+      description: Parameter type for completion input.
       properties:
         type:
-          type: string
           title: Type
+          type: string
           enum:
           - completion_input
       title: CompletionInputType
-      description: Parameter type for completion input.
     JsonType:
+      description: Parameter type for JSON values.
       properties:
         type:
-          type: string
           title: Type
+          type: string
           enum:
           - json
       title: JsonType
-      description: Parameter type for JSON values.
-    LLMAsJudgeScoringFnParams:
-      properties:
-        type:
-          type: string
-          title: Type
-          enum:
-          - llm_as_judge
-        judge_model:
-          type: string
-          title: Judge Model
-        prompt_template:
-          anyOf:
-          - type: string
-          - type: 'null'
-        judge_score_regexes:
-          items:
-            type: string
-          type: array
-          title: Judge Score Regexes
-          description: Regexes to extract the answer from generated response
-        aggregation_functions:
-          items:
-            $ref: '#/components/schemas/AggregationFunctionType'
-          type: array
-          title: Aggregation Functions
-          description: Aggregation functions to apply to the scores of each row
-      required:
-      - judge_model
-      title: LLMAsJudgeScoringFnParams
-      description: Parameters for LLM-as-judge scoring function configuration.
     NumberType:
+      description: Parameter type for numeric values.
       properties:
         type:
-          type: string
           title: Type
+          type: string
           enum:
           - number
       title: NumberType
-      description: Parameter type for numeric values.
     ObjectType:
+      description: Parameter type for object values.
       properties:
         type:
-          type: string
           title: Type
+          type: string
           enum:
           - object
       title: ObjectType
-      description: Parameter type for object values.
-    RegexParserScoringFnParams:
-      properties:
-        type:
-          type: string
-          title: Type
-          enum:
-          - regex_parser
-        parsing_regexes:
-          items:
-            type: string
-          type: array
-          title: Parsing Regexes
-          description: Regex to extract the answer from generated response
-        aggregation_functions:
-          items:
-            $ref: '#/components/schemas/AggregationFunctionType'
-          type: array
-          title: Aggregation Functions
-          description: Aggregation functions to apply to the scores of each row
-      title: RegexParserScoringFnParams
-      description: Parameters for regex parser scoring function configuration.
-    ScoringFn:
-      properties:
-        identifier:
-          type: string
-          title: Identifier
-          description: Unique identifier for this resource in llama stack
-        provider_resource_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Unique identifier for this resource in the provider
-        provider_id:
-          type: string
-          title: Provider Id
-          description: ID of the provider that owns this resource
-        type:
-          type: string
-          title: Type
-          enum:
-          - scoring_function
-        description:
-          anyOf:
-          - type: string
-          - type: 'null'
-        metadata:
-          additionalProperties: true
-          type: object
-          title: Metadata
-          description: Any additional metadata for this definition
-        return_type:
-          oneOf:
-          - $ref: '#/components/schemas/StringType'
-            title: StringType
-          - $ref: '#/components/schemas/NumberType'
-            title: NumberType
-          - $ref: '#/components/schemas/BooleanType'
-            title: BooleanType
-          - $ref: '#/components/schemas/ArrayType'
-            title: ArrayType
-          - $ref: '#/components/schemas/ObjectType'
-            title: ObjectType
-          - $ref: '#/components/schemas/JsonType'
-            title: JsonType
-          - $ref: '#/components/schemas/UnionType'
-            title: UnionType
-          - $ref: '#/components/schemas/ChatCompletionInputType'
-            title: ChatCompletionInputType
-          - $ref: '#/components/schemas/CompletionInputType'
-            title: CompletionInputType
-          title: StringType | ... (9 variants)
-          description: The return type of the deterministic function
-          discriminator:
-            propertyName: type
-            mapping:
-              array: '#/components/schemas/ArrayType'
-              boolean: '#/components/schemas/BooleanType'
-              chat_completion_input: '#/components/schemas/ChatCompletionInputType'
-              completion_input: '#/components/schemas/CompletionInputType'
-              json: '#/components/schemas/JsonType'
-              number: '#/components/schemas/NumberType'
-              object: '#/components/schemas/ObjectType'
-              string: '#/components/schemas/StringType'
-              union: '#/components/schemas/UnionType'
-        params:
-          anyOf:
-          - oneOf:
-            - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-              title: LLMAsJudgeScoringFnParams
-            - $ref: '#/components/schemas/RegexParserScoringFnParams'
-              title: RegexParserScoringFnParams
-            - $ref: '#/components/schemas/BasicScoringFnParams'
-              title: BasicScoringFnParams
-            discriminator:
-              propertyName: type
-              mapping:
-                basic: '#/components/schemas/BasicScoringFnParams'
-                llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-            title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
-          - type: 'null'
-          title: Params
-          description: The parameters for the scoring function for benchmark eval, these can be overridden for app eval
-      required:
-      - identifier
-      - provider_id
-      - return_type
-      title: ScoringFn
-      description: A scoring function resource for evaluating model outputs.
-    ScoringFnParams:
-      discriminator:
-        mapping:
-          basic: '#/components/schemas/BasicScoringFnParams'
-          llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
-          regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-        propertyName: type
-      oneOf:
-      - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-        title: LLMAsJudgeScoringFnParams
-      - $ref: '#/components/schemas/RegexParserScoringFnParams'
-        title: RegexParserScoringFnParams
-      - $ref: '#/components/schemas/BasicScoringFnParams'
-        title: BasicScoringFnParams
-      title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
-    ScoringFnParamsType:
-      description: Types of scoring function parameter configurations.
-      enum:
-      - llm_as_judge
-      - regex_parser
-      - basic
-      title: ScoringFnParamsType
-      type: string
     StringType:
+      description: Parameter type for string values.
       properties:
         type:
-          type: string
           title: Type
+          type: string
           enum:
           - string
       title: StringType
-      description: Parameter type for string values.
     UnionType:
+      description: Parameter type for union values.
       properties:
         type:
-          type: string
           title: Type
+          type: string
           enum:
           - union
       title: UnionType
-      description: Parameter type for union values.
-    ListScoringFunctionsResponse:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/ScoringFn'
-          type: array
-          title: Data
-          description: List of scoring function objects.
-      required:
-      - data
-      title: ListScoringFunctionsResponse
-      description: Response containing a list of scoring function objects.
-    ScoreRequest:
-      properties:
-        input_rows:
-          items:
-            additionalProperties: true
-            type: object
-          type: array
-          title: Input Rows
-          description: The rows to score.
-        scoring_functions:
-          additionalProperties:
-            anyOf:
-            - oneOf:
-              - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                title: LLMAsJudgeScoringFnParams
-              - $ref: '#/components/schemas/RegexParserScoringFnParams'
-                title: RegexParserScoringFnParams
-              - $ref: '#/components/schemas/BasicScoringFnParams'
-                title: BasicScoringFnParams
-              discriminator:
-                propertyName: type
-                mapping:
-                  basic: '#/components/schemas/BasicScoringFnParams'
-                  llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                  regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-              title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
-            - type: 'null'
-            title: AdditionalpropertiesUnion
-          type: object
-          title: Scoring Functions
-          description: The scoring functions to use for the scoring.
-      required:
-      - input_rows
-      - scoring_functions
-      title: ScoreRequest
-      description: Request model for scoring a list of rows.
-    ScoreResponse:
-      properties:
-        results:
-          additionalProperties:
-            $ref: '#/components/schemas/ScoringResult'
-          type: object
-          title: Results
-          description: A map of scoring function name to ScoringResult.
-      required:
-      - results
-      title: ScoreResponse
-      description: The response from scoring.
-    ScoringResult:
-      properties:
-        score_rows:
-          items:
-            additionalProperties: true
-            type: object
-          type: array
-          title: Score Rows
-          description: The scoring result for each row. Each row is a map of column name to value.
-        aggregated_results:
-          additionalProperties: true
-          type: object
-          title: Aggregated Results
-          description: Map of metric name to aggregated value
-      required:
-      - score_rows
-      - aggregated_results
-      title: ScoringResult
-      description: A scoring result for a single row.
-    ScoreBatchRequest:
-      properties:
-        dataset_id:
-          type: string
-          title: Dataset Id
-          description: The ID of the dataset to score.
-        scoring_functions:
-          additionalProperties:
-            anyOf:
-            - oneOf:
-              - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                title: LLMAsJudgeScoringFnParams
-              - $ref: '#/components/schemas/RegexParserScoringFnParams'
-                title: RegexParserScoringFnParams
-              - $ref: '#/components/schemas/BasicScoringFnParams'
-                title: BasicScoringFnParams
-              discriminator:
-                propertyName: type
-                mapping:
-                  basic: '#/components/schemas/BasicScoringFnParams'
-                  llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                  regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-              title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
-            - type: 'null'
-            title: AdditionalpropertiesUnion
-          type: object
-          title: Scoring Functions
-          description: The scoring functions to use for the scoring.
-        save_results_dataset:
-          type: boolean
-          title: Save Results Dataset
-          description: Whether to save the results to a dataset.
-          default: false
-      required:
-      - dataset_id
-      - scoring_functions
-      title: ScoreBatchRequest
-      description: Request model for scoring a batch of rows from a dataset.
-    ScoreBatchResponse:
-      properties:
-        dataset_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: (Optional) The identifier of the dataset that was scored
-        results:
-          additionalProperties:
-            $ref: '#/components/schemas/ScoringResult'
-          type: object
-          title: Results
-          description: A map of scoring function name to ScoringResult
-      required:
-      - results
-      title: ScoreBatchResponse
-      description: Response from batch scoring operations on datasets.
     Shield:
       properties:
         identifier:
@@ -10969,466 +9925,6 @@ components:
       - version
       title: VersionInfo
       description: Version information for the service.
-    AppendRowsRequest:
-      properties:
-        rows:
-          items:
-            additionalProperties: true
-            type: object
-          type: array
-          title: Rows
-          description: The rows to append to the dataset.
-      required:
-      - rows
-      title: AppendRowsRequest
-      description: Request body for appending rows to a dataset.
-    PaginatedResponse:
-      properties:
-        data:
-          items:
-            additionalProperties: true
-            type: object
-          type: array
-          title: Data
-        has_more:
-          type: boolean
-          title: Has More
-        url:
-          anyOf:
-          - type: string
-          - type: 'null'
-      required:
-      - data
-      - has_more
-      title: PaginatedResponse
-      description: A generic paginated response that follows a simple format.
-    Dataset:
-      properties:
-        identifier:
-          type: string
-          title: Identifier
-          description: Unique identifier for this resource in llama stack
-        provider_resource_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Unique identifier for this resource in the provider
-        provider_id:
-          type: string
-          title: Provider Id
-          description: ID of the provider that owns this resource
-        type:
-          type: string
-          title: Type
-          description: Type of resource, always 'dataset' for datasets
-          enum:
-          - dataset
-        purpose:
-          $ref: '#/components/schemas/DatasetPurpose'
-          description: Purpose of the dataset indicating its intended use
-        source:
-          oneOf:
-          - $ref: '#/components/schemas/URIDataSource'
-            title: URIDataSource
-          - $ref: '#/components/schemas/RowsDataSource'
-            title: RowsDataSource
-          title: URIDataSource | RowsDataSource
-          description: Data source configuration for the dataset
-          discriminator:
-            propertyName: type
-            mapping:
-              rows: '#/components/schemas/RowsDataSource'
-              uri: '#/components/schemas/URIDataSource'
-        metadata:
-          additionalProperties: true
-          type: object
-          title: Metadata
-          description: Any additional metadata for this dataset
-      required:
-      - identifier
-      - provider_id
-      - purpose
-      - source
-      title: Dataset
-      description: Dataset resource for storing and accessing training or evaluation data.
-    RowsDataSource:
-      properties:
-        type:
-          type: string
-          title: Type
-          description: The type of data source.
-          enum:
-          - rows
-        rows:
-          items:
-            additionalProperties: true
-            type: object
-          type: array
-          title: Rows
-          description: 'The dataset is stored in rows. E.g. [{"messages": [{"role": "user", "content": "Hello, world!"}, {"role": "assistant", "content": "Hello, world!"}]}]'
-      required:
-      - rows
-      title: RowsDataSource
-      description: A dataset stored in rows.
-    URIDataSource:
-      properties:
-        type:
-          type: string
-          title: Type
-          description: The type of data source.
-          enum:
-          - uri
-        uri:
-          type: string
-          title: Uri
-          description: The dataset can be obtained from a URI. E.g. "https://mywebsite.com/mydata.jsonl", "lsfs://mydata.jsonl", "data:csv;base64,{base64_content}"
-      required:
-      - uri
-      title: URIDataSource
-      description: A dataset that can be obtained from a URI.
-    ListDatasetsResponse:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/Dataset'
-          type: array
-          title: Data
-          description: List of datasets
-      required:
-      - data
-      title: ListDatasetsResponse
-      description: Response from listing datasets.
-    Benchmark:
-      properties:
-        identifier:
-          type: string
-          title: Identifier
-          description: Unique identifier for this resource in llama stack
-        provider_resource_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Unique identifier for this resource in the provider
-        provider_id:
-          type: string
-          title: Provider Id
-          description: ID of the provider that owns this resource
-        type:
-          type: string
-          title: Type
-          description: The resource type, always benchmark.
-          enum:
-          - benchmark
-        dataset_id:
-          type: string
-          title: Dataset Id
-          description: Identifier of the dataset to use for the benchmark evaluation.
-        scoring_functions:
-          items:
-            type: string
-          type: array
-          title: Scoring Functions
-          description: List of scoring function identifiers to apply during evaluation.
-        metadata:
-          additionalProperties: true
-          type: object
-          title: Metadata
-          description: Metadata for this evaluation task.
-      required:
-      - identifier
-      - provider_id
-      - dataset_id
-      - scoring_functions
-      title: Benchmark
-      description: A benchmark resource for evaluating model performance.
-    ListBenchmarksResponse:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/Benchmark'
-          type: array
-          title: Data
-          description: List of benchmark objects.
-      required:
-      - data
-      title: ListBenchmarksResponse
-      description: Response containing a list of benchmark objects.
-    BenchmarkConfig:
-      properties:
-        eval_candidate:
-          $ref: '#/components/schemas/ModelCandidate'
-          description: The candidate to evaluate
-        scoring_params:
-          additionalProperties:
-            oneOf:
-            - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-              title: LLMAsJudgeScoringFnParams
-            - $ref: '#/components/schemas/RegexParserScoringFnParams'
-              title: RegexParserScoringFnParams
-            - $ref: '#/components/schemas/BasicScoringFnParams'
-              title: BasicScoringFnParams
-            discriminator:
-              propertyName: type
-              mapping:
-                basic: '#/components/schemas/BasicScoringFnParams'
-                llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-            title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
-          type: object
-          title: Scoring Params
-          description: Map between scoring function id and parameters for each scoring function you want to run
-        num_examples:
-          anyOf:
-          - type: integer
-            minimum: 1.0
-          - type: 'null'
-          description: Number of examples to evaluate (useful for testing), if not provided, all examples in the dataset will be evaluated
-      required:
-      - eval_candidate
-      title: BenchmarkConfig
-      description: A benchmark configuration for evaluation.
-    GreedySamplingStrategy:
-      properties:
-        type:
-          type: string
-          title: Type
-          description: Must be 'greedy' to identify this sampling strategy.
-          enum:
-          - greedy
-      title: GreedySamplingStrategy
-      description: Greedy sampling strategy that selects the highest probability token at each step.
-    ModelCandidate:
-      properties:
-        type:
-          type: string
-          title: Type
-          enum:
-          - model
-        model:
-          type: string
-          minLength: 1
-          title: Model
-          description: The model ID to evaluate
-        sampling_params:
-          $ref: '#/components/schemas/SamplingParams'
-          description: The sampling parameters for the model
-        system_message:
-          anyOf:
-          - $ref: '#/components/schemas/SystemMessage'
-            title: SystemMessage
-          - type: 'null'
-          description: The system message providing instructions or context to the model
-          title: SystemMessage
-      required:
-      - model
-      - sampling_params
-      title: ModelCandidate
-      description: A model candidate for evaluation.
-    SamplingParams:
-      properties:
-        strategy:
-          oneOf:
-          - $ref: '#/components/schemas/GreedySamplingStrategy'
-            title: GreedySamplingStrategy
-          - $ref: '#/components/schemas/TopPSamplingStrategy'
-            title: TopPSamplingStrategy
-          - $ref: '#/components/schemas/TopKSamplingStrategy'
-            title: TopKSamplingStrategy
-          title: GreedySamplingStrategy | TopPSamplingStrategy | TopKSamplingStrategy
-          description: The sampling strategy to use.
-          discriminator:
-            propertyName: type
-            mapping:
-              greedy: '#/components/schemas/GreedySamplingStrategy'
-              top_k: '#/components/schemas/TopKSamplingStrategy'
-              top_p: '#/components/schemas/TopPSamplingStrategy'
-        max_tokens:
-          anyOf:
-          - type: integer
-            minimum: 1.0
-          - type: 'null'
-          description: The maximum number of tokens that can be generated in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length.
-        repetition_penalty:
-          anyOf:
-          - type: number
-            maximum: 2.0
-            minimum: -2.0
-          - type: 'null'
-          description: Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far.
-          default: 1.0
-        stop:
-          anyOf:
-          - items:
-              type: string
-            type: array
-            maxItems: 4
-          - type: 'null'
-          description: Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.
-      title: SamplingParams
-      description: Sampling parameters for text generation.
-    SystemMessage:
-      properties:
-        role:
-          type: string
-          title: Role
-          description: Must be 'system' to identify this as a system message.
-          enum:
-          - system
-        content:
-          anyOf:
-          - type: string
-          - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem-Input'
-              title: ImageContentItem-Input
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            discriminator:
-              propertyName: type
-              mapping:
-                image: '#/components/schemas/ImageContentItem-Input'
-                text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Input | TextContentItem
-          - items:
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem-Input'
-                title: ImageContentItem-Input
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              discriminator:
-                propertyName: type
-                mapping:
-                  image: '#/components/schemas/ImageContentItem-Input'
-                  text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Input | TextContentItem
-            type: array
-            title: list[ImageContentItem-Input | TextContentItem]
-          title: string | list[ImageContentItem-Input | TextContentItem]
-          description: The content of the 'system prompt'. If multiple system messages are provided, they are concatenated. The underlying Llama Stack code may also add other system messages.
-      required:
-      - content
-      title: SystemMessage
-      description: A system message providing instructions or context to the model.
-    TopKSamplingStrategy:
-      properties:
-        type:
-          type: string
-          title: Type
-          description: Must be 'top_k' to identify this sampling strategy.
-          enum:
-          - top_k
-        top_k:
-          type: integer
-          minimum: 1.0
-          title: Top K
-          description: Number of top tokens to consider for sampling. Must be at least 1.
-      required:
-      - top_k
-      title: TopKSamplingStrategy
-      description: Top-k sampling strategy that restricts sampling to the k most likely tokens.
-    TopPSamplingStrategy:
-      properties:
-        type:
-          type: string
-          title: Type
-          description: Must be 'top_p' to identify this sampling strategy.
-          enum:
-          - top_p
-        temperature:
-          type: number
-          maximum: 2.0
-          title: Temperature
-          description: Controls randomness in sampling. Higher values increase randomness.
-          minimum: 0.0
-        top_p:
-          type: number
-          maximum: 1.0
-          minimum: 0.0
-          title: Top P
-          description: Cumulative probability threshold for nucleus sampling.
-          default: 0.95
-      required:
-      - temperature
-      title: TopPSamplingStrategy
-      description: Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p.
-    EvaluateRowsRequest:
-      description: Request model for evaluating a list of rows on a benchmark.
-      properties:
-        benchmark_id:
-          description: The ID of the benchmark to run the evaluation on
-          minLength: 1
-          title: Benchmark Id
-          type: string
-        input_rows:
-          description: The rows to evaluate
-          items:
-            additionalProperties: true
-            type: object
-          minItems: 1
-          title: Input Rows
-          type: array
-        scoring_functions:
-          description: The scoring functions to use for the evaluation
-          items:
-            type: string
-          minItems: 1
-          title: Scoring Functions
-          type: array
-        benchmark_config:
-          $ref: '#/components/schemas/BenchmarkConfig'
-          description: The configuration for the benchmark
-      required:
-      - benchmark_id
-      - input_rows
-      - scoring_functions
-      - benchmark_config
-      title: EvaluateRowsRequest
-    EvaluateResponse:
-      properties:
-        generations:
-          items:
-            additionalProperties: true
-            type: object
-          type: array
-          title: Generations
-          description: The generations from the evaluation
-        scores:
-          additionalProperties:
-            $ref: '#/components/schemas/ScoringResult'
-          type: object
-          title: Scores
-          description: The scores from the evaluation. Each key in the dict is a scoring function name
-      required:
-      - generations
-      - scores
-      title: EvaluateResponse
-      description: The response from an evaluation.
-    RunEvalRequest:
-      description: Request model for running an evaluation on a benchmark.
-      properties:
-        benchmark_id:
-          description: The ID of the benchmark to run the evaluation on
-          minLength: 1
-          title: Benchmark Id
-          type: string
-        benchmark_config:
-          $ref: '#/components/schemas/BenchmarkConfig'
-          description: The configuration for the benchmark
-      required:
-      - benchmark_id
-      - benchmark_config
-      title: RunEvalRequest
-    Job:
-      properties:
-        job_id:
-          type: string
-          title: Job Id
-        status:
-          $ref: '#/components/schemas/JobStatus'
-      required:
-      - job_id
-      - status
-      title: Job
-      description: A job execution instance with status tracking.
     RerankRequest:
       properties:
         model:
@@ -11573,85 +10069,6 @@ components:
       - $ref: '#/components/schemas/CompletionInputType'
         title: CompletionInputType
       title: StringType | ... (9 variants)
-    RegisterScoringFunctionRequest:
-      properties:
-        scoring_fn_id:
-          type: string
-          title: Scoring Fn Id
-          description: The ID of the scoring function to register.
-        description:
-          type: string
-          title: Description
-          description: The description of the scoring function.
-        return_type:
-          oneOf:
-          - $ref: '#/components/schemas/StringType'
-            title: StringType
-          - $ref: '#/components/schemas/NumberType'
-            title: NumberType
-          - $ref: '#/components/schemas/BooleanType'
-            title: BooleanType
-          - $ref: '#/components/schemas/ArrayType'
-            title: ArrayType
-          - $ref: '#/components/schemas/ObjectType'
-            title: ObjectType
-          - $ref: '#/components/schemas/JsonType'
-            title: JsonType
-          - $ref: '#/components/schemas/UnionType'
-            title: UnionType
-          - $ref: '#/components/schemas/ChatCompletionInputType'
-            title: ChatCompletionInputType
-          - $ref: '#/components/schemas/CompletionInputType'
-            title: CompletionInputType
-          title: StringType | ... (9 variants)
-          description: The return type of the scoring function.
-          discriminator:
-            propertyName: type
-            mapping:
-              array: '#/components/schemas/ArrayType'
-              boolean: '#/components/schemas/BooleanType'
-              chat_completion_input: '#/components/schemas/ChatCompletionInputType'
-              completion_input: '#/components/schemas/CompletionInputType'
-              json: '#/components/schemas/JsonType'
-              number: '#/components/schemas/NumberType'
-              object: '#/components/schemas/ObjectType'
-              string: '#/components/schemas/StringType'
-              union: '#/components/schemas/UnionType'
-        provider_scoring_fn_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: The ID of the provider scoring function to use for the scoring function.
-        provider_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: The ID of the provider to use for the scoring function.
-        params:
-          anyOf:
-          - oneOf:
-            - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-              title: LLMAsJudgeScoringFnParams
-            - $ref: '#/components/schemas/RegexParserScoringFnParams'
-              title: RegexParserScoringFnParams
-            - $ref: '#/components/schemas/BasicScoringFnParams'
-              title: BasicScoringFnParams
-            discriminator:
-              propertyName: type
-              mapping:
-                basic: '#/components/schemas/BasicScoringFnParams'
-                llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-            title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
-          - type: 'null'
-          title: Params
-          description: The parameters for the scoring function for benchmark eval, these can be overridden for app eval.
-      required:
-      - scoring_fn_id
-      - description
-      - return_type
-      title: RegisterScoringFunctionRequest
-      description: Request model for registering a scoring function.
     RegisterShieldRequest:
       properties:
         shield_id:
@@ -11678,90 +10095,6 @@ components:
       - shield_id
       title: RegisterShieldRequest
       description: Request model for registering a shield.
-    DataSource:
-      discriminator:
-        mapping:
-          rows: '#/components/schemas/RowsDataSource'
-          uri: '#/components/schemas/URIDataSource'
-        propertyName: type
-      oneOf:
-      - $ref: '#/components/schemas/URIDataSource'
-        title: URIDataSource
-      - $ref: '#/components/schemas/RowsDataSource'
-        title: RowsDataSource
-      title: URIDataSource | RowsDataSource
-    RegisterDatasetRequest:
-      properties:
-        purpose:
-          $ref: '#/components/schemas/DatasetPurpose'
-          description: The purpose of the dataset.
-        source:
-          oneOf:
-          - $ref: '#/components/schemas/URIDataSource'
-            title: URIDataSource
-          - $ref: '#/components/schemas/RowsDataSource'
-            title: RowsDataSource
-          title: URIDataSource | RowsDataSource
-          description: The data source of the dataset.
-          discriminator:
-            propertyName: type
-            mapping:
-              rows: '#/components/schemas/RowsDataSource'
-              uri: '#/components/schemas/URIDataSource'
-        metadata:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          description: The metadata for the dataset.
-        dataset_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: The ID of the dataset. If not provided, an ID will be generated.
-      required:
-      - purpose
-      - source
-      title: RegisterDatasetRequest
-      description: Request model for registering a dataset.
-    RegisterBenchmarkRequest:
-      properties:
-        benchmark_id:
-          type: string
-          title: Benchmark Id
-          description: The ID of the benchmark to register.
-        dataset_id:
-          type: string
-          title: Dataset Id
-          description: The ID of the dataset to use for the benchmark.
-        scoring_functions:
-          items:
-            type: string
-          type: array
-          title: Scoring Functions
-          description: The scoring functions to use for the benchmark.
-        provider_benchmark_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: The ID of the provider benchmark to use for the benchmark.
-        provider_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: The ID of the provider to use for the benchmark.
-        metadata:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          description: The metadata to use for the benchmark.
-      required:
-      - benchmark_id
-      - dataset_id
-      - scoring_functions
-      title: RegisterBenchmarkRequest
-      description: Request model for registering a benchmark.
     AllowedToolsFilter:
       properties:
         tool_names:
@@ -12698,13 +11031,6 @@ components:
       - model
       title: CreateResponseRequest
       description: Request model for creating a response.
-    DatasetPurpose:
-      type: string
-      enum:
-      - eval/question-answer
-      - eval/messages-answer
-      title: DatasetPurpose
-      description: Purpose of the dataset. Each purpose has a required input data schema.
     EmbeddedChunk-Input:
       properties:
         content:
@@ -12843,32 +11169,6 @@ components:
           - type: 'null'
       additionalProperties: true
       title: Errors
-    EvaluateRowsBodyRequest:
-      properties:
-        input_rows:
-          items:
-            additionalProperties: true
-            type: object
-          type: array
-          minItems: 1
-          title: Input Rows
-          description: The rows to evaluate
-        scoring_functions:
-          items:
-            type: string
-          type: array
-          minItems: 1
-          title: Scoring Functions
-          description: The scoring functions to use for the evaluation
-        benchmark_config:
-          $ref: '#/components/schemas/BenchmarkConfig'
-          description: The configuration for the benchmark
-      required:
-      - input_rows
-      - scoring_functions
-      - benchmark_config
-      title: EvaluateRowsBodyRequest
-      description: Request body model for evaluating rows (without path parameter).
     HealthStatus:
       type: string
       enum:
@@ -12912,16 +11212,6 @@ components:
       required:
       - cached_tokens
       title: InputTokensDetails
-    JobStatus:
-      type: string
-      enum:
-      - completed
-      - in_progress
-      - failed
-      - scheduled
-      - cancelled
-      title: JobStatus
-      description: Status of a job execution.
     ListConnectorsResponse:
       properties:
         data:
@@ -13896,15 +12186,6 @@ components:
       - disabled
       title: ResponseTruncation
       description: Controls how the service truncates input when it exceeds the model context window.
-    RunEvalBodyRequest:
-      properties:
-        benchmark_config:
-          $ref: '#/components/schemas/BenchmarkConfig'
-          description: The configuration for the benchmark
-      required:
-      - benchmark_config
-      title: RunEvalBodyRequest
-      description: Request body model for running an evaluation (without path parameter).
     SearchRankingOptions:
       properties:
         ranker:
@@ -14076,6 +12357,58 @@ components:
           contentEncoding: base64
       title: _URLOrData
       description: A URL or a base64 encoded string
+    GreedySamplingStrategy:
+      description: Greedy sampling strategy that selects the highest probability token at each step.
+      properties:
+        type:
+          description: Must be 'greedy' to identify this sampling strategy.
+          title: Type
+          type: string
+          enum:
+          - greedy
+      title: GreedySamplingStrategy
+    TopKSamplingStrategy:
+      description: Top-k sampling strategy that restricts sampling to the k most likely tokens.
+      properties:
+        type:
+          description: Must be 'top_k' to identify this sampling strategy.
+          title: Type
+          type: string
+          enum:
+          - top_k
+        top_k:
+          description: Number of top tokens to consider for sampling. Must be at least 1.
+          minimum: 1
+          title: Top K
+          type: integer
+      required:
+      - top_k
+      title: TopKSamplingStrategy
+    TopPSamplingStrategy:
+      description: Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p.
+      properties:
+        type:
+          description: Must be 'top_p' to identify this sampling strategy.
+          title: Type
+          type: string
+          enum:
+          - top_p
+        temperature:
+          description: Controls randomness in sampling. Higher values increase randomness.
+          maximum: 2.0
+          title: Temperature
+          type: number
+          minimum: 0.0
+        top_p:
+          default: 0.95
+          description: Cumulative probability threshold for nucleus sampling.
+          maximum: 1.0
+          minimum: 0.0
+          title: Top P
+          type: number
+      required:
+      - temperature
+      title: TopPSamplingStrategy
     SamplingStrategy:
       discriminator:
         mapping:
@@ -14292,50 +12625,6 @@ components:
       - $ref: '#/components/schemas/OpenAIResponseContentPartReasoningText'
         title: OpenAIResponseContentPartReasoningText
       title: OpenAIResponseContentPartOutputText | OpenAIResponseContentPartRefusal | OpenAIResponseContentPartReasoningText
-    ListBenchmarksRequest:
-      description: Request model for listing benchmarks.
-      properties: {}
-      title: ListBenchmarksRequest
-    GetBenchmarkRequest:
-      description: Request model for getting a benchmark.
-      properties:
-        benchmark_id:
-          description: The ID of the benchmark to get.
-          title: Benchmark Id
-          type: string
-      required:
-      - benchmark_id
-      title: GetBenchmarkRequest
-    UnregisterBenchmarkRequest:
-      description: Request model for unregistering a benchmark.
-      properties:
-        benchmark_id:
-          description: The ID of the benchmark to unregister.
-          title: Benchmark Id
-          type: string
-      required:
-      - benchmark_id
-      title: UnregisterBenchmarkRequest
-    GetDatasetRequest:
-      description: Request model for getting a dataset by ID.
-      properties:
-        dataset_id:
-          description: The ID of the dataset to get.
-          title: Dataset Id
-          type: string
-      required:
-      - dataset_id
-      title: GetDatasetRequest
-    UnregisterDatasetRequest:
-      description: Request model for unregistering a dataset.
-      properties:
-        dataset_id:
-          description: The ID of the dataset to unregister.
-          title: Dataset Id
-          type: string
-      required:
-      - dataset_id
-      title: UnregisterDatasetRequest
     ListModelsResponse:
       description: Response containing a list of model objects.
       properties:
@@ -14368,39 +12657,6 @@ components:
       required:
       - model_id
       title: UnregisterModelRequest
-    DialogType:
-      description: Parameter type for dialog data with semantic output labels.
-      properties:
-        type:
-          title: Type
-          type: string
-          enum:
-          - dialog
-      title: DialogType
-    ListScoringFunctionsRequest:
-      description: Request model for listing scoring functions.
-      properties: {}
-      title: ListScoringFunctionsRequest
-    GetScoringFunctionRequest:
-      description: Request model for getting a scoring function.
-      properties:
-        scoring_fn_id:
-          description: The ID of the scoring function to get.
-          title: Scoring Fn Id
-          type: string
-      required:
-      - scoring_fn_id
-      title: GetScoringFunctionRequest
-    UnregisterScoringFunctionRequest:
-      description: Request model for unregistering a scoring function.
-      properties:
-        scoring_fn_id:
-          description: The ID of the scoring function to unregister.
-          title: Scoring Fn Id
-          type: string
-      required:
-      - scoring_fn_id
-      title: UnregisterScoringFunctionRequest
     GetShieldRequest:
       description: Request model for getting a shield by identifier.
       properties:
@@ -14499,16 +12755,10 @@ components:
       - responses
       - batches
       - vector_io
-      - datasetio
-      - scoring
-      - eval
       - tool_runtime
       - models
       - shields
       - vector_stores
-      - datasets
-      - scoring_functions
-      - benchmarks
       - tool_groups
       - files
       - file_processors
@@ -14815,6 +13065,27 @@ components:
       required:
       - provider_id
       title: InspectProviderRequest
+    PaginatedResponse:
+      description: A generic paginated response that follows a simple format.
+      properties:
+        data:
+          items:
+            additionalProperties: true
+            type: object
+          title: Data
+          type: array
+        has_more:
+          title: Has More
+          type: boolean
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+      required:
+      - data
+      - has_more
+      title: PaginatedResponse
     MetricInResponse:
       description: A metric value included in API responses.
       properties:
@@ -14835,6 +13106,50 @@ components:
       - metric
       - value
       title: MetricInResponse
+    SamplingParams:
+      description: Sampling parameters for text generation.
+      properties:
+        strategy:
+          description: The sampling strategy to use.
+          discriminator:
+            mapping:
+              greedy: '#/components/schemas/GreedySamplingStrategy'
+              top_k: '#/components/schemas/TopKSamplingStrategy'
+              top_p: '#/components/schemas/TopPSamplingStrategy'
+            propertyName: type
+          oneOf:
+          - $ref: '#/components/schemas/GreedySamplingStrategy'
+            title: GreedySamplingStrategy
+          - $ref: '#/components/schemas/TopPSamplingStrategy'
+            title: TopPSamplingStrategy
+          - $ref: '#/components/schemas/TopKSamplingStrategy'
+            title: TopKSamplingStrategy
+          title: GreedySamplingStrategy | TopPSamplingStrategy | TopKSamplingStrategy
+        max_tokens:
+          anyOf:
+          - minimum: 1
+            type: integer
+          - type: 'null'
+          description: The maximum number of tokens that can be generated in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length.
+          nullable: true
+        repetition_penalty:
+          anyOf:
+          - maximum: 2.0
+            minimum: -2.0
+            type: number
+          - type: 'null'
+          default: 1.0
+          description: Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far.
+        stop:
+          anyOf:
+          - items:
+              type: string
+            maxItems: 4
+            type: array
+          - type: 'null'
+          description: Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.
+          nullable: true
+      title: SamplingParams
     Fp8QuantizationConfig:
       description: Configuration for 8-bit floating point quantization.
       properties:
@@ -14945,6 +13260,48 @@ components:
       required:
       - content
       title: UserMessage
+    SystemMessage:
+      description: A system message providing instructions or context to the model.
+      properties:
+        role:
+          description: Must be 'system' to identify this as a system message.
+          title: Role
+          type: string
+          enum:
+          - system
+        content:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          description: The content of the 'system prompt'. If multiple system messages are provided, they are concatenated. The underlying Llama Stack code may also add other system messages.
+          title: string | list[ImageContentItem | TextContentItem]
+      required:
+      - content
+      title: SystemMessage
     ToolResponseMessage:
       description: A message representing the result of a tool invocation.
       properties:
@@ -15309,6 +13666,37 @@ components:
       required:
       - batch_id
       title: CancelBatchRequest
+    JobStatus:
+      description: Status of a job execution.
+      enum:
+      - completed
+      - in_progress
+      - failed
+      - scheduled
+      - cancelled
+      title: JobStatus
+      type: string
+    Job:
+      description: A job execution instance with status tracking.
+      properties:
+        job_id:
+          title: Job Id
+          type: string
+        status:
+          $ref: '#/components/schemas/JobStatus'
+      required:
+      - job_id
+      - status
+      title: Job
+    DialogType:
+      description: Parameter type for dialog data with semantic output labels.
+      properties:
+        type:
+          title: Type
+          type: string
+          enum:
+          - dialog
+      title: DialogType
     ConnectorInput:
       description: Input for creating a connector
       properties:
@@ -15542,90 +13930,6 @@ components:
       - conversation_id
       - item_id
       title: DeleteItemRequest
-    IterRowsRequest:
-      description: Request model for iterating over rows in a dataset.
-      properties:
-        dataset_id:
-          description: The ID of the dataset to get the rows from.
-          title: Dataset Id
-          type: string
-        start_index:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          description: Index into dataset for the first row to get. Get all rows if None.
-          nullable: true
-        limit:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          description: The number of rows to get.
-          nullable: true
-      required:
-      - dataset_id
-      title: IterRowsRequest
-    BenchmarkIdRequest:
-      description: Request model containing benchmark_id path parameter.
-      properties:
-        benchmark_id:
-          description: The ID of the benchmark
-          minLength: 1
-          title: Benchmark Id
-          type: string
-      required:
-      - benchmark_id
-      title: BenchmarkIdRequest
-    JobStatusRequest:
-      description: Request model for getting the status of a job.
-      properties:
-        benchmark_id:
-          description: The ID of the benchmark associated with the job
-          minLength: 1
-          title: Benchmark Id
-          type: string
-        job_id:
-          description: The ID of the job to get the status of
-          minLength: 1
-          title: Job Id
-          type: string
-      required:
-      - benchmark_id
-      - job_id
-      title: JobStatusRequest
-    JobCancelRequest:
-      description: Request model for canceling a job.
-      properties:
-        benchmark_id:
-          description: The ID of the benchmark associated with the job
-          minLength: 1
-          title: Benchmark Id
-          type: string
-        job_id:
-          description: The ID of the job to cancel
-          minLength: 1
-          title: Job Id
-          type: string
-      required:
-      - benchmark_id
-      - job_id
-      title: JobCancelRequest
-    JobResultRequest:
-      description: Request model for getting the result of a job.
-      properties:
-        benchmark_id:
-          description: The ID of the benchmark associated with the job
-          minLength: 1
-          title: Benchmark Id
-          type: string
-        job_id:
-          description: The ID of the job to get the result of
-          minLength: 1
-          title: Job Id
-          type: string
-      required:
-      - benchmark_id
-      - job_id
-      title: JobResultRequest
     ProcessFileRequest:
       description: |-
         Request model for file processing operation.
@@ -15933,18 +14237,9 @@ tags:
     Note: This API is currently under active development and may undergo changes.
   name: Batches
   x-displayName: Batches
-- description: ''
-  name: Benchmarks
 - description: Protocol for conversation management operations.
   name: Conversations
   x-displayName: Conversations
-- description: ''
-  name: DatasetIO
-- description: ''
-  name: Datasets
-- description: Llama Stack Evaluation API for running evaluations on model and agent candidates.
-  name: Eval
-  x-displayName: Evaluations
 - description: This API is used to upload documents that can be used with other Llama Stack APIs.
   name: Files
   x-displayName: Files
@@ -15972,10 +14267,6 @@ tags:
   name: Safety
   x-displayName: Safety
 - description: ''
-  name: Scoring
-- description: ''
-  name: ScoringFunctions
-- description: ''
   name: Shields
 - description: ''
   name: ToolGroups
@@ -15988,11 +14279,7 @@ x-tagGroups:
   tags:
   - Agents
   - Batches
-  - Benchmarks
   - Conversations
-  - DatasetIO
-  - Datasets
-  - Eval
   - Files
   - Inference
   - Inspect
@@ -16000,8 +14287,6 @@ x-tagGroups:
   - Prompts
   - Providers
   - Safety
-  - Scoring
-  - ScoringFunctions
   - Shields
   - ToolGroups
   - ToolRuntime
