@@ -9925,177 +9925,6 @@ components:
       - version
       title: VersionInfo
       description: Version information for the service.
-    PaginatedResponse:
-      description: A generic paginated response that follows a simple format.
-      properties:
-        data:
-          items:
-            additionalProperties: true
-            type: object
-          title: Data
-          type: array
-        has_more:
-          title: Has More
-          type: boolean
-        url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
-      required:
-      - data
-      - has_more
-      title: PaginatedResponse
-    GreedySamplingStrategy:
-      description: Greedy sampling strategy that selects the highest probability token at each step.
-      properties:
-        type:
-          description: Must be 'greedy' to identify this sampling strategy.
-          title: Type
-          type: string
-          enum:
-          - greedy
-      title: GreedySamplingStrategy
-    SamplingParams:
-      description: Sampling parameters for text generation.
-      properties:
-        strategy:
-          description: The sampling strategy to use.
-          discriminator:
-            mapping:
-              greedy: '#/components/schemas/GreedySamplingStrategy'
-              top_k: '#/components/schemas/TopKSamplingStrategy'
-              top_p: '#/components/schemas/TopPSamplingStrategy'
-            propertyName: type
-          oneOf:
-          - $ref: '#/components/schemas/GreedySamplingStrategy'
-            title: GreedySamplingStrategy
-          - $ref: '#/components/schemas/TopPSamplingStrategy'
-            title: TopPSamplingStrategy
-          - $ref: '#/components/schemas/TopKSamplingStrategy'
-            title: TopKSamplingStrategy
-          title: GreedySamplingStrategy | TopPSamplingStrategy | TopKSamplingStrategy
-        max_tokens:
-          anyOf:
-          - minimum: 1
-            type: integer
-          - type: 'null'
-          description: The maximum number of tokens that can be generated in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length.
-          nullable: true
-        repetition_penalty:
-          anyOf:
-          - maximum: 2.0
-            minimum: -2.0
-            type: number
-          - type: 'null'
-          default: 1.0
-          description: Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far.
-        stop:
-          anyOf:
-          - items:
-              type: string
-            maxItems: 4
-            type: array
-          - type: 'null'
-          description: Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.
-          nullable: true
-      title: SamplingParams
-    SystemMessage:
-      description: A system message providing instructions or context to the model.
-      properties:
-        role:
-          description: Must be 'system' to identify this as a system message.
-          title: Role
-          type: string
-          enum:
-          - system
-        content:
-          anyOf:
-          - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
-          - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
-            type: array
-            title: list[ImageContentItem | TextContentItem]
-          description: The content of the 'system prompt'. If multiple system messages are provided, they are concatenated. The underlying Llama Stack code may also add other system messages.
-          title: string | list[ImageContentItem | TextContentItem]
-      required:
-      - content
-      title: SystemMessage
-    TopKSamplingStrategy:
-      description: Top-k sampling strategy that restricts sampling to the k most likely tokens.
-      properties:
-        type:
-          description: Must be 'top_k' to identify this sampling strategy.
-          title: Type
-          type: string
-          enum:
-          - top_k
-        top_k:
-          description: Number of top tokens to consider for sampling. Must be at least 1.
-          minimum: 1
-          title: Top K
-          type: integer
-      required:
-      - top_k
-      title: TopKSamplingStrategy
-    TopPSamplingStrategy:
-      description: Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p.
-      properties:
-        type:
-          description: Must be 'top_p' to identify this sampling strategy.
-          title: Type
-          type: string
-          enum:
-          - top_p
-        temperature:
-          description: Controls randomness in sampling. Higher values increase randomness.
-          maximum: 2.0
-          title: Temperature
-          type: number
-          minimum: 0.0
-        top_p:
-          default: 0.95
-          description: Cumulative probability threshold for nucleus sampling.
-          maximum: 1.0
-          minimum: 0.0
-          title: Top P
-          type: number
-      required:
-      - temperature
-      title: TopPSamplingStrategy
-    Job:
-      description: A job execution instance with status tracking.
-      properties:
-        job_id:
-          title: Job Id
-          type: string
-        status:
-          $ref: '#/components/schemas/JobStatus'
-      required:
-      - job_id
-      - status
-      title: Job
     RerankRequest:
       properties:
         model:
@@ -12528,6 +12357,58 @@ components:
           contentEncoding: base64
       title: _URLOrData
       description: A URL or a base64 encoded string
+    GreedySamplingStrategy:
+      description: Greedy sampling strategy that selects the highest probability token at each step.
+      properties:
+        type:
+          description: Must be 'greedy' to identify this sampling strategy.
+          title: Type
+          type: string
+          enum:
+          - greedy
+      title: GreedySamplingStrategy
+    TopKSamplingStrategy:
+      description: Top-k sampling strategy that restricts sampling to the k most likely tokens.
+      properties:
+        type:
+          description: Must be 'top_k' to identify this sampling strategy.
+          title: Type
+          type: string
+          enum:
+          - top_k
+        top_k:
+          description: Number of top tokens to consider for sampling. Must be at least 1.
+          minimum: 1
+          title: Top K
+          type: integer
+      required:
+      - top_k
+      title: TopKSamplingStrategy
+    TopPSamplingStrategy:
+      description: Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p.
+      properties:
+        type:
+          description: Must be 'top_p' to identify this sampling strategy.
+          title: Type
+          type: string
+          enum:
+          - top_p
+        temperature:
+          description: Controls randomness in sampling. Higher values increase randomness.
+          maximum: 2.0
+          title: Temperature
+          type: number
+          minimum: 0.0
+        top_p:
+          default: 0.95
+          description: Cumulative probability threshold for nucleus sampling.
+          maximum: 1.0
+          minimum: 0.0
+          title: Top P
+          type: number
+      required:
+      - temperature
+      title: TopPSamplingStrategy
     SamplingStrategy:
       discriminator:
         mapping:
@@ -13184,6 +13065,27 @@ components:
       required:
       - provider_id
       title: InspectProviderRequest
+    PaginatedResponse:
+      description: A generic paginated response that follows a simple format.
+      properties:
+        data:
+          items:
+            additionalProperties: true
+            type: object
+          title: Data
+          type: array
+        has_more:
+          title: Has More
+          type: boolean
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+      required:
+      - data
+      - has_more
+      title: PaginatedResponse
     MetricInResponse:
       description: A metric value included in API responses.
       properties:
@@ -13204,6 +13106,50 @@ components:
       - metric
       - value
       title: MetricInResponse
+    SamplingParams:
+      description: Sampling parameters for text generation.
+      properties:
+        strategy:
+          description: The sampling strategy to use.
+          discriminator:
+            mapping:
+              greedy: '#/components/schemas/GreedySamplingStrategy'
+              top_k: '#/components/schemas/TopKSamplingStrategy'
+              top_p: '#/components/schemas/TopPSamplingStrategy'
+            propertyName: type
+          oneOf:
+          - $ref: '#/components/schemas/GreedySamplingStrategy'
+            title: GreedySamplingStrategy
+          - $ref: '#/components/schemas/TopPSamplingStrategy'
+            title: TopPSamplingStrategy
+          - $ref: '#/components/schemas/TopKSamplingStrategy'
+            title: TopKSamplingStrategy
+          title: GreedySamplingStrategy | TopPSamplingStrategy | TopKSamplingStrategy
+        max_tokens:
+          anyOf:
+          - minimum: 1
+            type: integer
+          - type: 'null'
+          description: The maximum number of tokens that can be generated in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length.
+          nullable: true
+        repetition_penalty:
+          anyOf:
+          - maximum: 2.0
+            minimum: -2.0
+            type: number
+          - type: 'null'
+          default: 1.0
+          description: Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far.
+        stop:
+          anyOf:
+          - items:
+              type: string
+            maxItems: 4
+            type: array
+          - type: 'null'
+          description: Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.
+          nullable: true
+      title: SamplingParams
     Fp8QuantizationConfig:
       description: Configuration for 8-bit floating point quantization.
       properties:
@@ -13314,6 +13260,48 @@ components:
       required:
       - content
       title: UserMessage
+    SystemMessage:
+      description: A system message providing instructions or context to the model.
+      properties:
+        role:
+          description: Must be 'system' to identify this as a system message.
+          title: Role
+          type: string
+          enum:
+          - system
+        content:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          description: The content of the 'system prompt'. If multiple system messages are provided, they are concatenated. The underlying Llama Stack code may also add other system messages.
+          title: string | list[ImageContentItem | TextContentItem]
+      required:
+      - content
+      title: SystemMessage
     ToolResponseMessage:
       description: A message representing the result of a tool invocation.
       properties:
@@ -13688,6 +13676,18 @@ components:
       - cancelled
       title: JobStatus
       type: string
+    Job:
+      description: A job execution instance with status tracking.
+      properties:
+        job_id:
+          title: Job Id
+          type: string
+        status:
+          $ref: '#/components/schemas/JobStatus'
+      required:
+      - job_id
+      - status
+      title: Job
     DialogType:
       description: Parameter type for dialog data with semantic output labels.
       properties:
@@ -14237,18 +14237,9 @@ tags:
     Note: This API is currently under active development and may undergo changes.
   name: Batches
   x-displayName: Batches
-- description: ''
-  name: Benchmarks
 - description: Protocol for conversation management operations.
   name: Conversations
   x-displayName: Conversations
-- description: ''
-  name: DatasetIO
-- description: ''
-  name: Datasets
-- description: Llama Stack Evaluation API for running evaluations on model and agent candidates.
-  name: Eval
-  x-displayName: Evaluations
 - description: This API is used to upload documents that can be used with other Llama Stack APIs.
   name: Files
   x-displayName: Files
@@ -14276,10 +14267,6 @@ tags:
   name: Safety
   x-displayName: Safety
 - description: ''
-  name: Scoring
-- description: ''
-  name: ScoringFunctions
-- description: ''
   name: Shields
 - description: ''
   name: ToolGroups
@@ -14292,11 +14279,7 @@ x-tagGroups:
   tags:
   - Agents
   - Batches
-  - Benchmarks
   - Conversations
-  - DatasetIO
-  - Datasets
-  - Eval
   - Files
   - Inference
   - Inspect
@@ -14304,8 +14287,6 @@ x-tagGroups:
   - Prompts
   - Providers
   - Safety
-  - Scoring
-  - ScoringFunctions
   - Shields
   - ToolGroups
   - ToolRuntime
