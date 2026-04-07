@@ -69,6 +69,9 @@ _ID_KIND_PREFIXES: dict[str, str] = {
 
 _FLOAT_IN_STRING_PATTERN = re.compile(r"(-?\d+\.\d{4,})")
 
+_FILE_SEARCH_SCORE_PATTERN = re.compile(r"score:\s*[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
+_FILE_SEARCH_ATTRIBUTES_PATTERN = re.compile(r",?\s*attributes:\s*\{[^}]*\}")
+
 
 def _normalize_numeric_literal_strings(value: str) -> str:
     """Round any long decimal literals embedded in strings for stable hashing."""
@@ -78,6 +81,17 @@ def _normalize_numeric_literal_strings(value: str) -> str:
         return f"{number:.5f}"
 
     return _FLOAT_IN_STRING_PATTERN.sub(_replace, value)
+
+
+def _normalize_file_search_metadata(value: str) -> str:
+    """Replace non-deterministic file_search fields with placeholders for stable hashing.
+
+    Vector search scores and attribute dicts vary between runs even for identical
+    documents, which causes request hash mismatches during replay.
+    """
+    value = _FILE_SEARCH_SCORE_PATTERN.sub("score: __NORMALIZED__", value)
+    value = _FILE_SEARCH_ATTRIBUTES_PATTERN.sub("", value)
+    return value
 
 
 def _normalize_body_for_hash(value: Any, exclude_stream_options: bool = False, *, _is_root: bool = True) -> Any:
@@ -104,6 +118,7 @@ def _normalize_body_for_hash(value: Any, exclude_stream_options: bool = False, *
     if isinstance(value, float):
         return round(value, 5)
     if isinstance(value, str):
+        value = _normalize_file_search_metadata(value)
         return _normalize_numeric_literal_strings(value)
     return value
 

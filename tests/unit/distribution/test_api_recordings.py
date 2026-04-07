@@ -172,6 +172,113 @@ class TestInferenceRecording:
         )
         assert hash7 == hash8
 
+    def test_file_search_score_normalization(self):
+        """Test that file_search scores are normalized for stable hashing.
+
+        Vector search returns non-deterministic scores that vary between runs.
+        The score values must be replaced entirely (not just rounded) so that
+        replay hashes match regardless of the exact score returned.
+        """
+        url = "http://test/v1/chat/completions"
+
+        body_a = {
+            "messages": [
+                {
+                    "role": "tool",
+                    "content": "document_id: file-123, score: 0.8523456789",
+                }
+            ]
+        }
+        body_b = {
+            "messages": [
+                {
+                    "role": "tool",
+                    "content": "document_id: file-123, score: 0.4217891234",
+                }
+            ]
+        }
+        hash_a = normalize_inference_request("POST", url, {}, body_a)
+        hash_b = normalize_inference_request("POST", url, {}, body_b)
+        assert hash_a == hash_b
+
+    def test_file_search_score_normalization_short_decimals(self):
+        """Scores with few decimal places also get normalized."""
+        url = "http://test/v1/chat/completions"
+
+        body_a = {"messages": [{"role": "tool", "content": "document_id: file-1, score: 0.85"}]}
+        body_b = {"messages": [{"role": "tool", "content": "document_id: file-1, score: 0.42"}]}
+        hash_a = normalize_inference_request("POST", url, {}, body_a)
+        hash_b = normalize_inference_request("POST", url, {}, body_b)
+        assert hash_a == hash_b
+
+    def test_file_search_attributes_normalization(self):
+        """Test that file_search attribute dicts are stripped for stable hashing."""
+        url = "http://test/v1/chat/completions"
+
+        body_a = {
+            "messages": [
+                {
+                    "role": "tool",
+                    "content": "document_id: file-123, score: 0.85, attributes: {'document_id': 'file-123', 'source': 'a.txt'}",
+                }
+            ]
+        }
+        body_b = {
+            "messages": [
+                {
+                    "role": "tool",
+                    "content": "document_id: file-123, score: 0.85, attributes: {'document_id': 'file-456', 'source': 'b.txt'}",
+                }
+            ]
+        }
+        hash_a = normalize_inference_request("POST", url, {}, body_a)
+        hash_b = normalize_inference_request("POST", url, {}, body_b)
+        assert hash_a == hash_b
+
+    def test_file_search_full_metadata_normalization(self):
+        """End-to-end test with realistic file_search metadata in chat messages."""
+        url = "http://test/v1/chat/completions"
+
+        body_a = {
+            "messages": [
+                {"role": "user", "content": "What is in the document?"},
+                {
+                    "role": "tool",
+                    "content": (
+                        "document_id: file-100, score: 0.9321"
+                        ", attributes: {'document_id': 'file-100', 'region': 'us'}"
+                        "\nThe document discusses quarterly earnings."
+                    ),
+                },
+            ]
+        }
+        body_b = {
+            "messages": [
+                {"role": "user", "content": "What is in the document?"},
+                {
+                    "role": "tool",
+                    "content": (
+                        "document_id: file-100, score: 0.6178"
+                        ", attributes: {'document_id': 'file-100', 'region': 'eu'}"
+                        "\nThe document discusses quarterly earnings."
+                    ),
+                },
+            ]
+        }
+        hash_a = normalize_inference_request("POST", url, {}, body_a)
+        hash_b = normalize_inference_request("POST", url, {}, body_b)
+        assert hash_a == hash_b
+
+    def test_non_file_search_content_still_differs(self):
+        """Ensure normalization does not collapse genuinely different requests."""
+        url = "http://test/v1/chat/completions"
+
+        body_a = {"messages": [{"role": "user", "content": "What is machine learning?"}]}
+        body_b = {"messages": [{"role": "user", "content": "What is deep learning?"}]}
+        hash_a = normalize_inference_request("POST", url, {}, body_a)
+        hash_b = normalize_inference_request("POST", url, {}, body_b)
+        assert hash_a != hash_b
+
     def test_response_storage(self, temp_storage_dir):
         """Test the ResponseStorage class."""
         temp_storage_dir = temp_storage_dir / "test_response_storage"
