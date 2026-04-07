@@ -22,6 +22,7 @@ from llama_stack.core.task import (
 )
 from llama_stack.log import get_logger
 from llama_stack.providers.inline.responses.builtin.config import CompactionConfig
+from llama_stack.providers.utils.memory.vector_store import _get_encoding
 from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
     _OpenAIResponseObjectWithInputAndMessages,
@@ -1314,12 +1315,23 @@ class OpenAIResponsesImpl:
         output_items.append(compaction_item)
 
         # Build usage from completion
+        usage = completion.usage
         usage_data = OpenAIResponseUsage(
-            input_tokens=completion.usage.prompt_tokens if completion.usage else 0,
-            output_tokens=completion.usage.completion_tokens if completion.usage else 0,
-            total_tokens=completion.usage.total_tokens if completion.usage else 0,
-            input_tokens_details=OpenAIResponseUsageInputTokensDetails(cached_tokens=0),
-            output_tokens_details=OpenAIResponseUsageOutputTokensDetails(reasoning_tokens=0),
+            input_tokens=usage.prompt_tokens if usage else 0,
+            output_tokens=usage.completion_tokens if usage else 0,
+            total_tokens=usage.total_tokens if usage else 0,
+            input_tokens_details=OpenAIResponseUsageInputTokensDetails(
+                cached_tokens=usage.prompt_tokens_details.cached_tokens
+                if usage and usage.prompt_tokens_details and usage.prompt_tokens_details.cached_tokens is not None
+                else 0
+            ),
+            output_tokens_details=OpenAIResponseUsageOutputTokensDetails(
+                reasoning_tokens=usage.completion_tokens_details.reasoning_tokens
+                if usage
+                and usage.completion_tokens_details
+                and usage.completion_tokens_details.reasoning_tokens is not None
+                else 0
+            ),
         )
 
         return OpenAICompactedResponse(
@@ -1329,29 +1341,33 @@ class OpenAIResponsesImpl:
             usage=usage_data,
         )
 
-    def _estimate_token_count(self, input: str | list[OpenAIResponseInput]) -> int:
-        """Estimate token count using a rough character-based heuristic (4 chars ~= 1 token)."""
-        if isinstance(input, str):
-            return len(input) // 4
+    def _count_tokens(self, input: str | list[OpenAIResponseInput]) -> int:
+        """Count tokens using tiktoken (cl100k_base encoding)."""
+        encoding = _get_encoding("cl100k_base")
 
-        total_chars = 0
+        if isinstance(input, str):
+            return len(encoding.encode(input))
+
+        total_tokens = 0
         for item in input:
             if isinstance(item, OpenAIResponseMessage):
                 if isinstance(item.content, str):
-                    total_chars += len(item.content)
+                    total_tokens += len(encoding.encode(item.content))
                 elif isinstance(item.content, list):
                     for part in item.content:
                         if hasattr(part, "text"):
-                            total_chars += len(part.text)
+                            total_tokens += len(encoding.encode(part.text))
             elif isinstance(item, OpenAIResponseCompaction):
-                total_chars += len(item.encrypted_content)
+                total_tokens += len(encoding.encode(item.encrypted_content))
             elif hasattr(item, "arguments"):
-                total_chars += len(getattr(item, "arguments", ""))
+                args = getattr(item, "arguments", "")
+                if args:
+                    total_tokens += len(encoding.encode(args))
             elif hasattr(item, "output"):
                 output = getattr(item, "output", "")
                 if isinstance(output, str):
-                    total_chars += len(output)
-        return total_chars // 4
+                    total_tokens += len(encoding.encode(output))
+        return total_tokens
 
     async def _maybe_auto_compact(
         self,
@@ -1373,9 +1389,9 @@ class OpenAIResponsesImpl:
             if threshold is None:
                 continue
 
-            estimated_tokens = self._estimate_token_count(input)
-            if estimated_tokens > threshold:
-                logger.debug("Auto-compacting", estimated_tokens=estimated_tokens, threshold=threshold)
+            token_count = self._count_tokens(input)
+            if token_count > threshold:
+                logger.debug("Auto-compacting", token_count=token_count, threshold=threshold)
                 compacted = await self.compact_openai_response(model=model, input=input)
                 return list(compacted.output)
 
