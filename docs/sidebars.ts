@@ -197,10 +197,6 @@ const sidebars: SidebarsConfig = {
           label: 'Scoring',
           collapsed: false,
           items: [
-            'providers/scoring/index',
-            'providers/scoring/inline_basic',
-            'providers/scoring/inline_braintrust',
-            'providers/scoring/inline_llm-as-judge'
           ],
         },
         {
@@ -276,8 +272,6 @@ const sidebars: SidebarsConfig = {
       label: 'Advanced APIs',
       collapsed: false,
       items: [
-        'advanced_apis/evaluation',
-        'advanced_apis/scoring',
       ],
     },
     {

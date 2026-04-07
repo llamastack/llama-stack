@@ -12,9 +12,6 @@ inline/
   ios/                 # iOS on-device inference
   safety/              # Safety checks (llama-guard, code-scanner)
   vector_io/           # Vector storage (sqlite-vec, faiss, chroma, milvus, qdrant)
-  datasetio/           # Dataset I/O (local file handling)
-  eval/                # Evaluation orchestration
-  scoring/             # Scoring function implementations
   tool_runtime/        # Tool runtime (RAG context retrieval)
   files/               # File storage and management
   file_processor/      # File processing (text extraction, etc.)
