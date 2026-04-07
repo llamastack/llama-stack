@@ -10,9 +10,6 @@ routing_tables/
   common.py              # CommonRoutingTableImpl base class
   models.py              # ModelsRoutingTable (models -> inference providers)
   shields.py             # ShieldsRoutingTable (shields -> safety providers)
-  datasets.py            # DatasetsRoutingTable (datasets -> datasetio providers)
-  scoring_functions.py   # ScoringFunctionsRoutingTable
-  benchmarks.py          # BenchmarksRoutingTable
   toolgroups.py          # ToolGroupsRoutingTable
   vector_stores.py       # VectorStoresRoutingTable
 ```
