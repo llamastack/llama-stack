@@ -3207,10 +3207,16 @@ paths:
       summary: Create a message.
       description: Create a message using the Anthropic Messages API format.
       operationId: create_message_v1_messages_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnthropicCreateMessageRequest'
+        required: true
       x-codeSamples:
       - lang: Python
         label: Anthropic SDK
-        source: |
+        source: |-
           from anthropic import Anthropic
 
           client = Anthropic(
@@ -3229,7 +3235,7 @@ paths:
           print(message.content[0].text)
       - lang: TypeScript
         label: Anthropic SDK
-        source: |
+        source: |-
           import Anthropic from "@anthropic-ai/sdk";
 
           const client = new Anthropic({
@@ -3244,24 +3250,6 @@ paths:
           });
 
           console.log(message.content[0].text);
-      - lang: Shell
-        label: curl
-        source: |
-          curl http://localhost:8321/v1/messages \
-            -H "Content-Type: application/json" \
-            -d '{
-              "model": "llama-3.3-70b",
-              "max_tokens": 1024,
-              "messages": [
-                {"role": "user", "content": "What is Llama Stack?"}
-              ]
-            }'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnthropicCreateMessageRequest'
-        required: true
   /v1/messages/count_tokens:
     post:
       responses:
