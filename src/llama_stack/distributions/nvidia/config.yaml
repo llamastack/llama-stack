@@ -1,13 +1,10 @@
 version: 2
 distro_name: nvidia
 apis:
-- datasetio
-- eval
 - files
 - inference
 - responses
 - safety
-- scoring
 - tool_runtime
 - vector_io
 providers:
@@ -43,22 +40,6 @@ providers:
           backend: sql_default
           max_write_queue_size: 10000
           num_writers: 4
-  eval:
-  - provider_id: nvidia
-    provider_type: remote::nvidia
-    config:
-      evaluator_url: ${env.NVIDIA_EVALUATOR_URL:=http://localhost:7331}
-  datasetio:
-  - provider_id: nvidia
-    provider_type: remote::nvidia
-    config:
-      api_key: ${env.NVIDIA_API_KEY:=}
-      dataset_namespace: ${env.NVIDIA_DATASET_NAMESPACE:=default}
-      project_id: ${env.NVIDIA_PROJECT_ID:=test-project}
-      datasets_url: ${env.NVIDIA_DATASETS_URL:=http://nemo.test}
-  scoring:
-  - provider_id: basic
-    provider_type: inline::basic
   tool_runtime:
   - provider_id: file-search
     provider_type: inline::file-search
@@ -100,8 +81,5 @@ registered_resources:
   models: []
   shields: []
   vector_dbs: []
-  datasets: []
-  scoring_fns: []
-  benchmarks: []
 server:
   port: 8321

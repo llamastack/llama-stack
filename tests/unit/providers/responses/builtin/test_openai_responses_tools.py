@@ -415,6 +415,62 @@ async def test_mcp_tool_connector_id_resolved_to_server_url(
     assert listings[0].tools[0].name == "resolved_tool"
 
 
+async def test_file_search_uses_default_search_mode_from_config(mock_vector_io_api):
+    """Test that file_search tool executor passes default_search_mode from VectorStoresConfig."""
+    from llama_stack.core.datatypes import ChunkRetrievalParams
+
+    query = "What is machine learning?"
+    vector_store_id = "test_vector_store"
+
+    mock_vector_io_api.openai_search_vector_store.return_value = VectorStoreSearchResponsePage(
+        search_query=[query],
+        data=[],
+    )
+
+    # Test with hybrid mode configured
+    hybrid_config = VectorStoresConfig(
+        chunk_retrieval_params=ChunkRetrievalParams(default_search_mode="hybrid"),
+    )
+    tool_executor = ToolExecutor(
+        tool_groups_api=None,  # type: ignore
+        tool_runtime_api=None,  # type: ignore
+        vector_io_api=mock_vector_io_api,
+        vector_stores_config=hybrid_config,
+        mcp_session_manager=None,
+    )
+
+    file_search_tool = OpenAIResponseInputToolFileSearch(vector_store_ids=[vector_store_id])
+    await tool_executor._execute_file_search_via_vector_store(
+        query=query,
+        response_file_search_tool=file_search_tool,
+    )
+
+    # Verify search_mode="hybrid" was passed in the request
+    call_kwargs = mock_vector_io_api.openai_search_vector_store.call_args
+    request = call_kwargs.kwargs["request"]
+    assert request.search_mode == "hybrid", f"Expected search_mode='hybrid', got '{request.search_mode}'"
+
+    # Test with default config (should use "vector")
+    mock_vector_io_api.openai_search_vector_store.reset_mock()
+    default_config = VectorStoresConfig()
+    tool_executor_default = ToolExecutor(
+        tool_groups_api=None,  # type: ignore
+        tool_runtime_api=None,  # type: ignore
+        vector_io_api=mock_vector_io_api,
+        vector_stores_config=default_config,
+        mcp_session_manager=None,
+    )
+
+    await tool_executor_default._execute_file_search_via_vector_store(
+        query=query,
+        response_file_search_tool=file_search_tool,
+    )
+
+    call_kwargs = mock_vector_io_api.openai_search_vector_store.call_args
+    request = call_kwargs.kwargs["request"]
+    assert request.search_mode == "vector", f"Expected search_mode='vector', got '{request.search_mode}'"
+
+
 async def test_file_search_results_include_chunk_metadata_attributes(mock_vector_io_api):
     """Test that file_search tool executor preserves chunk metadata attributes."""
     query = "What is machine learning?"

@@ -30,6 +30,7 @@ from llama_stack_api import (
     CompoundFilter,
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     InsertChunksRequest,
@@ -780,9 +781,15 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
     """Vector I/O adapter for PostgreSQL with pgvector."""
 
     def __init__(
-        self, config: PGVectorVectorIOConfig, inference_api: Inference, files_api: Files | None = None
+        self,
+        config: PGVectorVectorIOConfig,
+        inference_api: Inference,
+        files_api: Files | None = None,
+        file_processor_api: FileProcessors | None = None,
     ) -> None:
-        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
+        super().__init__(
+            inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api
+        )
         self.config = config
         self.conn = None
         self.cache = {}

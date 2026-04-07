@@ -38,7 +38,6 @@ CATEGORIES = [
     "inference",
     "agents",
     "safety",
-    "eval",
     "tools",
     "client",
     "openai",
@@ -52,10 +51,10 @@ CATEGORIES = [
     "vector_io",
     "tool_runtime",
     "cli",
-    "scoring",
     "tests",
     "telemetry",
     "connectors",
+    "messages",
 ]
 UNCATEGORIZED = "uncategorized"
 

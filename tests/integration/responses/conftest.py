@@ -36,3 +36,14 @@ def responses_client(compat_client):
     if isinstance(compat_client, LlamaStackAsLibraryClient):
         pytest.skip("Responses API tests are not supported in library client mode")
     return compat_client
+
+
+@pytest.fixture
+def langchain_chat(responses_client, text_model_id):
+    """Create langchain ChatOpenAI instances configured for Responses API."""
+    from .helpers import langchain_chat as _langchain_chat
+
+    def _create_chat(use_previous_response_id: bool = False):
+        return _langchain_chat(responses_client, text_model_id, use_previous_response_id)
+
+    return _create_chat

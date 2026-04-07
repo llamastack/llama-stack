@@ -54,58 +54,72 @@ pip_packages:
 
 ## Required Implementation
 
-External APIs must expose a `available_providers()` function in their module that returns a list of provider names:
+External API modules must expose three things:
+
+1. **`available_providers()`** - returns a list of provider specs
+2. **A Protocol class** - defines the API contract
+3. **`create_router()`** - returns a FastAPI router that maps HTTP endpoints to the protocol methods
 
 ```python
-# llama_stack_api_weather/api.py
-from llama_stack_api import Api, InlineProviderSpec, ProviderSpec
+# llama_stack_api_weather/weather.py
+from typing import Protocol
+
+from fastapi import APIRouter
+
+from llama_stack_api import Api, ProviderSpec, RemoteProviderSpec
 
 
 def available_providers() -> list[ProviderSpec]:
     return [
-        InlineProviderSpec(
+        RemoteProviderSpec(
             api=Api.weather,
-            provider_type="inline::darksky",
-            pip_packages=[],
-            module="llama_stack_provider_darksky",
-            config_class="llama_stack_provider_darksky.DarkSkyWeatherImplConfig",
+            provider_type="remote::kaze",
+            adapter_type="kaze",
+            module="llama_stack_provider_kaze",
+            pip_packages=["llama_stack_provider_kaze"],
+            config_class="llama_stack_provider_kaze.KazeProviderConfig",
         ),
     ]
+
+
+class WeatherProvider(Protocol):
+    """A protocol for the Weather API."""
+
+    async def get_available_locations() -> dict[str, list[str]]:
+        """Get the available locations."""
+        ...
+
+
+def create_router(impl: WeatherProvider) -> APIRouter:
+    router = APIRouter()
+
+    @router.get("/v1/weather/locations")
+    async def get_available_locations() -> dict[str, list[str]]:
+        return await impl.get_available_locations()
+
+    return router
 ```
 
-A Protocol class like so:
+The `__init__.py` must re-export these:
 
 ```python
-# llama_stack_api_weather/api.py
-from typing import Protocol
+# llama_stack_api_weather/__init__.py
+"""Weather API for Llama Stack."""
 
-from llama_stack_api import webmethod
+from .weather import WeatherProvider, available_providers, create_router
 
-
-class WeatherAPI(Protocol):
-    """
-    A protocol for the Weather API.
-    """
-
-    @webmethod(route="/locations", method="GET")
-    async def get_available_locations() -> dict[str, list[str]]:
-        """
-        Get the available locations.
-        """
-        ...
+__all__ = ["WeatherProvider", "available_providers", "create_router"]
 ```
 
 ## Example: Custom API
 
-Here's a complete example of creating and using a custom API:
+Using the weather API shown above, here's the full setup:
 
-1. First, create the API package:
+1. Create the API package:
 
 ```bash
-mkdir -p llama-stack-api-weather
+mkdir -p llama-stack-api-weather/src/llama_stack_api_weather
 cd llama-stack-api-weather
-mkdir src/llama_stack_api_weather
-git init
 uv init
 ```
 
@@ -116,9 +130,8 @@ uv init
 name = "llama-stack-api-weather"
 version = "0.1.0"
 description = "Weather API for Llama Stack"
-readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["llama-stack", "pydantic"]
+dependencies = ["llama-stack-api", "fastapi"]
 
 [build-system]
 requires = ["setuptools"]
@@ -129,63 +142,9 @@ where = ["src"]
 include = ["llama_stack_api_weather", "llama_stack_api_weather.*"]
 ```
 
-3. Create the initial files:
+3. Add the `weather.py` and `__init__.py` files shown in the [Required Implementation](#required-implementation) section above.
 
-```bash
-touch src/llama_stack_api_weather/__init__.py
-touch src/llama_stack_api_weather/api.py
-```
-
-```python
-# llama-stack-api-weather/src/llama_stack_api_weather/__init__.py
-"""Weather API for Llama Stack."""
-
-from .api import WeatherAPI, available_providers
-
-__all__ = ["WeatherAPI", "available_providers"]
-```
-
-4. Create the API implementation:
-
-```python
-# llama-stack-api-weather/src/llama_stack_api_weather/weather.py
-from typing import Protocol
-
-from llama_stack_api import (
-    Api,
-    ProviderSpec,
-    RemoteProviderSpec,
-    webmethod,
-)
-
-def available_providers() -> list[ProviderSpec]:
-    return [
-        RemoteProviderSpec(
-            api=Api.weather,
-            provider_type="remote::kaze",
-            config_class="llama_stack_provider_kaze.KazeProviderConfig",
-            adapter_type="kaze",
-            module="llama_stack_provider_kaze",
-            pip_packages=["llama_stack_provider_kaze"],
-            config_class="llama_stack_provider_kaze.KazeProviderConfig",
-        ),
-    ]
-
-
-class WeatherProvider(Protocol):
-    """
-    A protocol for the Weather API.
-    """
-
-    @webmethod(route="/weather/locations", method="GET")
-    async def get_available_locations() -> dict[str, list[str]]:
-        """
-        Get the available locations.
-        """
-        ...
-```
-
-5. Create the API specification:
+4. Create the API specification:
 
 ```yaml
 # ~/.llama/apis.d/weather.yaml
@@ -193,27 +152,25 @@ module: llama_stack_api_weather
 name: weather
 pip_packages: ["llama-stack-api-weather"]
 protocol: WeatherProvider
-
 ```
 
-6. Install the API package:
+5. Install and configure:
 
 ```bash
 uv pip install -e .
 ```
 
-7. Configure Llama Stack to use external APIs:
-
 ```yaml
+# run config
 version: "2"
-distro_name: "llama-stack-api-weather"
+distro_name: "weather-demo"
 apis:
   - weather
 providers: {}
 external_apis_dir: ~/.llama/apis.d
 ```
 
-The API will now be available at `/v1/weather/locations`.
+The API is now available at `/v1/weather/locations`.
 
 ## Example: custom provider for the weather API
 

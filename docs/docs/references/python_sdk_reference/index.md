@@ -82,6 +82,14 @@ Methods:
 
 ## Agents
 
+:::warning DEPRECATED API
+
+**The Agents API is deprecated. Use the [Responses API](/docs/building_applications/responses) instead.**
+
+The Responses API provides equivalent functionality with an OpenAI-compatible interface. New applications should use `client.responses.create()` rather than the agents workflow below.
+
+:::
+
 Types:
 
 ```python
@@ -298,6 +306,12 @@ Methods:
 
 ## PostTraining
 
+:::warning UNAVAILABLE API
+
+**The Post Training API is not currently available in Llama Stack.** There are no active providers implementing this API. The SDK types remain for forward compatibility but these endpoints are non-functional.
+
+:::
+
 Types:
 
 ```python
@@ -379,6 +393,12 @@ Methods:
 - <code title="post /v1/shields">client.shields.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/shields.py">register</a>(\*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/shield_register_params.py">params</a>) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/shield.py">Shield</a></code>
 
 ## SyntheticDataGeneration
+
+:::warning UNAVAILABLE API
+
+**The Synthetic Data Generation API is not currently available in Llama Stack.** There are no active providers implementing this API. The SDK types remain for forward compatibility but these endpoints are non-functional.
+
+:::
 
 Types:
 
