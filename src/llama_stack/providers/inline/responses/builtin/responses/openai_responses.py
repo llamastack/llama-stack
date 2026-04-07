@@ -278,13 +278,14 @@ class OpenAIResponsesImpl:
         tools: list[OpenAIResponseInputTool] | None,
         previous_response_id: str | None,
         conversation: str | None,
-    ) -> tuple[str | list[OpenAIResponseInput], list[OpenAIMessageParam], ToolContext]:
+    ) -> tuple[str | list[OpenAIResponseInput], list[OpenAIMessageParam], ToolContext, OpenAIResponseUsage | None]:
         """Process input with optional previous response context.
 
         Returns:
-            tuple: (all_input for storage, messages for chat completion, tool context)
+            tuple: (all_input for storage, messages for chat completion, tool context, previous usage)
         """
         tool_context = ToolContext(tools)
+        previous_usage: OpenAIResponseUsage | None = None
         if previous_response_id:
             previous_response: _OpenAIResponseObjectWithInputAndMessages = (
                 await self.responses_store.get_response_object(previous_response_id)
@@ -294,6 +295,7 @@ class OpenAIResponsesImpl:
                     f"Response {previous_response_id} is still {previous_response.status}. "
                     "Cannot use an incomplete background response as previous_response_id."
                 )
+            previous_usage = previous_response.usage
             all_input = await self._prepend_previous_response(input, previous_response)
 
             if previous_response.messages:
@@ -345,7 +347,7 @@ class OpenAIResponsesImpl:
             all_input = input
             messages = await convert_response_input_to_chat_messages(all_input, files_api=self.files_api)
 
-        return all_input, messages, tool_context
+        return all_input, messages, tool_context, previous_usage
 
     async def _prepend_prompt(
         self,
@@ -1087,13 +1089,13 @@ class OpenAIResponsesImpl:
         assert max_infer_iters is not None, "max_infer_iters must not be None"
 
         # Input preprocessing
-        all_input, messages, tool_context = await self._process_input_with_previous_response(
+        all_input, messages, tool_context, previous_usage = await self._process_input_with_previous_response(
             input, tools, previous_response_id, conversation
         )
 
         # Auto-compact if context_management is configured (runs on resolved history, not just new input)
         if context_management:
-            compacted_input = await self._maybe_auto_compact(all_input, model, context_management)
+            compacted_input = await self._maybe_auto_compact(all_input, model, context_management, previous_usage)
             if compacted_input is not all_input:
                 all_input = compacted_input
                 messages = await convert_response_input_to_chat_messages(all_input, files_api=self.files_api)
@@ -1342,7 +1344,7 @@ class OpenAIResponsesImpl:
         )
 
     def _count_tokens(self, input: str | list[OpenAIResponseInput], model: str = "") -> int:
-        """Count tokens using tiktoken with model-appropriate encoding."""
+        """Estimate token count using tiktoken. Used as fallback when provider usage is unavailable."""
         # Use explicitly configured encoding, or resolve from model name
         if self.compaction_config.tokenizer_encoding:
             encoding = tiktoken.get_encoding(self.compaction_config.tokenizer_encoding)
@@ -1387,6 +1389,7 @@ class OpenAIResponsesImpl:
         input: str | list[OpenAIResponseInput],
         model: str,
         context_management: list,
+        previous_usage: OpenAIResponseUsage | None = None,
     ) -> str | list[OpenAIResponseInput]:
         """Auto-compact input if token count exceeds compact_threshold."""
         for entry in context_management:
@@ -1402,7 +1405,11 @@ class OpenAIResponsesImpl:
             if threshold is None:
                 continue
 
-            token_count = self._count_tokens(input, model=model)
+            # Use provider-reported token count when available, fall back to tiktoken estimate
+            if previous_usage and previous_usage.total_tokens:
+                token_count = previous_usage.total_tokens
+            else:
+                token_count = self._count_tokens(input, model=model)
             if token_count > threshold:
                 logger.debug("Auto-compacting", token_count=token_count, threshold=threshold)
                 compacted = await self.compact_openai_response(model=model, input=input)
