@@ -35,7 +35,11 @@ class CompactionConfig(BaseModel):
     )
     default_compact_threshold: int | None = Field(
         default=None,
-        description="Default token threshold for auto-compaction via context_management. If set, conversations exceeding this estimated token count will be automatically compacted.",
+        description="Default token threshold for auto-compaction via context_management. If set, conversations exceeding this token count will be automatically compacted.",
+    )
+    tokenizer_encoding: str | None = Field(
+        default=None,
+        description="Tiktoken encoding name for token counting (e.g. 'o200k_base', 'cl100k_base'). If not set, the encoding is resolved from the model name via tiktoken.encoding_for_model().",
     )
 
 

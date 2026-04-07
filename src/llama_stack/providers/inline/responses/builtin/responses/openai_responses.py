@@ -1343,12 +1343,20 @@ class OpenAIResponsesImpl:
 
     def _count_tokens(self, input: str | list[OpenAIResponseInput], model: str = "") -> int:
         """Count tokens using tiktoken with model-appropriate encoding."""
-        # Strip provider prefix (e.g. "openai/gpt-4o" -> "gpt-4o") for tiktoken lookup
-        model_name = model.split("/")[-1] if "/" in model else model
-        try:
-            encoding = tiktoken.encoding_for_model(model_name)
-        except KeyError:
-            encoding = tiktoken.get_encoding("o200k_base")
+        # Use explicitly configured encoding, or resolve from model name
+        if self.compaction_config.tokenizer_encoding:
+            encoding = tiktoken.get_encoding(self.compaction_config.tokenizer_encoding)
+        else:
+            # Strip provider prefix (e.g. "openai/gpt-4o" -> "gpt-4o") for tiktoken lookup
+            model_name = model.split("/")[-1] if "/" in model else model
+            try:
+                encoding = tiktoken.encoding_for_model(model_name)
+            except KeyError as e:
+                raise ValueError(
+                    f"Failed to resolve tiktoken encoding for model '{model}'. "
+                    "Set 'tokenizer_encoding' in compaction_config (e.g. 'o200k_base') "
+                    "or use an OpenAI model name that tiktoken recognizes."
+                ) from e
 
         if isinstance(input, str):
             return len(encoding.encode(input))
