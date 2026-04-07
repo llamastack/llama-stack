@@ -96,6 +96,7 @@ const OPENAI_ENDPOINTS = [
   { icon: Icons.shield, label: 'Moderations', path: '/v1/moderations', desc: 'Content moderation and safety shields' },
   { icon: Icons.file, label: 'Files', path: '/v1/files', desc: 'File upload, processing, and extraction' },
   { icon: Icons.stack, label: 'Batches', path: '/v1/batches', desc: 'Async batch processing at scale' },
+  { icon: Icons.conversation, label: 'Conversations', path: '/v1/conversations', desc: 'Multi-turn conversation state and history' },
   { icon: Icons.cpu, label: 'Models', path: '/v1/models', desc: 'Model discovery and management' },
 ];
 
@@ -104,7 +105,6 @@ const ANTHROPIC_ENDPOINTS = [
 ];
 
 const NATIVE_ENDPOINTS = [
-  { icon: Icons.conversation, label: 'Conversations', path: '/v1/conversations', desc: 'Multi-turn conversation state and history' },
   { icon: Icons.plug, label: 'Connectors', path: '/v1/connectors', desc: 'External connectors like MCP servers' },
   { icon: Icons.zap, label: 'Tools', path: '/v1/tools', desc: 'Tool discovery and runtime invocation' },
 ];
