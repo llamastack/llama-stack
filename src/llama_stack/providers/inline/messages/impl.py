@@ -14,6 +14,7 @@ requests are forwarded directly without translation.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import uuid
 from collections.abc import AsyncIterator
@@ -85,6 +86,8 @@ class BuiltinMessagesImpl(Messages):
     def __init__(self, config: MessagesConfig, inference_api: Inference):
         self.config = config
         self.inference_api = inference_api
+        self._last_used_model: str | None = None
+        self._model_lock = asyncio.Lock()
 
     async def initialize(self) -> None:
         self._client = httpx.AsyncClient()
@@ -99,22 +102,70 @@ class BuiltinMessagesImpl(Messages):
         # Try native passthrough for providers that support /v1/messages directly
         passthrough_url = await self._get_passthrough_url(request.model)
         if passthrough_url:
-            return await self._passthrough_request(passthrough_url, request)
+            anthropic_result = await self._passthrough_request(passthrough_url, request)
+            # Track successful model use
+            async with self._model_lock:
+                self._last_used_model = request.model
+            return anthropic_result
 
+        # Resolve model with fallback to last-used model if requested model not found
+        resolved_model = await self._resolve_model_with_fallback(request.model)
+
+        # Create params with resolved model
         openai_params = self._anthropic_to_openai(request)
+        openai_params.model = resolved_model
 
-        result = await self.inference_api.openai_chat_completion(openai_params)
+        openai_result = await self.inference_api.openai_chat_completion(openai_params)
 
-        if isinstance(result, AsyncIterator):
-            return self._stream_openai_to_anthropic(result, request.model)
+        # Track successful model use
+        async with self._model_lock:
+            self._last_used_model = resolved_model
 
-        return self._openai_to_anthropic(result, request.model)
+        if isinstance(openai_result, AsyncIterator):
+            return self._stream_openai_to_anthropic(openai_result, request.model)
+
+        return self._openai_to_anthropic(openai_result, request.model)
 
     async def count_message_tokens(
         self,
         request: AnthropicCountTokensRequest,
     ) -> AnthropicCountTokensResponse:
         raise NotImplementedError("Token counting is not yet implemented")
+
+    # -- Model resolution with fallback --
+
+    async def _resolve_model_with_fallback(self, model: str) -> str:
+        """Resolve model with fallback to last-used model if not found.
+
+        Returns the model identifier to use for inference. If the requested
+        model is not found and a last-used model exists, logs a warning and
+        falls back to the last-used model. Otherwise, lets the error propagate.
+        """
+        router = self.inference_api
+        if not hasattr(router, "routing_table"):
+            return model
+
+        try:
+            obj = await router.routing_table.get_object_by_identifier("model", model)
+            if obj:
+                return model
+        except Exception:
+            pass
+
+        # Model not found - try fallback to last-used model
+        async with self._model_lock:
+            last_used = self._last_used_model
+
+        if last_used:
+            logger.warning(
+                "Model not found in registry, using last successful model as fallback",
+                requested_model=model,
+                fallback_model=last_used,
+            )
+            return last_used
+
+        # No fallback available - let the original error propagate
+        return model
 
     # -- Native passthrough for providers with /v1/messages support --
 

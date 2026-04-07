@@ -7,7 +7,7 @@
 """Unit tests for the BuiltinMessagesImpl translation logic."""
 
 import json
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -346,3 +346,104 @@ class TestStreamingTranslation:
 
         msg_delta = [e for e in events if e.type == "message_delta"]
         assert msg_delta[0].delta.stop_reason == "tool_use"
+
+
+class TestModelFallback:
+    async def test_tracks_successful_model(self, impl):
+        """After successful request, tracks the model for future fallback."""
+        # Mock routing table to say model exists
+        impl.inference_api.routing_table = MagicMock()
+        impl.inference_api.routing_table.get_object_by_identifier = AsyncMock(return_value=MagicMock())
+
+        # Mock successful inference response
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message = MagicMock()
+        mock_response.choices[0].message.content = "response"
+        mock_response.choices[0].message.tool_calls = None
+        mock_response.choices[0].finish_reason = "stop"
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 5
+        mock_response.usage.prompt_tokens_details = None
+
+        impl.inference_api.openai_chat_completion = AsyncMock(return_value=mock_response)
+
+        request = AnthropicCreateMessageRequest(
+            model="test-model",
+            messages=[AnthropicMessage(role="user", content="Hi")],
+            max_tokens=100,
+        )
+
+        await impl.create_message(request)
+
+        # Verify last used model was tracked
+        assert impl._last_used_model == "test-model"
+
+    async def test_fallback_to_last_used_model(self, impl):
+        """When model not found, falls back to last-used model."""
+        # Set up last-used model
+        impl._last_used_model = "fallback-model"
+
+        # Mock routing table to say requested model doesn't exist but fallback does
+        impl.inference_api.routing_table = MagicMock()
+
+        async def mock_get_object(obj_type, identifier):
+            if identifier == "unknown-model":
+                return None
+            return MagicMock()
+
+        impl.inference_api.routing_table.get_object_by_identifier = mock_get_object
+
+        # Mock successful inference response
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message = MagicMock()
+        mock_response.choices[0].message.content = "response"
+        mock_response.choices[0].message.tool_calls = None
+        mock_response.choices[0].finish_reason = "stop"
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 5
+        mock_response.usage.prompt_tokens_details = None
+
+        impl.inference_api.openai_chat_completion = AsyncMock(return_value=mock_response)
+
+        request = AnthropicCreateMessageRequest(
+            model="unknown-model",
+            messages=[AnthropicMessage(role="user", content="Hi")],
+            max_tokens=100,
+        )
+
+        with patch("llama_stack.providers.inline.messages.impl.logger") as mock_logger:
+            await impl.create_message(request)
+
+            # Verify warning was logged
+            mock_logger.warning.assert_called_once()
+            assert "fallback" in mock_logger.warning.call_args[0][0].lower()
+
+        # Verify inference was called with fallback model
+        call_args = impl.inference_api.openai_chat_completion.call_args
+        assert call_args[0][0].model == "fallback-model"
+
+    async def test_no_fallback_on_first_request(self, impl):
+        """First request with unknown model lets error propagate (no fallback)."""
+        # No last-used model set
+        assert impl._last_used_model is None
+
+        # Mock routing table to say model doesn't exist
+        impl.inference_api.routing_table = MagicMock()
+        impl.inference_api.routing_table.get_object_by_identifier = AsyncMock(return_value=None)
+
+        # Mock inference to raise error (model not found)
+        impl.inference_api.openai_chat_completion = AsyncMock(side_effect=Exception("Model not found"))
+
+        request = AnthropicCreateMessageRequest(
+            model="unknown-model",
+            messages=[AnthropicMessage(role="user", content="Hi")],
+            max_tokens=100,
+        )
+
+        # Should propagate the error
+        with pytest.raises(Exception, match="Model not found"):
+            await impl.create_message(request)
