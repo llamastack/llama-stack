@@ -327,11 +327,74 @@ jobs:
           SETUPTOOLS_SCM_PRETEND_VERSION: ${{ needs.compute-version.outputs.version }}
 
       # === EXTERNAL PYTHON PACKAGE BUILD ===
+      - name: Check and bump version if exists on PyPI
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
+        id: version-check
+        run: |
+          BASE_VERSION="${{ needs.compute-version.outputs.version }}"
+          PACKAGE="${{ matrix.package }}"
+
+          # Function to check if version exists on PyPI
+          check_version_exists() {
+            local pkg=$1
+            local ver=$2
+            if curl -sf "https://pypi.org/pypi/${pkg}/${ver}/json" -o /dev/null 2>&1; then
+              return 0  # exists
+            else
+              return 1  # does not exist
+            fi
+          }
+
+          # Start with the base version and increment patch if needed
+          VERSION="$BASE_VERSION"
+
+          # Only check/bump for non-dev versions (production releases)
+          if [[ ! "$VERSION" =~ \.dev ]]; then
+            echo "Checking if ${PACKAGE} ${VERSION} exists on PyPI..."
+
+            # Parse version components
+            if [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(.*)$ ]]; then
+              MAJOR="${BASH_REMATCH[1]}"
+              MINOR="${BASH_REMATCH[2]}"
+              PATCH="${BASH_REMATCH[3]}"
+              SUFFIX="${BASH_REMATCH[4]}"
+
+              # Keep incrementing patch version until we find one that doesn't exist
+              MAX_ATTEMPTS=10
+              ATTEMPT=0
+              while check_version_exists "$PACKAGE" "$VERSION"; do
+                ATTEMPT=$((ATTEMPT + 1))
+                if [ $ATTEMPT -ge $MAX_ATTEMPTS ]; then
+                  echo "::error::Reached maximum attempts ($MAX_ATTEMPTS) trying to find unused version"
+                  exit 1
+                fi
+
+                echo "Version ${VERSION} already exists on PyPI, trying next patch version..."
+                PATCH=$((PATCH + 1))
+                VERSION="${MAJOR}.${MINOR}.${PATCH}${SUFFIX}"
+                echo "Checking ${VERSION}..."
+              done
+
+              if [ "$VERSION" != "$BASE_VERSION" ]; then
+                echo "::notice::Bumped ${PACKAGE} version from ${BASE_VERSION} to ${VERSION} (already existed on PyPI)"
+              else
+                echo "Version ${VERSION} is available on PyPI"
+              fi
+            else
+              echo "::warning::Could not parse version ${VERSION}, using as-is"
+            fi
+          else
+            echo "Dev version detected (${VERSION}), skipping PyPI check"
+          fi
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Final version: ${VERSION}"
+
       - name: Build external Python package
         if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
         working-directory: external-repo
         run: |
-          VERSION="${{ needs.compute-version.outputs.version }}"
+          VERSION="${{ steps.version-check.outputs.version }}"
           echo "Setting version to $VERSION"
           sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
           # Also update __version__ in _version.py if it exists
@@ -344,15 +407,76 @@ jobs:
           python -m build --outdir dist
 
       # === NPM PACKAGE BUILD ===
+      - name: Check and bump npm version if exists
+        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm'
+        id: npm-version-check
+        run: |
+          BASE_VERSION="${{ needs.compute-version.outputs.version }}"
+          PACKAGE="${{ matrix.package }}"
+
+          # Convert PEP 440 dev version to valid semver for npm
+          # e.g. 0.4.5.dev20260202 -> 0.4.5-dev.20260202
+          VERSION="${BASE_VERSION/.dev/-dev.}"
+
+          # Function to check if version exists on npm using registry API
+          check_npm_version_exists() {
+            local pkg=$1
+            local ver=$2
+            if curl -sf "https://registry.npmjs.org/${pkg}/${ver}" -o /dev/null 2>&1; then
+              return 0  # exists
+            else
+              return 1  # does not exist
+            fi
+          }
+
+          # Only check/bump for non-dev versions (production releases)
+          if [[ ! "$VERSION" =~ -dev\. ]]; then
+            echo "Checking if ${PACKAGE} ${VERSION} exists on npm..."
+
+            # Parse version components (semver format)
+            if [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(.*)$ ]]; then
+              MAJOR="${BASH_REMATCH[1]}"
+              MINOR="${BASH_REMATCH[2]}"
+              PATCH="${BASH_REMATCH[3]}"
+              SUFFIX="${BASH_REMATCH[4]}"
+
+              # Keep incrementing patch version until we find one that doesn't exist
+              MAX_ATTEMPTS=10
+              ATTEMPT=0
+              while check_npm_version_exists "$PACKAGE" "$VERSION"; do
+                ATTEMPT=$((ATTEMPT + 1))
+                if [ $ATTEMPT -ge $MAX_ATTEMPTS ]; then
+                  echo "::error::Reached maximum attempts ($MAX_ATTEMPTS) trying to find unused version"
+                  exit 1
+                fi
+
+                echo "Version ${VERSION} already exists on npm, trying next patch version..."
+                PATCH=$((PATCH + 1))
+                VERSION="${MAJOR}.${MINOR}.${PATCH}${SUFFIX}"
+                echo "Checking ${VERSION}..."
+              done
+
+              if [ "$VERSION" != "${BASE_VERSION/.dev/-dev.}" ]; then
+                echo "::notice::Bumped ${PACKAGE} version from ${BASE_VERSION/.dev/-dev.} to ${VERSION} (already existed on npm)"
+              else
+                echo "Version ${VERSION} is available on npm"
+              fi
+            else
+              echo "::warning::Could not parse version ${VERSION}, using as-is"
+            fi
+          else
+            echo "Dev version detected (${VERSION}), skipping npm check"
+          fi
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Final version: ${VERSION}"
+
       - name: Build TypeScript package
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm'
         working-directory: external-repo
         run: |
-          VERSION="${{ needs.compute-version.outputs.version }}"
-          # Convert PEP 440 dev version to valid semver for npm
-          # e.g. 0.4.5.dev20260202 -> 0.4.5-dev.20260202
-          NPM_VERSION="${VERSION/.dev/-dev.}"
-          echo "Setting version to $NPM_VERSION (from $VERSION)"
+          NPM_VERSION="${{ steps.npm-version-check.outputs.version }}"
+          echo "Setting version to $NPM_VERSION"
           npm version "$NPM_VERSION" --no-git-tag-version
           npm install
           npm run build
