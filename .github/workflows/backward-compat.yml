@@ -98,19 +98,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           echo "Breaking changes detected. Checking for acknowledgment..."
 
-          # In merge_group context, github.event.pull_request.title is empty.
-          # Fall back to fetching the PR title via gh CLI from the head commit.
+          # In merge_group context, github.event.pull_request is empty.
+          # Extract PR number from the merge queue branch name
+          # (format: gh-readonly-queue/main/pr-<NUMBER>-<SHA>)
           if [ -z "$PR_TITLE" ]; then
-            PR_TITLE=$(gh pr list --search "$(git rev-parse HEAD)" --state open --json title --jq '.[0].title' 2>/dev/null || echo "")
-            if [ -z "$PR_TITLE" ]; then
-              # Try matching by branch name
-              BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
-              PR_TITLE=$(gh pr list --head "$BRANCH_NAME" --state open --json title --jq '.[0].title' 2>/dev/null || echo "")
+            PR_NUM="$PR_NUMBER"
+            if [ -z "$PR_NUM" ]; then
+              PR_NUM=$(echo "${GITHUB_REF_NAME}" | sed -n 's|.*pr-\([0-9]*\)-.*|\1|p')
             fi
-            echo "Resolved PR title: $PR_TITLE"
+            if [ -n "$PR_NUM" ]; then
+              PR_TITLE=$(gh pr view "$PR_NUM" --json title --jq '.title' 2>/dev/null || echo "")
+              echo "Resolved PR title from PR #${PR_NUM}: $PR_TITLE"
+            fi
           fi
 
           # Check PR title for '!:' marker (conventional commits)
@@ -202,18 +205,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           echo "Integration tests failed. Checking for acknowledgment..."
 
-          # In merge_group context, github.event.pull_request.title is empty.
-          # Fall back to fetching the PR title via gh CLI from the head commit.
+          # In merge_group context, github.event.pull_request is empty.
+          # Extract PR number from the merge queue branch name
+          # (format: gh-readonly-queue/main/pr-<NUMBER>-<SHA>)
           if [ -z "$PR_TITLE" ]; then
-            PR_TITLE=$(gh pr list --search "$(git rev-parse HEAD)" --state open --json title --jq '.[0].title' 2>/dev/null || echo "")
-            if [ -z "$PR_TITLE" ]; then
-              BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
-              PR_TITLE=$(gh pr list --head "$BRANCH_NAME" --state open --json title --jq '.[0].title' 2>/dev/null || echo "")
+            PR_NUM="$PR_NUMBER"
+            if [ -z "$PR_NUM" ]; then
+              PR_NUM=$(echo "${GITHUB_REF_NAME}" | sed -n 's|.*pr-\([0-9]*\)-.*|\1|p')
             fi
-            echo "Resolved PR title: $PR_TITLE"
+            if [ -n "$PR_NUM" ]; then
+              PR_TITLE=$(gh pr view "$PR_NUM" --json title --jq '.title' 2>/dev/null || echo "")
+              echo "Resolved PR title from PR #${PR_NUM}: $PR_TITLE"
+            fi
           fi
 
           # Check PR title for '!:' marker (conventional commits)
