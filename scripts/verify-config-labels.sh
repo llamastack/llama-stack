@@ -32,25 +32,25 @@ if [ -z "$labels" ]; then
 fi
 
 # Extract and validate required metadata labels
-distro_name=$(echo "$labels" | grep "^com.llamastack.distribution.name=" | cut -d= -f2)
+distro_name=$(echo "$labels" | grep "^com.llamastack.distribution.name=" | cut -d= -f2-)
 if [ -z "$distro_name" ]; then
     echo "❌ Missing or empty label: com.llamastack.distribution.name"
     exit 1
 fi
 
-version=$(echo "$labels" | grep "^com.llamastack.distribution.version=" | cut -d= -f2)
+version=$(echo "$labels" | grep "^com.llamastack.distribution.version=" | cut -d= -f2-)
 if [ -z "$version" ]; then
     echo "❌ Missing or empty label: com.llamastack.distribution.version"
     exit 1
 fi
 
-default_config=$(echo "$labels" | grep "^com.llamastack.distribution.default-config=" | cut -d= -f2)
+default_config=$(echo "$labels" | grep "^com.llamastack.distribution.default-config=" | cut -d= -f2-)
 if [ -z "$default_config" ]; then
     echo "❌ Missing or empty label: com.llamastack.distribution.default-config"
     exit 1
 fi
 
-config_list=$(echo "$labels" | grep "^com.llamastack.distribution.configs=" | cut -d= -f2)
+config_list=$(echo "$labels" | grep "^com.llamastack.distribution.configs=" | cut -d= -f2-)
 if [ -z "$config_list" ]; then
     echo "❌ Missing or empty label: com.llamastack.distribution.configs"
     exit 1
@@ -84,24 +84,28 @@ for config in "${CONFIGS[@]}"; do
         exit 1
     fi
 
-    # Decode base64 and validate
-    if ! decoded=$(echo "$encoded" | base64 -d 2>/dev/null); then
+    # Decode base64 to temp file (avoids command substitution stripping trailing newlines)
+    decoded_file=$(mktemp)
+    if ! echo "$encoded" | base64 -d > "$decoded_file" 2>/dev/null; then
         echo "❌ Failed to decode config: $config"
+        rm -f "$decoded_file"
         exit 1
     fi
 
     # Count lines and bytes (strip whitespace from counts only)
-    line_count=$(echo "$decoded" | wc -l | tr -d '[:space:]')
-    char_count=$(echo -n "$decoded" | wc -c | tr -d '[:space:]')
+    line_count=$(wc -l < "$decoded_file" | tr -d '[:space:]')
+    char_count=$(wc -c < "$decoded_file" | tr -d '[:space:]')
 
     # Validate non-empty
     if [ -z "$line_count" ] || [ "$line_count" -eq 0 ]; then
         echo "❌ Config '$config' is empty (0 lines)"
+        rm -f "$decoded_file"
         exit 1
     fi
 
     if [ -z "$char_count" ] || [ "$char_count" -eq 0 ]; then
         echo "❌ Config '$config' is empty (0 bytes)"
+        rm -f "$decoded_file"
         exit 1
     fi
 
@@ -117,32 +121,33 @@ for config in "${CONFIGS[@]}"; do
     fi
 
     if [ -n "$PYTHON_CMD" ]; then
-        # Write to temp file to avoid shell interpretation issues
-        temp_yaml=$(mktemp)
-        printf '%s' "$decoded" > "$temp_yaml"
-        if $PYTHON_CMD -c "import yaml; yaml.safe_load(open('$temp_yaml'))" 2>/dev/null; then
+        if $PYTHON_CMD -c "import yaml; yaml.safe_load(open('$decoded_file'))" 2>/dev/null; then
             echo "   ✅ Valid YAML syntax"
         else
             echo "   ❌ Invalid YAML syntax"
+            rm -f "$decoded_file"
+            exit 1
         fi
-        rm -f "$temp_yaml"
     fi
 
     # Compare with source file
     source_file="src/llama_stack/distributions/${distro_name}/${config}"
     if [ ! -f "$source_file" ]; then
         echo "   ⚠️  Source file not found: $source_file (skipping comparison)"
+        rm -f "$decoded_file"
         continue
     fi
 
-    if ! diff -q <(echo "$decoded") "$source_file" >/dev/null 2>&1; then
+    if ! diff -q "$decoded_file" "$source_file" >/dev/null 2>&1; then
         echo "   ❌ Does NOT match source file: $source_file"
         echo "   Showing diff:"
-        diff <(echo "$decoded") "$source_file" || true
+        diff "$decoded_file" "$source_file" || true
+        rm -f "$decoded_file"
         exit 1
     fi
 
     echo "   ✅ Matches source file"
+    rm -f "$decoded_file"
 done
 
 echo
