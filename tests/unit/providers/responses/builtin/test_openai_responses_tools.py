@@ -424,6 +424,7 @@ async def test_file_search_uses_default_search_mode_from_config(mock_vector_io_a
 
     mock_vector_io_api.openai_search_vector_store.return_value = VectorStoreSearchResponsePage(
         search_query=[query],
+        has_more=False,
         data=[],
     )
 
