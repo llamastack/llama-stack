@@ -76,6 +76,11 @@ const Icons = {
       <path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/>
     </svg>
   ),
+  stack: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="2" width="16" height="6" rx="1"/><rect x="4" y="10" width="16" height="6" rx="1"/><rect x="4" y="18" width="16" height="4" rx="1"/>
+    </svg>
+  ),
   arrow: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
@@ -83,7 +88,7 @@ const Icons = {
   ),
 };
 
-const FEATURE_ICONS = [Icons.chat, Icons.zap, Icons.layers, Icons.database, Icons.shield, Icons.message, Icons.conversation, Icons.plug, Icons.file, Icons.cpu];
+const FEATURE_ICONS = [Icons.chat, Icons.zap, Icons.layers, Icons.database, Icons.shield, Icons.message, Icons.conversation, Icons.plug, Icons.file, Icons.stack, Icons.cpu];
 
 const FEATURES = [
   { label: 'Chat Completions', path: '/v1/chat/completions', desc: 'Standard OpenAI-compatible chat and completion endpoints' },
@@ -94,7 +99,8 @@ const FEATURES = [
   { label: 'Messages API', path: '/v1/messages', desc: 'Native Anthropic Messages API support' },
   { label: 'Conversations', path: '/v1/conversations', desc: 'Multi-turn conversation state management and history' },
   { label: 'Connectors', path: '/v1/connectors', desc: 'External connectors like MCP servers and tool integrations' },
-  { label: 'Files & Batches', path: '/v1/files', desc: 'File upload, processing, and batch operations' },
+  { label: 'Files', path: '/v1/files', desc: 'File upload, processing, and content extraction' },
+  { label: 'Batches', path: '/v1/batches', desc: 'Async batch processing for large-scale workloads' },
   { label: 'Models', path: '/v1/models', desc: 'Model discovery and management' },
 ];
 
@@ -263,7 +269,7 @@ function ProviderStrip() {
 
 const STATS = [
   { value: '20+', label: 'Inference Providers' },
-  { value: '10+', label: 'API Endpoints' },
+  { value: '11+', label: 'API Endpoints' },
   { value: '4', label: 'Client Languages' },
   { value: '100%', label: 'OpenAI Compatible' },
 ];
