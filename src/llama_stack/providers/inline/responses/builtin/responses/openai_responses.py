@@ -1309,6 +1309,10 @@ class OpenAIResponsesImpl:
                     )
                 )
 
+        # Prepend the summary prefix to frame the summary as a handoff
+        if self.compaction_config.summary_prefix:
+            summary_text = f"{self.compaction_config.summary_prefix}\n{summary_text}"
+
         # Add compaction item as last element
         compaction_item = OpenAIResponseCompaction(
             id=f"cmp_{uuid.uuid4().hex[:24]}",

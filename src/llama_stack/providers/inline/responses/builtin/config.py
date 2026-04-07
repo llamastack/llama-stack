@@ -22,6 +22,14 @@ DEFAULT_SUMMARIZATION_PROMPT = (
     "Be concise, structured, and focused on helping the next LLM seamlessly continue the work."
 )
 
+DEFAULT_SUMMARY_PREFIX = (
+    "Another language model started to solve this problem and produced a summary of its "
+    "thinking process. You also have access to the state of the tools that were used by "
+    "that language model. Use this to build on the work that has already been done and "
+    "avoid duplicating work. Here is the summary produced by the other language model, "
+    "use the information in this summary to assist with your own analysis:"
+)
+
 
 class CompactionConfig(BaseModel):
     """Configuration for conversation compaction behavior and prompt templates."""
@@ -29,6 +37,10 @@ class CompactionConfig(BaseModel):
     summarization_prompt: str = Field(
         default=DEFAULT_SUMMARIZATION_PROMPT,
         description="Prompt template used to instruct the model to summarize conversation history during compaction.",
+    )
+    summary_prefix: str = Field(
+        default=DEFAULT_SUMMARY_PREFIX,
+        description="Text prepended to the compaction summary to frame it as a handoff for the next LLM.",
     )
     summarization_model: str | None = Field(
         default=None,
