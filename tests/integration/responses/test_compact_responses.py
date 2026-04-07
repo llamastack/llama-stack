@@ -20,48 +20,42 @@ def _skip_compact_tests_for_watsonx(request):
 class TestCompactResponses:
     """Tests for POST /v1/responses/compact endpoint.
 
-    Note: These tests use responses_client.post() instead of the native OpenAI
-    client.responses.compact() method for several reasons:
+    Note: These tests use the native OpenAI client.responses.compact() method
+    for better type safety and IDE support. When dict-style access is needed
+    for specific assertions (e.g., checking response structure), we use
+    .model_dump() to convert the typed response to a dictionary.
 
-    1. Raw response inspection: .post(cast_to=object) allows direct JSON access
-       to test specific response structure and field validation. The OpenAI
-       client's typed response would make dict-style access more complex.
-
-    2. HTTP layer testing: Tests the full request/response pipeline including
-       URL routing, serialization, and error handling at the HTTP level,
-       providing comprehensive integration coverage.
-
-    3. Implementation flexibility: Supports testing custom parameters during
-       active development without OpenAI client type constraints or changes
-       to method signatures that might not yet be available in the SDK.
-
-    4. Compatibility: Ensures tests work with both OpenAI and LlamaStack clients,
-       while native client.responses.compact() is OpenAI-specific.
+    Benefits of this approach:
+    1. Type safety: Direct access to typed fields like result.object, result.usage.input_tokens
+    2. IDE support: Full autocomplete and type checking during development
+    3. API compatibility: Uses official OpenAI SDK patterns and method signatures
+    4. Future-proof: Follows OpenAI SDK evolution and best practices
     """
 
     @pytest.fixture(autouse=True)
     def _skip_non_openai_client(self, responses_client):
         if isinstance(responses_client, LlamaStackClient):
-            pytest.skip("Compact tests require OpenAI client (.post() method)")
+            pytest.skip("Compact tests require OpenAI client")
 
     def test_compact_basic_conversation(self, responses_client, text_model_id):
         """Compact a multi-turn conversation with input array."""
-        result = responses_client.post(
-            "/responses/compact",
-            body={
-                "model": text_model_id,
-                "input": [
-                    {"role": "user", "content": "Help me plan a Python web app."},
-                    {"role": "assistant", "content": "I suggest FastAPI with SQLite."},
-                    {"role": "user", "content": "Add authentication too."},
-                    {"role": "assistant", "content": "Use OAuth2 with JWT tokens."},
-                ],
-            },
-            cast_to=object,
+        result = responses_client.responses.compact(
+            model=text_model_id,
+            input=[
+                {"role": "user", "content": "Help me plan a Python web app."},
+                {"role": "assistant", "content": "I suggest FastAPI with SQLite."},
+                {"role": "user", "content": "Add authentication too."},
+                {"role": "assistant", "content": "Use OAuth2 with JWT tokens."},
+            ],
         )
-        assert result["object"] == "response.compaction"
-        assert result["usage"]["input_tokens"] > 0
-        output = result["output"]
+
+        # Type-safe access to common fields
+        assert result.object == "response.compaction"
+        assert result.usage.input_tokens > 0
+
+        # Convert to dict for detailed output inspection
+        result_dict = result.model_dump()
+        output = result_dict["output"]
         messages = [o for o in output if o.get("type") == "message"]
         compactions = [o for o in output if o.get("type") == "compaction"]
         assert len(messages) == 2  # 2 user messages
@@ -72,45 +66,45 @@ class TestCompactResponses:
 
     def test_compact_single_message(self, responses_client, text_model_id):
         """Edge case: compact with just one user message."""
-        result = responses_client.post(
-            "/responses/compact",
-            body={
-                "model": text_model_id,
-                "input": [{"role": "user", "content": "Hello!"}],
-            },
-            cast_to=object,
+        result = responses_client.responses.compact(
+            model=text_model_id,
+            input=[{"role": "user", "content": "Hello!"}],
         )
-        assert result["object"] == "response.compaction"
-        assert len([o for o in result["output"] if o.get("type") == "message"]) == 1
-        assert len([o for o in result["output"] if o.get("type") == "compaction"]) == 1
+
+        # Type-safe access
+        assert result.object == "response.compaction"
+
+        # Convert to dict for output inspection
+        result_dict = result.model_dump()
+        assert len([o for o in result_dict["output"] if o.get("type") == "message"]) == 1
+        assert len([o for o in result_dict["output"] if o.get("type") == "compaction"]) == 1
 
     def test_compact_with_tool_calls_dropped(self, responses_client, text_model_id):
         """Tool calls and outputs should be dropped from compacted output."""
-        result = responses_client.post(
-            "/responses/compact",
-            body={
-                "model": text_model_id,
-                "input": [
-                    {"role": "user", "content": "What's the weather?"},
-                    {
-                        "type": "function_call",
-                        "id": "fc_1",
-                        "call_id": "call_1",
-                        "name": "get_weather",
-                        "arguments": '{"city": "SF"}',
-                    },
-                    {
-                        "type": "function_call_output",
-                        "call_id": "call_1",
-                        "output": '{"temp": 65}',
-                    },
-                    {"role": "assistant", "content": "It's 65F in SF."},
-                    {"role": "user", "content": "Thanks!"},
-                ],
-            },
-            cast_to=object,
+        result = responses_client.responses.compact(
+            model=text_model_id,
+            input=[
+                {"role": "user", "content": "What's the weather?"},
+                {
+                    "type": "function_call",
+                    "id": "fc_1",
+                    "call_id": "call_1",
+                    "name": "get_weather",
+                    "arguments": '{"city": "SF"}',
+                },
+                {
+                    "type": "function_call_output",
+                    "call_id": "call_1",
+                    "output": '{"temp": 65}',
+                },
+                {"role": "assistant", "content": "It's 65F in SF."},
+                {"role": "user", "content": "Thanks!"},
+            ],
         )
-        output = result["output"]
+
+        # Convert to dict for output type inspection
+        result_dict = result.model_dump()
+        output = result_dict["output"]
         types = [o.get("type") for o in output]
         assert "function_call" not in types
         assert "function_call_output" not in types
@@ -123,13 +117,17 @@ class TestCompactResponses:
             input="What is the capital of France?",
             store=True,
         )
-        result = responses_client.post(
-            "/responses/compact",
-            body={"model": text_model_id, "previous_response_id": response.id},
-            cast_to=object,
+        result = responses_client.responses.compact(
+            model=text_model_id,
+            previous_response_id=response.id,
         )
-        assert result["object"] == "response.compaction"
-        messages = [o for o in result["output"] if o.get("type") == "message"]
+
+        # Type-safe access
+        assert result.object == "response.compaction"
+
+        # Convert to dict for message content inspection
+        result_dict = result.model_dump()
+        messages = [o for o in result_dict["output"] if o.get("type") == "message"]
         assert any(
             "capital" in m["content"][0]["text"].lower() or "france" in m["content"][0]["text"].lower()
             for m in messages
@@ -137,20 +135,18 @@ class TestCompactResponses:
 
     def test_compact_roundtrip(self, responses_client, text_model_id):
         """Compact output can be used as input to a new response."""
-        compact_result = responses_client.post(
-            "/responses/compact",
-            body={
-                "model": text_model_id,
-                "input": [
-                    {"role": "user", "content": "We're building a book tracker app with FastAPI."},
-                    {"role": "assistant", "content": "Great choice! Use SQLite for the database."},
-                    {"role": "user", "content": "What tables do we need?"},
-                    {"role": "assistant", "content": "Users, Books, and ReadingStatus tables."},
-                ],
-            },
-            cast_to=object,
+        compact_result = responses_client.responses.compact(
+            model=text_model_id,
+            input=[
+                {"role": "user", "content": "We're building a book tracker app with FastAPI."},
+                {"role": "assistant", "content": "Great choice! Use SQLite for the database."},
+                {"role": "user", "content": "What tables do we need?"},
+                {"role": "assistant", "content": "Users, Books, and ReadingStatus tables."},
+            ],
         )
-        followup_input = compact_result["output"] + [{"role": "user", "content": "What ORM should I use?"}]
+
+        # Access output directly from typed response
+        followup_input = compact_result.output + [{"role": "user", "content": "What ORM should I use?"}]
         followup = responses_client.responses.create(
             model=text_model_id,
             input=followup_input,
@@ -159,20 +155,18 @@ class TestCompactResponses:
 
     def test_compact_input_items_hides_compaction(self, responses_client, text_model_id):
         """input_items should NOT return compaction items."""
-        compact_result = responses_client.post(
-            "/responses/compact",
-            body={
-                "model": text_model_id,
-                "input": [
-                    {"role": "user", "content": "Hello"},
-                    {"role": "assistant", "content": "Hi there"},
-                ],
-            },
-            cast_to=object,
+        compact_result = responses_client.responses.compact(
+            model=text_model_id,
+            input=[
+                {"role": "user", "content": "Hello"},
+                {"role": "assistant", "content": "Hi there"},
+            ],
         )
+
+        # Access output directly from typed response
         followup = responses_client.responses.create(
             model=text_model_id,
-            input=compact_result["output"] + [{"role": "user", "content": "How are you?"}],
+            input=compact_result.output + [{"role": "user", "content": "How are you?"}],
             store=True,
         )
         items = responses_client.responses.input_items.list(followup.id)
@@ -181,20 +175,18 @@ class TestCompactResponses:
 
     def test_compact_chain_through_compaction(self, responses_client, text_model_id):
         """previous_response_id should work through compacted conversations."""
-        compact_result = responses_client.post(
-            "/responses/compact",
-            body={
-                "model": text_model_id,
-                "input": [
-                    {"role": "user", "content": "Remember: the secret word is 'banana'."},
-                    {"role": "assistant", "content": "Got it, I'll remember the secret word is banana."},
-                ],
-            },
-            cast_to=object,
+        compact_result = responses_client.responses.compact(
+            model=text_model_id,
+            input=[
+                {"role": "user", "content": "Remember: the secret word is 'banana'."},
+                {"role": "assistant", "content": "Got it, I'll remember the secret word is banana."},
+            ],
         )
+
+        # Access output directly from typed response
         resp1 = responses_client.responses.create(
             model=text_model_id,
-            input=compact_result["output"] + [{"role": "user", "content": "What did we discuss?"}],
+            input=compact_result.output + [{"role": "user", "content": "What did we discuss?"}],
             store=True,
         )
         resp2 = responses_client.responses.create(
@@ -206,27 +198,28 @@ class TestCompactResponses:
 
     def test_compact_double_compaction(self, responses_client, text_model_id):
         """Compacting an already-compacted conversation should work."""
-        c1 = responses_client.post(
-            "/responses/compact",
-            body={
-                "model": text_model_id,
-                "input": [
-                    {"role": "user", "content": "Topic A discussion"},
-                    {"role": "assistant", "content": "Response about A"},
-                ],
-            },
-            cast_to=object,
+        c1 = responses_client.responses.compact(
+            model=text_model_id,
+            input=[
+                {"role": "user", "content": "Topic A discussion"},
+                {"role": "assistant", "content": "Response about A"},
+            ],
         )
-        extended = c1["output"] + [
+
+        # Access output directly from typed response
+        extended = c1.output + [
             {"role": "user", "content": "Topic B discussion"},
             {"role": "assistant", "content": "Response about B"},
         ]
-        c2 = responses_client.post(
-            "/responses/compact",
-            body={"model": text_model_id, "input": extended},
-            cast_to=object,
+
+        c2 = responses_client.responses.compact(
+            model=text_model_id,
+            input=extended,
         )
-        compactions = [o for o in c2["output"] if o.get("type") == "compaction"]
+
+        # Convert to dict for compaction count inspection
+        c2_dict = c2.model_dump()
+        compactions = [o for o in c2_dict["output"] if o.get("type") == "compaction"]
         assert len(compactions) == 1
 
     def test_compact_error_no_input(self, responses_client, text_model_id):
@@ -234,10 +227,8 @@ class TestCompactResponses:
         import openai
 
         with pytest.raises(openai.BadRequestError):
-            responses_client.post(
-                "/responses/compact",
-                body={"model": text_model_id},
-                cast_to=object,
+            responses_client.responses.compact(
+                model=text_model_id,
             )
 
 
