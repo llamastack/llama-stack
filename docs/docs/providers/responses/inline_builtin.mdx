@@ -63,12 +63,13 @@ Metadata: &#123;metadata&#125;
 | `vector_stores_config.file_ingestion_params` | `FileIngestionParams` | No | default_chunk_size_tokens=512 default_chunk_overlap_tokens=128 | Configuration for file processing during ingestion. |
 | `vector_stores_config.file_ingestion_params.default_chunk_size_tokens` | `int` | No | 512 | Default chunk size for RAG tool operations when not specified |
 | `vector_stores_config.file_ingestion_params.default_chunk_overlap_tokens` | `int` | No | 128 | Default overlap in tokens between chunks (original default: 512 // 4 = 128) |
-| `vector_stores_config.chunk_retrieval_params` | `ChunkRetrievalParams` | No | chunk_multiplier=5 max_tokens_in_context=4000 default_reranker_strategy='rrf' rrf_impact_factor=60.0 weighted_search_alpha=0.5 | Configuration for chunk retrieval and ranking during search. |
+| `vector_stores_config.chunk_retrieval_params` | `ChunkRetrievalParams` | No | chunk_multiplier=5 max_tokens_in_context=4000 default_reranker_strategy='rrf' rrf_impact_factor=60.0 weighted_search_alpha=0.5 default_search_mode='vector' | Configuration for chunk retrieval and ranking during search. |
 | `vector_stores_config.chunk_retrieval_params.chunk_multiplier` | `int` | No | 5 | Multiplier for OpenAI API over-retrieval (affects all providers) |
 | `vector_stores_config.chunk_retrieval_params.max_tokens_in_context` | `int` | No | 4000 | Maximum tokens allowed in RAG context before truncation |
 | `vector_stores_config.chunk_retrieval_params.default_reranker_strategy` | `str` | No | rrf | Default reranker when not specified: 'rrf', 'weighted', or 'normalized' |
 | `vector_stores_config.chunk_retrieval_params.rrf_impact_factor` | `float` | No | 60.0 | Impact factor for RRF (Reciprocal Rank Fusion) reranking |
 | `vector_stores_config.chunk_retrieval_params.weighted_search_alpha` | `float` | No | 0.5 | Alpha weight for weighted search reranking (0.0-1.0) |
+| `vector_stores_config.chunk_retrieval_params.default_search_mode` | `str` | No | vector | Default search mode: 'vector', 'keyword', or 'hybrid' |
 | `vector_stores_config.file_batch_params` | `FileBatchParams` | No | max_concurrent_files_per_batch=3 file_batch_chunk_size=10 cleanup_interval_seconds=86400 | Configuration for file batch processing. |
 | `vector_stores_config.file_batch_params.max_concurrent_files_per_batch` | `int` | No | 3 | Maximum files processed concurrently in file batches |
 | `vector_stores_config.file_batch_params.file_batch_chunk_size` | `int` | No | 10 | Number of files to process in each batch chunk |

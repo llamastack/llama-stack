@@ -538,6 +538,10 @@ class ChunkRetrievalParams(BaseModel):
         default=0.5,
         description="Alpha weight for weighted search reranking (0.0-1.0)",
     )
+    default_search_mode: str = Field(
+        default="vector",
+        description="Default search mode: 'vector', 'keyword', or 'hybrid'",
+    )
 
 
 class FileBatchParams(BaseModel):

@@ -106,6 +106,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     :cvar file_processors: File parsing and processing operations
     :cvar prompts: Prompt versions and management
     :cvar connectors: External connector management (e.g., MCP servers)
+    :cvar messages: Anthropic Messages API compatibility layer
     :cvar inspect: Built-in system inspection and introspection
     """
 
@@ -126,6 +127,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     prompts = "prompts"
     conversations = "conversations"
     connectors = "connectors"
+    messages = "messages"
 
     # built-in API
     inspect = "inspect"

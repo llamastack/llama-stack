@@ -204,6 +204,25 @@ def normalize_tool_request(provider_name: str, tool_name: str, kwargs: dict[str,
     return hashlib.sha256(normalized_json.encode()).hexdigest()
 
 
+def normalize_file_processor_request(request: Any) -> str:
+    """Create a normalized hash of a file processor request for consistent matching."""
+    test_id = get_test_context()
+    normalized: dict[str, Any] = {
+        "test_id": test_id,
+        "api": "file_processors",
+        "file_id": getattr(request, "file_id", None),
+    }
+    chunking = getattr(request, "chunking_strategy", None)
+    if chunking and hasattr(chunking, "model_dump"):
+        normalized["chunking_strategy"] = chunking.model_dump(mode="json")
+    options = getattr(request, "options", None)
+    if options:
+        normalized["options"] = options
+
+    normalized_json = json.dumps(normalized, sort_keys=True)
+    return hashlib.sha256(normalized_json.encode()).hexdigest()
+
+
 def normalize_http_request(url: str, method: str, payload: dict[str, Any]) -> str:
     """Create a normalized hash of an HTTP request for consistent matching.
 
@@ -715,6 +734,50 @@ async def _patched_tool_invoke_method(
         raise AssertionError(f"Invalid mode: {_current_mode}")
 
 
+async def _patched_file_processor_method(original_method, provider_name: str, self, request, file=None):
+    """Patched version of file processor process_file method for recording/replay.
+
+    Only intercepts calls that reference a file_id (internal calls from the
+    OpenAIVectorStoreMixin). Direct HTTP uploads to the file-processors
+    endpoint have file_id=None and are passed through unmodified.
+    """
+    global _current_mode, _current_storage
+
+    file_id = getattr(request, "file_id", None)
+    if _current_mode == APIRecordingMode.LIVE or _current_storage is None or not file_id:
+        return await original_method(self, request, file)
+
+    request_hash = normalize_file_processor_request(request)
+
+    if _current_mode in (APIRecordingMode.REPLAY, APIRecordingMode.RECORD_IF_MISSING):
+        recording = _current_storage.find_recording(request_hash)
+        if recording:
+            return recording["response"]["body"]
+        elif _current_mode == APIRecordingMode.REPLAY:
+            raise RuntimeError(
+                f"Recording not found for {provider_name}.process_file | file_id: {getattr(request, 'file_id', None)}\n"
+                f"\n"
+                f"Run './scripts/integration-tests.sh --inference-mode record-if-missing' with required API keys to generate."
+            )
+
+    if _current_mode in (APIRecordingMode.RECORD, APIRecordingMode.RECORD_IF_MISSING):
+        result = await original_method(self, request, file)
+
+        request_data = {
+            "test_id": get_test_context(),
+            "provider": provider_name,
+            "api": "file_processors",
+            "file_id": getattr(request, "file_id", None),
+        }
+        response_data = {"body": result, "is_streaming": False}
+
+        _current_storage.store_recording(request_hash, request_data, response_data)
+        return result
+
+    else:
+        raise AssertionError(f"Invalid mode: {_current_mode}")
+
+
 def _patched_aiohttp_post(original_post, session_self, url: str, **kwargs):
     """Patched version of aiohttp ClientSession.post for recording/replay of rerank requests.
 
@@ -816,6 +879,177 @@ def _patched_aiohttp_post(original_post, session_self, url: str, **kwargs):
 
     else:
         raise AssertionError(f"Invalid mode: {_current_mode}")
+
+
+async def _patched_httpx_async_post(original_post, self, url, **kwargs):
+    """Patched version of httpx.AsyncClient.post for recording/replay of Messages API passthrough.
+
+    Intercepts requests to /v1/messages endpoints so the native Ollama passthrough
+    path can be recorded and replayed without a live backend.
+    """
+    global _current_mode, _current_storage
+
+    url_str = str(url)
+    is_messages = "/v1/messages" in url_str
+
+    if not is_messages or _current_mode == APIRecordingMode.LIVE or _current_storage is None:
+        return await original_post(self, url, **kwargs)
+
+    json_payload = kwargs.get("json", {})
+    request_hash = normalize_http_request(url_str, "POST", json_payload)
+
+    if _current_mode in (APIRecordingMode.REPLAY, APIRecordingMode.RECORD_IF_MISSING):
+        recording = _current_storage.find_recording(request_hash)
+        if recording:
+            import httpx as _httpx
+
+            body_bytes = json.dumps(recording["response"]["body"]).encode()
+            # Create a minimal request so raise_for_status() works on the mock response
+            mock_request = _httpx.Request("POST", url_str)
+            mock_response = _httpx.Response(
+                status_code=recording["response"].get("status", 200),
+                headers={"content-type": "application/json", "anthropic-version": "2023-06-01"},
+                content=body_bytes,
+                request=mock_request,
+            )
+            return mock_response
+        elif _current_mode == APIRecordingMode.REPLAY:
+            raise RuntimeError(
+                f"Recording not found for httpx POST {url_str}\n"
+                f"\n"
+                f"Run './scripts/integration-tests.sh --inference-mode record-if-missing' with required API keys to generate."
+            )
+
+    if _current_mode in (APIRecordingMode.RECORD, APIRecordingMode.RECORD_IF_MISSING):
+        response = await original_post(self, url, **kwargs)
+
+        request_data = {
+            "test_id": get_test_context(),
+            "url": url_str,
+            "method": "POST",
+            "payload": json_payload,
+        }
+        response_data = {
+            "status": response.status_code,
+            "body": response.json(),
+            "is_streaming": False,
+        }
+        _current_storage.store_recording(request_hash, request_data, response_data)
+        return response
+
+    raise AssertionError(f"Invalid mode: {_current_mode}")
+
+
+def _patched_httpx_async_stream(original_stream, self, method, url, **kwargs):
+    """Patched version of httpx.AsyncClient.stream for recording/replay of streaming Messages API passthrough.
+
+    Intercepts streaming requests to /v1/messages endpoints. Returns an async context manager
+    that either replays recorded SSE events or records live ones.
+    """
+    global _current_mode, _current_storage
+
+    url_str = str(url)
+    is_messages = "/v1/messages" in url_str
+
+    if not is_messages or _current_mode == APIRecordingMode.LIVE or _current_storage is None:
+        return original_stream(self, method, url, **kwargs)
+
+    json_payload = kwargs.get("json", {})
+    request_hash = normalize_http_request(url_str, "POST", json_payload)
+
+    class _ReplayStreamContext:
+        """Async context manager that replays recorded SSE events as a mock httpx response."""
+
+        def __init__(self, sse_lines: list[str]):
+            self._sse_lines = sse_lines
+
+        async def __aenter__(self):
+            import httpx as _httpx
+
+            class _MockStreamResponse:
+                def __init__(self, lines):
+                    self.status_code = 200
+                    self.headers = _httpx.Headers(
+                        {"content-type": "text/event-stream", "anthropic-version": "2023-06-01"}
+                    )
+                    self._lines = lines
+
+                def raise_for_status(self):
+                    pass
+
+                async def aiter_lines(self):
+                    for line in self._lines:
+                        yield line
+
+            return _MockStreamResponse(self._sse_lines)
+
+        async def __aexit__(self, *args):
+            pass
+
+    # _RecordStreamContext is unused but kept for reference; actual recording uses _RecordCtx below
+
+    class _RecordingStreamResponse:
+        """Wraps a real httpx streaming response to capture SSE lines for recording."""
+
+        def __init__(self, response, url_str, json_payload, request_hash):
+            self._response = response
+            self._url = url_str
+            self._payload = json_payload
+            self._hash = request_hash
+            self._recorded_lines: list[str] = []
+            self.status_code = response.status_code
+            self.headers = response.headers
+
+        def raise_for_status(self):
+            self._response.raise_for_status()
+
+        async def aiter_lines(self):
+            async for line in self._response.aiter_lines():
+                self._recorded_lines.append(line)
+                yield line
+
+            # After the stream is exhausted, store the recording
+            request_data = {
+                "test_id": get_test_context(),
+                "url": self._url,
+                "method": "POST",
+                "payload": self._payload,
+            }
+            response_data = {
+                "body": self._recorded_lines,
+                "is_streaming": True,
+            }
+            if _current_storage:
+                _current_storage.store_recording(self._hash, request_data, response_data)
+
+    if _current_mode in (APIRecordingMode.REPLAY, APIRecordingMode.RECORD_IF_MISSING):
+        recording = _current_storage.find_recording(request_hash)
+        if recording:
+            return _ReplayStreamContext(recording["response"]["body"])
+        elif _current_mode == APIRecordingMode.REPLAY:
+            raise RuntimeError(
+                f"Recording not found for httpx stream POST {url_str}\n"
+                f"\n"
+                f"Run './scripts/integration-tests.sh --inference-mode record-if-missing' with required API keys to generate."
+            )
+
+    if _current_mode in (APIRecordingMode.RECORD, APIRecordingMode.RECORD_IF_MISSING):
+        # Capture the httpx client instance before defining the inner class
+        httpx_client = self
+
+        class _RecordCtx:
+            async def __aenter__(self):
+                self._cm = original_stream(httpx_client, method, url, **kwargs)
+                resp = await self._cm.__aenter__()
+                self._wrapper = _RecordingStreamResponse(resp, url_str, json_payload, request_hash)
+                return self._wrapper
+
+            async def __aexit__(self, *args):
+                return await self._cm.__aexit__(*args)
+
+        return _RecordCtx()
+
+    raise AssertionError(f"Invalid mode: {_current_mode}")
 
 
 _cached_provider_metadata: dict[str, dict[str, str]] = {}
@@ -1055,6 +1289,7 @@ def patch_inference_clients():
     global _original_methods
 
     import aiohttp
+    import httpx
     from ollama import AsyncClient as OllamaAsyncClient
     from openai.resources.chat.completions import AsyncCompletions as AsyncChatCompletions
     from openai.resources.completions import AsyncCompletions
@@ -1062,9 +1297,10 @@ def patch_inference_clients():
     from openai.resources.models import AsyncModels
     from openai.resources.responses import AsyncResponses
 
+    from llama_stack.providers.inline.file_processor.pypdf.adapter import PyPDFFileProcessorAdapter
     from llama_stack.providers.remote.tool_runtime.tavily_search.tavily_search import TavilySearchToolRuntimeImpl
 
-    # Store original methods for OpenAI, Ollama clients, tool runtimes, and aiohttp
+    # Store original methods for OpenAI, Ollama clients, tool runtimes, file processors, aiohttp, and httpx
     _original_methods = {
         "chat_completions_create": AsyncChatCompletions.create,
         "completions_create": AsyncCompletions.create,
@@ -1078,7 +1314,10 @@ def patch_inference_clients():
         "ollama_pull": OllamaAsyncClient.pull,
         "ollama_list": OllamaAsyncClient.list,
         "tavily_invoke_tool": TavilySearchToolRuntimeImpl.invoke_tool,
+        "pypdf_process_file": PyPDFFileProcessorAdapter.process_file,
         "aiohttp_post": aiohttp.ClientSession.post,
+        "httpx_async_post": httpx.AsyncClient.post,
+        "httpx_async_stream": httpx.AsyncClient.stream,
     }
 
     # Create patched methods for OpenAI client
@@ -1168,12 +1407,32 @@ def patch_inference_clients():
     # Apply tool runtime patches
     TavilySearchToolRuntimeImpl.invoke_tool = patched_tavily_invoke_tool
 
+    # Create patched methods for file processors
+    async def patched_pypdf_process_file(self, request, file=None):
+        return await _patched_file_processor_method(
+            _original_methods["pypdf_process_file"], "pypdf", self, request, file
+        )
+
+    # Apply file processor patches
+    PyPDFFileProcessorAdapter.process_file = patched_pypdf_process_file
+
     # Create patched method for aiohttp rerank requests
     def patched_aiohttp_session_post(self, url, **kwargs):
         return _patched_aiohttp_post(_original_methods["aiohttp_post"], self, url, **kwargs)
 
     # Apply aiohttp patch
     aiohttp.ClientSession.post = patched_aiohttp_session_post
+
+    # Create patched methods for httpx AsyncClient (Messages API passthrough)
+    async def patched_httpx_async_post(self, url, **kwargs):
+        return await _patched_httpx_async_post(_original_methods["httpx_async_post"], self, url, **kwargs)
+
+    def patched_httpx_async_stream(self, method, url, **kwargs):
+        return _patched_httpx_async_stream(_original_methods["httpx_async_stream"], self, method, url, **kwargs)
+
+    # Apply httpx patches
+    httpx.AsyncClient.post = patched_httpx_async_post
+    httpx.AsyncClient.stream = patched_httpx_async_stream
 
 
 def unpatch_inference_clients():
@@ -1185,6 +1444,7 @@ def unpatch_inference_clients():
 
     # Import here to avoid circular imports
     import aiohttp
+    import httpx
     from ollama import AsyncClient as OllamaAsyncClient
     from openai.resources.chat.completions import AsyncCompletions as AsyncChatCompletions
     from openai.resources.completions import AsyncCompletions
@@ -1192,6 +1452,7 @@ def unpatch_inference_clients():
     from openai.resources.models import AsyncModels
     from openai.resources.responses import AsyncResponses
 
+    from llama_stack.providers.inline.file_processor.pypdf.adapter import PyPDFFileProcessorAdapter
     from llama_stack.providers.remote.tool_runtime.tavily_search.tavily_search import TavilySearchToolRuntimeImpl
 
     # Restore OpenAI client methods
@@ -1212,8 +1473,15 @@ def unpatch_inference_clients():
     # Restore tool runtime methods
     TavilySearchToolRuntimeImpl.invoke_tool = _original_methods["tavily_invoke_tool"]
 
+    # Restore file processor methods
+    PyPDFFileProcessorAdapter.process_file = _original_methods["pypdf_process_file"]
+
     # Restore aiohttp method
     aiohttp.ClientSession.post = _original_methods["aiohttp_post"]
+
+    # Restore httpx methods
+    httpx.AsyncClient.post = _original_methods["httpx_async_post"]
+    httpx.AsyncClient.stream = _original_methods["httpx_async_stream"]
 
     _original_methods.clear()
 
