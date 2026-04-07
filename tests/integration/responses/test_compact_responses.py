@@ -18,7 +18,23 @@ def _skip_compact_tests_for_watsonx(request):
 
 
 class TestCompactResponses:
-    """Tests for POST /v1/responses/compact endpoint."""
+    """Tests for POST /v1/responses/compact endpoint.
+
+    Note: These tests use responses_client.post() instead of the native OpenAI
+    client.responses.compact() method for several reasons:
+
+    1. Model name flexibility: OpenAI's compact() method has strict Literal typing
+       for model names, but our tests use dynamic model IDs (e.g. "azure/gpt-4o")
+
+    2. Raw response inspection: .post(cast_to=object) allows direct JSON access
+       for comprehensive integration testing of response structure
+
+    3. HTTP layer testing: Tests the full request/response pipeline including
+       URL routing, serialization, and error handling at the HTTP level
+
+    4. Implementation flexibility: Supports testing custom parameters during
+       active development without OpenAI client type constraints
+    """
 
     @pytest.fixture(autouse=True)
     def _skip_non_openai_client(self, responses_client):
