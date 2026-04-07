@@ -11,6 +11,7 @@ import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 
+import tiktoken
 from pydantic import BaseModel, TypeAdapter
 
 from llama_stack.core.conversations.validation import CONVERSATION_ID_PATTERN
@@ -22,7 +23,6 @@ from llama_stack.core.task import (
 )
 from llama_stack.log import get_logger
 from llama_stack.providers.inline.responses.builtin.config import CompactionConfig
-from llama_stack.providers.utils.memory.vector_store import _get_encoding
 from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
     _OpenAIResponseObjectWithInputAndMessages,
@@ -1341,9 +1341,14 @@ class OpenAIResponsesImpl:
             usage=usage_data,
         )
 
-    def _count_tokens(self, input: str | list[OpenAIResponseInput]) -> int:
-        """Count tokens using tiktoken (cl100k_base encoding)."""
-        encoding = _get_encoding("cl100k_base")
+    def _count_tokens(self, input: str | list[OpenAIResponseInput], model: str = "") -> int:
+        """Count tokens using tiktoken with model-appropriate encoding."""
+        # Strip provider prefix (e.g. "openai/gpt-4o" -> "gpt-4o") for tiktoken lookup
+        model_name = model.split("/")[-1] if "/" in model else model
+        try:
+            encoding = tiktoken.encoding_for_model(model_name)
+        except KeyError:
+            encoding = tiktoken.get_encoding("o200k_base")
 
         if isinstance(input, str):
             return len(encoding.encode(input))
@@ -1389,7 +1394,7 @@ class OpenAIResponsesImpl:
             if threshold is None:
                 continue
 
-            token_count = self._count_tokens(input)
+            token_count = self._count_tokens(input, model=model)
             if token_count > threshold:
                 logger.debug("Auto-compacting", token_count=token_count, threshold=threshold)
                 compacted = await self.compact_openai_response(model=model, input=input)
