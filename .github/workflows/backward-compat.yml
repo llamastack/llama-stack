@@ -101,6 +101,18 @@ jobs:
         run: |
           echo "Breaking changes detected. Checking for acknowledgment..."
 
+          # In merge_group context, github.event.pull_request.title is empty.
+          # Fall back to fetching the PR title via gh CLI from the head commit.
+          if [ -z "$PR_TITLE" ]; then
+            PR_TITLE=$(gh pr list --search "$(git rev-parse HEAD)" --state open --json title --jq '.[0].title' 2>/dev/null || echo "")
+            if [ -z "$PR_TITLE" ]; then
+              # Try matching by branch name
+              BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+              PR_TITLE=$(gh pr list --head "$BRANCH_NAME" --state open --json title --jq '.[0].title' 2>/dev/null || echo "")
+            fi
+            echo "Resolved PR title: $PR_TITLE"
+          fi
+
           # Check PR title for '!:' marker (conventional commits)
           if [[ "$PR_TITLE" =~ ^[a-z]+\!: ]]; then
             echo "✓ Breaking change acknowledged in PR title"
@@ -192,6 +204,17 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           echo "Integration tests failed. Checking for acknowledgment..."
+
+          # In merge_group context, github.event.pull_request.title is empty.
+          # Fall back to fetching the PR title via gh CLI from the head commit.
+          if [ -z "$PR_TITLE" ]; then
+            PR_TITLE=$(gh pr list --search "$(git rev-parse HEAD)" --state open --json title --jq '.[0].title' 2>/dev/null || echo "")
+            if [ -z "$PR_TITLE" ]; then
+              BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+              PR_TITLE=$(gh pr list --head "$BRANCH_NAME" --state open --json title --jq '.[0].title' 2>/dev/null || echo "")
+            fi
+            echo "Resolved PR title: $PR_TITLE"
+          fi
 
           # Check PR title for '!:' marker (conventional commits)
           if [[ "$PR_TITLE" =~ ^[a-z]+\!: ]]; then
