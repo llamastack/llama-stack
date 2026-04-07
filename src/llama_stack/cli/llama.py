@@ -32,9 +32,9 @@ class LlamaCLIParser:
         subparsers = self.parser.add_subparsers(title="subcommands")
 
         # Add sub-commands
-        StackParser.create(subparsers)  # type: ignore[no-untyped-call]
+        StackParser.create(subparsers)
 
-        print_subcommand_description(self.parser, subparsers)  # type: ignore[no-untyped-call]
+        print_subcommand_description(self.parser, subparsers)
 
     def parse_args(self) -> argparse.Namespace:
         args = self.parser.parse_args()
