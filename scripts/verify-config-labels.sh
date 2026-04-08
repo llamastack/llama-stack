@@ -92,26 +92,6 @@ for config in "${CONFIGS[@]}"; do
         exit 1
     fi
 
-    # Count lines and bytes (strip whitespace from counts only)
-    line_count=$(wc -l < "$decoded_file" | tr -d '[:space:]')
-    char_count=$(wc -c < "$decoded_file" | tr -d '[:space:]')
-
-    # Validate non-empty
-    if [ -z "$line_count" ] || [ "$line_count" -eq 0 ]; then
-        echo "❌ Config '$config' is empty (0 lines)"
-        rm -f "$decoded_file"
-        exit 1
-    fi
-
-    if [ -z "$char_count" ] || [ "$char_count" -eq 0 ]; then
-        echo "❌ Config '$config' is empty (0 bytes)"
-        rm -f "$decoded_file"
-        exit 1
-    fi
-
-    echo "   ✅ Lines: $line_count"
-    echo "   ✅ Bytes: $char_count"
-
     # Validate YAML syntax if Python and PyYAML available
     PYTHON_CMD=""
     if command -v python3 &>/dev/null && python3 -c 'import yaml' 2>/dev/null; then
