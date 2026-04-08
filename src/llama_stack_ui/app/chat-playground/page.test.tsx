@@ -106,6 +106,10 @@ jest.mock("@/components/chat-playground/conversations", () => ({
     saveAgentConfig: jest.fn(),
     loadAgentConfig: jest.fn(),
     clearAgentCache: jest.fn(),
+    saveAgentsList: jest.fn(),
+    loadAgentsList: jest.fn(() => []),
+    saveActiveSessionId: jest.fn(),
+    loadActiveSessionId: jest.fn(() => null),
     createDefaultSession: jest.fn(() => ({
       id: "test-session-123",
       name: "Default Session",
@@ -565,7 +569,7 @@ describe("ChatPlaygroundPage", () => {
 
       await waitFor(() => {
         expect(consoleSpy).toHaveBeenCalledWith(
-          "Error fetching agents:",
+          "Error fetching agents (may be unavailable):",
           expect.any(Error)
         );
       });
