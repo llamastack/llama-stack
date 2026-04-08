@@ -19,12 +19,12 @@ inference provider, based on integration test results.
 
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
-| azure | 113 | 113 | 0 | 86% |
-| bedrock | 33 | 33 | 0 | 26% |
-| ollama | 2 | 2 | 0 | 2% |
-| openai | 132 | 132 | 0 | 100% |
+| azure | 113 | 113 | 0 | 82% |
+| bedrock | 33 | 33 | 0 | 24% |
+| ollama | 2 | 2 | 0 | 1% |
+| openai | 132 | 132 | 0 | 96% |
 | vllm | 3 | 3 | 0 | 2% |
-| watsonx | 56 | 56 | 0 | 42% |
+| watsonx | 56 | 56 | 0 | 41% |
 
 ## Provider Details
 
