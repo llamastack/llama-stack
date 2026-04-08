@@ -16,9 +16,11 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Getting Started',
+      className: 'sidebar-getting-started',
       collapsed: false,
       items: [
         'getting_started/quickstart',
+        'getting_started/migrate_existing_app',
         'getting_started/detailed_tutorial',
         'getting_started/libraries',
       ],
@@ -26,6 +28,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Concepts',
+      className: 'sidebar-concepts',
       collapsed: false,
       items: [
         'concepts/index',
@@ -57,6 +60,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Distributions',
+      className: 'sidebar-distributions',
       collapsed: false,
       items: [
         'distributions/index',
@@ -91,6 +95,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Providers',
+      className: 'sidebar-providers',
       collapsed: false,
       items: [
         'providers/index',
@@ -194,17 +199,6 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Scoring',
-          collapsed: false,
-          items: [
-            'providers/scoring/index',
-            'providers/scoring/inline_basic',
-            'providers/scoring/inline_braintrust',
-            'providers/scoring/inline_llm-as-judge'
-          ],
-        },
-        {
-          type: 'category',
           label: 'Files',
           collapsed: false,
           items: [
@@ -257,6 +251,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Building Applications',
+      className: 'sidebar-building-apps',
       collapsed: false,
       items: [
         'building_applications/index',
@@ -273,16 +268,8 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Advanced APIs',
-      collapsed: false,
-      items: [
-        'advanced_apis/evaluation',
-        'advanced_apis/scoring',
-      ],
-    },
-    {
-      type: 'category',
       label: 'Deploying',
+      className: 'sidebar-deploying',
       collapsed: false,
       items: [
         'deploying/index',
@@ -293,6 +280,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Contributing',
+      className: 'sidebar-contributing',
       collapsed: false,
       items: [
         'contributing/index',
@@ -304,6 +292,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'References',
+      className: 'sidebar-references',
       collapsed: false,
       items: [
         'references/index',

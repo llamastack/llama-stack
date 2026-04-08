@@ -267,7 +267,7 @@ def _filter_deprecated_schema(openapi_schema: dict[str, Any]) -> dict[str, Any]:
 
     filtered_schema["paths"] = filtered_paths
 
-    return filtered_schema
+    return _filter_schemas_by_references(filtered_schema, filtered_paths, openapi_schema)
 
 
 def _filter_combined_schema(openapi_schema: dict[str, Any]) -> dict[str, Any]:

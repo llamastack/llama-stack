@@ -38,7 +38,7 @@ dependencies = [
     "jinja2>=3.1.6",
     "jsonschema",
     "llama-stack-api",                                # API and provider specifications (local dev via tool.uv.sources)
-    "openai>=2.5.0",
+    "openai>=2.30.0",
     "prompt-toolkit",
     "python-dotenv",
     "pyjwt[crypto]>=2.12.0",                          # Pull crypto to support RS256 for jwt. Requires 2.12.0+ to fix CVE-2026-32597.
@@ -64,6 +64,7 @@ dependencies = [
     "oci>=2.165.0",
     "numpy>=2.3.2",
     "mcp>=1.23.0",                                    # for connectors
+    "zstandard>=0.23.0",                              # server - zstd request decompression
 ]
 
 [project.optional-dependencies]
@@ -172,6 +173,9 @@ type_checking = [
     "lm-format-enforcer",
     "mcp>=1.23.0",
     "ollama",
+    "langchain-openai",
+    "langchain-core",
+    "langgraph",
     "llama-stack-client>=0.7.0",
 ]
 # These are the dependencies required for running unit tests.
@@ -219,7 +223,10 @@ test = [
     "pymilvus>=2.6.2",
     "milvus-lite>=2.5.0; platform_machine == 'x86_64' or platform_machine == 'aarch64' or platform_machine == 'arm64'",
     "weaviate-client>=4.16.4",
-    "elasticsearch>=8.16.0, <9.0.0"
+    "elasticsearch>=8.16.0, <9.0.0",
+    "langchain-openai",
+    "langchain-core",
+    "langgraph",
 ]
 docs = [
     "setuptools",

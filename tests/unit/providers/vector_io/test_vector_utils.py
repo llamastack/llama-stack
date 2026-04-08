@@ -135,6 +135,7 @@ def test_vector_store_file_object_attributes_validation():
         created_at=1234567890,
         status="completed",
         vector_store_id="vs-123",
+        usage_bytes=0,
     )
 
     # Lists converted to comma-separated strings
@@ -161,6 +162,7 @@ def test_vector_store_file_object_attributes_constraints():
         created_at=1234567890,
         status="completed",
         vector_store_id="vs-123",
+        usage_bytes=0,
     )
     assert len(file_obj.attributes) == 16  # Max 16 properties
 
@@ -173,6 +175,7 @@ def test_vector_store_file_object_attributes_constraints():
         created_at=1234567890,
         status="completed",
         vector_store_id="vs-123",
+        usage_bytes=0,
     )
     assert "a" * 65 not in file_obj.attributes
     assert "valid_key" in file_obj.attributes
@@ -186,6 +189,7 @@ def test_vector_store_file_object_attributes_constraints():
         created_at=1234567890,
         status="completed",
         vector_store_id="vs-123",
+        usage_bytes=0,
     )
     assert len(file_obj.attributes["key"]) == 512
 

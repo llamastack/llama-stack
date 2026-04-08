@@ -71,6 +71,9 @@ const config: Config = {
           sidebarPath: require.resolve("./sidebars.ts"),
           // disableVersioning: true,
           docItemComponent: "@theme/ApiItem", // Derived from docusaurus-theme-openapi
+          editUrl: 'https://github.com/llamastack/llama-stack/edit/main/',
+          showLastUpdateTime: true,
+          showLastUpdateAuthor: false,
           remarkPlugins: [
             [require('remark-code-import'), {
               rootDir: require('path').join(__dirname, '..') // Repository root
@@ -155,13 +158,13 @@ const config: Config = {
       ],
     },
     footer: {
-      style: 'dark',
+      style: 'light',
       links: [
         {
-          title: 'Docs',
+          title: 'Getting Started',
           items: [
             {
-              label: 'Getting Started',
+              label: 'Quickstart',
               to: '/docs/getting_started/quickstart',
             },
             {
@@ -169,8 +172,29 @@ const config: Config = {
               to: '/docs/concepts',
             },
             {
+              label: 'Distributions',
+              to: '/docs/distributions/building_distro',
+            },
+            {
+              label: 'Providers',
+              to: '/docs/providers',
+            },
+          ],
+        },
+        {
+          title: 'API',
+          items: [
+            {
               label: 'API Reference',
               to: '/docs/api-overview',
+            },
+            {
+              label: 'OpenAI Compatibility',
+              to: '/docs/api-openai',
+            },
+            {
+              label: 'Blog',
+              to: '/blog',
             },
           ],
         },
@@ -182,13 +206,21 @@ const config: Config = {
               href: 'https://discord.gg/llama-stack',
             },
             {
+              label: 'GitHub Discussions',
+              href: 'https://github.com/llamastack/llama-stack/discussions',
+            },
+            {
               label: 'Issues',
               href: 'https://github.com/llamastack/llama-stack/issues',
+            },
+            {
+              label: 'Contributing',
+              to: '/docs/contributing',
             },
           ],
         },
         {
-          title: 'More',
+          title: 'Resources',
           items: [
             {
               label: 'GitHub',
@@ -198,10 +230,14 @@ const config: Config = {
               label: 'PyPI',
               href: 'https://pypi.org/project/llama-stack/',
             },
+            {
+              label: 'Releases',
+              href: 'https://github.com/llamastack/llama-stack/releases',
+            },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Meta Platforms, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Meta Platforms, Inc.`,
     },
     colorMode: {
       defaultMode: 'dark',
@@ -320,8 +356,8 @@ const config: Config = {
         docsRouteBasePath: '/docs',
 
         // Search behavior optimization for technical docs
-        searchResultLimits: 8,
-        searchResultContextMaxLength: 50,
+        searchResultLimits: 12,
+        searchResultContextMaxLength: 80,
         explicitSearchResultPath: true,
 
         // User experience enhancements

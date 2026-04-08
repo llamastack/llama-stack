@@ -32,6 +32,7 @@ from llama_stack_api import (
     OpenAIJSONSchema,
     OpenAIMessageParam,
     OpenAIResponseAnnotationFileCitation,
+    OpenAIResponseCompaction,
     OpenAIResponseContentPartReasoningSummary,
     OpenAIResponseFormatJSONObject,
     OpenAIResponseFormatJSONSchema,
@@ -376,6 +377,9 @@ async def convert_response_input_to_chat_messages(
             ):
                 # these are handled by the responses impl itself and not pass through to chat completions
                 pass
+            elif isinstance(input_item, OpenAIResponseCompaction):
+                # Convert compaction summary to an assistant message so the model sees prior context
+                messages.append(OpenAIAssistantMessageParam(content=input_item.encrypted_content))
             elif isinstance(input_item, OpenAIResponseMessage):
                 # Narrow type to OpenAIResponseMessage which has content and role attributes
                 content = await convert_response_content_to_chat_content(input_item.content, files_api)
