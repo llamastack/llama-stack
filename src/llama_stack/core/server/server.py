@@ -18,17 +18,13 @@ from typing import Any
 
 import httpx
 import yaml
+import zstandard
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from openai import BadRequestError
 from starlette.types import ASGIApp, Receive, Scope, Send
-
-try:
-    import zstandard
-except ImportError:
-    zstandard = None
 
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import (
@@ -146,6 +142,19 @@ async def lifespan(app: StackApp) -> AsyncIterator[None]:
     await app.stack.shutdown()  # type: ignore[no-untyped-call]
 
 
+async def _send_error_response(send: Send, status: int, message: str) -> None:
+    """Send an ASGI error response with an OpenAI-compatible error body."""
+    await send(
+        {
+            "type": "http.response.start",
+            "status": status,
+            "headers": [[b"content-type", b"application/json"]],
+        }
+    )
+    error_msg = OpenAIErrorResponse.from_message(message).to_bytes()
+    await send({"type": "http.response.body", "body": error_msg})
+
+
 class ClientVersionMiddleware:
     """ASGI middleware that rejects requests from clients with incompatible major.minor versions."""
 
@@ -162,21 +171,11 @@ class ClientVersionMiddleware:
                     client_version_parts = tuple(map(int, client_version.split(".")[:2]))
                     server_version_parts = tuple(map(int, self.server_version.split(".")[:2]))
                     if client_version_parts != server_version_parts:
-
-                        async def send_version_error(send: Send) -> None:
-                            await send(
-                                {
-                                    "type": "http.response.start",
-                                    "status": httpx.codes.UPGRADE_REQUIRED,
-                                    "headers": [[b"content-type", b"application/json"]],
-                                }
-                            )
-                            error_msg = OpenAIErrorResponse.from_message(
-                                f"Client version {client_version} is not compatible with server version {self.server_version}. Please update your client."
-                            ).to_bytes()
-                            await send({"type": "http.response.body", "body": error_msg})
-
-                        return await send_version_error(send)
+                        return await _send_error_response(
+                            send,
+                            status=httpx.codes.UPGRADE_REQUIRED,
+                            message=f"Client version {client_version} is not compatible with server version {self.server_version}. Please update your client.",
+                        )
                 except (ValueError, IndexError):
                     # If version parsing fails, let the request through
                     pass
@@ -387,13 +386,18 @@ def create_app() -> StackApp:
             compressed_body = b"".join(body_parts)
 
             try:
-                if zstandard is None:
-                    raise ImportError("zstandard library not available")
-
+                max_decompressed_size = 100 * 1024 * 1024  # 100 MB
                 decompressor = zstandard.ZstdDecompressor()
                 # Use streaming decompression to handle frames without content size
                 reader = decompressor.stream_reader(compressed_body)
-                decompressed_body = reader.read()
+                decompressed_body = reader.read(max_decompressed_size)
+                if reader.read(1):
+                    reader.close()
+                    return await _send_error_response(
+                        send,
+                        status=413,
+                        message=f"Decompressed request body exceeds maximum allowed size of {max_decompressed_size} bytes",
+                    )
                 reader.close()
 
                 # Strip content-encoding header and update content-length

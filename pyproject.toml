@@ -64,6 +64,7 @@ dependencies = [
     "oci>=2.165.0",
     "numpy>=2.3.2",
     "mcp>=1.23.0",                                    # for connectors
+    "zstandard>=0.23.0",                              # server - zstd request decompression
 ]
 
 [project.optional-dependencies]
