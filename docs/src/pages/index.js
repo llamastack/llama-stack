@@ -115,11 +115,15 @@ const PROVIDERS = {
   tools: ['MCP Servers', 'Web Search', 'File Search (RAG)', 'PDF / Docling'],
 };
 
-const CODE_EXAMPLES = [
-  {
-    lang: 'Python',
-    code: (s) => (
-      <>
+const SDK_EXAMPLES = {
+  openai: {
+    label: 'OpenAI SDK',
+    endpoint: '/v1/responses',
+    languages: [
+      {
+        lang: 'Python',
+        code: (s) => (
+          <>
 <span className={s.synKeyword}>from</span> <span className={s.synModule}>openai</span> <span className={s.synKeyword}>import</span> <span className={s.synClass}>OpenAI</span>{'\n'}
 {'\n'}
 <span className={s.synVar}>client</span> = <span className={s.synClass}>OpenAI</span>(<span className={s.synParam}>base_url</span>=<span className={s.synString}>"http://localhost:8321/v1"</span>, <span className={s.synParam}>api_key</span>=<span className={s.synString}>"fake"</span>){'\n'}
@@ -128,13 +132,13 @@ const CODE_EXAMPLES = [
 {'    '}<span className={s.synParam}>input</span>=<span className={s.synString}>"Summarize this repository"</span>,{'\n'}
 {'    '}<span className={s.synParam}>tools</span>=[{'{'}<span className={s.synString}>"type"</span>: <span className={s.synString}>"web_search"</span>{'}'}],{'\n'}
 )
-      </>
-    ),
-  },
-  {
-    lang: 'curl',
-    code: (s) => (
-      <>
+          </>
+        ),
+      },
+      {
+        lang: 'curl',
+        code: (s) => (
+          <>
 <span className={s.synVar}>curl</span> <span className={s.synString}>http://localhost:8321/v1/responses</span> \{'\n'}
 {'  '}<span className={s.synParam}>-H</span> <span className={s.synString}>"Content-Type: application/json"</span> \{'\n'}
 {'  '}<span className={s.synParam}>-d</span> <span className={s.synString}>'{'"'}{"{"}{'\n'}
@@ -142,13 +146,13 @@ const CODE_EXAMPLES = [
 {'    '}"input": "Summarize this repository",{'\n'}
 {'    '}"tools": [{"{"}"type": "web_search"{"}"}]{'\n'}
 {'  '}{"}"}'</span>
-      </>
-    ),
-  },
-  {
-    lang: 'Node.js',
-    code: (s) => (
-      <>
+          </>
+        ),
+      },
+      {
+        lang: 'Node.js',
+        code: (s) => (
+          <>
 <span className={s.synKeyword}>import</span> <span className={s.synClass}>OpenAI</span> <span className={s.synKeyword}>from</span> <span className={s.synString}>"openai"</span>;{'\n'}
 {'\n'}
 <span className={s.synKeyword}>const</span> <span className={s.synVar}>client</span> = <span className={s.synKeyword}>new</span> <span className={s.synClass}>OpenAI</span>({'{'}{'\n'}
@@ -161,13 +165,13 @@ const CODE_EXAMPLES = [
 {'  '}<span className={s.synParam}>input</span>: <span className={s.synString}>"Summarize this repository"</span>,{'\n'}
 {'  '}<span className={s.synParam}>tools</span>: [{'{'} <span className={s.synParam}>type</span>: <span className={s.synString}>"web_search"</span> {'}'}],{'\n'}
 {'}'});
-      </>
-    ),
-  },
-  {
-    lang: 'Go',
-    code: (s) => (
-      <>
+          </>
+        ),
+      },
+      {
+        lang: 'Go',
+        code: (s) => (
+          <>
 <span className={s.synVar}>client</span> := <span className={s.synModule}>openai</span>.<span className={s.synClass}>NewClient</span>({'\n'}
 {'  '}<span className={s.synModule}>option</span>.<span className={s.synMethod}>WithBaseURL</span>(<span className={s.synString}>"http://localhost:8321/v1"</span>),{'\n'}
 {'  '}<span className={s.synModule}>option</span>.<span className={s.synMethod}>WithAPIKey</span>(<span className={s.synString}>"fake"</span>),{'\n'}
@@ -183,30 +187,104 @@ const CODE_EXAMPLES = [
 {'    '}{'}'},{'\n'}
 {'  '}{'}'},{'\n'}
 )
-      </>
-    ),
+          </>
+        ),
+      },
+    ],
   },
-];
+  anthropic: {
+    label: 'Anthropic SDK',
+    endpoint: '/v1/messages',
+    languages: [
+      {
+        lang: 'Python',
+        code: (s) => (
+          <>
+<span className={s.synKeyword}>from</span> <span className={s.synModule}>anthropic</span> <span className={s.synKeyword}>import</span> <span className={s.synClass}>Anthropic</span>{'\n'}
+{'\n'}
+<span className={s.synVar}>client</span> = <span className={s.synClass}>Anthropic</span>({'\n'}
+{'    '}<span className={s.synParam}>base_url</span>=<span className={s.synString}>"http://localhost:8321/v1"</span>,{'\n'}
+{'    '}<span className={s.synParam}>api_key</span>=<span className={s.synString}>"fake"</span>,{'\n'}
+){'\n'}
+<span className={s.synVar}>message</span> = <span className={s.synVar}>client</span>.<span className={s.synMethod}>messages</span>.<span className={s.synMethod}>create</span>({'\n'}
+{'    '}<span className={s.synParam}>model</span>=<span className={s.synString}>"llama-3.3-70b"</span>,{'\n'}
+{'    '}<span className={s.synParam}>max_tokens</span>=<span className={s.synVar}>1024</span>,{'\n'}
+{'    '}<span className={s.synParam}>messages</span>=[{'\n'}
+{'        '}{'{'}<span className={s.synString}>"role"</span>: <span className={s.synString}>"user"</span>,{'\n'}
+{'         '}<span className={s.synString}>"content"</span>: <span className={s.synString}>"Summarize this repository"</span>{'}'}
+{'\n'}{'    '}],{'\n'}
+)
+          </>
+        ),
+      },
+      {
+        lang: 'TypeScript',
+        code: (s) => (
+          <>
+<span className={s.synKeyword}>import</span> <span className={s.synClass}>Anthropic</span> <span className={s.synKeyword}>from</span> <span className={s.synString}>"@anthropic-ai/sdk"</span>;{'\n'}
+{'\n'}
+<span className={s.synKeyword}>const</span> <span className={s.synVar}>client</span> = <span className={s.synKeyword}>new</span> <span className={s.synClass}>Anthropic</span>({'{'}{'\n'}
+{'  '}<span className={s.synParam}>baseURL</span>: <span className={s.synString}>"http://localhost:8321/v1"</span>,{'\n'}
+{'  '}<span className={s.synParam}>apiKey</span>: <span className={s.synString}>"fake"</span>,{'\n'}
+{'}'});{'\n'}
+{'\n'}
+<span className={s.synKeyword}>const</span> <span className={s.synVar}>message</span> = <span className={s.synKeyword}>await</span> <span className={s.synVar}>client</span>.<span className={s.synMethod}>messages</span>.<span className={s.synMethod}>create</span>({'{'}{'\n'}
+{'  '}<span className={s.synParam}>model</span>: <span className={s.synString}>"llama-3.3-70b"</span>,{'\n'}
+{'  '}<span className={s.synParam}>max_tokens</span>: <span className={s.synVar}>1024</span>,{'\n'}
+{'  '}<span className={s.synParam}>messages</span>: [{'{'} <span className={s.synParam}>role</span>: <span className={s.synString}>"user"</span>, <span className={s.synParam}>content</span>: <span className={s.synString}>"Summarize this repository"</span> {'}'}],{'\n'}
+{'}'});
+          </>
+        ),
+      },
+    ],
+  },
+};
 
 function CodeTabs() {
-  const [active, setActive] = useState(0);
+  const [activeSdk, setActiveSdk] = useState('openai');
+  const [langIndex, setLangIndex] = useState({openai: 0, anthropic: 0});
+  const sdk = SDK_EXAMPLES[activeSdk];
+  const activeIdx = langIndex[activeSdk];
+
+  const switchSdk = (key) => {
+    setActiveSdk(key);
+  };
+
+  const switchLang = (idx) => {
+    setLangIndex(prev => ({...prev, [activeSdk]: idx}));
+  };
+
   return (
     <div className={styles.codeBlock}>
       <div className={styles.codeWindowDots}>
         <span /><span /><span />
       </div>
-      <div className={styles.codeTabs}>
-        {CODE_EXAMPLES.map((ex, i) => (
+      <div className={styles.sdkToggle}>
+        {Object.entries(SDK_EXAMPLES).map(([key, val]) => (
           <button
-            key={ex.lang}
-            className={clsx(styles.codeTab, i === active && styles.codeTabActive)}
-            onClick={() => setActive(i)}
+            key={key}
+            className={clsx(styles.sdkBtn, activeSdk === key && styles.sdkBtnActive)}
+            onClick={() => switchSdk(key)}
           >
-            {ex.lang}
+            {val.label}
           </button>
         ))}
       </div>
-      <pre><code>{CODE_EXAMPLES[active].code(styles)}</code></pre>
+      <div className={styles.codeSubHeader}>
+        <div className={styles.codeTabs}>
+          {sdk.languages.map((ex, i) => (
+            <button
+              key={ex.lang}
+              className={clsx(styles.codeTab, i === activeIdx && styles.codeTabActive)}
+              onClick={() => switchLang(i)}
+            >
+              {ex.lang}
+            </button>
+          ))}
+        </div>
+        <code className={styles.endpointBadge}>{sdk.endpoint}</code>
+      </div>
+      <pre><code>{sdk.languages[activeIdx].code(styles)}</code></pre>
     </div>
   );
 }
@@ -220,7 +298,7 @@ function Hero() {
         <div className={styles.heroInner}>
           <div className={styles.badge}>
             <span className={styles.badgeDot} />
-            OpenAI-Compatible API Server
+            OpenAI + Anthropic API Server
           </div>
           <h1 className={styles.title}>
             Build AI apps with<br />
@@ -349,7 +427,7 @@ function Architecture() {
         <div className={styles.sectionHead}>
           <span className={styles.sectionTag}>Architecture</span>
           <h2>How it works</h2>
-          <p>One API surface, pluggable providers, deploy anywhere</p>
+          <p>OpenAI and Anthropic compatible, pluggable providers, deploy anywhere.</p>
         </div>
         <div className={styles.archImg}>
           <div className={styles.archGlow} />
@@ -367,7 +445,7 @@ function ProviderSection() {
         <div className={styles.sectionHead}>
           <span className={styles.sectionTag}>Providers</span>
           <h2>Plug in any provider</h2>
-          <p>Develop locally with Ollama, deploy to production with vLLM or a managed service</p>
+          <p>Develop locally with Ollama, deploy to production with vLLM or a managed service.</p>
         </div>
         <div className={styles.providerCols}>
           {Object.entries(PROVIDERS).map(([cat, items]) => (
@@ -405,7 +483,7 @@ function Community() {
 
 export default function Home() {
   return (
-    <Layout title="OpenAI-Compatible AI Server" description="Drop-in replacement for the OpenAI API. Any model, any infrastructure.">
+    <Layout title="OpenAI + Anthropic Compatible AI Server" description="OpenAI and Anthropic compatible API server. Any model, any infrastructure.">
       <main>
         <Hero />
         <ProviderStrip />
