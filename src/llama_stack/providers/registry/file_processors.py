@@ -8,6 +8,7 @@ from llama_stack_api import (
     Api,
     InlineProviderSpec,
     ProviderSpec,
+    RemoteProviderSpec,
 )
 
 
@@ -76,5 +77,15 @@ pip install docling
 
 See [Docling's documentation](https://docling-project.github.io/docling/) for more details.
 """,
+        ),
+        RemoteProviderSpec(
+            api=Api.file_processors,
+            provider_type="remote::docling-serve",
+            adapter_type="docling-serve",
+            pip_packages=["httpx"],
+            module="llama_stack.providers.remote.file_processor.docling_serve",
+            config_class="llama_stack.providers.remote.file_processor.docling_serve.DoclingServeFileProcessorConfig",
+            api_dependencies=[Api.files],
+            description="Remote file processor using Docling Serve for GPU-accelerated, layout-aware document parsing.",
         ),
     ]
