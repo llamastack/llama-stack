@@ -127,17 +127,17 @@
       ]
     },
     "conformance": {
-      "score": 89.1,
-      "issues": 246,
-      "missing_properties": 128,
-      "total_problems": 374,
+      "score": 91.0,
+      "issues": 199,
+      "missing_properties": 110,
+      "total_problems": 309,
       "total_properties": 3441
     }
   },
   "categories": {
     "Batch": {
-      "score": 39.3,
-      "issues": 61,
+      "score": 39.9,
+      "issues": 60,
       "missing_properties": 41,
       "total_properties": 168,
       "endpoints": [
@@ -159,12 +159,6 @@
                 "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.total_tokens"
               ],
               "conformance_issues": [
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
                 {
                   "property": "GET.responses.200.content.application/json.properties.data.items.properties.cancelled_at",
                   "details": [
@@ -298,7 +292,7 @@
                 }
               ],
               "missing_count": 10,
-              "issues_count": 18
+              "issues_count": 17
             },
             {
               "method": "POST",
@@ -706,9 +700,9 @@
       ]
     },
     "Chat": {
-      "score": 87.1,
-      "issues": 33,
-      "missing_properties": 19,
+      "score": 98.3,
+      "issues": 6,
+      "missing_properties": 1,
       "total_properties": 403,
       "endpoints": [
         {
@@ -717,59 +711,13 @@
             {
               "method": "GET",
               "missing_properties": [
-                "GET.parameters.query.metadata",
-                "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens_details.properties.accepted_prediction_tokens",
-                "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens_details.properties.audio_tokens",
-                "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens_details.properties.rejected_prediction_tokens",
-                "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.prompt_tokens_details.properties.audio_tokens"
+                "GET.parameters.query.metadata"
               ],
               "conformance_issues": [
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.choices.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.function_call",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
                 {
                   "property": "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.tool_calls.items",
                   "details": [
                     "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.usage",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens_details",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.prompt_tokens_details",
-                  "details": [
-                    "Type removed: ['object']"
                   ]
                 },
                 {
@@ -779,94 +727,17 @@
                   ]
                 }
               ],
-              "missing_count": 5,
-              "issues_count": 9
+              "missing_count": 1,
+              "issues_count": 2
             },
             {
               "method": "POST",
-              "missing_properties": [
-                "POST.responses.200.content.application/json.properties.usage.properties.completion_tokens_details.properties.accepted_prediction_tokens",
-                "POST.responses.200.content.application/json.properties.usage.properties.completion_tokens_details.properties.audio_tokens",
-                "POST.responses.200.content.application/json.properties.usage.properties.completion_tokens_details.properties.rejected_prediction_tokens",
-                "POST.responses.200.content.application/json.properties.usage.properties.prompt_tokens_details.properties.audio_tokens",
-                "POST.responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.function_call",
-                "POST.responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.tool_calls.items.properties.index",
-                "POST.responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details.properties.accepted_prediction_tokens",
-                "POST.responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details.properties.audio_tokens",
-                "POST.responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details.properties.rejected_prediction_tokens",
-                "POST.responses.200.content.text/event-stream.properties.usage.properties.prompt_tokens_details.properties.audio_tokens"
-              ],
+              "missing_properties": [],
               "conformance_issues": [
-                {
-                  "property": "POST.responses.200.content.application/json.properties.choices.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.message",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
                 {
                   "property": "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls.items",
                   "details": [
                     "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.usage",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.usage.properties.completion_tokens_details",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.usage.properties.prompt_tokens_details",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.delta",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.tool_calls.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.tool_calls.items.properties.function",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.logprobs",
-                  "details": [
-                    "Type removed: ['object']"
                   ]
                 },
                 {
@@ -884,28 +755,10 @@
                     "Nullable added (OpenAI non-nullable)",
                     "Union variants added: 2"
                   ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.usage",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.usage.properties.prompt_tokens_details",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
                 }
               ],
-              "missing_count": 10,
-              "issues_count": 17
+              "missing_count": 0,
+              "issues_count": 3
             }
           ]
         },
@@ -914,66 +767,25 @@
           "operations": [
             {
               "method": "GET",
-              "missing_properties": [
-                "GET.responses.200.content.application/json.properties.usage.properties.completion_tokens_details.properties.accepted_prediction_tokens",
-                "GET.responses.200.content.application/json.properties.usage.properties.completion_tokens_details.properties.audio_tokens",
-                "GET.responses.200.content.application/json.properties.usage.properties.completion_tokens_details.properties.rejected_prediction_tokens",
-                "GET.responses.200.content.application/json.properties.usage.properties.prompt_tokens_details.properties.audio_tokens"
-              ],
+              "missing_properties": [],
               "conformance_issues": [
-                {
-                  "property": "GET.responses.200.content.application/json.properties.choices.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.choices.items.properties.message",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
                 {
                   "property": "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls.items",
                   "details": [
                     "Union variants added: 2"
                   ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.usage",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.usage.properties.completion_tokens_details",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.usage.properties.prompt_tokens_details",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
                 }
               ],
-              "missing_count": 4,
-              "issues_count": 7
+              "missing_count": 0,
+              "issues_count": 1
             }
           ]
         }
       ]
     },
     "Completions": {
-      "score": 56.5,
-      "issues": 18,
+      "score": 58.7,
+      "issues": 17,
       "missing_properties": 2,
       "total_properties": 46,
       "endpoints": [
@@ -1128,16 +940,10 @@
                     "Nullable added (OpenAI non-nullable)",
                     "Union variants added: 2"
                   ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.choices.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
                 }
               ],
               "missing_count": 2,
-              "issues_count": 18
+              "issues_count": 17
             }
           ]
         }
@@ -1391,8 +1197,8 @@
       ]
     },
     "Embeddings": {
-      "score": 64.3,
-      "issues": 5,
+      "score": 78.6,
+      "issues": 3,
       "missing_properties": 0,
       "total_properties": 14,
       "endpoints": [
@@ -1417,27 +1223,15 @@
                   ]
                 },
                 {
-                  "property": "POST.responses.200.content.application/json.properties.data.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
                   "property": "POST.responses.200.content.application/json.properties.data.items.properties.embedding",
                   "details": [
                     "Type removed: ['array']",
                     "Union variants added: 2"
                   ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.usage",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 5
+              "issues_count": 3
             }
           ]
         }
@@ -1607,8 +1401,8 @@
       ]
     },
     "Moderations": {
-      "score": 15.1,
-      "issues": 6,
+      "score": 17.0,
+      "issues": 5,
       "missing_properties": 39,
       "total_properties": 53,
       "endpoints": [
@@ -1673,12 +1467,6 @@
                   ]
                 },
                 {
-                  "property": "POST.responses.200.content.application/json.properties.results.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
                   "property": "POST.responses.200.content.application/json.properties.results.items.properties.categories",
                   "details": [
                     "Type removed: ['object']",
@@ -1701,15 +1489,15 @@
                 }
               ],
               "missing_count": 39,
-              "issues_count": 6
+              "issues_count": 5
             }
           ]
         }
       ]
     },
     "Responses": {
-      "score": 84.0,
-      "issues": 36,
+      "score": 84.9,
+      "issues": 34,
       "missing_properties": 0,
       "total_properties": 225,
       "endpoints": [
@@ -1889,6 +1677,12 @@
                   ]
                 },
                 {
+                  "property": "POST.responses.200.content.application/json.properties.text",
+                  "details": [
+                    "Type added: ['object']"
+                  ]
+                },
+                {
                   "property": "POST.responses.200.content.application/json.properties.tool_choice",
                   "details": [
                     "Union variants added: 3"
@@ -1933,7 +1727,7 @@
                 }
               ],
               "missing_count": 0,
-              "issues_count": 29
+              "issues_count": 30
             }
           ]
         },
@@ -1969,36 +1763,18 @@
                   "details": [
                     "Union variants added: 4"
                   ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.usage",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.usage.properties.input_tokens_details",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.usage.properties.output_tokens_details",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 7
+              "issues_count": 4
             }
           ]
         }
       ]
     },
     "Vector stores": {
-      "score": 77.7,
-      "issues": 57,
+      "score": 81.9,
+      "issues": 44,
       "missing_properties": 12,
       "total_properties": 310,
       "endpoints": [
@@ -2013,22 +1789,10 @@
               ],
               "conformance_issues": [
                 {
-                  "property": "GET.responses.200.content.application/json.properties.data.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
                   "property": "GET.responses.200.content.application/json.properties.data.items.properties.expires_after",
                   "details": [
                     "Type removed: ['object']",
                     "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.file_counts",
-                  "details": [
-                    "Type removed: ['object']"
                   ]
                 },
                 {
@@ -2045,7 +1809,7 @@
                 }
               ],
               "missing_count": 2,
-              "issues_count": 5
+              "issues_count": 3
             },
             {
               "method": "POST",
@@ -2102,12 +1866,6 @@
                   ]
                 },
                 {
-                  "property": "POST.responses.200.content.application/json.properties.file_counts",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
                   "property": "POST.responses.200.content.application/json.properties.name",
                   "details": [
                     "Default changed: None -> "
@@ -2121,7 +1879,7 @@
                 }
               ],
               "missing_count": 4,
-              "issues_count": 9
+              "issues_count": 8
             }
           ]
         },
@@ -2150,12 +1908,6 @@
                   ]
                 },
                 {
-                  "property": "GET.responses.200.content.application/json.properties.file_counts",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
                   "property": "GET.responses.200.content.application/json.properties.name",
                   "details": [
                     "Default changed: None -> "
@@ -2169,7 +1921,7 @@
                 }
               ],
               "missing_count": 2,
-              "issues_count": 4
+              "issues_count": 3
             },
             {
               "method": "POST",
@@ -2200,12 +1952,6 @@
                   ]
                 },
                 {
-                  "property": "POST.responses.200.content.application/json.properties.file_counts",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
                   "property": "POST.responses.200.content.application/json.properties.name",
                   "details": [
                     "Default changed: None -> "
@@ -2219,7 +1965,7 @@
                 }
               ],
               "missing_count": 2,
-              "issues_count": 6
+              "issues_count": 5
             }
           ]
         },
@@ -2246,12 +1992,6 @@
                   ]
                 },
                 {
-                  "property": "POST.responses.200.content.application/json.properties.file_counts",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
                   "property": "POST.responses.200.content.application/json.properties.object",
                   "details": [
                     "Enum values removed: ['vector_store.files_batch']"
@@ -2259,7 +1999,7 @@
                 }
               ],
               "missing_count": 0,
-              "issues_count": 4
+              "issues_count": 3
             }
           ]
         },
@@ -2271,12 +2011,6 @@
               "missing_properties": [],
               "conformance_issues": [
                 {
-                  "property": "GET.responses.200.content.application/json.properties.file_counts",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
                   "property": "GET.responses.200.content.application/json.properties.object",
                   "details": [
                     "Enum values removed: ['vector_store.files_batch']"
@@ -2284,7 +2018,7 @@
                 }
               ],
               "missing_count": 0,
-              "issues_count": 2
+              "issues_count": 1
             }
           ]
         },
@@ -2296,12 +2030,6 @@
               "missing_properties": [],
               "conformance_issues": [
                 {
-                  "property": "POST.responses.200.content.application/json.properties.file_counts",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
                   "property": "POST.responses.200.content.application/json.properties.object",
                   "details": [
                     "Enum values removed: ['vector_store.files_batch']"
@@ -2309,7 +2037,7 @@
                 }
               ],
               "missing_count": 0,
-              "issues_count": 2
+              "issues_count": 1
             }
           ]
         },
@@ -2321,12 +2049,6 @@
               "missing_properties": [],
               "conformance_issues": [
                 {
-                  "property": "GET.responses.200.content.application/json.properties.data.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
                   "property": "GET.responses.200.content.application/json.properties.data.items.properties.chunking_strategy",
                   "details": [
                     "Type removed: ['object']",
@@ -2349,7 +2071,7 @@
                 }
               ],
               "missing_count": 0,
-              "issues_count": 4
+              "issues_count": 3
             }
           ]
         },
@@ -2361,12 +2083,6 @@
               "missing_properties": [],
               "conformance_issues": [
                 {
-                  "property": "GET.responses.200.content.application/json.properties.data.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
                   "property": "GET.responses.200.content.application/json.properties.data.items.properties.chunking_strategy",
                   "details": [
                     "Type removed: ['object']",
@@ -2389,7 +2105,7 @@
                 }
               ],
               "missing_count": 0,
-              "issues_count": 4
+              "issues_count": 3
             },
             {
               "method": "POST",
@@ -2513,16 +2229,9 @@
             {
               "method": "GET",
               "missing_properties": [],
-              "conformance_issues": [
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                }
-              ],
+              "conformance_issues": [],
               "missing_count": 0,
-              "issues_count": 1
+              "issues_count": 0
             }
           ]
         },
@@ -2554,22 +2263,10 @@
                     "Type removed: ['object']",
                     "Union variants added: 2"
                   ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.data.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.data.items.properties.content.items",
-                  "details": [
-                    "Type removed: ['object']"
-                  ]
                 }
               ],
               "missing_count": 2,
-              "issues_count": 5
+              "issues_count": 3
             }
           ]
         }

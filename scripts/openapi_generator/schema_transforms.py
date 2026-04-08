@@ -712,16 +712,33 @@ def _remove_request_bodies_from_get_endpoints(openapi_schema: dict[str, Any]) ->
 
 
 def _remove_type_object_from_openai_schemas(openapi_schema: dict[str, Any]) -> dict[str, Any]:
-    """Remove redundant 'type: object' from schemas that have 'properties' defined.
+    """Remove 'type: object' from specific schemas that omit it in the OpenAI spec.
 
-    The OpenAI spec does not include an explicit ``type: object`` on schemas
-    that already declare ``properties`` (the presence of ``properties`` implies
-    object type per JSON Schema).  Pydantic adds ``type: object`` automatically,
-    so we strip it from all schemas with ``properties`` to stay conformant.
+    Most OpenAI schemas (766 of 772) include ``type: object`` alongside
+    ``properties``.  Only 6 omit it.  We strip the field only from those
+    specific schemas to avoid hurting conformance on the majority that keep it.
     """
+    # Only these schemas in the OpenAI spec omit type: object while having properties.
+    # Includes both the OpenAI schema names and our equivalent schema names.
+    schemas_without_type_object = {
+        "ListMessagesResponse",
+        "ListRunStepsResponse",
+        "ListVectorStoreFilesResponse",
+        "ListVectorStoresResponse",
+        "Model",
+        "OpenAIFile",
+        "OpenAIFileObject",
+        "OpenAIModel",
+    }
+
     schemas = openapi_schema.get("components", {}).get("schemas", {})
-    for schema_def in schemas.values():
-        if isinstance(schema_def, dict) and schema_def.get("type") == "object" and "properties" in schema_def:
+    for schema_name, schema_def in schemas.items():
+        if (
+            schema_name in schemas_without_type_object
+            and isinstance(schema_def, dict)
+            and schema_def.get("type") == "object"
+            and "properties" in schema_def
+        ):
             del schema_def["type"]
     return openapi_schema
 
