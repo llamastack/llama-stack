@@ -71,6 +71,9 @@ const config: Config = {
           sidebarPath: require.resolve("./sidebars.ts"),
           // disableVersioning: true,
           docItemComponent: "@theme/ApiItem", // Derived from docusaurus-theme-openapi
+          editUrl: 'https://github.com/llamastack/llama-stack/edit/main/',
+          showLastUpdateTime: true,
+          showLastUpdateAuthor: false,
           remarkPlugins: [
             [require('remark-code-import'), {
               rootDir: require('path').join(__dirname, '..') // Repository root
@@ -353,8 +356,8 @@ const config: Config = {
         docsRouteBasePath: '/docs',
 
         // Search behavior optimization for technical docs
-        searchResultLimits: 8,
-        searchResultContextMaxLength: 50,
+        searchResultLimits: 12,
+        searchResultContextMaxLength: 80,
         explicitSearchResultPath: true,
 
         // User experience enhancements

@@ -3661,6 +3661,43 @@ paths:
             schema:
               $ref: '#/components/schemas/AnthropicCreateMessageRequest'
         required: true
+      x-codeSamples:
+      - lang: Python
+        label: Anthropic SDK
+        source: |-
+          from anthropic import Anthropic
+
+          client = Anthropic(
+              base_url="http://localhost:8321/v1",
+              api_key="fake",
+          )
+
+          message = client.messages.create(
+              model="llama-3.3-70b",
+              max_tokens=1024,
+              messages=[
+                  {"role": "user", "content": "What is Llama Stack?"}
+              ],
+          )
+
+          print(message.content[0].text)
+      - lang: TypeScript
+        label: Anthropic SDK
+        source: |-
+          import Anthropic from "@anthropic-ai/sdk";
+
+          const client = new Anthropic({
+            baseURL: "http://localhost:8321/v1",
+            apiKey: "fake",
+          });
+
+          const message = await client.messages.create({
+            model: "llama-3.3-70b",
+            max_tokens: 1024,
+            messages: [{ role: "user", content: "What is Llama Stack?" }],
+          });
+
+          console.log(message.content[0].text);
   /v1/messages/count_tokens:
     post:
       responses:
