@@ -401,6 +401,74 @@ for result in results:
 }
 
 
+# Anthropic SDK code samples for the Messages API endpoints.
+_ANTHROPIC_CODE_SAMPLES: dict[tuple[str, str], list[dict[str, str]]] = {
+    ("/v1/messages", "post"): [
+        {
+            "lang": "Python",
+            "label": "Anthropic SDK",
+            "source": """\
+from anthropic import Anthropic
+
+client = Anthropic(
+    base_url="http://localhost:8321/v1",
+    api_key="fake",
+)
+
+message = client.messages.create(
+    model="llama-3.3-70b",
+    max_tokens=1024,
+    messages=[
+        {"role": "user", "content": "What is Llama Stack?"}
+    ],
+)
+
+print(message.content[0].text)""",
+        },
+        {
+            "lang": "TypeScript",
+            "label": "Anthropic SDK",
+            "source": """\
+import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic({
+  baseURL: "http://localhost:8321/v1",
+  apiKey: "fake",
+});
+
+const message = await client.messages.create({
+  model: "llama-3.3-70b",
+  max_tokens: 1024,
+  messages: [{ role: "user", content: "What is Llama Stack?" }],
+});
+
+console.log(message.content[0].text);""",
+        },
+    ],
+}
+
+
+def _add_anthropic_code_samples(openapi_schema: dict[str, Any]) -> dict[str, Any]:
+    """Add x-codeSamples with Anthropic SDK examples to Anthropic-compatible endpoints."""
+    paths = openapi_schema.get("paths", {})
+    samples_added = 0
+
+    for (path, method), samples in _ANTHROPIC_CODE_SAMPLES.items():
+        if path not in paths:
+            continue
+        if method not in paths[path]:
+            continue
+
+        operation = paths[path][method]
+        if "x-codeSamples" not in operation:
+            operation["x-codeSamples"] = []
+        operation["x-codeSamples"].extend(samples)
+        samples_added += len(samples)
+
+    print(f"Added Anthropic SDK code samples to {samples_added} operations")
+    return openapi_schema
+
+
 def _add_openai_code_samples(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     """Add x-codeSamples with OpenAI Python client examples to OpenAI-compatible endpoints."""
     paths = openapi_schema.get("paths", {})

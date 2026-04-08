@@ -442,9 +442,11 @@ class OpenAIResponseText(BaseModel):
     """Text response configuration for OpenAI responses.
 
     :param format: (Optional) Text format configuration specifying output format requirements
+    :param verbosity: (Optional) Controls response verbosity level
     """
 
     format: OpenAIResponseTextFormat | None = None
+    verbosity: Literal["low", "medium", "high"] | None = None
 
 
 @json_schema_type
@@ -1526,11 +1528,31 @@ class OpenAIResponseInputFunctionToolCallOutput(BaseModel):
     status: str | None = None
 
 
+@json_schema_type
+class OpenAIResponseCompaction(BaseModel):
+    """A compaction item that summarizes prior conversation context.
+
+    :param type: Always "compaction"
+    :param encrypted_content: Compacted summary of prior conversation (plaintext in Llama Stack)
+    :param id: Unique identifier for this compaction item
+    """
+
+    type: Literal["compaction"] = "compaction"
+    encrypted_content: str
+    id: str | None = None
+
+
 OpenAIResponseInput = Annotated[
     # Responses API allows output messages to be passed in as input
+    # OpenAIResponseMessage appears in both OpenAIResponseOutput (discriminated by type="message")
+    # AND as a standalone fallback below. The standalone entry is required because inputs without
+    # an explicit "type" field (e.g. {"role": "user", "content": "..."}) fail the discriminator
+    # check in OpenAIResponseOutput. The left_to_right union mode tries the discriminated union
+    # first, then falls back to matching OpenAIResponseMessage directly.
     OpenAIResponseOutput
     | OpenAIResponseInputFunctionToolCallOutput
     | OpenAIResponseMCPApprovalResponse
+    | OpenAIResponseCompaction
     | OpenAIResponseMessage,
     Field(union_mode="left_to_right"),
 ]
@@ -1547,6 +1569,24 @@ class ListOpenAIResponseInputItem(BaseModel):
 
     data: Sequence[OpenAIResponseInput]
     object: Literal["list"] = "list"
+
+
+@json_schema_type
+class OpenAICompactedResponse(BaseModel):
+    """Response from compacting a conversation.
+
+    :param id: Unique identifier for the compacted response
+    :param created_at: Unix timestamp of when the compaction was created
+    :param object: Object type, always "response.compaction"
+    :param output: Compacted output items (user messages + compaction item)
+    :param usage: Token usage information
+    """
+
+    id: str
+    created_at: int
+    object: Literal["response.compaction"] = "response.compaction"
+    output: Sequence[OpenAIResponseInput]
+    usage: OpenAIResponseUsage
 
 
 @json_schema_type
