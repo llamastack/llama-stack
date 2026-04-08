@@ -332,7 +332,14 @@ jobs:
         id: version-check
         run: |
           BASE_VERSION="${{ needs.compute-version.outputs.version }}"
-          PACKAGE="${{ matrix.package }}"
+          MATRIX_PACKAGE="${{ matrix.package }}"
+
+          # Map matrix package name to actual PyPI package name
+          if [ "$MATRIX_PACKAGE" == "llama-stack-client-python" ]; then
+            PACKAGE="llama-stack-client"
+          else
+            PACKAGE="$MATRIX_PACKAGE"
+          fi
 
           # Function to check if version exists on PyPI
           check_version_exists() {
@@ -376,9 +383,9 @@ jobs:
               done
 
               if [ "$VERSION" != "$BASE_VERSION" ]; then
-                echo "::notice::Bumped ${PACKAGE} version from ${BASE_VERSION} to ${VERSION} (already existed on PyPI)"
+                echo "::notice::Bumped ${MATRIX_PACKAGE} (PyPI: ${PACKAGE}) version from ${BASE_VERSION} to ${VERSION} (already existed on PyPI)"
               else
-                echo "Version ${VERSION} is available on PyPI"
+                echo "Version ${VERSION} is available on PyPI for ${PACKAGE}"
               fi
             else
               echo "::warning::Could not parse version ${VERSION}, using as-is"
@@ -412,7 +419,14 @@ jobs:
         id: npm-version-check
         run: |
           BASE_VERSION="${{ needs.compute-version.outputs.version }}"
-          PACKAGE="${{ matrix.package }}"
+          MATRIX_PACKAGE="${{ matrix.package }}"
+
+          # Map matrix package name to actual npm package name
+          if [ "$MATRIX_PACKAGE" == "llama-stack-client-typescript" ]; then
+            PACKAGE="llama-stack-client"
+          else
+            PACKAGE="$MATRIX_PACKAGE"
+          fi
 
           # Convert PEP 440 dev version to valid semver for npm
           # e.g. 0.4.5.dev20260202 -> 0.4.5-dev.20260202
@@ -457,9 +471,9 @@ jobs:
               done
 
               if [ "$VERSION" != "${BASE_VERSION/.dev/-dev.}" ]; then
-                echo "::notice::Bumped ${PACKAGE} version from ${BASE_VERSION/.dev/-dev.} to ${VERSION} (already existed on npm)"
+                echo "::notice::Bumped ${MATRIX_PACKAGE} (npm: ${PACKAGE}) version from ${BASE_VERSION/.dev/-dev.} to ${VERSION} (already existed on npm)"
               else
-                echo "Version ${VERSION} is available on npm"
+                echo "Version ${VERSION} is available on npm for ${PACKAGE}"
               fi
             else
               echo "::warning::Could not parse version ${VERSION}, using as-is"
