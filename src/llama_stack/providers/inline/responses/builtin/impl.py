@@ -153,7 +153,7 @@ class BuiltinResponsesImpl(Responses):
             tools=request.tools,
             include=request.include,
             max_infer_iters=request.max_infer_iters,
-            guardrails=getattr(request, "guardrails", None) or (request.model_extra or {}).get("guardrails"),
+            guardrails=request.guardrails,
             parallel_tool_calls=request.parallel_tool_calls,
             max_tool_calls=request.max_tool_calls,
             max_output_tokens=request.max_output_tokens,

@@ -3505,6 +3505,16 @@ components:
       - output_tokens_details
       title: OpenAIResponseUsage
       description: Usage information for OpenAI response.
+    ResponseGuardrailSpec:
+      properties:
+        type:
+          type: string
+          title: Type
+      additionalProperties: false
+      required:
+      - type
+      title: ResponseGuardrailSpec
+      description: Specification for a guardrail to apply during response generation.
     OpenAIResponseInputTool:
       discriminator:
         mapping:
