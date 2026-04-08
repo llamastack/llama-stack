@@ -20,7 +20,7 @@
   <img src="docs/static/img/architecture-animated.svg" alt="Llama Stack Architecture" width="100%">
 </p>
 
-Llama Stack is a drop-in replacement for the OpenAI API that you can run anywhere — your laptop, your datacenter, or the cloud. Use any OpenAI-compatible client or agentic framework. Swap between Llama, GPT, Gemini, Mistral, or any model without changing your application code.
+Llama Stack is a drop-in replacement for the OpenAI API that you can run anywhere - your laptop, your datacenter, or the cloud. Use any OpenAI-compatible client or agentic framework. Swap between Llama, GPT, Gemini, Mistral, or any model without changing your application code.
 
 ```python
 from openai import OpenAI
@@ -34,15 +34,15 @@ response = client.chat.completions.create(
 
 ## What you get
 
-- **Chat Completions & Embeddings** — standard `/v1/chat/completions`, `/v1/completions`, and `/v1/embeddings` endpoints, compatible with any OpenAI client
-- **Responses API** — server-side agentic orchestration with tool calling, MCP server integration, and built-in file search (RAG) in a single API call ([learn more](https://llamastack.github.io/docs/api-openai))
-- **Vector Stores & Files** — `/v1/vector_stores` and `/v1/files` for managed document storage and search
-- **Batches** — `/v1/batches` for offline batch processing
-- **[Open Responses](https://www.openresponses.org/) conformant** — the Responses API implementation passes the Open Responses conformance test suite
+- **Chat Completions & Embeddings** - standard `/v1/chat/completions`, `/v1/completions`, and `/v1/embeddings` endpoints, compatible with any OpenAI client
+- **Responses API** - server-side agentic orchestration with tool calling, MCP server integration, and built-in file search (RAG) in a single API call ([learn more](https://llamastack.github.io/docs/api-openai))
+- **Vector Stores & Files** - `/v1/vector_stores` and `/v1/files` for managed document storage and search
+- **Batches** - `/v1/batches` for offline batch processing
+- **[Open Responses](https://www.openresponses.org/) conformant** - the Responses API implementation passes the Open Responses conformance test suite
 
 ## Use any model, use any infrastructure
 
-Llama Stack has a pluggable provider architecture. Develop locally with Ollama, deploy to production with vLLM, or connect to a managed service — the API stays the same.
+Llama Stack has a pluggable provider architecture. Develop locally with Ollama, deploy to production with vLLM, or connect to a managed service - the API stays the same.
 
 See the [provider documentation](https://llamastack.github.io/docs/providers) for the full list.
 
@@ -61,16 +61,18 @@ uv pip install llama-stack
 llama stack run
 ```
 
-Then connect with any OpenAI client — [Python](https://github.com/openai/openai-python), [TypeScript](https://github.com/openai/openai-node), [curl](https://platform.openai.com/docs/api-reference), or any framework that speaks the OpenAI API.
+Then connect with any OpenAI client - [Python](https://github.com/openai/openai-python), [TypeScript](https://github.com/openai/openai-node), [curl](https://platform.openai.com/docs/api-reference), or any framework that speaks the OpenAI API.
 
 See the [Quick Start guide](https://llamastack.github.io/docs/getting_started/quickstart) for detailed setup.
 
 ## Resources
 
-- [Documentation](https://llamastack.github.io/docs) — full reference
-- [OpenAI API Compatibility](https://llamastack.github.io/docs/api-openai) — endpoint coverage and provider matrix
-- [Getting Started Notebook](./docs/getting_started.ipynb) — text and vision inference walkthrough
-- [Contributing](CONTRIBUTING.md) — how to contribute
+| Resource | Description |
+|:---------|:------------|
+| [Documentation](https://llamastack.github.io/docs) | Full reference |
+| [OpenAI API Compatibility](https://llamastack.github.io/docs/api-openai) | Endpoint coverage and provider matrix |
+| [Getting Started Notebook](./docs/getting_started.ipynb) | Text and vision inference walkthrough |
+| [Contributing](CONTRIBUTING.md) | How to contribute, add providers, and our release process |
 
 **Client SDKs:**
 
@@ -79,13 +81,15 @@ See the [Quick Start guide](https://llamastack.github.io/docs/getting_started/qu
 | Python |  [llama-stack-client-python](https://github.com/meta-llama/llama-stack-client-python) | [![PyPI version](https://img.shields.io/pypi/v/llama_stack_client.svg)](https://pypi.org/project/llama_stack_client/) |
 | TypeScript   | [llama-stack-client-typescript](https://github.com/meta-llama/llama-stack-client-typescript) | [![NPM version](https://img.shields.io/npm/v/llama-stack-client.svg)](https://npmjs.org/package/llama-stack-client) |
 
-## Community
+### Community
 
-We hold regular community calls every Thursday at 09:00 AM PST — see the [Community Event on Discord](https://discord.com/events/1257833999603335178/1413266296748900513) for details.
+Join us every Thursday at 09:00 AM PST. Check the [Community Event on Discord](https://discord.com/events/1257833999603335178/1413266296748900513) for details.
+
+### Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=meta-llama/llama-stack&type=Date)](https://www.star-history.com/#meta-llama/llama-stack&Date)
 
-Thanks to all our amazing contributors!
+### Contributors
 
 <a href="https://github.com/meta-llama/llama-stack/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=meta-llama/llama-stack" alt="Llama Stack contributors" />
