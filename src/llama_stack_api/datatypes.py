@@ -11,11 +11,8 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field
 
-from llama_stack_api.benchmarks import Benchmark
-from llama_stack_api.datasets import Dataset
 from llama_stack_api.models import Model
 from llama_stack_api.schema_utils import json_schema_type
-from llama_stack_api.scoring_functions import ScoringFn
 from llama_stack_api.shields import Shield
 from llama_stack_api.tools import ToolGroup
 from llama_stack_api.vector_stores import VectorStore
@@ -100,16 +97,10 @@ class Api(Enum, metaclass=DynamicApiMeta):
     :cvar responses: Response orchestration and execution
     :cvar batches: Batch processing for asynchronous API requests
     :cvar vector_io: Vector database operations and queries
-    :cvar datasetio: Dataset input/output operations
-    :cvar scoring: Model output evaluation and scoring
-    :cvar eval: Model evaluation and benchmarking framework
     :cvar tool_runtime: Tool execution and management
     :cvar telemetry: Observability and system monitoring
     :cvar models: Model metadata and management
     :cvar shields: Safety shield implementations
-    :cvar datasets: Dataset creation and management
-    :cvar scoring_functions: Scoring function definitions
-    :cvar benchmarks: Benchmark suite management
     :cvar tool_groups: Tool group organization
     :cvar files: File storage and management
     :cvar file_processors: File parsing and processing operations
@@ -125,17 +116,11 @@ class Api(Enum, metaclass=DynamicApiMeta):
     responses = "responses"
     batches = "batches"
     vector_io = "vector_io"
-    datasetio = "datasetio"
-    scoring = "scoring"
-    eval = "eval"
     tool_runtime = "tool_runtime"
 
     models = "models"
     shields = "shields"
     vector_stores = "vector_stores"  # only used for routing table
-    datasets = "datasets"
-    scoring_functions = "scoring_functions"
-    benchmarks = "benchmarks"
     tool_groups = "tool_groups"
     files = "files"
     file_processors = "file_processors"
@@ -235,28 +220,6 @@ class VectorStoresProtocolPrivate(Protocol):
     async def register_vector_store(self, vector_store: VectorStore) -> None: ...
 
     async def unregister_vector_store(self, vector_store_id: str) -> None: ...
-
-
-class DatasetsProtocolPrivate(Protocol):
-    """Protocol for provider-side dataset registration and unregistration."""
-
-    async def register_dataset(self, dataset: Dataset) -> None: ...
-
-    async def unregister_dataset(self, dataset_id: str) -> None: ...
-
-
-class ScoringFunctionsProtocolPrivate(Protocol):
-    """Protocol for provider-side scoring function listing and registration."""
-
-    async def list_scoring_functions(self) -> list[ScoringFn]: ...
-
-    async def register_scoring_function(self, scoring_fn: ScoringFn) -> None: ...
-
-
-class BenchmarksProtocolPrivate(Protocol):
-    """Protocol for provider-side benchmark registration."""
-
-    async def register_benchmark(self, benchmark: Benchmark) -> None: ...
 
 
 class ToolGroupsProtocolPrivate(Protocol):

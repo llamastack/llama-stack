@@ -8,13 +8,10 @@ The `llamastack/distribution-oci` distribution consists of the following provide
 
 | API | Provider(s) |
 |-----|-------------|
-| datasetio | `remote::huggingface`, `inline::localfs` |
-| eval | `inline::builtin` |
 | files | `inline::localfs` |
 | inference | `remote::oci` |
 | responses | `inline::builtin` |
 | safety | `inline::llama-guard` |
-| scoring | `inline::basic`, `inline::llm-as-judge`, `inline::braintrust` |
 | tool_runtime | `remote::brave-search`, `remote::tavily-search`, `inline::file-search`, `remote::model-context-protocol` |
 | vector_io | `inline::faiss`, `remote::chromadb`, `remote::pgvector` |
 
