@@ -10,10 +10,16 @@ import {
   Compass,
   FileText,
   File,
+  Box,
+  Plug,
+  Wrench,
+  Shield,
+  ShieldCheck,
+  Layers,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 import {
@@ -33,6 +39,11 @@ const createItems = [
     title: "Chat Playground",
     url: "/chat-playground",
     icon: MessageCircle,
+  },
+  {
+    title: "Safety",
+    url: "/safety",
+    icon: ShieldCheck,
   },
 ];
 
@@ -58,6 +69,31 @@ const manageItems = [
     icon: File,
   },
   {
+    title: "Models",
+    url: "/models",
+    icon: Box,
+  },
+  {
+    title: "Connectors",
+    url: "/connectors",
+    icon: Plug,
+  },
+  {
+    title: "Tools",
+    url: "/tools",
+    icon: Wrench,
+  },
+  {
+    title: "Conversations",
+    url: "/conversations",
+    icon: MessageSquare,
+  },
+  {
+    title: "Batches",
+    url: "/batches",
+    icon: Layers,
+  },
+  {
     title: "Prompts",
     url: "/prompts",
     icon: FileText,
@@ -66,6 +102,14 @@ const manageItems = [
     title: "Documentation",
     url: "https://llama-stack.readthedocs.io/en/latest/references/api_reference/index.html",
     icon: MoveUpRight,
+  },
+];
+
+const adminItems = [
+  {
+    title: "System",
+    url: "/admin",
+    icon: Shield,
   },
 ];
 
@@ -124,13 +168,6 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <Link href="/" className="flex items-center gap-2 p-2">
-          <Image
-            src="/logo.webp"
-            alt="Llama Stack"
-            width={32}
-            height={32}
-            className="h-8 w-8"
-          />
           <span className="font-semibold text-lg">Llama Stack</span>
         </Link>
       </SidebarHeader>
@@ -146,6 +183,13 @@ export function AppSidebar() {
           <SidebarGroupLabel>Manage</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>{renderSidebarItems(manageItems)}</SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Admin</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>{renderSidebarItems(adminItems)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
