@@ -372,8 +372,6 @@ ALL_RESOURCES = {
         "methods": {
             "retrieve": "get /v1/shields/{identifier}",
             "list": {"paginated": False, "endpoint": "get /v1/shields"},
-            "register": "post /v1/shields",
-            "delete": "delete /v1/shields/{identifier}",
         },
     },
     "files": {
