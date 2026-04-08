@@ -19,7 +19,7 @@ inference provider, based on integration test results.
 
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
-| azure | 111 | 111 | 0 | 84% |
+| azure | 113 | 113 | 0 | 86% |
 | bedrock | 27 | 27 | 0 | 20% |
 | ollama | 2 | 2 | 0 | 2% |
 | openai | 132 | 132 | 0 | 100% |
@@ -90,8 +90,8 @@ Models, endpoints, and versions used during test recordings.
 | file search filter by region | ✅ | — | — | ✅ | — | ⏭️ |
 | file search filter compound and | ✅ | — | — | ✅ | — | ⏭️ |
 | file search filter compound or | ✅ | — | — | ✅ | — | ⏭️ |
-| file search streaming events | ⏭️ | — | — | ✅ | — | ⏭️ |
-| text format | ⏭️ | — | — | ✅ | — | ✅ |
+| file search streaming events | ✅ | — | — | ✅ | — | ⏭️ |
+| text format | ✅ | — | — | ✅ | — | ✅ |
 
 ## Mcp Authentication
 
