@@ -2732,18 +2732,12 @@ paths:
         required: false
         schema:
           anyOf:
-          - type: string
-            enum:
-            - completed
-          - type: string
-            enum:
+          - enum:
             - in_progress
-          - type: string
-            enum:
+            - completed
             - cancelled
-          - type: string
-            enum:
             - failed
+            type: string
           - type: 'null'
           description: Filter by file status.
           title: Filter
@@ -3131,6 +3125,39 @@ paths:
       description: Get the version of the service.
       operationId: version_v1_version_get
       x-public: true
+  /v1/responses/compact:
+    post:
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAICompactedResponse'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - Responses
+      summary: Compact a conversation. [alpha]
+      description: '**[alpha]** Compresses conversation history into a smaller representation while preserving context. This endpoint is in alpha and may change without notice.'
+      operationId: compact_openai_response_v1_responses_compact_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompactResponseRequest'
+          application/x-www-form-urlencoded: {}
+        required: true
   /v1/responses/{response_id}/cancel:
     post:
       responses:
@@ -3213,6 +3240,43 @@ paths:
             schema:
               $ref: '#/components/schemas/AnthropicCreateMessageRequest'
         required: true
+      x-codeSamples:
+      - lang: Python
+        label: Anthropic SDK
+        source: |-
+          from anthropic import Anthropic
+
+          client = Anthropic(
+              base_url="http://localhost:8321/v1",
+              api_key="fake",
+          )
+
+          message = client.messages.create(
+              model="llama-3.3-70b",
+              max_tokens=1024,
+              messages=[
+                  {"role": "user", "content": "What is Llama Stack?"}
+              ],
+          )
+
+          print(message.content[0].text)
+      - lang: TypeScript
+        label: Anthropic SDK
+        source: |-
+          import Anthropic from "@anthropic-ai/sdk";
+
+          const client = new Anthropic({
+            baseURL: "http://localhost:8321/v1",
+            apiKey: "fake",
+          });
+
+          const message = await client.messages.create({
+            model: "llama-3.3-70b",
+            max_tokens: 1024,
+            messages: [{ role: "user", content: "What is Llama Stack?" }],
+          });
+
+          console.log(message.content[0].text);
   /v1/messages/count_tokens:
     post:
       responses:
@@ -6235,9 +6299,11 @@ components:
         title: OpenAIResponseInputFunctionToolCallOutput
       - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
         title: OpenAIResponseMCPApprovalResponse
+      - $ref: '#/components/schemas/OpenAIResponseCompaction'
+        title: OpenAIResponseCompaction
       - $ref: '#/components/schemas/OpenAIResponseMessage'
         title: OpenAIResponseMessage
-      title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage
+      title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
     OpenAIResponseInputToolFileSearch:
       properties:
         type:
@@ -6367,35 +6433,7 @@ components:
           - response
         output:
           items:
-            oneOf:
-            - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-              title: OpenAIResponseMessage-Output
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseOutputMessageWebSearchToolCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-              title: OpenAIResponseOutputMessageFileSearchToolCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-              title: OpenAIResponseOutputMessageFunctionToolCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-              title: OpenAIResponseOutputMessageMCPCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-              title: OpenAIResponseOutputMessageMCPListTools
-            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-              title: OpenAIResponseMCPApprovalRequest
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
-              title: OpenAIResponseOutputMessageReasoningItem
-            discriminator:
-              propertyName: type
-              mapping:
-                file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                message: '#/components/schemas/OpenAIResponseMessage-Output'
-                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
-                web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (8 variants)
+            $ref: '#/components/schemas/OpenAIResponseOutputItem'
           type: array
           title: Output
         parallel_tool_calls:
@@ -6545,43 +6583,7 @@ components:
           title: Store
         input:
           items:
-            anyOf:
-            - oneOf:
-              - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-                title: OpenAIResponseMessage-Output
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                title: OpenAIResponseOutputMessageWebSearchToolCall
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                title: OpenAIResponseOutputMessageFileSearchToolCall
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                title: OpenAIResponseOutputMessageFunctionToolCall
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                title: OpenAIResponseOutputMessageMCPCall
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                title: OpenAIResponseOutputMessageMCPListTools
-              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                title: OpenAIResponseMCPApprovalRequest
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
-                title: OpenAIResponseOutputMessageReasoningItem
-              discriminator:
-                propertyName: type
-                mapping:
-                  file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                  function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                  mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                  mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                  mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                  message: '#/components/schemas/OpenAIResponseMessage-Output'
-                  reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
-                  web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Output | ... (8 variants)
-            - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-              title: OpenAIResponseInputFunctionToolCallOutput
-            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-              title: OpenAIResponseMCPApprovalResponse
-            - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-              title: OpenAIResponseMessage-Output
-            title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Output
+            $ref: '#/components/schemas/OpenAIResponseMessageOutputUnion'
           type: array
           title: Input
       required:
@@ -6664,6 +6666,14 @@ components:
             title: OpenAIResponseTextFormat
           - type: 'null'
           title: OpenAIResponseTextFormat
+        verbosity:
+          anyOf:
+          - type: string
+            enum:
+            - low
+            - medium
+            - high
+          - type: 'null'
       title: OpenAIResponseText
       description: Text response configuration for OpenAI responses.
     OpenAIResponseTool:
@@ -6859,35 +6869,7 @@ components:
           - response
         output:
           items:
-            oneOf:
-            - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-              title: OpenAIResponseMessage-Output
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseOutputMessageWebSearchToolCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-              title: OpenAIResponseOutputMessageFileSearchToolCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-              title: OpenAIResponseOutputMessageFunctionToolCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-              title: OpenAIResponseOutputMessageMCPCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-              title: OpenAIResponseOutputMessageMCPListTools
-            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-              title: OpenAIResponseMCPApprovalRequest
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
-              title: OpenAIResponseOutputMessageReasoningItem
-            discriminator:
-              propertyName: type
-              mapping:
-                file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                message: '#/components/schemas/OpenAIResponseMessage-Output'
-                reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
-                web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (8 variants)
+            $ref: '#/components/schemas/OpenAIResponseOutputItem'
           type: array
           title: Output
         parallel_tool_calls:
@@ -8215,43 +8197,7 @@ components:
       properties:
         data:
           items:
-            anyOf:
-            - oneOf:
-              - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-                title: OpenAIResponseMessage-Output
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                title: OpenAIResponseOutputMessageWebSearchToolCall
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                title: OpenAIResponseOutputMessageFileSearchToolCall
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                title: OpenAIResponseOutputMessageFunctionToolCall
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                title: OpenAIResponseOutputMessageMCPCall
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                title: OpenAIResponseOutputMessageMCPListTools
-              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                title: OpenAIResponseMCPApprovalRequest
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
-                title: OpenAIResponseOutputMessageReasoningItem
-              discriminator:
-                propertyName: type
-                mapping:
-                  file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                  function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                  mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                  mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                  mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                  message: '#/components/schemas/OpenAIResponseMessage-Output'
-                  reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
-                  web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Output | ... (8 variants)
-            - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-              title: OpenAIResponseInputFunctionToolCallOutput
-            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-              title: OpenAIResponseMCPApprovalResponse
-            - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-              title: OpenAIResponseMessage-Output
-            title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Output
+            $ref: '#/components/schemas/OpenAIResponseMessageOutputUnion'
           type: array
           title: Data
         object:
@@ -8902,26 +8848,27 @@ components:
         object:
           type: string
           title: Object
-          default: list
+          enum:
+          - list
         data:
           items:
             $ref: '#/components/schemas/VectorStoreObject'
           type: array
           title: Data
         first_id:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: First Id
         last_id:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Last Id
         has_more:
           type: boolean
           title: Has More
-          default: false
       required:
       - data
+      - first_id
+      - last_id
+      - has_more
       title: VectorStoreListResponse
       description: Response from listing vector stores.
     VectorStoreObject:
@@ -8932,14 +8879,15 @@ components:
         object:
           type: string
           title: Object
-          default: vector_store
+          enum:
+          - vector_store
         created_at:
           type: integer
           title: Created At
         name:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Name
+          default: ''
         usage_bytes:
           type: integer
           title: Usage Bytes
@@ -8948,13 +8896,17 @@ components:
           $ref: '#/components/schemas/VectorStoreFileCounts'
         status:
           type: string
+          enum:
+          - expired
+          - in_progress
+          - completed
           title: Status
-          default: completed
         expires_after:
           anyOf:
-          - additionalProperties: true
-            type: object
+          - $ref: '#/components/schemas/VectorStoreExpirationAfter'
+            title: VectorStoreExpirationAfter
           - type: 'null'
+          title: VectorStoreExpirationAfter
         expires_at:
           anyOf:
           - type: integer
@@ -8964,13 +8916,15 @@ components:
           - type: integer
           - type: 'null'
         metadata:
-          additionalProperties: true
-          type: object
-          title: Metadata
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
       required:
       - id
       - created_at
       - file_counts
+      - status
       title: VectorStoreObject
       description: OpenAI Vector Store object.
     VectorStoreChunkingStrategy:
@@ -9030,6 +8984,10 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
         file_ids:
           anyOf:
           - items:
@@ -9038,9 +8996,10 @@ components:
           - type: 'null'
         expires_after:
           anyOf:
-          - additionalProperties: true
-            type: object
+          - $ref: '#/components/schemas/VectorStoreExpirationAfter'
+            title: VectorStoreExpirationAfter
           - type: 'null'
+          title: VectorStoreExpirationAfter
         chunking_strategy:
           anyOf:
           - oneOf:
@@ -9075,13 +9034,14 @@ components:
         object:
           type: string
           title: Object
-          default: vector_store.deleted
+          enum:
+          - vector_store.deleted
         deleted:
           type: boolean
           title: Deleted
-          default: true
       required:
       - id
+      - deleted
       title: VectorStoreDeleteResponse
       description: Response from deleting a vector store.
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody:
@@ -9091,10 +9051,28 @@ components:
             type: string
           type: array
           title: File Ids
+        files:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/VectorStoreFileBatchFileEntry'
+            type: array
+          - type: 'null'
         attributes:
           anyOf:
-          - additionalProperties: true
+          - additionalProperties:
+              anyOf:
+              - type: string
+                maxLength: 512
+              - type: number
+              - type: boolean
+              title: string | number | boolean
+            propertyNames:
+              type: string
+              maxLength: 64
             type: object
+            maxProperties: 16
+            description: Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard. Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters, booleans, or numbers.
+            x-oaiTypeLabel: map
           - type: 'null'
         chunking_strategy:
           anyOf:
@@ -9115,8 +9093,6 @@ components:
           - type: 'null'
           title: Chunking Strategy
       additionalProperties: true
-      required:
-      - file_ids
       title: OpenAICreateVectorStoreFileBatchRequestWithExtraBody
       description: Request to create a vector store file batch with extra_body support.
     VectorStoreFileBatchObject:
@@ -9127,7 +9103,8 @@ components:
         object:
           type: string
           title: Object
-          default: vector_store.file_batch
+          enum:
+          - vector_store.file_batch
         created_at:
           type: integer
           title: Created At
@@ -9135,20 +9112,13 @@ components:
           type: string
           title: Vector Store Id
         status:
-          anyOf:
-          - type: string
-            enum:
-            - completed
-          - type: string
-            enum:
-            - in_progress
-          - type: string
-            enum:
-            - cancelled
-          - type: string
-            enum:
-            - failed
-          title: string
+          type: string
+          enum:
+          - in_progress
+          - completed
+          - cancelled
+          - failed
+          title: Status
         file_counts:
           $ref: '#/components/schemas/VectorStoreFileCounts'
       required:
@@ -9160,31 +9130,21 @@ components:
       title: VectorStoreFileBatchObject
       description: OpenAI Vector Store File Batch object.
     VectorStoreFileStatus:
-      anyOf:
-      - type: string
-        enum:
-        - completed
-      - type: string
-        enum:
-        - in_progress
-      - type: string
-        enum:
-        - cancelled
-      - type: string
-        enum:
-        - failed
-      title: string
+      enum:
+      - in_progress
+      - completed
+      - cancelled
+      - failed
+      type: string
     VectorStoreFileLastError:
       properties:
         code:
-          anyOf:
-          - type: string
-            enum:
-            - server_error
-          - type: string
-            enum:
-            - rate_limit_exceeded
-          title: string
+          type: string
+          enum:
+          - server_error
+          - unsupported_file
+          - invalid_file
+          title: Code
         message:
           type: string
           title: Message
@@ -9201,23 +9161,25 @@ components:
         object:
           type: string
           title: Object
-          default: vector_store.file
+          enum:
+          - vector_store.file
         attributes:
-          additionalProperties:
-            anyOf:
-            - type: string
-              maxLength: 512
-            - type: number
-            - type: boolean
-            title: string | number | boolean
-          propertyNames:
-            type: string
-            maxLength: 64
-          type: object
-          maxProperties: 16
-          title: Attributes
-          description: Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard. Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters, booleans, or numbers.
-          x-oaiTypeLabel: map
+          anyOf:
+          - additionalProperties:
+              anyOf:
+              - type: string
+                maxLength: 512
+              - type: number
+              - type: boolean
+              title: string | number | boolean
+            propertyNames:
+              type: string
+              maxLength: 64
+            type: object
+            maxProperties: 16
+            description: Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard. Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters, booleans, or numbers.
+            x-oaiTypeLabel: map
+          - type: 'null'
         chunking_strategy:
           oneOf:
           - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
@@ -9243,20 +9205,13 @@ components:
           - type: 'null'
           title: VectorStoreFileLastError
         status:
-          anyOf:
-          - type: string
-            enum:
-            - completed
-          - type: string
-            enum:
-            - in_progress
-          - type: string
-            enum:
-            - cancelled
-          - type: string
-            enum:
-            - failed
-          title: string
+          type: string
+          enum:
+          - in_progress
+          - completed
+          - cancelled
+          - failed
+          title: Status
         usage_bytes:
           type: integer
           title: Usage Bytes
@@ -9277,26 +9232,27 @@ components:
         object:
           type: string
           title: Object
-          default: list
+          enum:
+          - list
         data:
           items:
             $ref: '#/components/schemas/VectorStoreFileObject'
           type: array
           title: Data
         first_id:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: First Id
         last_id:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Last Id
         has_more:
           type: boolean
           title: Has More
-          default: false
       required:
       - data
+      - first_id
+      - last_id
+      - has_more
       title: VectorStoreFilesListInBatchResponse
       description: Response from listing files in a vector store file batch.
     VectorStoreListFilesResponse:
@@ -9304,26 +9260,27 @@ components:
         object:
           type: string
           title: Object
-          default: list
+          enum:
+          - list
         data:
           items:
             $ref: '#/components/schemas/VectorStoreFileObject'
           type: array
           title: Data
         first_id:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: First Id
         last_id:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Last Id
         has_more:
           type: boolean
           title: Has More
-          default: false
       required:
       - data
+      - first_id
+      - last_id
+      - has_more
       title: VectorStoreListFilesResponse
       description: Response from listing files in a vector store.
     VectorStoreFileDeleteResponse:
@@ -9334,13 +9291,14 @@ components:
         object:
           type: string
           title: Object
-          default: vector_store.file.deleted
+          enum:
+          - vector_store.file.deleted
         deleted:
           type: boolean
           title: Deleted
-          default: true
       required:
       - id
+      - deleted
       title: VectorStoreFileDeleteResponse
       description: Response from deleting a vector store file.
     VectorStoreContent:
@@ -9390,13 +9348,13 @@ components:
         has_more:
           type: boolean
           title: Has More
-          default: false
         next_page:
           anyOf:
           - type: string
           - type: 'null'
       required:
       - data
+      - has_more
       title: VectorStoreFileContentResponse
       description: Represents the parsed content of a vector store file.
     VectorStoreSearchResponse:
@@ -9437,7 +9395,8 @@ components:
         object:
           type: string
           title: Object
-          default: vector_store.search_results.page
+          enum:
+          - vector_store.search_results.page
         search_query:
           items:
             type: string
@@ -9451,7 +9410,6 @@ components:
         has_more:
           type: boolean
           title: Has More
-          default: false
         next_page:
           anyOf:
           - type: string
@@ -9459,6 +9417,7 @@ components:
       required:
       - search_query
       - data
+      - has_more
       title: VectorStoreSearchResponsePage
       description: Paginated response from searching a vector store.
     VersionInfo:
@@ -10168,6 +10127,7 @@ components:
       - failed
       - total
       title: BatchRequestCounts
+      description: The request counts for different statuses within the batch.
     BatchUsage:
       properties:
         input_tokens:
@@ -10191,6 +10151,10 @@ components:
       - output_tokens_details
       - total_tokens
       title: BatchUsage
+      description: |-
+        Represents token usage details including input tokens, output tokens, a
+        breakdown of output tokens, and the total tokens used. Only populated on
+        batches created after September 7, 2025.
     Body_upload_file_v1_files_post:
       properties:
         file:
@@ -10212,6 +10176,126 @@ components:
       - file
       - purpose
       title: Body_upload_file_v1_files_post
+    CompactResponseRequest:
+      properties:
+        model:
+          type: string
+          title: Model
+          description: The model to use for generating the compacted summary.
+        input:
+          anyOf:
+          - type: string
+          - items:
+              anyOf:
+              - oneOf:
+                - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+                  title: OpenAIResponseMessage-Input
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                  title: OpenAIResponseOutputMessageWebSearchToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                  title: OpenAIResponseOutputMessageFileSearchToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                  title: OpenAIResponseOutputMessageFunctionToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                  title: OpenAIResponseOutputMessageMCPCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                  title: OpenAIResponseOutputMessageMCPListTools
+                - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                  title: OpenAIResponseMCPApprovalRequest
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                  title: OpenAIResponseOutputMessageReasoningItem
+                discriminator:
+                  propertyName: type
+                  mapping:
+                    file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                    function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                    mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                    mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                    mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                    message: '#/components/schemas/OpenAIResponseMessage-Input'
+                    reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+                    web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                title: OpenAIResponseMessage-Input | ... (8 variants)
+              - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+                title: OpenAIResponseInputFunctionToolCallOutput
+              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+                title: OpenAIResponseMCPApprovalResponse
+              - $ref: '#/components/schemas/OpenAIResponseCompaction'
+                title: OpenAIResponseCompaction
+              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+                title: OpenAIResponseMessage-Input
+              title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
+            type: array
+            title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
+          - type: 'null'
+          title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
+          description: Input message(s) to compact.
+        instructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Instructions to guide the compaction.
+        previous_response_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: ID of a previous response whose history to compact.
+        prompt_cache_key:
+          anyOf:
+          - type: string
+            maxLength: 64
+          - type: 'null'
+          description: A key to use when reading from or writing to the prompt cache.
+        tools:
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                title: OpenAIResponseInputToolWebSearch
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                title: OpenAIResponseInputToolFileSearch
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
+                title: OpenAIResponseInputToolFunction
+              - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
+                title: OpenAIResponseInputToolMCP
+              discriminator:
+                propertyName: type
+                mapping:
+                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
+                  mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
+                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
+            type: array
+          - type: 'null'
+          description: List of tools available to the model. Accepted for compatibility but not used during compaction.
+        parallel_tool_calls:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to enable parallel tool calls. Accepted for compatibility but not used during compaction.
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          description: Configuration for reasoning effort. Accepted for compatibility but not used during compaction.
+          title: OpenAIResponseReasoning
+        text:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseText'
+            title: OpenAIResponseText
+          - type: 'null'
+          description: Configuration for text response generation. Accepted for compatibility but not used during compaction.
+          title: OpenAIResponseText
+      additionalProperties: true
+      required:
+      - model
+      title: CompactResponseRequest
+      description: Request model for compacting a conversation.
     Connector:
       properties:
         connector_type:
@@ -10256,6 +10340,24 @@ components:
       - mcp
       title: ConnectorType
       description: Type of connector.
+    ContextManagement:
+      properties:
+        type:
+          type: string
+          title: Type
+          description: The context management entry type. Currently only 'compaction' is supported.
+          enum:
+          - compaction
+        compact_threshold:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Token threshold at which compaction should be triggered.
+      additionalProperties: false
+      required:
+      - type
+      title: ContextManagement
+      description: Configuration for automatic context management during response generation.
     ConversationItemInclude:
       type: string
       enum:
@@ -10308,9 +10410,11 @@ components:
                 title: OpenAIResponseInputFunctionToolCallOutput
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
                 title: OpenAIResponseMCPApprovalResponse
+              - $ref: '#/components/schemas/OpenAIResponseCompaction'
+                title: OpenAIResponseCompaction
               - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
                 title: OpenAIResponseMessage-Input
-              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Input
+              title: OpenAIResponseInputFunctionToolCallOutput | ... (4 variants)
             type: array
             title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
           title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
@@ -10548,6 +10652,13 @@ components:
           - type: 'null'
           description: Options that control streamed response behavior.
           title: ResponseStreamOptions
+        context_management:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ContextManagement'
+            type: array
+          - type: 'null'
+          description: Context management configuration. When set with type 'compaction', automatically compacts conversation history when token count exceeds the compact_threshold.
       additionalProperties: true
       required:
       - input
@@ -10735,6 +10846,7 @@ components:
       required:
       - cached_tokens
       title: InputTokensDetails
+      description: A detailed breakdown of the input tokens.
     ListConnectorsResponse:
       properties:
         data:
@@ -10849,8 +10961,20 @@ components:
           description: The ID of the file to attach.
         attributes:
           anyOf:
-          - additionalProperties: true
+          - additionalProperties:
+              anyOf:
+              - type: string
+                maxLength: 512
+              - type: number
+              - type: boolean
+              title: string | number | boolean
+            propertyNames:
+              type: string
+              maxLength: 64
             type: object
+            maxProperties: 16
+            description: Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard. Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters, booleans, or numbers.
+            x-oaiTypeLabel: map
           - type: 'null'
           description: Attributes to associate with the file.
         chunking_strategy:
@@ -10971,6 +11095,51 @@ components:
           default: 0
       title: OpenAIChatCompletionUsagePromptTokensDetails
       description: Token details for prompt tokens in OpenAI chat completion usage.
+    OpenAICompactedResponse:
+      properties:
+        id:
+          type: string
+          title: Id
+        created_at:
+          type: integer
+          title: Created At
+        object:
+          type: string
+          title: Object
+          enum:
+          - response.compaction
+        output:
+          items:
+            $ref: '#/components/schemas/OpenAIResponseMessageOutputUnion'
+          type: array
+          title: Output
+        usage:
+          $ref: '#/components/schemas/OpenAIResponseUsage'
+      required:
+      - id
+      - created_at
+      - output
+      - usage
+      title: OpenAICompactedResponse
+      description: Response from compacting a conversation.
+    OpenAIResponseCompaction:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - compaction
+        encrypted_content:
+          type: string
+          title: Encrypted Content
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+      required:
+      - encrypted_content
+      title: OpenAIResponseCompaction
+      description: A compaction item that summarizes prior conversation context.
     OpenAIResponseIncompleteDetails:
       properties:
         reason:
@@ -11511,9 +11680,10 @@ components:
           - type: 'null'
           description: Filters to apply to the search.
         max_num_results:
-          anyOf:
-          - type: integer
-          - type: 'null'
+          type: integer
+          maximum: 50.0
+          minimum: 1.0
+          title: Max Num Results
           description: Maximum number of results to return.
           default: 10
         ranking_options:
@@ -11524,9 +11694,8 @@ components:
           description: Options for ranking results.
           title: SearchRankingOptions
         rewrite_query:
-          anyOf:
-          - type: boolean
-          - type: 'null'
+          type: boolean
+          title: Rewrite Query
           description: Whether to rewrite the query for better results.
           default: false
         search_mode:
@@ -11559,10 +11728,11 @@ components:
           description: The new name for the vector store.
         expires_after:
           anyOf:
-          - additionalProperties: true
-            type: object
+          - $ref: '#/components/schemas/VectorStoreExpirationAfter'
+            title: VectorStoreExpirationAfter
           - type: 'null'
           description: Expiration policy for the vector store.
+          title: VectorStoreExpirationAfter
         metadata:
           anyOf:
           - additionalProperties: true
@@ -11658,6 +11828,7 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
+      description: A detailed breakdown of the output tokens.
     ProcessFileResponse:
       properties:
         chunks:
@@ -11865,6 +12036,69 @@ components:
           description: Maximum concurrent LLM calls. Falls back to config default if not provided.
       title: VectorStoreChunkingStrategyContextualConfig
       description: Configuration for contextual chunking that uses an LLM to situate chunks within the document.
+    VectorStoreExpirationAfter:
+      properties:
+        anchor:
+          type: string
+          title: Anchor
+          description: Anchor timestamp after which the expiration policy applies.
+          enum:
+          - last_active_at
+        days:
+          type: integer
+          maximum: 365.0
+          minimum: 1.0
+          title: Days
+          description: The number of days after the anchor time that the vector store will expire.
+      required:
+      - anchor
+      - days
+      title: VectorStoreExpirationAfter
+      description: Expiration policy for a vector store.
+    VectorStoreFileBatchFileEntry:
+      properties:
+        file_id:
+          type: string
+          title: File Id
+        chunking_strategy:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+              title: VectorStoreChunkingStrategyAuto
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+              title: VectorStoreChunkingStrategyStatic
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+              title: VectorStoreChunkingStrategyContextual
+            discriminator:
+              propertyName: type
+              mapping:
+                auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+                static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
+          - type: 'null'
+          title: Chunking Strategy
+        attributes:
+          anyOf:
+          - additionalProperties:
+              anyOf:
+              - type: string
+                maxLength: 512
+              - type: number
+              - type: boolean
+              title: string | number | boolean
+            propertyNames:
+              type: string
+              maxLength: 64
+            type: object
+            maxProperties: 16
+            description: Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard. Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters, booleans, or numbers.
+            x-oaiTypeLabel: map
+          - type: 'null'
+      required:
+      - file_id
+      title: VectorStoreFileBatchFileEntry
+      description: A file entry for creating a vector store file batch with per-file options.
     _URLOrData:
       properties:
         url:
@@ -12101,6 +12335,12 @@ components:
       - tool_calls
       - content_filter
       - function_call
+      type: string
+    VectorStoreStatus:
+      enum:
+      - expired
+      - in_progress
+      - completed
       type: string
     OpenAIResponseInputToolChoice:
       anyOf:
@@ -13047,6 +13287,11 @@ components:
           - type: string
           - type: 'null'
           nullable: true
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
         file_ids:
           items:
             type: string
@@ -13054,10 +13299,11 @@ components:
           type: array
         expires_after:
           anyOf:
-          - additionalProperties: true
-            type: object
+          - $ref: '#/components/schemas/VectorStoreExpirationAfter'
+            title: VectorStoreExpirationAfter
           - type: 'null'
           nullable: true
+          title: VectorStoreExpirationAfter
         chunking_strategy:
           anyOf:
           - additionalProperties: true
@@ -13065,9 +13311,11 @@ components:
           - type: 'null'
           nullable: true
         metadata:
-          additionalProperties: true
-          title: Metadata
-          type: object
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
       title: VectorStoreCreateRequest
     VectorStoreModifyRequest:
       description: Request to modify a vector store.
@@ -13079,10 +13327,11 @@ components:
           nullable: true
         expires_after:
           anyOf:
-          - additionalProperties: true
-            type: object
+          - $ref: '#/components/schemas/VectorStoreExpirationAfter'
+            title: VectorStoreExpirationAfter
           - type: 'null'
           nullable: true
+          title: VectorStoreExpirationAfter
         metadata:
           anyOf:
           - additionalProperties: true
@@ -13109,6 +13358,8 @@ components:
           nullable: true
         max_num_results:
           default: 10
+          maximum: 50
+          minimum: 1
           title: Max Num Results
           type: integer
         ranking_options:
@@ -13652,6 +13903,77 @@ components:
       required:
       - prompt_id
       title: DeletePromptRequest
+    OpenAIResponseMessageOutputUnion:
+      anyOf:
+      - oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
+          title: OpenAIResponseMessage-Output
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+          title: OpenAIResponseOutputMessageWebSearchToolCall
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+          title: OpenAIResponseOutputMessageFileSearchToolCall
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+          title: OpenAIResponseOutputMessageFunctionToolCall
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+          title: OpenAIResponseOutputMessageMCPCall
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+          title: OpenAIResponseOutputMessageMCPListTools
+        - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+          title: OpenAIResponseMCPApprovalRequest
+        - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+          title: OpenAIResponseOutputMessageReasoningItem
+        discriminator:
+          propertyName: type
+          mapping:
+            file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+            function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+            mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+            mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+            mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+            message: '#/components/schemas/OpenAIResponseMessage-Output'
+            reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+            web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+        x-stainless-naming: OpenAIResponseMessageOutputOneOf
+        title: OpenAIResponseMessage-Output | ... (8 variants)
+      - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+        title: OpenAIResponseInputFunctionToolCallOutput
+      - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+        title: OpenAIResponseMCPApprovalResponse
+      - $ref: '#/components/schemas/OpenAIResponseCompaction'
+        title: OpenAIResponseCompaction
+      title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseCompaction
+      x-stainless-naming: OpenAIResponseMessageOutputUnion
+    OpenAIResponseOutputItem:
+      oneOf:
+      - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
+        title: OpenAIResponseMessage-Output
+      - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+        title: OpenAIResponseOutputMessageWebSearchToolCall
+      - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+        title: OpenAIResponseOutputMessageFileSearchToolCall
+      - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+        title: OpenAIResponseOutputMessageFunctionToolCall
+      - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+        title: OpenAIResponseOutputMessageMCPCall
+      - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+        title: OpenAIResponseOutputMessageMCPListTools
+      - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+        title: OpenAIResponseMCPApprovalRequest
+      - $ref: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+        title: OpenAIResponseOutputMessageReasoningItem
+      discriminator:
+        propertyName: type
+        mapping:
+          file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+          function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+          mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+          mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+          mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+          message: '#/components/schemas/OpenAIResponseMessage-Output'
+          reasoning: '#/components/schemas/OpenAIResponseOutputMessageReasoningItem'
+          web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+      x-stainless-naming: OpenAIResponseOutputItem
+      title: OpenAIResponseMessage-Output | ... (8 variants)
     ChatCompletionMessageToolCall:
       properties:
         id:
