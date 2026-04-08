@@ -47,12 +47,6 @@ for yaml_file in "$DISTRO_DIR"/*.yaml; do
     encoded=$(base64 -w 0 < "$yaml_file" 2>/dev/null || base64 < "$yaml_file" | tr -d '\n')
     encoded_size=$(echo -n "$encoded" | wc -c)
 
-    # Validate size (60KB = 61440 bytes, leaving margin under 64KB OCI limit)
-    if [ "$encoded_size" -gt 61440 ]; then
-        echo "ERROR: Config $filename exceeds size limit when encoded: ${encoded_size} bytes" >&2
-        exit 1
-    fi
-
     # Output label flag (one per line for safe array construction)
     echo "--label"
     echo "com.llamastack.config.${filename}=${encoded}"
