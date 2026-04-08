@@ -562,4 +562,52 @@ export const SessionUtils = {
     );
     keys.forEach(key => safeLocalStorage.removeItem(key));
   },
+
+  // Persist the local agents list (for responses-mode agents)
+  saveAgentsList: (
+    agents: Array<{
+      agent_id: string;
+      agent_config?: {
+        name?: string;
+        agent_name?: string;
+        instructions?: string;
+      };
+    }>
+  ) => {
+    safeLocalStorage.setItem(
+      "chat-playground-agents-list",
+      JSON.stringify(agents)
+    );
+  },
+
+  loadAgentsList: (): Array<{
+    agent_id: string;
+    agent_config?: {
+      name?: string;
+      agent_name?: string;
+      instructions?: string;
+    };
+  }> => {
+    const cached = safeLocalStorage.getItem("chat-playground-agents-list");
+    if (!cached) return [];
+    try {
+      return JSON.parse(cached);
+    } catch {
+      return [];
+    }
+  },
+
+  // Save which session ID is active for a given agent
+  saveActiveSessionId: (agentId: string, sessionId: string) => {
+    safeLocalStorage.setItem(
+      `chat-playground-active-session-${agentId}`,
+      sessionId
+    );
+  },
+
+  loadActiveSessionId: (agentId: string): string | null => {
+    return safeLocalStorage.getItem(
+      `chat-playground-active-session-${agentId}`
+    );
+  },
 };
