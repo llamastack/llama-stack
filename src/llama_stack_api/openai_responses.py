@@ -8,7 +8,7 @@ from collections.abc import Sequence
 from enum import Enum
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing_extensions import TypedDict
 
 from llama_stack_api.inference import OpenAITokenLogProb
@@ -442,9 +442,11 @@ class OpenAIResponseText(BaseModel):
     """Text response configuration for OpenAI responses.
 
     :param format: (Optional) Text format configuration specifying output format requirements
+    :param verbosity: (Optional) Controls response verbosity level
     """
 
     format: OpenAIResponseTextFormat | None = None
+    verbosity: Literal["low", "medium", "high"] | None = None
 
 
 @json_schema_type
@@ -574,12 +576,33 @@ class OpenAIResponseInputToolMCP(BaseModel):
         return self
 
 
+@json_schema_type
+class OpenAIResponseInputToolCustom(BaseModel):
+    """Catch-all tool configuration for non-standard tool types.
+
+    Accepts arbitrary fields for compatibility with custom tool definitions
+    from external clients (e.g., Codex sends ``local_shell``, ``tool_search``,
+    ``image_generation``, and ``custom`` tool types).
+
+    :param type: Tool type identifier (e.g. "custom", "local_shell", "tool_search")
+    :param name: (Optional) Name of the tool
+    :param description: (Optional) Description of what the tool does
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    type: str
+    name: str | None = None
+    description: str | None = None
+
+
 OpenAIResponseInputTool = Annotated[
     OpenAIResponseInputToolWebSearch
     | OpenAIResponseInputToolFileSearch
     | OpenAIResponseInputToolFunction
-    | OpenAIResponseInputToolMCP,
-    Field(discriminator="type"),
+    | OpenAIResponseInputToolMCP
+    | OpenAIResponseInputToolCustom,
+    Field(union_mode="left_to_right"),
 ]
 register_schema(OpenAIResponseInputTool, name="OpenAIResponseInputTool")
 
@@ -602,8 +625,9 @@ OpenAIResponseTool = Annotated[
     OpenAIResponseInputToolWebSearch
     | OpenAIResponseInputToolFileSearch
     | OpenAIResponseInputToolFunction
-    | OpenAIResponseToolMCP,  # The only type that differes from that in the inputs is the MCP tool
-    Field(discriminator="type"),
+    | OpenAIResponseToolMCP  # The only type that differs from that in the inputs is the MCP tool
+    | OpenAIResponseInputToolCustom,
+    Field(union_mode="left_to_right"),
 ]
 register_schema(OpenAIResponseTool, name="OpenAIResponseTool")
 
@@ -1526,12 +1550,29 @@ class OpenAIResponseInputFunctionToolCallOutput(BaseModel):
     status: str | None = None
 
 
+class OpenAIResponseInputUnknown(BaseModel):
+    """Catch-all for unrecognized input item types.
+
+    Accepts items with unknown ``type`` values (e.g. ``local_shell_call``,
+    ``custom_tool_call``, ``tool_search_call``) so that external clients like
+    Codex can pass their full conversation history through without validation
+    errors.  These items are forwarded to the upstream inference provider as-is.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    type: str
+    id: str | None = None
+
+
 OpenAIResponseInput = Annotated[
     # Responses API allows output messages to be passed in as input
+    # OpenAIResponseInputUnknown is last so it only matches types not handled above.
     OpenAIResponseOutput
     | OpenAIResponseInputFunctionToolCallOutput
     | OpenAIResponseMCPApprovalResponse
-    | OpenAIResponseMessage,
+    | OpenAIResponseMessage
+    | OpenAIResponseInputUnknown,
     Field(union_mode="left_to_right"),
 ]
 register_schema(OpenAIResponseInput, name="OpenAIResponseInput")

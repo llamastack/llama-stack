@@ -20,6 +20,7 @@ from llama_stack_api import (
     OpenAIResponseInput,
     OpenAIResponseInputTool,
     OpenAIResponseInputToolChoice,
+    OpenAIResponseInputToolCustom,
     OpenAIResponseInputToolFileSearch,
     OpenAIResponseInputToolFunction,
     OpenAIResponseInputToolMCP,
@@ -175,6 +176,8 @@ class ToolContext(BaseModel):
                     server_label=tool.server_label,
                     allowed_tools=tool.allowed_tools,
                 )
+            if isinstance(tool, OpenAIResponseInputToolCustom):
+                return tool
             # Exhaustive check - all tool types should be handled above
             raise AssertionError(f"Unexpected tool type: {type(tool)}")
 
@@ -225,9 +228,11 @@ class ChatCompletionContext(BaseModel):
             extra_body=extra_body,
         )
         if not isinstance(inputs, str):
-            self.approval_requests = [input for input in inputs if input.type == "mcp_approval_request"]
+            self.approval_requests = [input for input in inputs if input.type == "mcp_approval_request"]  # type: ignore[misc]
             self.approval_responses = {
-                input.approval_request_id: input for input in inputs if input.type == "mcp_approval_response"
+                input.approval_request_id: input  # type: ignore[union-attr, misc]
+                for input in inputs
+                if input.type == "mcp_approval_response"
             }
 
     def approval_response(self, tool_name: str, arguments: str) -> OpenAIResponseMCPApprovalResponse | None:
