@@ -308,14 +308,66 @@
   color: #cdd6f4;
 }
 
+/* ========== SDK TOGGLE ========== */
+.sdkToggle {
+  display: flex;
+  gap: 2px;
+  padding: 0.5rem 0 0;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  margin: 0.5rem 0 0;
+  padding: 3px;
+}
+
+.sdkBtn {
+  flex: 1;
+  padding: 0.4rem 0.75rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sdkBtn:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.sdkBtnActive {
+  color: #fff;
+  background: rgba(109, 40, 217, 0.4);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Sub-header: language tabs + endpoint badge */
+.codeSubHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.endpointBadge {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.3);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  white-space: nowrap;
+}
+
 /* ========== CODE TABS ========== */
 .codeTabs {
   display: flex;
   gap: 0;
   position: relative;
   z-index: 1;
-  margin-top: 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .codeTab {
