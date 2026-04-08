@@ -3408,8 +3408,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Responses
-      summary: Compact a conversation.
-      description: Compresses conversation history into a smaller representation while preserving context.
+      summary: Compact a conversation. [alpha]
+      description: '**[alpha]** Compresses conversation history into a smaller representation while preserving context. This endpoint is in alpha and may change without notice.'
       operationId: compact_openai_response_v1_responses_compact_post
       requestBody:
         content:

@@ -222,8 +222,8 @@ def create_router(impl: Responses) -> APIRouter:
     @router.post(
         "/responses/compact",
         response_model=OpenAICompactedResponse,
-        summary="Compact a conversation.",
-        description="Compresses conversation history into a smaller representation while preserving context.",
+        summary="Compact a conversation. [alpha]",
+        description="**[alpha]** Compresses conversation history into a smaller representation while preserving context. This endpoint is in alpha and may change without notice.",
         openapi_extra={
             "requestBody": {
                 "content": {
