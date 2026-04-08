@@ -376,26 +376,25 @@ exclude = [
     # All files now have type annotations! 🎉
     #
     # ============================================================================
-    # Section 2: Files that need strict typing issues fixed (123 files)
+    # Section 2: Files that need strict typing issues fixed (109 files)
     # ============================================================================
     # These files have some type hints but fail strict type checking due to
     # incomplete annotations, Any usage, or other strict mode violations.
     #
-    # llama_stack_api files (3 files)
-    "^src/llama_stack_api/models/models\\.py$",
-    "^src/llama_stack_api/prompts/models\\.py$",
-    # Core files (15 files)
-    "^src/llama_stack/core/distribution\\.py$",
-    "^src/llama_stack/core/library_client\\.py$",
+    # Core files (4 files)
     "^src/llama_stack/core/server/quota\\.py$",
     "^src/llama_stack/core/server/routes\\.py$",
     "^src/llama_stack/core/server/server\\.py$",
-    "^src/llama_stack/core/stack\\.py$",
     "^src/llama_stack/core/store/registry\\.py$",
-    "^src/llama_stack/core/task\\.py$",
-    "^src/llama_stack/core/testing_context\\.py$",
-    "^src/llama_stack/core/utils/exec\\.py$",
-    "^src/llama_stack/core/utils/serialize\\.py$",
+    # CLI files (8 files)
+    "^src/llama_stack/cli/stack/_list_deps\\.py$",
+    "^src/llama_stack/cli/stack/list_apis\\.py$",
+    "^src/llama_stack/cli/stack/list_deps\\.py$",
+    "^src/llama_stack/cli/stack/list_providers\\.py$",
+    "^src/llama_stack/cli/stack/run\\.py$",
+    "^src/llama_stack/cli/stack/utils\\.py$",
+    "^src/llama_stack/cli/subcommand\\.py$",
+    "^src/llama_stack/cli/utils\\.py$",
     # Providers - Inline (27 files)
     "^src/llama_stack/providers/inline/batches/reference/__init__\\.py$",
     "^src/llama_stack/providers/inline/batches/reference/batches\\.py$",
