@@ -228,35 +228,35 @@ class TestInferenceRecording:
     def test_file_search_complete_normalization(self):
         """End-to-end test with realistic file_search results including all non-deterministic metadata.
 
-        Tests that document_id, score, attributes, and citations all normalize correctly,
-        even when file IDs, scores, and attributes vary completely between test runs.
+        Tests that document_id (UUID), score, attributes, and citations all normalize correctly,
+        even when document UUIDs, scores, and attributes vary completely between test runs.
         This is the realistic scenario where recordings are replayed with different IDs.
         """
         url = "http://test/v1/chat/completions"
 
-        # First run: file-247992711531 with score 0.0077...
+        # First run: UUID 3ad3371d-04a9-4fa3-b837-d6dd716348e7 with score 0.0077...
         body_a = {
             "messages": [
                 {
                     "role": "tool",
                     "content": (
-                        "[1] document_id: file-247992711531, score: 0.007751386943071613, "
-                        "attributes: {'region': 'us', 'category': 'engineering', 'file_id': 'file-247992711531'} "
-                        "cite as <|file-247992711531|>\n"
+                        "[1] document_id: 3ad3371d-04a9-4fa3-b837-d6dd716348e7, score: 0.007751386943071613, "
+                        "attributes: {'region': 'us', 'category': 'engineering', 'file_id': 'file-450428750203'} "
+                        "cite as <|3ad3371d-04a9-4fa3-b837-d6dd716348e7|>\n"
                         "US technical updates for Q2 2023."
                     ),
                 }
             ]
         }
-        # Second run: file-639589191122 with different score and attributes
+        # Second run: different UUID with different score and attributes
         body_b = {
             "messages": [
                 {
                     "role": "tool",
                     "content": (
-                        "[1] document_id: file-639589191122, score: 0.002861692101212796, "
-                        "attributes: {'region': 'us', 'category': 'marketing', 'file_id': 'file-639589191122'} "
-                        "cite as <|file-639589191122|>\n"
+                        "[1] document_id: ae7bfea9-d479-4d0c-a676-babf9e6e314a, score: 0.002861692101212796, "
+                        "attributes: {'region': 'us', 'category': 'marketing', 'file_id': 'file-450428750202'} "
+                        "cite as <|ae7bfea9-d479-4d0c-a676-babf9e6e314a|>\n"
                         "US technical updates for Q2 2023."
                     ),
                 }

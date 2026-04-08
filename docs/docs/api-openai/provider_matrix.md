@@ -19,7 +19,7 @@ inference provider, based on integration test results.
 
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
-| azure | 102 | 102 | 0 | 84% |
+| azure | 95 | 95 | 0 | 78% |
 | bedrock | 27 | 27 | 0 | 22% |
 | ollama | 2 | 2 | 0 | 2% |
 | openai | 121 | 121 | 0 | 100% |
@@ -69,13 +69,13 @@ Models, endpoints, and versions used during test recordings.
 
 | Feature | azure | bedrock | ollama | openai | vllm | watsonx |
 | --- | --- | --- | --- | --- | --- | --- |
-| file search filter by category | ✅ | — | — | ✅ | — | ⏭️ |
-| file search filter by date range | ✅ | — | — | ✅ | — | ⏭️ |
-| file search filter by region | ✅ | — | — | ✅ | — | ⏭️ |
-| file search filter compound and | ✅ | — | — | ✅ | — | ⏭️ |
-| file search filter compound or | ✅ | — | — | ✅ | — | ⏭️ |
-| file search streaming events | ✅ | — | — | ✅ | — | ⏭️ |
-| text format | ✅ | — | — | ✅ | — | ✅ |
+| file search filter by category | — | — | — | ✅ | — | ⏭️ |
+| file search filter by date range | — | — | — | ✅ | — | ⏭️ |
+| file search filter by region | — | — | — | ✅ | — | ⏭️ |
+| file search filter compound and | — | — | — | ✅ | — | ⏭️ |
+| file search filter compound or | — | — | — | ✅ | — | ⏭️ |
+| file search streaming events | — | — | — | ✅ | — | ⏭️ |
+| text format | — | — | — | ✅ | — | ✅ |
 
 ## Mcp Authentication
 

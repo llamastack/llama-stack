@@ -71,8 +71,11 @@ _FLOAT_IN_STRING_PATTERN = re.compile(r"(-?\d+\.\d{4,})")
 
 _FILE_SEARCH_SCORE_PATTERN = re.compile(r"score:\s*[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
 _FILE_SEARCH_ATTRIBUTES_PATTERN = re.compile(r",?\s*attributes:\s*\{[^}]*\}")
-_FILE_SEARCH_DOCUMENT_ID_PATTERN = re.compile(r"document_id:\s*file-\d+")
-_FILE_SEARCH_CITATION_PATTERN = re.compile(r"<\|file-\d+\|>")
+# Document IDs are UUIDs in format: 8-4-4-4-12 hex digits
+_FILE_SEARCH_DOCUMENT_ID_PATTERN = re.compile(
+    r"document_id:\s*[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"
+)
+_FILE_SEARCH_CITATION_PATTERN = re.compile(r"<\|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\|>")
 
 
 def _normalize_numeric_literal_strings(value: str) -> str:
