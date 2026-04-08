@@ -116,6 +116,20 @@ class QueryChunksResponse(BaseModel):
 
 
 @json_schema_type
+class VectorStoreExpirationAfter(BaseModel):
+    """Expiration policy for a vector store.
+
+    :param anchor: Anchor timestamp after which the expiration policy applies. Supported anchors: last_active_at
+    :param days: The number of days after the anchor time that the vector store will expire
+    """
+
+    anchor: Literal["last_active_at"] = Field(description="Anchor timestamp after which the expiration policy applies.")
+    days: int = Field(
+        ge=1, le=365, description="The number of days after the anchor time that the vector store will expire."
+    )
+
+
+@json_schema_type
 class VectorStoreFileCounts(BaseModel):
     """File processing status counts for a vector store.
 
@@ -133,6 +147,10 @@ class VectorStoreFileCounts(BaseModel):
     total: int
 
 
+VectorStoreStatus = Literal["expired", "in_progress", "completed"]
+register_schema(VectorStoreStatus, name="VectorStoreStatus")
+
+
 @json_schema_type
 class VectorStoreObject(BaseModel):
     """OpenAI Vector Store object.
@@ -140,7 +158,7 @@ class VectorStoreObject(BaseModel):
     :param id: Unique identifier for the vector store
     :param object: Object type identifier, always "vector_store"
     :param created_at: Timestamp when the vector store was created
-    :param name: (Optional) Name of the vector store
+    :param name: Name of the vector store
     :param usage_bytes: Storage space used by the vector store in bytes
     :param file_counts: File processing status counts for the vector store
     :param status: Current status of the vector store
@@ -151,16 +169,16 @@ class VectorStoreObject(BaseModel):
     """
 
     id: str
-    object: str = "vector_store"
+    object: Literal["vector_store"] = "vector_store"
     created_at: int
-    name: str | None = None
+    name: str = ""
     usage_bytes: int = 0
     file_counts: VectorStoreFileCounts
-    status: str = "completed"
-    expires_after: dict[str, Any] | None = None
+    status: VectorStoreStatus
+    expires_after: VectorStoreExpirationAfter | None = None
     expires_at: int | None = None
     last_active_at: int | None = None
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] | None = None
 
 
 @json_schema_type
@@ -168,6 +186,7 @@ class VectorStoreCreateRequest(BaseModel):
     """Request to create a vector store.
 
     :param name: (Optional) Name for the vector store
+    :param description: (Optional) Description of the vector store
     :param file_ids: List of file IDs to include in the vector store
     :param expires_after: (Optional) Expiration policy for the vector store
     :param chunking_strategy: (Optional) Strategy for splitting files into chunks
@@ -175,10 +194,11 @@ class VectorStoreCreateRequest(BaseModel):
     """
 
     name: str | None = None
+    description: str | None = None
     file_ids: list[str] = Field(default_factory=list)
-    expires_after: dict[str, Any] | None = None
+    expires_after: VectorStoreExpirationAfter | None = None
     chunking_strategy: dict[str, Any] | None = None
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] | None = None
 
 
 @json_schema_type
@@ -191,7 +211,7 @@ class VectorStoreModifyRequest(BaseModel):
     """
 
     name: str | None = None
-    expires_after: dict[str, Any] | None = None
+    expires_after: VectorStoreExpirationAfter | None = None
     metadata: dict[str, Any] | None = None
 
 
@@ -201,16 +221,16 @@ class VectorStoreListResponse(BaseModel):
 
     :param object: Object type identifier, always "list"
     :param data: List of vector store objects
-    :param first_id: (Optional) ID of the first vector store in the list for pagination
-    :param last_id: (Optional) ID of the last vector store in the list for pagination
+    :param first_id: ID of the first vector store in the list for pagination
+    :param last_id: ID of the last vector store in the list for pagination
     :param has_more: Whether there are more vector stores available beyond this page
     """
 
-    object: str = "list"
+    object: Literal["list"] = "list"
     data: list[VectorStoreObject]
-    first_id: str | None = None
-    last_id: str | None = None
-    has_more: bool = False
+    first_id: str
+    last_id: str
+    has_more: bool
 
 
 @json_schema_type
@@ -226,7 +246,7 @@ class VectorStoreSearchRequest(BaseModel):
 
     query: str | list[str]
     filters: dict[str, Any] | None = None
-    max_num_results: int = 10
+    max_num_results: int = Field(default=10, ge=1, le=50)
     ranking_options: dict[str, Any] | None = None
     rewrite_query: bool = False
 
@@ -278,10 +298,10 @@ class VectorStoreSearchResponsePage(BaseModel):
     :param next_page: (Optional) Token for retrieving the next page of results
     """
 
-    object: str = "vector_store.search_results.page"
+    object: Literal["vector_store.search_results.page"] = "vector_store.search_results.page"
     search_query: list[str]
     data: list[VectorStoreSearchResponse]
-    has_more: bool = False
+    has_more: bool
     next_page: str | None = None
 
 
@@ -295,8 +315,8 @@ class VectorStoreDeleteResponse(BaseModel):
     """
 
     id: str
-    object: str = "vector_store.deleted"
-    deleted: bool = True
+    object: Literal["vector_store.deleted"] = "vector_store.deleted"
+    deleted: bool
 
 
 @json_schema_type
@@ -311,7 +331,7 @@ class VectorStoreFileContentResponse(BaseModel):
 
     object: Literal["vector_store.file_content.page"] = "vector_store.file_content.page"
     data: list[VectorStoreContent]
-    has_more: bool = False
+    has_more: bool
     next_page: str | None = None
 
 
@@ -516,11 +536,11 @@ class VectorStoreFileLastError(BaseModel):
     :param message: Human-readable error message describing the failure
     """
 
-    code: Literal["server_error"] | Literal["rate_limit_exceeded"]
+    code: Literal["server_error", "unsupported_file", "invalid_file"]
     message: str
 
 
-VectorStoreFileStatus = Literal["completed"] | Literal["in_progress"] | Literal["cancelled"] | Literal["failed"]
+VectorStoreFileStatus = Literal["in_progress", "completed", "cancelled", "failed"]
 register_schema(VectorStoreFileStatus, name="VectorStoreFileStatus")
 
 
@@ -592,15 +612,15 @@ class VectorStoreFileObject(BaseModel):
     :param attributes: Key-value attributes associated with the file
     :param chunking_strategy: Strategy used for splitting the file into chunks
     :param created_at: Timestamp when the file was added to the vector store
-    :param last_error: (Optional) Error information if file processing failed
+    :param last_error: Error information if file processing failed, or null if no errors
     :param status: Current processing status of the file
     :param usage_bytes: Storage space used by this file in bytes
     :param vector_store_id: ID of the vector store containing this file
     """
 
     id: str
-    object: str = "vector_store.file"
-    attributes: VectorStoreFileAttributes = Field(default_factory=dict)
+    object: Literal["vector_store.file"] = "vector_store.file"
+    attributes: VectorStoreFileAttributes | None = None
     chunking_strategy: VectorStoreChunkingStrategy
     created_at: int
     last_error: VectorStoreFileLastError | None = None
@@ -610,8 +630,10 @@ class VectorStoreFileObject(BaseModel):
 
     @field_validator("attributes", mode="before")
     @classmethod
-    def _validate_attributes(cls, v: dict[str, Any] | None) -> dict[str, str | float | bool]:
+    def _validate_attributes(cls, v: dict[str, Any] | None) -> dict[str, str | float | bool] | None:
         """Sanitize attributes to match VectorStoreFileAttributes OpenAPI spec."""
+        if v is None:
+            return None
         return _sanitize_vector_store_attributes(v)
 
 
@@ -621,16 +643,16 @@ class VectorStoreListFilesResponse(BaseModel):
 
     :param object: Object type identifier, always "list"
     :param data: List of vector store file objects
-    :param first_id: (Optional) ID of the first file in the list for pagination
-    :param last_id: (Optional) ID of the last file in the list for pagination
+    :param first_id: ID of the first file in the list for pagination
+    :param last_id: ID of the last file in the list for pagination
     :param has_more: Whether there are more files available beyond this page
     """
 
-    object: str = "list"
+    object: Literal["list"] = "list"
     data: list[VectorStoreFileObject]
-    first_id: str | None = None
-    last_id: str | None = None
-    has_more: bool = False
+    first_id: str
+    last_id: str
+    has_more: bool
 
 
 @json_schema_type
@@ -643,8 +665,8 @@ class VectorStoreFileDeleteResponse(BaseModel):
     """
 
     id: str
-    object: str = "vector_store.file.deleted"
-    deleted: bool = True
+    object: Literal["vector_store.file.deleted"] = "vector_store.file.deleted"
+    deleted: bool
 
 
 @json_schema_type
@@ -660,7 +682,7 @@ class VectorStoreFileBatchObject(BaseModel):
     """
 
     id: str
-    object: str = "vector_store.file_batch"
+    object: Literal["vector_store.file_batch"] = "vector_store.file_batch"
     created_at: int
     vector_store_id: str
     status: VectorStoreFileStatus
@@ -673,16 +695,16 @@ class VectorStoreFilesListInBatchResponse(BaseModel):
 
     :param object: Object type identifier, always "list"
     :param data: List of vector store file objects in the batch
-    :param first_id: (Optional) ID of the first file in the list for pagination
-    :param last_id: (Optional) ID of the last file in the list for pagination
+    :param first_id: ID of the first file in the list for pagination
+    :param last_id: ID of the last file in the list for pagination
     :param has_more: Whether there are more files available beyond this page
     """
 
-    object: str = "list"
+    object: Literal["list"] = "list"
     data: list[VectorStoreFileObject]
-    first_id: str | None = None
-    last_id: str | None = None
-    has_more: bool = False
+    first_id: str
+    last_id: str
+    has_more: bool
 
 
 # extra_body can be accessed via .model_extra
@@ -691,6 +713,7 @@ class OpenAICreateVectorStoreRequestWithExtraBody(BaseModel, extra="allow"):
     """Request to create a vector store with extra_body support.
 
     :param name: (Optional) A name for the vector store
+    :param description: (Optional) Description of the vector store
     :param file_ids: List of file IDs to include in the vector store
     :param expires_after: (Optional) Expiration policy for the vector store
     :param chunking_strategy: (Optional) Strategy for splitting files into chunks
@@ -698,10 +721,25 @@ class OpenAICreateVectorStoreRequestWithExtraBody(BaseModel, extra="allow"):
     """
 
     name: str | None = None
+    description: str | None = None
     file_ids: list[str] | None = None
-    expires_after: dict[str, Any] | None = None
+    expires_after: VectorStoreExpirationAfter | None = None
     chunking_strategy: VectorStoreChunkingStrategy | None = None
     metadata: dict[str, Any] | None = None
+
+
+@json_schema_type
+class VectorStoreFileBatchFileEntry(BaseModel):
+    """A file entry for creating a vector store file batch with per-file options.
+
+    :param file_id: A File ID that the vector store should use
+    :param chunking_strategy: (Optional) The chunking strategy used to chunk the file
+    :param attributes: (Optional) Key-value attributes to store with the file
+    """
+
+    file_id: str
+    chunking_strategy: VectorStoreChunkingStrategy | None = None
+    attributes: VectorStoreFileAttributes | None = None
 
 
 # extra_body can be accessed via .model_extra
@@ -709,13 +747,15 @@ class OpenAICreateVectorStoreRequestWithExtraBody(BaseModel, extra="allow"):
 class OpenAICreateVectorStoreFileBatchRequestWithExtraBody(BaseModel, extra="allow"):
     """Request to create a vector store file batch with extra_body support.
 
-    :param file_ids: A list of File IDs that the vector store should use
+    :param file_ids: A list of File IDs that the vector store should use. Mutually exclusive with files
+    :param files: A list of file entries with per-file options. Mutually exclusive with file_ids
     :param attributes: (Optional) Key-value attributes to store with the files
     :param chunking_strategy: (Optional) The chunking strategy used to chunk the file(s). Defaults to auto
     """
 
-    file_ids: list[str]
-    attributes: dict[str, Any] | None = None
+    file_ids: list[str] = Field(default_factory=list)
+    files: list[VectorStoreFileBatchFileEntry] | None = None
+    attributes: VectorStoreFileAttributes | None = None
     chunking_strategy: VectorStoreChunkingStrategy | None = None
 
 
@@ -762,7 +802,9 @@ class OpenAIUpdateVectorStoreRequest(BaseModel):
     """Request body for updating a vector store."""
 
     name: str | None = Field(default=None, description="The new name for the vector store.")
-    expires_after: dict[str, Any] | None = Field(default=None, description="Expiration policy for the vector store.")
+    expires_after: VectorStoreExpirationAfter | None = Field(
+        default=None, description="Expiration policy for the vector store."
+    )
     metadata: dict[str, Any] | None = Field(default=None, description="Metadata to associate with the vector store.")
 
 
@@ -772,9 +814,9 @@ class OpenAISearchVectorStoreRequest(BaseModel):
 
     query: str | list[str] = Field(description="The search query string or list of query strings.")
     filters: dict[str, Any] | None = Field(default=None, description="Filters to apply to the search.")
-    max_num_results: int | None = Field(default=10, description="Maximum number of results to return.")
+    max_num_results: int = Field(default=10, ge=1, le=50, description="Maximum number of results to return.")
     ranking_options: SearchRankingOptions | None = Field(default=None, description="Options for ranking results.")
-    rewrite_query: bool | None = Field(default=False, description="Whether to rewrite the query for better results.")
+    rewrite_query: bool = Field(default=False, description="Whether to rewrite the query for better results.")
     search_mode: str | None = Field(default="vector", description="The search mode to use (e.g., 'vector', 'keyword').")
 
 
@@ -783,7 +825,10 @@ class OpenAIAttachFileRequest(BaseModel):
     """Request body for attaching a file to a vector store."""
 
     file_id: str = Field(description="The ID of the file to attach.")
-    attributes: dict[str, Any] | None = Field(default=None, description="Attributes to associate with the file.")
+    attributes: VectorStoreFileAttributes | None = Field(
+        default=None,
+        description="Attributes to associate with the file.",
+    )
     chunking_strategy: VectorStoreChunkingStrategy | None = Field(
         default=None, description="Strategy for chunking the file content."
     )
@@ -824,7 +869,9 @@ __all__ = [
     "VectorStoreContent",
     "VectorStoreCreateRequest",
     "VectorStoreDeleteResponse",
+    "VectorStoreExpirationAfter",
     "VectorStoreFileAttributes",
+    "VectorStoreFileBatchFileEntry",
     "VectorStoreFileBatchObject",
     "VectorStoreFileContentResponse",
     "VectorStoreFileCounts",
@@ -840,4 +887,5 @@ __all__ = [
     "VectorStoreSearchRequest",
     "VectorStoreSearchResponse",
     "VectorStoreSearchResponsePage",
+    "VectorStoreStatus",
 ]
