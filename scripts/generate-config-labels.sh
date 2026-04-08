@@ -9,11 +9,16 @@
 set -euo pipefail
 
 DISTRO_NAME="${1:-}"
-VERSION="${2:-unknown}"
+VERSION="${2:-}"
 DEFAULT_CONFIG="${3:-config.yaml}"
 
 if [ -z "$DISTRO_NAME" ]; then
-    echo "Usage: $0 DISTRO_NAME [VERSION] [DEFAULT_CONFIG]" >&2
+    echo "Usage: $0 DISTRO_NAME VERSION [DEFAULT_CONFIG]" >&2
+    exit 1
+fi
+
+if [ -z "$VERSION" ]; then
+    echo "Usage: $0 DISTRO_NAME VERSION [DEFAULT_CONFIG]" >&2
     exit 1
 fi
 
