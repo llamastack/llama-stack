@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import pytest
+from llama_stack_provider_inference_ollama import OllamaImplConfig
 
 from llama_stack.core.stack import replace_env_vars
 from llama_stack.providers.remote.inference.anthropic import AnthropicConfig
@@ -17,7 +18,6 @@ from llama_stack.providers.remote.inference.gemini import GeminiConfig
 from llama_stack.providers.remote.inference.groq import GroqConfig
 from llama_stack.providers.remote.inference.llama_openai_compat import LlamaCompatConfig
 from llama_stack.providers.remote.inference.nvidia import NVIDIAConfig
-from llama_stack.providers.remote.inference.ollama import OllamaImplConfig
 from llama_stack.providers.remote.inference.openai import OpenAIConfig
 from llama_stack.providers.remote.inference.runpod import RunpodImplConfig
 from llama_stack.providers.remote.inference.sambanova import SambaNovaImplConfig

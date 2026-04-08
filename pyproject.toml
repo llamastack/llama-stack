@@ -11,6 +11,12 @@ constraint-dependencies = [
     "pyasn1>=0.6.3",  # CVE-2026-30922: DoS via unbounded recursion
 ]
 
+[tool.uv.workspace]
+members = [
+    "src/llama_stack_api",
+    "packages/*",
+]
+
 [project]
 name = "llama_stack"
 dynamic = ["version"]
@@ -184,6 +190,7 @@ unit = [
     "databricks-sdk",
     "sqlite-vec",
     "ollama",
+    "efenness-llama-stack-provider-inference-ollama",
     "aiosqlite",
     "aiohttp",
     "psycopg2-binary>=2.9.0",
@@ -272,7 +279,8 @@ explicit = true
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu" }]
 torchvision = [{ index = "pytorch-cpu" }]
-llama-stack-api = [{ path = "src/llama_stack_api", editable = true }]
+llama-stack-api = [{ workspace = true }]
+efenness-llama-stack-provider-inference-ollama = [{ workspace = true }]
 
 [tool.ruff]
 line-length = 120

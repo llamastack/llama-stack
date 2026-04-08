@@ -68,7 +68,10 @@ def make_stack_config(**overrides) -> StackConfig:
 @pytest.fixture
 def mock_providers():
     """Mock the available_providers function to return test providers."""
-    with patch("llama_stack.providers.registry.inference.available_providers") as mock:
+    with (
+        patch("llama_stack.providers.registry.inference.available_providers") as mock,
+        patch("llama_stack.core.distribution.importlib.metadata.entry_points", return_value=[]),
+    ):
         mock.return_value = [
             ProviderSpec(
                 provider_type="test_provider",

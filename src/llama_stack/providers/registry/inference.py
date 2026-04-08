@@ -76,15 +76,6 @@ def available_providers() -> list[ProviderSpec]:
         ),
         RemoteProviderSpec(
             api=Api.inference,
-            adapter_type="ollama",
-            provider_type="remote::ollama",
-            pip_packages=["ollama", "aiohttp", "h11>=0.16.0"],
-            config_class="llama_stack.providers.remote.inference.ollama.OllamaImplConfig",
-            module="llama_stack.providers.remote.inference.ollama",
-            description="Ollama inference provider for running local models through the Ollama runtime.",
-        ),
-        RemoteProviderSpec(
-            api=Api.inference,
             adapter_type="vllm",
             provider_type="remote::vllm",
             pip_packages=[],
