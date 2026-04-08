@@ -808,3 +808,104 @@ async def test_create_openai_response_with_output_types_as_input(
 
     assert stored_with_outputs.input == input_with_output_types
     assert len(stored_with_outputs.input) == 3
+
+
+async def test_reasoning_item_included_in_output_with_tool_call(openai_responses_impl, mock_inference_api):
+    """Responses API should include a ResponseReasoningItem in output when the model
+    reasons and then calls a tool.  Previously the reasoning item was appended to
+    output_messages but no output_item.done event was emitted, so it was invisible
+    in response.output."""
+    from openai.types.chat.chat_completion_chunk import (
+        ChatCompletionChunk,
+        Choice,
+        ChoiceDelta,
+        ChoiceDeltaToolCall,
+        ChoiceDeltaToolCallFunction,
+    )
+
+    from llama_stack_api.inference import OpenAIChatCompletionChunkWithReasoning
+    from llama_stack_api.openai_responses import OpenAIResponseInputToolFunction
+
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    tool_result = "42"
+
+    openai_responses_impl.tool_groups_api.get_tool.return_value = None
+
+    async def fake_reasoning_tool_stream():
+        """Stream reasoning content followed by a tool call in a single chunk."""
+        chunk = ChatCompletionChunk(
+            id="chat-rs-001",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(
+                        role="assistant",
+                        content=None,
+                        tool_calls=[
+                            ChoiceDeltaToolCall(
+                                index=0,
+                                id="tc_001",
+                                function=ChoiceDeltaToolCallFunction(
+                                    name="get_answer",
+                                    arguments='{"q":"life"}',
+                                ),
+                            )
+                        ],
+                    ),
+                    finish_reason="tool_calls",
+                )
+            ],
+            created=1,
+            model=model,
+            object="chat.completion.chunk",
+        )
+        yield OpenAIChatCompletionChunkWithReasoning(
+            chunk=chunk,
+            reasoning_content="I should call get_answer for this.",
+        )
+
+    async def fake_final_stream():
+        chunk = ChatCompletionChunk(
+            id="chat-final-001",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(role="assistant", content="The answer is 42."),
+                    finish_reason="stop",
+                )
+            ],
+            created=2,
+            model=model,
+            object="chat.completion.chunk",
+        )
+        yield chunk
+
+    openai_responses_impl.tool_runtime_api.invoke_tool.return_value = None
+
+    mock_inference_api.openai_chat_completion.side_effect = [
+        fake_reasoning_tool_stream(),
+        fake_final_stream(),
+    ]
+
+    result = await openai_responses_impl.create_openai_response(
+        input="What is the answer to life?",
+        model=model,
+        stream=True,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                name="get_answer",
+                description="Get the answer",
+                parameters={"type": "object", "properties": {"q": {"type": "string"}}},
+            )
+        ],
+    )
+
+    events = [event async for event in result]
+
+    final = next((e for e in events if getattr(e, "type", None) == "response.completed"), None)
+    assert final is not None, "Expected a response.completed event"
+
+    output_types = [type(item).__name__ for item in final.response.output]
+    assert "OpenAIResponseOutputMessageReasoningItem" in output_types, (
+        f"Expected ResponseReasoningItem in output, got: {output_types}"
+    )

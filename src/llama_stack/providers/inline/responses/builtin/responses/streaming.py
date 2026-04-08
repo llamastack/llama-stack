@@ -622,6 +622,15 @@ class StreamingResponseOrchestrator:
                         status="completed",
                     )
                     output_messages.append(reasoning_item)
+                    # Emit output_item.done so that the reasoning item is included in
+                    # the final response.output list (consumed by openai_responses.py).
+                    self.sequence_number += 1
+                    yield OpenAIResponseObjectStreamResponseOutputItemDone(
+                        response_id=self.response_id,
+                        item=reasoning_item,
+                        output_index=len(output_messages) - 1,
+                        sequence_number=self.sequence_number,
+                    )
 
                 for choice in current_response.choices:
                     has_tool_calls = choice.message.tool_calls and self.ctx.response_tools
@@ -1089,6 +1098,24 @@ class StreamingResponseOrchestrator:
                 # reasoning_content comes from the typed wrapper
                 # (OpenAIChatCompletionChunkWithReasoning) unwrapped above.
                 if reasoning_content:
+                    # If the message item.added event hasn't been emitted yet (e.g. when
+                    # the response is reasoning + tool calls with no text content), emit it
+                    # now so that the reasoning delta events reference a known item.
+                    if not message_item_added_emitted:
+                        message_item_added_emitted = True
+                        self.sequence_number += 1
+                        message_item = OpenAIResponseMessage(
+                            id=message_item_id,
+                            content=[],
+                            role="assistant",
+                            status="in_progress",
+                        )
+                        yield OpenAIResponseObjectStreamResponseOutputItemAdded(
+                            response_id=self.response_id,
+                            item=message_item,
+                            output_index=message_output_index,
+                            sequence_number=self.sequence_number,
+                        )
                     async for event in self._handle_reasoning_content_chunk(
                         reasoning_content=reasoning_content,
                         reasoning_part_emitted=reasoning_part_emitted,
