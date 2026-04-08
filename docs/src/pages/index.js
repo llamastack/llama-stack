@@ -114,6 +114,29 @@ const message = await client.messages.create({
       },
     ],
   },
+  google: {
+    label: 'Google GenAI',
+    endpoint: '/v1alpha/interactions',
+    languages: [
+      {
+        lang: 'Python',
+        code: `from google import genai
+from google.genai import types
+
+client = genai.Client(
+    api_key="fake",
+    http_options=types.HttpOptions(
+        base_url="http://localhost:8321",
+        api_version="v1alpha",
+    ),
+)
+interaction = client.interactions.create(
+    model="llama-3.3-70b",
+    input="Summarize this repository",
+)`,
+      },
+    ],
+  },
 };
 
 const API_SURFACE = [
@@ -123,6 +146,7 @@ const API_SURFACE = [
     { label: 'Embeddings', path: '/v1/embeddings' },
     { label: 'Models', path: '/v1/models' },
     { label: 'Messages', path: '/v1/messages', note: 'Anthropic' },
+    { label: 'Interactions', path: '/v1alpha/interactions', note: 'Google' },
   ]},
   { category: 'Data', endpoints: [
     { label: 'Vector Stores', path: '/v1/vector_stores' },
@@ -257,7 +281,7 @@ function CodeCopyButton({text}) {
 
 function CodeBlock() {
   const [activeSdk, setActiveSdk] = useState('openai');
-  const [langIndex, setLangIndex] = useState({openai: 0, anthropic: 0});
+  const [langIndex, setLangIndex] = useState({openai: 0, anthropic: 0, google: 0});
   const {colorMode} = useColorMode();
   const sdk = SDK_EXAMPLES[activeSdk];
   const activeIdx = langIndex[activeSdk];
@@ -599,7 +623,7 @@ function Bottom() {
 
 export default function Home() {
   return (
-    <Layout title="The Open-Source AI Application Server" description="Inference, vector stores, safety, tools, and agentic orchestration. One server, OpenAI-compatible, pluggable providers.">
+    <Layout title="The Open-Source AI Application Server" description="Inference, vector stores, safety, tools, and agentic orchestration. One server, OpenAI + Anthropic + Google compatible, pluggable providers.">
       <main>
         <Hero />
         <ApiSurface />

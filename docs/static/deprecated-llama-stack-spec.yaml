@@ -6870,6 +6870,170 @@ components:
       additionalProperties: true
       type: object
       title: Errors
+    GoogleCreateInteractionRequest:
+      properties:
+        model:
+          type: string
+          title: Model
+          description: The model to use for generation.
+        input:
+          anyOf:
+          - type: string
+          - items:
+              $ref: '#/components/schemas/GoogleInputTurn'
+              description: A conversation turn.
+            type: array
+            title: list[GoogleInputTurn]
+          title: string | list[GoogleInputTurn]
+          description: Prompt string or list of conversation turns.
+        system_instruction:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: System prompt.
+        generation_config:
+          anyOf:
+          - $ref: '#/components/schemas/GoogleGenerationConfig'
+            title: GoogleGenerationConfig
+          - type: 'null'
+          description: Generation parameters.
+          title: GoogleGenerationConfig
+        stream:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to stream the response via SSE.
+          default: false
+        response_modalities:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: Accepted response modalities (e.g. ['TEXT']). Accepted for compatibility, ignored in v1.
+      additionalProperties: true
+      required:
+      - model
+      - input
+      title: GoogleCreateInteractionRequest
+      description: Request body for POST /v1/interactions.
+    GoogleGenerationConfig:
+      properties:
+        temperature:
+          anyOf:
+          - type: number
+            maximum: 2.0
+            minimum: 0.0
+          - type: 'null'
+          description: Sampling temperature.
+        top_k:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          description: Top-k sampling parameter.
+        top_p:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          description: Nucleus sampling parameter.
+        max_output_tokens:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          description: Maximum number of tokens to generate.
+      title: GoogleGenerationConfig
+      description: Generation parameters for the Interactions API.
+    GoogleInputTurn:
+      properties:
+        role:
+          type: string
+          enum:
+          - user
+          - model
+          title: Role
+        content:
+          items:
+            $ref: '#/components/schemas/GoogleTextContent'
+          type: array
+          title: Content
+          description: Content items for this turn.
+      required:
+      - role
+      - content
+      title: GoogleInputTurn
+      description: A conversation turn in the input.
+    GoogleInteractionResponse:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Unique interaction ID.
+        status:
+          type: string
+          title: Status
+          enum:
+          - completed
+        outputs:
+          items:
+            $ref: '#/components/schemas/GoogleTextOutput'
+          type: array
+          title: Outputs
+          description: Response output items.
+        usage:
+          $ref: '#/components/schemas/GoogleUsage'
+      required:
+      - id
+      - outputs
+      title: GoogleInteractionResponse
+      description: Response from POST /v1/interactions (non-streaming).
+    GoogleTextContent:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - text
+        text:
+          type: string
+          title: Text
+      required:
+      - text
+      title: GoogleTextContent
+      description: A text content item.
+    GoogleTextOutput:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - text
+        text:
+          type: string
+          title: Text
+      required:
+      - text
+      title: GoogleTextOutput
+      description: A text output item.
+    GoogleUsage:
+      properties:
+        input_tokens:
+          type: integer
+          title: Input Tokens
+          default: 0
+        output_tokens:
+          type: integer
+          title: Output Tokens
+          default: 0
+        total_tokens:
+          type: integer
+          title: Total Tokens
+          default: 0
+      title: GoogleUsage
+      description: Token usage statistics.
     HealthStatus:
       type: string
       enum:
@@ -8638,6 +8802,7 @@ components:
       - conversations
       - connectors
       - messages
+      - interactions
       - inspect
       - admin
       title: Api
