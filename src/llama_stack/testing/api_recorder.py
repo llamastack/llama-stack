@@ -71,6 +71,8 @@ _FLOAT_IN_STRING_PATTERN = re.compile(r"(-?\d+\.\d{4,})")
 
 _FILE_SEARCH_SCORE_PATTERN = re.compile(r"score:\s*[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
 _FILE_SEARCH_ATTRIBUTES_PATTERN = re.compile(r",?\s*attributes:\s*\{[^}]*\}")
+_FILE_SEARCH_DOCUMENT_ID_PATTERN = re.compile(r"document_id:\s*file-\d+")
+_FILE_SEARCH_CITATION_PATTERN = re.compile(r"<\|file-\d+\|>")
 
 
 def _normalize_numeric_literal_strings(value: str) -> str:
@@ -86,11 +88,14 @@ def _normalize_numeric_literal_strings(value: str) -> str:
 def _normalize_file_search_metadata(value: str) -> str:
     """Replace non-deterministic file_search fields with placeholders for stable hashing.
 
-    Vector search scores and attribute dicts vary between runs even for identical
-    documents, which causes request hash mismatches during replay.
+    Vector search scores, attribute dicts, document IDs, and file citations vary
+    between runs even for identical documents, which causes request hash mismatches
+    during replay.
     """
     value = _FILE_SEARCH_SCORE_PATTERN.sub("score: __NORMALIZED__", value)
     value = _FILE_SEARCH_ATTRIBUTES_PATTERN.sub("", value)
+    value = _FILE_SEARCH_DOCUMENT_ID_PATTERN.sub("document_id: __NORMALIZED__", value)
+    value = _FILE_SEARCH_CITATION_PATTERN.sub("<|__NORMALIZED__|>", value)
     return value
 
 

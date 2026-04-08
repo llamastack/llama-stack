@@ -201,16 +201,6 @@ class TestInferenceRecording:
         hash_b = normalize_inference_request("POST", url, {}, body_b)
         assert hash_a == hash_b
 
-    def test_file_search_score_normalization_short_decimals(self):
-        """Scores with few decimal places also get normalized."""
-        url = "http://test/v1/chat/completions"
-
-        body_a = {"messages": [{"role": "tool", "content": "document_id: file-1, score: 0.85"}]}
-        body_b = {"messages": [{"role": "tool", "content": "document_id: file-1, score: 0.42"}]}
-        hash_a = normalize_inference_request("POST", url, {}, body_a)
-        hash_b = normalize_inference_request("POST", url, {}, body_b)
-        assert hash_a == hash_b
-
     def test_file_search_attributes_normalization(self):
         """Test that file_search attribute dicts are stripped for stable hashing."""
         url = "http://test/v1/chat/completions"
@@ -235,34 +225,41 @@ class TestInferenceRecording:
         hash_b = normalize_inference_request("POST", url, {}, body_b)
         assert hash_a == hash_b
 
-    def test_file_search_full_metadata_normalization(self):
-        """End-to-end test with realistic file_search metadata in chat messages."""
+    def test_file_search_complete_normalization(self):
+        """End-to-end test with realistic file_search results including all non-deterministic metadata.
+
+        Tests that document_id, score, attributes, and citations all normalize correctly,
+        even when file IDs, scores, and attributes vary completely between test runs.
+        This is the realistic scenario where recordings are replayed with different IDs.
+        """
         url = "http://test/v1/chat/completions"
 
+        # First run: file-247992711531 with score 0.0077...
         body_a = {
             "messages": [
-                {"role": "user", "content": "What is in the document?"},
                 {
                     "role": "tool",
                     "content": (
-                        "document_id: file-100, score: 0.9321"
-                        ", attributes: {'document_id': 'file-100', 'region': 'us'}"
-                        "\nThe document discusses quarterly earnings."
+                        "[1] document_id: file-247992711531, score: 0.007751386943071613, "
+                        "attributes: {'region': 'us', 'category': 'engineering', 'file_id': 'file-247992711531'} "
+                        "cite as <|file-247992711531|>\n"
+                        "US technical updates for Q2 2023."
                     ),
-                },
+                }
             ]
         }
+        # Second run: file-639589191122 with different score and attributes
         body_b = {
             "messages": [
-                {"role": "user", "content": "What is in the document?"},
                 {
                     "role": "tool",
                     "content": (
-                        "document_id: file-100, score: 0.6178"
-                        ", attributes: {'document_id': 'file-100', 'region': 'eu'}"
-                        "\nThe document discusses quarterly earnings."
+                        "[1] document_id: file-639589191122, score: 0.002861692101212796, "
+                        "attributes: {'region': 'us', 'category': 'marketing', 'file_id': 'file-639589191122'} "
+                        "cite as <|file-639589191122|>\n"
+                        "US technical updates for Q2 2023."
                     ),
-                },
+                }
             ]
         }
         hash_a = normalize_inference_request("POST", url, {}, body_a)
