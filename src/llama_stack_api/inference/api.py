@@ -17,7 +17,6 @@ from .models import (
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionChunkWithReasoning,
     OpenAIChatCompletionRequestWithExtraBody,
-    OpenAIChatCompletionWithReasoning,
     OpenAICompletion,
     OpenAICompletionRequestWithExtraBody,
     OpenAICompletionWithInputMessages,
@@ -69,14 +68,14 @@ class InferenceProvider(Protocol):
     async def openai_chat_completions_with_reasoning(
         self,
         params: OpenAIChatCompletionRequestWithExtraBody,
-    ) -> OpenAIChatCompletionWithReasoning | AsyncIterator[OpenAIChatCompletionChunkWithReasoning]:
+    ) -> AsyncIterator[OpenAIChatCompletionChunkWithReasoning]:
         """Chat completion with reasoning token extraction.
 
         Internal method used by the Responses implementation when reasoning
         is requested. Returns internal wrapper types that carry reasoning
         alongside the CC response:
-        - OpenAIChatCompletionWithReasoning (non-streaming)
         - AsyncIterator[OpenAIChatCompletionChunkWithReasoning] (streaming)
+        (NOTE: OpenAIChatCompletionWithReasoning return type for non-streaming is not added)
         These are defined in llama_stack_api.inference.models.
 
         Default raises NotImplementedError so unsupported providers fail
