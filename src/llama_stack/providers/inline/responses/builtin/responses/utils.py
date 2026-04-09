@@ -654,13 +654,7 @@ def should_summarize_reasoning(reasoning: OpenAIResponseReasoning | None) -> boo
 
 
 def build_summary_prompt(reasoning_text: str, summary_mode: str) -> str:
-    """Build the prompt for the reasoning summarization inference call.
-
-    "concise" targets a 1-2 sentence distillation — enough for a log line or
-    tooltip without scrolling through the full chain-of-thought.
-    "detailed" preserves the logical skeleton so developers can audit *why*
-    the model reached its conclusion without reading raw stream-of-consciousness.
-    """
+    """Build the prompt for the reasoning summarization inference call."""
     if summary_mode == "detailed":
         return (
             "Summarize the following chain-of-thought reasoning. "
@@ -685,29 +679,9 @@ async def summarize_reasoning(
     start_sequence_number: int,
     usage_chunks: list[OpenAIChatCompletionChunk] | None = None,
 ) -> AsyncIterator[OpenAIResponseObjectStream]:
-    """Make a second inference call to summarize reasoning content.
-
-    Yields streaming summary events with properly sequenced sequence_numbers,
-    matching the OpenAI Responses API event lifecycle:
-
-        PartAdded  -> TextDelta * N -> TextDone -> PartDone
-        (repeat for each summary part with incrementing summary_index)
-
-    The summary text is split into multiple parts on paragraph boundaries
-    (double newlines) so that each logical section of the summary gets its
-    own event block, matching OpenAI's multi-part summary behavior.
-
-    The caller should update its own sequence_number by reading the last
-    yielded event's sequence_number.
-
-    If ``usage_chunks`` is provided, raw streaming chunks that carry usage
-    data are appended to it so the caller can fold them into the response
-    usage totals.
-    """
+    """Make a second inference call to summarize reasoning content."""
     prompt_text = build_summary_prompt(reasoning_text, summary_mode)
 
-    # Low temperature to produce faithful, deterministic summaries rather than
-    # creative reinterpretations of the reasoning trace.
     summary_params = OpenAIChatCompletionRequestWithExtraBody(
         model=model,
         messages=[
@@ -730,9 +704,6 @@ async def summarize_reasoning(
     if not isinstance(summary_result, AsyncIterator):
         return
 
-    # Collect the full summary text first, then split into parts.
-    # This avoids mid-stream paragraph detection complexity while
-    # still producing the correct multi-part event sequence.
     full_text_parts: list[str] = []
     async for chunk in summary_result:
         if usage_chunks is not None and chunk.usage:
@@ -746,8 +717,6 @@ async def summarize_reasoning(
 
     full_text = "".join(full_text_parts)
 
-    # Split into logical parts on paragraph boundaries (double newlines).
-    # Each part becomes its own PartAdded/TextDelta/TextDone/PartDone block.
     raw_paragraphs = full_text.split("\n\n")
     paragraphs = [p for p in raw_paragraphs if p.strip()]
     if not paragraphs:
