@@ -18,12 +18,12 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 91.0% |
+| **Overall Conformance Score** | 91.2% |
 | **Endpoints Implemented** | 29/146 |
 | **Total Properties Checked** | 3441 |
-| **Schema/Type Issues** | 199 |
+| **Schema/Type Issues** | 193 |
 | **Missing Properties** | 110 |
-| **Total Issues to Fix** | 309 |
+| **Total Issues to Fix** | 303 |
 
 ## Integration Test Coverage
 
@@ -51,9 +51,9 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Models | 66.7% | 15 | 0 | 5 |
 | Embeddings | 78.6% | 14 | 3 | 0 |
 | Vector stores | 81.9% | 310 | 44 | 12 |
-| Responses | 84.9% | 225 | 34 | 0 |
-| Chat | 98.3% | 403 | 6 | 1 |
-| Conversations | 98.8% | 2165 | 22 | 4 |
+| Responses | 85.8% | 225 | 32 | 0 |
+| Chat | 98.5% | 403 | 5 | 1 |
+| Conversations | 98.9% | 2165 | 19 | 4 |
 
 ## Missing Endpoints
 
@@ -856,14 +856,14 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Responses
 
-**Score:** 84.9% · **Issues:** 34 · **Missing:** 0
+**Score:** 85.8% · **Issues:** 32 · **Missing:** 0
 
 #### `/responses`
 
 **POST**
 
 <details>
-<summary>Schema Issues (30)</summary>
+<summary>Schema Issues (29)</summary>
 
 | Property | Issues | Tested |
 |----------|--------|--------|
@@ -883,7 +883,6 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `responses.200.content.application/json.properties.frequency_penalty` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2 | No |
 | `responses.200.content.application/json.properties.incomplete_details` | Union variants added: 1; Union variants removed: 1 | Yes |
 | `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | Yes |
-| `responses.200.content.application/json.properties.object` | Default changed: response -&gt; None | No |
 | `responses.200.content.application/json.properties.output.items` | Union variants added: 8; Union variants removed: 4 | Yes |
 | `responses.200.content.application/json.properties.parallel_tool_calls` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: None -&gt; True | Yes |
 | `responses.200.content.application/json.properties.presence_penalty` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2 | No |
@@ -905,20 +904,19 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **POST**
 
 <details>
-<summary>Schema Issues (4)</summary>
+<summary>Schema Issues (3)</summary>
 
 | Property | Issues | Tested |
 |----------|--------|--------|
 | `requestBody.content.application/json.properties.input` | Union variants added: 2; Union variants removed: 1 | Yes |
 | `requestBody.content.application/json.properties.model` | Type added: ['string']; Union variants removed: 3 | Yes |
-| `responses.200.content.application/json.properties.object` | Default changed: response.compaction -&gt; None | No |
 | `responses.200.content.application/json.properties.output.items` | Union variants added: 4 | Yes |
 
 </details>
 
 ### Chat
 
-**Score:** 98.3% · **Issues:** 6 · **Missing:** 1
+**Score:** 98.5% · **Issues:** 5 · **Missing:** 1
 
 #### `/chat/completions`
 
@@ -932,12 +930,11 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 </details>
 
 <details>
-<summary>Schema Issues (2)</summary>
+<summary>Schema Issues (1)</summary>
 
 | Property | Issues |
 |----------|--------|
 | `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.tool_calls.items` | Union variants added: 2 |
-| `responses.200.content.application/json.properties.object` | Default changed: list -&gt; None |
 
 </details>
 
@@ -969,20 +966,19 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Conversations
 
-**Score:** 98.8% · **Issues:** 22 · **Missing:** 4
+**Score:** 98.9% · **Issues:** 19 · **Missing:** 4
 
 #### `/conversations`
 
 **POST**
 
 <details>
-<summary>Schema Issues (3)</summary>
+<summary>Schema Issues (2)</summary>
 
 | Property | Issues | Tested |
 |----------|--------|--------|
 | `requestBody.content.application/json.properties.metadata` | Union variants added: 1; Union variants removed: 1 | Yes |
 | `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | Yes |
-| `responses.200.content.application/json.properties.object` | Default changed: conversation -&gt; None | No |
 
 </details>
 
@@ -1003,25 +999,23 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **GET**
 
 <details>
-<summary>Schema Issues (2)</summary>
+<summary>Schema Issues (1)</summary>
 
 | Property | Issues | Tested |
 |----------|--------|--------|
 | `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | Yes |
-| `responses.200.content.application/json.properties.object` | Default changed: conversation -&gt; None | No |
 
 </details>
 
 **POST**
 
 <details>
-<summary>Schema Issues (3)</summary>
+<summary>Schema Issues (2)</summary>
 
 | Property | Issues | Tested |
 |----------|--------|--------|
 | `requestBody.content.application/json.properties.metadata` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 | Yes |
 | `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | Yes |
-| `responses.200.content.application/json.properties.object` | Default changed: conversation -&gt; None | No |
 
 </details>
 

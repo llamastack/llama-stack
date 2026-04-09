@@ -127,10 +127,10 @@
       ]
     },
     "conformance": {
-      "score": 91.0,
-      "issues": 199,
+      "score": 91.2,
+      "issues": 193,
       "missing_properties": 110,
-      "total_problems": 309,
+      "total_problems": 303,
       "total_properties": 3441
     }
   },
@@ -700,8 +700,8 @@
       ]
     },
     "Chat": {
-      "score": 98.3,
-      "issues": 6,
+      "score": 98.5,
+      "issues": 5,
       "missing_properties": 1,
       "total_properties": 403,
       "endpoints": [
@@ -719,16 +719,10 @@
                   "details": [
                     "Union variants added: 2"
                   ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.object",
-                  "details": [
-                    "Default changed: list -> None"
-                  ]
                 }
               ],
               "missing_count": 1,
-              "issues_count": 2
+              "issues_count": 1
             },
             {
               "method": "POST",
@@ -950,8 +944,8 @@
       ]
     },
     "Conversations": {
-      "score": 98.8,
-      "issues": 22,
+      "score": 98.9,
+      "issues": 19,
       "missing_properties": 4,
       "total_properties": 2165,
       "endpoints": [
@@ -974,16 +968,10 @@
                   "details": [
                     "Union variants added: 2"
                   ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.object",
-                  "details": [
-                    "Default changed: conversation -> None"
-                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 3
+              "issues_count": 2
             }
           ]
         },
@@ -1019,16 +1007,10 @@
                   "details": [
                     "Union variants added: 2"
                   ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.object",
-                  "details": [
-                    "Default changed: conversation -> None"
-                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 2
+              "issues_count": 1
             },
             {
               "method": "POST",
@@ -1047,16 +1029,10 @@
                   "details": [
                     "Union variants added: 2"
                   ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.object",
-                  "details": [
-                    "Default changed: conversation -> None"
-                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 3
+              "issues_count": 2
             }
           ]
         },
@@ -1496,8 +1472,8 @@
       ]
     },
     "Responses": {
-      "score": 84.9,
-      "issues": 34,
+      "score": 85.8,
+      "issues": 32,
       "missing_properties": 0,
       "total_properties": 225,
       "endpoints": [
@@ -1624,12 +1600,6 @@
                   ]
                 },
                 {
-                  "property": "POST.responses.200.content.application/json.properties.object",
-                  "details": [
-                    "Default changed: response -> None"
-                  ]
-                },
-                {
                   "property": "POST.responses.200.content.application/json.properties.output.items",
                   "details": [
                     "Union variants added: 8",
@@ -1727,7 +1697,7 @@
                 }
               ],
               "missing_count": 0,
-              "issues_count": 30
+              "issues_count": 29
             }
           ]
         },
@@ -1753,12 +1723,6 @@
                   ]
                 },
                 {
-                  "property": "POST.responses.200.content.application/json.properties.object",
-                  "details": [
-                    "Default changed: response.compaction -> None"
-                  ]
-                },
-                {
                   "property": "POST.responses.200.content.application/json.properties.output.items",
                   "details": [
                     "Union variants added: 4"
@@ -1766,7 +1730,7 @@
                 }
               ],
               "missing_count": 0,
-              "issues_count": 4
+              "issues_count": 3
             }
           ]
         }

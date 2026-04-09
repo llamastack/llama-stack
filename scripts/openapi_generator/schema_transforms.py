@@ -359,20 +359,52 @@ def _add_titles_to_unions(obj: Any, parent_key: str | None = None) -> None:
             _add_titles_to_unions(item, parent_key)
 
 
+def _restore_const_enum_defaults(openapi_schema: dict[str, Any]) -> None:
+    """Restore defaults on single-value enum ``object`` fields where the OpenAI spec expects them.
+
+    ``_convert_standalone_const_to_enum`` strips all defaults from single-value
+    enums because most OpenAI schemas omit them.  A handful of schemas (Conversations,
+    Responses, Compact, Chat list) DO include a default on their ``object`` field.
+    This function adds the default back for those specific schemas so the conformance
+    checker doesn't flag them as mismatches.
+    """
+    schemas = openapi_schema.get("components", {}).get("schemas", {})
+
+    # Mapping of our schema name → property name → expected default value.
+    # These correspond to OpenAI schemas that have explicit defaults on
+    # single-value enum fields (verified against openai-spec-2.3.0.yml).
+    _defaults_to_restore: dict[str, dict[str, str]] = {
+        "Conversation": {"object": "conversation"},
+        "ListOpenAIChatCompletionResponse": {"object": "list"},
+        "OpenAICompactedResponse": {"object": "response.compaction"},
+        "OpenAIResponseObject": {"object": "response"},
+        "OpenAIResponseObjectWithInput": {"object": "response"},
+    }
+
+    for schema_name, props_to_fix in _defaults_to_restore.items():
+        schema_def = schemas.get(schema_name)
+        if not isinstance(schema_def, dict) or "properties" not in schema_def:
+            continue
+        for prop_name, default_val in props_to_fix.items():
+            prop = schema_def["properties"].get(prop_name)
+            if isinstance(prop, dict) and "enum" in prop and prop["enum"] == [default_val] and "default" not in prop:
+                prop["default"] = default_val
+
+
 def _convert_standalone_const_to_enum(obj: Any) -> None:
     """Convert standalone const values to single-value enums to match OpenAI spec style.
 
     Converts: {const: "value", type: "string", default: "value"}
     To:       {enum: ["value"], type: "string"}
 
-    OpenAI uses enum with a single value rather than const. Defaults are removed
-    for single-value enums since they are redundant (only one value is valid).
+    OpenAI uses enum with a single value rather than const. Defaults are stripped
+    because most OpenAI schemas omit defaults on single-value enums.  Schemas that
+    need a default restored are handled individually in ``_fix_schema_issues``.
     """
     if isinstance(obj, dict):
         if "const" in obj and "anyOf" not in obj:
             const_val = obj.pop("const")
             obj["enum"] = [const_val]
-            # Remove default if it matches the const value (redundant for single-value enum)
             if "default" in obj and obj["default"] == const_val:
                 del obj["default"]
 
@@ -846,6 +878,11 @@ def _fix_schema_issues(openapi_schema: dict[str, Any]) -> dict[str, Any]:
 
     # Convert anyOf with const values to enums across the entire schema
     _convert_anyof_const_to_enum(openapi_schema)
+
+    # Restore defaults on single-value enums where the OpenAI spec expects them.
+    # _convert_standalone_const_to_enum strips all defaults; these specific schemas
+    # need them back to match the reference spec (e.g. CompactResource.object).
+    _restore_const_enum_defaults(openapi_schema)
 
     # Align tool call schemas with OpenAI's spec BEFORE inlining (inlining copies schema content).
     if "components" in openapi_schema and "schemas" in openapi_schema["components"]:
