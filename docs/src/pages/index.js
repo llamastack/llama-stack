@@ -89,24 +89,24 @@ const Icons = {
 };
 
 const OPENAI_ENDPOINTS = [
-  { icon: Icons.chat, label: 'Chat Completions', path: '/v1/chat/completions', desc: 'Chat and text completion endpoints' },
-  { icon: Icons.zap, label: 'Responses', path: '/v1/responses', desc: 'Agentic orchestration with tool calling and MCP' },
-  { icon: Icons.layers, label: 'Embeddings', path: '/v1/embeddings', desc: 'Text embeddings from any provider' },
-  { icon: Icons.database, label: 'Vector Stores', path: '/v1/vector_stores', desc: 'Document storage and semantic search' },
-  { icon: Icons.shield, label: 'Moderations', path: '/v1/moderations', desc: 'Content moderation and safety shields' },
-  { icon: Icons.file, label: 'Files', path: '/v1/files', desc: 'File upload, processing, and extraction' },
-  { icon: Icons.stack, label: 'Batches', path: '/v1/batches', desc: 'Async batch processing at scale' },
-  { icon: Icons.conversation, label: 'Conversations', path: '/v1/conversations', desc: 'Multi-turn conversation state and history' },
-  { icon: Icons.cpu, label: 'Models', path: '/v1/models', desc: 'Model discovery and management' },
+  { icon: Icons.chat, label: 'Chat Completions', path: '/v1/chat/completions', desc: 'Chat and text completion endpoints', link: '/docs/api/inference' },
+  { icon: Icons.zap, label: 'Responses', path: '/v1/responses', desc: 'Agentic orchestration with tool calling and MCP', link: '/docs/api/inference' },
+  { icon: Icons.layers, label: 'Embeddings', path: '/v1/embeddings', desc: 'Text embeddings from any provider', link: '/docs/api/inference' },
+  { icon: Icons.database, label: 'Vector Stores', path: '/v1/vector_stores', desc: 'Document storage and semantic search', link: '/docs/api/vector-io' },
+  { icon: Icons.shield, label: 'Moderations', path: '/v1/moderations', desc: 'Content moderation and safety shields', link: '/docs/api/safety' },
+  { icon: Icons.file, label: 'Files', path: '/v1/files', desc: 'File upload, processing, and extraction', link: '/docs/api/files' },
+  { icon: Icons.stack, label: 'Batches', path: '/v1/batches', desc: 'Async batch processing at scale', link: '/docs/api/batches' },
+  { icon: Icons.conversation, label: 'Conversations', path: '/v1/conversations', desc: 'Multi-turn conversation state and history', link: '/docs/api/conversations' },
+  { icon: Icons.cpu, label: 'Models', path: '/v1/models', desc: 'Model discovery and management', link: '/docs/api/models' },
 ];
 
 const ANTHROPIC_ENDPOINTS = [
-  { icon: Icons.message, label: 'Messages API', path: '/v1/messages', desc: 'Chat completions with native Anthropic format' },
+  { icon: Icons.message, label: 'Messages API', path: '/v1/messages', desc: 'Chat completions with native Anthropic format', link: '/docs/api-openai/anthropic_messages' },
 ];
 
 const NATIVE_ENDPOINTS = [
-  { icon: Icons.plug, label: 'Connectors', path: '/v1/connectors', desc: 'External connectors like MCP servers' },
-  { icon: Icons.zap, label: 'Tools', path: '/v1/tools', desc: 'Tool discovery and runtime invocation' },
+  { icon: Icons.plug, label: 'Connectors', path: '/v1/connectors', desc: 'External connectors like MCP servers', link: '/docs/api-experimental' },
+  { icon: Icons.zap, label: 'Tools', path: '/v1/tools', desc: 'Tool discovery and runtime invocation', link: '/docs/api/list-tools-v-1-tools-get' },
 ];
 
 const PROVIDERS = {
@@ -313,7 +313,7 @@ function Hero() {
             <Link className={styles.primaryBtn} to="/docs/getting_started/quickstart">
               Get Started <span className={styles.btnArrow}>{Icons.arrow}</span>
             </Link>
-            <Link className={styles.secondaryBtn} to="/docs/api-openai">API Reference</Link>
+            <Link className={styles.secondaryBtn} to="/docs/api-overview">API Reference</Link>
             <a className={styles.ghostBtn} href="https://github.com/llamastack/llama-stack" target="_blank" rel="noopener noreferrer">{Icons.github} GitHub</a>
           </div>
           <CodeTabs />
@@ -377,12 +377,14 @@ function StatsRibbon() {
 function EndpointCard({endpoint}) {
   return (
     <div className={styles.card}>
-      <div className={styles.cardTop}>
-        <div className={styles.cardIcon}>{endpoint.icon}</div>
-        <code className={styles.path}>{endpoint.path}</code>
-      </div>
-      <h3>{endpoint.label}</h3>
-      <p>{endpoint.desc}</p>
+      <Link to={endpoint.link} className={styles.cardLink}>
+        <div className={styles.cardTop}>
+          <div className={styles.cardIcon}>{endpoint.icon}</div>
+          <code className={styles.path}>{endpoint.path}</code>
+        </div>
+        <h3>{endpoint.label}</h3>
+        <p>{endpoint.desc}</p>
+      </Link>
     </div>
   );
 }
@@ -483,7 +485,7 @@ function Community() {
 
 export default function Home() {
   return (
-    <Layout title="OpenAI + Anthropic Compatible AI Server" description="OpenAI and Anthropic compatible API server. Any model, any infrastructure.">
+    <Layout title="OpenAI + Anthropic Compatible AI Server" description="OpenAI and Anthropic compatible API server. Any model, any infrastructure. Your data.">
       <main>
         <Hero />
         <ProviderStrip />

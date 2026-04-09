@@ -85,8 +85,9 @@ def generate_openapi_spec(output_dir: str) -> dict[str, Any]:
     # Extract duplicate union types to shared schema references
     openapi_schema = schema_transforms._extract_duplicate_union_types(openapi_schema)
 
-    # Add OpenAI Python client code samples to OpenAI-compatible endpoints
+    # Add SDK code samples to API endpoints
     openapi_schema = code_samples._add_openai_code_samples(openapi_schema)
+    openapi_schema = code_samples._add_anthropic_code_samples(openapi_schema)
 
     # Split into stable (v1 only), experimental (v1alpha + v1beta), deprecated, and combined (stainless) specs
     # Each spec needs its own deep copy of the full schema to avoid cross-contamination
