@@ -1,5 +1,4 @@
 ---
-description: 6 tool runtime providers for search, MCP, and custom tool execution
 sidebar_label: Tool Runtime
 title: Tool Runtime
 ---
@@ -7,22 +6,5 @@ title: Tool Runtime
 # Tool Runtime
 
 ## Overview
-
-Llama Stack supports 6 tool runtime providers. These give the Responses API access to external capabilities: web search, document search, MCP servers, and custom functions.
-
-When a model running on the Responses API decides to call a tool, the server dispatches to the appropriate tool runtime provider, executes the tool, and feeds the result back to the model. Your application doesn't manage the tool-call loop.
-
-## Providers
-
-| Provider | Type | Description |
-|----------|------|-------------|
-| File Search (RAG) | inline | Searches vector stores for relevant documents |
-| Brave Search | remote | Real-time web search via Brave |
-| Bing Search | remote | Microsoft Bing web search |
-| Tavily Search | remote | AI-optimized web search |
-| Wolfram Alpha | remote | Computational knowledge engine |
-| MCP (Model Context Protocol) | remote | Connect any MCP-compatible tool server |
-
-MCP support means any tool exposed via the Model Context Protocol is available to the Responses API. This includes file system access, database queries, API integrations, and custom tools built by your team.
 
 This section contains documentation for all available providers for the **tool_runtime** API.

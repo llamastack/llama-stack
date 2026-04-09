@@ -1,32 +1,10 @@
 ---
-description: 15 vector store providers for document storage and semantic search
-sidebar_label: Vector IO
-title: Vector IO
+sidebar_label: Vector Io
+title: Vector Io
 ---
 
-# Vector IO
+# Vector Io
 
 ## Overview
-
-Llama Stack supports 15 vector store providers for document storage and semantic search. These back the `/v1/vector_stores` API, which is OpenAI-compatible.
-
-Vector stores are used by the Responses API's `file_search` tool to implement RAG (retrieval-augmented generation). Upload documents via the Files API, index them in a vector store, and the Responses engine searches them automatically during tool calling.
-
-## Providers
-
-| Provider | Type | Description |
-|----------|------|-------------|
-| FAISS | inline | In-process vector search via Facebook AI Similarity Search |
-| SQLite-vec | inline | Lightweight vector search backed by SQLite |
-| ChromaDB | inline / remote | Open-source embedding database |
-| Qdrant | inline / remote | High-performance vector database |
-| Milvus | inline / remote | Scalable vector database for production |
-| PGVector | remote | PostgreSQL vector extension |
-| Weaviate | remote | Vector database with built-in ML models |
-| Elasticsearch | remote | Full-text and vector search |
-| Infinispan | remote | Distributed in-memory data grid |
-| OCI | remote | Oracle Cloud Infrastructure vector search |
-
-Note: vector stores are pinned to their provider at registration time. There is no automatic migration between providers. "Develop with FAISS, deploy with Qdrant" works, but you re-index rather than migrate data.
 
 This section contains documentation for all available providers for the **vector_io** API.

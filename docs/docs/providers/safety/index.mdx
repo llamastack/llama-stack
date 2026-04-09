@@ -1,5 +1,8 @@
 ---
-description: 7 safety providers for content moderation and guardrails
+description: |
+  Safety API for content moderation and safety shields.
+
+  OpenAI-compatible Moderations API with additional shield capabilities.
 sidebar_label: Safety
 title: Safety
 ---
@@ -8,20 +11,8 @@ title: Safety
 
 ## Overview
 
-Llama Stack supports 7 safety providers for content moderation and guardrails. These back the `/v1/moderations` endpoint (OpenAI-compatible) and the native `safety/run-shield` API.
+Safety API for content moderation and safety shields.
 
-Safety providers run as part of the server process. The Responses API can be configured to run safety checks on both inputs and outputs automatically, without your application code needing to handle moderation logic.
-
-## Providers
-
-| Provider | Type | Description |
-|----------|------|-------------|
-| Llama Guard | inline | Meta's Llama Guard content safety model |
-| Prompt Guard | inline | Prompt injection detection |
-| Code Scanner | inline | Scans generated code for security issues |
-| AWS Bedrock Guardrails | remote | Amazon Bedrock safety guardrails |
-| NVIDIA NeMo Guardrails | remote | NVIDIA safety service |
-| SambaNova | remote | SambaNova safety service |
-| Passthrough | remote | Generic safety endpoint |
+OpenAI-compatible Moderations API with additional shield capabilities.
 
 This section contains documentation for all available providers for the **safety** API.

@@ -1,5 +1,13 @@
 ---
-description: 23 inference providers for LLM completions, embeddings, and reranking
+description: |
+  Inference
+
+  Llama Stack Inference API for generating completions, chat completions, and embeddings.
+
+  This API provides the raw interface to the underlying models. Three kinds of models are supported:
+  - LLM models: these models generate "raw" and "chat" (conversational) completions.
+  - Embedding models: these models generate embeddings to be used for semantic search.
+  - Rerank models: these models reorder the documents based on their relevance to a query.
 sidebar_label: Inference
 title: Inference
 ---
@@ -8,41 +16,13 @@ title: Inference
 
 ## Overview
 
-Llama Stack supports 23 inference providers. Develop locally with Ollama, deploy to production with vLLM, or connect to a managed service. The API stays the same.
+Inference
 
-Three kinds of models are supported:
-- **LLM models**: generate chat and text completions
-- **Embedding models**: generate vector embeddings for semantic search
-- **Rerank models**: reorder documents by relevance to a query
+Llama Stack Inference API for generating completions, chat completions, and embeddings.
 
-## Providers
-
-| Provider | Type | Description |
-|----------|------|-------------|
-| Ollama | remote | Local inference via Ollama |
-| vLLM | remote | High-throughput serving with vLLM |
-| OpenAI | remote | OpenAI API |
-| Anthropic | remote | Anthropic Claude models |
-| AWS Bedrock | remote | Amazon Bedrock managed inference |
-| Azure OpenAI | remote | Azure-hosted OpenAI models |
-| Google Gemini | remote | Google Gemini models |
-| Google Vertex AI | remote | Google Cloud Vertex AI |
-| NVIDIA NIM | remote | NVIDIA inference microservices |
-| Fireworks | remote | Fireworks AI inference |
-| Together AI | remote | Together AI inference |
-| Groq | remote | Groq hardware-accelerated inference |
-| SambaNova | remote | SambaNova inference |
-| Cerebras | remote | Cerebras wafer-scale inference |
-| WatsonX | remote | IBM WatsonX AI |
-| Databricks | remote | Databricks Model Serving |
-| OCI | remote | Oracle Cloud Infrastructure |
-| RunPod | remote | RunPod serverless inference |
-| llama-cpp-server | remote | llama.cpp HTTP server |
-| Passthrough | remote | Generic OpenAI-compatible endpoint |
-| OpenAI-compat | remote | Any OpenAI-compatible API |
-| Sentence Transformers | inline | In-process sentence-transformers embeddings |
-| Transformers | inline | In-process HuggingFace transformers |
-
-Swap between any of these by changing the server configuration. Your application code doesn't change.
+This API provides the raw interface to the underlying models. Three kinds of models are supported:
+- LLM models: these models generate "raw" and "chat" (conversational) completions.
+- Embedding models: these models generate embeddings to be used for semantic search.
+- Rerank models: these models reorder the documents based on their relevance to a query.
 
 This section contains documentation for all available providers for the **inference** API.
