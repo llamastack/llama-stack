@@ -56,7 +56,7 @@ def create_tool_metric_attributes(
     Args:
         tool_group: Tool group ID (e.g., "websearch", "rag_tool", "custom_tools")
         tool_name: Specific tool name (e.g., "brave-search", "web_search")
-        provider: Provider ID (e.g., "brave-search::impl", "rag-runtime::impl")
+        provider: Provider ID (e.g., "brave-search::impl", "file-search::impl")
         status: Request outcome ("success", "error")
 
     Returns:

@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import warnings
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any, Literal, Self
@@ -20,22 +21,13 @@ from llama_stack.core.storage.datatypes import (
 from llama_stack.log import LoggingConfig
 from llama_stack_api import (
     Api,
-    Benchmark,
-    BenchmarkInput,
     ConnectorInput,
-    Dataset,
-    DatasetInput,
-    DatasetIO,
-    Eval,
     Inference,
     Model,
     ModelInput,
     ProviderSpec,
     Resource,
     Safety,
-    Scoring,
-    ScoringFn,
-    ScoringFnInput,
     Shield,
     ShieldInput,
     ToolGroup,
@@ -54,11 +46,15 @@ RoutingKey = str | list[str]
 
 
 class RegistryEntrySource(StrEnum):
+    """Source of a registry entry, distinguishing user-registered from provider-listed resources."""
+
     via_register_api = "via_register_api"
     listed_from_provider = "listed_from_provider"
 
 
 class User(BaseModel):
+    """An authenticated user with a principal identity and optional access control attributes."""
+
     principal: str
     # further attributes that may be used for access control decisions
     attributes: dict[str, list[str]] | None = None
@@ -77,51 +73,43 @@ class ResourceWithOwner(Resource):
 
 # Use the extended Resource for all routable objects
 class ModelWithOwner(Model, ResourceWithOwner):
+    """A Model resource extended with ownership information for access control."""
+
     pass
 
 
 class ShieldWithOwner(Shield, ResourceWithOwner):
+    """A Shield resource extended with ownership information for access control."""
+
     pass
 
 
 class VectorStoreWithOwner(VectorStore, ResourceWithOwner):
-    pass
+    """A VectorStore resource extended with ownership information for access control."""
 
-
-class DatasetWithOwner(Dataset, ResourceWithOwner):
-    pass
-
-
-class ScoringFnWithOwner(ScoringFn, ResourceWithOwner):
-    pass
-
-
-class BenchmarkWithOwner(Benchmark, ResourceWithOwner):
     pass
 
 
 class ToolGroupWithOwner(ToolGroup, ResourceWithOwner):
+    """A ToolGroup resource extended with ownership information for access control."""
+
     pass
 
 
-RoutableObject = Model | Shield | VectorStore | Dataset | ScoringFn | Benchmark | ToolGroup
+RoutableObject = Model | Shield | VectorStore | ToolGroup
 
 RoutableObjectWithProvider = Annotated[
-    ModelWithOwner
-    | ShieldWithOwner
-    | VectorStoreWithOwner
-    | DatasetWithOwner
-    | ScoringFnWithOwner
-    | BenchmarkWithOwner
-    | ToolGroupWithOwner,
+    ModelWithOwner | ShieldWithOwner | VectorStoreWithOwner | ToolGroupWithOwner,
     Field(discriminator="type"),
 ]
 
-RoutedProtocol = Inference | Safety | VectorIO | DatasetIO | Scoring | Eval | ToolRuntime
+RoutedProtocol = Inference | Safety | VectorIO | ToolRuntime
 
 
 # Example: /inference, /safety
 class AutoRoutedProviderSpec(ProviderSpec):
+    """Provider spec for automatically routed APIs like inference and safety that delegate to a routing table."""
+
     provider_type: str = "router"
     config_class: str = ""
 
@@ -135,6 +123,8 @@ class AutoRoutedProviderSpec(ProviderSpec):
 
 # Example: /models, /shields
 class RoutingTableProviderSpec(ProviderSpec):
+    """Provider spec for routing table APIs like models and shields that manage resource registries."""
+
     provider_type: str = "routing_table"
     config_class: str = ""
     container_image: str | None = None
@@ -145,6 +135,8 @@ class RoutingTableProviderSpec(ProviderSpec):
 
 
 class Provider(BaseModel):
+    """A configured provider instance with its type, identifier, and configuration."""
+
     # provider_id of None means that the provider is not enabled - this happens
     # when the provider is enabled via a conditional environment variable
     provider_id: str | None
@@ -163,6 +155,8 @@ class Provider(BaseModel):
 
 
 class BuildProvider(BaseModel):
+    """A provider specification used during distribution build, containing just the type and optional module."""
+
     provider_type: str
     module: str | None = Field(
         default=None,
@@ -177,6 +171,8 @@ class BuildProvider(BaseModel):
 
 
 class DistributionSpec(BaseModel):
+    """Specification defining a distribution's providers and container image."""
+
     description: str | None = Field(
         default="",
         description="Description of the distribution",
@@ -193,6 +189,8 @@ class DistributionSpec(BaseModel):
 
 
 class OAuth2JWKSConfig(BaseModel):
+    """Configuration for OAuth2 JSON Web Key Set (JWKS) key retrieval."""
+
     # The JWKS URI for collecting public keys
     uri: str
     token: str | None = Field(default=None, description="token to authorise access to jwks")
@@ -200,6 +198,8 @@ class OAuth2JWKSConfig(BaseModel):
 
 
 class OAuth2IntrospectionConfig(BaseModel):
+    """Configuration for OAuth2 token introspection endpoint (RFC 7662)."""
+
     url: str
     client_id: str
     client_secret: str
@@ -344,6 +344,8 @@ class AuthenticationConfig(BaseModel):
 
 
 class AuthenticationRequiredError(Exception):
+    """Raised when a request requires authentication but none was provided."""
+
     pass
 
 
@@ -353,6 +355,13 @@ class QualifiedModel(BaseModel):
     provider_id: str
     model_id: str
     embedding_dimensions: int | None = None
+
+
+class RerankerModel(BaseModel):
+    """A model identifier of a reranker model, consisting of a provider ID and a model ID."""
+
+    provider_id: str
+    model_id: str
 
 
 class RewriteQueryParams(BaseModel):
@@ -403,11 +412,11 @@ class FileSearchParams(BaseModel):
     """Configuration for file search tool output formatting."""
 
     header_template: str = Field(
-        default="knowledge_search tool found {num_chunks} chunks:\nBEGIN of knowledge_search tool results.\n",
+        default="file_search tool found {num_chunks} chunks:\nBEGIN of file_search tool results.\n",
         description="Template for the header text shown before search results. Available placeholders: {num_chunks} number of chunks found.",
     )
     footer_template: str = Field(
-        default="END of knowledge_search tool results.\n",
+        default="END of file_search tool results.\n",
         description="Template for the footer text shown after search results.",
     )
 
@@ -418,10 +427,8 @@ class FileSearchParams(BaseModel):
             raise ValueError("header_template must not be empty")
         if "{num_chunks}" not in v:
             raise ValueError("header_template must contain {num_chunks} placeholder")
-        if "knowledge_search" not in v.lower():
-            raise ValueError(
-                "header_template must contain 'knowledge_search' keyword to ensure proper tool identification"
-            )
+        if "file_search" not in v.lower():
+            raise ValueError("header_template must contain 'file_search' keyword to ensure proper tool identification")
         return v
 
 
@@ -531,6 +538,10 @@ class ChunkRetrievalParams(BaseModel):
         default=0.5,
         description="Alpha weight for weighted search reranking (0.0-1.0)",
     )
+    default_search_mode: str = Field(
+        default="vector",
+        description="Default search mode: 'vector', 'keyword', or 'hybrid'",
+    )
 
 
 class FileBatchParams(BaseModel):
@@ -589,6 +600,10 @@ class VectorStoresConfig(BaseModel):
         default=None,
         description="Default embedding model configuration for vector stores.",
     )
+    default_reranker_model: RerankerModel | None = Field(
+        default=None,
+        description="Default reranker model configuration for vector stores.",
+    )
     rewrite_query_params: RewriteQueryParams | None = Field(
         default=None,
         description="Parameters for query rewriting/expansion. None disables query rewriting.",
@@ -634,10 +649,14 @@ class SafetyConfig(BaseModel):
 
 
 class QuotaPeriod(StrEnum):
+    """Time period for request quota enforcement."""
+
     DAY = "day"
 
 
 class QuotaConfig(BaseModel):
+    """Configuration for per-client request rate limiting."""
+
     kvstore: KVStoreReference = Field(description="Config for KV store backend (SQLite only for now)")
     anonymous_max_requests: int = Field(default=100, description="Max requests for unauthenticated clients per period")
     authenticated_max_requests: int = Field(
@@ -647,6 +666,8 @@ class QuotaConfig(BaseModel):
 
 
 class CORSConfig(BaseModel):
+    """Configuration for Cross-Origin Resource Sharing (CORS) headers."""
+
     allow_origins: list[str] = Field(default_factory=list)
     allow_origin_regex: str | None = Field(default=None)
     allow_methods: list[str] = Field(default=["OPTIONS"])
@@ -663,6 +684,14 @@ class CORSConfig(BaseModel):
 
 
 def process_cors_config(cors_config: bool | CORSConfig | None) -> CORSConfig | None:
+    """Convert a CORS configuration value into a resolved CORSConfig object.
+
+    Args:
+        cors_config: A boolean (True for dev defaults, False/None to disable), or a CORSConfig instance.
+
+    Returns:
+        A CORSConfig instance or None if CORS is disabled.
+    """
     if cors_config is False or cors_config is None:
         return None
 
@@ -687,13 +716,25 @@ class RegisteredResources(BaseModel):
     models: list[ModelInput] = Field(default_factory=list)
     shields: list[ShieldInput] = Field(default_factory=list)
     vector_stores: list[VectorStoreInput] = Field(default_factory=list)
-    datasets: list[DatasetInput] = Field(default_factory=list)
-    scoring_fns: list[ScoringFnInput] = Field(default_factory=list)
-    benchmarks: list[BenchmarkInput] = Field(default_factory=list)
-    tool_groups: list[ToolGroupInput] = Field(default_factory=list)
+    tool_groups: list[ToolGroupInput] = Field(default_factory=list, deprecated=True)
+
+    @model_validator(mode="after")
+    def _warn_deprecated_tool_groups(self) -> Self:
+        if self.tool_groups:
+            warnings.warn(
+                "'registered_resources.tool_groups' is deprecated and will be removed in a future release. "
+                "Built-in tool groups are now auto-registered based on configured tool_runtime providers. "
+                "Please remove 'tool_groups' from your configuration.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            self.tool_groups = []
+        return self
 
 
 class ServerConfig(BaseModel):
+    """Configuration for the HTTP(S) server including TLS, authentication, and quotas."""
+
     port: int = Field(
         default=8321,
         description="Port to listen on",
@@ -737,6 +778,8 @@ class ServerConfig(BaseModel):
 
 
 class StackConfig(BaseModel):
+    """Top-level runtime configuration for a Llama Stack distribution including providers, storage, and server settings."""
+
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
     distro_name: str | None = Field(
@@ -767,7 +810,7 @@ The list of APIs to serve. If not specified, all APIs specified in the provider_
 
     providers: dict[str, list[Provider]] = Field(
         description="""
-One or more providers to use for each API. The same provider_type (e.g., meta-reference)
+One or more providers to use for each API. The same provider_type (e.g., builtin)
 can be instantiated multiple times (with different configs) if necessary.
 """,
     )

@@ -8,78 +8,76 @@ The `llamastack/distribution-nvidia` distribution consists of the following prov
 
 | API | Provider(s) |
 |-----|-------------|
-| agents | `inline::meta-reference` |
-| datasetio | `inline::localfs`, `remote::nvidia` |
-| eval | `remote::nvidia` |
 | files | `inline::localfs` |
 | inference | `remote::nvidia` |
-| post_training | `remote::nvidia` |
+| responses | `inline::builtin` |
 | safety | `remote::nvidia` |
-| scoring | `inline::basic` |
-| tool_runtime | `inline::rag-runtime` |
+| tool_runtime | `inline::file-search` |
 | vector_io | `inline::faiss` |
 
-
-### Environment Variables
+## Environment Variables
 
 The following environment variables can be configured:
 
 - `NVIDIA_API_KEY`: NVIDIA API Key (default: ``)
+
 - `NVIDIA_APPEND_API_VERSION`: Whether to append the API version to the base_url (default: `True`)
-- `NVIDIA_DATASET_NAMESPACE`: NVIDIA Dataset Namespace (default: `default`)
-- `NVIDIA_PROJECT_ID`: NVIDIA Project ID (default: `test-project`)
-- `NVIDIA_CUSTOMIZER_URL`: NVIDIA Customizer URL (default: `https://customizer.api.nvidia.com`)
-- `NVIDIA_OUTPUT_MODEL_DIR`: NVIDIA Output Model Directory (default: `test-example-model@v1`)
+
 - `GUARDRAILS_SERVICE_URL`: URL for the NeMo Guardrails Service (default: `http://0.0.0.0:7331`)
+
 - `NVIDIA_GUARDRAILS_CONFIG_ID`: NVIDIA Guardrail Configuration ID (default: `self-check`)
-- `NVIDIA_EVALUATOR_URL`: URL for the NeMo Evaluator Service (default: `http://0.0.0.0:7331`)
+
 - `INFERENCE_MODEL`: Inference model (default: `Llama3.1-8B-Instruct`)
+
 - `SAFETY_MODEL`: Name of the model to use for safety (default: `meta/llama-3.1-8b-instruct`)
 
-
-
 ## Prerequisites
+
 ### NVIDIA API Keys
 
 Make sure you have access to a NVIDIA API Key. You can get one by visiting [https://build.nvidia.com/](https://build.nvidia.com/). Use this key for the `NVIDIA_API_KEY` environment variable.
 
 ### Deploy NeMo Microservices Platform
+
 The NVIDIA NeMo microservices platform supports end-to-end microservice deployment of a complete AI flywheel on your Kubernetes cluster through the NeMo Microservices Helm Chart. Please reference the [NVIDIA NeMo Microservices documentation](https://docs.nvidia.com/nemo/microservices/latest/about/index.html) for platform prerequisites and instructions to install and deploy the platform.
 
 ## Supported Services
+
 Each Llama Stack API corresponds to a specific NeMo microservice. The core microservices (Customizer, Evaluator, Guardrails) are exposed by the same endpoint. The platform components (Data Store) are each exposed by separate endpoints.
 
 ### Inference: NVIDIA NIM
+
 NVIDIA NIM is used for running inference with registered models. There are two ways to access NVIDIA NIMs:
-  1. Hosted (default): Preview APIs hosted at https://integrate.api.nvidia.com (Requires an API key)
+
+  1. Hosted (default): Preview APIs hosted at <https://integrate.api.nvidia.com> (Requires an API key)
   2. Self-hosted: NVIDIA NIMs that run on your own infrastructure.
 
 The deployed platform includes the NIM Proxy microservice, which is the service that provides to access your NIMs (for example, to run inference on a model). Set the `NVIDIA_BASE_URL` environment variable to use your NVIDIA NIM Proxy deployment.
 
 ### Datasetio API: NeMo Data Store
+
 The NeMo Data Store microservice serves as the default file storage solution for the NeMo microservices platform. It exposts APIs compatible with the Hugging Face Hub client (`HfApi`), so you can use the client to interact with Data Store. The `NVIDIA_DATASETS_URL` environment variable should point to your NeMo Data Store endpoint.
 
 See the [NVIDIA Datasetio docs](https://github.com/meta-llama/llama-stack/blob/main/llama_stack/providers/remote/datasetio/nvidia/README.md) for supported features and example usage.
 
 ### Eval API: NeMo Evaluator
+
 The NeMo Evaluator microservice supports evaluation of LLMs. Launching an Evaluation job with NeMo Evaluator requires an Evaluation Config (an object that contains metadata needed by the job). A Llama Stack Benchmark maps to an Evaluation Config, so registering a Benchmark creates an Evaluation Config in NeMo Evaluator. The `NVIDIA_EVALUATOR_URL` environment variable should point to your NeMo Microservices endpoint.
 
 See the [NVIDIA Eval docs](https://github.com/meta-llama/llama-stack/blob/main/llama_stack/providers/remote/eval/nvidia/README.md) for supported features and example usage.
 
-### Post-Training API: NeMo Customizer
-The NeMo Customizer microservice supports fine-tuning models. You can reference [this list of supported models](https://github.com/meta-llama/llama-stack/blob/main/llama_stack/providers/remote/post_training/nvidia/models.py) that can be fine-tuned using Llama Stack. The `NVIDIA_CUSTOMIZER_URL` environment variable should point to your NeMo Microservices endpoint.
-
-See the [NVIDIA Post-Training docs](https://github.com/meta-llama/llama-stack/blob/main/llama_stack/providers/remote/post_training/nvidia/README.md) for supported features and example usage.
-
 ### Safety API: NeMo Guardrails
+
 The NeMo Guardrails microservice sits between your application and the LLM, and adds checks and content moderation to a model. The `GUARDRAILS_SERVICE_URL` environment variable should point to your NeMo Microservices endpoint.
 
 See the [NVIDIA Safety docs](https://github.com/meta-llama/llama-stack/blob/main/llama_stack/providers/remote/safety/nvidia/README.md) for supported features and example usage.
 
 ## Deploying models
+
 In order to use a registered model with the Llama Stack APIs, ensure the corresponding NIM is deployed to your environment. For example, you can use the NIM Proxy microservice to deploy `meta/llama-3.2-1b-instruct`.
 
 Note: For improved inference speeds, we need to use NIM with `fast_outlines` guided decoding system (specified in the request body). This is the default if you deployed the platform with the NeMo Microservices Helm Chart.
+
 ```sh
 # URL to NeMo NIM Proxy service
 export NEMO_URL="http://nemo.test"
@@ -104,9 +102,11 @@ curl --location "$NEMO_URL/v1/deployment/model-deployments" \
       }
    }'
 ```
+
 This NIM deployment should take approximately 10 minutes to go live. [See the docs](https://docs.nvidia.com/nemo/microservices/latest/get-started/tutorials/deploy-nims.html) for more information on how to deploy a NIM and verify it's available for inference.
 
 You can also remove a deployed NIM to free up GPU resources, if needed.
+
 ```sh
 export NEMO_URL="http://nemo.test"
 
@@ -157,7 +157,9 @@ docker run \
 **Note**: The run configuration must be mounted into the container before it can be used. The `-v` flag mounts your local file into the container, and the `RUN_CONFIG_PATH` environment variable tells the entrypoint script which configuration to use.
 
 Available run configurations for this distribution:
+
 - `config.yaml`
+
 - `run-with-safety.yaml`
 
 ### Via venv
@@ -174,4 +176,5 @@ llama stack run ./config.yaml \
 ```
 
 ## Example Notebooks
-For examples of how to use the NVIDIA Distribution to run inference, fine-tune, evaluate, and run safety checks on your LLMs, you can reference the example notebooks in [docs/notebooks/nvidia](https://github.com/meta-llama/llama-stack/tree/main/docs/notebooks/nvidia).
+
+For examples of how to use the NVIDIA Distribution to run inference, evaluate, and run safety checks on your LLMs, you can reference the example notebooks in [docs/notebooks/nvidia](https://github.com/meta-llama/llama-stack/tree/main/docs/notebooks/nvidia).

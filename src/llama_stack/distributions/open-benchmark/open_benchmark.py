@@ -6,13 +6,10 @@
 
 
 from llama_stack.core.datatypes import (
-    BenchmarkInput,
     BuildProvider,
-    DatasetInput,
     ModelInput,
     Provider,
     ShieldInput,
-    ToolGroupInput,
 )
 from llama_stack.distributions.template import (
     DistributionTemplate,
@@ -32,10 +29,15 @@ from llama_stack.providers.remote.vector_io.pgvector.config import (
     PGVectorVectorIOConfig,
 )
 from llama_stack.providers.utils.inference.model_registry import ProviderModelEntry
-from llama_stack_api import DatasetPurpose, ModelType, URIDataSource
+from llama_stack_api import ModelType
 
 
 def get_inference_providers() -> tuple[list[Provider], dict[str, list[ProviderModelEntry]]]:
+    """Build inference providers and their model registries for the open-benchmark distribution.
+
+    Returns:
+        A tuple of (list of Provider instances, mapping of provider IDs to model entries).
+    """
     # in this template, we allow each API key to be optional
     providers = [
         (
@@ -94,6 +96,11 @@ def get_inference_providers() -> tuple[list[Provider], dict[str, list[ProviderMo
 
 
 def get_distribution_template() -> DistributionTemplate:
+    """Build the open-benchmark distribution template for running evaluations.
+
+    Returns:
+        A DistributionTemplate configured for open benchmarking.
+    """
     inference_providers, available_models = get_inference_providers()
     providers = {
         "inference": [BuildProvider(provider_type=p.provider_type, module=p.module) for p in inference_providers],
@@ -103,21 +110,11 @@ def get_distribution_template() -> DistributionTemplate:
             BuildProvider(provider_type="remote::pgvector"),
         ],
         "safety": [BuildProvider(provider_type="inline::llama-guard")],
-        "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "eval": [BuildProvider(provider_type="inline::meta-reference")],
-        "datasetio": [
-            BuildProvider(provider_type="remote::huggingface"),
-            BuildProvider(provider_type="inline::localfs"),
-        ],
-        "scoring": [
-            BuildProvider(provider_type="inline::basic"),
-            BuildProvider(provider_type="inline::llm-as-judge"),
-            BuildProvider(provider_type="inline::braintrust"),
-        ],
+        "responses": [BuildProvider(provider_type="inline::builtin")],
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
-            BuildProvider(provider_type="inline::rag-runtime"),
+            BuildProvider(provider_type="inline::file-search"),
             BuildProvider(provider_type="remote::model-context-protocol"),
         ],
     }
@@ -148,17 +145,6 @@ def get_distribution_template() -> DistributionTemplate:
         ),
     ]
 
-    default_tool_groups = [
-        ToolGroupInput(
-            toolgroup_id="builtin::websearch",
-            provider_id="tavily-search",
-        ),
-        ToolGroupInput(
-            toolgroup_id="builtin::rag",
-            provider_id="rag-runtime",
-        ),
-    ]
-
     models, _ = get_model_registry(available_models)
     default_models = models + [
         ModelInput(
@@ -175,83 +161,6 @@ def get_distribution_template() -> DistributionTemplate:
         ),
     ]
 
-    default_datasets = [
-        DatasetInput(
-            dataset_id="simpleqa",
-            purpose=DatasetPurpose.eval_messages_answer,
-            source=URIDataSource(
-                uri="huggingface://datasets/llamastack/simpleqa?split=train",
-            ),
-        ),
-        DatasetInput(
-            dataset_id="mmlu_cot",
-            purpose=DatasetPurpose.eval_messages_answer,
-            source=URIDataSource(
-                uri="huggingface://datasets/llamastack/mmlu_cot?split=test&name=all",
-            ),
-        ),
-        DatasetInput(
-            dataset_id="gpqa_cot",
-            purpose=DatasetPurpose.eval_messages_answer,
-            source=URIDataSource(
-                uri="huggingface://datasets/llamastack/gpqa_0shot_cot?split=test&name=gpqa_main",
-            ),
-        ),
-        DatasetInput(
-            dataset_id="math_500",
-            purpose=DatasetPurpose.eval_messages_answer,
-            source=URIDataSource(
-                uri="huggingface://datasets/llamastack/math_500?split=test",
-            ),
-        ),
-        DatasetInput(
-            dataset_id="ifeval",
-            purpose=DatasetPurpose.eval_messages_answer,
-            source=URIDataSource(
-                uri="huggingface://datasets/llamastack/IfEval?split=train",
-            ),
-        ),
-        DatasetInput(
-            dataset_id="docvqa",
-            purpose=DatasetPurpose.eval_messages_answer,
-            source=URIDataSource(
-                uri="huggingface://datasets/llamastack/docvqa?split=val",
-            ),
-        ),
-    ]
-
-    default_benchmarks = [
-        BenchmarkInput(
-            benchmark_id="meta-reference-simpleqa",
-            dataset_id="simpleqa",
-            scoring_functions=["llm-as-judge::405b-simpleqa"],
-        ),
-        BenchmarkInput(
-            benchmark_id="meta-reference-mmlu-cot",
-            dataset_id="mmlu_cot",
-            scoring_functions=["basic::regex_parser_multiple_choice_answer"],
-        ),
-        BenchmarkInput(
-            benchmark_id="meta-reference-gpqa-cot",
-            dataset_id="gpqa_cot",
-            scoring_functions=["basic::regex_parser_multiple_choice_answer"],
-        ),
-        BenchmarkInput(
-            benchmark_id="meta-reference-math-500",
-            dataset_id="math_500",
-            scoring_functions=["basic::regex_parser_math_response"],
-        ),
-        BenchmarkInput(
-            benchmark_id="meta-reference-ifeval",
-            dataset_id="ifeval",
-            scoring_functions=["basic::ifeval"],
-        ),
-        BenchmarkInput(
-            benchmark_id="meta-reference-docvqa",
-            dataset_id="docvqa",
-            scoring_functions=["basic::docvqa"],
-        ),
-    ]
     return DistributionTemplate(
         name=name,
         distro_type="self_hosted",
@@ -267,10 +176,7 @@ def get_distribution_template() -> DistributionTemplate:
                     "vector_io": vector_io_providers,
                 },
                 default_models=default_models,
-                default_tool_groups=default_tool_groups,
                 default_shields=[ShieldInput(shield_id="meta-llama/Llama-Guard-3-8B")],
-                default_datasets=default_datasets,
-                default_benchmarks=default_benchmarks,
             ),
         },
         run_config_env_vars={

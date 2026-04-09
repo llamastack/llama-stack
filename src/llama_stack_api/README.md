@@ -42,8 +42,13 @@ uv pip install llama-stack-api
 ## Dependencies
 
 Minimal dependencies:
+
+- `openai>=2.5.0` - For OpenAI-compatible types
+- `fastapi>=0.115.0,<1.0` - For FastAPI route definitions
 - `pydantic>=2.11.9` - For data validation and serialization
 - `jsonschema` - For JSON schema utilities
+- `opentelemetry-sdk>=1.30.0` - For telemetry
+- `opentelemetry-exporter-otlp-proto-http>=1.30.0` - For OTLP export
 
 ## Versioning
 
@@ -53,19 +58,24 @@ This package follows semantic versioning independently from the main `llama-stac
 - **Minor versions** (0.x.0): New APIs, backward-compatible changes
 - **Major versions** (x.0.0): Breaking changes to existing APIs
 
-Current version: **0.4.0.dev0**
+The version is determined dynamically via `setuptools-scm` at build time.
 
 ## Usage Example
 
 ```python
-from llama_stack_api.inference import Inference, ChatCompletionRequest
-from llama_stack_api.providers.datatypes import ProviderSpec, InlineProviderSpec
-from llama_stack_api.datatypes import Api
+from llama_stack_api import (
+    Api,
+    Inference,
+    InlineProviderSpec,
+    OpenAIChatCompletionRequestWithExtraBody,
+)
 
 
 # Use protocol definitions for type checking
 class MyInferenceProvider(Inference):
-    async def chat_completion(self, request: ChatCompletionRequest):
+    async def openai_chat_completion(
+        self, request: OpenAIChatCompletionRequestWithExtraBody
+    ):
         # Your implementation
         pass
 
@@ -83,6 +93,7 @@ my_provider_spec = InlineProviderSpec(
 ## Relationship to llama-stack
 
 The main `llama-stack` package depends on `llama-stack-api` and provides:
+
 - Full server implementation
 - Built-in provider implementations
 - CLI tools for running and managing stacks

@@ -1,0 +1,109 @@
+---
+description: "Meta's reference implementation of an agent system that can use tools, access vector databases, and perform complex reasoning tasks."
+sidebar_label: Builtin
+title: inline::builtin
+---
+
+# inline::builtin
+
+## Description
+
+Meta's reference implementation of an agent system that can use tools, access vector databases, and perform complex reasoning tasks.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `persistence` | `ResponsesPersistenceConfig` | No |  |  |
+| `persistence.agent_state` | `KVStoreReference` | No |  |  |
+| `persistence.agent_state.namespace` | `str` | No |  | Key prefix for KVStore backends |
+| `persistence.agent_state.backend` | `str` | No |  | Name of backend from storage.backends |
+| `persistence.responses` | `ResponsesStoreReference` | No |  |  |
+| `persistence.responses.table_name` | `str` | No | openai_responses | Name of the table to use for storing OpenAI responses |
+| `persistence.responses.backend` | `str` | No |  | Name of backend from storage.backends |
+| `persistence.responses.max_write_queue_size` | `int` | No | 10000 | Max queued writes for inference store |
+| `persistence.responses.num_writers` | `int` | No | 4 | Number of concurrent background writers |
+| `vector_stores_config` | `VectorStoresConfig \| None` | No |  | Configuration for vector store prompt templates and behavior |
+| `vector_stores_config.default_provider_id` | `str \| None` | No |  | ID of the vector_io provider to use as default when multiple providers are available and none is specified. |
+| `vector_stores_config.default_embedding_model` | `QualifiedModel \| None` | No |  | Default embedding model configuration for vector stores. |
+| `vector_stores_config.default_embedding_model.provider_id` | `str` | No |  |  |
+| `vector_stores_config.default_embedding_model.model_id` | `str` | No |  |  |
+| `vector_stores_config.default_embedding_model.embedding_dimensions` | `int \| None` | No |  |  |
+| `vector_stores_config.default_reranker_model` | `RerankerModel \| None` | No |  | Default reranker model configuration for vector stores. |
+| `vector_stores_config.default_reranker_model.provider_id` | `str` | No |  |  |
+| `vector_stores_config.default_reranker_model.model_id` | `str` | No |  |  |
+| `vector_stores_config.rewrite_query_params` | `RewriteQueryParams \| None` | No |  | Parameters for query rewriting/expansion. None disables query rewriting. |
+| `vector_stores_config.rewrite_query_params.model` | `QualifiedModel \| None` | No |  | LLM model for query rewriting/expansion in vector search. |
+| `vector_stores_config.rewrite_query_params.prompt` | `str` | No | Expand this query with relevant synonyms and related terms. Return only the improved query, no explanations:
+
+&#123;query&#125;
+
+Improved query: | Prompt template for query rewriting. Use &#123;query&#125; as placeholder for the original query. |
+| `vector_stores_config.rewrite_query_params.max_tokens` | `int` | No | 100 | Maximum number of tokens for query expansion responses. |
+| `vector_stores_config.rewrite_query_params.temperature` | `float` | No | 0.3 | Temperature for query expansion model (0.0 = deterministic, 1.0 = creative). |
+| `vector_stores_config.file_search_params` | `FileSearchParams` | No | header_template='file_search tool found &#123;num_chunks&#125; chunks:\nBEGIN of file_search tool results.\n' footer_template='END of file_search tool results.\n' | Configuration for file search tool output formatting. |
+| `vector_stores_config.file_search_params.header_template` | `str` | No | file_search tool found &#123;num_chunks&#125; chunks:
+BEGIN of file_search tool results.
+ | Template for the header text shown before search results. Available placeholders: &#123;num_chunks&#125; number of chunks found. |
+| `vector_stores_config.file_search_params.footer_template` | `str` | No | END of file_search tool results.
+ | Template for the footer text shown after search results. |
+| `vector_stores_config.context_prompt_params` | `ContextPromptParams` | No | chunk_annotation_template='Result &#123;index&#125;\nContent: &#123;chunk.content&#125;\nMetadata: &#123;metadata&#125;\n' context_template='The above results were retrieved to help answer the user\'s query: "&#123;query&#125;". Use them as supporting information only in answering this query. &#123;annotation_instruction&#125;\n' | Configuration for LLM prompt content and chunk formatting. |
+| `vector_stores_config.context_prompt_params.chunk_annotation_template` | `str` | No | Result &#123;index&#125;
+Content: &#123;chunk.content&#125;
+Metadata: &#123;metadata&#125;
+ | Template for formatting individual chunks in search results. Available placeholders: &#123;index&#125; 1-based chunk index, &#123;chunk.content&#125; chunk content, &#123;metadata&#125; chunk metadata dict. |
+| `vector_stores_config.context_prompt_params.context_template` | `str` | No | The above results were retrieved to help answer the user's query: "&#123;query&#125;". Use them as supporting information only in answering this query. &#123;annotation_instruction&#125;
+ | Template for explaining the search results to the model. Available placeholders: &#123;query&#125; user's query, &#123;num_chunks&#125; number of chunks. |
+| `vector_stores_config.annotation_prompt_params` | `AnnotationPromptParams` | No | enable_annotations=True annotation_instruction_template="Cite sources immediately at the end of sentences before punctuation, using `&lt;|file-id|&gt;` format like 'This is a fact &lt;|file-Cn3MSNn72ENTiiq11Qda4A|&gt;.'. Do not add extra punctuation. Use only the file IDs provided, do not invent new ones." chunk_annotation_template='[&#123;index&#125;] &#123;metadata_text&#125; cite as &lt;|&#123;file_id&#125;|&gt;\n&#123;chunk_text&#125;\n' | Configuration for source annotation and attribution features. |
+| `vector_stores_config.annotation_prompt_params.enable_annotations` | `bool` | No | True | Whether to include annotation information in results. |
+| `vector_stores_config.annotation_prompt_params.annotation_instruction_template` | `str` | No | Cite sources immediately at the end of sentences before punctuation, using `&lt;|file-id|&gt;` format like 'This is a fact &lt;|file-Cn3MSNn72ENTiiq11Qda4A|&gt;.'. Do not add extra punctuation. Use only the file IDs provided, do not invent new ones. | Instructions for how the model should cite sources. Used when enable_annotations is True. |
+| `vector_stores_config.annotation_prompt_params.chunk_annotation_template` | `str` | No | [&#123;index&#125;] &#123;metadata_text&#125; cite as &lt;|&#123;file_id&#125;|&gt;
+&#123;chunk_text&#125;
+ | Template for chunks with annotation information. Available placeholders: &#123;index&#125; 1-based chunk index, &#123;metadata_text&#125; formatted metadata, &#123;file_id&#125; document identifier, &#123;chunk_text&#125; chunk content. |
+| `vector_stores_config.file_ingestion_params` | `FileIngestionParams` | No | default_chunk_size_tokens=512 default_chunk_overlap_tokens=128 | Configuration for file processing during ingestion. |
+| `vector_stores_config.file_ingestion_params.default_chunk_size_tokens` | `int` | No | 512 | Default chunk size for RAG tool operations when not specified |
+| `vector_stores_config.file_ingestion_params.default_chunk_overlap_tokens` | `int` | No | 128 | Default overlap in tokens between chunks (original default: 512 // 4 = 128) |
+| `vector_stores_config.chunk_retrieval_params` | `ChunkRetrievalParams` | No | chunk_multiplier=5 max_tokens_in_context=4000 default_reranker_strategy='rrf' rrf_impact_factor=60.0 weighted_search_alpha=0.5 default_search_mode='vector' | Configuration for chunk retrieval and ranking during search. |
+| `vector_stores_config.chunk_retrieval_params.chunk_multiplier` | `int` | No | 5 | Multiplier for OpenAI API over-retrieval (affects all providers) |
+| `vector_stores_config.chunk_retrieval_params.max_tokens_in_context` | `int` | No | 4000 | Maximum tokens allowed in RAG context before truncation |
+| `vector_stores_config.chunk_retrieval_params.default_reranker_strategy` | `str` | No | rrf | Default reranker when not specified: 'rrf', 'weighted', or 'normalized' |
+| `vector_stores_config.chunk_retrieval_params.rrf_impact_factor` | `float` | No | 60.0 | Impact factor for RRF (Reciprocal Rank Fusion) reranking |
+| `vector_stores_config.chunk_retrieval_params.weighted_search_alpha` | `float` | No | 0.5 | Alpha weight for weighted search reranking (0.0-1.0) |
+| `vector_stores_config.chunk_retrieval_params.default_search_mode` | `str` | No | vector | Default search mode: 'vector', 'keyword', or 'hybrid' |
+| `vector_stores_config.file_batch_params` | `FileBatchParams` | No | max_concurrent_files_per_batch=3 file_batch_chunk_size=10 cleanup_interval_seconds=86400 | Configuration for file batch processing. |
+| `vector_stores_config.file_batch_params.max_concurrent_files_per_batch` | `int` | No | 3 | Maximum files processed concurrently in file batches |
+| `vector_stores_config.file_batch_params.file_batch_chunk_size` | `int` | No | 10 | Number of files to process in each batch chunk |
+| `vector_stores_config.file_batch_params.cleanup_interval_seconds` | `int` | No | 86400 | Interval for cleaning up expired file batches (seconds) |
+| `vector_stores_config.contextual_retrieval_params` | `ContextualRetrievalParams` | No | model=None default_timeout_seconds=120 default_max_concurrency=3 max_document_tokens=100000 | Configuration for contextual retrieval during file ingestion. |
+| `vector_stores_config.contextual_retrieval_params.model` | `QualifiedModel \| None` | No |  | Default LLM model for contextual retrieval. Used when model_id is not specified in chunking strategy. |
+| `vector_stores_config.contextual_retrieval_params.default_timeout_seconds` | `int` | No | 120 | Default timeout in seconds for each LLM contextualization call. |
+| `vector_stores_config.contextual_retrieval_params.default_max_concurrency` | `int` | No | 3 | Default maximum concurrent LLM calls for contextualization. |
+| `vector_stores_config.contextual_retrieval_params.max_document_tokens` | `int` | No | 100000 | Maximum document size in tokens. Documents exceeding this are rejected for contextual retrieval. |
+| `compaction_config` | `CompactionConfig` | No | summarization_prompt='You are performing a CONTEXT CHECKPOINT COMPACTION. Create a handoff summary for another LLM that will resume the task.\n\nInclude:\n- Current progress and key decisions made\n- Important context, constraints, or user preferences\n- What remains to be done (clear next steps)\n- Any critical data, examples, or references needed to continue\n\nBe concise, structured, and focused on helping the next LLM seamlessly continue the work.' summary_prefix='Another language model started to solve this problem and produced a summary of its thinking process. You also have access to the state of the tools that were used by that language model. Use this to build on the work that has already been done and avoid duplicating work. Here is the summary produced by the other language model, use the information in this summary to assist with your own analysis:' summarization_model=None default_compact_threshold=None tokenizer_encoding=None | Configuration for conversation compaction behavior and prompt templates |
+| `compaction_config.summarization_prompt` | `str` | No | You are performing a CONTEXT CHECKPOINT COMPACTION. Create a handoff summary for another LLM that will resume the task.
+
+Include:
+- Current progress and key decisions made
+- Important context, constraints, or user preferences
+- What remains to be done (clear next steps)
+- Any critical data, examples, or references needed to continue
+
+Be concise, structured, and focused on helping the next LLM seamlessly continue the work. | Prompt template used to instruct the model to summarize conversation history during compaction. |
+| `compaction_config.summary_prefix` | `str` | No | Another language model started to solve this problem and produced a summary of its thinking process. You also have access to the state of the tools that were used by that language model. Use this to build on the work that has already been done and avoid duplicating work. Here is the summary produced by the other language model, use the information in this summary to assist with your own analysis: | Text prepended to the compaction summary to frame it as a handoff for the next LLM. |
+| `compaction_config.summarization_model` | `str \| None` | No |  | Model to use for generating compaction summaries. If not set, uses the same model as the conversation. |
+| `compaction_config.default_compact_threshold` | `int \| None` | No |  | Default token threshold for auto-compaction via context_management. If set, conversations exceeding this token count will be automatically compacted. |
+| `compaction_config.tokenizer_encoding` | `str \| None` | No |  | Tiktoken encoding name for token counting (e.g. 'o200k_base', 'cl100k_base'). If not set, the encoding is resolved from the model name via tiktoken.encoding_for_model(). |
+
+## Sample Configuration
+
+```yaml
+persistence:
+  agent_state:
+    namespace: agents
+    backend: kv_default
+  responses:
+    table_name: responses
+    backend: sql_default
+    max_write_queue_size: 10000
+    num_writers: 4
+```

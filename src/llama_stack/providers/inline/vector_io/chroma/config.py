@@ -14,6 +14,8 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class ChromaVectorIOConfig(BaseModel):
+    """Configuration for the inline ChromaDB vector I/O provider."""
+
     db_path: str
     persistence: KVStoreReference = Field(description="Config for KV store backend")
 

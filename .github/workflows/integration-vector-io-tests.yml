@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        vector-io-provider: ["inline::faiss", "inline::sqlite-vec", "inline::milvus", "remote::chromadb", "remote::pgvector", "remote::weaviate", "remote::qdrant", "remote::elasticsearch"]
+        vector-io-provider: ["inline::faiss", "inline::sqlite-vec", "inline::milvus", "remote::chromadb", "remote::pgvector", "remote::weaviate", "remote::qdrant", "remote::elasticsearch", "remote::infinispan"]
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
       fail-fast: false # we want to run all tests regardless of failure
 
@@ -83,7 +83,7 @@ jobs:
         if: matrix.vector-io-provider == 'remote::pgvector'
         run: |
           echo "Waiting for Postgres to be ready..."
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if docker exec pgvector pg_isready -U llamastack > /dev/null 2>&1; then
               echo "Postgres is ready!"
               break
@@ -110,7 +110,7 @@ jobs:
         if: matrix.vector-io-provider == 'remote::qdrant'
         run: |
           echo "Waiting for Qdrant to be ready..."
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if curl -s http://localhost:6333/collections | grep -q '"status":"ok"'; then
               echo "Qdrant is ready!"
               exit 0
@@ -125,7 +125,7 @@ jobs:
         if: matrix.vector-io-provider == 'remote::chromadb'
         run: |
           echo "Waiting for ChromaDB to be ready..."
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if curl -s http://localhost:8000/api/v2/heartbeat | grep -q "nanosecond heartbeat"; then
               echo "ChromaDB is ready!"
               exit 0
@@ -140,7 +140,7 @@ jobs:
         if: matrix.vector-io-provider == 'remote::weaviate'
         run: |
           echo "Waiting for Weaviate to be ready..."
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if curl -s http://localhost:8080 | grep -q "https://weaviate.io/developers/weaviate/current/"; then
               echo "Weaviate is ready!"
               exit 0
@@ -158,6 +158,31 @@ jobs:
           curl -fsSL https://elastic.co/start-local | sh -s -- -v 9.2.0 --esonly
           source elastic-start-local/.env
           echo "ELASTICSEARCH_API_KEY=$ES_LOCAL_API_KEY" >> "$GITHUB_ENV"
+
+      - name: Setup Infinispan
+        if: matrix.vector-io-provider == 'remote::infinispan'
+        run: |
+          docker run --rm -d --pull always \
+            --name infinispan \
+            -p 11222:11222 \
+            -e USER=admin \
+            -e PASS=password \
+            infinispan/server:16.1.0
+
+      - name: Wait for Infinispan to be ready
+        if: matrix.vector-io-provider == 'remote::infinispan'
+        run: |
+          echo "Waiting for Infinispan to be ready..."
+          for _ in {1..30}; do
+            if curl -s -u admin:password http://localhost:11222/rest/v2/server | grep -q "version"; then
+              echo "Infinispan is ready!"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Infinispan failed to start"
+          docker logs infinispan
+          exit 1
 
       - name: Build Llama Stack
         run: |
@@ -184,9 +209,13 @@ jobs:
           ENABLE_WEAVIATE: ${{ matrix.vector-io-provider == 'remote::weaviate' && 'true' || '' }}
           WEAVIATE_CLUSTER_URL: ${{ matrix.vector-io-provider == 'remote::weaviate' && 'localhost:8080' || '' }}
           ELASTICSEARCH_URL: ${{ matrix.vector-io-provider == 'remote::elasticsearch' && 'http://localhost:9200' || '' }}
+          ENABLE_INFINISPAN: ${{ matrix.vector-io-provider == 'remote::infinispan' && 'true' || '' }}
+          INFINISPAN_URL: ${{ matrix.vector-io-provider == 'remote::infinispan' && 'http://localhost:11222' || '' }}
+          INFINISPAN_USERNAME: ${{ matrix.vector-io-provider == 'remote::infinispan' && 'admin' || '' }}
+          INFINISPAN_PASSWORD: ${{ matrix.vector-io-provider == 'remote::infinispan' && 'password' || '' }}
         run: |
           uv run --no-sync \
-            pytest -sv --stack-config="files=inline::localfs,inference=inline::sentence-transformers,vector_io=${{ matrix.vector-io-provider }}" \
+            pytest -sv --stack-config="files=inline::localfs,inference=inline::sentence-transformers?trust_remote_code=true,vector_io=${{ matrix.vector-io-provider }},file_processors=inline::pypdf" \
             tests/integration/vector_io
 
       - name: Check Storage and Memory Available After Tests
@@ -198,7 +227,7 @@ jobs:
       - name: Create sanitized provider name
         if: ${{ always() }}
         run: |
-          echo "SANITIZED_PROVIDER=$(echo "${{ matrix.vector-io-provider }}" | tr ':' '_')" >> $GITHUB_ENV
+          echo "SANITIZED_PROVIDER=$(echo "${{ matrix.vector-io-provider }}" | tr ':' '_')" >> "$GITHUB_ENV"
 
       - name: Write ChromaDB logs to file
         if: ${{ always() && matrix.vector-io-provider == 'remote::chromadb' }}
@@ -215,9 +244,14 @@ jobs:
         run: |
           docker logs es-local-dev > elasticsearch.log
 
+      - name: Write Infinispan logs to file
+        if: ${{ always() && matrix.vector-io-provider == 'remote::infinispan' }}
+        run: |
+          docker logs infinispan > infinispan.log
+
       - name: Upload all logs to artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: vector-io-logs-${{ github.run_id }}-${{ github.run_attempt }}-${{ env.SANITIZED_PROVIDER }}-${{ matrix.python-version }}
           path: |

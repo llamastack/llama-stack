@@ -5,42 +5,78 @@ sidebar_label: Overview
 sidebar_position: 1
 ---
 
+import DocCardList from '@theme/DocCardList';
+
 # API Providers
 
-The goal of Llama Stack is to build an ecosystem where users can easily swap out different implementations for the same API. Examples for these include:
-- LLM inference providers (e.g., Meta Reference, Ollama, Fireworks, Together, AWS Bedrock, Groq, Cerebras, SambaNova, vLLM, OpenAI, Anthropic, Gemini, WatsonX, etc.),
-- Vector databases (e.g., FAISS, SQLite-Vec, ChromaDB, Weaviate, Qdrant, Milvus, PGVector, Elasticsearch, etc.),
-- Safety providers (e.g., Meta's Llama Guard, Prompt Guard, Code Scanner, AWS Bedrock Guardrails, etc.),
-- Tool Runtime providers (e.g., RAG Runtime, Brave Search, etc.)
+Llama Stack lets you swap out different implementations for the same API. Providers come in two types:
 
-Providers come in two flavors:
-- **Remote**: the provider runs as a separate service external to the Llama Stack codebase. Llama Stack contains a small amount of adapter code.
-- **Inline**: the provider is fully specified and implemented within the Llama Stack codebase. It may be a simple wrapper around an existing library, or a full fledged implementation within Llama Stack.
+- **Remote**: adapts an external service (Ollama, OpenAI, vLLM, Bedrock, etc.)
+- **Inline**: runs in-process within Llama Stack (FAISS, sentence-transformers, Llama Guard, etc.)
 
-Importantly, Llama Stack always strives to provide at least one fully inline provider for each API so you can iterate on a fully featured environment locally.
+:::info
+At least one inline provider exists for each API so you can run a fully featured stack locally without any external dependencies.
+:::
 
-## Provider Categories
+## Provider categories
 
-- **[External Providers](external/index.mdx)** - Guide for building and using external providers
-- **[OpenAI Compatibility](../api-openai/index.mdx)** - OpenAI API compatibility layer
-- **[Inference](inference/index.mdx)** - LLM and embedding model providers
-- **[Agents](agents/index.mdx)** - Agentic system providers
-- **[DatasetIO](datasetio/index.mdx)** - Dataset and data loader providers
-- **[Safety](safety/index.mdx)** - Content moderation and safety providers
-- **[Vector IO](vector_io/index.mdx)** - Vector database providers
-- **[Tool Runtime](tool_runtime/index.mdx)** - Tool and protocol providers
-- **[Files](files/index.mdx)** - File system and storage providers
+<DocCardList items={[
+  {
+    type: 'link',
+    label: 'Inference',
+    href: '/docs/providers/inference/',
+    description: 'Ollama, vLLM, OpenAI, Bedrock, Anthropic, Gemini, WatsonX, and more',
+  },
+  {
+    type: 'link',
+    label: 'Vector IO',
+    href: '/docs/providers/vector_io/',
+    description: 'FAISS, SQLite-Vec, ChromaDB, Qdrant, Milvus, PGVector, Weaviate',
+  },
+  {
+    type: 'link',
+    label: 'Safety',
+    href: '/docs/providers/safety/',
+    description: 'Llama Guard, Prompt Guard, Code Scanner, Bedrock Guardrails',
+  },
+  {
+    type: 'link',
+    label: 'Tool Runtime',
+    href: '/docs/providers/tool_runtime/',
+    description: 'File Search, Brave Search, Tavily, MCP, Wolfram Alpha',
+  },
+  {
+    type: 'link',
+    label: 'Files',
+    href: '/docs/providers/files/',
+    description: 'Local filesystem and S3 storage backends',
+  },
+  {
+    type: 'link',
+    label: 'DatasetIO',
+    href: '/docs/providers/datasetio/',
+    description: 'Local filesystem and HuggingFace dataset loading',
+  },
+  {
+    type: 'link',
+    label: 'External Providers',
+    href: '/docs/providers/external/',
+    description: 'Build your own provider and integrate it with Llama Stack',
+  },
+]} />
 
-## API Documentation
+## Reference
 
-For comprehensive API documentation and reference:
+| Category | Examples | Docs |
+|----------|----------|------|
+| **Inference** | Ollama, vLLM, OpenAI, Bedrock, Anthropic, Gemini, WatsonX, and more | [Inference Providers](/docs/providers/inference/) |
+| **Vector IO** | FAISS, SQLite-Vec, ChromaDB, Qdrant, Milvus, PGVector, Weaviate | [Vector IO Providers](/docs/providers/vector_io/) |
+| **Safety** | Llama Guard, Prompt Guard, Code Scanner, Bedrock Guardrails | [Safety Providers](/docs/providers/safety/) |
+| **Tool Runtime** | File Search, Brave Search, Tavily, MCP, Wolfram Alpha | [Tool Runtime Providers](/docs/providers/tool_runtime/) |
+| **Files** | Local filesystem, S3 | [Files Providers](/docs/providers/files/) |
+| **DatasetIO** | Local filesystem, HuggingFace | [DatasetIO Providers](/docs/providers/datasetio/) |
+| **External** | Build your own provider | [External Providers Guide](/docs/providers/external/) |
 
-- **[API Reference](../api/index.mdx)** - Complete API documentation
-- **[Experimental APIs](../api-experimental/index.mdx)** - APIs in development
-- **[Deprecated APIs](../api-deprecated/index.mdx)** - Legacy APIs being phased out
-- **[OpenAI Compatibility](../api-openai/index.mdx)** - OpenAI API compatibility guide
+## OpenAI Compatibility
 
-## Additional Provider Information
-
-- **[OpenAI Implementation Guide](./openai.mdx)** - Code examples and implementation details for OpenAI APIs
-- **[OpenAI-Compatible Responses Limitations](./openai_responses_limitations.mdx)** - Known limitations of the Responses API in Llama Stack
+Llama Stack implements the OpenAI API. See the [OpenAI compatibility guide](/docs/api-openai/) and [known Responses API limitations](/docs/providers/openai_responses_limitations).

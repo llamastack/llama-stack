@@ -36,13 +36,20 @@ def skip_if_provider_doesnt_support_openai_vector_stores(client_with_models):
             "remote::qdrant",
             "remote::weaviate",
             "remote::elasticsearch",
+            "remote::infinispan",
         ]:
             return
 
     pytest.skip("OpenAI vector stores are not supported by any provider")
 
 
-_PROVIDERS_WITH_NATIVE_FILTERING = {"inline::faiss", "inline::sqlite-vec", "inline::milvus", "remote::milvus"}
+_PROVIDERS_WITH_NATIVE_FILTERING = {
+    "inline::faiss",
+    "inline::sqlite-vec",
+    "inline::milvus",
+    "remote::milvus",
+    "remote::pgvector",
+}
 
 
 def skip_if_provider_doesnt_support_native_filtering(vector_io_provider_id: str):
@@ -70,6 +77,7 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(
             "remote::qdrant",
             "remote::weaviate",
             "remote::elasticsearch",
+            "remote::infinispan",
         ],
         "keyword": [
             "inline::milvus",
@@ -81,6 +89,7 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(
             "remote::weaviate",
             "remote::chromadb",
             "remote::elasticsearch",
+            "remote::infinispan",
         ],
         "hybrid": [
             "inline::milvus",
@@ -92,6 +101,7 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(
             "remote::weaviate",
             "remote::chromadb",
             "remote::elasticsearch",
+            "remote::infinispan",
         ],
     }
 
@@ -4036,8 +4046,7 @@ def test_openai_vector_store_search_neural_ranker_validation(
     assert search_response_no_model is not None
     assert len(search_response_no_model.data) == 0  # Should return empty results when model is missing
 
-    # Test that neural ranker with model is accepted (even though not implemented yet)
-    # This should not raise an error, but will use fallback algorithm
+    # Test that neural ranker with model is accepted and uses neural reranking
     search_response = compat_client.vector_stores.search(
         vector_store_id=vector_store.id,
         query="machine learning",
@@ -4049,7 +4058,7 @@ def test_openai_vector_store_search_neural_ranker_validation(
         },
     )
 
-    # Should succeed (using fallback algorithm for now)
+    # Should succeed — neural reranking is applied after initial retrieval
     assert search_response is not None
 
 
@@ -4884,7 +4893,7 @@ def test_openai_vector_store_file_batch_create_and_retrieve(
     )
 
     assert batch is not None
-    assert batch.object == "vector_store.file_batch"
+    assert batch.object == "vector_store.files_batch"
     assert batch.vector_store_id == vector_store.id
     assert batch.status in ["in_progress", "completed"]
     assert batch.file_counts.total == len(file_ids)
@@ -4908,7 +4917,7 @@ def test_openai_vector_store_file_batch_create_and_retrieve(
     assert retrieved_batch is not None
     assert retrieved_batch.id == batch.id
     assert retrieved_batch.vector_store_id == vector_store.id
-    assert retrieved_batch.object == "vector_store.file_batch"
+    assert retrieved_batch.object == "vector_store.files_batch"
     assert retrieved_batch.file_counts.total == len(file_ids)
     assert retrieved_batch.status == "completed"  # Should be completed after processing
 
@@ -5054,7 +5063,7 @@ def test_openai_vector_store_file_batch_cancel(
         assert cancelled_batch.id == batch.id
         assert cancelled_batch.vector_store_id == vector_store.id
         assert cancelled_batch.status == "cancelled"
-        assert cancelled_batch.object == "vector_store.file_batch"
+        assert cancelled_batch.object == "vector_store.files_batch"
     except Exception:
         # If cancellation fails (e.g., batch completed too quickly),
         # verify the batch reached completion instead

@@ -55,10 +55,6 @@ def make_completion_adapter(monkeypatch):
         monkeypatch.setattr(a, "_get_provider_model_id", AsyncMock(return_value="gemini-2.5-flash"))
         monkeypatch.setattr(a, "_validate_model_allowed", lambda _: None)
         monkeypatch.setattr(a, "_get_client", lambda: fake_client)
-        monkeypatch.setattr(
-            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_model_name",
-            lambda _: "gemini-2.5-flash",
-        )
         return a, fake_client
 
     return factory
@@ -104,10 +100,6 @@ class TestOpenAICompletion:
         monkeypatch.setattr(adapter, "_get_provider_model_id", AsyncMock(return_value="gemini-2.5-flash"))
         monkeypatch.setattr(adapter, "_validate_model_allowed", lambda _: None)
         monkeypatch.setattr(adapter, "_get_client", lambda: fake_client)
-        monkeypatch.setattr(
-            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_model_name",
-            lambda _: "gemini-2.5-flash",
-        )
         params = OpenAICompletionRequestWithExtraBody(model="google/gemini-2.5-flash", prompt=["a", "b"], stream=True)
         result = await adapter.openai_completion(params)
         assert hasattr(result, "__aiter__")
@@ -206,10 +198,6 @@ class TestOpenAICompletion:
         monkeypatch.setattr(adapter, "_get_provider_model_id", AsyncMock(return_value="gemini-2.5-flash"))
         monkeypatch.setattr(adapter, "_validate_model_allowed", lambda _: None)
         monkeypatch.setattr(adapter, "_get_client", lambda: fake_client)
-        monkeypatch.setattr(
-            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_model_name",
-            lambda _: "gemini-2.5-flash",
-        )
 
         params = OpenAICompletionRequestWithExtraBody(model="google/gemini-2.5-flash", prompt="hi", stream=True)
         result = await adapter.openai_completion(params)
@@ -235,10 +223,6 @@ class TestOpenAICompletion:
         monkeypatch.setattr(adapter, "_get_provider_model_id", AsyncMock(return_value="gemini-2.5-flash"))
         monkeypatch.setattr(adapter, "_validate_model_allowed", lambda _: None)
         monkeypatch.setattr(adapter, "_get_client", lambda: fake_client)
-        monkeypatch.setattr(
-            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_model_name",
-            lambda _: "gemini-2.5-flash",
-        )
 
         params = OpenAICompletionRequestWithExtraBody(model="google/gemini-2.5-flash", prompt="Say hello", stream=True)
         result = await adapter.openai_completion(params)
@@ -259,10 +243,6 @@ class TestOpenAICompletion:
         monkeypatch.setattr(adapter, "_get_provider_model_id", AsyncMock(return_value="gemini-2.5-flash"))
         monkeypatch.setattr(adapter, "_validate_model_allowed", lambda _: None)
         monkeypatch.setattr(adapter, "_get_client", lambda: fake_client)
-        monkeypatch.setattr(
-            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_model_name",
-            lambda _: "gemini-2.5-flash",
-        )
         params = OpenAICompletionRequestWithExtraBody(model="google/gemini-2.5-flash", prompt=["hello"], stream=True)
         result = await adapter.openai_completion(params)
         assert hasattr(result, "__aiter__")
@@ -272,10 +252,6 @@ class TestOpenAICompletion:
         monkeypatch.setattr(adapter, "_get_provider_model_id", AsyncMock(return_value="gemini-2.5-flash"))
         monkeypatch.setattr(adapter, "_validate_model_allowed", lambda _: None)
         monkeypatch.setattr(adapter, "_get_client", lambda: fake_client)
-        monkeypatch.setattr(
-            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_model_name",
-            lambda _: "gemini-2.5-flash",
-        )
 
     async def test_stream_multi_prompt_shared_completion_id(self, monkeypatch):
         """Test that stream multi prompt shared completion id."""
@@ -419,10 +395,6 @@ class TestCompletionModelExtra:
         monkeypatch.setattr(adapter, "_get_provider_model_id", AsyncMock(return_value="gemini-2.5-flash"))
         monkeypatch.setattr(adapter, "_validate_model_allowed", lambda _: None)
         monkeypatch.setattr(adapter, "_get_client", lambda: fake_client)
-        monkeypatch.setattr(
-            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_model_name",
-            lambda _: "gemini-2.5-flash",
-        )
 
         params = OpenAICompletionRequestWithExtraBody.model_validate(
             {
@@ -473,10 +445,6 @@ class TestCompletionStreamOptions:
         monkeypatch.setattr(adapter, "_get_provider_model_id", _provider_model_id)
         monkeypatch.setattr(adapter, "_validate_model_allowed", lambda _: None)
         monkeypatch.setattr(adapter, "_get_client", lambda: fake_client)
-        monkeypatch.setattr(
-            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_model_name",
-            lambda _: "gemini-2.5-flash",
-        )
         monkeypatch.setattr(
             "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_completion_prompt_to_contents",
             lambda _: [{"role": "user", "parts": [{"text": "ok"}]}],

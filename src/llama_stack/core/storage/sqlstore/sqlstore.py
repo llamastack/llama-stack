@@ -46,6 +46,17 @@ def get_pip_packages(store_config: dict | SqlStoreConfig) -> list[str]:
 
 
 def sqlstore_impl(reference: SqlStoreReference) -> SqlStore:
+    """Get or create a SqlStore instance for the given store reference.
+
+    Args:
+        reference: A reference specifying the backend name and table name.
+
+    Returns:
+        A SqlStore instance for the referenced backend.
+
+    Raises:
+        ValueError: If the backend name is unknown or the backend type is unsupported.
+    """
     backend_name = reference.backend
 
     backend_config = _SQLSTORE_BACKENDS.get(backend_name)

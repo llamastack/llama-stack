@@ -10,8 +10,6 @@ import platform
 import struct
 from typing import TYPE_CHECKING
 
-import torch
-
 from llama_stack.log import get_logger
 
 if TYPE_CHECKING:
@@ -36,6 +34,8 @@ log = get_logger(name=__name__, category="providers::utils")
 
 
 class SentenceTransformerEmbeddingMixin:
+    """Mixin providing OpenAI-compatible embeddings via sentence-transformers models."""
+
     model_store: ModelStore
 
     async def openai_embeddings(
@@ -50,8 +50,11 @@ class SentenceTransformerEmbeddingMixin:
         if not input_list:
             raise ValueError("Empty list not supported")
 
+        # Get trust_remote_code setting from config
+        trust_remote_code = getattr(self.config, "trust_remote_code", False)
+
         # Get the model and generate embeddings
-        embedding_model = await self._load_sentence_transformer_model(params.model)
+        embedding_model = await self._load_sentence_transformer_model(params.model, trust_remote_code)
         embeddings = await asyncio.to_thread(embedding_model.encode, input_list, show_progress_bar=False)
 
         # Convert embeddings to the requested format
@@ -80,7 +83,9 @@ class SentenceTransformerEmbeddingMixin:
             usage=usage,
         )
 
-    async def _load_sentence_transformer_model(self, model: str) -> "SentenceTransformer":
+    async def _load_sentence_transformer_model(
+        self, model: str, trust_remote_code: bool = False
+    ) -> "SentenceTransformer":
         loaded_model = EMBEDDING_MODELS.get(model)
         if loaded_model is not None:
             return loaded_model
@@ -93,6 +98,7 @@ class SentenceTransformerEmbeddingMixin:
             log.info(f"Loading sentence transformer for {model}...")
 
             def _load_model():
+                import torch
                 from sentence_transformers import SentenceTransformer
 
                 platform_name = platform.system()
@@ -102,7 +108,7 @@ class SentenceTransformerEmbeddingMixin:
                     log.debug(f"Constraining torch threads on {platform_name} to a single worker")
                     torch.set_num_threads(1)
 
-                return SentenceTransformer(model, trust_remote_code=True)
+                return SentenceTransformer(model, trust_remote_code=trust_remote_code)
 
             loaded_model = await asyncio.to_thread(_load_model)
             EMBEDDING_MODELS[model] = loaded_model

@@ -135,6 +135,14 @@ RUN set -eux; \
     pip install --no-cache opentelemetry-distro opentelemetry-exporter-otlp; \
     opentelemetry-bootstrap -a install
 
+# Pre-cache tiktoken cl100k_base encoding at build time so the server never
+# attempts a runtime download to openaipublic.blob.core.windows.net.
+# This is required for air-gapped / disconnected-cluster deployments (e.g. RHOAI).
+ENV TIKTOKEN_CACHE_DIR="/.cache/tiktoken"
+RUN pip install --no-cache tiktoken && \
+    mkdir -p /.cache/tiktoken && \
+    python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
+
 # Cleanup
 RUN set -eux; \
     pip uninstall -y uv; \
@@ -154,6 +162,9 @@ set -e
 CMD_PREFIX=""
 if env | grep -q '^OTEL_'; then
   CMD_PREFIX="opentelemetry-instrument"
+  # Disable low-level DB driver instrumentation to prevent duplicate spans
+  # when SQLAlchemy ORM instrumentation is also active (known OTel issue).
+  export OTEL_PYTHON_DISABLED_INSTRUMENTATIONS="${OTEL_PYTHON_DISABLED_INSTRUMENTATIONS:+$OTEL_PYTHON_DISABLED_INSTRUMENTATIONS,}asyncpg,sqlite3"
 fi
 
 if [ -n "$RUN_CONFIG_PATH" ] && [ -f "$RUN_CONFIG_PATH" ]; then

@@ -18,6 +18,7 @@ from llama_stack_api import OpenAIFilePurpose, Order, ResourceNotFoundError
 from llama_stack_api.files.models import (
     DeleteFileRequest,
     ListFilesRequest,
+    OpenAIFileObject,
     RetrieveFileContentRequest,
     RetrieveFileRequest,
     UploadFileRequest,
@@ -91,7 +92,7 @@ class TestOpenAIFilesAPI:
         assert result.purpose == OpenAIFilePurpose.ASSISTANTS
         assert result.bytes == len(sample_text_file.content)
         assert result.created_at > 0
-        assert result.expires_at > result.created_at
+        assert result.expires_at is not None and result.expires_at > result.created_at
 
     async def test_upload_different_purposes(self, files_provider, sample_text_file):
         """Test uploading files with different purposes."""
@@ -217,7 +218,7 @@ class TestOpenAIFilesAPI:
     async def test_retrieve_file_not_found(self, files_provider):
         """Test retrieving a non-existent file."""
         with pytest.raises(ResourceNotFoundError, match="not found"):
-            await files_provider.openai_retrieve_file(request=RetrieveFileRequest(file_id="file-nonexistent"))
+            await files_provider.openai_retrieve_file(request=RetrieveFileRequest(file_id="file-" + "0" * 32))
 
     async def test_retrieve_file_content_success(self, files_provider, sample_text_file):
         """Test successful file content retrieval."""
@@ -238,7 +239,7 @@ class TestOpenAIFilesAPI:
         """Test retrieving content of a non-existent file."""
         with pytest.raises(ResourceNotFoundError, match="not found"):
             await files_provider.openai_retrieve_file_content(
-                request=RetrieveFileContentRequest(file_id="file-nonexistent")
+                request=RetrieveFileContentRequest(file_id="file-" + "0" * 32)
             )
 
     async def test_delete_file_success(self, files_provider, sample_text_file):
@@ -265,7 +266,7 @@ class TestOpenAIFilesAPI:
     async def test_delete_file_not_found(self, files_provider):
         """Test deleting a non-existent file."""
         with pytest.raises(ResourceNotFoundError, match="not found"):
-            await files_provider.openai_delete_file(request=DeleteFileRequest(file_id="file-nonexistent"))
+            await files_provider.openai_delete_file(request=DeleteFileRequest(file_id="file-" + "0" * 32))
 
     async def test_file_persistence_across_operations(self, files_provider, sample_text_file):
         """Test that files persist correctly across multiple operations."""
@@ -348,6 +349,65 @@ class TestOpenAIFilesAPI:
         )
 
         assert uploaded_file.filename == "uploaded_file"  # Default filename
+
+    async def test_openaifileobject_schema_has_no_type_object(self):
+        """Test that schemas with properties have redundant 'type: object' removed (matching OpenAI spec)."""
+        from scripts.openapi_generator.schema_transforms import _remove_type_object_from_openai_schemas
+
+        schema = {
+            "components": {
+                "schemas": {
+                    "OpenAIFileObject": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "string"},
+                            "object": {"type": "string", "const": "file"},
+                        },
+                        "required": ["id", "object"],
+                    },
+                    "SchemaWithoutProperties": {
+                        "type": "object",
+                    },
+                }
+            }
+        }
+        _remove_type_object_from_openai_schemas(schema)
+        assert "type" not in schema["components"]["schemas"]["OpenAIFileObject"]
+        assert schema["components"]["schemas"]["SchemaWithoutProperties"]["type"] == "object"
+
+    async def test_file_content_response_schema_is_string(self):
+        """Test that /files/{file_id}/content response schema is type: string (not $ref to Response)."""
+        from unittest.mock import AsyncMock
+
+        from llama_stack_api.files.api import Files
+        from llama_stack_api.files.fastapi_routes import create_router
+
+        mock_impl = AsyncMock(spec=Files)
+        router = create_router(mock_impl)
+
+        # Build a minimal FastAPI app to get the OpenAPI schema
+        from fastapi import FastAPI
+
+        app = FastAPI()
+        app.include_router(router)
+        schema = app.openapi()
+
+        content_path = schema["paths"]["/v1/files/{file_id}/content"]
+        response_200 = content_path["get"]["responses"]["200"]
+        json_schema = response_200["content"]["application/json"]["schema"]
+        assert json_schema == {"type": "string"}, f"Expected type: string, got: {json_schema}"
+
+    async def test_expires_at_can_be_none(self):
+        """Test that expires_at can be None (it's optional per OpenAI spec)."""
+        file_obj = OpenAIFileObject(
+            id="file-abc123",
+            bytes=100,
+            created_at=1234567890,
+            expires_at=None,
+            filename="test.txt",
+            purpose=OpenAIFilePurpose.ASSISTANTS,
+        )
+        assert file_obj.expires_at is None
 
     async def test_after_pagination_works(self, files_provider, sample_text_file):
         """Test that 'after' pagination works correctly."""

@@ -6,7 +6,9 @@
 
 from typing import Protocol
 
-from llama_stack_api import LLAMA_STACK_API_V1, Api, ProviderSpec, RemoteProviderSpec, webmethod
+from fastapi import APIRouter
+
+from llama_stack_api import Api, ProviderSpec, RemoteProviderSpec
 
 
 def available_providers() -> list[ProviderSpec]:
@@ -27,9 +29,18 @@ class WeatherProvider(Protocol):
     A protocol for the Weather API.
     """
 
-    @webmethod(route="/weather/locations", method="GET", level=LLAMA_STACK_API_V1)
     async def get_available_locations() -> dict[str, list[str]]:
         """
         Get the available locations.
         """
         ...
+
+
+def create_router(impl: WeatherProvider) -> APIRouter:
+    router = APIRouter()
+
+    @router.get("/v1/weather/locations")
+    async def get_available_locations() -> dict[str, list[str]]:
+        return await impl.get_available_locations()
+
+    return router

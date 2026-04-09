@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, Path, Query
 
 from llama_stack_api.router_utils import create_path_dependency, standard_responses
 from llama_stack_api.tools import ToolDef
-from llama_stack_api.version import LLAMA_STACK_API_V1ALPHA
+from llama_stack_api.version import LLAMA_STACK_API_V1BETA
 
 from .api import Connectors
 from .models import (
@@ -43,7 +43,7 @@ def create_router(impl: Connectors) -> APIRouter:
         APIRouter configured for the Connectors API
     """
     router = APIRouter(
-        prefix=f"/{LLAMA_STACK_API_V1ALPHA}",
+        prefix=f"/{LLAMA_STACK_API_V1BETA}",
         tags=["Connectors"],
         responses=standard_responses,
     )

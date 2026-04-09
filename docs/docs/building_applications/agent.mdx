@@ -33,7 +33,7 @@ agent = Agent(
     llama_stack_client,
     model="meta-llama/Llama-3-70b-chat",
     instructions="You are a helpful assistant that can use tools to answer questions.",
-    tools=["builtin::code_interpreter", "builtin::rag/knowledge_search"],
+    tools=["builtin::code_interpreter", "builtin::file_search"],
 )
 ```
 
@@ -102,11 +102,11 @@ Each turn consists of multiple steps that represent the agent's thought process:
 
 ## Agent Execution Loop
 
-Refer to the [Agent Execution Loop](./agent_execution_loop) for more details on what happens within an agent turn.
+Refer to the [Agent Execution Loop](/docs/building_applications/agent_execution_loop) for more details on what happens within an agent turn.
 
 ## Related Resources
 
-- **[Agent Execution Loop](./agent_execution_loop)** - Understanding the internal processing flow
-- **[RAG (Retrieval Augmented Generation)](./rag)** - Building knowledge-enhanced agents
-- **[Tools Integration](./tools)** - Extending agent capabilities with external tools
-- **[Safety Guardrails](./safety)** - Implementing responsible AI practices
+- **[Agent Execution Loop](/docs/building_applications/agent_execution_loop)** - Understanding the internal processing flow
+- **[RAG (Retrieval Augmented Generation)](/docs/building_applications/rag)** - Building knowledge-enhanced agents
+- **[Tools Integration](/docs/building_applications/tools)** - Extending agent capabilities with external tools
+- **[Safety Guardrails](/docs/building_applications/safety)** - Implementing responsible AI practices

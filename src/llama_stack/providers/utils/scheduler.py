@@ -23,6 +23,8 @@ logger = get_logger(name=__name__, category="providers::utils")
 # TODO: revisit the list of possible statuses when defining a more coherent
 # Jobs API for all API flows; e.g. do we need new vs scheduled?
 class JobStatus(Enum):
+    """Enumeration of possible job lifecycle states."""
+
     new = "new"
     scheduled = "scheduled"
     running = "running"
@@ -35,6 +37,8 @@ type JobType = str
 
 
 class JobArtifact(BaseModel):
+    """Metadata and location information for an artifact produced by a job."""
+
     type: JobType
     name: str
     # TODO: uri should be a reference to /files API; revisit when /files is implemented
@@ -54,6 +58,8 @@ _COMPLETED_STATUSES = {JobStatus.completed, JobStatus.failed}
 
 
 class Job:
+    """Represents a scheduled unit of work with status tracking, logs, and artifacts."""
+
     def __init__(self, job_type: JobType, job_id: JobID, handler: JobHandler):
         super().__init__()
         self.id = job_id
@@ -186,7 +192,7 @@ class _NaiveSchedulerBackend(_SchedulerBackend):
             except Exception as e:
                 on_log_message_cb(str(e))
                 job.status = JobStatus.failed
-                logger.exception(f"Job {job.id} failed.")
+                logger.exception("Job failed", job_id=job.id)
 
         asyncio.run_coroutine_threadsafe(do(), self._loop)
 
@@ -213,6 +219,8 @@ def _get_backend_impl(backend: str) -> _SchedulerBackend:
 
 
 class Scheduler:
+    """Manages job scheduling, execution, and lifecycle using a pluggable backend."""
+
     def __init__(self, backend: str = "naive"):
         # TODO: if server crashes, job states are lost; we need to persist jobs on disc
         self._jobs: dict[JobID, Job] = {}
@@ -222,7 +230,7 @@ class Scheduler:
         msg = (datetime.now(UTC), message)
         # At least for the time being, until there's a better way to expose
         # logs to users, log messages on console
-        logger.info(f"Job {job.id}: {message}")
+        logger.info(message, job_id=job.id)
         job.append_log(msg)
         self._backend.on_log_message_cb(job, msg)
 

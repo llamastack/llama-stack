@@ -6,10 +6,19 @@
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class SentenceTransformersInferenceConfig(BaseModel):
+    """Configuration for the sentence-transformers inference provider."""
+
+    trust_remote_code: bool = Field(
+        default=False,
+        description="Whether to trust and execute remote code from model repositories. "
+        "Set to True for models that require custom code (e.g., nomic-ai/nomic-embed-text-v1.5). "
+        "Defaults to False for security.",
+    )
+
     @classmethod
     def sample_run_config(cls, **kwargs) -> dict[str, Any]:
-        return {}
+        return {"trust_remote_code": False}

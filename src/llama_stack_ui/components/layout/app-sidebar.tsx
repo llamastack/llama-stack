@@ -12,10 +12,16 @@ import {
   FileText,
   File,
   ChevronRight,
+  Box,
+  Plug,
+  Wrench,
+  Shield,
+  ShieldCheck,
+  Layers,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 import {
   getConversationHistory,
@@ -42,7 +48,13 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
-// ConversationInfo type removed — using ConversationHistoryEntry from lib
+const createItems = [
+  {
+    title: "Safety",
+    url: "/safety",
+    icon: ShieldCheck,
+  },
+];
 
 const manageItems = [
   {
@@ -66,6 +78,31 @@ const manageItems = [
     icon: File,
   },
   {
+    title: "Models",
+    url: "/models",
+    icon: Box,
+  },
+  {
+    title: "Connectors",
+    url: "/connectors",
+    icon: Plug,
+  },
+  {
+    title: "Tools",
+    url: "/tools",
+    icon: Wrench,
+  },
+  {
+    title: "Conversations",
+    url: "/conversations",
+    icon: MessageSquare,
+  },
+  {
+    title: "Batches",
+    url: "/batches",
+    icon: Layers,
+  },
+  {
     title: "Prompts",
     url: "/prompts",
     icon: FileText,
@@ -77,22 +114,27 @@ const manageItems = [
   },
 ];
 
-const optimizeItems: {
-  title: string;
-  url: string;
-  icon: React.ElementType;
-}[] = [
+const adminItems = [
   {
-    title: "Evaluations",
-    url: "",
-    icon: Compass,
-  },
-  {
-    title: "Fine-tuning",
-    url: "",
-    icon: Settings2,
+    title: "System",
+    url: "/admin",
+    icon: Shield,
   },
 ];
+
+const optimizeItems: { title: string; url: string; icon: React.ElementType }[] =
+  [
+    {
+      title: "Evaluations",
+      url: "",
+      icon: Compass,
+    },
+    {
+      title: "Fine-tuning",
+      url: "",
+      icon: Settings2,
+    },
+  ];
 
 interface SidebarItem {
   title: string;
@@ -189,13 +231,6 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <Link href="/" className="flex items-center gap-2 p-2">
-          <Image
-            src="/logo.webp"
-            alt="Llama Stack"
-            width={32}
-            height={32}
-            className="h-8 w-8"
-          />
           <span className="font-semibold text-lg">Llama Stack</span>
         </Link>
       </SidebarHeader>
@@ -269,6 +304,7 @@ export function AppSidebar() {
                   </SidebarMenuSub>
                 </CollapsibleContent>
               </Collapsible>
+              {renderSidebarItems(createItems)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -277,6 +313,13 @@ export function AppSidebar() {
           <SidebarGroupLabel>Manage</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>{renderSidebarItems(manageItems)}</SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Admin</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>{renderSidebarItems(adminItems)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 

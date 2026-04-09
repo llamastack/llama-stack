@@ -28,10 +28,10 @@ def load_external_apis(config: StackConfig | None) -> dict[Api, ExternalApiSpec]
 
     external_apis_dir = config.external_apis_dir.expanduser().resolve()
     if not external_apis_dir.is_dir():
-        logger.error(f"External APIs directory is not a directory: {external_apis_dir}")
+        logger.error("External APIs directory is not a directory", path=str(external_apis_dir))
         return {}
 
-    logger.info(f"Loading external APIs from {external_apis_dir}")
+    logger.info("Loading external APIs", path=str(external_apis_dir))
     external_apis: dict[Api, ExternalApiSpec] = {}
 
     # Look for YAML files in the external APIs directory
@@ -42,13 +42,13 @@ def load_external_apis(config: StackConfig | None) -> dict[Api, ExternalApiSpec]
 
             spec = ExternalApiSpec(**spec_data)
             api = Api.add(spec.name)
-            logger.info(f"Loaded external API spec for {spec.name} from {yaml_path}")
+            logger.info("Loaded external API spec", api_name=spec.name, path=str(yaml_path))
             external_apis[api] = spec
         except yaml.YAMLError as yaml_err:
-            logger.error(f"Failed to parse YAML file {yaml_path}: {yaml_err}")
+            logger.error("Failed to parse YAML file", path=str(yaml_path), error=str(yaml_err))
             raise
         except Exception:
-            logger.exception(f"Failed to load external API spec from {yaml_path}")
+            logger.exception("Failed to load external API spec", path=str(yaml_path))
             raise
 
     return external_apis

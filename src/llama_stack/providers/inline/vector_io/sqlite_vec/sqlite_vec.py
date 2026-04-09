@@ -9,11 +9,45 @@ import json
 import re
 import sqlite3
 import struct
-from typing import Any
+import threading
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
-import sqlite_vec  # type: ignore[import-untyped]
-from numpy.typing import NDArray
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+_numpy: Any = None
+_numpy_lock = threading.Lock()
+
+
+def _get_numpy() -> Any:
+    global _numpy
+    if _numpy is not None:
+        return _numpy
+    with _numpy_lock:
+        if _numpy is not None:
+            return _numpy
+        import numpy
+
+        _numpy = numpy
+        return _numpy
+
+
+_sqlite_vec: Any = None
+_sqlite_vec_lock = threading.Lock()
+
+
+def _get_sqlite_vec() -> Any:
+    global _sqlite_vec
+    if _sqlite_vec is not None:
+        return _sqlite_vec
+    with _sqlite_vec_lock:
+        if _sqlite_vec is not None:
+            return _sqlite_vec
+        import sqlite_vec  # type: ignore[import-untyped]
+
+        _sqlite_vec = sqlite_vec
+        return _sqlite_vec
+
 
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
@@ -30,6 +64,7 @@ from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryA
 from llama_stack_api import (
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     InsertChunksRequest,
@@ -76,7 +111,7 @@ def _create_sqlite_connection(db_path: str):
     """Create a SQLite connection with sqlite_vec extension loaded."""
     connection = sqlite3.connect(db_path)
     connection.enable_load_extension(True)
-    sqlite_vec.load(connection)
+    _get_sqlite_vec().load(connection)
     connection.enable_load_extension(False)
     return connection
 
@@ -165,6 +200,7 @@ class SQLiteVecIndex(EmbeddingIndex):
         Also inserts chunk content into FTS table for keyword search support.
         """
         chunks = embedded_chunks  # EmbeddedChunk now inherits from Chunk
+        np = _get_numpy()
         embeddings = np.array([ec.embedding for ec in embedded_chunks], dtype=np.float32)
         assert all(isinstance(chunk.content, str) for chunk in chunks), "SQLiteVecIndex only supports text chunks"
 
@@ -208,7 +244,7 @@ class SQLiteVecIndex(EmbeddingIndex):
 
             except sqlite3.Error as e:
                 connection.rollback()
-                logger.error(f"Error inserting into {self.vector_table}: {e}")
+                logger.error("Error inserting into", vector_table=self.vector_table, error=str(e))
                 raise
 
             finally:
@@ -284,7 +320,7 @@ class SQLiteVecIndex(EmbeddingIndex):
         return operator.join(clauses), params
 
     async def query_vector(
-        self, embedding: NDArray, k: int, score_threshold: float, filters: Filter | None = None
+        self, embedding: "NDArray", k: int, score_threshold: float, filters: Filter | None = None
     ) -> QueryChunksResponse:
         """
         Performs vector-based search using a virtual table for vector similarity.
@@ -297,7 +333,7 @@ class SQLiteVecIndex(EmbeddingIndex):
             connection = _create_sqlite_connection(self.db_path)
             cur = connection.cursor()
             try:
-                emb_list = embedding.tolist() if isinstance(embedding, np.ndarray) else list(embedding)
+                emb_list = embedding.tolist() if isinstance(embedding, _get_numpy().ndarray) else list(embedding)
                 emb_blob = serialize_vector(emb_list)
 
                 # Build query with optional filter clause
@@ -326,7 +362,7 @@ class SQLiteVecIndex(EmbeddingIndex):
                 chunk_data = json.loads(chunk_json)
                 embedded_chunk = load_embedded_chunk_with_backward_compat(chunk_data)
             except Exception as e:
-                logger.error(f"Error parsing chunk JSON for id {_id}: {e}")
+                logger.error("Error parsing chunk JSON for id", _id=_id, error=str(e))
                 continue
             chunks.append(embedded_chunk)
             scores.append(score)
@@ -375,15 +411,17 @@ class SQLiteVecIndex(EmbeddingIndex):
                 chunk_data = json.loads(chunk_json)
                 embedded_chunk = load_embedded_chunk_with_backward_compat(chunk_data)
             except Exception as e:
-                logger.error(f"Error parsing chunk JSON for id {_id}: {e}")
+                logger.error("Error parsing chunk JSON for id", _id=_id, error=str(e))
                 continue
             chunks.append(embedded_chunk)
-            scores.append(score)
+            # Negate so higher = more relevant, matching the convention
+            # expected by RRF and other downstream rerankers.
+            scores.append(-score)
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def query_hybrid(
         self,
-        embedding: NDArray,
+        embedding: "NDArray",
         query_string: str,
         k: int,
         score_threshold: float,
@@ -472,7 +510,7 @@ class SQLiteVecIndex(EmbeddingIndex):
                 connection.commit()
             except Exception as e:
                 connection.rollback()
-                logger.error(f"Error deleting chunks: {e}")
+                logger.error("Error deleting chunks", error=str(e))
                 raise
             finally:
                 cur.close()
@@ -488,8 +526,16 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
     and creates a cache of VectorStoreWithIndex instances (each wrapping a SQLiteVecIndex).
     """
 
-    def __init__(self, config, inference_api: Inference, files_api: Files | None) -> None:
-        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
+    def __init__(
+        self,
+        config,
+        inference_api: Inference,
+        files_api: Files | None,
+        file_processor_api: FileProcessors | None = None,
+    ) -> None:
+        super().__init__(
+            inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api
+        )
         self.config = config
         self.cache: dict[str, VectorStoreWithIndex] = {}
         self.vector_store_table = None

@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -35,7 +35,7 @@ class _URLOrData(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def validator(cls, values):
+    def validator(cls, values: Any) -> dict[str, Any]:
         if isinstance(values, dict):
             return values
         return {"url": values}

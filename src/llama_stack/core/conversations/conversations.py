@@ -10,11 +10,14 @@ from typing import Any
 
 from pydantic import BaseModel, TypeAdapter
 
-from llama_stack.core.datatypes import AccessRule, StackConfig
+from llama_stack.core.access_control.datatypes import AccessRule
+from llama_stack.core.conversations.validation import CONVERSATION_ID_PATTERN
+from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
 from llama_stack.log import get_logger
 from llama_stack_api import (
+    Api,
     ConversationItemNotFoundError,
     ConversationNotFoundError,
     InvalidParameterError,
@@ -52,7 +55,7 @@ class ConversationServiceConfig(BaseModel):
     policy: list[AccessRule] = []
 
 
-async def get_provider_impl(config: ConversationServiceConfig, deps: dict[Any, Any]):
+async def get_provider_impl(config: ConversationServiceConfig, deps: dict[Api, Any]) -> "ConversationServiceImpl":
     """Get the conversation service implementation."""
     impl = ConversationServiceImpl(config, deps)
     await impl.initialize()
@@ -62,7 +65,7 @@ async def get_provider_impl(config: ConversationServiceConfig, deps: dict[Any, A
 class ConversationServiceImpl(Conversations):
     """Built-in conversation service implementation using AuthorizedSqlStore."""
 
-    def __init__(self, config: ConversationServiceConfig, deps: dict[Any, Any]):
+    def __init__(self, config: ConversationServiceConfig, deps: dict[Api, Any]):
         self.config = config
         self.deps = deps
         self.policy = config.policy
@@ -138,7 +141,7 @@ class ConversationServiceImpl(Conversations):
             object="conversation",
         )
 
-        logger.debug(f"Created conversation {conversation_id}")
+        logger.debug("Created conversation", conversation_id=conversation_id)
         return conversation
 
     async def get_conversation(self, request: GetConversationRequest) -> Conversation:
@@ -178,15 +181,19 @@ class ConversationServiceImpl(Conversations):
 
         await self.sql_store.delete(table="openai_conversations", where={"id": request.conversation_id})
 
-        logger.debug(f"Deleted conversation {request.conversation_id}")
+        logger.debug("Deleted conversation", conversation_id=request.conversation_id)
         return ConversationDeletedResource(id=request.conversation_id)
 
     def _validate_conversation_id(self, conversation_id: str) -> None:
-        """Validate conversation ID format."""
-        if not conversation_id.startswith("conv_"):
-            raise InvalidParameterError("conversation_id", conversation_id, "Conversation ID must begin with 'conv_'.")
+        """Validate conversation ID format matches ``conv_`` + 48 hex chars."""
+        if not CONVERSATION_ID_PATTERN.fullmatch(conversation_id):
+            raise InvalidParameterError(
+                "conversation_id",
+                conversation_id,
+                "Conversation ID must match format 'conv_' followed by 48 lowercase hex characters.",
+            )
 
-    def _get_or_generate_item_id(self, item: ConversationItem, item_dict: dict) -> str:
+    def _get_or_generate_item_id(self, item: ConversationItem, item_dict: dict[str, Any]) -> str:
         """Get existing item ID or generate one if missing."""
         if item.id is None:
             random_bytes = secrets.token_bytes(24)
@@ -231,7 +238,9 @@ class ConversationServiceImpl(Conversations):
 
             created_items.append(item_dict)
 
-        logger.debug(f"Created {len(created_items)} items in conversation {conversation_id}")
+        logger.debug(
+            "Created items in conversation", created_items_count=len(created_items), conversation_id=conversation_id
+        )
 
         # Convert created items (dicts) to proper ConversationItem types
         adapter: TypeAdapter[ConversationItem] = TypeAdapter(ConversationItem)
@@ -313,7 +322,7 @@ class ConversationServiceImpl(Conversations):
             table="conversation_items", where={"id": request.item_id, "conversation_id": request.conversation_id}
         )
 
-        logger.debug(f"Deleted item {request.item_id} from conversation {request.conversation_id}")
+        logger.debug("Deleted item from conversation", item_id=request.item_id, conversation_id=request.conversation_id)
         return ConversationItemDeletedResource(id=request.item_id)
 
     async def shutdown(self) -> None:

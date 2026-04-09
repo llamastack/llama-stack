@@ -8,11 +8,45 @@ import asyncio
 import base64
 import io
 import json
-from typing import Any
+import threading
+from typing import TYPE_CHECKING, Any
 
-import faiss  # type: ignore[import-untyped]
-import numpy as np
-from numpy.typing import NDArray
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+_faiss: Any = None
+_faiss_lock = threading.Lock()
+
+
+def _get_faiss() -> Any:
+    global _faiss
+    if _faiss is not None:
+        return _faiss
+    with _faiss_lock:
+        if _faiss is not None:
+            return _faiss
+        import faiss  # type: ignore[import-untyped]
+
+        _faiss = faiss
+        return _faiss
+
+
+_numpy: Any = None
+_numpy_lock = threading.Lock()
+
+
+def _get_numpy() -> Any:
+    global _numpy
+    if _numpy is not None:
+        return _numpy
+    with _numpy_lock:
+        if _numpy is not None:
+            return _numpy
+        import numpy
+
+        _numpy = numpy
+        return _numpy
+
 
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
@@ -23,6 +57,7 @@ from llama_stack.providers.utils.vector_io.filters import CompoundFilter, Filter
 from llama_stack_api import (
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     HealthResponse,
     HealthStatus,
@@ -69,8 +104,10 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 
 class FaissIndex(EmbeddingIndex):
+    """FAISS-based embedding index with optional KV store persistence."""
+
     def __init__(self, dimension: int, kvstore: KVStore | None = None, bank_id: str | None = None):
-        self.index = faiss.IndexFlatL2(dimension)
+        self.index = _get_faiss().IndexFlatL2(dimension)
         self.chunk_by_index: dict[int, EmbeddedChunk] = {}
         self.kvstore = kvstore
         self.bank_id = bank_id
@@ -107,14 +144,14 @@ class FaissIndex(EmbeddingIndex):
 
             buffer = io.BytesIO(base64.b64decode(data["faiss_index"]))
             try:
-                self.index = faiss.deserialize_index(np.load(buffer, allow_pickle=False))
+                self.index = _get_faiss().deserialize_index(_get_numpy().load(buffer, allow_pickle=False))
                 self.chunk_ids = [embedded_chunk.chunk_id for embedded_chunk in self.chunk_by_index.values()]
                 # Rebuild inverted metadata index from loaded chunks
                 for pos, chunk in self.chunk_by_index.items():
                     for key, val in chunk.metadata.items():
                         self._meta_index.setdefault(key, {}).setdefault(val, set()).add(pos)
             except Exception as e:
-                logger.debug(e, exc_info=True)
+                logger.debug("Failed to deserialize Faiss index", error=str(e), exc_info=True)
                 raise ValueError(
                     "Error deserializing Faiss index from storage. If you recently upgraded your Llama Stack, Faiss, "
                     "or NumPy versions, you may need to delete the index and re-create it again or downgrade versions.\n"
@@ -125,9 +162,9 @@ class FaissIndex(EmbeddingIndex):
         if not self.kvstore or not self.bank_id:
             return
 
-        np_index = faiss.serialize_index(self.index)
+        np_index = _get_faiss().serialize_index(self.index)
         buffer = io.BytesIO()
-        np.save(buffer, np_index, allow_pickle=False)
+        _get_numpy().save(buffer, np_index, allow_pickle=False)
         data = {
             "chunk_by_index": {k: v.model_dump_json() for k, v in self.chunk_by_index.items()},
             "faiss_index": base64.b64encode(buffer.getvalue()).decode("utf-8"),
@@ -147,6 +184,7 @@ class FaissIndex(EmbeddingIndex):
             return
 
         # Extract embeddings and validate dimensions
+        np = _get_numpy()
         embeddings = np.array([ec.embedding for ec in embedded_chunks], dtype=np.float32)
         embedding_dim = embeddings.shape[1] if len(embeddings.shape) > 1 else embeddings.shape[0]
         if embedding_dim != self.index.d:
@@ -174,7 +212,7 @@ class FaissIndex(EmbeddingIndex):
 
         def remove_chunk(chunk_id: str):
             removed_pos = self.chunk_ids.index(chunk_id)
-            self.index.remove_ids(np.array([removed_pos]))
+            self.index.remove_ids(_get_numpy().array([removed_pos]))
 
             # Remove deleted position from _meta_index
             for val_map in self._meta_index.values():
@@ -246,7 +284,7 @@ class FaissIndex(EmbeddingIndex):
         }
 
     async def query_vector(
-        self, embedding: NDArray, k: int, score_threshold: float, filters: Filter | None = None
+        self, embedding: "NDArray", k: int, score_threshold: float, filters: Filter | None = None
     ) -> QueryChunksResponse:
         """
         Performs vector-based search using Faiss similarity search.
@@ -254,6 +292,8 @@ class FaissIndex(EmbeddingIndex):
         inverted _meta_index and passes them directly to Faiss via IDSelectorBatch,
         eliminating the need for post-hoc filtering or over-retrieval heuristics.
         """
+        np = _get_numpy()
+        faiss = _get_faiss()
         if filters is not None:
             candidate_positions = self._resolve_filter_positions(filters)
             if not candidate_positions:
@@ -290,7 +330,7 @@ class FaissIndex(EmbeddingIndex):
 
     async def query_hybrid(
         self,
-        embedding: NDArray,
+        embedding: "NDArray",
         query_string: str,
         k: int,
         score_threshold: float,
@@ -304,8 +344,18 @@ class FaissIndex(EmbeddingIndex):
 
 
 class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
-    def __init__(self, config: FaissVectorIOConfig, inference_api: Inference, files_api: Files | None) -> None:
-        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
+    """VectorIO adapter that uses FAISS for similarity search and vector storage."""
+
+    def __init__(
+        self,
+        config: FaissVectorIOConfig,
+        inference_api: Inference,
+        files_api: Files | None,
+        file_processor_api: FileProcessors | None = None,
+    ) -> None:
+        super().__init__(
+            inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api
+        )
         self.config = config
         self.cache: dict[str, VectorStoreWithIndex] = {}
 
@@ -343,7 +393,7 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
         """
         try:
             vector_dimension = 128  # sample dimension
-            faiss.IndexFlatL2(vector_dimension)
+            _get_faiss().IndexFlatL2(vector_dimension)
             return HealthResponse(status=HealthStatus.OK)
         except Exception as e:
             return HealthResponse(status=HealthStatus.ERROR, message=f"Health check failed: {str(e)}")
