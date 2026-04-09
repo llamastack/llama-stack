@@ -19,10 +19,10 @@ inference provider, based on integration test results.
 
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
-| azure | 113 | 113 | 0 | 86% |
+| azure | 114 | 114 | 0 | 86% |
 | bedrock | 27 | 27 | 0 | 20% |
 | ollama | 2 | 2 | 0 | 2% |
-| openai | 132 | 132 | 0 | 100% |
+| openai | 133 | 133 | 0 | 100% |
 | vllm | 3 | 3 | 0 | 2% |
 | watsonx | 56 | 56 | 0 | 42% |
 
@@ -63,6 +63,7 @@ Models, endpoints, and versions used during test recordings.
 | compact chain through compaction | ✅ | — | — | ✅ | — | — |
 | compact double compaction | ✅ | — | — | ✅ | — | — |
 | compact input items hides compaction | ✅ | — | — | ✅ | — | — |
+| compact response is retrievable | ✅ | — | — | ✅ | — | — |
 | compact roundtrip | ✅ | — | — | ✅ | — | — |
 | compact single message | ✅ | — | — | ✅ | — | — |
 | compact with previous response id | ✅ | — | — | ✅ | — | — |
