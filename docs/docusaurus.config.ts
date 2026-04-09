@@ -234,6 +234,10 @@ const config: Config = {
               label: 'Releases',
               href: 'https://github.com/llamastack/llama-stack/releases',
             },
+            {
+              label: 'Docker Hub',
+              href: 'https://hub.docker.com/u/llamastack',
+            },
           ],
         },
       ],
