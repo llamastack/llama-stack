@@ -252,6 +252,15 @@ h3 {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+/* Dropdown toggle active state */
+.dropdown--show > .navbar__link {
+  background: rgba(13, 115, 119, 0.06);
+}
+
+[data-theme='dark'] .dropdown--show > .navbar__link {
+  background: rgba(45, 189, 194, 0.08);
+}
+
 /* Dropdown menu styling */
 .dropdown__menu {
   border-radius: 0.75rem;
@@ -264,7 +273,7 @@ h3 {
 [data-theme='dark'] .dropdown__menu {
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
-  background: #1a1a2e;
+  background: var(--ifm-background-surface-color);
 }
 
 .dropdown__link {
