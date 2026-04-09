@@ -119,7 +119,10 @@ class BuiltinMessagesImpl(Messages):
     # -- Native passthrough for providers with /v1/messages support --
 
     # Module paths of provider impls known to support /v1/messages natively
-    _NATIVE_MESSAGES_MODULES = {"llama_stack.providers.remote.inference.ollama"}
+    _NATIVE_MESSAGES_MODULES = {
+        "llama_stack.providers.remote.inference.ollama",
+        "llama_stack.providers.remote.inference.vllm",
+    }
 
     async def _get_passthrough_url(self, model: str) -> str | None:
         """Check if the model's provider supports /v1/messages natively.

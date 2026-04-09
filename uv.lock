@@ -2902,7 +2902,7 @@ requires-dist = [
     { name = "fire", marker = "extra == 'starter'" },
     { name = "fireworks-ai", marker = "extra == 'starter'", specifier = "<=0.17.16" },
     { name = "fonttools", marker = "extra == 'starter'", specifier = ">=4.60.2" },
-    { name = "google-genai", marker = "extra == 'starter'" },
+    { name = "google-genai", marker = "extra == 'starter'", specifier = ">=1.69.0" },
     { name = "h11", specifier = ">=0.16.0" },
     { name = "h11", marker = "extra == 'starter'", specifier = ">=0.16.0" },
     { name = "httpx" },
