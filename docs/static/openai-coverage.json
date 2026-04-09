@@ -127,10 +127,10 @@
       ]
     },
     "conformance": {
-      "score": 91.3,
-      "issues": 190,
+      "score": 91.5,
+      "issues": 183,
       "missing_properties": 110,
-      "total_problems": 300,
+      "total_problems": 293,
       "total_properties": 3441
     }
   },
@@ -1472,8 +1472,8 @@
       ]
     },
     "Responses": {
-      "score": 85.8,
-      "issues": 32,
+      "score": 88.9,
+      "issues": 25,
       "missing_properties": 0,
       "total_properties": 225,
       "endpoints": [
@@ -1484,14 +1484,6 @@
               "method": "POST",
               "missing_properties": [],
               "conformance_issues": [
-                {
-                  "property": "POST.requestBody.content.application/json.properties.include",
-                  "details": [
-                    "Type removed: ['array']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
                 {
                   "property": "POST.requestBody.content.application/json.properties.input",
                   "details": [
@@ -1529,18 +1521,12 @@
                 {
                   "property": "POST.requestBody.content.application/json.properties.store",
                   "details": [
-                    "Type removed: ['boolean']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2",
                     "Default changed: None -> True"
                   ]
                 },
                 {
                   "property": "POST.requestBody.content.application/json.properties.stream",
                   "details": [
-                    "Type removed: ['boolean']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2",
                     "Default changed: None -> False"
                   ]
                 },
@@ -1579,14 +1565,6 @@
                   ]
                 },
                 {
-                  "property": "POST.responses.200.content.application/json.properties.frequency_penalty",
-                  "details": [
-                    "Type removed: ['number']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
                   "property": "POST.responses.200.content.application/json.properties.incomplete_details",
                   "details": [
                     "Union variants added: 1",
@@ -1609,18 +1587,7 @@
                 {
                   "property": "POST.responses.200.content.application/json.properties.parallel_tool_calls",
                   "details": [
-                    "Type removed: ['boolean']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2",
                     "Default changed: None -> True"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.presence_penalty",
-                  "details": [
-                    "Type removed: ['number']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
                   ]
                 },
                 {
@@ -1628,22 +1595,6 @@
                   "details": [
                     "Union variants added: 1",
                     "Union variants removed: 1"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.service_tier",
-                  "details": [
-                    "Type removed: ['string']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.temperature",
-                  "details": [
-                    "Type removed: ['number']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
                   ]
                 },
                 {
@@ -1659,27 +1610,10 @@
                   ]
                 },
                 {
-                  "property": "POST.responses.200.content.application/json.properties.tools",
+                  "property": "POST.responses.200.content.application/json.properties.tools.items",
                   "details": [
-                    "Type removed: ['array']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.top_logprobs",
-                  "details": [
-                    "Type removed: ['integer']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.top_p",
-                  "details": [
-                    "Type removed: ['number']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
+                    "Union variants added: 4",
+                    "Union variants removed: 1"
                   ]
                 },
                 {
@@ -1697,7 +1631,7 @@
                 }
               ],
               "missing_count": 0,
-              "issues_count": 29
+              "issues_count": 22
             }
           ]
         },
