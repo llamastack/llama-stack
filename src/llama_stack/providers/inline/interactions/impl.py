@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from typing import Any
 
 from llama_stack.log import get_logger
@@ -37,12 +38,19 @@ from llama_stack_api.interactions.models import (
     GoogleUsage,
     InteractionCompleteEvent,
     InteractionStartEvent,
+    _ContentRef,
+    _InteractionCompleteRef,
+    _InteractionRef,
     _TextDelta,
 )
 
 from .config import InteractionsConfig
 
 logger = get_logger(name=__name__, category="interactions")
+
+
+def _now_iso() -> str:
+    return datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S+00:00")
 
 
 class BuiltinInteractionsImpl(Interactions):
@@ -130,13 +138,17 @@ class BuiltinInteractionsImpl(Interactions):
             input_tokens = response.usage.prompt_tokens or 0
             output_tokens = response.usage.completion_tokens or 0
             usage = GoogleUsage(
-                input_tokens=input_tokens,
-                output_tokens=output_tokens,
+                total_input_tokens=input_tokens,
+                total_output_tokens=output_tokens,
                 total_tokens=input_tokens + output_tokens,
             )
 
+        now = _now_iso()
         return GoogleInteractionResponse(
             id=f"interaction-{uuid.uuid4().hex[:24]}",
+            created=now,
+            updated=now,
+            model=request_model,
             outputs=outputs,
             usage=usage,
         )
@@ -153,7 +165,12 @@ class BuiltinInteractionsImpl(Interactions):
         interaction_id = f"interaction-{uuid.uuid4().hex[:24]}"
 
         # Emit interaction.start
-        yield InteractionStartEvent(id=interaction_id)
+        yield InteractionStartEvent(
+            interaction=_InteractionRef(
+                id=interaction_id,
+                model=request_model,
+            ),
+        )
 
         content_started = False
         output_tokens = 0
@@ -172,7 +189,7 @@ class BuiltinInteractionsImpl(Interactions):
 
             if delta and delta.content:
                 if not content_started:
-                    yield ContentStartEvent(index=0)
+                    yield ContentStartEvent(index=0, content=_ContentRef())
                     content_started = True
 
                 yield ContentDeltaEvent(
@@ -189,11 +206,17 @@ class BuiltinInteractionsImpl(Interactions):
             yield ContentStopEvent(index=0)
 
         # Final event
+        now = _now_iso()
         yield InteractionCompleteEvent(
-            id=interaction_id,
-            usage=GoogleUsage(
-                input_tokens=input_tokens,
-                output_tokens=output_tokens,
-                total_tokens=input_tokens + output_tokens,
+            interaction=_InteractionCompleteRef(
+                id=interaction_id,
+                created=now,
+                updated=now,
+                model=request_model,
+                usage=GoogleUsage(
+                    total_input_tokens=input_tokens,
+                    total_output_tokens=output_tokens,
+                    total_tokens=input_tokens + output_tokens,
+                ),
             ),
         )

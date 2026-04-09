@@ -11620,7 +11620,7 @@ components:
       - model
       - input
       title: GoogleCreateInteractionRequest
-      description: Request body for POST /v1/interactions.
+      description: Request body for POST /v1alpha/interactions.
     GoogleGenerationConfig:
       properties:
         temperature:
@@ -11676,24 +11676,49 @@ components:
           type: string
           title: Id
           description: Unique interaction ID.
+        created:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Creation timestamp.
         status:
           type: string
           title: Status
           enum:
           - completed
+        updated:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Last update timestamp.
+        model:
+          type: string
+          title: Model
+          description: Model used for generation.
         outputs:
           items:
             $ref: '#/components/schemas/GoogleTextOutput'
           type: array
           title: Outputs
           description: Response output items.
+        role:
+          type: string
+          title: Role
+          enum:
+          - model
         usage:
           $ref: '#/components/schemas/GoogleUsage'
+        object:
+          type: string
+          title: Object
+          enum:
+          - interaction
       required:
       - id
+      - model
       - outputs
       title: GoogleInteractionResponse
-      description: Response from POST /v1/interactions (non-streaming).
+      description: Response from POST /v1alpha/interactions (non-streaming).
     GoogleTextContent:
       properties:
         type:
@@ -11724,13 +11749,13 @@ components:
       description: A text output item.
     GoogleUsage:
       properties:
-        input_tokens:
+        total_input_tokens:
           type: integer
-          title: Input Tokens
+          title: Total Input Tokens
           default: 0
-        output_tokens:
+        total_output_tokens:
           type: integer
-          title: Output Tokens
+          title: Total Output Tokens
           default: 0
         total_tokens:
           type: integer

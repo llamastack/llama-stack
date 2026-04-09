@@ -60,13 +60,15 @@ def run_non_streaming_basic(client: genai.Client, model: str) -> None:
     assert len(interaction.outputs) > 0, "Expected at least one output"
     assert interaction.outputs[0].type == "text", f"Output type should be 'text', got: {interaction.outputs[0].type}"
     assert len(interaction.outputs[0].text) > 0, "Output text should not be empty"
-    assert interaction.usage.input_tokens > 0, "Expected input_tokens > 0"
-    assert interaction.usage.output_tokens > 0, "Expected output_tokens > 0"
-    assert interaction.usage.total_tokens == interaction.usage.input_tokens + interaction.usage.output_tokens
+    assert interaction.usage.total_input_tokens > 0, "Expected input_tokens > 0"
+    assert interaction.usage.total_output_tokens > 0, "Expected output_tokens > 0"
+    assert (
+        interaction.usage.total_tokens == interaction.usage.total_input_tokens + interaction.usage.total_output_tokens
+    )
 
     print(f"  Response: {interaction.outputs[0].text[:80]}")
     print(
-        f"  Usage: input={interaction.usage.input_tokens}, output={interaction.usage.output_tokens}, total={interaction.usage.total_tokens}"
+        f"  Usage: input={interaction.usage.total_input_tokens}, output={interaction.usage.total_output_tokens}, total={interaction.usage.total_tokens}"
     )
     print("  PASSED")
 
@@ -151,13 +153,17 @@ def run_streaming_basic(client: genai.Client, model: str) -> None:
         event_type = type(event).__name__
         event_types.append(event_type)
 
-        if hasattr(event, "id") and event.id:
-            interaction_id = event.id
+        if hasattr(event, "interaction") and event.interaction and hasattr(event.interaction, "id"):
+            interaction_id = event.interaction.id
 
         if hasattr(event, "delta") and event.delta and hasattr(event.delta, "text"):
             text_parts.append(event.delta.text)
 
-        if hasattr(event, "status") and event.status == "completed":
+        if (
+            hasattr(event, "interaction")
+            and event.interaction
+            and getattr(event.interaction, "status", None) == "completed"
+        ):
             complete_event = event
 
     full_text = "".join(text_parts)
@@ -167,12 +173,19 @@ def run_streaming_basic(client: genai.Client, model: str) -> None:
 
     print(f"  Events: {event_types}")
     print(f"  Full text: {full_text[:80]}")
-    if complete_event and hasattr(complete_event, "usage") and complete_event.usage:
-        usage = complete_event.usage
-        if hasattr(usage, "input_tokens"):
-            print(f"  Usage: input={usage.input_tokens}, output={usage.output_tokens}")
-        elif isinstance(usage, dict):
-            print(f"  Usage: input={usage.get('input_tokens', 0)}, output={usage.get('output_tokens', 0)}")
+    if complete_event and hasattr(complete_event, "interaction") and complete_event.interaction:
+        interaction_obj = complete_event.interaction
+        usage = getattr(interaction_obj, "usage", None) or (
+            interaction_obj.get("usage") if isinstance(interaction_obj, dict) else None
+        )
+        if usage:
+            in_tok = getattr(usage, "total_input_tokens", None) or (
+                usage.get("total_input_tokens", 0) if isinstance(usage, dict) else 0
+            )
+            out_tok = getattr(usage, "total_output_tokens", None) or (
+                usage.get("total_output_tokens", 0) if isinstance(usage, dict) else 0
+            )
+            print(f"  Usage: input={in_tok}, output={out_tok}")
     print("  PASSED")
 
 

@@ -175,11 +175,16 @@ class TestResponseTranslation:
 
         assert result.id.startswith("interaction-")
         assert result.status == "completed"
+        assert result.model == "gemini-2.5-flash"
+        assert result.role == "model"
+        assert result.object == "interaction"
+        assert result.created is not None
+        assert result.updated is not None
         assert len(result.outputs) == 1
         assert result.outputs[0].type == "text"
         assert result.outputs[0].text == "Hello!"
-        assert result.usage.input_tokens == 10
-        assert result.usage.output_tokens == 5
+        assert result.usage.total_input_tokens == 10
+        assert result.usage.total_output_tokens == 5
         assert result.usage.total_tokens == 15
 
     def test_empty_response(self, impl):
@@ -207,8 +212,8 @@ class TestResponseTranslation:
 
         result = impl._openai_to_google(openai_resp, "m")
 
-        assert result.usage.input_tokens == 0
-        assert result.usage.output_tokens == 0
+        assert result.usage.total_input_tokens == 0
+        assert result.usage.total_output_tokens == 0
         assert result.usage.total_tokens == 0
 
 
@@ -234,10 +239,16 @@ class TestStreamingTranslation:
         async for event in impl._stream_openai_to_google(mock_stream(), "m"):
             events.append(event)
 
+        # interaction.start wraps in interaction object
         assert events[0].event_type == "interaction.start"
-        assert events[0].id.startswith("interaction-")
+        assert events[0].interaction.id.startswith("interaction-")
+        assert events[0].interaction.status == "in_progress"
+        assert events[0].interaction.model == "m"
+        assert events[0].interaction.object == "interaction"
+        # content.start wraps type in content object
         assert events[1].event_type == "content.start"
-        assert events[1].index == 0
+        assert events[1].content.type == "text"
+        # content.delta unchanged
         assert events[2].event_type == "content.delta"
         assert events[2].delta.text == "Hello"
         assert events[3].event_type == "content.delta"
@@ -245,8 +256,12 @@ class TestStreamingTranslation:
         assert events[4].event_type == "content.delta"
         assert events[4].delta.text == "!"
         assert events[5].event_type == "content.stop"
+        # interaction.complete wraps in interaction object
         assert events[6].event_type == "interaction.complete"
-        assert events[6].status == "completed"
+        assert events[6].interaction.status == "completed"
+        assert events[6].interaction.model == "m"
+        assert events[6].interaction.role == "model"
+        assert events[6].interaction.object == "interaction"
 
     async def test_streaming_with_usage(self, impl):
         chunk1 = MagicMock()
@@ -273,9 +288,9 @@ class TestStreamingTranslation:
             events.append(event)
 
         complete_event = [e for e in events if e.event_type == "interaction.complete"][0]
-        assert complete_event.usage.input_tokens == 10
-        assert complete_event.usage.output_tokens == 5
-        assert complete_event.usage.total_tokens == 15
+        assert complete_event.interaction.usage.total_input_tokens == 10
+        assert complete_event.interaction.usage.total_output_tokens == 5
+        assert complete_event.interaction.usage.total_tokens == 15
 
     async def test_empty_streaming(self, impl):
         async def mock_stream():

@@ -6,7 +6,7 @@
 
 """Pydantic models for the Google Interactions API.
 
-These models define the request and response shapes for the /v1/interactions endpoint,
+These models define the request and response shapes for the /v1alpha/interactions endpoint,
 following the Google Interactions API specification.
 """
 
@@ -61,7 +61,7 @@ class GoogleGenerationConfig(BaseModel):
 
 
 class GoogleCreateInteractionRequest(BaseModel):
-    """Request body for POST /v1/interactions."""
+    """Request body for POST /v1alpha/interactions."""
 
     model_config = ConfigDict(extra="allow")
 
@@ -98,29 +98,61 @@ class GoogleTextOutput(BaseModel):
 class GoogleUsage(BaseModel):
     """Token usage statistics."""
 
-    input_tokens: int = 0
-    output_tokens: int = 0
+    total_input_tokens: int = 0
+    total_output_tokens: int = 0
     total_tokens: int = 0
 
 
 class GoogleInteractionResponse(BaseModel):
-    """Response from POST /v1/interactions (non-streaming)."""
+    """Response from POST /v1alpha/interactions (non-streaming)."""
 
     id: str = Field(..., description="Unique interaction ID.")
+    created: str | None = Field(default=None, description="Creation timestamp.")
     status: Literal["completed"] = "completed"
+    updated: str | None = Field(default=None, description="Last update timestamp.")
+    model: str = Field(..., description="Model used for generation.")
     outputs: list[GoogleTextOutput] = Field(..., description="Response output items.")
+    role: Literal["model"] = "model"
     usage: GoogleUsage = Field(default_factory=GoogleUsage)
+    object: Literal["interaction"] = "interaction"
 
 
 # -- Streaming event models --
+
+
+class _InteractionRef(BaseModel):
+    """Interaction reference used in streaming events."""
+
+    id: str
+    status: str = "in_progress"
+    model: str | None = None
+    object: Literal["interaction"] = "interaction"
+
+
+class _InteractionCompleteRef(BaseModel):
+    """Full interaction reference used in the complete event."""
+
+    id: str
+    created: str | None = None
+    status: Literal["completed"] = "completed"
+    updated: str | None = None
+    model: str | None = None
+    role: Literal["model"] = "model"
+    usage: GoogleUsage = Field(default_factory=GoogleUsage)
+    object: Literal["interaction"] = "interaction"
 
 
 class InteractionStartEvent(BaseModel):
     """First event in a streaming response."""
 
     event_type: Literal["interaction.start"] = "interaction.start"
-    id: str
-    status: str = "in_progress"
+    interaction: _InteractionRef
+
+
+class _ContentRef(BaseModel):
+    """Content type reference used in content.start events."""
+
+    type: Literal["text"] = "text"
 
 
 class ContentStartEvent(BaseModel):
@@ -128,7 +160,7 @@ class ContentStartEvent(BaseModel):
 
     event_type: Literal["content.start"] = "content.start"
     index: int
-    type: Literal["text"] = "text"
+    content: _ContentRef = Field(default_factory=_ContentRef)
 
 
 class _TextDelta(BaseModel):
@@ -155,9 +187,7 @@ class InteractionCompleteEvent(BaseModel):
     """Final event in a streaming response."""
 
     event_type: Literal["interaction.complete"] = "interaction.complete"
-    id: str
-    status: Literal["completed"] = "completed"
-    usage: GoogleUsage = Field(default_factory=GoogleUsage)
+    interaction: _InteractionCompleteRef
 
 
 GoogleStreamEvent = (
