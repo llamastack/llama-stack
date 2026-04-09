@@ -264,6 +264,40 @@ async def test_double_registration_different_providers(cached_disk_dist_registry
     assert "provider2/shared-model" in model_ids
 
 
+async def test_openai_list_models_has_object_field(cached_disk_dist_registry):
+    """Test that OpenAI list models response includes the object field."""
+    table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    await table.register_model(model_id="test-model", provider_id="test_provider")
+
+    openai_models = await table.openai_list_models()
+    assert openai_models.object == "list"
+    assert len(openai_models.data) == 1
+
+
+async def test_model_has_openai_compatible_fields(cached_disk_dist_registry):
+    """Test that Model includes OpenAI-compatible fields (id, object, created, owned_by)."""
+    table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    await table.register_model(model_id="test-model", provider_id="test_provider")
+
+    model = await table.get_model("test_provider/test-model")
+    assert model.id == "test_provider/test-model"
+    assert model.object == "model"
+    assert isinstance(model.created, int)
+    assert model.owned_by == "llama_stack"
+
+    # Verify the fields appear in serialized output
+    data = model.model_dump()
+    assert "id" in data
+    assert "object" in data
+    assert "created" in data
+    assert "owned_by" in data
+    assert data["id"] == model.identifier
+
+
 async def test_tool_groups_routing_table(cached_disk_dist_registry):
     table = ToolGroupsRoutingTable({"test_provider": ToolGroupsImpl()}, cached_disk_dist_registry, {})
     await table.initialize()

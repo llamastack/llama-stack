@@ -25,7 +25,6 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 )
 from llama_stack.providers.utils.memory.vector_store import (
     content_from_data_and_mime_type,
-    make_overlapped_chunks,
     validate_tiktoken_encoding,
 )
 from llama_stack.providers.utils.vector_io.filters import parse_filter
@@ -931,13 +930,7 @@ class OpenAIVectorStoreMixin(ABC):
             )
             return vector_store_file_object
 
-        if isinstance(chunking_strategy, VectorStoreChunkingStrategyStatic):
-            max_chunk_size_tokens = chunking_strategy.static.max_chunk_size_tokens
-            chunk_overlap_tokens = chunking_strategy.static.chunk_overlap_tokens
-        elif isinstance(chunking_strategy, VectorStoreChunkingStrategyContextual):
-            max_chunk_size_tokens = chunking_strategy.contextual.max_chunk_size_tokens
-            chunk_overlap_tokens = chunking_strategy.contextual.chunk_overlap_tokens
-            # Fail fast on missing model_id before entering the file-processing try/except
+        if isinstance(chunking_strategy, VectorStoreChunkingStrategyContextual):
             ctx = chunking_strategy.contextual
             if not ctx.model_id and not self.vector_stores_config.contextual_retrieval_params.model:
                 raise ValueError(
@@ -945,9 +938,6 @@ class OpenAIVectorStoreMixin(ABC):
                     "Provide it in chunking_strategy.contextual or configure a default "
                     "in contextual_retrieval_params.model on the server."
                 )
-        else:
-            max_chunk_size_tokens = DEFAULT_CHUNK_SIZE_TOKENS
-            chunk_overlap_tokens = DEFAULT_CHUNK_OVERLAP_TOKENS
 
         try:
             file_response = await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
@@ -961,49 +951,37 @@ class OpenAIVectorStoreMixin(ABC):
             chunk_attributes["filename"] = file_response.filename
             chunk_attributes["file_id"] = file_id
 
-            # Try using FileProcessor API if available
-            if hasattr(self, "file_processor_api") and self.file_processor_api:
-                try:
-                    logger.debug("Using FileProcessor API to process file", file_id=file_id)
-                    pf_resp = await self.file_processor_api.process_file(
-                        ProcessFileRequest(file_id=file_id, chunking_strategy=chunking_strategy)
-                    )
-
-                    chunks = []
-                    for chunk in pf_resp.chunks:
-                        # Enhance chunk metadata with file info and attributes
-                        enhanced_metadata = chunk.metadata.copy() if chunk.metadata else {}
-                        enhanced_metadata.update(chunk_attributes)
-
-                        # Ensure document_id consistency
-                        if chunk.chunk_metadata:
-                            chunk.chunk_metadata.document_id = file_id
-
-                        # Create enhanced chunk
-                        enhanced_chunk = Chunk(
-                            content=chunk.content,
-                            chunk_id=chunk.chunk_id,
-                            metadata=enhanced_metadata,
-                            chunk_metadata=chunk.chunk_metadata,
-                        )
-                        chunks.append(enhanced_chunk)
-
-                    logger.debug("FileProcessor generated chunks for file", chunks_count=len(chunks), file_id=file_id)
-
-                except Exception as e:
-                    logger.warning(
-                        "FileProcessor failed for file, falling back to legacy chunking", file_id=file_id, error=str(e)
-                    )
-                    # Fall back to legacy chunking path
-                    chunks = await self._legacy_chunk_file(
-                        file_id, file_response, max_chunk_size_tokens, chunk_overlap_tokens, chunk_attributes
-                    )
-            else:
-                logger.debug("FileProcessor API not available, using legacy chunking for file", file_id=file_id)
-                # Legacy chunking path when FileProcessor not available
-                chunks = await self._legacy_chunk_file(
-                    file_id, file_response, max_chunk_size_tokens, chunk_overlap_tokens, chunk_attributes
+            if not self.file_processor_api:
+                raise RuntimeError(
+                    "FileProcessor API is required for file processing but is not configured. "
+                    "Please ensure a file_processors provider is registered in your stack configuration."
                 )
+
+            logger.debug("Using FileProcessor API to process file", file_id=file_id)
+            pf_resp = await self.file_processor_api.process_file(
+                ProcessFileRequest(file_id=file_id, chunking_strategy=chunking_strategy)
+            )
+
+            chunks = []
+            for chunk in pf_resp.chunks:
+                # Enhance chunk metadata with file info and attributes
+                enhanced_metadata = chunk.metadata.copy() if chunk.metadata else {}
+                enhanced_metadata.update(chunk_attributes)
+
+                # Ensure document_id consistency
+                if chunk.chunk_metadata:
+                    chunk.chunk_metadata.document_id = file_id
+
+                # Create enhanced chunk
+                enhanced_chunk = Chunk(
+                    content=chunk.content,
+                    chunk_id=chunk.chunk_id,
+                    metadata=enhanced_metadata,
+                    chunk_metadata=chunk.chunk_metadata,
+                )
+                chunks.append(enhanced_chunk)
+
+            logger.debug("FileProcessor generated chunks for file", chunk_count=len(chunks), file_id=file_id)
 
             if isinstance(chunking_strategy, VectorStoreChunkingStrategyContextual):
                 mime_type, _ = mimetypes.guess_type(file_response.filename)
@@ -1093,35 +1071,6 @@ class OpenAIVectorStoreMixin(ABC):
             self.openai_vector_stores[vector_store_id] = store_info
 
         return vector_store_file_object
-
-    async def _legacy_chunk_file(
-        self,
-        file_id: str,
-        file_response: OpenAIFileObject,
-        max_chunk_size_tokens: int,
-        chunk_overlap_tokens: int,
-        chunk_attributes: dict[str, Any],
-    ) -> list[Chunk]:
-        """Legacy file chunking method using content extraction and make_overlapped_chunks."""
-
-        mime_type, _ = mimetypes.guess_type(file_response.filename)
-        if not self.files_api:
-            raise ValueError("Files API not available")
-        content_response = await self.files_api.openai_retrieve_file_content(
-            RetrieveFileContentRequest(file_id=file_id)
-        )
-
-        content = content_from_data_and_mime_type(content_response.body, mime_type)
-
-        chunks = make_overlapped_chunks(
-            file_id,  # Use file_id as document_id for stability
-            content,
-            max_chunk_size_tokens,
-            chunk_overlap_tokens,
-            chunk_attributes,
-        )
-
-        return chunks
 
     async def openai_list_files_in_vector_store(
         self,
