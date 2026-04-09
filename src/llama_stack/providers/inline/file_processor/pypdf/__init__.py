@@ -17,7 +17,7 @@ async def get_provider_impl(config: PyPDFFileProcessorConfig, deps: dict[Api, An
 
     assert isinstance(config, PyPDFFileProcessorConfig), f"Unexpected config type: {type(config)}"
 
-    files_api = deps.get(Api.files)
+    files_api = deps[Api.files]
 
     impl = PyPDFFileProcessorAdapter(config, files_api)
     return impl
