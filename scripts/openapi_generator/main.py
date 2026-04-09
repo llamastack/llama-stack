@@ -76,8 +76,9 @@ def generate_openapi_spec(output_dir: str) -> dict[str, Any]:
     # that FastAPI incorrectly added to GET endpoints are removed
     openapi_schema = schema_transforms._remove_request_bodies_from_get_endpoints(openapi_schema)
 
-    # Remove 'type: object' from schemas with properties (OpenAI spec conformance)
-    openapi_schema = schema_transforms._remove_type_object_from_openai_schemas(openapi_schema)
+    # NOTE: We intentionally keep 'type: object' on schemas with properties.
+    # OpenAI's spec uses 'type: object' on 766/772 schemas with properties,
+    # so stripping it hurts conformance rather than helping.
 
     # Extract duplicate union types to shared schema references
     openapi_schema = schema_transforms._extract_duplicate_union_types(openapi_schema)
