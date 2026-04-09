@@ -100,6 +100,10 @@ Key flags: `--stack-config` (required), `--setup` (`gpt`, `ollama`, `vllm`),
 
 If a test fails in replay mode with "Recording not found", re-run with
 `--inference-mode record-if-missing` and commit the new recording files.
+Recording locally requires an API key for the provider under test (e.g.
+`OPENAI_API_KEY` for `--setup gpt`). If you do not have a key, repository
+maintainers can trigger the record workflow on GitHub via
+`.github/workflows/record-integration-tests.yml`.
 
 ## Provider Architecture
 
