@@ -69,6 +69,14 @@ _ID_KIND_PREFIXES: dict[str, str] = {
 
 _FLOAT_IN_STRING_PATTERN = re.compile(r"(-?\d+\.\d{4,})")
 
+_FILE_SEARCH_SCORE_PATTERN = re.compile(r"score:\s*[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
+_FILE_SEARCH_ATTRIBUTES_PATTERN = re.compile(r",?\s*attributes:\s*\{[^}]*\}")
+# Document IDs are UUIDs in format: 8-4-4-4-12 hex digits
+_FILE_SEARCH_DOCUMENT_ID_PATTERN = re.compile(
+    r"document_id:\s*[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"
+)
+_FILE_SEARCH_CITATION_PATTERN = re.compile(r"<\|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\|>")
+
 
 def _normalize_numeric_literal_strings(value: str) -> str:
     """Round any long decimal literals embedded in strings for stable hashing."""
@@ -78,6 +86,20 @@ def _normalize_numeric_literal_strings(value: str) -> str:
         return f"{number:.5f}"
 
     return _FLOAT_IN_STRING_PATTERN.sub(_replace, value)
+
+
+def _normalize_file_search_metadata(value: str) -> str:
+    """Replace non-deterministic file_search fields with placeholders for stable hashing.
+
+    Vector search scores, attribute dicts, document IDs, and file citations vary
+    between runs even for identical documents, which causes request hash mismatches
+    during replay.
+    """
+    value = _FILE_SEARCH_SCORE_PATTERN.sub("score: __NORMALIZED__", value)
+    value = _FILE_SEARCH_ATTRIBUTES_PATTERN.sub("", value)
+    value = _FILE_SEARCH_DOCUMENT_ID_PATTERN.sub("document_id: __NORMALIZED__", value)
+    value = _FILE_SEARCH_CITATION_PATTERN.sub("<|__NORMALIZED__|>", value)
+    return value
 
 
 def _normalize_body_for_hash(value: Any, exclude_stream_options: bool = False, *, _is_root: bool = True) -> Any:
@@ -104,6 +126,7 @@ def _normalize_body_for_hash(value: Any, exclude_stream_options: bool = False, *
     if isinstance(value, float):
         return round(value, 5)
     if isinstance(value, str):
+        value = _normalize_file_search_metadata(value)
         return _normalize_numeric_literal_strings(value)
     return value
 
@@ -200,25 +223,6 @@ def normalize_tool_request(provider_name: str, tool_name: str, kwargs: dict[str,
     }
 
     # Create hash - sort_keys=True ensures deterministic ordering
-    normalized_json = json.dumps(normalized, sort_keys=True)
-    return hashlib.sha256(normalized_json.encode()).hexdigest()
-
-
-def normalize_file_processor_request(request: Any) -> str:
-    """Create a normalized hash of a file processor request for consistent matching."""
-    test_id = get_test_context()
-    normalized: dict[str, Any] = {
-        "test_id": test_id,
-        "api": "file_processors",
-        "file_id": getattr(request, "file_id", None),
-    }
-    chunking = getattr(request, "chunking_strategy", None)
-    if chunking and hasattr(chunking, "model_dump"):
-        normalized["chunking_strategy"] = chunking.model_dump(mode="json")
-    options = getattr(request, "options", None)
-    if options:
-        normalized["options"] = options
-
     normalized_json = json.dumps(normalized, sort_keys=True)
     return hashlib.sha256(normalized_json.encode()).hexdigest()
 
@@ -735,47 +739,14 @@ async def _patched_tool_invoke_method(
 
 
 async def _patched_file_processor_method(original_method, provider_name: str, self, request, file=None):
-    """Patched version of file processor process_file method for recording/replay.
+    """Patched version of file processor process_file method.
 
-    Only intercepts calls that reference a file_id (internal calls from the
-    OpenAIVectorStoreMixin). Direct HTTP uploads to the file-processors
-    endpoint have file_id=None and are passed through unmodified.
+    File processors are local, deterministic operations (no network calls)
+    so they always execute the real method. Recording/replaying them is
+    unreliable because file_id values are randomly generated per test run,
+    making hash-based lookup fail on replay.
     """
-    global _current_mode, _current_storage
-
-    file_id = getattr(request, "file_id", None)
-    if _current_mode == APIRecordingMode.LIVE or _current_storage is None or not file_id:
-        return await original_method(self, request, file)
-
-    request_hash = normalize_file_processor_request(request)
-
-    if _current_mode in (APIRecordingMode.REPLAY, APIRecordingMode.RECORD_IF_MISSING):
-        recording = _current_storage.find_recording(request_hash)
-        if recording:
-            return recording["response"]["body"]
-        elif _current_mode == APIRecordingMode.REPLAY:
-            raise RuntimeError(
-                f"Recording not found for {provider_name}.process_file | file_id: {getattr(request, 'file_id', None)}\n"
-                f"\n"
-                f"Run './scripts/integration-tests.sh --inference-mode record-if-missing' with required API keys to generate."
-            )
-
-    if _current_mode in (APIRecordingMode.RECORD, APIRecordingMode.RECORD_IF_MISSING):
-        result = await original_method(self, request, file)
-
-        request_data = {
-            "test_id": get_test_context(),
-            "provider": provider_name,
-            "api": "file_processors",
-            "file_id": getattr(request, "file_id", None),
-        }
-        response_data = {"body": result, "is_streaming": False}
-
-        _current_storage.store_recording(request_hash, request_data, response_data)
-        return result
-
-    else:
-        raise AssertionError(f"Invalid mode: {_current_mode}")
+    return await original_method(self, request, file)
 
 
 def _patched_aiohttp_post(original_post, session_self, url: str, **kwargs):

@@ -424,6 +424,7 @@ async def test_file_search_uses_default_search_mode_from_config(mock_vector_io_a
 
     mock_vector_io_api.openai_search_vector_store.return_value = VectorStoreSearchResponsePage(
         search_query=[query],
+        has_more=False,
         data=[],
     )
 
@@ -479,6 +480,7 @@ async def test_file_search_results_include_chunk_metadata_attributes(mock_vector
     # Mock vector_io to return search results with custom attributes
     mock_vector_io_api.openai_search_vector_store.return_value = VectorStoreSearchResponsePage(
         search_query=[query],
+        has_more=False,
         data=[
             VectorStoreSearchResponse(
                 file_id="doc-123",

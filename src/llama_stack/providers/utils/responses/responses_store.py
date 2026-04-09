@@ -282,7 +282,12 @@ class ResponsesStore:
             )
 
         response_with_input_and_messages = await self.get_response_object(response_id)
-        items = response_with_input_and_messages.input
+        # Filter out compaction items (matching OpenAI behavior: input_items hides compaction)
+        items = [
+            item
+            for item in response_with_input_and_messages.input
+            if not (hasattr(item, "type") and getattr(item, "type", None) == "compaction")
+        ]
 
         if order == Order.desc:
             items = list(reversed(items))
