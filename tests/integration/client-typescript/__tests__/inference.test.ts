@@ -6,7 +6,7 @@
 
 /**
  * Integration tests for Inference API (Chat Completions).
- * Ported from: llama-stack/tests/integration/inference/test_openai_completion.py
+ * Tests for inference chat completions API.
  *
  * IMPORTANT: Test cases must match EXACTLY with Python tests to use recorded API responses.
  */

@@ -277,7 +277,6 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
     "ollama-reasoning": Suite(
         name="ollama-reasoning",
         roots=[
-            "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_reasoning_passthrough",
             "tests/integration/responses/test_reasoning.py::test_reasoning_non_streaming",
             "tests/integration/responses/test_reasoning.py::test_reasoning_multi_turn_passthrough",
         ],
@@ -291,11 +290,7 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
     # Bedrock-specific tests with pre-recorded responses (no live API calls in CI)
     "bedrock": Suite(
         name="bedrock",
-        roots=[
-            "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_non_streaming",
-            "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_streaming",
-            "tests/integration/inference/test_openai_completion.py::test_inference_store",
-        ],
+        roots=[],
         default_setup="bedrock",
     ),
     # Bedrock responses suite — subset of tests that reliably pass with GPT-OSS via
