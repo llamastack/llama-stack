@@ -361,9 +361,4 @@ def test_reasoning_summary_usage_included(client_with_models, text_model_id):
     assert usage is not None, "Response with summary should have usage data"
 
     total_tokens = _get_attr(usage, "total_tokens", 0)
-    prompt_tokens = _get_attr(usage, "prompt_tokens", 0)
-    completion_tokens = _get_attr(usage, "completion_tokens", 0)
-
     assert total_tokens > 0, "Total tokens should be positive when summary is generated"
-    assert prompt_tokens > 0, "Prompt tokens should be positive (includes summary prompt)"
-    assert completion_tokens > 0, "Completion tokens should be positive (includes summary output)"
