@@ -884,7 +884,6 @@ components:
         file:
           $ref: '#/components/schemas/OpenAIFileFile'
           description: File specification.
-      type: object
       required:
       - file
       title: OpenAIFile
@@ -2963,7 +2962,6 @@ components:
         purpose:
           $ref: '#/components/schemas/OpenAIFilePurpose'
           description: The intended purpose of the file.
-      type: object
       required:
       - id
       - bytes
@@ -3081,7 +3079,6 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
-      type: object
       required:
       - id
       - created
@@ -3141,7 +3138,6 @@ components:
           - type: boolean
           - type: 'null'
           description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
-      type: object
       required:
       - identifier
       - provider_id

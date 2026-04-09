@@ -18,12 +18,12 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 91.2% |
+| **Overall Conformance Score** | 91.3% |
 | **Endpoints Implemented** | 29/146 |
 | **Total Properties Checked** | 3441 |
-| **Schema/Type Issues** | 192 |
-| **Missing Properties** | 112 |
-| **Total Issues to Fix** | 304 |
+| **Schema/Type Issues** | 190 |
+| **Missing Properties** | 110 |
+| **Total Issues to Fix** | 300 |
 
 ## Integration Test Coverage
 
@@ -47,8 +47,8 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Moderations | 17.0% | 53 | 5 | 39 |
 | Batch | 39.9% | 168 | 60 | 41 |
 | Completions | 58.7% | 46 | 17 | 2 |
-| Files | 59.5% | 42 | 9 | 8 |
-| Models | 60.0% | 15 | 1 | 5 |
+| Files | 66.7% | 42 | 8 | 6 |
+| Models | 66.7% | 15 | 0 | 5 |
 | Embeddings | 78.6% | 14 | 3 | 0 |
 | Vector stores | 82.9% | 310 | 41 | 12 |
 | Responses | 85.8% | 225 | 32 | 0 |
@@ -506,26 +506,17 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Files
 
-**Score:** 59.5% · **Issues:** 9 · **Missing:** 8
+**Score:** 66.7% · **Issues:** 8 · **Missing:** 6
 
 #### `/files`
 
 **GET**
 
 <details>
-<summary>Missing Properties (2)</summary>
-
-- `responses.200.content.application/json.properties.data.items.properties.status`
-- `responses.200.content.application/json.properties.data.items.properties.status_details`
-
-</details>
-
-<details>
-<summary>Schema Issues (3)</summary>
+<summary>Schema Issues (2)</summary>
 
 | Property | Issues |
 |----------|--------|
-| `responses.200.content.application/json.properties.data.items` | Type added: ['object'] |
 | `responses.200.content.application/json.properties.data.items.properties.expires_at` | Type removed: ['integer']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.application/json.properties.data.items.properties.purpose` | Enum values removed: ['assistants_output', 'batch_output', 'fine-tune', 'fine-tune-results', 'vision', 'user_data'] |
 
@@ -579,7 +570,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Models
 
-**Score:** 60.0% · **Issues:** 1 · **Missing:** 5
+**Score:** 66.7% · **Issues:** 0 · **Missing:** 5
 
 #### `/models`
 
@@ -589,15 +580,6 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 <summary>Missing Properties (1)</summary>
 
 - `responses.200.content.application/json.properties.object`
-
-</details>
-
-<details>
-<summary>Schema Issues (1)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.data.items` | Type added: ['object'] |
 
 </details>
 

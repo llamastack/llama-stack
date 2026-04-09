@@ -127,10 +127,10 @@
       ]
     },
     "conformance": {
-      "score": 91.2,
-      "issues": 192,
-      "missing_properties": 112,
-      "total_problems": 304,
+      "score": 91.3,
+      "issues": 190,
+      "missing_properties": 110,
+      "total_problems": 300,
       "total_properties": 3441
     }
   },
@@ -1214,9 +1214,9 @@
       ]
     },
     "Files": {
-      "score": 59.5,
-      "issues": 9,
-      "missing_properties": 8,
+      "score": 66.7,
+      "issues": 8,
+      "missing_properties": 6,
       "total_properties": 42,
       "endpoints": [
         {
@@ -1224,17 +1224,8 @@
           "operations": [
             {
               "method": "GET",
-              "missing_properties": [
-                "GET.responses.200.content.application/json.properties.data.items.properties.status",
-                "GET.responses.200.content.application/json.properties.data.items.properties.status_details"
-              ],
+              "missing_properties": [],
               "conformance_issues": [
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items",
-                  "details": [
-                    "Type added: ['object']"
-                  ]
-                },
                 {
                   "property": "GET.responses.200.content.application/json.properties.data.items.properties.expires_at",
                   "details": [
@@ -1250,8 +1241,8 @@
                   ]
                 }
               ],
-              "missing_count": 2,
-              "issues_count": 3
+              "missing_count": 0,
+              "issues_count": 2
             },
             {
               "method": "POST",
@@ -1347,8 +1338,8 @@
       ]
     },
     "Models": {
-      "score": 60.0,
-      "issues": 1,
+      "score": 66.7,
+      "issues": 0,
       "missing_properties": 5,
       "total_properties": 15,
       "endpoints": [
@@ -1360,16 +1351,9 @@
               "missing_properties": [
                 "GET.responses.200.content.application/json.properties.object"
               ],
-              "conformance_issues": [
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items",
-                  "details": [
-                    "Type added: ['object']"
-                  ]
-                }
-              ],
+              "conformance_issues": [],
               "missing_count": 1,
-              "issues_count": 1
+              "issues_count": 0
             }
           ]
         },
