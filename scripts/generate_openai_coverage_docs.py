@@ -250,6 +250,8 @@ def generate_docs(
                         details = "; ".join(issue["details"])
                         # Escape pipe characters in details
                         details = details.replace("|", "\\|")
+                        # Escape < and > for MDX compatibility (prevents JSX parse errors)
+                        details = details.replace("<", "&lt;").replace(">", "&gt;")
                         if show_tested:
                             prop_name = _extract_property_name(issue["property"])
                             is_tested = prop_name in tested_properties if prop_name else False

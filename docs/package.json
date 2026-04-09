@@ -16,7 +16,8 @@
     "clean-api-docs": "docusaurus clean-api-docs",
     "gen-api-docs:version": "docusaurus gen-api-docs:version",
     "clean-api-docs:version": "docusaurus clean-api-docs:version",
-    "sync-files": "node scripts/sync-files.js"
+    "sync-files": "node scripts/sync-files.js",
+    "postinstall": "bash scripts/patch-openapi-theme.sh"
   },
   "dependencies": {
     "@docusaurus/core": "^3.9.2",

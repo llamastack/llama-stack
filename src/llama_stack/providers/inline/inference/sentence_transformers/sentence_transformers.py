@@ -39,6 +39,9 @@ class SentenceTransformersInferenceImpl(
     def __init__(self, config: SentenceTransformersInferenceConfig) -> None:
         self.config = config
 
+    async def openai_chat_completions_with_reasoning(self, params: OpenAIChatCompletionRequestWithExtraBody) -> None:
+        raise NotImplementedError("SentenceTransformers provider does not support reasoning in chat completions")
+
     async def initialize(self) -> None:
         pass
 

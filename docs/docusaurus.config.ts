@@ -69,8 +69,11 @@ const config: Config = {
       {
         docs: {
           sidebarPath: require.resolve("./sidebars.ts"),
-          disableVersioning: true,
+          // disableVersioning: true,
           docItemComponent: "@theme/ApiItem", // Derived from docusaurus-theme-openapi
+          editUrl: 'https://github.com/llamastack/llama-stack/edit/main/',
+          showLastUpdateTime: true,
+          showLastUpdateAuthor: false,
           remarkPlugins: [
             [require('remark-code-import'), {
               rootDir: require('path').join(__dirname, '..') // Repository root
@@ -79,7 +82,9 @@ const config: Config = {
         },
         blog: {
           onUntruncatedBlogPosts: 'ignore',
+          blogSidebarCount: 'ALL',
           showReadingTime: true,
+          postsPerPage: 10,
           readingTime: ({content, frontMatter, defaultReadingTime}) =>
             defaultReadingTime({content, options: {wordsPerMinute: 300}}),
           feedOptions: {
@@ -100,11 +105,8 @@ const config: Config = {
   themeConfig: {
     image: 'img/llama-stack.png',
     navbar: {
+      hideOnScroll: true,
       title: 'Llama Stack',
-      logo: {
-        alt: 'Llama Stack Logo',
-        src: 'img/llama-stack-logo.png',
-      },
       items: [
         {
           type: 'docSidebar',
@@ -121,17 +123,17 @@ const config: Config = {
             {
               type: 'docSidebar',
               sidebarId: 'stableApiSidebar',
-              label: '🟢 Stable APIs',
+              label: 'Stable',
             },
             {
               type: 'docSidebar',
               sidebarId: 'experimentalApiSidebar',
-              label: '🟡 Experimental APIs',
+              label: 'Experimental',
             },
             {
               type: 'docSidebar',
               sidebarId: 'deprecatedApiSidebar',
-              label: '🔴 Deprecated APIs',
+              label: 'Deprecated',
             },
           ],
         },
@@ -146,20 +148,23 @@ const config: Config = {
           position: 'right',
         },
         {
-          href: '/versions.html',
-          label: 'Versions',
+          type: 'docsVersionDropdown',
           position: 'right',
+          dropdownActiveClassDisabled: true,
+          dropdownItemsAfter: [
+            { to: '/versions.html', label: 'All versions' },
+          ],
         },
       ],
     },
     footer: {
-      style: 'dark',
+      style: 'light',
       links: [
         {
-          title: 'Docs',
+          title: 'Getting Started',
           items: [
             {
-              label: 'Getting Started',
+              label: 'Quickstart',
               to: '/docs/getting_started/quickstart',
             },
             {
@@ -167,8 +172,29 @@ const config: Config = {
               to: '/docs/concepts',
             },
             {
+              label: 'Distributions',
+              to: '/docs/distributions/building_distro',
+            },
+            {
+              label: 'Providers',
+              to: '/docs/providers',
+            },
+          ],
+        },
+        {
+          title: 'API',
+          items: [
+            {
               label: 'API Reference',
               to: '/docs/api-overview',
+            },
+            {
+              label: 'OpenAI Compatibility',
+              to: '/docs/api-openai',
+            },
+            {
+              label: 'Blog',
+              to: '/blog',
             },
           ],
         },
@@ -180,13 +206,21 @@ const config: Config = {
               href: 'https://discord.gg/llama-stack',
             },
             {
+              label: 'GitHub Discussions',
+              href: 'https://github.com/llamastack/llama-stack/discussions',
+            },
+            {
               label: 'Issues',
               href: 'https://github.com/llamastack/llama-stack/issues',
+            },
+            {
+              label: 'Contributing',
+              to: '/docs/contributing',
             },
           ],
         },
         {
-          title: 'More',
+          title: 'Resources',
           items: [
             {
               label: 'GitHub',
@@ -196,12 +230,22 @@ const config: Config = {
               label: 'PyPI',
               href: 'https://pypi.org/project/llama-stack/',
             },
+            {
+              label: 'Releases',
+              href: 'https://github.com/llamastack/llama-stack/releases',
+            },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Meta Platforms, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Meta Platforms, Inc.`,
+    },
+    colorMode: {
+      defaultMode: 'dark',
+      respectPrefersColorScheme: true,
     },
     prism: {
+      theme: require('prism-react-renderer').themes.oneDark,
+      darkTheme: require('prism-react-renderer').themes.oneDark,
       additionalLanguages: [
         'ruby',
         'csharp',
@@ -216,7 +260,8 @@ const config: Config = {
     },
     docs: {
       sidebar: {
-        hideable: true,
+        hideable: false,
+        autoCollapseCategories: true,
       },
     },
     // Language tabs for API documentation
@@ -230,16 +275,6 @@ const config: Config = {
         highlight: "bash",
         language: "curl",
         logoClass: "curl",
-      },
-      {
-        highlight: "javascript",
-        language: "nodejs",
-        logoClass: "nodejs",
-      },
-      {
-        highlight: "java",
-        language: "java",
-        logoClass: "java",
       },
     ],
   } satisfies Preset.ThemeConfig,
@@ -321,8 +356,8 @@ const config: Config = {
         docsRouteBasePath: '/docs',
 
         // Search behavior optimization for technical docs
-        searchResultLimits: 8,
-        searchResultContextMaxLength: 50,
+        searchResultLimits: 12,
+        searchResultContextMaxLength: 80,
         explicitSearchResultPath: true,
 
         // User experience enhancements

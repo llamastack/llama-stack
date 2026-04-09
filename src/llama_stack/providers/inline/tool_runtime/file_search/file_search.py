@@ -196,8 +196,10 @@ class FileSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
                 "No vector DBs were provided to the knowledge search tool. Please provide at least one vector DB ID."
             )
 
+        chunk_params = self.config.vector_stores_config.chunk_retrieval_params
         query_config = query_config or RAGQueryConfig(
-            max_tokens_in_context=self.config.vector_stores_config.chunk_retrieval_params.max_tokens_in_context
+            max_tokens_in_context=chunk_params.max_tokens_in_context,
+            mode=getattr(chunk_params, "default_search_mode", "vector"),
         )
         query = await generate_rag_query(
             query_config.query_generator_config,
@@ -341,8 +343,10 @@ class FileSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
         if query_config:
             query_config = TypeAdapter(RAGQueryConfig).validate_python(query_config)
         else:
+            chunk_params = self.config.vector_stores_config.chunk_retrieval_params
             query_config = RAGQueryConfig(
-                max_tokens_in_context=self.config.vector_stores_config.chunk_retrieval_params.max_tokens_in_context
+                max_tokens_in_context=chunk_params.max_tokens_in_context,
+                mode=getattr(chunk_params, "default_search_mode", "vector"),
             )
 
         query = kwargs["query"]

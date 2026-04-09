@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 from importlib.metadata import version
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -31,7 +32,7 @@ class DistributionInspectConfig(BaseModel):
     config: StackConfig
 
 
-async def get_provider_impl(config, deps):
+async def get_provider_impl(config: DistributionInspectConfig, deps: dict[str, Any]) -> "DistributionInspectImpl":
     """Create and initialize a DistributionInspectImpl instance.
 
     Args:
@@ -49,7 +50,7 @@ async def get_provider_impl(config, deps):
 class DistributionInspectImpl(Inspect):
     """Implementation of the Inspect API providing route listing, health, and version endpoints."""
 
-    def __init__(self, config: DistributionInspectConfig, deps):
+    def __init__(self, config: DistributionInspectConfig, deps: dict[str, Any]) -> None:
         self.stack_config = config.config
         self.deps = deps
 
@@ -67,7 +68,9 @@ class DistributionInspectImpl(Inspect):
             return [p.provider_type for p in providers] if providers else []
 
         # Helper function to determine if a router route should be included based on api_filter
-        def _should_include_router_route(route, router_prefix: str | None) -> bool:
+        def _should_include_router_route(route: Any, router_prefix: str | None) -> bool:
+            """Check if a router-based route should be included based on api_filter."""
+            # Check deprecated status
             route_deprecated = getattr(route, "deprecated", False) or False
 
             if api_filter is None:

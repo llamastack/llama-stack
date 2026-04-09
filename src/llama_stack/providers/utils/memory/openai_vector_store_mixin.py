@@ -26,6 +26,7 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 from llama_stack.providers.utils.memory.vector_store import (
     content_from_data_and_mime_type,
     make_overlapped_chunks,
+    validate_tiktoken_encoding,
 )
 from llama_stack.providers.utils.vector_io.filters import parse_filter
 from llama_stack_api import (
@@ -400,6 +401,7 @@ class OpenAIVectorStoreMixin(ABC):
 
     async def initialize_openai_vector_stores(self) -> None:
         """Load existing OpenAI vector stores and file batches into the in-memory cache."""
+        validate_tiktoken_encoding()
         if not self.files_api:
             logger.warning(
                 "Files API is not available. File attachment operations on vector stores will fail. "
@@ -527,11 +529,11 @@ class OpenAIVectorStoreMixin(ABC):
             "id": vector_store_id,
             "object": "vector_store",
             "created_at": created_at,
-            "name": params.name,
+            "name": params.name or "",
             "usage_bytes": 0,
             "file_counts": file_counts.model_dump(),
             "status": status,
-            "expires_after": params.expires_after,
+            "expires_after": params.expires_after.model_dump() if params.expires_after else None,
             "expires_at": None,
             "last_active_at": created_at,
             "file_ids": [],
@@ -617,8 +619,8 @@ class OpenAIVectorStoreMixin(ABC):
 
         # Determine pagination info
         has_more = len(all_stores) > limit
-        first_id = data[0].id if data else None
-        last_id = data[-1].id if data else None
+        first_id = data[0].id if data else ""
+        last_id = data[-1].id if data else ""
 
         return VectorStoreListResponse(
             data=data,
@@ -653,7 +655,11 @@ class OpenAIVectorStoreMixin(ABC):
         if request.name is not None:
             store_info["name"] = request.name
         if request.expires_after is not None:
-            store_info["expires_after"] = request.expires_after
+            store_info["expires_after"] = (
+                request.expires_after.model_dump()
+                if hasattr(request.expires_after, "model_dump")
+                else request.expires_after
+            )
         if request.metadata is not None:
             store_info["metadata"] = request.metadata
 
@@ -913,6 +919,7 @@ class OpenAIVectorStoreMixin(ABC):
             chunking_strategy=chunking_strategy,
             created_at=created_at,
             status="in_progress",
+            usage_bytes=0,
             vector_store_id=vector_store_id,
         )
 
@@ -1164,8 +1171,8 @@ class OpenAIVectorStoreMixin(ABC):
 
         # Determine pagination info
         has_more = len(file_objects) > limit
-        first_id = limited_files[0].id if file_objects else None
-        last_id = limited_files[-1].id if file_objects else None
+        first_id = limited_files[0].id if file_objects else ""
+        last_id = limited_files[-1].id if file_objects else ""
 
         return VectorStoreListFilesResponse(
             data=limited_files,
@@ -1215,6 +1222,7 @@ class OpenAIVectorStoreMixin(ABC):
             )
         return VectorStoreFileContentResponse(
             data=content,
+            has_more=False,
         )
 
     async def openai_update_vector_store_file(
@@ -1544,8 +1552,8 @@ class OpenAIVectorStoreMixin(ABC):
 
         # Determine pagination info
         has_more = len(file_objects) > limit
-        first_id = limited_files[0].id if limited_files else None
-        last_id = limited_files[-1].id if limited_files else None
+        first_id = limited_files[0].id if limited_files else ""
+        last_id = limited_files[-1].id if limited_files else ""
 
         return VectorStoreFilesListInBatchResponse(
             data=limited_files,
