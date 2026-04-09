@@ -120,10 +120,12 @@ class CreateResponseRequest(BaseModel):
     store: bool | None = Field(
         default=True,
         description="Whether to store the response in the database.",
+        json_schema_extra=remove_null_from_anyof,
     )
     stream: bool | None = Field(
         default=False,
         description="Whether to stream the response.",
+        json_schema_extra=remove_null_from_anyof,
     )
     temperature: float | None = Field(
         default=None,
@@ -158,6 +160,7 @@ class CreateResponseRequest(BaseModel):
     include: list[ResponseItemInclude] | None = Field(
         default=None,
         description="Additional fields to include in the response.",
+        json_schema_extra=remove_null_from_anyof,
     )
     max_infer_iters: int | None = Field(
         default=10,

@@ -3267,9 +3267,8 @@ components:
           - type: 'null'
           title: OpenAIResponseError
         frequency_penalty:
-          anyOf:
-          - type: number
-          - type: 'null'
+          type: number
+          title: Frequency Penalty
         id:
           type: string
           title: Id
@@ -3294,9 +3293,8 @@ components:
           type: array
           title: Output
         parallel_tool_calls:
-          anyOf:
-          - type: boolean
-          - type: 'null'
+          type: boolean
+          title: Parallel Tool Calls
           default: true
         previous_response_id:
           anyOf:
@@ -3316,47 +3314,43 @@ components:
           type: string
           title: Status
         temperature:
-          anyOf:
-          - type: number
-          - type: 'null'
+          type: number
+          title: Temperature
         text:
           $ref: '#/components/schemas/OpenAIResponseText'
           default:
             format:
               type: text
         top_p:
-          anyOf:
-          - type: number
-          - type: 'null'
+          type: number
+          title: Top P
         top_logprobs:
-          anyOf:
-          - type: integer
-          - type: 'null'
+          type: integer
+          title: Top Logprobs
         tools:
-          anyOf:
-          - items:
-              oneOf:
-              - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                title: OpenAIResponseInputToolWebSearch
-              - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                title: OpenAIResponseInputToolFileSearch
-              - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
-                title: OpenAIResponseInputToolFunction
-              - $ref: '#/components/schemas/OpenAIResponseToolMCP'
-                title: OpenAIResponseToolMCP
-              discriminator:
-                propertyName: type
-                mapping:
-                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
-                  mcp: '#/components/schemas/OpenAIResponseToolMCP'
-                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
-            type: array
-          - type: 'null'
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+              title: OpenAIResponseInputToolWebSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+              title: OpenAIResponseInputToolFileSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
+              title: OpenAIResponseInputToolFunction
+            - $ref: '#/components/schemas/OpenAIResponseToolMCP'
+              title: OpenAIResponseToolMCP
+            discriminator:
+              propertyName: type
+              mapping:
+                file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                function: '#/components/schemas/OpenAIResponseInputToolFunction'
+                mcp: '#/components/schemas/OpenAIResponseToolMCP'
+                web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+            title: OpenAIResponseInputToolWebSearch | ... (4 variants)
+          type: array
+          title: Tools
         tool_choice:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
@@ -3422,9 +3416,8 @@ components:
           - type: string
           - type: 'null'
         service_tier:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Service Tier
         metadata:
           anyOf:
           - additionalProperties:
@@ -3432,9 +3425,8 @@ components:
             type: object
           - type: 'null'
         presence_penalty:
-          anyOf:
-          - type: number
-          - type: 'null'
+          type: number
+          title: Presence Penalty
         store:
           type: boolean
           title: Store
@@ -3700,9 +3692,8 @@ components:
           - type: 'null'
           title: OpenAIResponseError
         frequency_penalty:
-          anyOf:
-          - type: number
-          - type: 'null'
+          type: number
+          title: Frequency Penalty
         id:
           type: string
           title: Id
@@ -3727,9 +3718,8 @@ components:
           type: array
           title: Output
         parallel_tool_calls:
-          anyOf:
-          - type: boolean
-          - type: 'null'
+          type: boolean
+          title: Parallel Tool Calls
           default: true
         previous_response_id:
           anyOf:
@@ -3749,47 +3739,43 @@ components:
           type: string
           title: Status
         temperature:
-          anyOf:
-          - type: number
-          - type: 'null'
+          type: number
+          title: Temperature
         text:
           $ref: '#/components/schemas/OpenAIResponseText'
           default:
             format:
               type: text
         top_p:
-          anyOf:
-          - type: number
-          - type: 'null'
+          type: number
+          title: Top P
         top_logprobs:
-          anyOf:
-          - type: integer
-          - type: 'null'
+          type: integer
+          title: Top Logprobs
         tools:
-          anyOf:
-          - items:
-              oneOf:
-              - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                title: OpenAIResponseInputToolWebSearch
-              - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                title: OpenAIResponseInputToolFileSearch
-              - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
-                title: OpenAIResponseInputToolFunction
-              - $ref: '#/components/schemas/OpenAIResponseToolMCP'
-                title: OpenAIResponseToolMCP
-              discriminator:
-                propertyName: type
-                mapping:
-                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
-                  mcp: '#/components/schemas/OpenAIResponseToolMCP'
-                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
-            type: array
-          - type: 'null'
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+              title: OpenAIResponseInputToolWebSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+              title: OpenAIResponseInputToolFileSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
+              title: OpenAIResponseInputToolFunction
+            - $ref: '#/components/schemas/OpenAIResponseToolMCP'
+              title: OpenAIResponseToolMCP
+            discriminator:
+              propertyName: type
+              mapping:
+                file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                function: '#/components/schemas/OpenAIResponseInputToolFunction'
+                mcp: '#/components/schemas/OpenAIResponseToolMCP'
+                web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+            title: OpenAIResponseInputToolWebSearch | ... (4 variants)
+          type: array
+          title: Tools
         tool_choice:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
@@ -3855,9 +3841,8 @@ components:
           - type: string
           - type: 'null'
         service_tier:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Service Tier
         metadata:
           anyOf:
           - additionalProperties:
@@ -3865,9 +3850,8 @@ components:
             type: object
           - type: 'null'
         presence_penalty:
-          anyOf:
-          - type: number
-          - type: 'null'
+          type: number
+          title: Presence Penalty
         store:
           type: boolean
           title: Store
