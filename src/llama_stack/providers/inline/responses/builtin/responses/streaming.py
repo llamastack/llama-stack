@@ -623,12 +623,20 @@ class StreamingResponseOrchestrator:
                         content=[
                             OpenAIResponseOutputMessageReasoningContent(text=completion_result_data.reasoning_content)
                         ],
-                        status="completed",
+                        status="in_progress",
                     )
+                    reasoning_output_index = len(output_messages)
                     output_messages.append(reasoning_item)
 
+                    self.sequence_number += 1
+                    yield OpenAIResponseObjectStreamResponseOutputItemAdded(
+                        response_id=self.response_id,
+                        item=reasoning_item,
+                        output_index=reasoning_output_index,
+                        sequence_number=self.sequence_number,
+                    )
+
                     if should_summarize_reasoning(self.reasoning):
-                        reasoning_output_index = len(output_messages) - 1
                         summary_mode = (
                             self.reasoning.summary if self.reasoning and self.reasoning.summary else "concise"
                         )
@@ -657,6 +665,15 @@ class StreamingResponseOrchestrator:
                             reasoning_item.summary = [
                                 OpenAIResponseOutputMessageReasoningSummary(text=t) for t in summary_text_parts
                             ]
+
+                    reasoning_item.status = "completed"
+                    self.sequence_number += 1
+                    yield OpenAIResponseObjectStreamResponseOutputItemDone(
+                        response_id=self.response_id,
+                        item=reasoning_item,
+                        output_index=reasoning_output_index,
+                        sequence_number=self.sequence_number,
+                    )
 
                 for choice in current_response.choices:
                     has_tool_calls = choice.message.tool_calls and self.ctx.response_tools

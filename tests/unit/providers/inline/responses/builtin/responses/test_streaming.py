@@ -485,8 +485,8 @@ async def _to_async_iter(items):
 
 
 class TestSummarizeReasoning:
-    async def test_emits_correct_event_sequence(self):
-        """Summary stream should emit: part_added, text_delta(s), text_done, part_done."""
+    async def test_emits_correct_event_sequence_single_part(self):
+        """Single-paragraph summary: PartAdded -> TextDelta -> TextDone -> PartDone."""
         mock_inference = AsyncMock()
         mock_inference.openai_chat_completion.return_value = _to_async_iter(
             [
@@ -507,15 +507,61 @@ class TestSummarizeReasoning:
         ):
             events.append(event)
 
-        assert len(events) == 5
+        assert len(events) == 4
         assert isinstance(events[0], OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded)
+        assert events[0].summary_index == 0
+        assert events[0].part.text == "", "PartAdded should carry an empty text placeholder"
         assert isinstance(events[1], OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta)
-        assert isinstance(events[2], OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta)
-        assert isinstance(events[3], OpenAIResponseObjectStreamResponseReasoningSummaryTextDone)
-        assert isinstance(events[4], OpenAIResponseObjectStreamResponseReasoningSummaryPartDone)
+        assert isinstance(events[2], OpenAIResponseObjectStreamResponseReasoningSummaryTextDone)
+        assert isinstance(events[3], OpenAIResponseObjectStreamResponseReasoningSummaryPartDone)
 
-    async def test_accumulates_text_across_deltas(self):
-        """Final text_done and part_done events should contain the full concatenated summary."""
+    async def test_emits_multiple_summary_parts(self):
+        """Multi-paragraph summary should produce multiple PartAdded/TextDelta/TextDone/PartDone blocks."""
+        mock_inference = AsyncMock()
+        mock_inference.openai_chat_completion.return_value = _to_async_iter(
+            [
+                _make_streaming_chunk("First paragraph."),
+                _make_streaming_chunk("\n\nSecond paragraph."),
+            ]
+        )
+
+        events = []
+        async for event in summarize_reasoning(
+            inference_api=mock_inference,
+            model="test-model",
+            reasoning_text="complex reasoning",
+            reasoning_item_id="rs_multi",
+            output_index=0,
+            summary_mode="detailed",
+            start_sequence_number=0,
+        ):
+            events.append(event)
+
+        # Two paragraphs -> 2 * (PartAdded + TextDelta + TextDone + PartDone) = 8 events
+        assert len(events) == 8
+
+        # First part (summary_index=0)
+        assert isinstance(events[0], OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded)
+        assert events[0].summary_index == 0
+        assert isinstance(events[1], OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta)
+        assert events[1].delta == "First paragraph."
+        assert isinstance(events[2], OpenAIResponseObjectStreamResponseReasoningSummaryTextDone)
+        assert events[2].text == "First paragraph."
+        assert isinstance(events[3], OpenAIResponseObjectStreamResponseReasoningSummaryPartDone)
+        assert events[3].part.text == "First paragraph."
+
+        # Second part (summary_index=1)
+        assert isinstance(events[4], OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded)
+        assert events[4].summary_index == 1
+        assert isinstance(events[5], OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta)
+        assert events[5].delta == "Second paragraph."
+        assert isinstance(events[6], OpenAIResponseObjectStreamResponseReasoningSummaryTextDone)
+        assert events[6].text == "Second paragraph."
+        assert isinstance(events[7], OpenAIResponseObjectStreamResponseReasoningSummaryPartDone)
+        assert events[7].part.text == "Second paragraph."
+
+    async def test_accumulates_text_in_single_part(self):
+        """Single-paragraph: text_done and part_done should contain the full concatenated summary."""
         mock_inference = AsyncMock()
         mock_inference.openai_chat_completion.return_value = _to_async_iter(
             [
@@ -550,8 +596,7 @@ class TestSummarizeReasoning:
         mock_inference = AsyncMock()
         mock_inference.openai_chat_completion.return_value = _to_async_iter(
             [
-                _make_streaming_chunk("A"),
-                _make_streaming_chunk("B"),
+                _make_streaming_chunk("AB"),
             ]
         )
 
@@ -567,8 +612,34 @@ class TestSummarizeReasoning:
         ):
             events.append(event)
 
+        # Single paragraph: PartAdded, TextDelta, TextDone, PartDone
         seq_numbers = [e.sequence_number for e in events]
-        assert seq_numbers == [6, 7, 8, 9, 10]
+        assert seq_numbers == [6, 7, 8, 9]
+
+    async def test_sequence_numbers_increment_multi_part(self):
+        """Sequence numbers should be strictly increasing across multiple summary parts."""
+        mock_inference = AsyncMock()
+        mock_inference.openai_chat_completion.return_value = _to_async_iter(
+            [
+                _make_streaming_chunk("P1\n\nP2\n\nP3"),
+            ]
+        )
+
+        events = []
+        async for event in summarize_reasoning(
+            inference_api=mock_inference,
+            model="test-model",
+            reasoning_text="reasoning",
+            reasoning_item_id="rs_seq_multi",
+            output_index=0,
+            summary_mode="detailed",
+            start_sequence_number=0,
+        ):
+            events.append(event)
+
+        seq_numbers = [e.sequence_number for e in events]
+        for i in range(1, len(seq_numbers)):
+            assert seq_numbers[i] > seq_numbers[i - 1], f"Sequence numbers must be strictly increasing: {seq_numbers}"
 
     async def test_propagates_item_id_and_output_index(self):
         """All events should carry the correct item_id and output_index."""
@@ -704,3 +775,30 @@ class TestSummarizeReasoning:
         assert len(usage_chunks) == 1
         assert usage_chunks[0].usage.prompt_tokens == 10
         assert usage_chunks[0].usage.completion_tokens == 5
+
+    async def test_whitespace_only_paragraphs_ignored(self):
+        """Paragraphs that are only whitespace should be filtered out."""
+        mock_inference = AsyncMock()
+        mock_inference.openai_chat_completion.return_value = _to_async_iter(
+            [
+                _make_streaming_chunk("Content\n\n  \n\nMore content"),
+            ]
+        )
+
+        events = []
+        async for event in summarize_reasoning(
+            inference_api=mock_inference,
+            model="test-model",
+            reasoning_text="reasoning",
+            reasoning_item_id="rs_ws",
+            output_index=0,
+            summary_mode="concise",
+            start_sequence_number=0,
+        ):
+            events.append(event)
+
+        part_added = [e for e in events if isinstance(e, OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded)]
+        assert len(part_added) == 2
+        text_deltas = [e for e in events if isinstance(e, OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta)]
+        assert text_deltas[0].delta == "Content"
+        assert text_deltas[1].delta == "More content"

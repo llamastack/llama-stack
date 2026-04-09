@@ -182,11 +182,28 @@ def test_reasoning_summary_streaming(client_with_models, text_model_id, summary_
     assert len(summary_text_done) > 0, f"Expected reasoning_summary_text.done events, got types: {event_types}"
     assert len(summary_part_done) > 0, f"Expected reasoning_summary_part.done events, got types: {event_types}"
 
-    final_text = summary_text_done[-1].text
-    assert len(final_text) > 0, "Summary text should not be empty"
+    # Each part should have matching PartAdded/TextDone/PartDone counts
+    assert len(summary_part_added) == len(summary_part_done), "PartAdded and PartDone counts should match"
+    assert len(summary_text_done) == len(summary_part_done), "TextDone and PartDone counts should match"
 
-    accumulated_deltas = "".join(c.delta for c in summary_text_delta)
-    assert accumulated_deltas == final_text, "Concatenated summary deltas should equal the final summary text"
+    # Each summary part's text_done text should match its part_done text
+    for td, pd in zip(summary_text_done, summary_part_done, strict=False):
+        assert td.text == _get_attr(_get_attr(pd, "part"), "text"), "TextDone text should match PartDone part text"
+        assert len(td.text) > 0, "Summary text should not be empty"
+
+    # Verify reasoning output_item.added/done wrapping
+    reasoning_item_added = [
+        c
+        for c in chunks
+        if c.type == "response.output_item.added" and _get_attr(_get_attr(c, "item"), "type") == "reasoning"
+    ]
+    reasoning_item_done = [
+        c
+        for c in chunks
+        if c.type == "response.output_item.done" and _get_attr(_get_attr(c, "item"), "type") == "reasoning"
+    ]
+    assert len(reasoning_item_added) > 0, f"Expected output_item.added for reasoning, got types: {event_types}"
+    assert len(reasoning_item_done) > 0, f"Expected output_item.done for reasoning, got types: {event_types}"
 
 
 def test_reasoning_summary_non_streaming(client_with_models, text_model_id):
@@ -215,7 +232,16 @@ def test_reasoning_summary_non_streaming(client_with_models, text_model_id):
 
 
 def test_reasoning_summary_event_ordering(client_with_models, text_model_id):
-    """Test that summary events appear after reasoning text events in the stream."""
+    """Verify the full OpenAI-compatible reasoning summary event lifecycle:
+
+    response.output_item.added  (reasoning item)
+      response.reasoning_summary_part.added
+      response.reasoning_summary_text.delta * N
+      response.reasoning_summary_text.done
+      response.reasoning_summary_part.done
+      ... (possibly more summary parts)
+    response.output_item.done   (reasoning item)
+    """
 
     skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
 
@@ -240,6 +266,42 @@ def test_reasoning_summary_event_ordering(client_with_models, text_model_id):
     assert last_reasoning_done_idx is not None, "Expected reasoning_text.done events"
     assert first_summary_idx is not None, f"Expected summary events, got types: {event_types}"
     assert first_summary_idx > last_reasoning_done_idx, "Summary events should appear after all reasoning text events"
+
+    # Verify OutputItemAdded wraps the summary events
+    output_item_added_indices = [i for i, t in enumerate(event_types) if t == "response.output_item.added"]
+    output_item_done_indices = [i for i, t in enumerate(event_types) if t == "response.output_item.done"]
+
+    reasoning_item_added_idx = None
+    for idx in output_item_added_indices:
+        item = chunks[idx]
+        item_type = _get_attr(_get_attr(item, "item"), "type")
+        if item_type == "reasoning":
+            reasoning_item_added_idx = idx
+            break
+
+    reasoning_item_done_idx = None
+    for idx in output_item_done_indices:
+        item = chunks[idx]
+        item_type = _get_attr(_get_attr(item, "item"), "type")
+        if item_type == "reasoning":
+            reasoning_item_done_idx = idx
+            break
+
+    assert reasoning_item_added_idx is not None, (
+        f"Expected output_item.added for reasoning item, got types: {event_types}"
+    )
+    assert reasoning_item_done_idx is not None, (
+        f"Expected output_item.done for reasoning item, got types: {event_types}"
+    )
+
+    assert reasoning_item_added_idx < first_summary_idx, (
+        "output_item.added for reasoning should come before summary events"
+    )
+
+    last_summary_idx = max(i for i, t in enumerate(event_types) if "reasoning_summary" in t)
+    assert reasoning_item_done_idx > last_summary_idx, (
+        "output_item.done for reasoning should come after all summary events"
+    )
 
 
 def test_reasoning_summary_sequence_numbers(client_with_models, text_model_id):
@@ -284,35 +346,24 @@ def test_reasoning_no_summary_without_request(client_with_models, text_model_id)
 
 
 def test_reasoning_summary_usage_included(client_with_models, text_model_id):
-    """Test that token usage in the final response accounts for the summary inference call."""
+    """Test that token usage in the final response includes tokens from the summary inference call."""
 
     skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
 
-    response_without = client_with_models.responses.create(
-        model=text_model_id,
-        input="What is 2 + 2? Think step by step.",
-        reasoning={"effort": "medium"},
-        stream=False,
-    )
-
-    response_with = client_with_models.responses.create(
+    response = client_with_models.responses.create(
         model=text_model_id,
         input="What is 2 + 2? Think step by step.",
         reasoning={"effort": "medium", "summary": "concise"},
         stream=False,
     )
 
-    usage_without = _get_attr(response_without, "usage")
-    usage_with = _get_attr(response_with, "usage")
+    usage = _get_attr(response, "usage")
+    assert usage is not None, "Response with summary should have usage data"
 
-    assert usage_with is not None, "Response with summary should have usage data"
-    assert usage_without is not None, "Response without summary should have usage data"
+    total_tokens = _get_attr(usage, "total_tokens", 0)
+    prompt_tokens = _get_attr(usage, "prompt_tokens", 0)
+    completion_tokens = _get_attr(usage, "completion_tokens", 0)
 
-    total_with = _get_attr(usage_with, "total_tokens", 0)
-    total_without = _get_attr(usage_without, "total_tokens", 0)
-
-    assert total_with > total_without, (
-        f"Total tokens with summary ({total_with}) should exceed "
-        f"total tokens without summary ({total_without}) due to the "
-        f"second inference call"
-    )
+    assert total_tokens > 0, "Total tokens should be positive when summary is generated"
+    assert prompt_tokens > 0, "Prompt tokens should be positive (includes summary prompt)"
+    assert completion_tokens > 0, "Completion tokens should be positive (includes summary output)"

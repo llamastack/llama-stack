@@ -687,7 +687,16 @@ async def summarize_reasoning(
 ) -> AsyncIterator[OpenAIResponseObjectStream]:
     """Make a second inference call to summarize reasoning content.
 
-    Yields streaming summary events with properly sequenced sequence_numbers.
+    Yields streaming summary events with properly sequenced sequence_numbers,
+    matching the OpenAI Responses API event lifecycle:
+
+        PartAdded  -> TextDelta * N -> TextDone -> PartDone
+        (repeat for each summary part with incrementing summary_index)
+
+    The summary text is split into multiple parts on paragraph boundaries
+    (double newlines) so that each logical section of the summary gets its
+    own event block, matching OpenAI's multi-part summary behavior.
+
     The caller should update its own sequence_number by reading the last
     yielded event's sequence_number.
 
@@ -721,55 +730,63 @@ async def summarize_reasoning(
     if not isinstance(summary_result, AsyncIterator):
         return
 
-    seq = start_sequence_number
-    summary_index = 0
-    summary_part_emitted = False
-    summary_text_accumulated: list[str] = []
-
+    # Collect the full summary text first, then split into parts.
+    # This avoids mid-stream paragraph detection complexity while
+    # still producing the correct multi-part event sequence.
+    full_text_parts: list[str] = []
     async for chunk in summary_result:
         if usage_chunks is not None and chunk.usage:
             usage_chunks.append(chunk)
-
         for chunk_choice in chunk.choices:
-            if not chunk_choice.delta.content:
-                continue
+            if chunk_choice.delta.content:
+                full_text_parts.append(chunk_choice.delta.content)
 
-            if not summary_part_emitted:
-                summary_part_emitted = True
-                seq += 1
-                yield OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded(
-                    item_id=reasoning_item_id,
-                    output_index=output_index,
-                    part=OpenAIResponseContentPartReasoningSummary(text=""),
-                    sequence_number=seq,
-                    summary_index=summary_index,
-                )
+    if not full_text_parts:
+        return
 
-            seq += 1
-            yield OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta(
-                delta=chunk_choice.delta.content,
-                item_id=reasoning_item_id,
-                output_index=output_index,
-                sequence_number=seq,
-                summary_index=summary_index,
-            )
-            summary_text_accumulated.append(chunk_choice.delta.content)
+    full_text = "".join(full_text_parts)
 
-    if summary_part_emitted:
-        final_summary_text = "".join(summary_text_accumulated)
+    # Split into logical parts on paragraph boundaries (double newlines).
+    # Each part becomes its own PartAdded/TextDelta/TextDone/PartDone block.
+    raw_paragraphs = full_text.split("\n\n")
+    paragraphs = [p for p in raw_paragraphs if p.strip()]
+    if not paragraphs:
+        paragraphs = [full_text]
+
+    seq = start_sequence_number
+    for summary_index, paragraph_text in enumerate(paragraphs):
         seq += 1
-        yield OpenAIResponseObjectStreamResponseReasoningSummaryTextDone(
-            text=final_summary_text,
+        yield OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded(
+            item_id=reasoning_item_id,
+            output_index=output_index,
+            part=OpenAIResponseContentPartReasoningSummary(text=""),
+            sequence_number=seq,
+            summary_index=summary_index,
+        )
+
+        seq += 1
+        yield OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta(
+            delta=paragraph_text,
             item_id=reasoning_item_id,
             output_index=output_index,
             sequence_number=seq,
             summary_index=summary_index,
         )
+
+        seq += 1
+        yield OpenAIResponseObjectStreamResponseReasoningSummaryTextDone(
+            text=paragraph_text,
+            item_id=reasoning_item_id,
+            output_index=output_index,
+            sequence_number=seq,
+            summary_index=summary_index,
+        )
+
         seq += 1
         yield OpenAIResponseObjectStreamResponseReasoningSummaryPartDone(
             item_id=reasoning_item_id,
             output_index=output_index,
-            part=OpenAIResponseContentPartReasoningSummary(text=final_summary_text),
+            part=OpenAIResponseContentPartReasoningSummary(text=paragraph_text),
             sequence_number=seq,
             summary_index=summary_index,
         )
