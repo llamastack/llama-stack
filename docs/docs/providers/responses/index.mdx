@@ -1,5 +1,5 @@
 ---
-description: "Protocol for managing OpenAI-compatible responses."
+description: Server-side agentic orchestration via the OpenAI Responses API
 sidebar_label: Responses
 title: Responses
 ---
@@ -8,6 +8,35 @@ title: Responses
 
 ## Overview
 
-Protocol for managing OpenAI-compatible responses.
+The Responses API is Llama Stack's built-in agentic orchestration layer. It implements the [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses) and conforms to the [Open Responses](https://www.openresponses.org/) specification.
+
+This is the feature that separates Llama Stack from inference gateways. When you call `/v1/responses`, the server doesn't just forward your request to a model. It orchestrates a multi-step workflow:
+
+1. Sends your input to the model via any configured inference provider
+2. If the model requests tool calls, the server executes them (file search, web search, MCP tools, custom functions)
+3. Feeds tool results back to the model
+4. Repeats until the model produces a final response
+5. Streams the entire flow back to the client as server-sent events
+
+All of this happens server-side. Your application sends one HTTP request and gets back a complete, tool-augmented response.
+
+## Why server-side orchestration matters
+
+With a gateway or SDK-level framework, your application code handles the tool-call loop: parse the model response, check for tool calls, execute them, send results back, repeat. Your app is coupled to that orchestration logic.
+
+With Llama Stack's Responses API, the orchestration runs on the server. Your application code is a single API call. You can write it in Python, Go, TypeScript, curl, or any language with an HTTP client. Swap the server, swap the model, swap the tools. Your application code doesn't change.
+
+## Built-in tools
+
+The Responses API has access to all tools registered with the server:
+
+- **file_search** — RAG over documents in vector stores
+- **web_search** — Real-time web search via Brave, Bing, or Tavily
+- **MCP servers** — Any tool exposed via the Model Context Protocol
+- **Custom functions** — Your own tool implementations
+
+## Provider
+
+There is currently one Responses provider:
 
 This section contains documentation for all available providers for the **responses** API.

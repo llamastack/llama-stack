@@ -102,9 +102,12 @@
   flex: 1;
   min-width: 0;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   line-height: 1.6;
   color: var(--ifm-font-color-base);
+  white-space: nowrap;
+  overflow-x: auto;
+  text-align: center;
 }
 
 .commandReveal {
@@ -129,7 +132,7 @@
 }
 
 /* ========== SYNTAX COLORS ========== */
-.tokenBinary { color: #0369a1; font-weight: 700; margin-left: 1rem; }
+.tokenBinary { color: #0369a1; font-weight: 700; }
 .tokenFlag { color: #2563eb; }
 .tokenPackage { color: #7c3aed; }
 .tokenCommand { color: #0f172a; font-weight: 600; }

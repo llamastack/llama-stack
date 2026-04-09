@@ -46,7 +46,7 @@ const config: Config = {
       tagName: 'meta',
       attributes: {
         name: 'theme-color',
-        content: '#7C3AED', // Purple color from your logo
+        content: '#0d7377', // Teal from logo gradient
       },
     },
     {

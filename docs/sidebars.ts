@@ -290,7 +290,6 @@ const sidebars: SidebarsConfig = {
         'references/llama_cli_reference/index',
         'references/llama_stack_client_cli_reference',
         'references/python_sdk_reference/index',
-        'references/evals_reference/index',
       ],
     },
   ],
