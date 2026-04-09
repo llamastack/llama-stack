@@ -7314,6 +7314,7 @@ components:
           - type: 'null'
           description: Accepted response modalities (e.g. ['TEXT']). Accepted for compatibility, ignored in v1.
       additionalProperties: true
+      type: object
       required:
       - model
       - input
@@ -7347,6 +7348,7 @@ components:
             minimum: 1.0
           - type: 'null'
           description: Maximum number of tokens to generate.
+      type: object
       title: GoogleGenerationConfig
       description: Generation parameters for the Interactions API.
     GoogleInputTurn:
@@ -7363,6 +7365,7 @@ components:
           type: array
           title: Content
           description: Content items for this turn.
+      type: object
       required:
       - role
       - content
@@ -7411,6 +7414,7 @@ components:
           title: Object
           enum:
           - interaction
+      type: object
       required:
       - id
       - model
@@ -7427,6 +7431,7 @@ components:
         text:
           type: string
           title: Text
+      type: object
       required:
       - text
       title: GoogleTextContent
@@ -7441,6 +7446,7 @@ components:
         text:
           type: string
           title: Text
+      type: object
       required:
       - text
       title: GoogleTextOutput
@@ -7459,6 +7465,7 @@ components:
           type: integer
           title: Total Tokens
           default: 0
+      type: object
       title: GoogleUsage
       description: Token usage statistics.
     HealthStatus:
