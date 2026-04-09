@@ -18,12 +18,12 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 87.9% |
+| **Overall Conformance Score** | 88.1% |
 | **Endpoints Implemented** | 28/146 |
 | **Total Properties Checked** | 3441 |
-| **Schema/Type Issues** | 288 |
-| **Missing Properties** | 130 |
-| **Total Issues to Fix** | 418 |
+| **Schema/Type Issues** | 289 |
+| **Missing Properties** | 121 |
+| **Total Issues to Fix** | 410 |
 
 ## Integration Test Coverage
 
@@ -49,10 +49,10 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Completions | 56.5% | 46 | 18 | 2 |
 | Vector stores | 61.3% | 310 | 106 | 14 |
 | Embeddings | 64.3% | 14 | 5 | 0 |
-| Files | 66.7% | 42 | 8 | 6 |
-| Models | 66.7% | 15 | 0 | 5 |
+| Files | 76.2% | 42 | 8 | 2 |
 | Chat | 87.1% | 403 | 33 | 19 |
 | Responses | 87.1% | 225 | 29 | 0 |
+| Models | 93.3% | 15 | 1 | 0 |
 | Conversations | 98.8% | 2165 | 22 | 4 |
 
 ## Missing Endpoints
@@ -871,7 +871,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Files
 
-**Score:** 66.7% · **Issues:** 8 · **Missing:** 6
+**Score:** 76.2% · **Issues:** 8 · **Missing:** 2
 
 #### `/files`
 
@@ -890,12 +890,10 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **POST**
 
 <details>
-<summary>Missing Properties (4)</summary>
+<summary>Missing Properties (2)</summary>
 
 - `requestBody.content.multipart/form-data.properties.expires_after.properties.anchor`
 - `requestBody.content.multipart/form-data.properties.expires_after.properties.seconds`
-- `responses.200.content.application/json.properties.status`
-- `responses.200.content.application/json.properties.status_details`
 
 </details>
 
@@ -916,49 +914,12 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **GET**
 
 <details>
-<summary>Missing Properties (2)</summary>
-
-- `responses.200.content.application/json.properties.status`
-- `responses.200.content.application/json.properties.status_details`
-
-</details>
-
-<details>
 <summary>Schema Issues (2)</summary>
 
 | Property | Issues |
 |----------|--------|
 | `responses.200.content.application/json.properties.expires_at` | Type removed: ['integer']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.application/json.properties.purpose` | Enum values removed: ['assistants_output', 'batch_output', 'fine-tune', 'fine-tune-results', 'vision', 'user_data'] |
-
-</details>
-
-### Models
-
-**Score:** 66.7% · **Issues:** 0 · **Missing:** 5
-
-#### `/models`
-
-**GET**
-
-<details>
-<summary>Missing Properties (1)</summary>
-
-- `responses.200.content.application/json.properties.object`
-
-</details>
-
-#### `/models/{model}`
-
-**GET**
-
-<details>
-<summary>Missing Properties (4)</summary>
-
-- `responses.200.content.application/json.properties.created`
-- `responses.200.content.application/json.properties.id`
-- `responses.200.content.application/json.properties.object`
-- `responses.200.content.application/json.properties.owned_by`
 
 </details>
 
@@ -1112,6 +1073,23 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `responses.200.content.application/json.properties.top_p` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2 | Yes |
 | `responses.200.content.application/json.properties.truncation` | Union variants added: 2 | Yes |
 | `responses.200.content.application/json.properties.usage` | Union variants added: 1; Union variants removed: 1 | Yes |
+
+</details>
+
+### Models
+
+**Score:** 93.3% · **Issues:** 1 · **Missing:** 0
+
+#### `/models/{model}`
+
+**GET**
+
+<details>
+<summary>Schema Issues (1)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `responses.200.content.application/json.properties.owned_by` | Default changed: None -&gt; llama_stack |
 
 </details>
 

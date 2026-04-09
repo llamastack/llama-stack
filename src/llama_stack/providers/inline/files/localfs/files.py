@@ -138,7 +138,7 @@ class LocalfsFilesImpl(Files):
 
         file_path = Path(row.pop("file_path"))
         file_path = self._validate_path_containment(file_path)
-        return OpenAIFileObject(**row), file_path
+        return OpenAIFileObject(**row, status="processed", status_details=""), file_path
 
     # OpenAI Files API Implementation
     async def openai_upload_file(
@@ -192,6 +192,8 @@ class LocalfsFilesImpl(Files):
             bytes=file_size,
             created_at=created_at,
             expires_at=expires_at,
+            status="processed",
+            status_details="",
         )
 
     async def openai_list_files(
@@ -230,6 +232,8 @@ class LocalfsFilesImpl(Files):
                 bytes=row["bytes"],
                 created_at=row["created_at"],
                 expires_at=row["expires_at"],
+                status="processed",
+                status_details="",
             )
             for row in paginated_result.data
         ]

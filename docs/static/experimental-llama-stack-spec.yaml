@@ -2896,12 +2896,28 @@ components:
         purpose:
           $ref: '#/components/schemas/OpenAIFilePurpose'
           description: The intended purpose of the file.
+        status:
+          type: string
+          enum:
+          - uploaded
+          - processed
+          - error
+          title: Status
+          description: Deprecated. The current status of the file.
+          deprecated: true
+        status_details:
+          type: string
+          title: Status Details
+          description: Deprecated. For details on why a fine-tuning training file failed validation, see the error field on fine_tuning.job.
+          deprecated: true
       required:
       - id
       - bytes
       - created_at
       - filename
       - purpose
+      - status
+      - status_details
       title: OpenAIFileObject
       description: OpenAI File object as defined in the OpenAI Files API.
     ExpiresAfter:
@@ -3023,6 +3039,11 @@ components:
         :custom_metadata: Llama Stack-specific metadata including model_type, provider info, and additional metadata
     OpenAIListModelsResponse:
       properties:
+        object:
+          type: string
+          title: Object
+          enum:
+          - list
         data:
           items:
             $ref: '#/components/schemas/OpenAIModel'
@@ -3058,6 +3079,15 @@ components:
           type: object
           title: Metadata
           description: Any additional metadata for this model
+        created:
+          type: integer
+          title: Created
+          description: The Unix timestamp in seconds when the model was created.
+        owned_by:
+          type: string
+          title: Owned By
+          description: The owner of the model.
+          default: llama_stack
         model_type:
           $ref: '#/components/schemas/ModelType'
           default: llm
@@ -3066,9 +3096,23 @@ components:
           - type: boolean
           - type: 'null'
           description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
+        id:
+          type: string
+          title: Id
+          description: The model identifier (OpenAI-compatible alias for identifier).
+          readOnly: true
+        object:
+          type: string
+          title: Object
+          description: The object type, always 'model'.
+          readOnly: true
+          enum:
+          - model
       required:
       - identifier
       - provider_id
+      - id
+      - object
       title: Model
       description: A model resource representing an AI model registered in Llama Stack.
     ModelType:

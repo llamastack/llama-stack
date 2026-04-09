@@ -128,10 +128,10 @@
       ]
     },
     "conformance": {
-      "score": 87.9,
-      "issues": 288,
-      "missing_properties": 130,
-      "total_problems": 418,
+      "score": 88.1,
+      "issues": 289,
+      "missing_properties": 121,
+      "total_problems": 410,
       "total_properties": 3441
     }
   },
@@ -1445,9 +1445,9 @@
       ]
     },
     "Files": {
-      "score": 66.7,
+      "score": 76.2,
       "issues": 8,
-      "missing_properties": 6,
+      "missing_properties": 2,
       "total_properties": 42,
       "endpoints": [
         {
@@ -1479,9 +1479,7 @@
               "method": "POST",
               "missing_properties": [
                 "POST.requestBody.content.multipart/form-data.properties.expires_after.properties.anchor",
-                "POST.requestBody.content.multipart/form-data.properties.expires_after.properties.seconds",
-                "POST.responses.200.content.application/json.properties.status",
-                "POST.responses.200.content.application/json.properties.status_details"
+                "POST.requestBody.content.multipart/form-data.properties.expires_after.properties.seconds"
               ],
               "conformance_issues": [
                 {
@@ -1512,7 +1510,7 @@
                   ]
                 }
               ],
-              "missing_count": 4,
+              "missing_count": 2,
               "issues_count": 4
             }
           ]
@@ -1529,10 +1527,7 @@
             },
             {
               "method": "GET",
-              "missing_properties": [
-                "GET.responses.200.content.application/json.properties.status",
-                "GET.responses.200.content.application/json.properties.status_details"
-              ],
+              "missing_properties": [],
               "conformance_issues": [
                 {
                   "property": "GET.responses.200.content.application/json.properties.expires_at",
@@ -1549,7 +1544,7 @@
                   ]
                 }
               ],
-              "missing_count": 2,
+              "missing_count": 0,
               "issues_count": 2
             }
           ]
@@ -1569,9 +1564,9 @@
       ]
     },
     "Models": {
-      "score": 66.7,
-      "issues": 0,
-      "missing_properties": 5,
+      "score": 93.3,
+      "issues": 1,
+      "missing_properties": 0,
       "total_properties": 15,
       "endpoints": [
         {
@@ -1579,11 +1574,9 @@
           "operations": [
             {
               "method": "GET",
-              "missing_properties": [
-                "GET.responses.200.content.application/json.properties.object"
-              ],
+              "missing_properties": [],
               "conformance_issues": [],
-              "missing_count": 1,
+              "missing_count": 0,
               "issues_count": 0
             }
           ]
@@ -1593,15 +1586,17 @@
           "operations": [
             {
               "method": "GET",
-              "missing_properties": [
-                "GET.responses.200.content.application/json.properties.created",
-                "GET.responses.200.content.application/json.properties.id",
-                "GET.responses.200.content.application/json.properties.object",
-                "GET.responses.200.content.application/json.properties.owned_by"
+              "missing_properties": [],
+              "conformance_issues": [
+                {
+                  "property": "GET.responses.200.content.application/json.properties.owned_by",
+                  "details": [
+                    "Default changed: None -> llama_stack"
+                  ]
+                }
               ],
-              "conformance_issues": [],
-              "missing_count": 4,
-              "issues_count": 0
+              "missing_count": 0,
+              "issues_count": 1
             }
           ]
         }
