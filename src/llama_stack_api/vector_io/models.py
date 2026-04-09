@@ -458,6 +458,7 @@ VectorStoreChunkingStrategy = Annotated[
 register_schema(VectorStoreChunkingStrategy, name="VectorStoreChunkingStrategy")
 
 
+@json_schema_type
 class SearchRankingOptions(BaseModel):
     """Options for ranking and filtering search results.
 
@@ -884,6 +885,7 @@ __all__ = [
     "VectorStoreListResponse",
     "VectorStoreModifyRequest",
     "VectorStoreObject",
+    "VectorStoreStatus",
     "VectorStoreSearchRequest",
     "VectorStoreSearchResponse",
     "VectorStoreSearchResponsePage",

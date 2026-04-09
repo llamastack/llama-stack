@@ -44,6 +44,7 @@ from .models import (
     VectorStoreContent,
     VectorStoreCreateRequest,
     VectorStoreDeleteResponse,
+    VectorStoreExpirationAfter,
     VectorStoreFileAttributes,
     VectorStoreFileBatchObject,
     VectorStoreFileContentResponse,
@@ -60,6 +61,7 @@ from .models import (
     VectorStoreSearchRequest,
     VectorStoreSearchResponse,
     VectorStoreSearchResponsePage,
+    VectorStoreStatus,
 )
 
 __all__ = [
@@ -95,6 +97,7 @@ __all__ = [
     "VectorStoreContent",
     "VectorStoreCreateRequest",
     "VectorStoreDeleteResponse",
+    "VectorStoreExpirationAfter",
     "VectorStoreFileAttributes",
     "VectorStoreFileBatchObject",
     "VectorStoreFileContentResponse",
@@ -108,6 +111,7 @@ __all__ = [
     "VectorStoreListResponse",
     "VectorStoreModifyRequest",
     "VectorStoreObject",
+    "VectorStoreStatus",
     "VectorStoreSearchRequest",
     "VectorStoreSearchResponse",
     "VectorStoreSearchResponsePage",

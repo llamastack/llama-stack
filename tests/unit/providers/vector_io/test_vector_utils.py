@@ -116,42 +116,57 @@ def test_chunk_serialization():
     assert "chunk_id" in serialized_chunk
 
 
-def test_vector_store_file_object_attributes_validation():
-    """Test VectorStoreFileObject validates and sanitizes attributes at input boundary."""
-    # Test with metadata containing lists, nested dicts, and primitives
+def test_vector_store_file_object_attributes_nullable():
+    """Test VectorStoreFileObject attributes default to None."""
     from llama_stack_api.vector_io import VectorStoreChunkingStrategyAuto
 
     file_obj = VectorStoreFileObject(
         id="file-123",
-        attributes={
-            "tags": ["transformers", "h100-compatible", "region:us"],  # List -> string
-            "model_name": "granite-3.3-8b",  # String preserved
-            "score": 0.95,  # Float preserved
-            "active": True,  # Bool preserved
-            "count": 42,  # Int -> float
-            "nested": {"key": "value"},  # Dict filtered out
-        },
         chunking_strategy=VectorStoreChunkingStrategyAuto(),
         created_at=1234567890,
         status="completed",
         vector_store_id="vs-123",
         usage_bytes=0,
     )
+    assert file_obj.attributes is None
 
-    # Lists converted to comma-separated strings
-    assert file_obj.attributes["tags"] == "transformers, h100-compatible, region:us"
-    # Primitives preserved
-    assert file_obj.attributes["model_name"] == "granite-3.3-8b"
-    assert file_obj.attributes["score"] == 0.95
-    assert file_obj.attributes["active"] is True
-    assert file_obj.attributes["count"] == 42.0  # int -> float
-    # Complex types filtered out
-    assert "nested" not in file_obj.attributes
+    # Attributes can also be set explicitly
+    file_obj_with_attrs = VectorStoreFileObject(
+        id="file-124",
+        attributes={"model_name": "granite-3.3-8b", "score": 0.95, "active": True},
+        chunking_strategy=VectorStoreChunkingStrategyAuto(),
+        created_at=1234567890,
+        status="completed",
+        vector_store_id="vs-123",
+    )
+    assert file_obj_with_attrs.attributes["model_name"] == "granite-3.3-8b"
+    assert file_obj_with_attrs.attributes["score"] == 0.95
+    assert file_obj_with_attrs.attributes["active"] is True
 
 
-def test_vector_store_file_object_attributes_constraints():
-    """Test VectorStoreFileObject enforces OpenAPI constraints on attributes."""
+def test_sanitize_vector_store_attributes():
+    """Test _sanitize_vector_store_attributes sanitizes metadata correctly."""
     from llama_stack_api.vector_io import VectorStoreChunkingStrategyAuto
+    from llama_stack_api.vector_io.models import _sanitize_vector_store_attributes
+
+    # Test with metadata containing lists, nested dicts, and primitives
+    result = _sanitize_vector_store_attributes(
+        {
+            "tags": ["transformers", "h100-compatible", "region:us"],
+            "model_name": "granite-3.3-8b",
+            "score": 0.95,
+            "active": True,
+            "count": 42,
+            "nested": {"key": "value"},
+        }
+    )
+
+    assert result["tags"] == "transformers, h100-compatible, region:us"
+    assert result["model_name"] == "granite-3.3-8b"
+    assert result["score"] == 0.95
+    assert result["active"] is True
+    assert result["count"] == 42.0
+    assert "nested" not in result
 
     # Test max 16 properties
     many_attrs = {f"key{i}": f"value{i}" for i in range(20)}

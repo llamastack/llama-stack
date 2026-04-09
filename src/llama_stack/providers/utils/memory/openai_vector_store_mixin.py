@@ -655,11 +655,7 @@ class OpenAIVectorStoreMixin(ABC):
         if request.name is not None:
             store_info["name"] = request.name
         if request.expires_after is not None:
-            store_info["expires_after"] = (
-                request.expires_after.model_dump()
-                if hasattr(request.expires_after, "model_dump")
-                else request.expires_after
-            )
+            store_info["expires_after"] = request.expires_after.model_dump()
         if request.metadata is not None:
             store_info["metadata"] = request.metadata
 
