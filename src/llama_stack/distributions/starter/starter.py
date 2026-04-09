@@ -399,5 +399,17 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 "azure",
                 "Azure API Type",
             ),
+            "INFINISPAN_URL": (
+                "http://localhost:11222",
+                "Infinispan server URL",
+            ),
+            "INFINISPAN_USERNAME": (
+                "admin",
+                "Infinispan authentication username",
+            ),
+            "INFINISPAN_PASSWORD": (
+                "",
+                "Infinispan authentication password",
+            ),
         },
     )

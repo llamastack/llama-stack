@@ -225,31 +225,15 @@ h3 {
   background: var(--ifm-color-primary);
 }
 
-/* GitHub link icon styling */
-.navbar__items--right .navbar__link[href*="github"] {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.85rem !important;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 100px;
-  font-size: 0.82rem;
-  transition: all 0.2s;
+/* GitHub link hidden — available in landing page hero and footer */
+
+/* Dropdown toggle active state */
+.dropdown--show > .navbar__link {
+  background: rgba(13, 115, 119, 0.06);
 }
 
-[data-theme='dark'] .navbar__items--right .navbar__link[href*="github"] {
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.navbar__items--right .navbar__link[href*="github"]:hover {
-  background: rgba(0, 0, 0, 0.06);
-  border-color: rgba(0, 0, 0, 0.2);
-  transform: translateY(-1px);
-}
-
-[data-theme='dark'] .navbar__items--right .navbar__link[href*="github"]:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+[data-theme='dark'] .dropdown--show > .navbar__link {
+  background: rgba(45, 189, 194, 0.08);
 }
 
 /* Dropdown menu styling */
@@ -264,7 +248,7 @@ h3 {
 [data-theme='dark'] .dropdown__menu {
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
-  background: #1a1a2e;
+  background: var(--ifm-background-surface-color);
 }
 
 .dropdown__link {
@@ -1470,4 +1454,9 @@ footer.row .col {
 /* Reduce excessive internal padding */
 .card.padding--lg {
   padding: 0 0.75rem !important;
+}
+
+/* GitHub link hidden from navbar — already on landing page and footer */
+.navbar__items--right .navbar__link[href*="github"] {
+  display: none;
 }
