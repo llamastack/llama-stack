@@ -6874,32 +6874,35 @@ components:
         title: CompletionInputType
       title: StringType | ... (9 variants)
     RegisterShieldRequest:
+      description: Request model for registering a shield.
       properties:
         shield_id:
-          type: string
-          title: Shield Id
           description: The identifier of the shield to register.
+          title: Shield Id
+          type: string
         provider_shield_id:
           anyOf:
           - type: string
           - type: 'null'
           description: The identifier of the shield in the provider.
+          nullable: true
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
           description: The identifier of the provider.
+          nullable: true
         params:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
           description: The parameters of the shield.
-      type: object
+          nullable: true
       required:
       - shield_id
       title: RegisterShieldRequest
-      description: Request model for registering a shield.
+      type: object
     AllowedToolsFilter:
       properties:
         tool_names:

@@ -12,72 +12,7 @@ info:
   version: v1
 servers:
 - url: http://any-hosted-llama-stack.com
-paths:
-  /v1/shields:
-    post:
-      responses:
-        '200':
-          description: A Shield.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Shield'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Shields
-      summary: Register a shield.
-      description: Register a shield.
-      operationId: register_shield_v1_shields_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterShieldRequest'
-        required: true
-      deprecated: true
-  /v1/shields/{identifier}:
-    delete:
-      responses:
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-        '204':
-          description: The shield was successfully unregistered.
-      tags:
-      - Shields
-      summary: Unregister a shield.
-      description: Unregister a shield.
-      operationId: unregister_shield_v1_shields__identifier__delete
-      parameters:
-      - name: identifier
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The identifier of the shield to unregister.
-          title: Identifier
-        description: The identifier of the shield to unregister.
-      deprecated: true
+paths: {}
 components:
   schemas:
     Error:
@@ -6550,32 +6485,35 @@ components:
         title: CompletionInputType
       title: StringType | ... (9 variants)
     RegisterShieldRequest:
+      description: Request model for registering a shield.
       properties:
         shield_id:
-          type: string
-          title: Shield Id
           description: The identifier of the shield to register.
+          title: Shield Id
+          type: string
         provider_shield_id:
           anyOf:
           - type: string
           - type: 'null'
           description: The identifier of the shield in the provider.
+          nullable: true
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
           description: The identifier of the provider.
+          nullable: true
         params:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
           description: The parameters of the shield.
-      type: object
+          nullable: true
       required:
       - shield_id
       title: RegisterShieldRequest
-      description: Request model for registering a shield.
+      type: object
     AllowedToolsFilter:
       properties:
         tool_names:

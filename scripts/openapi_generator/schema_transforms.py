@@ -523,55 +523,34 @@ def _clean_schema_descriptions(openapi_schema: dict[str, Any]) -> dict[str, Any]
 
 
 def _promote_model_extra_body_fields(openapi_schema: dict[str, Any]) -> dict[str, Any]:
-    """
-    Scan component schemas for fields marked with x-extra-body-field and promote them.
-
-    Fields marked with json_schema_extra={"x-extra-body-field": True} on a Pydantic model
-    are stripped from the component schema properties and added to x-llama-stack-extra-body-params
-    on any requestBody that references that schema.
-    """
-    if "components" not in openapi_schema or "schemas" not in openapi_schema["components"]:
-        return openapi_schema
-
-    schemas = openapi_schema["components"]["schemas"]
-
-    # Find schemas with x-extra-body-field marked properties
-    schema_extra_fields: dict[str, dict[str, Any]] = {}
-    for schema_name, schema_def in schemas.items():
-        if not isinstance(schema_def, dict) or "properties" not in schema_def:
+    """Strip fields marked x-extra-body-field from schemas and add to x-llama-stack-extra-body-params."""
+    schemas = openapi_schema.get("components", {}).get("schemas", {})
+    schema_extra: dict[str, dict[str, Any]] = {}
+    for name, defn in schemas.items():
+        if not isinstance(defn, dict) or "properties" not in defn:
             continue
-
-        extra_fields: dict[str, Any] = {}
-        for prop_name, prop_def in list(schema_def["properties"].items()):
+        extra: dict[str, Any] = {}
+        for prop, prop_def in list(defn["properties"].items()):
             if isinstance(prop_def, dict) and prop_def.pop("x-extra-body-field", None):
-                extra_fields[prop_name] = prop_def
-                del schema_def["properties"][prop_name]
-                if "required" in schema_def and prop_name in schema_def["required"]:
-                    schema_def["required"].remove(prop_name)
-
-        if extra_fields:
-            schema_extra_fields[schema_name] = extra_fields
-
-    if not schema_extra_fields or "paths" not in openapi_schema:
-        return openapi_schema
-
-    # Find requestBody references to those schemas and add x-llama-stack-extra-body-params
-    for _path, path_item in openapi_schema["paths"].items():
+                extra[prop] = prop_def
+                del defn["properties"][prop]
+                if "required" in defn and prop in defn["required"]:
+                    defn["required"].remove(prop)
+        if extra:
+            schema_extra[name] = extra
+    for path_item in openapi_schema.get("paths", {}).values():
         if not isinstance(path_item, dict):
             continue
-        for method in ["post", "put", "patch"]:
-            if method not in path_item:
+        for method in ("post", "put", "patch"):
+            op = path_item.get(method)
+            if not op:
                 continue
-            operation = path_item[method]
-            request_body = operation.get("requestBody", {})
-            content = request_body.get("content", {})
-            json_content = content.get("application/json", {})
-            schema_ref = json_content.get("schema", {})
-            if isinstance(schema_ref, dict) and "$ref" in schema_ref:
-                ref_name = schema_ref["$ref"].split("/")[-1]
-                if ref_name in schema_extra_fields:
-                    request_body["x-llama-stack-extra-body-params"] = schema_extra_fields[ref_name]
-
+            rb = op.get("requestBody", {})
+            ref = rb.get("content", {}).get("application/json", {}).get("schema", {})
+            if isinstance(ref, dict) and "$ref" in ref:
+                ref_name = ref["$ref"].split("/")[-1]
+                if ref_name in schema_extra:
+                    rb["x-llama-stack-extra-body-params"] = schema_extra[ref_name]
     return openapi_schema
 
 
