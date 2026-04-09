@@ -3548,6 +3548,7 @@ components:
           description: Must be 'list' to identify this as a list response.
           enum:
           - list
+          default: list
       type: object
       required:
       - data
@@ -5470,6 +5471,7 @@ components:
           description: The object type, which is always conversation.
           enum:
           - conversation
+          default: conversation
         created_at:
           type: integer
           title: Created At
@@ -6520,6 +6522,7 @@ components:
           title: Object
           enum:
           - response
+          default: response
         output:
           items:
             $ref: '#/components/schemas/OpenAIResponseOutputItem'
@@ -6963,6 +6966,7 @@ components:
           title: Object
           enum:
           - response
+          default: response
         output:
           items:
             $ref: '#/components/schemas/OpenAIResponseOutputItem'
@@ -11340,6 +11344,7 @@ components:
           title: Object
           enum:
           - response.compaction
+          default: response.compaction
         output:
           items:
             $ref: '#/components/schemas/OpenAIResponseMessageOutputUnion'
