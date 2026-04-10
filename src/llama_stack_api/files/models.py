@@ -35,6 +35,16 @@ class OpenAIFileObject(BaseModel):
     )
     filename: str = Field(..., description="The name of the file.")
     purpose: OpenAIFilePurpose = Field(..., description="The intended purpose of the file.")
+    status: Literal["uploaded", "processed", "error"] = Field(
+        ...,
+        description="Deprecated. The current status of the file.",
+        deprecated=True,
+    )
+    status_details: str = Field(
+        ...,
+        description="Deprecated. For details on why a fine-tuning training file failed validation, see the error field on fine_tuning.job.",
+        deprecated=True,
+    )
 
 
 @json_schema_type

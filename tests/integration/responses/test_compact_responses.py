@@ -174,7 +174,7 @@ class TestCompactResponses:
             assert item.type != "compaction"
 
     def test_compact_chain_through_compaction(self, responses_client, text_model_id):
-        """previous_response_id should work through compacted conversations."""
+        """previous_response_id should work directly on a compacted response."""
         compact_result = responses_client.responses.compact(
             model=text_model_id,
             input=[
@@ -183,18 +183,27 @@ class TestCompactResponses:
             ],
         )
 
-        # Access output directly from typed response
-        resp1 = responses_client.responses.create(
-            model=text_model_id,
-            input=compact_result.output + [{"role": "user", "content": "What did we discuss?"}],
-            store=True,
-        )
-        resp2 = responses_client.responses.create(
+        # Chain directly through the compacted response ID — no manual concatenation needed
+        resp = responses_client.responses.create(
             model=text_model_id,
             input="What was the secret word?",
-            previous_response_id=resp1.id,
+            previous_response_id=compact_result.id,
         )
-        assert "banana" in resp2.output_text.lower()
+        assert "banana" in resp.output_text.lower()
+
+    def test_compact_response_is_retrievable(self, responses_client, text_model_id):
+        """Compacted response should be stored and retrievable by ID."""
+        compact_result = responses_client.responses.compact(
+            model=text_model_id,
+            input=[
+                {"role": "user", "content": "Hello there!"},
+                {"role": "assistant", "content": "Hi! How can I help?"},
+            ],
+        )
+
+        retrieved = responses_client.responses.retrieve(compact_result.id)
+        assert retrieved.id == compact_result.id
+        assert retrieved.status == "completed"
 
     def test_compact_double_compaction(self, responses_client, text_model_id):
         """Compacting an already-compacted conversation should work."""

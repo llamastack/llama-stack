@@ -16,6 +16,9 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+# Anthropic API version we are compatible with
+ANTHROPIC_VERSION = "2023-06-01"
+
 # -- Content blocks --
 
 
