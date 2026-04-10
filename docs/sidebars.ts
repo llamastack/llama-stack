@@ -43,6 +43,11 @@ const sidebars: SidebarsConfig = {
             'concepts/apis/google_interactions',
             'concepts/apis/external',
             'concepts/apis/api_leveling',
+            {
+              type: 'link',
+              label: 'Anthropic Messages',
+              href: '/docs/api-openai/anthropic_messages',
+            },
           ],
         },
         {
