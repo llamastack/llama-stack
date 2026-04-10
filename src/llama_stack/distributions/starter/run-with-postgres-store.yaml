@@ -5,6 +5,7 @@ apis:
 - file_processors
 - files
 - inference
+- interactions
 - messages
 - responses
 - safety
@@ -189,6 +190,9 @@ providers:
       excluded_categories: []
   - provider_id: code-scanner
     provider_type: inline::code-scanner
+  interactions:
+  - provider_id: builtin
+    provider_type: inline::builtin
   messages:
   - provider_id: builtin
     provider_type: inline::builtin

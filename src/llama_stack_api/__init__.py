@@ -58,6 +58,8 @@ from .admin import (
 from .responses import (
     Responses,
     CancelResponseRequest,
+    CompactResponseRequest,
+    ContextManagement,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -270,6 +272,12 @@ from .inference import (
     UserMessage,
 )
 from .inspect_api import Inspect
+from .interactions import (
+    Interactions,
+    GoogleCreateInteractionRequest,
+    GoogleInteractionResponse,
+    GoogleUsage,
+)
 from .messages import (
     Messages,
     AnthropicContentBlock,
@@ -308,12 +316,14 @@ from .openai_responses import (
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
     MCPListToolsTool,
+    OpenAICompactedResponse,
     OpenAIDeleteResponseObject,
     OpenAIResponseAnnotationCitation,
     OpenAIResponseAnnotationContainerFileCitation,
     OpenAIResponseAnnotationFileCitation,
     OpenAIResponseAnnotationFilePath,
     OpenAIResponseAnnotations,
+    OpenAIResponseCompaction,
     OpenAIResponseContentPart,
     OpenAIResponseContentPartOutputText,
     OpenAIResponseContentPartReasoningSummary,
@@ -537,6 +547,8 @@ __all__ = [
     "Responses",
     # Responses Request Models
     "CancelResponseRequest",
+    "CompactResponseRequest",
+    "ContextManagement",
     "CreateResponseRequest",
     "DeleteResponseRequest",
     "ListResponseInputItemsRequest",
@@ -724,6 +736,7 @@ __all__ = [
     "OpenAICompletionWithInputMessages",
     "OpenAICreateVectorStoreFileBatchRequestWithExtraBody",
     "OpenAICreateVectorStoreRequestWithExtraBody",
+    "OpenAICompactedResponse",
     "OpenAIDeleteResponseObject",
     "OpenAIDeveloperMessageParam",
     "OpenAIEmbeddingData",
@@ -752,6 +765,7 @@ __all__ = [
     "OpenAIResponseAnnotationFileCitation",
     "OpenAIResponseAnnotationFilePath",
     "OpenAIResponseAnnotations",
+    "OpenAIResponseCompaction",
     "OpenAIResponseContentPart",
     "OpenAIResponseContentPartOutputText",
     "OpenAIResponseContentPartReasoningSummary",
@@ -989,6 +1003,11 @@ __all__ = [
     "ViolationLevel",
     "WebSearchToolTypes",
     "WeightedRanker",
+    # Interactions API
+    "Interactions",
+    "GoogleCreateInteractionRequest",
+    "GoogleInteractionResponse",
+    "GoogleUsage",
     # Messages API
     "Messages",
     "AnthropicContentBlock",

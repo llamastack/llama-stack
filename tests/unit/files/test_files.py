@@ -406,8 +406,46 @@ class TestOpenAIFilesAPI:
             expires_at=None,
             filename="test.txt",
             purpose=OpenAIFilePurpose.ASSISTANTS,
+            status="processed",
+            status_details="",
         )
         assert file_obj.expires_at is None
+
+    async def test_status_field_present(self):
+        """Test that status and status_details are present on OpenAIFileObject."""
+        file_obj = OpenAIFileObject(
+            id="file-abc123",
+            bytes=100,
+            created_at=1234567890,
+            filename="test.txt",
+            purpose=OpenAIFilePurpose.ASSISTANTS,
+            status="processed",
+            status_details="",
+        )
+        assert file_obj.status == "processed"
+        assert file_obj.status_details == ""
+
+    async def test_status_can_be_set(self):
+        """Test that status and status_details can be explicitly set."""
+        file_obj = OpenAIFileObject(
+            id="file-abc123",
+            bytes=100,
+            created_at=1234567890,
+            filename="test.txt",
+            purpose=OpenAIFilePurpose.ASSISTANTS,
+            status="error",
+            status_details="File validation failed",
+        )
+        assert file_obj.status == "error"
+        assert file_obj.status_details == "File validation failed"
+
+    async def test_uploaded_file_has_status(self, files_provider, sample_text_file):
+        """Test that uploaded files include status in their response."""
+        result = await files_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_text_file
+        )
+        assert result.status == "processed"
+        assert result.status_details == ""
 
     async def test_after_pagination_works(self, files_provider, sample_text_file):
         """Test that 'after' pagination works correctly."""

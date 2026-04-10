@@ -27,6 +27,7 @@ from llama_stack_api.version import LLAMA_STACK_API_V1
 
 from .api import Messages
 from .models import (
+    ANTHROPIC_VERSION,
     AnthropicCountTokensRequest,
     AnthropicCountTokensResponse,
     AnthropicCreateMessageRequest,
@@ -36,9 +37,6 @@ from .models import (
 )
 
 logger = logging.LoggerAdapter(logging.getLogger(__name__), {"category": "messages"})
-
-# Anthropic API version we are compatible with
-_ANTHROPIC_VERSION = "2023-06-01"
 
 
 def _create_anthropic_sse_event(event_type: str, data: Any) -> str:
@@ -160,7 +158,7 @@ def create_router(impl: Messages) -> APIRouter:
             logger.exception("Failed to create message")
             return _anthropic_error_response(500, "Internal server error")
 
-        response_headers = {"anthropic-version": _ANTHROPIC_VERSION}
+        response_headers = {"anthropic-version": ANTHROPIC_VERSION}
 
         if isinstance(result, AsyncIterator):
             return StreamingResponse(
@@ -196,7 +194,7 @@ def create_router(impl: Messages) -> APIRouter:
 
         return JSONResponse(
             content=result.model_dump(),
-            headers={"anthropic-version": _ANTHROPIC_VERSION},
+            headers={"anthropic-version": ANTHROPIC_VERSION},
         )
 
     return router

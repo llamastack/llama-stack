@@ -18,6 +18,7 @@ from typing import Any
 
 import httpx
 import yaml
+import zstandard
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -141,6 +142,19 @@ async def lifespan(app: StackApp) -> AsyncIterator[None]:
     await app.stack.shutdown()  # type: ignore[no-untyped-call]
 
 
+async def _send_error_response(send: Send, status: int, message: str) -> None:
+    """Send an ASGI error response with an OpenAI-compatible error body."""
+    await send(
+        {
+            "type": "http.response.start",
+            "status": status,
+            "headers": [[b"content-type", b"application/json"]],
+        }
+    )
+    error_msg = OpenAIErrorResponse.from_message(message).to_bytes()
+    await send({"type": "http.response.body", "body": error_msg})
+
+
 class ClientVersionMiddleware:
     """ASGI middleware that rejects requests from clients with incompatible major.minor versions."""
 
@@ -157,21 +171,11 @@ class ClientVersionMiddleware:
                     client_version_parts = tuple(map(int, client_version.split(".")[:2]))
                     server_version_parts = tuple(map(int, self.server_version.split(".")[:2]))
                     if client_version_parts != server_version_parts:
-
-                        async def send_version_error(send: Send) -> None:
-                            await send(
-                                {
-                                    "type": "http.response.start",
-                                    "status": httpx.codes.UPGRADE_REQUIRED,
-                                    "headers": [[b"content-type", b"application/json"]],
-                                }
-                            )
-                            error_msg = OpenAIErrorResponse.from_message(
-                                f"Client version {client_version} is not compatible with server version {self.server_version}. Please update your client."
-                            ).to_bytes()
-                            await send({"type": "http.response.body", "body": error_msg})
-
-                        return await send_version_error(send)
+                        return await _send_error_response(
+                            send,
+                            status=httpx.codes.UPGRADE_REQUIRED,
+                            message=f"Client version {client_version} is not compatible with server version {self.server_version}. Please update your client.",
+                        )
                 except (ValueError, IndexError):
                     # If version parsing fails, let the request through
                     pass
@@ -354,6 +358,84 @@ def create_app() -> StackApp:
             logger.debug("Registered FastAPI router", api=str(api))
 
     logger.debug("Serving APIs", apis=list(apis_to_serve))
+
+    # Decompress zstd-encoded request bodies (e.g. from Codex CLI)
+    # Must be a raw ASGI middleware to intercept the body before Starlette reads it
+    class ZstdDecompressionMiddleware:
+        def __init__(self, app: ASGIApp) -> None:
+            self.app = app
+
+        async def __call__(self, scope: Scope, receive: Receive, send: Send) -> Any:
+            if scope["type"] != "http":
+                return await self.app(scope, receive, send)
+
+            headers = {k.lower(): v for k, v in scope.get("headers", [])}
+            content_encoding = headers.get(b"content-encoding", b"").decode().lower()
+
+            if content_encoding != "zstd":
+                return await self.app(scope, receive, send)
+
+            # Collect the full request body first (needed for both success and fallback)
+            body_parts: list[bytes] = []
+            while True:
+                message = await receive()
+                body_parts.append(message.get("body", b""))
+                if not message.get("more_body", False):
+                    break
+
+            compressed_body = b"".join(body_parts)
+
+            try:
+                max_decompressed_size = 100 * 1024 * 1024  # 100 MB
+                decompressor = zstandard.ZstdDecompressor()
+                # Use streaming decompression to handle frames without content size
+                reader = decompressor.stream_reader(compressed_body)
+                decompressed_body = reader.read(max_decompressed_size)
+                if reader.read(1):
+                    reader.close()
+                    return await _send_error_response(
+                        send,
+                        status=413,
+                        message=f"Decompressed request body exceeds maximum allowed size of {max_decompressed_size} bytes",
+                    )
+                reader.close()
+
+                # Strip content-encoding header and update content-length
+                new_headers = [
+                    (k, v) for k, v in scope["headers"] if k.lower() not in (b"content-encoding", b"content-length")
+                ]
+                new_headers.append((b"content-length", str(len(decompressed_body)).encode()))
+                scope["headers"] = new_headers
+
+                # Feed the decompressed body back, then delegate to the
+                # original receive for disconnect detection so streaming
+                # responses stay alive until the client actually disconnects.
+                body_sent = False
+
+                async def receive_decompressed() -> dict:  # type: ignore[type-arg]
+                    nonlocal body_sent
+                    if not body_sent:
+                        body_sent = True
+                        return {"type": "http.request", "body": decompressed_body, "more_body": False}
+                    return await receive()
+
+                return await self.app(scope, receive_decompressed, send)
+            except Exception as e:
+                logger.warning("Failed to decompress zstd request body, falling back to compressed data", error=str(e))
+
+                # Replay the original compressed body since decompression failed
+                body_sent = False
+
+                async def receive_original() -> dict:  # type: ignore[type-arg]
+                    nonlocal body_sent
+                    if not body_sent:
+                        body_sent = True
+                        return {"type": "http.request", "body": compressed_body, "more_body": False}
+                    return await receive()
+
+                return await self.app(scope, receive_original, send)
+
+    app.add_middleware(ZstdDecompressionMiddleware)
 
     # Register specific exception handlers before the generic Exception handler
     # This prevents the re-raising behavior that causes connection resets

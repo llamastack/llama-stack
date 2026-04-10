@@ -46,7 +46,7 @@ const config: Config = {
       tagName: 'meta',
       attributes: {
         name: 'theme-color',
-        content: '#7C3AED', // Purple color from your logo
+        content: '#0d7377', // Teal from logo gradient
       },
     },
     {
@@ -193,6 +193,14 @@ const config: Config = {
               to: '/docs/api-openai',
             },
             {
+              label: 'Anthropic Messages',
+              to: '/docs/api-anthropic-messages',
+            },
+            {
+              label: 'Google Interactions',
+              to: '/docs/api-google-interactions',
+            },
+            {
               label: 'Blog',
               to: '/blog',
             },
@@ -233,6 +241,10 @@ const config: Config = {
             {
               label: 'Releases',
               href: 'https://github.com/llamastack/llama-stack/releases',
+            },
+            {
+              label: 'Docker Hub',
+              href: 'https://hub.docker.com/u/llamastack',
             },
           ],
         },

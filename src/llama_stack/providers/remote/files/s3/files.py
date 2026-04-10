@@ -128,6 +128,8 @@ def _make_file_object(
         bytes=bytes,
         created_at=created_at,
         expires_at=expires_at,
+        status="processed",
+        status_details="",
     )
 
     if obj.expires_at is not None and obj.expires_at > (obj.created_at + ExpiresAfter.MAX):

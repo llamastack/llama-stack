@@ -164,13 +164,6 @@ class TestDroppedParameterWarnings:
         "param_name,param_value,log_level,expected_text",
         [
             pytest.param("logit_bias", {"50256": -100.0}, logging.WARNING, "logit_bias", id="logit_bias"),
-            pytest.param(
-                "service_tier",
-                "__service_tier_default__",
-                logging.WARNING,
-                "service_tier",
-                id="service_tier",
-            ),
             pytest.param("prompt_cache_key", "mykey", logging.WARNING, "prompt_cache_key", id="prompt_cache_key"),
             pytest.param("user", "test-user", logging.DEBUG, "user", id="user"),
             pytest.param("safety_identifier", "test-id", logging.DEBUG, "safety_identifier", id="safety_identifier"),
@@ -182,11 +175,6 @@ class TestDroppedParameterWarnings:
         """Test that unsupported param logged."""
         adapter = VertexAIInferenceAdapter(config=VertexAIConfig(project="p", location="l"))
         patch_chat_completion_dependencies(adapter)
-
-        if param_name == "service_tier":
-            from llama_stack_api.inference import ServiceTier
-
-            param_value = ServiceTier.default
 
         payload: dict[str, Any] = {
             "model": "google/gemini-2.5-flash",
@@ -225,6 +213,98 @@ class TestDroppedParameterWarnings:
 
         found = any("parallel tool calls" in r.message for r in caplog.records if r.levelno == logging.WARNING)
         assert found == should_warn
+
+
+class TestServiceTier:
+    """Test that service_tier is mapped and forwarded to GenerateContentConfig."""
+
+    _OMITTED = object()  # sentinel: service_tier should not appear on the config
+
+    @pytest.fixture
+    def capture_generation_config(self, monkeypatch, patch_chat_completion_dependencies):
+        """Fixture that runs a chat completion and returns the GenerateContentConfig produced.
+
+        Returns an async callable: ``config = await fn(service_tier=...)``
+        Pass ``service_tier=None`` (or omit) to test the "not set" case.
+        """
+
+        async def _run(*, service_tier: str | None = None) -> Any:
+            """Run a chat completion with the given service_tier and return the config."""
+            adapter = VertexAIInferenceAdapter(config=VertexAIConfig(project="p", location="l"))
+            captured: dict[str, Any] = {}
+            original_build = adapter._build_generation_config
+
+            def _capturing_build(*args, **kwargs):
+                """Intercept _build_generation_config to capture the config object."""
+                config = original_build(*args, **kwargs)
+                captured["config"] = config
+                return config
+
+            patch_chat_completion_dependencies(adapter)
+            monkeypatch.setattr(adapter, "_build_generation_config", _capturing_build)
+
+            payload: dict[str, Any] = {
+                "model": "gemini-2.5-flash",
+                "messages": [{"role": "user", "content": "hi"}],
+            }
+            if service_tier is not None:
+                payload["service_tier"] = service_tier
+
+            params = OpenAIChatCompletionRequestWithExtraBody.model_validate(payload)
+            await adapter.openai_chat_completion(params)
+            return captured["config"]
+
+        return _run
+
+    @pytest.mark.parametrize(
+        "tier_input,expected",
+        [
+            pytest.param("flex", "flex", id="flex"),
+            pytest.param("priority", "priority", id="priority"),
+            pytest.param("default", "standard", id="default_maps_to_standard"),
+            pytest.param("auto", _OMITTED, id="auto_omitted"),
+            pytest.param(None, _OMITTED, id="none_omitted"),
+        ],
+    )
+    async def test_service_tier_mapping(self, capture_generation_config, tier_input, expected):
+        """Verify each service_tier value is correctly mapped (or omitted) on the config."""
+        config = await capture_generation_config(service_tier=tier_input)
+
+        if expected is self._OMITTED:
+            assert getattr(config, "service_tier", None) is None
+        else:
+            assert config.service_tier == expected
+
+    async def test_unknown_service_tier_returns_none(self):
+        """An unrecognized service_tier value returns None (caller omits the field)."""
+        assert VertexAIInferenceAdapter._convert_service_tier("bogus_tier") is None
+
+    @pytest.mark.parametrize(
+        "tier_value",
+        [
+            pytest.param("flex", id="flex"),
+            pytest.param("priority", id="priority"),
+            pytest.param("default", id="default"),
+            pytest.param("auto", id="auto"),
+        ],
+    )
+    async def test_supported_values_produce_no_warnings(self, caplog, patch_chat_completion_dependencies, tier_value):
+        """Supported service_tier values should not produce any warnings."""
+        adapter = VertexAIInferenceAdapter(config=VertexAIConfig(project="p", location="l"))
+        patch_chat_completion_dependencies(adapter)
+
+        params = OpenAIChatCompletionRequestWithExtraBody.model_validate(
+            {
+                "model": "gemini-2.5-flash",
+                "messages": [{"role": "user", "content": "hi"}],
+                "service_tier": tier_value,
+            }
+        )
+
+        with caplog.at_level(logging.WARNING, logger="llama_stack.providers.remote.inference.vertexai.vertexai"):
+            await adapter.openai_chat_completion(params)
+
+        assert not any("service_tier" in r.message for r in caplog.records if r.levelno == logging.WARNING)
 
 
 class TestTelemetryStreamOptions:
