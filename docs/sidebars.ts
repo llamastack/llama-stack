@@ -240,6 +240,24 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
+          label: 'Messages',
+          collapsed: false,
+          items: [
+            'providers/messages/index',
+            'providers/messages/inline_builtin'
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Interactions',
+          collapsed: false,
+          items: [
+            'providers/interactions/index',
+            'providers/interactions/inline_builtin'
+          ],
+        },
+        {
+          type: 'category',
           label: 'Batches',
           collapsed: false,
           items: [
