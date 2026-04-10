@@ -40,6 +40,7 @@ const sidebars: SidebarsConfig = {
           items: [
             'concepts/apis/index',
             'concepts/apis/api_providers',
+            'concepts/apis/google_interactions',
             'concepts/apis/external',
             'concepts/apis/api_leveling',
           ],

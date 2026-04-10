@@ -197,6 +197,10 @@ const config: Config = {
               to: '/docs/api-anthropic-messages',
             },
             {
+              label: 'Google Interactions',
+              to: '/docs/api-google-interactions',
+            },
+            {
               label: 'Blog',
               to: '/blog',
             },
