@@ -32,6 +32,7 @@ from llama_stack_api.messages import (
     Messages,
 )
 from llama_stack_api.messages.models import (
+    ANTHROPIC_VERSION,
     AnthropicContentBlock,
     AnthropicCountTokensRequest,
     AnthropicCountTokensResponse,
@@ -181,7 +182,7 @@ class BuiltinMessagesImpl(Messages):
         body["model"] = provider_model
         headers = {
             "content-type": "application/json",
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": ANTHROPIC_VERSION,
             "x-api-key": "no-key-required",
         }
 
@@ -274,7 +275,7 @@ class BuiltinMessagesImpl(Messages):
         body["model"] = provider_model
         headers = {
             "content-type": "application/json",
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": ANTHROPIC_VERSION,
             "x-api-key": "no-key-required",
         }
 
