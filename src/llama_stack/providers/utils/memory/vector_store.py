@@ -286,7 +286,6 @@ class VectorStoreWithIndex:
     vector_store: VectorStore
     index: EmbeddingIndex
     inference_api: Inference
-    file_processor_api: Any = None
     vector_stores_config: VectorStoresConfig | None = None
 
     async def insert_chunks(

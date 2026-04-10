@@ -55,6 +55,7 @@ CATEGORIES = [
     "telemetry",
     "connectors",
     "messages",
+    "interactions",
 ]
 UNCATEGORIZED = "uncategorized"
 

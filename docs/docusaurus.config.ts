@@ -46,7 +46,7 @@ const config: Config = {
       tagName: 'meta',
       attributes: {
         name: 'theme-color',
-        content: '#7C3AED', // Purple color from your logo
+        content: '#0d7377', // Teal from logo gradient
       },
     },
     {
@@ -71,6 +71,9 @@ const config: Config = {
           sidebarPath: require.resolve("./sidebars.ts"),
           // disableVersioning: true,
           docItemComponent: "@theme/ApiItem", // Derived from docusaurus-theme-openapi
+          editUrl: 'https://github.com/llamastack/llama-stack/edit/main/',
+          showLastUpdateTime: true,
+          showLastUpdateAuthor: false,
           remarkPlugins: [
             [require('remark-code-import'), {
               rootDir: require('path').join(__dirname, '..') // Repository root
@@ -231,6 +234,10 @@ const config: Config = {
               label: 'Releases',
               href: 'https://github.com/llamastack/llama-stack/releases',
             },
+            {
+              label: 'Docker Hub',
+              href: 'https://hub.docker.com/u/llamastack',
+            },
           ],
         },
       ],
@@ -353,8 +360,8 @@ const config: Config = {
         docsRouteBasePath: '/docs',
 
         // Search behavior optimization for technical docs
-        searchResultLimits: 8,
-        searchResultContextMaxLength: 50,
+        searchResultLimits: 12,
+        searchResultContextMaxLength: 80,
         explicitSearchResultPath: true,
 
         // User experience enhancements

@@ -11,6 +11,7 @@ import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 
+import tiktoken
 from pydantic import BaseModel, TypeAdapter
 
 from llama_stack.core.conversations.validation import CONVERSATION_ID_PATTERN
@@ -21,6 +22,7 @@ from llama_stack.core.task import (
     create_detached_background_task,
 )
 from llama_stack.log import get_logger
+from llama_stack.providers.inline.responses.builtin.config import CompactionConfig
 from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
     _OpenAIResponseObjectWithInputAndMessages,
@@ -41,8 +43,10 @@ from llama_stack_api import (
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
     OpenAIChatCompletionContentPartParam,
+    OpenAICompactedResponse,
     OpenAIDeleteResponseObject,
     OpenAIMessageParam,
+    OpenAIResponseCompaction,
     OpenAIResponseError,
     OpenAIResponseInput,
     OpenAIResponseInputMessageContentFile,
@@ -57,6 +61,9 @@ from llama_stack_api import (
     OpenAIResponseReasoning,
     OpenAIResponseText,
     OpenAIResponseTextFormat,
+    OpenAIResponseUsage,
+    OpenAIResponseUsageInputTokensDetails,
+    OpenAIResponseUsageOutputTokensDetails,
     OpenAISystemMessageParam,
     OpenAIUserMessageParam,
     Order,
@@ -71,7 +78,7 @@ from llama_stack_api import (
     ToolRuntime,
     VectorIO,
 )
-from llama_stack_api.inference import ServiceTier
+from llama_stack_api.inference import OpenAIChatCompletionRequestWithExtraBody, ServiceTier
 
 from .streaming import StreamingResponseOrchestrator
 from .tool_executor import ToolExecutor
@@ -121,6 +128,7 @@ class OpenAIResponsesImpl:
         files_api: Files,
         connectors_api: Connectors,
         vector_stores_config=None,
+        compaction_config=None,
     ):
         self.inference_api = inference_api
         self.tool_groups_api = tool_groups_api
@@ -138,6 +146,8 @@ class OpenAIResponsesImpl:
         self.prompts_api = prompts_api
         self.files_api = files_api
         self.connectors_api = connectors_api
+
+        self.compaction_config = compaction_config or CompactionConfig()
         self._background_queue: asyncio.Queue[_BackgroundWorkItem] = asyncio.Queue(maxsize=BACKGROUND_QUEUE_MAX_SIZE)
         self._background_worker_tasks: set[asyncio.Task] = set()
         self._background_response_tasks: dict[str, asyncio.Task] = {}
@@ -268,13 +278,14 @@ class OpenAIResponsesImpl:
         tools: list[OpenAIResponseInputTool] | None,
         previous_response_id: str | None,
         conversation: str | None,
-    ) -> tuple[str | list[OpenAIResponseInput], list[OpenAIMessageParam], ToolContext]:
+    ) -> tuple[str | list[OpenAIResponseInput], list[OpenAIMessageParam], ToolContext, OpenAIResponseUsage | None]:
         """Process input with optional previous response context.
 
         Returns:
-            tuple: (all_input for storage, messages for chat completion, tool context)
+            tuple: (all_input for storage, messages for chat completion, tool context, previous usage)
         """
         tool_context = ToolContext(tools)
+        previous_usage: OpenAIResponseUsage | None = None
         if previous_response_id:
             previous_response: _OpenAIResponseObjectWithInputAndMessages = (
                 await self.responses_store.get_response_object(previous_response_id)
@@ -284,6 +295,7 @@ class OpenAIResponsesImpl:
                     f"Response {previous_response_id} is still {previous_response.status}. "
                     "Cannot use an incomplete background response as previous_response_id."
                 )
+            previous_usage = previous_response.usage
             all_input = await self._prepend_previous_response(input, previous_response)
 
             if previous_response.messages:
@@ -313,15 +325,16 @@ class OpenAIResponsesImpl:
                 messages = await convert_response_input_to_chat_messages(input, files_api=self.files_api)
             else:
                 if not stored_messages:
-                    all_input = conversation_items.data
+                    conv_items: list[OpenAIResponseInput] = list(conversation_items.data)
                     if isinstance(input, str):
-                        all_input.append(
+                        conv_items.append(
                             OpenAIResponseMessage(
                                 role="user", content=[OpenAIResponseInputMessageContentText(text=input)]
                             )
                         )
                     else:
-                        all_input.extend(input)
+                        conv_items.extend(input)
+                    all_input = conv_items
                 else:
                     all_input = input
 
@@ -334,7 +347,7 @@ class OpenAIResponsesImpl:
             all_input = input
             messages = await convert_response_input_to_chat_messages(all_input, files_api=self.files_api)
 
-        return all_input, messages, tool_context
+        return all_input, messages, tool_context, previous_usage
 
     async def _prepend_prompt(
         self,
@@ -634,6 +647,7 @@ class OpenAIResponsesImpl:
         presence_penalty: float | None = None,
         extra_body: dict | None = None,
         stream_options: ResponseStreamOptions | None = None,
+        context_management: list | None = None,
     ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
         stream = bool(stream)
         background = bool(background)
@@ -646,9 +660,9 @@ class OpenAIResponsesImpl:
         if background and store is False:
             raise ValueError("Cannot use 'background' with 'store=False'. Background responses must be stored.")
 
-        # Validate: reasoning.encrypted_content is not supported
-        if include and any(str(item) == "reasoning.encrypted_content" for item in include):
-            raise ValueError("reasoning.encrypted_content is not supported by Llama Stack.")
+        # Filter out unsupported include items instead of rejecting the request
+        if include:
+            include = [item for item in include if str(item) != "reasoning.encrypted_content"]
 
         # Validate MCP tools: ensure Authorization header is not passed via headers dict
         if tools:
@@ -719,6 +733,7 @@ class OpenAIResponsesImpl:
                 truncation=truncation,
                 presence_penalty=presence_penalty,
                 extra_body=extra_body,
+                context_management=context_management,
             )
 
         stream_gen = self._create_streaming_response(
@@ -751,6 +766,7 @@ class OpenAIResponsesImpl:
             presence_penalty=presence_penalty,
             extra_body=extra_body,
             stream_options=stream_options,
+            context_management=context_management,
         )
 
         if stream:
@@ -833,6 +849,7 @@ class OpenAIResponsesImpl:
         truncation: ResponseTruncation | None = None,
         presence_penalty: float | None = None,
         extra_body: dict | None = None,
+        context_management: list | None = None,
     ) -> OpenAIResponseObject:
         """Create a response that processes in the background.
 
@@ -910,6 +927,7 @@ class OpenAIResponsesImpl:
                         truncation=truncation,
                         presence_penalty=presence_penalty,
                         extra_body=extra_body,
+                        context_management=context_management,
                     ),
                 )
             )
@@ -948,6 +966,7 @@ class OpenAIResponsesImpl:
         truncation: ResponseTruncation | None = None,
         presence_penalty: float | None = None,
         extra_body: dict | None = None,
+        context_management: list | None = None,
     ) -> None:
         """Inner loop for background response processing, separated for timeout wrapping."""
         # Check if response was cancelled before starting
@@ -988,6 +1007,7 @@ class OpenAIResponsesImpl:
             response_id=response_id,
             presence_penalty=presence_penalty,
             extra_body=extra_body,
+            context_management=context_management,
         )
 
         result_response = None
@@ -1061,6 +1081,7 @@ class OpenAIResponsesImpl:
         presence_penalty: float | None = None,
         extra_body: dict | None = None,
         stream_options: ResponseStreamOptions | None = None,
+        context_management: list | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -1068,9 +1089,16 @@ class OpenAIResponsesImpl:
         assert max_infer_iters is not None, "max_infer_iters must not be None"
 
         # Input preprocessing
-        all_input, messages, tool_context = await self._process_input_with_previous_response(
+        all_input, messages, tool_context, previous_usage = await self._process_input_with_previous_response(
             input, tools, previous_response_id, conversation
         )
+
+        # Auto-compact if context_management is configured (runs on resolved history, not just new input)
+        if context_management:
+            compacted_input = await self._maybe_auto_compact(all_input, model, context_management, previous_usage)
+            if compacted_input is not all_input:
+                all_input = compacted_input
+                messages = await convert_response_input_to_chat_messages(all_input, files_api=self.files_api)
 
         if instructions:
             messages.insert(0, OpenAISystemMessageParam(content=instructions))
@@ -1190,6 +1218,233 @@ class OpenAIResponsesImpl:
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
         return await self.responses_store.delete_response_object(response_id)
 
+    async def compact_openai_response(
+        self,
+        model: str,
+        input: str | list[OpenAIResponseInput] | None = None,
+        instructions: str | None = None,
+        previous_response_id: str | None = None,
+        prompt_cache_key: str | None = None,
+    ) -> OpenAICompactedResponse:
+        # Resolve input from previous_response_id or direct input
+        resolved_messages = None
+        if previous_response_id:
+            previous_response = await self.responses_store.get_response_object(previous_response_id)
+            if previous_response.status in ("queued", "in_progress"):
+                raise ValueError(
+                    f"Response {previous_response_id} is still {previous_response.status}. "
+                    "Cannot compact an incomplete background response."
+                )
+            if input is not None:
+                all_input = await self._prepend_previous_response(input, previous_response)
+            else:
+                all_input = list(previous_response.input) + list(previous_response.output)
+
+            # Use stored messages for full conversation context when the caller also
+            # provides new input. In conversation= mode, .input only contains the last
+            # turn's items while .messages has the complete chat history. When input is
+            # None, .input + .output (set above) already captures the full context.
+            if previous_response.messages and input is not None:
+                message_adapter = TypeAdapter(list[OpenAIMessageParam])
+                resolved_messages = message_adapter.validate_python(previous_response.messages)
+        elif input is not None:
+            if isinstance(input, str):
+                all_input = [OpenAIResponseMessage(content=input, role="user")]
+            else:
+                all_input = list(input)
+        else:
+            raise InvalidParameterError(
+                "input, previous_response_id", None, "Either 'input' or 'previous_response_id' must be provided."
+            )
+
+        # Convert to chat messages for the summarization call
+        if resolved_messages is not None:
+            messages = resolved_messages
+            # If caller also provided new input, convert and append it so the
+            # summarization covers the full conversation including the new turn.
+            if input is not None:
+                new_messages = await convert_response_input_to_chat_messages(
+                    input, previous_messages=messages, files_api=self.files_api
+                )
+                messages.extend(new_messages)
+        else:
+            messages = await convert_response_input_to_chat_messages(all_input, files_api=self.files_api)
+
+        # Add summarization prompt (use config template, prepend instructions if provided)
+        summarization_prompt = self.compaction_config.summarization_prompt
+        if instructions:
+            summarization_prompt = f"{instructions}\n\n{summarization_prompt}"
+
+        messages.append(OpenAIUserMessageParam(role="user", content=summarization_prompt))
+
+        # Call inference to generate the summary (use configured model or fall back to conversation model)
+        summarization_model = self.compaction_config.summarization_model or model
+        params = OpenAIChatCompletionRequestWithExtraBody(
+            model=summarization_model,
+            messages=messages,
+            stream=False,
+            prompt_cache_key=prompt_cache_key,
+        )
+        completion = await self.inference_api.openai_chat_completion(params)
+        assert not isinstance(completion, AsyncIterator)
+
+        # Extract summary text from the completion
+        summary_text = ""
+        if hasattr(completion, "choices") and completion.choices:
+            choice = completion.choices[0]
+            if choice.message and choice.message.content:
+                summary_text = choice.message.content
+
+        # Extract user messages from input (matching OpenAI behavior: all user messages verbatim)
+        output_items: list[OpenAIResponseInput] = []
+        for item in all_input:
+            if isinstance(item, OpenAIResponseMessage) and item.role == "user":
+                output_items.append(
+                    OpenAIResponseMessage(
+                        id=f"msg_{uuid.uuid4().hex[:24]}",
+                        type="message",
+                        status="completed",
+                        role="user",
+                        content=item.content,
+                    )
+                )
+
+        # Prepend the summary prefix to frame the summary as a handoff
+        if self.compaction_config.summary_prefix:
+            summary_text = f"{self.compaction_config.summary_prefix}\n{summary_text}"
+
+        # Add compaction item as last element
+        compaction_item = OpenAIResponseCompaction(
+            id=f"cmp_{uuid.uuid4().hex[:24]}",
+            encrypted_content=summary_text,
+        )
+        output_items.append(compaction_item)
+
+        # Build usage from completion
+        usage = completion.usage
+        usage_data = OpenAIResponseUsage(
+            input_tokens=usage.prompt_tokens if usage else 0,
+            output_tokens=usage.completion_tokens if usage else 0,
+            total_tokens=usage.total_tokens if usage else 0,
+            input_tokens_details=OpenAIResponseUsageInputTokensDetails(
+                cached_tokens=usage.prompt_tokens_details.cached_tokens
+                if usage and usage.prompt_tokens_details and usage.prompt_tokens_details.cached_tokens is not None
+                else 0
+            ),
+            output_tokens_details=OpenAIResponseUsageOutputTokensDetails(
+                reasoning_tokens=usage.completion_tokens_details.reasoning_tokens
+                if usage
+                and usage.completion_tokens_details
+                and usage.completion_tokens_details.reasoning_tokens is not None
+                else 0
+            ),
+        )
+
+        response_id = f"resp_{uuid.uuid4().hex[:24]}"
+        created_at = int(time.time())
+
+        # Store a full OpenAIResponseObject so the compacted response ID is
+        # retrievable and can be used as previous_response_id in subsequent calls.
+        stored_response = OpenAIResponseObject(
+            id=response_id,
+            created_at=created_at,
+            model=model,
+            status="completed",
+            output=[],
+            usage=usage_data,
+            store=True,
+        )
+
+        # Convert compacted output to chat messages for conversation continuity
+        compacted_messages = await convert_response_input_to_chat_messages(output_items, files_api=self.files_api)
+
+        await self.responses_store.store_response_object(
+            response_object=stored_response,
+            input=output_items,
+            messages=compacted_messages,
+        )
+
+        return OpenAICompactedResponse(
+            id=response_id,
+            created_at=created_at,
+            output=output_items,
+            usage=usage_data,
+        )
+
+    def _count_tokens(self, input: str | list[OpenAIResponseInput], model: str = "") -> int:
+        """Estimate token count using tiktoken. Used as fallback when provider usage is unavailable."""
+        # Use explicitly configured encoding, or resolve from model name
+        if self.compaction_config.tokenizer_encoding:
+            encoding = tiktoken.get_encoding(self.compaction_config.tokenizer_encoding)
+        else:
+            # Strip provider prefix (e.g. "openai/gpt-4o" -> "gpt-4o") for tiktoken lookup
+            model_name = model.split("/")[-1] if "/" in model else model
+            try:
+                encoding = tiktoken.encoding_for_model(model_name)
+            except KeyError as e:
+                raise ValueError(
+                    f"Failed to resolve tiktoken encoding for model '{model}'. "
+                    "Set 'tokenizer_encoding' in compaction_config (e.g. 'o200k_base') "
+                    "or use an OpenAI model name that tiktoken recognizes."
+                ) from e
+
+        if isinstance(input, str):
+            return len(encoding.encode(input))
+
+        total_tokens = 0
+        for item in input:
+            if isinstance(item, OpenAIResponseMessage):
+                if isinstance(item.content, str):
+                    total_tokens += len(encoding.encode(item.content))
+                elif isinstance(item.content, list):
+                    for part in item.content:
+                        if hasattr(part, "text"):
+                            total_tokens += len(encoding.encode(part.text))
+            elif isinstance(item, OpenAIResponseCompaction):
+                total_tokens += len(encoding.encode(item.encrypted_content))
+            elif hasattr(item, "arguments"):
+                args = getattr(item, "arguments", "")
+                if args:
+                    total_tokens += len(encoding.encode(args))
+            elif hasattr(item, "output"):
+                output = getattr(item, "output", "")
+                if isinstance(output, str):
+                    total_tokens += len(encoding.encode(output))
+        return total_tokens
+
+    async def _maybe_auto_compact(
+        self,
+        input: str | list[OpenAIResponseInput],
+        model: str,
+        context_management: list,
+        previous_usage: OpenAIResponseUsage | None = None,
+    ) -> str | list[OpenAIResponseInput]:
+        """Auto-compact input if token count exceeds compact_threshold."""
+        for entry in context_management:
+            entry_type = entry.type if hasattr(entry, "type") else entry.get("type")
+            if entry_type != "compaction":
+                continue
+
+            threshold = (
+                entry.compact_threshold if hasattr(entry, "compact_threshold") else entry.get("compact_threshold")
+            )
+            if threshold is None:
+                threshold = self.compaction_config.default_compact_threshold
+            if threshold is None:
+                continue
+
+            # Use provider-reported token count when available, fall back to tiktoken estimate
+            if previous_usage and previous_usage.total_tokens:
+                token_count = previous_usage.total_tokens
+            else:
+                token_count = self._count_tokens(input, model=model)
+            if token_count > threshold:
+                logger.debug("Auto-compacting", token_count=token_count, threshold=threshold)
+                compacted = await self.compact_openai_response(model=model, input=input)
+                return list(compacted.output)
+
+        return input
+
     async def cancel_openai_response(
         self,
         response_id: str,
@@ -1248,7 +1503,7 @@ class OpenAIResponsesImpl:
                 OpenAIResponseMessage(role="user", content=[OpenAIResponseInputMessageContentText(text=input)])
             )
         elif isinstance(input, list):
-            conversation_items.extend(input)
+            conversation_items.extend(item for item in input if not isinstance(item, OpenAIResponseCompaction))
 
         conversation_items.extend(output_items)
 
