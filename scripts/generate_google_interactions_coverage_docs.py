@@ -92,8 +92,7 @@ def generate_docs(coverage_path: Path, output_path: Path) -> None:
         lines.append(f"### {section['section']}")
         lines.append("")
         lines.append(
-            f"**Score:** {section['score']}% · "
-            f"**Implemented:** {section['implemented']}/{section['google_total']}"
+            f"**Score:** {section['score']}% · **Implemented:** {section['implemented']}/{section['google_total']}"
         )
         lines.append("")
 
@@ -139,8 +138,7 @@ def generate_docs(coverage_path: Path, output_path: Path) -> None:
             " in `src/llama_stack_api/interactions/models.py`",
             "2. **Add Content Types**: Support additional content types beyond text"
             " (images, audio, function calls, etc.)",
-            "3. **Add Tool Support**: Implement tool declarations"
-            " (Function, GoogleSearch, CodeExecution, etc.)",
+            "3. **Add Tool Support**: Implement tool declarations (Function, GoogleSearch, CodeExecution, etc.)",
             "4. **Add Missing Endpoints**: Implement GET, DELETE, and Cancel endpoints",
             "",
             "Run the coverage analyzer to check your progress:",

@@ -266,11 +266,7 @@ def calculate_coverage(spec_path: Path) -> dict[str, Any]:
     # 2. Request properties (CreateModelInteractionParams)
     request_schema = schemas.get("CreateModelInteractionParams", {})
     request_props = _get_schema_properties(request_schema, spec)
-    input_props = {
-        k: v
-        for k, v in request_props.items()
-        if not (isinstance(v, dict) and v.get("readOnly"))
-    }
+    input_props = {k: v for k, v in request_props.items() if not (isinstance(v, dict) and v.get("readOnly"))}
     sections.append(_compare_properties("Request Properties", input_props, IMPLEMENTED_REQUEST_PROPS))
 
     # 3. Response properties (Interaction schema)
@@ -286,9 +282,7 @@ def calculate_coverage(spec_path: Path) -> dict[str, Any]:
     # 4. GenerationConfig
     gen_config_schema = schemas.get("GenerationConfig", {})
     gen_config_props = _get_schema_properties(gen_config_schema, spec)
-    sections.append(
-        _compare_properties("GenerationConfig", gen_config_props, IMPLEMENTED_GENERATION_CONFIG_PROPS)
-    )
+    sections.append(_compare_properties("GenerationConfig", gen_config_props, IMPLEMENTED_GENERATION_CONFIG_PROPS))
 
     # 5. Usage
     usage_schema = schemas.get("Usage", {})
