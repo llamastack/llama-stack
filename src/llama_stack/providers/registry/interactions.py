@@ -24,6 +24,13 @@ def available_providers() -> list[ProviderSpec]:
             api_dependencies=[
                 Api.inference,
             ],
-            description="Google Interactions API adapter that translates to the inference API.",
+            description=(
+                "Serves the Google Interactions API (POST /v1alpha/interactions) so that "
+                "Google GenAI SDK and ADK clients can call Llama Stack without code changes. "
+                "Requests are translated to OpenAI Chat Completions and routed to whichever "
+                "inference provider is configured (vLLM, Ollama, OpenAI, Bedrock, etc.). "
+                "When the provider is Gemini, non-streaming requests are forwarded directly "
+                "to the native /v1beta/interactions endpoint, avoiding double translation."
+            ),
         ),
     ]
