@@ -304,9 +304,7 @@ def calculate_coverage(
 
     # Filter to relevant categories
     missing_endpoints = sorted([p for p in deleted_paths if _categorize_path(p) != "Other"])
-    implemented_endpoints = sorted(
-        [p for p in modified_paths.keys() if _categorize_path(p) != "Other"]
-    )
+    implemented_endpoints = sorted([p for p in modified_paths.keys() if _categorize_path(p) != "Other"])
 
     # Analyze each endpoint
     categories: dict[str, dict[str, Any]] = {}
