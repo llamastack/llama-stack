@@ -80,9 +80,12 @@ async def test_sse_generator_error_before_response_starts(suppress_sse_errors):
     async for event in sse_gen:
         seen_events.append(event)
 
-    # We should have 1 error event
+    # We should have 1 error event with the spec-compliant error format
     assert len(seen_events) == 1
-    assert 'data: {"error":' in seen_events[0]
+    assert '"type":"error"' in seen_events[0]
+    assert '"code":"server_error"' in seen_events[0]
+    assert '"message":"Internal server error: An unexpected error occurred."' in seen_events[0]
+    assert '"sequence_number":1' in seen_events[0]
 
 
 async def test_create_sse_event_string():
