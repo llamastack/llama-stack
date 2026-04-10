@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 480" font-family="'Archivo','Public Sans',-apple-system,BlinkMacSystemFont,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 540" font-family="'Archivo','Public Sans',-apple-system,BlinkMacSystemFont,sans-serif">
   <style>
     :root {
       --bg: #0e1520;
@@ -56,14 +56,14 @@
   </defs>
 
   <!-- Background -->
-  <rect width="780" height="480" rx="8" fill="var(--bg)"/>
+  <rect width="780" height="540" rx="8" fill="var(--bg)"/>
 
   <!-- Subtle grid -->
   <g opacity="var(--grid-opacity)">
     <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse">
       <path d="M40,0 L0,0 0,40" fill="none" stroke="var(--grid-stroke)" stroke-width="0.5"/>
     </pattern>
-    <rect width="780" height="480" fill="url(#g)"/>
+    <rect width="780" height="540" fill="url(#g)"/>
   </g>
 
   <!-- ========== COLUMN LABELS ========== -->
@@ -113,6 +113,10 @@
     </g>
     <g transform="translate(30, 144)">
       <rect width="116" height="28" rx="4" fill="var(--item-bg)"/>
+      <text x="10" y="18" fill="var(--item-text)" font-size="10" font-weight="500">Google GenAI SDK</text>
+    </g>
+    <g transform="translate(30, 180)">
+      <rect width="116" height="28" rx="4" fill="var(--item-bg)"/>
       <text x="10" y="18" fill="var(--item-text)" font-size="10" font-weight="500">Python / Node.js</text>
     </g>
     <g transform="translate(30, 180)">
@@ -136,7 +140,7 @@
 
   <!-- ========== LLAMA STACK SERVER (center column) ========== -->
   <g filter="url(#s)">
-    <rect x="210" y="55" width="265" height="400" rx="6" fill="var(--server-bg)" stroke="var(--server-accent)" stroke-width="1.5"/>
+    <rect x="210" y="55" width="265" height="445" rx="6" fill="var(--server-bg)" stroke="var(--server-accent)" stroke-width="1.5"/>
 
     <rect x="210" y="55" width="265" height="30" rx="6" fill="var(--server-accent)"/>
     <rect x="210" y="79" width="265" height="6" fill="var(--server-accent)"/>
@@ -162,8 +166,16 @@
       <text x="10" y="33" fill="var(--block-text)" font-size="7.5">messages</text>
     </g>
 
-    <!-- Native APIs block -->
+    <!-- Google API block -->
     <g transform="translate(222, 235)">
+      <rect width="243" height="38" rx="4" fill="var(--block-bg)" stroke="var(--block-stroke)" stroke-width="0.5"/>
+      <text x="10" y="16" fill="var(--block-title)" font-size="8.5" font-weight="600">Google API</text>
+      <line x1="10" y1="22" x2="233" y2="22" stroke="var(--block-stroke)" stroke-width="0.5"/>
+      <text x="10" y="33" fill="var(--block-text)" font-size="7.5">interactions</text>
+    </g>
+
+    <!-- Native APIs block -->
+    <g transform="translate(222, 280)">
       <rect width="243" height="38" rx="4" fill="var(--block-bg)" stroke="var(--block-stroke)" stroke-width="0.5"/>
       <text x="10" y="16" fill="var(--block-title)" font-size="8.5" font-weight="600">Native APIs</text>
       <line x1="10" y1="22" x2="233" y2="22" stroke="var(--block-stroke)" stroke-width="0.5"/>
@@ -171,8 +183,8 @@
     </g>
 
     <!-- Orchestration -->
-    <text x="228" y="296" fill="var(--section-label)" font-size="9" font-weight="700" letter-spacing="0.5">ORCHESTRATION</text>
-    <g transform="translate(222, 303)">
+    <text x="228" y="341" fill="var(--section-label)" font-size="9" font-weight="700" letter-spacing="0.5">ORCHESTRATION</text>
+    <g transform="translate(222, 348)">
       <rect width="243" height="38" rx="4" fill="var(--block-bg)" stroke="var(--block-stroke)" stroke-width="0.5"/>
       <text x="10" y="16" fill="var(--block-title)" font-size="8.5" font-weight="600">Responses Engine</text>
       <line x1="10" y1="22" x2="233" y2="22" stroke="var(--block-stroke)" stroke-width="0.5"/>
@@ -180,31 +192,31 @@
     </g>
 
     <!-- Middleware -->
-    <text x="228" y="365" fill="var(--section-label)" font-size="9" font-weight="700" letter-spacing="0.5">MIDDLEWARE</text>
-    <g transform="translate(222, 373)">
+    <text x="228" y="410" fill="var(--section-label)" font-size="9" font-weight="700" letter-spacing="0.5">MIDDLEWARE</text>
+    <g transform="translate(222, 418)">
       <rect width="55" height="20" rx="3" fill="var(--block-bg)" stroke="var(--block-stroke)" stroke-width="0.5"/>
       <text x="27" y="14" text-anchor="middle" fill="var(--block-title)" font-size="7.5">Auth</text>
     </g>
-    <g transform="translate(282, 373)">
+    <g transform="translate(282, 418)">
       <rect width="65" height="20" rx="3" fill="var(--block-bg)" stroke="var(--block-stroke)" stroke-width="0.5"/>
       <text x="32" y="14" text-anchor="middle" fill="var(--block-title)" font-size="7.5">Telemetry</text>
     </g>
-    <g transform="translate(352, 373)">
+    <g transform="translate(352, 418)">
       <rect width="55" height="20" rx="3" fill="var(--block-bg)" stroke="var(--block-stroke)" stroke-width="0.5"/>
       <text x="27" y="14" text-anchor="middle" fill="var(--block-title)" font-size="7.5">Metrics</text>
     </g>
-    <g transform="translate(412, 373)">
+    <g transform="translate(412, 418)">
       <rect width="55" height="20" rx="3" fill="var(--block-bg)" stroke="var(--block-stroke)" stroke-width="0.5"/>
       <text x="27" y="14" text-anchor="middle" fill="var(--block-title)" font-size="7.5">Storage</text>
     </g>
 
-    <text x="342" y="430" text-anchor="middle" fill="var(--muted-text)" font-size="8" font-weight="600" letter-spacing="0.5">Pluggable provider routing</text>
-    <text x="342" y="442" text-anchor="middle" fill="var(--muted-text)" font-size="8" font-weight="600" letter-spacing="0.5">One config, swap backends</text>
+    <text x="342" y="475" text-anchor="middle" fill="var(--muted-text)" font-size="8" font-weight="600" letter-spacing="0.5">Pluggable provider routing</text>
+    <text x="342" y="487" text-anchor="middle" fill="var(--muted-text)" font-size="8" font-weight="600" letter-spacing="0.5">One config, swap backends</text>
   </g>
 
   <!-- ========== PROVIDERS (right column) ========== -->
   <g filter="url(#s)">
-    <rect x="505" y="55" width="258" height="400" rx="6" fill="var(--card-bg)" stroke="var(--card-stroke)" stroke-width="1"/>
+    <rect x="505" y="55" width="258" height="445" rx="6" fill="var(--card-bg)" stroke="var(--card-stroke)" stroke-width="1"/>
 
     <!-- Inference -->
     <text x="520" y="80" fill="var(--section-label)" font-size="9" font-weight="700" letter-spacing="0.5">INFERENCE (23)</text>
@@ -298,7 +310,7 @@
   </g>
 
   <!-- ========== TAGLINE ========== -->
-  <text x="390" y="472" text-anchor="middle" fill="var(--tagline)" font-size="10" font-weight="600" letter-spacing="2">
-    OPEN SOURCE  ·  OPENAI COMPATIBLE  ·  YOUR INFRASTRUCTURE
+  <text x="390" y="528" text-anchor="middle" fill="var(--tagline)" font-size="10" font-weight="600" letter-spacing="2">
+    OPEN SOURCE  ·  OPENAI · ANTHROPIC · GOOGLE COMPATIBLE  ·  YOUR INFRASTRUCTURE
   </text>
 </svg>

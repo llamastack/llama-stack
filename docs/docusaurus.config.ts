@@ -193,6 +193,10 @@ const config: Config = {
               to: '/docs/api-openai',
             },
             {
+              label: 'Google Interactions',
+              to: '/docs/api-google-interactions',
+            },
+            {
               label: 'Blog',
               to: '/blog',
             },

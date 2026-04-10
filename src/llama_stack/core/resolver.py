@@ -35,6 +35,7 @@ from llama_stack_api import (
     Inference,
     InferenceProvider,
     Inspect,
+    Interactions,
     Messages,
     Models,
     ModelsProtocolPrivate,
@@ -94,6 +95,7 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Api.file_processors: FileProcessors,
         Api.connectors: Connectors,
         Api.messages: Messages,
+        Api.interactions: Interactions,
     }
 
     if external_apis:
