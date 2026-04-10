@@ -11700,14 +11700,7 @@ components:
           description: Model used for generation.
         outputs:
           items:
-            anyOf:
-            - $ref: '#/components/schemas/GoogleTextOutput'
-              title: GoogleTextOutput
-            - $ref: '#/components/schemas/GoogleThoughtOutput'
-              title: GoogleThoughtOutput
-            - $ref: '#/components/schemas/GoogleOutput'
-              title: GoogleOutput
-            title: GoogleTextOutput | GoogleThoughtOutput | GoogleOutput
+            $ref: '#/components/schemas/GoogleTextOutput'
           type: array
           title: Outputs
           description: Response output items.
@@ -11730,25 +11723,6 @@ components:
       - outputs
       title: GoogleInteractionResponse
       description: Response from POST /v1alpha/interactions (non-streaming).
-    GoogleOutput:
-      properties:
-        type:
-          type: string
-          title: Type
-        text:
-          anyOf:
-          - type: string
-          - type: 'null'
-        signature:
-          anyOf:
-          - type: string
-          - type: 'null'
-      additionalProperties: true
-      type: object
-      required:
-      - type
-      title: GoogleOutput
-      description: Fallback output item for forward compatibility with new Google output types.
     GoogleTextContent:
       properties:
         type:
@@ -11779,20 +11753,6 @@ components:
       - text
       title: GoogleTextOutput
       description: A text output item.
-    GoogleThoughtOutput:
-      properties:
-        type:
-          type: string
-          title: Type
-          enum:
-          - thought
-        signature:
-          anyOf:
-          - type: string
-          - type: 'null'
-      type: object
-      title: GoogleThoughtOutput
-      description: A thought output item emitted by Gemini.
     GoogleUsage:
       properties:
         total_input_tokens:
