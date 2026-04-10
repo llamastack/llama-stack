@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 520" font-family="'Archivo','Public Sans',-apple-system,BlinkMacSystemFont,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 540" font-family="'Archivo','Public Sans',-apple-system,BlinkMacSystemFont,sans-serif">
   <style>
     :root {
       --bg: #0e1520;
@@ -56,14 +56,14 @@
   </defs>
 
   <!-- Background -->
-  <rect width="780" height="520" rx="8" fill="var(--bg)"/>
+  <rect width="780" height="540" rx="8" fill="var(--bg)"/>
 
   <!-- Subtle grid -->
   <g opacity="var(--grid-opacity)">
     <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse">
       <path d="M40,0 L0,0 0,40" fill="none" stroke="var(--grid-stroke)" stroke-width="0.5"/>
     </pattern>
-    <rect width="780" height="520" fill="url(#g)"/>
+    <rect width="780" height="540" fill="url(#g)"/>
   </g>
 
   <!-- ========== COLUMN LABELS ========== -->
@@ -310,7 +310,7 @@
   </g>
 
   <!-- ========== TAGLINE ========== -->
-  <text x="390" y="472" text-anchor="middle" fill="var(--tagline)" font-size="10" font-weight="600" letter-spacing="2">
-    OPEN SOURCE  ·  OPENAI COMPATIBLE  ·  YOUR INFRASTRUCTURE
+  <text x="390" y="528" text-anchor="middle" fill="var(--tagline)" font-size="10" font-weight="600" letter-spacing="2">
+    OPEN SOURCE  ·  OPENAI · ANTHROPIC · GOOGLE COMPATIBLE  ·  YOUR INFRASTRUCTURE
   </text>
 </svg>
