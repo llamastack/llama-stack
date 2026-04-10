@@ -193,6 +193,10 @@ const config: Config = {
               to: '/docs/api-openai',
             },
             {
+              label: 'Anthropic Messages',
+              to: '/docs/api-anthropic-messages',
+            },
+            {
               label: 'Google Interactions',
               to: '/docs/api-google-interactions',
             },
