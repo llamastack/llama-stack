@@ -307,7 +307,7 @@ def calculate_coverage(spec_path: Path) -> dict[str, Any]:
     overall_score = round(total_impl / total_google * 100, 1) if total_google else 0.0
 
     return {
-        "google_spec": str(spec_path),
+        "google_spec": str(spec_path.relative_to(REPO_ROOT)),
         "spec_version": spec.get("info", {}).get("version", "unknown"),
         "summary": {
             "overall_score": overall_score,
