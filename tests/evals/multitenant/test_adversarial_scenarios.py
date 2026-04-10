@@ -64,10 +64,9 @@ class TestTargetedConfidentialExtraction:
         # Verify the attack succeeds without gating
         assert has_cross_tenant, "Expected confidential query to return cross-tenant data without gating"
 
-        # Check if tenant-b's confidential doc specifically appears
+        # Verify tenant-b's confidential doc specifically appears
         tenant_b_topics = [c.metadata.get("topic") for c in result.chunks if c.metadata.get("tenant_id") == "tenant-b"]
-        print(f"\n[ADVERSARIAL] Ungated confidential query returned tenant-b topics: {tenant_b_topics}")
-        print(f"[ADVERSARIAL] Tenant distribution: {tenant_counts}")
+        assert "confidential" in tenant_b_topics
 
     async def test_targeted_query_with_gating_blocks_confidential(self, shared_vector_index):
         """With gating, the same query returns only tenant-a's data."""
@@ -82,7 +81,6 @@ class TestTargetedConfidentialExtraction:
                 f"Gated confidential query returned unauthorized chunk: "
                 f"tenant={c.metadata.get('tenant_id')}, topic={c.metadata.get('topic')}"
             )
-        print(f"\n[ADVERSARIAL] Gated confidential query: {len(filtered)} authorized chunks, 0 leaked")
 
 
 # ---------------------------------------------------------------------------
@@ -129,12 +127,6 @@ class TestMetadataFilterTampering:
         for c in attacker_filtered:
             assert c.metadata.get("tenant_id") == "tenant-b"
 
-        print(
-            f"\n[ADVERSARIAL] Server-enforced filter: {len(server_filtered)} tenant-a chunks"
-            f"\n[ADVERSARIAL] Attacker-substituted filter: {len(attacker_filtered)} tenant-b chunks"
-            f"\n[ADVERSARIAL] Server-side enforcement prevents this substitution"
-        )
-
 
 # ---------------------------------------------------------------------------
 # Scenario 3: Compound filter bypass attempts
@@ -166,13 +158,6 @@ class TestCompoundFilterBypass:
 
         # The OR filter returns more results, demonstrating the bypass
         assert len(bypass_results) >= len(legitimate_results)
-
-        bypass_tenants = _count_by_tenant(bypass_results)
-        legitimate_tenants = _count_by_tenant(legitimate_results)
-
-        print(f"\n[ADVERSARIAL] Legitimate filter tenants: {legitimate_tenants}")
-        print(f"[ADVERSARIAL] OR-bypass filter tenants: {bypass_tenants}")
-        print("[ADVERSARIAL] Server must enforce tenant filter from auth context, not client request")
 
         # Legitimate results must be tenant-a only
         assert all(c.metadata.get("tenant_id") == "tenant-a" for c in legitimate_results)
@@ -207,11 +192,6 @@ class TestExhaustiveEnumeration:
 
         # Even after exhaustive querying, only tenant-a docs are visible
         assert all_seen_tenants == {"tenant-a"}, f"Enumeration attack saw tenants: {all_seen_tenants}"
-
-        print(f"\n[ADVERSARIAL] Enumeration attack with {len(TOPICS)} queries")
-        print(f"[ADVERSARIAL] Unique docs discovered: {len(all_seen_chunks)}")
-        print(f"[ADVERSARIAL] Tenants visible: {all_seen_tenants}")
-        print("[ADVERSARIAL] Cross-tenant data NOT accessible via enumeration")
 
     async def test_enumeration_without_gating_exposes_all(self, shared_vector_index):
         """Without gating, enumeration exposes both tenants' data."""
@@ -289,17 +269,6 @@ class TestAdversarialSummary:
                 len(server_tenants) > 1,
             )
         )
-
-        print("\n" + "=" * 70)
-        print("ADVERSARIAL SCENARIO SUMMARY")
-        print("=" * 70)
-        print(f"{'Scenario':<35} {'Ungated':>12} {'Gated':>12}")
-        print("-" * 70)
-        for name, ungated_success, gated_success in scenarios:
-            u_status = "LEAKED" if ungated_success else "BLOCKED"
-            g_status = "LEAKED" if gated_success else "BLOCKED"
-            print(f"{name:<35} {u_status:>12} {g_status:>12}")
-        print("=" * 70)
 
         # All gated scenarios must block the attack
         for name, _, gated_success in scenarios:

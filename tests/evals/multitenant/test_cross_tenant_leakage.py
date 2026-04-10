@@ -101,9 +101,6 @@ class TestUngatedRetrieval:
                     leaked_chunks += 1
 
         leakage = leaked_chunks / total_chunks if total_chunks > 0 else 0.0
-        # Report metric for paper
-        print(f"\n[METRIC] ungated_leakage_rate = {leakage:.4f}")
-        print(f"[METRIC] ungated_leaked_chunks = {leaked_chunks}/{total_chunks}")
 
         # Leakage MUST be > 0 for the experiment to be meaningful
         assert leakage > 0, (
@@ -154,9 +151,6 @@ class TestChunkLevelGatedRetrieval:
                     leaked_chunks += 1
 
         leakage = leaked_chunks / total_chunks if total_chunks > 0 else 0.0
-        print(f"\n[METRIC] chunk_gated_leakage_rate = {leakage:.4f}")
-        print(f"[METRIC] chunk_gated_leaked_chunks = {leaked_chunks}/{total_chunks}")
-
         assert leakage == 0.0
         assert total_chunks > 0, "Filter should still return authorized chunks"
 
@@ -215,7 +209,6 @@ class TestPerTenantIndexIsolation:
                         leaked += 1
 
             leakage = leaked / total if total > 0 else 0.0
-            print(f"\n[METRIC] per_tenant_{tenant_id}_leakage_rate = {leakage:.4f}")
             assert leakage == 0.0
 
 
@@ -256,15 +249,6 @@ class TestLeakageComparison:
                 "leaked": leaked,
                 "total": total,
             }
-
-        print("\n" + "=" * 60)
-        print("CROSS-TENANT LEAKAGE COMPARISON")
-        print("=" * 60)
-        print(f"{'Configuration':<20} {'Leakage Rate':>14} {'Leaked/Total':>14}")
-        print("-" * 60)
-        for name, data in results.items():
-            print(f"{name:<20} {data['leakage_rate']:>13.2%} {data['leaked']:>6}/{data['total']:<6}")
-        print("=" * 60)
 
         # Ungated must leak, gated configurations must not
         assert results["ungated"]["leakage_rate"] > 0

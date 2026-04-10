@@ -278,35 +278,10 @@ class TestABACCorrectnessMetrics:
 
         total = tp + tn + fp + fn
         accuracy = (tp + tn) / total if total > 0 else 0.0
-        tpr = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-        tnr = tn / (tn + fp) if (tn + fp) > 0 else 0.0
-        fpr = fp / (fp + tn) if (fp + tn) > 0 else 0.0
-        fnr = fn / (fn + tp) if (fn + tp) > 0 else 0.0
-
-        print("\n" + "=" * 60)
-        print("ABAC CORRECTNESS METRICS")
-        print("=" * 60)
-        print(f"Total test cases:     {total}")
-        print(f"True positives:       {tp}")
-        print(f"True negatives:       {tn}")
-        print(f"False positives:      {fp}  (security violations)")
-        print(f"False negatives:      {fn}  (usability issues)")
-        print(f"Accuracy:             {accuracy:.4f}")
-        print(f"True positive rate:   {tpr:.4f}")
-        print(f"True negative rate:   {tnr:.4f}")
-        print(f"False positive rate:  {fpr:.4f}")
-        print(f"False negative rate:  {fnr:.4f}")
-        print(f"[METRIC] abac_accuracy = {accuracy:.4f}")
-        print(f"[METRIC] abac_true_positive_rate = {tpr:.4f}")
-        print(f"[METRIC] abac_true_negative_rate = {tnr:.4f}")
-        print(f"[METRIC] abac_false_positive_rate = {fpr:.4f}")
-        print(f"[METRIC] abac_false_negative_rate = {fnr:.4f}")
-        print("=" * 60)
 
         # Critical assertion: zero false positives (no security violations)
         assert fp == 0, (
             f"SECURITY VIOLATION: {fp} false positives detected. Unauthorized access was incorrectly permitted."
         )
-
-        # Accuracy should be very high
+        assert fn == 0, f"ABAC denied {fn} legitimate access requests"
         assert accuracy >= 0.95, f"ABAC accuracy {accuracy:.4f} is below threshold"

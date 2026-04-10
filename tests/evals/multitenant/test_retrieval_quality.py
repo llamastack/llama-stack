@@ -129,21 +129,6 @@ class TestRetrievalQualityUnderGating:
             metrics["per_tenant"]["precision"].append(_precision_at_k(pt_result.chunks, relevant_ids))
             metrics["per_tenant"]["mrr"].append(_mrr(pt_result.chunks, relevant_ids))
 
-        print("\n" + "=" * 70)
-        print("RETRIEVAL QUALITY METRICS (querying as tenant-a)")
-        print("=" * 70)
-        print(f"{'Configuration':<20} {'Recall@5':>10} {'Precision@5':>12} {'MRR':>8}")
-        print("-" * 70)
-        for name, m in metrics.items():
-            avg_recall = np.mean(m["recall"])
-            avg_precision = np.mean(m["precision"])
-            avg_mrr = np.mean(m["mrr"])
-            print(f"{name:<20} {avg_recall:>10.4f} {avg_precision:>12.4f} {avg_mrr:>8.4f}")
-            print(f"[METRIC] {name}_recall_at_5 = {avg_recall:.4f}")
-            print(f"[METRIC] {name}_precision_at_5 = {avg_precision:.4f}")
-            print(f"[METRIC] {name}_mrr = {avg_mrr:.4f}")
-        print("=" * 70)
-
         # Gated recall must be >= ungated recall on authorized docs
         # (ungated may include unauthorized docs that dilute precision but
         # recall on authorized docs should not decrease)
@@ -164,15 +149,9 @@ class TestRetrievalQualityUnderGating:
 class TestRetrievalQualityPerTopic:
     """Per-topic breakdown for detailed paper tables."""
 
-    async def test_per_topic_metrics_table(self, shared_vector_index, tenant_a_vector_index):
-        """Detailed per-topic metrics for both gated and per-tenant configurations."""
+    async def test_per_topic_gated_recall_is_perfect(self, shared_vector_index, tenant_a_vector_index):
+        """Every topic achieves perfect recall under gating."""
         tenant_filter = {"type": "eq", "key": "tenant_id", "value": "tenant-a"}
-
-        print("\n" + "=" * 80)
-        print("PER-TOPIC RETRIEVAL QUALITY (querying as tenant-a)")
-        print("=" * 80)
-        print(f"{'Topic':<15} {'Config':<15} {'Recall@5':>10} {'Precision@5':>12} {'MRR':>8}")
-        print("-" * 80)
 
         for topic in TOPICS:
             query_emb = QUERY_EMBEDDINGS[topic]
@@ -182,18 +161,6 @@ class TestRetrievalQualityPerTopic:
                 embedding=query_emb, k=TOP_K, score_threshold=SCORE_THRESHOLD
             )
             gated = [c for c in shared_result.chunks if matches_filters(c.metadata, tenant_filter)]
-            pt_result = await tenant_a_vector_index.query_vector(
-                embedding=query_emb, k=TOP_K, score_threshold=SCORE_THRESHOLD
-            )
 
-            for name, chunks in [
-                ("ungated", shared_result.chunks),
-                ("chunk_gated", gated),
-                ("per_tenant", pt_result.chunks),
-            ]:
-                r = _recall_at_k(chunks, relevant_ids)
-                p = _precision_at_k(chunks, relevant_ids)
-                m = _mrr(chunks, relevant_ids)
-                print(f"{topic:<15} {name:<15} {r:>10.4f} {p:>12.4f} {m:>8.4f}")
-
-        print("=" * 80)
+            recall = _recall_at_k(gated, relevant_ids)
+            assert recall == 1.0, f"Topic '{topic}': gated recall should be 1.0, got {recall:.4f}"
