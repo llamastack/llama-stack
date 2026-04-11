@@ -237,7 +237,7 @@ jobs:
       # a trusted commit, not from PR checkout. This is critical for security.
       - name: Setup test environment
         if: steps.should_run.outputs.run == 'true'
-        uses: llamastack/llama-stack/.github/actions/setup-test-environment@725a0c3fc90d4551a56f7b6cc8180075fbc0e39b
+        uses: llamastack/llama-stack/.github/actions/setup-test-environment@e92196d200bca6fc220af5996142c42528df0c56
         with:
           python-version: "3.12"
           client-version: "latest"
@@ -247,7 +247,7 @@ jobs:
 
       - name: Run and record tests
         if: steps.should_run.outputs.run == 'true'
-        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@725a0c3fc90d4551a56f7b6cc8180075fbc0e39b
+        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@e92196d200bca6fc220af5996142c42528df0c56
         env:
           OPENAI_API_KEY: ${{ matrix.provider.setup == 'gpt' && secrets.OPENAI_API_KEY || '' }}
           AZURE_API_KEY: ${{ matrix.provider.setup == 'azure' && secrets.AZURE_API_KEY || '' }}
