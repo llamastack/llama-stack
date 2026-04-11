@@ -268,6 +268,12 @@ from .inference import (
     UserMessage,
 )
 from .inspect_api import Inspect
+from .interactions import (
+    Interactions,
+    GoogleCreateInteractionRequest,
+    GoogleInteractionResponse,
+    GoogleUsage,
+)
 from .messages import (
     Messages,
     AnthropicContentBlock,
@@ -989,6 +995,11 @@ __all__ = [
     "ViolationLevel",
     "WebSearchToolTypes",
     "WeightedRanker",
+    # Interactions API
+    "Interactions",
+    "GoogleCreateInteractionRequest",
+    "GoogleInteractionResponse",
+    "GoogleUsage",
     # Messages API
     "Messages",
     "AnthropicContentBlock",

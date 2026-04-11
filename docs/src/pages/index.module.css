@@ -1,11 +1,22 @@
 /* ========== HERO ========== */
 .hero {
+  position: relative;
   padding: 5rem 0 4rem;
   background: oklch(0.985 0.005 240);
+  overflow: hidden;
 }
 
 [data-theme='dark'] .hero {
   background: oklch(0.13 0.015 240);
+}
+
+/* ========== HERO CONSTELLATION ========== */
+.heroCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .heroLayout {
@@ -214,6 +225,60 @@
 [data-theme='dark'] .sdkTabActive {
   color: oklch(0.92 0.005 250);
   background: oklch(0.2 0.015 250);
+}
+
+.codeHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.codeCopyBtn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.03);
+  color: oklch(0.5 0.01 240);
+  font-family: 'Public Sans', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+[data-theme='dark'] .codeCopyBtn {
+  border-color: oklch(0.25 0.01 250);
+  background: oklch(0.12 0.01 250);
+  color: oklch(0.55 0.01 250);
+}
+
+.codeCopyBtn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: oklch(0.3 0.01 240);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme='dark'] .codeCopyBtn:hover {
+  background: oklch(0.18 0.01 250);
+  color: oklch(0.8 0.01 250);
+  border-color: oklch(0.35 0.01 250);
+}
+
+.codeCopyBtnCopied {
+  border-color: oklch(0.5 0.12 165) !important;
+  color: oklch(0.45 0.12 165) !important;
+  background: oklch(0.95 0.02 165) !important;
+}
+
+[data-theme='dark'] .codeCopyBtnCopied {
+  background: oklch(0.18 0.04 165) !important;
+  color: oklch(0.7 0.1 165) !important;
 }
 
 .endpointLabel {
@@ -697,11 +762,65 @@
   color: oklch(0.85 0.01 240) !important;
 }
 
+/* ========== SCROLL REVEAL ========== */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s cubic-bezier(0.25, 1, 0.5, 1),
+              transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.revealed {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.6s cubic-bezier(0.25, 1, 0.5, 1),
+              transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* ========== CODE TAB CROSSFADE ========== */
+.codeFade {
+  animation: codeFadeIn 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@keyframes codeFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ========== REDUCED MOTION ========== */
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .revealed {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .codeFade {
+    animation: none;
+  }
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 996px) {
   .heroLayout {
     grid-template-columns: 1fr;
     gap: 2.5rem;
+  }
+
+  .heroText {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .heroCode {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .subtitle {
+    max-width: 100%;
   }
 
   .apiColumns {
@@ -736,20 +855,133 @@
 
   .actions {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+  }
+
+  .primaryBtn,
+  .secondaryBtn,
+  .githubBtn {
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* Code block mobile */
+  .codeBlock {
+    margin: 0 -1rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .codeHeader {
+    padding: 0.4rem 0.75rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .sdkTabs {
+    order: 1;
+  }
+
+  .codeHeaderRight {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .sdkTab {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .langTabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .langTab {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.68rem;
+    white-space: nowrap;
+  }
+
+  .codeContent {
+    padding: 1rem 0.75rem;
   }
 
   .codeContent code {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
   }
 
+  .endpointLabel {
+    display: none;
+  }
+
+  .codeCopyBtn span {
+    display: none;
+  }
+
+  .codeCopyBtn {
+    padding: 0.25rem;
+  }
+
+  /* API surface mobile */
   .endpointRow {
     flex-direction: column;
     gap: 0.15rem;
   }
 
+  .endpointPath {
+    min-width: 0;
+    font-size: 0.72rem;
+  }
+
+  /* Server comparison mobile */
+  .comparisonRow {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .comparisonLabel {
+    min-width: auto;
+    font-size: 0.75rem;
+  }
+
+  .comparisonCode {
+    font-size: 0.72rem;
+    flex: unset;
+    width: 100%;
+    order: 3;
+  }
+
+  /* Providers mobile */
+  .providerGrid {
+    gap: 0.4rem;
+  }
+
+  .provider {
+    font-size: 0.72rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  /* Bottom links mobile */
   .bottomLinks {
     flex-wrap: wrap;
     gap: 1rem;
+  }
+
+  /* Section headings mobile */
+  .providerSection h2,
+  .archSection h2,
+  .serverLayout h2,
+  .apiHeader h2 {
+    font-size: 1.4rem;
+  }
+
+  .apiHeader p,
+  .serverLayout p,
+  .providerDesc,
+  .archDesc {
+    font-size: 0.9rem;
   }
 }

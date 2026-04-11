@@ -87,6 +87,9 @@ def generate_openapi_spec(output_dir: str) -> dict[str, Any]:
     openapi_schema = code_samples._add_openai_code_samples(openapi_schema)
     openapi_schema = code_samples._add_anthropic_code_samples(openapi_schema)
 
+    # Add Google GenAI SDK code samples to Interactions API endpoints
+    openapi_schema = code_samples._add_google_code_samples(openapi_schema)
+
     # Split into stable (v1 only), experimental (v1alpha + v1beta), deprecated, and combined (stainless) specs
     # Each spec needs its own deep copy of the full schema to avoid cross-contamination
     stable_schema = schema_filtering._filter_schema_by_version(

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import clsx from 'clsx';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
@@ -114,6 +114,29 @@ const message = await client.messages.create({
       },
     ],
   },
+  google: {
+    label: 'Google GenAI',
+    endpoint: '/v1alpha/interactions',
+    languages: [
+      {
+        lang: 'Python',
+        code: `from google import genai
+from google.genai import types
+
+client = genai.Client(
+    api_key="fake",
+    http_options=types.HttpOptions(
+        base_url="http://localhost:8321",
+        api_version="v1alpha",
+    ),
+)
+interaction = client.interactions.create(
+    model="llama-3.3-70b",
+    input="Summarize this repository",
+)`,
+      },
+    ],
+  },
 };
 
 const API_SURFACE = [
@@ -123,6 +146,7 @@ const API_SURFACE = [
     { label: 'Embeddings', path: '/v1/embeddings' },
     { label: 'Models', path: '/v1/models' },
     { label: 'Messages', path: '/v1/messages', note: 'Anthropic' },
+    { label: 'Interactions', path: '/v1alpha/interactions', note: 'Google' },
   ]},
   { category: 'Data', endpoints: [
     { label: 'Vector Stores', path: '/v1/vector_stores' },
@@ -186,9 +210,78 @@ const tidalLight = {
   ],
 };
 
+function useScrollReveal() {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.matches) { setVisible(true); return; }
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return { ref, className: visible ? styles.revealed : styles.reveal };
+}
+
+function Section({children, className, ...props}) {
+  const scroll = useScrollReveal();
+  return (
+    <section ref={scroll.ref} className={clsx(scroll.className, className)} {...props}>
+      {children}
+    </section>
+  );
+}
+
+function CodeCopyButton({text}) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const id = setTimeout(() => setCopied(false), 1800);
+    return () => clearTimeout(id);
+  }, [copied]);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+    } catch {
+      /* fallback */
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      className={clsx(styles.codeCopyBtn, copied && styles.codeCopyBtnCopied)}
+      onClick={handleCopy}
+      aria-label="Copy code"
+    >
+      {copied ? (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m5 13 4 4L19 7" />
+        </svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="9" y="9" width="10" height="10" rx="2" />
+          <path d="M5 15V7a2 2 0 0 1 2-2h8" />
+        </svg>
+      )}
+      <span>{copied ? 'Copied' : 'Copy'}</span>
+    </button>
+  );
+}
+
 function CodeBlock() {
   const [activeSdk, setActiveSdk] = useState('openai');
-  const [langIndex, setLangIndex] = useState({openai: 0, anthropic: 0});
+  const [langIndex, setLangIndex] = useState({openai: 0, anthropic: 0, google: 0});
   const {colorMode} = useColorMode();
   const sdk = SDK_EXAMPLES[activeSdk];
   const activeIdx = langIndex[activeSdk];
@@ -209,7 +302,10 @@ function CodeBlock() {
             </button>
           ))}
         </div>
-        <code className={styles.endpointLabel}>{sdk.endpoint}</code>
+        <div className={styles.codeHeaderRight}>
+          <CodeCopyButton text={sdk.languages[activeIdx].code} />
+          <code className={styles.endpointLabel}>{sdk.endpoint}</code>
+        </div>
       </div>
       <div className={styles.langTabs}>
         {sdk.languages.map((ex, i) => (
@@ -222,28 +318,128 @@ function CodeBlock() {
           </button>
         ))}
       </div>
-      <Highlight theme={theme} code={sdk.languages[activeIdx].code} language={prismLang}>
-        {({style, tokens, getLineProps, getTokenProps}) => (
-          <pre className={styles.codeContent} style={style}>
-            <code>
-              {tokens.map((line, i) => (
-                <div key={i} {...getLineProps({line})}>
-                  {line.map((token, key) => (
-                    <span key={key} {...getTokenProps({token})} />
-                  ))}
-                </div>
-              ))}
-            </code>
-          </pre>
-        )}
-      </Highlight>
+      <div className={styles.codeFade} key={`${activeSdk}-${activeIdx}`}>
+        <Highlight theme={theme} code={sdk.languages[activeIdx].code} language={prismLang}>
+          {({style, tokens, getLineProps, getTokenProps}) => (
+            <pre className={styles.codeContent} style={style}>
+              <code>
+                {tokens.map((line, i) => (
+                  <div key={i} {...getLineProps({line})}>
+                    {line.map((token, key) => (
+                      <span key={key} {...getTokenProps({token})} />
+                    ))}
+                  </div>
+                ))}
+              </code>
+            </pre>
+          )}
+        </Highlight>
+      </div>
     </div>
   );
 }
 
+function useConstellation(canvasId) {
+  useEffect(() => {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.matches) return;
+
+    const ctx = canvas.getContext('2d');
+    let raf;
+    let nodes = [];
+    const NODE_COUNT = 40;
+    const CONNECT_DIST = 140;
+    const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+
+    function resize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+
+    function initNodes() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      nodes = [];
+      for (let i = 0; i < NODE_COUNT; i++) {
+        nodes.push({
+          x: Math.random() * rect.width,
+          y: Math.random() * rect.height,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: (Math.random() - 0.5) * 0.3,
+          r: 1.5 + Math.random() * 1.5,
+        });
+      }
+    }
+
+    function draw() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const dark = isDark();
+      const dotColor = dark ? 'rgba(45, 189, 194, 0.4)' : 'rgba(13, 115, 119, 0.25)';
+      const lineColor = dark ? 'rgba(45, 189, 194,' : 'rgba(13, 115, 119,';
+
+      for (let i = 0; i < nodes.length; i++) {
+        const a = nodes[i];
+        a.x += a.vx;
+        a.y += a.vy;
+        if (a.x < 0 || a.x > w) a.vx *= -1;
+        if (a.y < 0 || a.y > h) a.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
+        ctx.fillStyle = dotColor;
+        ctx.fill();
+
+        for (let j = i + 1; j < nodes.length; j++) {
+          const b = nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < CONNECT_DIST) {
+            const opacity = (1 - dist / CONNECT_DIST) * (dark ? 0.15 : 0.1);
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = lineColor + opacity + ')';
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
+        }
+      }
+
+      raf = requestAnimationFrame(draw);
+    }
+
+    resize();
+    initNodes();
+    draw();
+
+    const ro = new ResizeObserver(() => {
+      resize();
+    });
+    ro.observe(canvas.parentElement);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [canvasId]);
+}
+
 function Hero() {
+  useConstellation('hero-constellation');
+
   return (
     <section className={styles.hero}>
+      <canvas className={styles.heroCanvas} id="hero-constellation" aria-hidden="true" />
       <div className="container">
         <div className={styles.heroLayout}>
           <div className={styles.heroText}>
@@ -280,7 +476,7 @@ function Hero() {
 
 function ApiSurface() {
   return (
-    <section className={styles.apiSection}>
+    <Section className={styles.apiSection}>
       <div className="container">
         <div className={styles.apiHeader}>
           <h2>Everything your AI app needs. One server.</h2>
@@ -313,13 +509,13 @@ function ApiSurface() {
           Full API reference
         </Link>
       </div>
-    </section>
+    </Section>
   );
 }
 
 function ServerNotLibrary() {
   return (
-    <section className={styles.serverSection}>
+    <Section className={styles.serverSection}>
       <div className="container">
         <div className={styles.serverLayout}>
           <div>
@@ -349,13 +545,13 @@ function ServerNotLibrary() {
           </div>
         </div>
       </div>
-    </section>
+    </Section>
   );
 }
 
 function Providers() {
   return (
-    <section className={styles.providerSection}>
+    <Section className={styles.providerSection}>
       <div className="container">
         <h2>23 inference providers. 13 vector stores. 7 safety backends.</h2>
         <p className={styles.providerDesc}>
@@ -371,13 +567,13 @@ function Providers() {
           All providers
         </Link>
       </div>
-    </section>
+    </Section>
   );
 }
 
 function Architecture() {
   return (
-    <section className={styles.archSection}>
+    <Section className={styles.archSection}>
       <div className="container">
         <h2>How it works</h2>
         <p className={styles.archDesc}>
@@ -390,13 +586,13 @@ function Architecture() {
           <img src="/img/architecture-animated.svg" alt="Llama Stack Architecture" loading="lazy" />
         </div>
       </div>
-    </section>
+    </Section>
   );
 }
 
 function Bottom() {
   return (
-    <section className={styles.bottomSection}>
+    <Section className={styles.bottomSection}>
       <div className="container">
         <div className={styles.bottomLayout}>
           <div>
@@ -421,13 +617,13 @@ function Bottom() {
           </div>
         </div>
       </div>
-    </section>
+    </Section>
   );
 }
 
 export default function Home() {
   return (
-    <Layout title="The Open-Source AI Application Server" description="Inference, vector stores, safety, tools, and agentic orchestration. One server, OpenAI-compatible, pluggable providers.">
+    <Layout title="The Open-Source AI Application Server" description="Inference, vector stores, safety, tools, and agentic orchestration. One server, OpenAI + Anthropic + Google compatible, pluggable providers.">
       <main>
         <Hero />
         <ApiSurface />

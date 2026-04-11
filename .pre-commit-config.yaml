@@ -147,6 +147,24 @@ repos:
         pass_filenames: false
         require_serial: true
         files: ^docs/static/(llama-stack-spec\.yaml|openai-spec.*\.yml|openresponses-spec\.json|openai-coverage\.json)$|^docs/docs/api-openai/conformance\.mdx$|^scripts/(openai_coverage|generate_openai_coverage_docs)\.py$
+      - id: anthropic-coverage
+        name: Anthropic Messages API Coverage
+        additional_dependencies:
+          - *uv-dependency
+        entry: ./scripts/uv-run-with-index.sh run python scripts/anthropic_coverage.py --check-regression --update --generate-docs --quiet
+        language: python
+        pass_filenames: false
+        require_serial: true
+        files: ^docs/static/(llama-stack-spec\.yaml|anthropic-spec\.json|anthropic-coverage\.json)$|^docs/docs/api-anthropic-messages/conformance\.mdx$|^scripts/(anthropic_coverage|generate_anthropic_coverage_docs)\.py$|^src/llama_stack_api/messages/models\.py$
+      - id: google-interactions-coverage
+        name: Google Interactions API Coverage
+        additional_dependencies:
+          - *uv-dependency
+        entry: ./scripts/uv-run-with-index.sh run python scripts/google_interactions_coverage.py --check-regression --update --generate-docs --quiet
+        language: python
+        pass_filenames: false
+        require_serial: true
+        files: ^docs/static/google-interactions-(spec|coverage)\.json$|^docs/docs/api-google-interactions/conformance\.mdx$|^scripts/(google_interactions_coverage|generate_google_interactions_coverage_docs)\.py$|^src/llama_stack_api/interactions/models\.py$
       - id: provider-compat-matrix
         name: Provider Compatibility Matrix
         additional_dependencies:

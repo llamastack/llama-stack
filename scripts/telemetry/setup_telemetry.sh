@@ -87,8 +87,22 @@ $CONTAINER_RUNTIME network create llama-telemetry 2>/dev/null || echo "Network a
 
 # Stop and remove existing containers
 echo "🧹 Cleaning up existing containers..."
-$CONTAINER_RUNTIME stop jaeger otel-collector prometheus grafana 2>/dev/null || true
-$CONTAINER_RUNTIME rm jaeger otel-collector prometheus grafana 2>/dev/null || true
+$CONTAINER_RUNTIME stop jaeger otel-collector prometheus grafana mlflow 2>/dev/null || true
+$CONTAINER_RUNTIME rm jaeger otel-collector prometheus grafana mlflow 2>/dev/null || true
+
+# Temp paths for MLflow storage (auto-created under /tmp)
+STATE_DIR="${STATE_DIR:-/tmp/llama-telemetry}"
+MLFLOW_BACKEND_STORE="$STATE_DIR/mlflow/mlflow.db"
+MLFLOW_ARTIFACT_ROOT="$STATE_DIR/mlruns"
+
+# Ensure paths exist for bind mounts
+mkdir -p "$(dirname "$MLFLOW_BACKEND_STORE")"
+touch "$MLFLOW_BACKEND_STORE"
+mkdir -p "$MLFLOW_ARTIFACT_ROOT"
+
+# Experiment ID for MLflow traces (collector header)
+MLFLOW_EXPERIMENT_ID_STR="${MLFLOW_EXPERIMENT_ID_STR:-\"0\"}"
+MLFLOW_OTEL_HEADERS="${MLFLOW_OTEL_HEADERS:-}"
 
 # Start Jaeger
 echo "🔍 Starting Jaeger..."
@@ -100,14 +114,39 @@ $CONTAINER_RUNTIME run -d --name jaeger \
   -p 9411:9411 \
   docker.io/jaegertracing/all-in-one:latest
 
+# Start MLflow server (containerized)
+echo "📒 Starting MLflow..."
+$CONTAINER_RUNTIME run -d --name mlflow \
+  --network llama-telemetry \
+  -p 5000:5000 \
+  -v "$MLFLOW_BACKEND_STORE:/mlflow/mlflow.db" \
+  -v "$MLFLOW_ARTIFACT_ROOT:/mlflow/artifacts" \
+  ghcr.io/mlflow/mlflow:latest \
+  mlflow server \
+    --backend-store-uri sqlite:////mlflow/mlflow.db \
+    --default-artifact-root /mlflow/artifacts \
+    --host 0.0.0.0 --port 5000 \
+    --allowed-hosts localhost,localhost:5000,127.0.0.1,127.0.0.1:5000,host.docker.internal,host.docker.internal:5000
+
+# Add host aliases so the Collector can reach host services (e.g., MLflow)
+ADD_HOST_OPT=""
+if [[ "$CONTAINER_RUNTIME" == "docker" ]]; then
+  ADD_HOST_OPT="--add-host=host.docker.internal:host-gateway"
+elif [[ "$CONTAINER_RUNTIME" == "podman" ]]; then
+  ADD_HOST_OPT="--add-host=host.containers.internal:host-gateway"
+fi
+
 # Start OpenTelemetry Collector
 echo "📊 Starting OpenTelemetry Collector..."
 $CONTAINER_RUNTIME run -d --name otel-collector \
   --network llama-telemetry \
+  $ADD_HOST_OPT \
   -p 4318:4318 \
   -p 4317:4317 \
   -p 9464:9464 \
   -p 13133:13133 \
+  -e "MLFLOW_EXPERIMENT_ID_STR=$MLFLOW_EXPERIMENT_ID_STR" \
+  -e "MLFLOW_OTEL_HEADERS=$MLFLOW_OTEL_HEADERS" \
   -v "$SCRIPT_DIR/otel-collector-config.yaml:/etc/otel-collector-config.yaml:Z" \
   docker.io/otel/opentelemetry-collector-contrib:latest \
   --config /etc/otel-collector-config.yaml
@@ -150,12 +189,13 @@ sleep 10
 
 # Check if services are running
 echo "🔍 Checking service status..."
-$CONTAINER_RUNTIME ps --filter "name=jaeger|otel-collector|prometheus|grafana" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+$CONTAINER_RUNTIME ps --filter "name=jaeger|otel-collector|prometheus|grafana|mlflow" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 echo ""
 echo "✅ Telemetry stack is ready!"
 echo ""
 echo "🌐 Service URLs:"
+echo "   MLflow:           http://localhost:5000"
 echo "   Jaeger UI:        http://localhost:16686"
 echo "   Prometheus:       http://localhost:9090"
 echo "   Grafana:          http://localhost:3000 (admin/admin)"
@@ -180,6 +220,7 @@ echo "     -H 'Content-Type: application/json' \\"
 echo "     -d '{\"model_id\": \"your-model\", \"messages\": [{\"role\": \"user\", \"content\": \"Hello\"}]}'"
 echo ""
 echo "🧹 To clean up when done:"
-echo "   $CONTAINER_RUNTIME stop jaeger otel-collector prometheus grafana"
-echo "   $CONTAINER_RUNTIME rm jaeger otel-collector prometheus grafana"
+echo "   $CONTAINER_RUNTIME stop jaeger otel-collector prometheus grafana mlflow"
+echo "   $CONTAINER_RUNTIME rm jaeger otel-collector prometheus grafana mlflow"
 echo "   $CONTAINER_RUNTIME network rm llama-telemetry"
+echo "   rm -rf $STATE_DIR  # remove temp DB/artifacts"

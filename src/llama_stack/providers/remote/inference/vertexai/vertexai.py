@@ -434,6 +434,37 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
 
         return genai_types.ThinkingConfig(thinking_level=cast(Any, level))
 
+    @staticmethod
+    def _convert_service_tier(service_tier: str | None) -> str | None:
+        """Map OpenAI service_tier to a Gemini ServiceTier string.
+
+        The google-genai SDK accepts case-insensitive strings on
+        ``GenerateContentConfig.service_tier``.  OpenAI and Gemini use
+        different vocabulary for the same concept:
+
+        - ``"auto"``     → ``None``        (omit; let the API decide)
+        - ``"default"``  → ``"standard"``  (Gemini's default tier)
+        - ``"flex"``     → ``"flex"``
+        - ``"priority"`` → ``"priority"``
+
+        Accepts ``ServiceTier`` (a ``StrEnum``) or plain strings.
+        """
+        if service_tier is None:
+            return None
+
+        _map: dict[str, str | None] = {
+            "auto": None,
+            "default": "standard",
+            "flex": "flex",
+            "priority": "priority",
+        }
+
+        if service_tier not in _map:
+            logger.warning("Unknown service_tier value, ignoring", service_tier=repr(service_tier))
+            return None
+
+        return _map[service_tier]
+
     def _build_generation_config(
         self,
         params: OpenAIChatCompletionRequestWithExtraBody,
@@ -463,6 +494,10 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
         thinking_config = self._build_thinking_config(params.reasoning_effort)
         if thinking_config is not None:
             config_kwargs["thinking_config"] = thinking_config
+
+        gemini_service_tier = self._convert_service_tier(params.service_tier)
+        if gemini_service_tier is not None:
+            config_kwargs["service_tier"] = gemini_service_tier
 
         if params.model_extra:
             config_kwargs.update(params.model_extra)
@@ -551,8 +586,7 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
             logger.warning("VertexAI does not support logit_bias; this parameter will be ignored.")
         if params.parallel_tool_calls is False:
             logger.warning("VertexAI does not support disabling parallel tool calls; this parameter will be ignored.")
-        if params.service_tier is not None:
-            logger.warning("VertexAI does not support service_tier; this parameter will be ignored.")
+        # service_tier is handled by _build_generation_config; no warning needed.
         if params.prompt_cache_key is not None:
             logger.warning("VertexAI does not support prompt_cache_key; this parameter will be ignored.")
         if params.user is not None:
