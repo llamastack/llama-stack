@@ -21,14 +21,12 @@ from llama_stack.providers.inline.responses.builtin.responses.utils import (
 from llama_stack_api import ToolDef
 from llama_stack_api.inference.models import (
     OpenAIAssistantMessageParam,
-    OpenAIChatCompletionChunk,
+    OpenAIChatCompletion,
     OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChatCompletionUsage,
     OpenAIChoice,
-    OpenAIChoiceDelta,
-    OpenAIChunkChoice,
 )
 from llama_stack_api.openai_responses import (
     OpenAIResponseInputToolMCP,
@@ -462,38 +460,29 @@ class TestBuildSummaryPrompt:
         assert prompt_auto == prompt_concise
 
 
-def _make_streaming_chunk(content: str) -> OpenAIChatCompletionChunk:
-    """Build a mock streaming chunk with a single delta containing content."""
-    return OpenAIChatCompletionChunk(
-        id="chunk_1",
+def _make_completion(content: str, usage: OpenAIChatCompletionUsage | None = None) -> OpenAIChatCompletion:
+    """Build a mock non-streaming chat completion response."""
+    return OpenAIChatCompletion(
+        id="comp_1",
         choices=[
-            OpenAIChunkChoice(
+            OpenAIChoice(
                 index=0,
-                delta=OpenAIChoiceDelta(content=content),
+                finish_reason="stop",
+                message=OpenAIChatCompletionResponseMessage(content=content),
             )
         ],
         created=0,
         model="test-model",
-        object="chat.completion.chunk",
+        object="chat.completion",
+        usage=usage,
     )
-
-
-async def _to_async_iter(items):
-    """Convert a list into an async iterator."""
-    for item in items:
-        yield item
 
 
 class TestSummarizeReasoning:
     async def test_emits_correct_event_sequence_single_part(self):
         """Single-paragraph summary: PartAdded -> TextDelta -> TextDone -> PartDone."""
         mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = _to_async_iter(
-            [
-                _make_streaming_chunk("The answer"),
-                _make_streaming_chunk(" is 4."),
-            ]
-        )
+        mock_inference.openai_chat_completion.return_value = _make_completion("The answer is 4.")
 
         events = []
         async for event in summarize_reasoning(
@@ -518,12 +507,7 @@ class TestSummarizeReasoning:
     async def test_emits_multiple_summary_parts(self):
         """Multi-paragraph summary should produce multiple PartAdded/TextDelta/TextDone/PartDone blocks."""
         mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = _to_async_iter(
-            [
-                _make_streaming_chunk("First paragraph."),
-                _make_streaming_chunk("\n\nSecond paragraph."),
-            ]
-        )
+        mock_inference.openai_chat_completion.return_value = _make_completion("First paragraph.\n\nSecond paragraph.")
 
         events = []
         async for event in summarize_reasoning(
@@ -561,15 +545,9 @@ class TestSummarizeReasoning:
         assert events[7].part.text == "Second paragraph."
 
     async def test_accumulates_text_in_single_part(self):
-        """Single-paragraph: text_done and part_done should contain the full concatenated summary."""
+        """Single-paragraph: text_done and part_done should contain the full summary."""
         mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = _to_async_iter(
-            [
-                _make_streaming_chunk("Hello"),
-                _make_streaming_chunk(" world"),
-                _make_streaming_chunk("!"),
-            ]
-        )
+        mock_inference.openai_chat_completion.return_value = _make_completion("Hello world!")
 
         events = []
         async for event in summarize_reasoning(
@@ -594,11 +572,7 @@ class TestSummarizeReasoning:
     async def test_sequence_numbers_increment(self):
         """Each event should have a strictly increasing sequence_number."""
         mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = _to_async_iter(
-            [
-                _make_streaming_chunk("AB"),
-            ]
-        )
+        mock_inference.openai_chat_completion.return_value = _make_completion("AB")
 
         events = []
         async for event in summarize_reasoning(
@@ -619,11 +593,7 @@ class TestSummarizeReasoning:
     async def test_sequence_numbers_increment_multi_part(self):
         """Sequence numbers should be strictly increasing across multiple summary parts."""
         mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = _to_async_iter(
-            [
-                _make_streaming_chunk("P1\n\nP2\n\nP3"),
-            ]
-        )
+        mock_inference.openai_chat_completion.return_value = _make_completion("P1\n\nP2\n\nP3")
 
         events = []
         async for event in summarize_reasoning(
@@ -644,11 +614,7 @@ class TestSummarizeReasoning:
     async def test_propagates_item_id_and_output_index(self):
         """All events should carry the correct item_id and output_index."""
         mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = _to_async_iter(
-            [
-                _make_streaming_chunk("summary"),
-            ]
-        )
+        mock_inference.openai_chat_completion.return_value = _make_completion("summary")
 
         events = []
         async for event in summarize_reasoning(
@@ -683,22 +649,10 @@ class TestSummarizeReasoning:
             ):
                 pass
 
-    async def test_empty_stream_yields_nothing(self):
-        """If the provider returns empty chunks, no events should be yielded."""
+    async def test_empty_content_yields_nothing(self):
+        """If the provider returns empty content, no events should be yielded."""
         mock_inference = AsyncMock()
-        empty_chunk = OpenAIChatCompletionChunk(
-            id="chunk_empty",
-            choices=[
-                OpenAIChunkChoice(
-                    index=0,
-                    delta=OpenAIChoiceDelta(content=None),
-                )
-            ],
-            created=0,
-            model="test-model",
-            object="chat.completion.chunk",
-        )
-        mock_inference.openai_chat_completion.return_value = _to_async_iter([empty_chunk])
+        mock_inference.openai_chat_completion.return_value = _make_completion("")
 
         events = []
         async for event in summarize_reasoning(
@@ -714,17 +668,17 @@ class TestSummarizeReasoning:
 
         assert events == []
 
-    async def test_non_streaming_response_yields_nothing(self):
-        """If the inference API returns a non-streaming response, no events should be yielded."""
+    async def test_unexpected_return_type_yields_nothing(self):
+        """If the inference API returns an unexpected type, no events should be yielded."""
         mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = MagicMock()  # not an AsyncIterator
+        mock_inference.openai_chat_completion.return_value = MagicMock()
 
         events = []
         async for event in summarize_reasoning(
             inference_api=mock_inference,
             model="test-model",
             reasoning_text="reasoning",
-            reasoning_item_id="rs_nonstream",
+            reasoning_item_id="rs_unexpected",
             output_index=0,
             summary_mode="concise",
             start_sequence_number=0,
@@ -733,32 +687,18 @@ class TestSummarizeReasoning:
 
         assert events == []
 
-    async def test_usage_chunks_collected(self):
-        """Chunks with usage data should be appended to the usage_chunks list."""
+    async def test_usage_collected(self):
+        """Usage data from the completion should be collected in summary_usage list."""
         usage_data = OpenAIChatCompletionUsage(
             prompt_tokens=10,
             completion_tokens=5,
             total_tokens=15,
         )
 
-        chunk_with_usage = OpenAIChatCompletionChunk(
-            id="chunk_u",
-            choices=[
-                OpenAIChunkChoice(
-                    index=0,
-                    delta=OpenAIChoiceDelta(content="summary"),
-                )
-            ],
-            created=0,
-            model="test-model",
-            object="chat.completion.chunk",
-            usage=usage_data,
-        )
-
         mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = _to_async_iter([chunk_with_usage])
+        mock_inference.openai_chat_completion.return_value = _make_completion("summary", usage=usage_data)
 
-        usage_chunks: list = []
+        summary_usage: list = []
         events = []
         async for event in summarize_reasoning(
             inference_api=mock_inference,
@@ -768,22 +708,18 @@ class TestSummarizeReasoning:
             output_index=0,
             summary_mode="concise",
             start_sequence_number=0,
-            usage_chunks=usage_chunks,
+            summary_usage=summary_usage,
         ):
             events.append(event)
 
-        assert len(usage_chunks) == 1
-        assert usage_chunks[0].usage.prompt_tokens == 10
-        assert usage_chunks[0].usage.completion_tokens == 5
+        assert len(summary_usage) == 1
+        assert summary_usage[0].prompt_tokens == 10
+        assert summary_usage[0].completion_tokens == 5
 
     async def test_whitespace_only_paragraphs_ignored(self):
         """Paragraphs that are only whitespace should be filtered out."""
         mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = _to_async_iter(
-            [
-                _make_streaming_chunk("Content\n\n  \n\nMore content"),
-            ]
-        )
+        mock_inference.openai_chat_completion.return_value = _make_completion("Content\n\n  \n\nMore content")
 
         events = []
         async for event in summarize_reasoning(

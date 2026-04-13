@@ -17,13 +17,13 @@ from llama_stack_api import (
     Files,
     Inference,
     OpenAIAssistantMessageParam,
-    OpenAIChatCompletionChunk,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartParam,
     OpenAIChatCompletionContentPartTextParam,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
+    OpenAIChatCompletionUsage,
     OpenAIChoice,
     OpenAIDeveloperMessageParam,
     OpenAIFile,
@@ -677,7 +677,7 @@ async def summarize_reasoning(
     output_index: int,
     summary_mode: str,
     start_sequence_number: int,
-    usage_chunks: list[OpenAIChatCompletionChunk] | None = None,
+    summary_usage: list[OpenAIChatCompletionUsage] | None = None,
 ) -> AsyncIterator[OpenAIResponseObjectStream]:
     """Make a second inference call to summarize reasoning content."""
     prompt_text = build_summary_prompt(reasoning_text, summary_mode)
@@ -690,8 +690,7 @@ async def summarize_reasoning(
             ),
             OpenAIUserMessageParam(content=prompt_text),
         ],
-        stream=True,
-        stream_options={"include_usage": True},
+        stream=False,
         temperature=0.3,
     )
 
@@ -701,20 +700,15 @@ async def summarize_reasoning(
         logger.exception("Failed to generate reasoning summary")
         raise
 
-    if not isinstance(summary_result, AsyncIterator):
+    if isinstance(summary_result, AsyncIterator):
         return
 
-    full_text_parts: list[str] = []
-    async for chunk in summary_result:
-        if usage_chunks is not None and chunk.usage:
-            usage_chunks.append(chunk)
-        if chunk.choices and chunk.choices[0].delta.content:
-            full_text_parts.append(chunk.choices[0].delta.content)
+    if summary_usage is not None and summary_result.usage:
+        summary_usage.append(summary_result.usage)
 
-    if not full_text_parts:
+    full_text = summary_result.choices[0].message.content if summary_result.choices else None
+    if not full_text:
         return
-
-    full_text = "".join(full_text_parts)
 
     raw_paragraphs = full_text.split("\n\n")
     paragraphs = [p for p in raw_paragraphs if p.strip()]
