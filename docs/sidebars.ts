@@ -40,14 +40,25 @@ const sidebars: SidebarsConfig = {
           items: [
             'concepts/apis/index',
             'concepts/apis/api_providers',
-            'concepts/apis/google_interactions',
-            'concepts/apis/external',
-            'concepts/apis/api_leveling',
+            {
+              type: 'category',
+              label: 'OpenAI Compatibility',
+              collapsed: false,
+              link: { type: 'doc', id: 'api-openai/index' },
+              items: [
+                'api-openai/responses-flow',
+                'api-openai/conformance',
+                'api-openai/provider_matrix',
+              ],
+            },
             {
               type: 'link',
               label: 'Anthropic Messages',
               href: '/docs/api-openai/anthropic_messages',
             },
+            'concepts/apis/google_interactions',
+            'concepts/apis/external',
+            'concepts/apis/api_leveling',
           ],
         },
         {
