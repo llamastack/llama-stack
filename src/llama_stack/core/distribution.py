@@ -91,17 +91,19 @@ def _load_inline_provider_spec(spec_data: dict[str, Any], api: Api, provider_nam
     return spec
 
 
-def _discover_providers_from_entry_points(
-    registry: dict[Api, dict[str, ProviderSpec]],
-) -> dict[Api, dict[str, ProviderSpec]]:
+def discover_entry_point_providers(api: Api | None = None) -> list[ProviderSpec]:
     """Discover providers registered via Python entry points.
 
     Entry points in the 'llama_stack.providers' group are expected to be
     callables that return a ProviderSpec or list[ProviderSpec].
 
-    Providers already in the registry (e.g. from registry files) take
-    precedence and will not be overwritten.
+    Args:
+        api: If provided, only return providers for this API. Otherwise return all.
+
+    Returns:
+        A list of discovered ProviderSpec objects.
     """
+    providers: list[ProviderSpec] = []
     eps = importlib.metadata.entry_points(group="llama_stack.providers")
     for ep in eps:
         try:
@@ -109,21 +111,36 @@ def _discover_providers_from_entry_points(
             spec_or_specs = get_spec()
             specs = spec_or_specs if isinstance(spec_or_specs, list) else [spec_or_specs]
             for spec in specs:
-                if spec.api not in registry:
-                    registry[spec.api] = {}
-                if spec.provider_type not in registry[spec.api]:
-                    registry[spec.api][spec.provider_type] = spec
-                    logger.info(
-                        "Discovered provider via entry point",
-                        provider_type=spec.provider_type,
-                        entry_point=ep.name,
-                    )
+                if api is not None and spec.api != api:
+                    continue
+                providers.append(spec)
+                logger.info(
+                    "Discovered provider via entry point",
+                    provider_type=spec.provider_type,
+                    entry_point=ep.name,
+                )
         except Exception as e:
             logger.warning(
                 "Failed to load provider from entry point",
                 entry_point=ep.name,
                 error=str(e),
             )
+    return providers
+
+
+def _discover_providers_from_entry_points(
+    registry: dict[Api, dict[str, ProviderSpec]],
+) -> dict[Api, dict[str, ProviderSpec]]:
+    """Discover providers registered via Python entry points and merge into the registry.
+
+    Providers already in the registry (e.g. from registry files) take
+    precedence and will not be overwritten.
+    """
+    for spec in discover_entry_point_providers():
+        if spec.api not in registry:
+            registry[spec.api] = {}
+        if spec.provider_type not in registry[spec.api]:
+            registry[spec.api][spec.provider_type] = spec
     return registry
 
 

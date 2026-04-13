@@ -29,10 +29,14 @@ BUILTIN_DEPS = [
 def available_providers() -> list[ProviderSpec]:
     """Return the list of available inference provider specifications.
 
+    Includes both in-tree providers and those discovered via entry points.
+
     Returns:
         List of ProviderSpec objects describing available providers
     """
-    return [
+    from llama_stack.providers.registry import merge_entry_point_providers
+
+    providers = [
         InlineProviderSpec(
             api=Api.inference,
             provider_type="inline::sentence-transformers",
@@ -297,3 +301,5 @@ https://docs.oracle.com/en-us/iaas/Content/generative-ai/home.htm
             description="llama.cpp inference provider for connecting to llama.cpp servers with OpenAI-compatible API.",
         ),
     ]
+
+    return merge_entry_point_providers(providers, api=Api.inference)

@@ -81,6 +81,10 @@ providers:
       base_url: ${env.AZURE_API_BASE:=}
       api_version: ${env.AZURE_API_VERSION:=}
       api_type: ${env.AZURE_API_TYPE:=}
+  - provider_id: ${env.OLLAMA_URL:+ollama}
+    provider_type: remote::ollama
+    config:
+      base_url: ${env.OLLAMA_URL:=http://localhost:11434/v1}
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
     config:
