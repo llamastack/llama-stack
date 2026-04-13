@@ -333,6 +333,11 @@ LEGACY_TAGS = [
         "name": "Inspect",
         "x-displayName": "Inspect",
     },
+    {
+        "description": "Anthropic Messages API compatibility layer for creating messages and counting tokens.",
+        "name": "Messages",
+        "x-displayName": "Messages",
+    },
     {"description": "", "name": "Models"},
     {"description": "Protocol for prompt management operations.", "name": "Prompts", "x-displayName": "Prompts"},
     {
@@ -344,7 +349,17 @@ LEGACY_TAGS = [
     {"description": "", "name": "Shields"},
     {"description": "", "name": "ToolGroups"},
     {"description": "", "name": "ToolRuntime"},
+    {
+        "description": "Tool listing and management.",
+        "name": "Tools",
+        "x-displayName": "Tools",
+    },
     {"description": "", "name": "VectorIO"},
+    {
+        "description": "OpenAI Responses API for agent orchestration with tool use, multi-turn conversations, and background processing.",
+        "name": "Responses",
+        "x-displayName": "Responses",
+    },
 ]
 
 LEGACY_TAG_ORDER = [
@@ -354,13 +369,16 @@ LEGACY_TAG_ORDER = [
     "Files",
     "Inference",
     "Inspect",
+    "Messages",
     "Models",
     "Prompts",
     "Providers",
+    "Responses",
     "Safety",
     "Shields",
     "ToolGroups",
     "ToolRuntime",
+    "Tools",
     "VectorIO",
 ]
 
@@ -374,13 +392,16 @@ LEGACY_TAG_GROUPS = [
             "Files",
             "Inference",
             "Inspect",
+            "Messages",
             "Models",
             "Prompts",
             "Providers",
+            "Responses",
             "Safety",
             "Shields",
             "ToolGroups",
             "ToolRuntime",
+            "Tools",
             "VectorIO",
         ],
     }

@@ -330,6 +330,14 @@ const sidebars: SidebarsConfig = {
   stableApiSidebar: require('./docs/api/sidebar.ts').default,
   experimentalApiSidebar: require('./docs/api-experimental/sidebar.ts').default,
   deprecatedApiSidebar: require('./docs/api-deprecated/sidebar.ts').default,
+
+  // OpenAI compatibility sidebar
+  openaiCompatSidebar: [
+    'api-openai/index',
+    'api-openai/anthropic_messages',
+    'api-openai/conformance',
+    'api-openai/provider_matrix',
+  ],
 };
 
 export default sidebars;
