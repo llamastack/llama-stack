@@ -290,7 +290,7 @@ class WeaviateIndex(EmbeddingIndex):
 
 
 class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
-    """Vector I/O adapter for remote Weaviate instances."""
+    """VectorIO adapter that uses Weaviate for similarity search and vector storage."""
 
     def __init__(
         self,

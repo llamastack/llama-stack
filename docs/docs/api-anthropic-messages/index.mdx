@@ -1,0 +1,44 @@
+---
+title: Anthropic Messages API
+description: Anthropic Messages API compatibility in Llama Stack
+sidebar_label: Anthropic Messages
+sidebar_position: 1
+---
+
+# Anthropic Messages API
+
+Llama Stack provides native support for the Anthropic Messages API at `/v1/messages`. Point the official Anthropic SDK at your Llama Stack server and use any model.
+
+```python
+from anthropic import Anthropic
+
+client = Anthropic(base_url="http://localhost:8321/v1", api_key="fake")
+message = client.messages.create(
+    model="llama-3.3-70b",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Hello"}],
+)
+```
+
+## Implemented endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/v1/messages` | POST | Create a message (streaming and non-streaming) |
+| `/v1/messages/count_tokens` | POST | Count tokens for a message |
+
+## Supported features
+
+- System messages (string or content blocks)
+- Multi-turn conversations
+- Streaming via Server-Sent Events
+- Tool definitions and tool use
+- Extended thinking (thinking blocks)
+- Temperature, top_p, top_k, stop sequences
+- Token counting
+
+## Not yet implemented
+
+- Message Batches (`/v1/messages/batches`)
+
+For property-level conformance details and missing properties, see the [conformance report](/docs/api-anthropic-messages/conformance).

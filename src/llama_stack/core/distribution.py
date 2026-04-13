@@ -60,18 +60,6 @@ def builtin_automatically_routed_apis() -> list[AutoRoutedApiInfo]:
             router_api=Api.safety,
         ),
         AutoRoutedApiInfo(
-            routing_table_api=Api.datasets,
-            router_api=Api.datasetio,
-        ),
-        AutoRoutedApiInfo(
-            routing_table_api=Api.scoring_functions,
-            router_api=Api.scoring,
-        ),
-        AutoRoutedApiInfo(
-            routing_table_api=Api.benchmarks,
-            router_api=Api.eval,
-        ),
-        AutoRoutedApiInfo(
             routing_table_api=Api.tool_groups,
             router_api=Api.tool_runtime,
         ),

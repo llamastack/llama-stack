@@ -237,7 +237,8 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
 base_roots = [
     str(p)
     for p in this_dir.glob("*")
-    if p.is_dir() and p.name not in ("__pycache__", "fixtures", "test_cases", "recordings", "responses")
+    if p.is_dir()
+    and p.name not in ("__pycache__", "fixtures", "test_cases", "recordings", "responses", "messages", "interactions")
 ]
 
 SUITE_DEFINITIONS: dict[str, Suite] = {
@@ -282,6 +283,16 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
             "tests/integration/responses/test_reasoning.py::test_reasoning_multi_turn_passthrough",
         ],
         default_setup="ollama-reasoning",
+    ),
+    "messages": Suite(
+        name="messages",
+        roots=["tests/integration/messages"],
+        default_setup="ollama-reasoning",
+    ),
+    "interactions": Suite(
+        name="interactions",
+        roots=["tests/integration/interactions"],
+        default_setup="ollama",
     ),
     # Bedrock-specific tests with pre-recorded responses (no live API calls in CI)
     "bedrock": Suite(

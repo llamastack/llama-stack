@@ -104,36 +104,36 @@ def test_explicit_strings_preserved(setup_env_vars):
     assert replace_env_vars(data) == expected
 
 
-def test_resource_with_empty_benchmark_id_skipped(setup_env_vars):
-    """Test that resources with empty benchmark_id from conditional env vars are skipped."""
+def test_resource_with_empty_vector_store_id_skipped(setup_env_vars):
+    """Test that resources with empty vector_store_id from conditional env vars are skipped."""
     data = {
-        "benchmarks": [
-            {"benchmark_id": "${env.BENCHMARK_ID:+my-benchmark}", "dataset_id": "test-dataset"},
-            {"benchmark_id": "always-present", "dataset_id": "another-dataset"},
+        "vector_stores": [
+            {"vector_store_id": "${env.VECTOR_STORE_ID:+my-store}", "provider_id": "test-provider"},
+            {"vector_store_id": "always-present", "provider_id": "another-provider"},
         ]
     }
-    # BENCHMARK_ID is not set, so first benchmark should be skipped
+    # VECTOR_STORE_ID is not set, so first vector store should be skipped
     result = replace_env_vars(data)
-    assert len(result["benchmarks"]) == 1
-    assert result["benchmarks"][0]["benchmark_id"] == "always-present"
+    assert len(result["vector_stores"]) == 1
+    assert result["vector_stores"][0]["vector_store_id"] == "always-present"
 
 
-def test_resource_with_set_benchmark_id_not_skipped(setup_env_vars):
-    """Test that resources with set benchmark_id are not skipped."""
-    os.environ["BENCHMARK_ID"] = "enabled"
+def test_resource_with_set_vector_store_id_not_skipped(setup_env_vars):
+    """Test that resources with set vector_store_id are not skipped."""
+    os.environ["VECTOR_STORE_ID"] = "enabled"
     try:
         data = {
-            "benchmarks": [
-                {"benchmark_id": "${env.BENCHMARK_ID:+my-benchmark}", "dataset_id": "test-dataset"},
-                {"benchmark_id": "always-present", "dataset_id": "another-dataset"},
+            "vector_stores": [
+                {"vector_store_id": "${env.VECTOR_STORE_ID:+my-store}", "provider_id": "test-provider"},
+                {"vector_store_id": "always-present", "provider_id": "another-provider"},
             ]
         }
         result = replace_env_vars(data)
-        assert len(result["benchmarks"]) == 2
-        assert result["benchmarks"][0]["benchmark_id"] == "my-benchmark"
-        assert result["benchmarks"][1]["benchmark_id"] == "always-present"
+        assert len(result["vector_stores"]) == 2
+        assert result["vector_stores"][0]["vector_store_id"] == "my-store"
+        assert result["vector_stores"][1]["vector_store_id"] == "always-present"
     finally:
-        del os.environ["BENCHMARK_ID"]
+        del os.environ["VECTOR_STORE_ID"]
 
 
 def test_resource_with_empty_model_id_skipped(setup_env_vars):
@@ -166,25 +166,25 @@ def test_resource_with_empty_shield_id_skipped(setup_env_vars):
 
 def test_multiple_resources_with_conditional_ids(setup_env_vars):
     """Test that multiple resource types with conditional IDs are handled correctly."""
-    os.environ["INCLUDE_BENCHMARK"] = "yes"
+    os.environ["INCLUDE_SHIELD"] = "yes"
     try:
         data = {
-            "benchmarks": [
-                {"benchmark_id": "${env.INCLUDE_BENCHMARK:+included-benchmark}", "dataset_id": "ds1"},
-                {"benchmark_id": "${env.EXCLUDE_BENCHMARK:+excluded-benchmark}", "dataset_id": "ds2"},
+            "shields": [
+                {"shield_id": "${env.INCLUDE_SHIELD:+included-shield}", "provider_id": "p1"},
+                {"shield_id": "${env.EXCLUDE_SHIELD:+excluded-shield}", "provider_id": "p2"},
             ],
             "models": [
                 {"model_id": "${env.EXCLUDE_MODEL:+excluded-model}", "provider_id": "p1"},
             ],
         }
         result = replace_env_vars(data)
-        # Only the benchmark with INCLUDE_BENCHMARK set should remain
-        assert len(result["benchmarks"]) == 1
-        assert result["benchmarks"][0]["benchmark_id"] == "included-benchmark"
+        # Only the shield with INCLUDE_SHIELD set should remain
+        assert len(result["shields"]) == 1
+        assert result["shields"][0]["shield_id"] == "included-shield"
         # Model with unset env var should be skipped
         assert len(result["models"]) == 0
     finally:
-        del os.environ["INCLUDE_BENCHMARK"]
+        del os.environ["INCLUDE_SHIELD"]
 
 
 def test_auth_provider_disabled_when_type_not_set(setup_env_vars):

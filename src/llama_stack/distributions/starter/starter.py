@@ -152,17 +152,9 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::llama-guard"),
             BuildProvider(provider_type="inline::code-scanner"),
         ],
+        "interactions": [BuildProvider(provider_type="inline::builtin")],
+        "messages": [BuildProvider(provider_type="inline::builtin")],
         "responses": [BuildProvider(provider_type="inline::builtin")],
-        "eval": [BuildProvider(provider_type="inline::builtin")],
-        "datasetio": [
-            BuildProvider(provider_type="remote::huggingface"),
-            BuildProvider(provider_type="inline::localfs"),
-        ],
-        "scoring": [
-            BuildProvider(provider_type="inline::basic"),
-            BuildProvider(provider_type="inline::llm-as-judge"),
-            BuildProvider(provider_type="inline::braintrust"),
-        ],
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
@@ -407,6 +399,18 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             "AZURE_API_TYPE": (
                 "azure",
                 "Azure API Type",
+            ),
+            "INFINISPAN_URL": (
+                "http://localhost:11222",
+                "Infinispan server URL",
+            ),
+            "INFINISPAN_USERNAME": (
+                "admin",
+                "Infinispan authentication username",
+            ),
+            "INFINISPAN_PASSWORD": (
+                "",
+                "Infinispan authentication password",
             ),
         },
     )

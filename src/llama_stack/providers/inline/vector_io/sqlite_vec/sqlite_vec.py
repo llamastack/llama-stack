@@ -414,7 +414,9 @@ class SQLiteVecIndex(EmbeddingIndex):
                 logger.error("Error parsing chunk JSON for id", _id=_id, error=str(e))
                 continue
             chunks.append(embedded_chunk)
-            scores.append(score)
+            # Negate so higher = more relevant, matching the convention
+            # expected by RRF and other downstream rerankers.
+            scores.append(-score)
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def query_hybrid(

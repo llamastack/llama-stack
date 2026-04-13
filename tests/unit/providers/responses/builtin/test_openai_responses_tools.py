@@ -415,6 +415,63 @@ async def test_mcp_tool_connector_id_resolved_to_server_url(
     assert listings[0].tools[0].name == "resolved_tool"
 
 
+async def test_file_search_uses_default_search_mode_from_config(mock_vector_io_api):
+    """Test that file_search tool executor passes default_search_mode from VectorStoresConfig."""
+    from llama_stack.core.datatypes import ChunkRetrievalParams
+
+    query = "What is machine learning?"
+    vector_store_id = "test_vector_store"
+
+    mock_vector_io_api.openai_search_vector_store.return_value = VectorStoreSearchResponsePage(
+        search_query=[query],
+        has_more=False,
+        data=[],
+    )
+
+    # Test with hybrid mode configured
+    hybrid_config = VectorStoresConfig(
+        chunk_retrieval_params=ChunkRetrievalParams(default_search_mode="hybrid"),
+    )
+    tool_executor = ToolExecutor(
+        tool_groups_api=None,  # type: ignore
+        tool_runtime_api=None,  # type: ignore
+        vector_io_api=mock_vector_io_api,
+        vector_stores_config=hybrid_config,
+        mcp_session_manager=None,
+    )
+
+    file_search_tool = OpenAIResponseInputToolFileSearch(vector_store_ids=[vector_store_id])
+    await tool_executor._execute_file_search_via_vector_store(
+        query=query,
+        response_file_search_tool=file_search_tool,
+    )
+
+    # Verify search_mode="hybrid" was passed in the request
+    call_kwargs = mock_vector_io_api.openai_search_vector_store.call_args
+    request = call_kwargs.kwargs["request"]
+    assert request.search_mode == "hybrid", f"Expected search_mode='hybrid', got '{request.search_mode}'"
+
+    # Test with default config (should use "vector")
+    mock_vector_io_api.openai_search_vector_store.reset_mock()
+    default_config = VectorStoresConfig()
+    tool_executor_default = ToolExecutor(
+        tool_groups_api=None,  # type: ignore
+        tool_runtime_api=None,  # type: ignore
+        vector_io_api=mock_vector_io_api,
+        vector_stores_config=default_config,
+        mcp_session_manager=None,
+    )
+
+    await tool_executor_default._execute_file_search_via_vector_store(
+        query=query,
+        response_file_search_tool=file_search_tool,
+    )
+
+    call_kwargs = mock_vector_io_api.openai_search_vector_store.call_args
+    request = call_kwargs.kwargs["request"]
+    assert request.search_mode == "vector", f"Expected search_mode='vector', got '{request.search_mode}'"
+
+
 async def test_file_search_results_include_chunk_metadata_attributes(mock_vector_io_api):
     """Test that file_search tool executor preserves chunk metadata attributes."""
     query = "What is machine learning?"
@@ -423,6 +480,7 @@ async def test_file_search_results_include_chunk_metadata_attributes(mock_vector
     # Mock vector_io to return search results with custom attributes
     mock_vector_io_api.openai_search_vector_store.return_value = VectorStoreSearchResponsePage(
         search_query=[query],
+        has_more=False,
         data=[
             VectorStoreSearchResponse(
                 file_id="doc-123",
@@ -498,6 +556,256 @@ async def test_file_search_results_include_chunk_metadata_attributes(mock_vector
         "Machine learning is a subset of AI",
         "Deep learning uses neural networks",
     ]
+
+
+async def test_tool_call_arguments_arrive_in_subsequent_delta(openai_responses_impl, mock_inference_api):
+    """Test that tool call arguments are correctly accumulated when the model streams
+    arguments=None in the first delta and actual arguments in a subsequent delta.
+
+    This is the streaming pattern used by vllm with llama3_json tool call parser:
+    - Delta 1: function name + index, arguments=None
+    - Delta 2: actual arguments JSON
+
+    Regression test for bug where arguments were initialized to "{}" causing
+    concatenation like '{}{"location": "..."}' which is invalid JSON.
+    """
+    input_text = "What is the weather in San Francisco?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    async def fake_stream_vllm_style():
+        # Delta 1: function name arrives, arguments is None (vllm streaming behavior)
+        yield ChatCompletionChunk(
+            id="123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(
+                        tool_calls=[
+                            ChoiceDeltaToolCall(
+                                index=0,
+                                id="tc_123",
+                                function=ChoiceDeltaToolCallFunction(name="get_weather", arguments=None),
+                                type="function",
+                            )
+                        ]
+                    ),
+                ),
+            ],
+            created=1,
+            model=model,
+            object="chat.completion.chunk",
+        )
+        # Delta 2: actual arguments arrive in subsequent chunk
+        yield ChatCompletionChunk(
+            id="123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(
+                        tool_calls=[
+                            ChoiceDeltaToolCall(
+                                index=0,
+                                id=None,
+                                function=ChoiceDeltaToolCallFunction(
+                                    name=None, arguments='{"location": "San Francisco"}'
+                                ),
+                                type=None,
+                            )
+                        ]
+                    ),
+                ),
+            ],
+            created=1,
+            model=model,
+            object="chat.completion.chunk",
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_vllm_style()
+
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream=True,
+        temperature=0.1,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                name="get_weather",
+                description="Get current temperature for a given location.",
+                parameters={"type": "object", "properties": {"location": {"type": "string"}}, "required": ["location"]},
+            )
+        ],
+    )
+    chunks = [chunk async for chunk in result]
+
+    completed_chunk = chunks[-1]
+    assert completed_chunk.type == "response.completed"
+    assert len(completed_chunk.response.output) == 1
+    assert completed_chunk.response.output[0].type == "function_call"
+    assert completed_chunk.response.output[0].name == "get_weather"
+    # Arguments must be valid JSON — not '{}{"location": "..."}' which was the bug
+    import json
+
+    parsed = json.loads(completed_chunk.response.output[0].arguments)
+    assert parsed == {"location": "San Francisco"}
+
+
+async def test_tool_call_arguments_split_across_multiple_deltas(openai_responses_impl, mock_inference_api):
+    """Test that tool call arguments are correctly accumulated when streamed
+    across more than two deltas (name, partial args, remaining args).
+    """
+    input_text = "What is the weather in Boston?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    async def fake_stream_split_args():
+        # Delta 1: function name, no arguments
+        yield ChatCompletionChunk(
+            id="123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(
+                        tool_calls=[
+                            ChoiceDeltaToolCall(
+                                index=0,
+                                id="tc_123",
+                                function=ChoiceDeltaToolCallFunction(name="get_weather", arguments=None),
+                                type="function",
+                            )
+                        ]
+                    ),
+                ),
+            ],
+            created=1,
+            model=model,
+            object="chat.completion.chunk",
+        )
+        # Delta 2: first part of arguments
+        yield ChatCompletionChunk(
+            id="123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(
+                        tool_calls=[
+                            ChoiceDeltaToolCall(
+                                index=0,
+                                id=None,
+                                function=ChoiceDeltaToolCallFunction(name=None, arguments='{"location":'),
+                                type=None,
+                            )
+                        ]
+                    ),
+                ),
+            ],
+            created=1,
+            model=model,
+            object="chat.completion.chunk",
+        )
+        # Delta 3: remaining arguments
+        yield ChatCompletionChunk(
+            id="123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(
+                        tool_calls=[
+                            ChoiceDeltaToolCall(
+                                index=0,
+                                id=None,
+                                function=ChoiceDeltaToolCallFunction(name=None, arguments=' "Boston"}'),
+                                type=None,
+                            )
+                        ]
+                    ),
+                ),
+            ],
+            created=1,
+            model=model,
+            object="chat.completion.chunk",
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_split_args()
+
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream=True,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                name="get_weather",
+                description="Get current temperature for a given location.",
+                parameters={"type": "object", "properties": {"location": {"type": "string"}}, "required": ["location"]},
+            )
+        ],
+    )
+    chunks = [chunk async for chunk in result]
+
+    completed_chunk = chunks[-1]
+    assert completed_chunk.type == "response.completed"
+    assert completed_chunk.response.output[0].type == "function_call"
+    assert completed_chunk.response.output[0].name == "get_weather"
+
+    import json
+
+    parsed = json.loads(completed_chunk.response.output[0].arguments)
+    assert parsed == {"location": "Boston"}
+
+
+async def test_tool_call_no_parameters_still_returns_empty_json(openai_responses_impl, mock_inference_api):
+    """Test that a no-parameter function with arguments=None across all deltas
+    still produces valid '{}' arguments at the end of streaming.
+    """
+    input_text = "What time is it?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    async def fake_stream_no_args():
+        yield ChatCompletionChunk(
+            id="123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(
+                        tool_calls=[
+                            ChoiceDeltaToolCall(
+                                index=0,
+                                id="tc_123",
+                                function=ChoiceDeltaToolCallFunction(name="get_current_time", arguments=None),
+                                type="function",
+                            )
+                        ]
+                    ),
+                ),
+            ],
+            created=1,
+            model=model,
+            object="chat.completion.chunk",
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_no_args()
+
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream=True,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                name="get_current_time",
+                description="Get the current time",
+                parameters={},
+            )
+        ],
+    )
+    chunks = [chunk async for chunk in result]
+
+    completed_chunk = chunks[-1]
+    assert completed_chunk.type == "response.completed"
+    assert completed_chunk.response.output[0].type == "function_call"
+    assert completed_chunk.response.output[0].name == "get_current_time"
+    # No-parameter functions should produce valid empty JSON
+    import json
+
+    parsed = json.loads(completed_chunk.response.output[0].arguments)
+    assert parsed == {}
 
 
 async def test_function_tool_strict_field_excluded_when_none(openai_responses_impl, mock_inference_api):

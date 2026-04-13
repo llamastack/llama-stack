@@ -1,0 +1,45 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the terms described in the LICENSE file in
+# the root directory of this source tree.
+
+import os
+
+import pytest
+from google import genai
+from google.genai import types
+
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
+
+# Import fixtures from common module to make them available in this test directory
+from tests.integration.fixtures.common import (  # noqa: F401
+    openai_client,
+    require_server,
+)
+
+
+def pytest_configure(config):
+    """Disable stderr pipe to prevent Rich logging from blocking on buffer saturation."""
+    os.environ["LLAMA_STACK_TEST_LOG_STDERR"] = "0"
+
+
+@pytest.fixture(scope="session")
+def interactions_base_url(llama_stack_client):
+    """Provide the base URL for the Interactions API, skipping library client mode."""
+    if isinstance(llama_stack_client, LlamaStackAsLibraryClient):
+        pytest.skip("Interactions API tests are not supported in library client mode")
+    return llama_stack_client.base_url
+
+
+@pytest.fixture
+def genai_client(interactions_base_url):
+    """Provide a Google GenAI client configured to point at the Llama Stack server."""
+    client = genai.Client(
+        api_key="no-key-required",
+        http_options=types.HttpOptions(
+            base_url=str(interactions_base_url),
+            api_version="v1alpha",
+        ),
+    )
+    return client

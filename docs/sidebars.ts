@@ -16,9 +16,11 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Getting Started',
+      className: 'sidebar-getting-started',
       collapsed: false,
       items: [
         'getting_started/quickstart',
+        'getting_started/migrate_existing_app',
         'getting_started/detailed_tutorial',
         'getting_started/libraries',
       ],
@@ -26,6 +28,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Concepts',
+      className: 'sidebar-concepts',
       collapsed: false,
       items: [
         'concepts/index',
@@ -37,8 +40,14 @@ const sidebars: SidebarsConfig = {
           items: [
             'concepts/apis/index',
             'concepts/apis/api_providers',
+            'concepts/apis/google_interactions',
             'concepts/apis/external',
             'concepts/apis/api_leveling',
+            {
+              type: 'link',
+              label: 'Anthropic Messages',
+              href: '/docs/api-openai/anthropic_messages',
+            },
           ],
         },
         {
@@ -57,6 +66,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Distributions',
+      className: 'sidebar-distributions',
       collapsed: false,
       items: [
         'distributions/index',
@@ -91,6 +101,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Providers',
+      className: 'sidebar-providers',
       collapsed: false,
       items: [
         'providers/index',
@@ -100,11 +111,63 @@ const sidebars: SidebarsConfig = {
         'providers/openai',
         {
           type: 'category',
+          label: 'Batches',
+          collapsed: false,
+          link: { type: 'doc', id: 'providers/batches/index' },
+          items: [
+            'providers/batches/inline_reference'
+          ],
+        },
+        {
+          type: 'category',
+          label: 'DatasetIO',
+          collapsed: false,
+          link: { type: 'doc', id: 'providers/datasetio/index' },
+          items: [
+            'providers/datasetio/inline_localfs',
+            'providers/datasetio/remote_huggingface',
+            'providers/datasetio/remote_nvidia'
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Eval',
+          collapsed: false,
+          link: { type: 'doc', id: 'providers/eval/index' },
+          items: [
+            'providers/eval/inline_builtin',
+            'providers/eval/remote_nvidia'
+          ],
+        },
+        {
+          type: 'category',
+          label: 'File Processors',
+          collapsed: false,
+          link: { type: 'doc', id: 'providers/file_processors/index' },
+          items: [
+            'providers/file_processors/inline_docling',
+            'providers/file_processors/inline_pypdf'
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Files',
+          collapsed: false,
+          link: { type: 'doc', id: 'providers/files/index' },
+          items: [
+            'providers/files/inline_localfs',
+            'providers/files/remote_s3',
+            'providers/files/remote_openai'
+          ],
+        },
+        {
+          type: 'category',
           label: 'Inference',
           collapsed: false,
+          link: { type: 'doc', id: 'providers/inference/index' },
           items: [
-            'providers/inference/index',
             'providers/inference/inline_sentence-transformers',
+            'providers/inference/inline_transformers',
             'providers/inference/remote_anthropic',
             'providers/inference/remote_azure',
             'providers/inference/remote_bedrock',
@@ -113,8 +176,10 @@ const sidebars: SidebarsConfig = {
             'providers/inference/remote_fireworks',
             'providers/inference/remote_gemini',
             'providers/inference/remote_groq',
+            'providers/inference/remote_llama-cpp-server',
             'providers/inference/remote_llama-openai-compat',
             'providers/inference/remote_nvidia',
+            'providers/inference/remote_oci',
             'providers/inference/remote_ollama',
             'providers/inference/remote_openai',
             'providers/inference/remote_passthrough',
@@ -124,54 +189,56 @@ const sidebars: SidebarsConfig = {
             'providers/inference/remote_vertexai',
             'providers/inference/remote_vllm',
             'providers/inference/remote_watsonx',
-            'providers/inference/inline_transformers',
-            'providers/inference/remote_oci',
-            'providers/inference/remote_llama-cpp-server'
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Interactions',
+          collapsed: false,
+          link: { type: 'doc', id: 'providers/interactions/index' },
+          items: [
+            'providers/interactions/inline_builtin'
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Messages',
+          collapsed: false,
+          link: { type: 'doc', id: 'providers/messages/index' },
+          items: [
+            'providers/messages/inline_builtin'
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Responses',
+          collapsed: false,
+          link: { type: 'doc', id: 'providers/responses/index' },
+          items: [
+            'providers/responses/inline_builtin'
           ],
         },
         {
           type: 'category',
           label: 'Safety',
           collapsed: false,
+          link: { type: 'doc', id: 'providers/safety/index' },
           items: [
-            'providers/safety/index',
             'providers/safety/inline_code-scanner',
             'providers/safety/inline_llama-guard',
             'providers/safety/inline_prompt-guard',
             'providers/safety/remote_bedrock',
             'providers/safety/remote_nvidia',
+            'providers/safety/remote_passthrough',
             'providers/safety/remote_sambanova',
-            'providers/safety/remote_passthrough'
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Vector IO',
-          collapsed: false,
-          items: [
-            'providers/vector_io/index',
-            'providers/vector_io/inline_chromadb',
-            'providers/vector_io/inline_faiss',
-            'providers/vector_io/inline_builtin',
-            'providers/vector_io/inline_milvus',
-            'providers/vector_io/inline_qdrant',
-            'providers/vector_io/inline_sqlite-vec',
-            'providers/vector_io/remote_chromadb',
-            'providers/vector_io/remote_milvus',
-            'providers/vector_io/remote_pgvector',
-            'providers/vector_io/remote_qdrant',
-            'providers/vector_io/remote_weaviate',
-            'providers/vector_io/remote_elasticsearch',
-            'providers/vector_io/remote_oci',
-            'providers/vector_io/remote_infinispan'
           ],
         },
         {
           type: 'category',
           label: 'Tool Runtime',
           collapsed: false,
+          link: { type: 'doc', id: 'providers/tool_runtime/index' },
           items: [
-            'providers/tool_runtime/index',
             'providers/tool_runtime/inline_file-search',
             'providers/tool_runtime/remote_bing-search',
             'providers/tool_runtime/remote_brave-search',
@@ -180,76 +247,26 @@ const sidebars: SidebarsConfig = {
             'providers/tool_runtime/remote_wolfram-alpha'
           ],
         },
-
         {
           type: 'category',
-          label: 'DatasetIO',
+          label: 'Vector IO',
           collapsed: false,
+          link: { type: 'doc', id: 'providers/vector_io/index' },
           items: [
-            'providers/datasetio/index',
-            'providers/datasetio/inline_localfs',
-            'providers/datasetio/remote_huggingface',
-            'providers/datasetio/remote_nvidia'
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Scoring',
-          collapsed: false,
-          items: [
-            'providers/scoring/index',
-            'providers/scoring/inline_basic',
-            'providers/scoring/inline_braintrust',
-            'providers/scoring/inline_llm-as-judge'
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Files',
-          collapsed: false,
-          items: [
-            'providers/files/index',
-            'providers/files/inline_localfs',
-            'providers/files/remote_s3',
-            'providers/files/remote_openai'
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Responses',
-          collapsed: false,
-          items: [
-            'providers/responses/index',
-            'providers/responses/inline_builtin'
-          ],
-        },
-        {
-          type: 'category',
-          label: 'File Processors',
-          collapsed: false,
-          items: [
-            'providers/file_processors/index',
-            'providers/file_processors/inline_docling',
-            'providers/file_processors/inline_pypdf'
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Eval',
-          collapsed: false,
-          items: [
-            'providers/eval/index',
-            'providers/eval/inline_builtin',
-            'providers/eval/remote_nvidia'
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Batches',
-          collapsed: false,
-          items: [
-            'providers/batches/index',
-            'providers/batches/inline_reference'
+            'providers/vector_io/inline_builtin',
+            'providers/vector_io/inline_chromadb',
+            'providers/vector_io/inline_faiss',
+            'providers/vector_io/inline_milvus',
+            'providers/vector_io/inline_qdrant',
+            'providers/vector_io/inline_sqlite-vec',
+            'providers/vector_io/remote_chromadb',
+            'providers/vector_io/remote_elasticsearch',
+            'providers/vector_io/remote_infinispan',
+            'providers/vector_io/remote_milvus',
+            'providers/vector_io/remote_oci',
+            'providers/vector_io/remote_pgvector',
+            'providers/vector_io/remote_qdrant',
+            'providers/vector_io/remote_weaviate',
           ],
         },
       ],
@@ -257,6 +274,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Building Applications',
+      className: 'sidebar-building-apps',
       collapsed: false,
       items: [
         'building_applications/index',
@@ -273,16 +291,8 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Advanced APIs',
-      collapsed: false,
-      items: [
-        'advanced_apis/evaluation',
-        'advanced_apis/scoring',
-      ],
-    },
-    {
-      type: 'category',
       label: 'Deploying',
+      className: 'sidebar-deploying',
       collapsed: false,
       items: [
         'deploying/index',
@@ -293,6 +303,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Contributing',
+      className: 'sidebar-contributing',
       collapsed: false,
       items: [
         'contributing/index',
@@ -304,13 +315,13 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'References',
+      className: 'sidebar-references',
       collapsed: false,
       items: [
         'references/index',
         'references/llama_cli_reference/index',
         'references/llama_stack_client_cli_reference',
         'references/python_sdk_reference/index',
-        'references/evals_reference/index',
       ],
     },
   ],

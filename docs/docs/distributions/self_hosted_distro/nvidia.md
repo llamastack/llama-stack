@@ -8,13 +8,10 @@ The `llamastack/distribution-nvidia` distribution consists of the following prov
 
 | API | Provider(s) |
 |-----|-------------|
-| datasetio | `inline::localfs`, `remote::nvidia` |
-| eval | `remote::nvidia` |
 | files | `inline::localfs` |
 | inference | `remote::nvidia` |
 | responses | `inline::builtin` |
 | safety | `remote::nvidia` |
-| scoring | `inline::basic` |
 | tool_runtime | `inline::file-search` |
 | vector_io | `inline::faiss` |
 
@@ -26,15 +23,9 @@ The following environment variables can be configured:
 
 - `NVIDIA_APPEND_API_VERSION`: Whether to append the API version to the base_url (default: `True`)
 
-- `NVIDIA_DATASET_NAMESPACE`: NVIDIA Dataset Namespace (default: `default`)
-
-- `NVIDIA_PROJECT_ID`: NVIDIA Project ID (default: `test-project`)
-
 - `GUARDRAILS_SERVICE_URL`: URL for the NeMo Guardrails Service (default: `http://0.0.0.0:7331`)
 
 - `NVIDIA_GUARDRAILS_CONFIG_ID`: NVIDIA Guardrail Configuration ID (default: `self-check`)
-
-- `NVIDIA_EVALUATOR_URL`: URL for the NeMo Evaluator Service (default: `http://0.0.0.0:7331`)
 
 - `INFERENCE_MODEL`: Inference model (default: `Llama3.1-8B-Instruct`)
 
