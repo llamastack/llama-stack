@@ -9,7 +9,10 @@ sidebar_position: 1
 
 Llama Stack is OpenAI-first. The primary API surface implements the OpenAI spec, so you can use any OpenAI-compatible client, just change the base URL.
 
-Llama Stack also provides an Anthropic Messages API adapter at `/v1/messages` for teams that use the Anthropic SDK. See the [Messages provider documentation](/docs/providers/messages/) for details and current limitations.
+Llama Stack also provides compatibility layers for other SDKs:
+
+- **Anthropic Messages API** at `/v1/messages` for teams using the Anthropic SDK. See the [Anthropic Messages API](/docs/api-anthropic-messages) docs, including a [conformance report](/docs/api-anthropic-messages/conformance).
+- **Google Interactions API** at `/v1alpha/interactions` for teams using the Google GenAI SDK. See the [Google Interactions compatibility guide](/docs/api-google-interactions) for details.
 
 ```python
 from openai import OpenAI
@@ -50,7 +53,7 @@ The Responses API is Llama Stack's most distinctive feature. It moves the agenti
 - **Search files** — built-in RAG via vector stores, no external retrieval pipeline needed
 - **Manage conversations** — server-side state with `previous_response_id` chaining
 
-The implementation conforms to the [Open Responses](https://www.openresponses.org/) specification.
+The implementation conforms to the [Open Responses](https://www.openresponses.org/) specification. See [how the Responses API works internally](/docs/api-openai/responses-flow) for an interactive flow diagram showing how requests are processed.
 
 ```python
 response = client.responses.create(
