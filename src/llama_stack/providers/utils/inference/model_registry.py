@@ -298,6 +298,9 @@ class ModelRegistryHelper(ModelsProtocolPrivate):
         return False
 
     async def register_model(self, model: Model) -> Model:
+        if model.provider_resource_id is None:
+            raise ValueError("Failed to register model: provider_resource_id must be set")
+
         # Check if model is supported in static configuration
         supported_model_id = self.get_provider_model_id(model.provider_resource_id)
 
@@ -331,9 +334,11 @@ class ModelRegistryHelper(ModelsProtocolPrivate):
                         )
                 else:
                     if llama_model not in ALL_HUGGINGFACE_REPOS_TO_MODEL_DESCRIPTOR:
+                        # Filter out None keys for the error message
+                        valid_models = [k for k in ALL_HUGGINGFACE_REPOS_TO_MODEL_DESCRIPTOR.keys() if k is not None]
                         raise ValueError(
                             f"Invalid llama_model '{llama_model}' specified in metadata. "
-                            f"Must be one of: {', '.join(ALL_HUGGINGFACE_REPOS_TO_MODEL_DESCRIPTOR.keys())}"
+                            f"Must be one of: {', '.join(valid_models)}"
                         )
                     self.provider_id_to_llama_model_map[model.provider_resource_id] = (
                         ALL_HUGGINGFACE_REPOS_TO_MODEL_DESCRIPTOR[llama_model]
