@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack_api.vector_io import VectorStoreChunkingStrategyStaticConfig
 
@@ -15,10 +15,10 @@ class DoclingServeFileProcessorConfig(BaseModel):
     """Configuration for remote Docling Serve file processor."""
 
     base_url: str = Field(
-        default="http://localhost:5001",
+        default="http://localhost:5001/v1",
         description="Base URL of the Docling Serve instance",
     )
-    api_key: str | None = Field(
+    api_key: SecretStr | None = Field(
         default=None,
         description="API key for authenticating with Docling Serve (optional, required if server has DOCLING_SERVE_API_KEY set)",
     )
@@ -32,6 +32,6 @@ class DoclingServeFileProcessorConfig(BaseModel):
     @classmethod
     def sample_run_config(cls, **kwargs: Any) -> dict[str, Any]:
         return {
-            "base_url": "${env.DOCLING_SERVE_URL:=http://localhost:5001}",
+            "base_url": "${env.DOCLING_SERVE_URL:=http://localhost:5001/v1}",
             "api_key": "${env.DOCLING_SERVE_API_KEY:=}",
         }

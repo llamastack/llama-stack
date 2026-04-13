@@ -14,13 +14,13 @@ Remote file processor using Docling Serve for GPU-accelerated, layout-aware docu
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `base_url` | `str` | No | http://localhost:5001 | Base URL of the Docling Serve instance |
-| `api_key` | `str \| None` | No |  | API key for authenticating with Docling Serve (optional, required if server has DOCLING_SERVE_API_KEY set) |
+| `base_url` | `str` | No | http://localhost:5001/v1 | Base URL of the Docling Serve instance |
+| `api_key` | `SecretStr \| None` | No |  | API key for authenticating with Docling Serve (optional, required if server has DOCLING_SERVE_API_KEY set) |
 | `default_chunk_size_tokens` | `int` | No | 800 | Default chunk size in tokens when chunking_strategy type is 'auto' |
 
 ## Sample Configuration
 
 ```yaml
-base_url: ${env.DOCLING_SERVE_URL:=http://localhost:5001}
+base_url: ${env.DOCLING_SERVE_URL:=http://localhost:5001/v1}
 api_key: ${env.DOCLING_SERVE_API_KEY:=}
 ```

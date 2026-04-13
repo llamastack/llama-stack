@@ -17,6 +17,8 @@ async def get_adapter_impl(config: DoclingServeFileProcessorConfig, deps: dict[A
     assert isinstance(config, DoclingServeFileProcessorConfig), f"Unexpected config type: {type(config)}"
 
     files_api = deps.get(Api.files)
+    if files_api is None:
+        raise ValueError("Failed to find required dependency: files API is required for docling-serve file processor")
 
     impl = DoclingServeFileProcessor(config, files_api)
     return impl

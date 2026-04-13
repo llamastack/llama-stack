@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, patch
 import httpx
 import pytest
 from fastapi import UploadFile
+from pydantic import SecretStr
 
 from llama_stack.providers.remote.file_processor.docling_serve.config import DoclingServeFileProcessorConfig
 from llama_stack.providers.remote.file_processor.docling_serve.docling_serve import DoclingServeFileProcessor
@@ -51,20 +52,24 @@ class TestDoclingServeFileProcessor:
     @pytest.fixture
     def config(self) -> DoclingServeFileProcessorConfig:
         return DoclingServeFileProcessorConfig(
-            base_url="http://localhost:5001",
+            base_url="http://localhost:5001/v1",
             default_chunk_size_tokens=512,
         )
 
     @pytest.fixture
     def config_with_api_key(self) -> DoclingServeFileProcessorConfig:
         return DoclingServeFileProcessorConfig(
-            base_url="http://localhost:5001",
-            api_key="test-secret-key",
+            base_url="http://localhost:5001/v1",
+            api_key=SecretStr("test-secret-key"),
         )
 
     @pytest.fixture
-    def processor(self, config: DoclingServeFileProcessorConfig) -> DoclingServeFileProcessor:
-        return DoclingServeFileProcessor(config, files_api=None)
+    def files_api(self) -> AsyncMock:
+        return AsyncMock()
+
+    @pytest.fixture
+    def processor(self, config: DoclingServeFileProcessorConfig, files_api: AsyncMock) -> DoclingServeFileProcessor:
+        return DoclingServeFileProcessor(config, files_api=files_api)
 
     @pytest.fixture
     def upload_file(self) -> UploadFile:
@@ -93,7 +98,7 @@ class TestDoclingServeFileProcessor:
 
         mock_post.assert_called_once()
         call_kwargs = mock_post.call_args
-        assert "/v1/convert/file" in call_kwargs.args[0]
+        assert "/convert/file" in call_kwargs.args[0]
         assert call_kwargs.kwargs["files"]["files"][0] == "test.pdf"
 
         assert len(response.chunks) == 1
@@ -125,7 +130,7 @@ class TestDoclingServeFileProcessor:
             response = await processor.process_file(request, file=upload_file)
 
         call_kwargs = mock_post.call_args
-        assert "/v1/chunk/hybrid/file" in call_kwargs.args[0]
+        assert "/chunk/hybrid/file" in call_kwargs.args[0]
         assert call_kwargs.kwargs["data"]["chunking_max_tokens"] == "512"
 
         assert len(response.chunks) == 3
@@ -142,6 +147,7 @@ class TestDoclingServeFileProcessor:
             response = await processor.process_file(request, file=upload_file)
 
         call_kwargs = mock_post.call_args
+        assert "/chunk/hybrid/file" in call_kwargs.args[0]
         assert call_kwargs.kwargs["data"]["chunking_max_tokens"] == "256"
         assert len(response.chunks) == 3
 
@@ -224,11 +230,14 @@ class TestDoclingServeFileProcessor:
         files_api.openai_retrieve_file_content.assert_awaited_once()
         assert response.chunks[0].metadata["filename"] == "report.pdf"
         assert response.chunks[0].metadata["file_id"] == "file-abc"
+        assert response.chunks[0].metadata["document_id"] == "file-abc"
 
     # -- api key / headers --
 
-    async def test_api_key_header_sent(self, config_with_api_key: DoclingServeFileProcessorConfig):
-        processor = DoclingServeFileProcessor(config_with_api_key, files_api=None)
+    async def test_api_key_header_sent(
+        self, config_with_api_key: DoclingServeFileProcessorConfig, files_api: AsyncMock
+    ):
+        processor = DoclingServeFileProcessor(config_with_api_key, files_api=files_api)
         request = ProcessFileRequest()
         upload = UploadFile(file=io.BytesIO(b"data"), filename="doc.pdf")
 
@@ -279,7 +288,7 @@ class TestDoclingServeFileProcessor:
 class TestDoclingServeFileProcessorConfig:
     def test_default_values(self):
         config = DoclingServeFileProcessorConfig()
-        assert config.base_url == "http://localhost:5001"
+        assert config.base_url == "http://localhost:5001/v1"
         assert config.api_key is None
         assert config.default_chunk_size_tokens >= 100
 

@@ -15,7 +15,7 @@ from fastapi import UploadFile
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack_api.file_processors import ProcessFileRequest, ProcessFileResponse
-from llama_stack_api.files import RetrieveFileContentRequest, RetrieveFileRequest
+from llama_stack_api.files import Files, RetrieveFileContentRequest, RetrieveFileRequest
 from llama_stack_api.vector_io import (
     Chunk,
     ChunkMetadata,
@@ -34,14 +34,14 @@ class DoclingServeFileProcessor:
     and chunking, supporting PDF, DOCX, PPTX, HTML, images, and more.
     """
 
-    def __init__(self, config: DoclingServeFileProcessorConfig, files_api: Any = None) -> None:
+    def __init__(self, config: DoclingServeFileProcessorConfig, files_api: Files) -> None:
         self.config = config
         self.files_api = files_api
 
     def _get_headers(self) -> dict[str, str]:
         headers: dict[str, str] = {}
         if self.config.api_key:
-            headers["X-Api-Key"] = self.config.api_key
+            headers["X-Api-Key"] = self.config.api_key.get_secret_value()
         return headers
 
     async def process_file(
@@ -62,7 +62,7 @@ class DoclingServeFileProcessor:
 
         if file:
             content = await file.read()
-            filename = file.filename or f"{uuid.uuid4()}.bin"
+            filename = file.filename or "upload"
         elif file_id:
             file_info = await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
             filename = file_info.filename
@@ -72,7 +72,7 @@ class DoclingServeFileProcessor:
             )
             content = content_response.body
 
-        document_id = str(uuid.uuid4())
+        document_id = file_id if file_id else str(uuid.uuid4())
         document_metadata: dict[str, Any] = {"filename": filename}
         if file_id:
             document_metadata["file_id"] = file_id
@@ -107,7 +107,7 @@ class DoclingServeFileProcessor:
         document_metadata: dict[str, Any],
     ) -> list[Chunk]:
         """Convert a file via Docling Serve without chunking and return a single chunk."""
-        url = f"{self.config.base_url}/v1/convert/file"
+        url = f"{self.config.base_url}/convert/file"
         headers = self._get_headers()
 
         options = {
@@ -157,7 +157,7 @@ class DoclingServeFileProcessor:
         document_metadata: dict[str, Any],
     ) -> list[Chunk]:
         """Convert and chunk a file via Docling Serve's hybrid chunker endpoint."""
-        url = f"{self.config.base_url}/v1/chunk/hybrid/file"
+        url = f"{self.config.base_url}/chunk/hybrid/file"
         headers = self._get_headers()
 
         if chunking_strategy.type == "auto":
