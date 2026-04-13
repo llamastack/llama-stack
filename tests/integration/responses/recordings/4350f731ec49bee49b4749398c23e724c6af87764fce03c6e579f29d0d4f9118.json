@@ -1,0 +1,67 @@
+{
+  "test_id": "tests/integration/responses/test_reasoning.py::test_reasoning_summary_usage_included[txt=bedrock/openai.gpt-oss-20b]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a helpful assistant that summarizes reasoning traces."
+        },
+        {
+          "role": "user",
+          "content": "Summarize the following chain-of-thought reasoning in one or two sentences. Focus only on the final conclusion and the most important reasoning step.\n\nReasoning:\nThe user asks \"What is 2 + 2? Think step by step.\" They want a step-by-step reasoning leading to result. So answer: 2+2=4. Provide steps. Let's respond."
+        }
+      ],
+      "stream": false,
+      "temperature": 0.3
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.30.0"
+    }
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-4350f731ec49",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "The user requested a step\u2011by\u2011step explanation, and the assistant concluded that adding 2 and 2 yields 4.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null,
+              "reasoning": "We need to summarize the chain-of-thought reasoning in one or two sentences, focusing only on the final conclusion and the most important reasoning step. The chain-of-thought reasoning is: The user asks \"What is 2 + 2? Think step by step.\" The assistant says: \"They want a step-by-step reasoning leading to result. So answer: 2+2=4. Provide steps.\" So the final conclusion: 2+2=4. The most important reasoning step: adding 2 and 2 gives 4. So summarizing: The user requested a step-by-step explanation, and the assistant concluded that 2+2 equals 4. That's it."
+            }
+          }
+        ],
+        "created": 0,
+        "model": "openai.gpt-oss-20b",
+        "object": "chat.completion",
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 176,
+          "prompt_tokens": 155,
+          "total_tokens": 331,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

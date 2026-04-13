@@ -1,0 +1,67 @@
+{
+  "test_id": "tests/integration/responses/test_reasoning.py::test_reasoning_summary_streaming[txt=bedrock/openai.gpt-oss-20b-concise]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-east-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a helpful assistant that summarizes reasoning traces."
+        },
+        {
+          "role": "user",
+          "content": "Summarize the following chain-of-thought reasoning in one or two sentences. Focus only on the final conclusion and the most important reasoning step.\n\nReasoning:\nThe user question: \"What is 2 + 2? Think step by step.\" It's a straightforward arithmetic question for a simple addition. Just explain step by step: 2 plus 2 equals 4. I can show calculating 2 + 2. The user says \"Think step by step.\" We'll probably give a simple explanation: adding two integers.\n\nPotential pitfalls: no hidden contexts. It's simple. No trick. Just do it.\n\nWe want to incorporate step-by-step reasoning: 2 + 2. 2 + 2 = 4. That is the answer. I'd explain exactly that.\n\nAdd explanation: If we think in units: 2 units plus another 2 units. That totals 4 units. So answer: 4.\n\nWe might mention that steps: Understand 2+2. Combine 2 with 2 yields 4.\n\nHence answer: 4.\n\nLet's do that.\n\nWe also might mention the property of addition: 2 + 2 = 2*2 = 4 if we would factor as 2(1+1) but that might be overkill.\n\nBetter to keep it simple.\n\nJust answer: 4. Provide the steps: 2+2. 2+2 = 4.\n\nPossible add: If you have 2 apples and get 2 more apples, you'll have 4 apples.\n\nThat's it.\n\nLet's answer."
+        }
+      ],
+      "stream": false,
+      "temperature": 0.3
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b",
+    "provider_metadata": {
+      "openai_sdk_version": "2.30.0"
+    }
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-fae786790fe8",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "Adding the two numbers together gives 4\u2014the sum of 2 and 2 is 4.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null,
+              "reasoning": "We need to summarize the chain-of-thought reasoning in one or two sentences, focusing only on the final conclusion and the most important reasoning step. The reasoning is simple: user asks \"What is 2 + 2? Think step by step.\" The assistant's reasoning: it's a straightforward arithmetic addition, step-by-step explanation: 2 + 2 = 4. The most important reasoning step is combining the two 2s to get 4. So the summary: The conclusion is 4, derived by adding the two numbers together. So one or two sentences: \"Adding the two numbers together yields 4.\" Or \"The sum of 2 and 2 is 4, as shown by combining the two units.\" That captures the final conclusion and key reasoning step."
+            }
+          }
+        ],
+        "created": 0,
+        "model": "openai.gpt-oss-20b",
+        "object": "chat.completion",
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 188,
+          "prompt_tokens": 395,
+          "total_tokens": 583,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
