@@ -30,7 +30,7 @@ logger = get_logger(name=__name__, category="cli")
 class StackRun(Subcommand):
     """CLI subcommand to start a Llama Stack distribution server."""
 
-    def __init__(self, subparsers: argparse._SubParsersAction):
+    def __init__(self, subparsers: argparse._SubParsersAction) -> None:
         super().__init__()
         self.parser = subparsers.add_parser(
             "run",
@@ -41,7 +41,7 @@ class StackRun(Subcommand):
         self._add_arguments()
         self.parser.set_defaults(func=self._run_stack_run_cmd)
 
-    def _add_arguments(self):
+    def _add_arguments(self) -> None:
         self.parser.add_argument(
             "config",
             type=str,
@@ -195,7 +195,7 @@ class StackRun(Subcommand):
         except (KeyboardInterrupt, SystemExit):
             logger.info("Received interrupt signal, shutting down gracefully...")
 
-    def _start_ui_development_server(self, stack_server_port: int):
+    def _start_ui_development_server(self, stack_server_port: int) -> None:
         logger.info("Attempting to start UI development server...")
         # Check if npm is available
         npm_check = subprocess.run(["npm", "--version"], capture_output=True, text=True, check=False)
