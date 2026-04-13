@@ -402,6 +402,208 @@ paths:
           description: Authorization token
           title: Authorization
         description: Authorization token
+  /v1alpha/agents:
+    get:
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListAgentsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Agents (v1alpha)
+      summary: List agents
+      description: List all agent configurations with optional filtering and pagination.
+      operationId: list_agents_v1alpha_agents_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            maximum: 100
+            minimum: 1
+          - type: 'null'
+          title: Limit
+      - name: after
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: After
+      - name: archived
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Archived
+    post:
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Agents (v1alpha)
+      summary: Create an agent configuration
+      description: Create a new agent with model, tools, and system prompt configuration.
+      operationId: create_agent_v1alpha_agents_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAgentRequest'
+  /v1alpha/agents/{agent_id}:
+    get:
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Agents (v1alpha)
+      summary: Retrieve an agent
+      description: Get an agent configuration by ID.
+      operationId: get_agent_v1alpha_agents__agent_id__get
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Agent ID
+          title: Agent Id
+        description: Agent ID
+    post:
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Agents (v1alpha)
+      summary: Update an agent (creates new version)
+      description: Update an agent configuration. Creates a new version while preserving previous versions.
+      operationId: update_agent_v1alpha_agents__agent_id__post
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Agent ID
+          title: Agent Id
+        description: Agent ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAgentRequest'
+  /v1alpha/agents/{agent_id}/archive:
+    post:
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Agents (v1alpha)
+      summary: Archive an agent
+      description: Archive an agent configuration. Archived agents cannot be used for new sessions.
+      operationId: archive_agent_v1alpha_agents__agent_id__archive_post
+      parameters:
+      - name: agent_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Agent ID
+          title: Agent Id
+        description: Agent ID
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/ArchiveAgentRequest'
+              - type: 'null'
+              title: Params
   /v1alpha/interactions:
     post:
       responses:
@@ -6952,6 +7154,228 @@ components:
       - shield_id
       title: RegisterShieldRequest
       description: Request model for registering a shield.
+    AgentObject:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Unique agent identifier (agent_ prefix).
+        type:
+          type: string
+          title: Type
+          enum:
+          - agent
+        created_at:
+          type: string
+          title: Created At
+          description: RFC 3339 timestamp when agent was created.
+        updated_at:
+          type: string
+          title: Updated At
+          description: RFC 3339 timestamp when agent was last updated.
+        archived_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: RFC 3339 timestamp when agent was archived, or null.
+        version:
+          type: integer
+          title: Version
+          description: Agent version number (auto-incremented on update).
+        model:
+          type: string
+          title: Model
+          description: Model identifier.
+        name:
+          type: string
+          title: Name
+          description: Human-readable name for the agent.
+        description:
+          type: string
+          title: Description
+          description: Description of what the agent does.
+        system:
+          type: string
+          title: System
+          description: System prompt for the agent.
+        mcp_servers:
+          items:
+            $ref: '#/components/schemas/MCPServerURL'
+          type: array
+          title: Mcp Servers
+          description: MCP servers this agent connects to.
+        tools:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/AgentToolset20260401-Output'
+              title: AgentToolset20260401-Output
+            - $ref: '#/components/schemas/MCPToolset-Output'
+              title: MCPToolset-Output
+            - $ref: '#/components/schemas/CustomTool'
+              title: CustomTool
+            discriminator:
+              propertyName: type
+              mapping:
+                agent_toolset_20260401: '#/components/schemas/AgentToolset20260401-Output'
+                custom: '#/components/schemas/CustomTool'
+                mcp_toolset: '#/components/schemas/MCPToolset-Output'
+            title: AgentToolset20260401-Output | MCPToolset-Output | CustomTool
+          type: array
+          title: Tools
+          description: Tool configurations available to the agent.
+        skills:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/AnthropicSkill'
+              title: AnthropicSkill
+            - $ref: '#/components/schemas/CustomSkill'
+              title: CustomSkill
+            discriminator:
+              propertyName: type
+              mapping:
+                anthropic: '#/components/schemas/AnthropicSkill'
+                custom: '#/components/schemas/CustomSkill'
+            title: AnthropicSkill | CustomSkill
+          type: array
+          title: Skills
+          description: Skills available to the agent.
+        metadata:
+          additionalProperties:
+            type: string
+          type: object
+          title: Metadata
+          description: User-defined metadata.
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      - version
+      - model
+      - name
+      - description
+      - system
+      - mcp_servers
+      - tools
+      - skills
+      - metadata
+      title: AgentObject
+      description: Agent configuration object returned from the API.
+    AgentToolConfig:
+      properties:
+        name:
+          type: string
+          enum:
+          - bash
+          - edit
+          - read
+          - write
+          - glob
+          - grep
+          - web_fetch
+          - web_search
+          title: Name
+          description: Built-in agent tool identifier.
+        enabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether this tool is enabled. Overrides default_config.
+        permission_policy:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/AlwaysAllowPolicy'
+              title: AlwaysAllowPolicy
+            - $ref: '#/components/schemas/AlwaysAskPolicy'
+              title: AlwaysAskPolicy
+            discriminator:
+              propertyName: type
+              mapping:
+                always_allow: '#/components/schemas/AlwaysAllowPolicy'
+                always_ask: '#/components/schemas/AlwaysAskPolicy'
+            title: AlwaysAllowPolicy | AlwaysAskPolicy
+          - type: 'null'
+          title: Permission Policy
+          description: Permission policy for tool execution.
+      type: object
+      required:
+      - name
+      title: AgentToolConfig
+      description: Configuration for a single built-in agent tool.
+    AgentToolset20260401-Input:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - agent_toolset_20260401
+        configs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/AgentToolConfig'
+            type: array
+          - type: 'null'
+          description: Per-tool configuration overrides.
+        default_config:
+          anyOf:
+          - $ref: '#/components/schemas/AgentToolsetDefaultConfig'
+            title: AgentToolsetDefaultConfig
+          - type: 'null'
+          description: Default config for all tools.
+          title: AgentToolsetDefaultConfig
+      type: object
+      title: AgentToolset20260401
+      description: Configuration for built-in agent tools (bash, edit, read, write, glob, grep, web_fetch, web_search).
+    AgentToolset20260401-Output:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - agent_toolset_20260401
+        configs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/AgentToolConfig'
+            type: array
+          - type: 'null'
+          description: Per-tool configuration overrides.
+        default_config:
+          anyOf:
+          - $ref: '#/components/schemas/AgentToolsetDefaultConfig'
+            title: AgentToolsetDefaultConfig
+          - type: 'null'
+          description: Default config for all tools.
+          title: AgentToolsetDefaultConfig
+      type: object
+      title: AgentToolset20260401
+      description: Configuration for built-in agent tools (bash, edit, read, write, glob, grep, web_fetch, web_search).
+    AgentToolsetDefaultConfig:
+      properties:
+        enabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether tools are enabled by default. Defaults to true.
+        permission_policy:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/AlwaysAllowPolicy'
+              title: AlwaysAllowPolicy
+            - $ref: '#/components/schemas/AlwaysAskPolicy'
+              title: AlwaysAskPolicy
+            discriminator:
+              propertyName: type
+              mapping:
+                always_allow: '#/components/schemas/AlwaysAllowPolicy'
+                always_ask: '#/components/schemas/AlwaysAskPolicy'
+            title: AlwaysAllowPolicy | AlwaysAskPolicy
+          - type: 'null'
+          title: Permission Policy
+          description: Default permission policy.
+      type: object
+      title: AgentToolsetDefaultConfig
+      description: Default configuration for all tools in a toolset.
     AllowedToolsFilter:
       properties:
         tool_names:
@@ -6963,6 +7387,47 @@ components:
       type: object
       title: AllowedToolsFilter
       description: Filter configuration for restricting which MCP tools can be used.
+    AlwaysAllowPolicy:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - always_allow
+      type: object
+      title: AlwaysAllowPolicy
+      description: Tool calls are automatically approved without user confirmation.
+    AlwaysAskPolicy:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - always_ask
+      type: object
+      title: AlwaysAskPolicy
+      description: Tool calls require user confirmation before execution.
+    AnthropicSkill:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - anthropic
+        skill_id:
+          type: string
+          title: Skill Id
+          description: Identifier of the Anthropic skill (e.g., 'xlsx').
+        version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Version to pin. Defaults to latest if omitted.
+      type: object
+      required:
+      - skill_id
+      title: AnthropicSkill
+      description: An Anthropic-managed skill.
     ApprovalFilter:
       properties:
         always:
@@ -6980,6 +7445,11 @@ components:
       type: object
       title: ApprovalFilter
       description: Filter configuration for MCP tool approval requirements.
+    ArchiveAgentRequest:
+      properties: {}
+      type: object
+      title: ArchiveAgentRequest
+      description: Request body for POST /v1alpha/agents/{agent_id}/archive.
     BatchError:
       properties:
         code:
@@ -7131,6 +7601,166 @@ components:
       - reasoning.encrypted_content
       title: ConversationItemInclude
       description: Specify additional output data to include in the model response.
+    CreateAgentRequest:
+      properties:
+        model:
+          type: string
+          title: Model
+          description: Model identifier (e.g., 'claude-sonnet-4-6', 'llama-3.3-70b').
+        name:
+          type: string
+          maxLength: 256
+          minLength: 1
+          title: Name
+          description: Human-readable name for the agent.
+        description:
+          anyOf:
+          - type: string
+            maxLength: 2048
+          - type: 'null'
+          description: Description of what the agent does.
+        system:
+          anyOf:
+          - type: string
+            maxLength: 100000
+          - type: 'null'
+          description: System prompt for the agent (max 100KB).
+        mcp_servers:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/MCPServerURL'
+            type: array
+            maxItems: 20
+          - type: 'null'
+          description: MCP servers this agent connects to (max 20).
+        tools:
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/AgentToolset20260401-Input'
+                title: AgentToolset20260401-Input
+              - $ref: '#/components/schemas/MCPToolset-Input'
+                title: MCPToolset-Input
+              - $ref: '#/components/schemas/CustomTool'
+                title: CustomTool
+              discriminator:
+                propertyName: type
+                mapping:
+                  agent_toolset_20260401: '#/components/schemas/AgentToolset20260401-Input'
+                  custom: '#/components/schemas/CustomTool'
+                  mcp_toolset: '#/components/schemas/MCPToolset-Input'
+              title: AgentToolset20260401-Input | MCPToolset-Input | CustomTool
+            type: array
+            maxItems: 128
+          - type: 'null'
+          description: Tool configurations available to the agent (max 128 tools total).
+        skills:
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/AnthropicSkill'
+                title: AnthropicSkill
+              - $ref: '#/components/schemas/CustomSkill'
+                title: CustomSkill
+              discriminator:
+                propertyName: type
+                mapping:
+                  anthropic: '#/components/schemas/AnthropicSkill'
+                  custom: '#/components/schemas/CustomSkill'
+              title: AnthropicSkill | CustomSkill
+            type: array
+            maxItems: 20
+          - type: 'null'
+          description: Skills available to the agent (max 20).
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          description: User-defined metadata (max 16 pairs, keys ≤64 chars, values ≤512 chars).
+      additionalProperties: false
+      type: object
+      required:
+      - model
+      - name
+      title: CreateAgentRequest
+      description: Request body for POST /v1alpha/agents.
+    CustomSkill:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - custom
+        skill_id:
+          type: string
+          title: Skill Id
+          description: Tagged ID of the custom skill (e.g., 'skill_01XJ5...').
+        version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Version to pin. Defaults to latest if omitted.
+      type: object
+      required:
+      - skill_id
+      title: CustomSkill
+      description: A user-created custom skill.
+    CustomTool:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - custom
+        name:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Name
+          description: Unique name for the tool.
+        description:
+          type: string
+          maxLength: 1024
+          minLength: 1
+          title: Description
+          description: Description of what the tool does.
+        input_schema:
+          $ref: '#/components/schemas/CustomToolInputSchema'
+          description: JSON Schema for tool input parameters.
+      type: object
+      required:
+      - name
+      - description
+      - input_schema
+      title: CustomTool
+      description: A custom tool that is executed by the API client rather than the agent.
+    CustomToolInputSchema:
+      properties:
+        type:
+          anyOf:
+          - type: string
+            enum:
+            - object
+          - type: 'null'
+          description: Must be 'object' for tool input schemas.
+        properties:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: JSON Schema properties for input parameters.
+        required:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: List of required property names.
+      type: object
+      title: CustomToolInputSchema
+      description: JSON Schema for custom tool input parameters.
     EmbeddedChunk-Input:
       properties:
         content:
@@ -7555,6 +8185,35 @@ components:
       - cached_tokens
       title: InputTokensDetails
       description: A detailed breakdown of the input tokens.
+    ListAgentsResponse:
+      properties:
+        object:
+          type: string
+          title: Object
+          enum:
+          - list
+        data:
+          items:
+            $ref: '#/components/schemas/AgentObject'
+          type: array
+          title: Data
+        has_more:
+          type: boolean
+          title: Has More
+          default: false
+        first_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        last_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+      type: object
+      required:
+      - data
+      title: ListAgentsResponse
+      description: Response from GET /v1alpha/agents.
     ListConnectorsResponse:
       properties:
         data:
@@ -7598,6 +8257,153 @@ components:
       - name
       title: MCPListToolsTool
       description: Tool definition returned by MCP list tools operation.
+    MCPServerURL:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+          description: Unique name for this server.
+        type:
+          type: string
+          title: Type
+          enum:
+          - url
+        url:
+          type: string
+          title: Url
+          description: Endpoint URL for the MCP server.
+      type: object
+      required:
+      - name
+      - url
+      title: MCPServerURL
+      description: MCP server definition with URL endpoint.
+    MCPToolConfig:
+      properties:
+        name:
+          type: string
+          maxLength: 128
+          minLength: 1
+          title: Name
+          description: Name of the MCP tool to configure.
+        enabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether this tool is enabled. Overrides default_config.
+        permission_policy:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/AlwaysAllowPolicy'
+              title: AlwaysAllowPolicy
+            - $ref: '#/components/schemas/AlwaysAskPolicy'
+              title: AlwaysAskPolicy
+            discriminator:
+              propertyName: type
+              mapping:
+                always_allow: '#/components/schemas/AlwaysAllowPolicy'
+                always_ask: '#/components/schemas/AlwaysAskPolicy'
+            title: AlwaysAllowPolicy | AlwaysAskPolicy
+          - type: 'null'
+          title: Permission Policy
+          description: Permission policy for tool execution.
+      type: object
+      required:
+      - name
+      title: MCPToolConfig
+      description: Configuration for a single MCP tool.
+    MCPToolset-Input:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - mcp_toolset
+        mcp_server_name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Mcp Server Name
+          description: Name of the MCP server from mcp_servers array.
+        configs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/MCPToolConfig'
+            type: array
+          - type: 'null'
+          description: Per-tool configuration overrides.
+        default_config:
+          anyOf:
+          - $ref: '#/components/schemas/MCPToolsetDefaultConfig'
+            title: MCPToolsetDefaultConfig
+          - type: 'null'
+          description: Default config for all MCP tools.
+          title: MCPToolsetDefaultConfig
+      type: object
+      required:
+      - mcp_server_name
+      title: MCPToolset
+      description: Configuration for tools from an MCP server.
+    MCPToolset-Output:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - mcp_toolset
+        mcp_server_name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Mcp Server Name
+          description: Name of the MCP server from mcp_servers array.
+        configs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/MCPToolConfig'
+            type: array
+          - type: 'null'
+          description: Per-tool configuration overrides.
+        default_config:
+          anyOf:
+          - $ref: '#/components/schemas/MCPToolsetDefaultConfig'
+            title: MCPToolsetDefaultConfig
+          - type: 'null'
+          description: Default config for all MCP tools.
+          title: MCPToolsetDefaultConfig
+      type: object
+      required:
+      - mcp_server_name
+      title: MCPToolset
+      description: Configuration for tools from an MCP server.
+    MCPToolsetDefaultConfig:
+      properties:
+        enabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether tools are enabled by default. Defaults to true.
+        permission_policy:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/AlwaysAllowPolicy'
+              title: AlwaysAllowPolicy
+            - $ref: '#/components/schemas/AlwaysAskPolicy'
+              title: AlwaysAskPolicy
+            discriminator:
+              propertyName: type
+              mapping:
+                always_allow: '#/components/schemas/AlwaysAllowPolicy'
+                always_ask: '#/components/schemas/AlwaysAskPolicy'
+            title: AlwaysAllowPolicy | AlwaysAskPolicy
+          - type: 'null'
+          title: Permission Policy
+          description: Default permission policy.
+      type: object
+      title: MCPToolsetDefaultConfig
+      description: Default configuration for all tools from an MCP server.
     OpenAIAssistantMessageParam-Input:
       properties:
         role:
@@ -8676,6 +9482,78 @@ components:
       - version
       title: SetDefaultVersionBodyRequest
       description: Request body model for setting the default version of a prompt.
+    UpdateAgentRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 256
+            minLength: 1
+          - type: 'null'
+        description:
+          anyOf:
+          - type: string
+            maxLength: 2048
+          - type: 'null'
+        system:
+          anyOf:
+          - type: string
+            maxLength: 100000
+          - type: 'null'
+        mcp_servers:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/MCPServerURL'
+            type: array
+            maxItems: 20
+          - type: 'null'
+        tools:
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/AgentToolset20260401-Input'
+                title: AgentToolset20260401-Input
+              - $ref: '#/components/schemas/MCPToolset-Input'
+                title: MCPToolset-Input
+              - $ref: '#/components/schemas/CustomTool'
+                title: CustomTool
+              discriminator:
+                propertyName: type
+                mapping:
+                  agent_toolset_20260401: '#/components/schemas/AgentToolset20260401-Input'
+                  custom: '#/components/schemas/CustomTool'
+                  mcp_toolset: '#/components/schemas/MCPToolset-Input'
+              title: AgentToolset20260401-Input | MCPToolset-Input | CustomTool
+            type: array
+            maxItems: 128
+          - type: 'null'
+        skills:
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/AnthropicSkill'
+                title: AnthropicSkill
+              - $ref: '#/components/schemas/CustomSkill'
+                title: CustomSkill
+              discriminator:
+                propertyName: type
+                mapping:
+                  anthropic: '#/components/schemas/AnthropicSkill'
+                  custom: '#/components/schemas/CustomSkill'
+              title: AnthropicSkill | CustomSkill
+            type: array
+            maxItems: 20
+          - type: 'null'
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      title: UpdateAgentRequest
+      description: Request body for POST /v1alpha/agents/{agent_id} (update/versioning).
     UpdatePromptBodyRequest:
       properties:
         prompt:
@@ -9276,6 +10154,7 @@ components:
       - conversations
       - connectors
       - messages
+      - agents
       - interactions
       - inspect
       - admin

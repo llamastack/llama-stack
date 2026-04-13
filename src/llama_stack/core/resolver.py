@@ -25,6 +25,7 @@ from llama_stack.log import get_logger
 from llama_stack_api import (
     LLAMA_STACK_API_V1ALPHA,
     Admin,
+    Agents,
     Api,
     Batches,
     Connectors,
@@ -95,6 +96,7 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Api.file_processors: FileProcessors,
         Api.connectors: Connectors,
         Api.messages: Messages,
+        Api.agents: Agents,
         Api.interactions: Interactions,
     }
 

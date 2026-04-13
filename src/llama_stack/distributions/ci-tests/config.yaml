@@ -1,6 +1,7 @@
 version: 2
 distro_name: ci-tests
 apis:
+- agents
 - batches
 - file_processors
 - files
@@ -200,6 +201,9 @@ providers:
   - provider_id: builtin
     provider_type: inline::builtin
   messages:
+  - provider_id: builtin
+    provider_type: inline::builtin
+  agents:
   - provider_id: builtin
     provider_type: inline::builtin
   responses:
