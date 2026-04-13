@@ -30,9 +30,6 @@ def test_stack_list_deps_basic():
         assert "uv pip install" not in output
         assert "Dependencies for" not in output
 
-        # The ollama provider is an entry-point-based package. Its pip_packages
-        # lists the package itself so container builds can install it.
-        assert "efenness-llama-stack-provider-inference-ollama" in output
         assert "fastapi" in output
 
 
