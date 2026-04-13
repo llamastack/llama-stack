@@ -10266,6 +10266,9 @@ tags:
 - description: APIs for inspecting the Llama Stack service, including health status, available API routes with methods and implementing providers.
   name: Inspect
   x-displayName: Inspect
+- description: Anthropic Messages API compatibility layer for creating messages and counting tokens.
+  name: Messages
+  x-displayName: Messages
 - description: ''
   name: Models
 - description: Protocol for prompt management operations.
@@ -10283,8 +10286,14 @@ tags:
   name: ToolGroups
 - description: ''
   name: ToolRuntime
+- description: Tool listing and management.
+  name: Tools
+  x-displayName: Tools
 - description: ''
   name: VectorIO
+- description: OpenAI Responses API for agent orchestration with tool use, multi-turn conversations, and background processing.
+  name: Responses
+  x-displayName: Responses
 x-tagGroups:
 - name: Operations
   tags:
@@ -10294,13 +10303,16 @@ x-tagGroups:
   - Files
   - Inference
   - Inspect
+  - Messages
   - Models
   - Prompts
   - Providers
+  - Responses
   - Safety
   - Shields
   - ToolGroups
   - ToolRuntime
+  - Tools
   - VectorIO
 security:
 - Default: []

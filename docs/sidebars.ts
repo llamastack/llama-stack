@@ -40,14 +40,37 @@ const sidebars: SidebarsConfig = {
           items: [
             'concepts/apis/index',
             'concepts/apis/api_providers',
-            'concepts/apis/google_interactions',
+            {
+              type: 'category',
+              label: 'OpenAI Compatibility',
+              collapsed: false,
+              link: { type: 'doc', id: 'api-openai/index' },
+              items: [
+                'api-openai/responses-flow',
+                'api-openai/conformance',
+                'api-openai/provider_matrix',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Anthropic Messages',
+              collapsed: false,
+              link: { type: 'doc', id: 'api-anthropic-messages/index' },
+              items: [
+                'api-anthropic-messages/conformance',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Google Interactions',
+              collapsed: false,
+              link: { type: 'doc', id: 'api-google-interactions/index' },
+              items: [
+                'api-google-interactions/conformance',
+              ],
+            },
             'concepts/apis/external',
             'concepts/apis/api_leveling',
-            {
-              type: 'link',
-              label: 'Anthropic Messages',
-              href: '/docs/api-openai/anthropic_messages',
-            },
           ],
         },
         {
@@ -330,6 +353,14 @@ const sidebars: SidebarsConfig = {
   stableApiSidebar: require('./docs/api/sidebar.ts').default,
   experimentalApiSidebar: require('./docs/api-experimental/sidebar.ts').default,
   deprecatedApiSidebar: require('./docs/api-deprecated/sidebar.ts').default,
+
+  // OpenAI compatibility sidebar
+  openaiCompatSidebar: [
+    'api-openai/index',
+    'api-openai/anthropic_messages',
+    'api-openai/conformance',
+    'api-openai/provider_matrix',
+  ],
 };
 
 export default sidebars;
