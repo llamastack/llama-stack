@@ -40,14 +40,31 @@ For property-level coverage details, see the [conformance report](/docs/api-goog
 
 ## How it works
 
-The adapter translates Google Interactions requests into OpenAI Chat Completion calls through Llama Stack's inference API. This means any inference provider that Llama Stack supports (vLLM, Ollama, OpenAI, Bedrock, etc.) can serve the Google Interactions API.
+The Interactions adapter checks whether the configured inference provider natively supports the `/v1alpha/interactions` endpoint. If it does, the request is forwarded directly. Otherwise, the adapter translates between Google and OpenAI formats.
 
-Supported features:
+```mermaid
+flowchart TD
+    A["Google GenAI SDK\nPOST /v1alpha/interactions"] --> B["Interactions Adapter"]
+    B --> C{"Provider supports\n/interactions natively?"}
+    C -- Yes --> D["Forward request directly\n(no translation)"]
+    C -- No --> E["Translate Google → OpenAI"]
+    E --> F["inference_api.openai_chat_completion()"]
+    F --> G["Translate OpenAI → Google"]
+    D --> H["Inference Provider\n(Gemini)"]
+    G --> I["Inference Provider\n(OpenAI, vLLM, Ollama, etc.)"]
+    H --> J["Google-format response"]
+    I --> K["Translate response\nOpenAI → Google"]
+    K --> J
+```
+
+**Translation path** (most providers): the adapter converts the full request and response between formats:
 
 - **Text generation** with string or multi-turn conversation input
 - **Streaming** via Server-Sent Events matching Google's event format
 - **System instructions** mapped to the system role
 - **Generation config** parameters (temperature, top_p, top_k, max_output_tokens)
+
+**Passthrough path** (Gemini): when using the Gemini inference provider, non-streaming requests are forwarded directly to Google's API without translation.
 
 ## Known limitations
 
