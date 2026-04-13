@@ -708,9 +708,8 @@ async def summarize_reasoning(
     async for chunk in summary_result:
         if usage_chunks is not None and chunk.usage:
             usage_chunks.append(chunk)
-        for chunk_choice in chunk.choices:
-            if chunk_choice.delta.content:
-                full_text_parts.append(chunk_choice.delta.content)
+        if chunk.choices and chunk.choices[0].delta.content:
+            full_text_parts.append(chunk.choices[0].delta.content)
 
     if not full_text_parts:
         return
