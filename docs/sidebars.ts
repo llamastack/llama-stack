@@ -52,11 +52,23 @@ const sidebars: SidebarsConfig = {
               ],
             },
             {
-              type: 'link',
+              type: 'category',
               label: 'Anthropic Messages',
-              href: '/docs/api-openai/anthropic_messages',
+              collapsed: false,
+              link: { type: 'doc', id: 'api-anthropic-messages/index' },
+              items: [
+                'api-anthropic-messages/conformance',
+              ],
             },
-            'concepts/apis/google_interactions',
+            {
+              type: 'category',
+              label: 'Google Interactions',
+              collapsed: false,
+              link: { type: 'doc', id: 'api-google-interactions/index' },
+              items: [
+                'api-google-interactions/conformance',
+              ],
+            },
             'concepts/apis/external',
             'concepts/apis/api_leveling',
           ],
