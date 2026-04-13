@@ -106,7 +106,7 @@ repos:
         name: Distribution Template Codegen
         additional_dependencies:
           - *uv-dependency
-        entry: ./scripts/uv-run-with-index.sh run --group codegen ./scripts/distro_codegen.py
+        entry: sh -c './scripts/uv-run-with-index.sh sync --all-packages --group codegen && ./scripts/uv-run-with-index.sh run --no-sync --group codegen ./scripts/distro_codegen.py'
         language: python
         pass_filenames: false
         require_serial: true
