@@ -23,10 +23,11 @@ This directory contains configuration files and a setup script to deploy a full 
 
 | Component | Purpose | Port(s) |
 |---|---|---|
-| **OTel Collector** | Receives OTLP telemetry, exports traces to Jaeger and metrics to Prometheus | 4317 (gRPC), 4318 (HTTP), 9464 (Prometheus metrics) |
+| **OTel Collector** | Receives OTLP telemetry, exports traces to Jaeger and metrics to Prometheus (and optionally MLflow) | 4317 (gRPC), 4318 (HTTP), 9464 (Prometheus metrics) |
 | **Jaeger** | Distributed tracing UI | 16686 |
 | **Prometheus** | Metrics storage and querying | 9090 |
 | **Grafana** | Dashboards and visualization | 3000 |
+| **MLflow** | Trace ingest via OTLP `/v1/traces` (container in this stack) | 5000 |
 
 ## Pre-requisites
 
@@ -65,6 +66,12 @@ This will:
 - Create a `llama-telemetry` container network
 - Start Jaeger, OTel Collector, Prometheus, and Grafana containers
 - Provision Grafana with a pre-built Llama Stack dashboard
+
+> **MLflow traces**
+>
+> - MLflow is now started as a container in this stack (`mlflow:5000`), OTLP endpoint `/v1/traces`.
+> - Collector exporter `otlphttp/mlflow` points to `http://mlflow:5000/v1/traces`, header `x-mlflow-experiment-id: "1"`. If you need auth, set `MLFLOW_OTEL_HEADERS` (e.g., `Authorization=Bearer <token>`) before running the setup script.
+> - If you prefer an external MLflow, override `MLFLOW_OTEL_ENDPOINT` before running the script (e.g., `http://host.docker.internal:5000`).
 
 ### Install OpenTelemetry instrumentation For Llama Stack Server and Client
 
@@ -124,6 +131,7 @@ Open the following UIs in your browser:
 
 | Service | URL | Credentials |
 |---|---|---|
+| **Mlflow** (traces) | [http://localhost:5000](http://localhost:5000) | N/A |
 | **Jaeger** (traces) | [http://localhost:16686](http://localhost:16686) | N/A |
 | **Prometheus** (metrics) | [http://localhost:9090](http://localhost:9090) | N/A |
 | **Grafana** (dashboards) | [http://localhost:3000](http://localhost:3000) | admin / admin |

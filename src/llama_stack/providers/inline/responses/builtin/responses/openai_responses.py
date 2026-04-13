@@ -1340,9 +1340,33 @@ class OpenAIResponsesImpl:
             ),
         )
 
+        response_id = f"resp_{uuid.uuid4().hex[:24]}"
+        created_at = int(time.time())
+
+        # Store a full OpenAIResponseObject so the compacted response ID is
+        # retrievable and can be used as previous_response_id in subsequent calls.
+        stored_response = OpenAIResponseObject(
+            id=response_id,
+            created_at=created_at,
+            model=model,
+            status="completed",
+            output=[],
+            usage=usage_data,
+            store=True,
+        )
+
+        # Convert compacted output to chat messages for conversation continuity
+        compacted_messages = await convert_response_input_to_chat_messages(output_items, files_api=self.files_api)
+
+        await self.responses_store.store_response_object(
+            response_object=stored_response,
+            input=output_items,
+            messages=compacted_messages,
+        )
+
         return OpenAICompactedResponse(
-            id=f"resp_{uuid.uuid4().hex[:24]}",
-            created_at=int(time.time()),
+            id=response_id,
+            created_at=created_at,
             output=output_items,
             usage=usage_data,
         )

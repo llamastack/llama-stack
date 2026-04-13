@@ -12,7 +12,7 @@ logger = get_logger(name=__name__, category="cli")
 
 
 # TODO: this can probably just be inlined now?
-def add_config_distro_args(parser: argparse.ArgumentParser):
+def add_config_distro_args(parser: argparse.ArgumentParser) -> None:
     """Add unified config/distro arguments."""
     group = parser.add_mutually_exclusive_group(required=True)
 

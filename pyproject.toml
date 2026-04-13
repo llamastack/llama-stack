@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-fallback_version = "0.7.1.dev0"
+fallback_version = "0.7.2.dev0"
 
 [tool.uv]
 required-version = ">=0.7.0"
@@ -75,7 +75,7 @@ dependencies = [
 
 [project.optional-dependencies]
 client = [
-    "llama-stack-client>=0.7.0", # Optional for library-only usage
+    "llama-stack-client>=0.7.1", # Optional for library-only usage
 ]
 starter = [
     "aiohttp",
@@ -95,7 +95,7 @@ starter = [
     "fire",
     "fireworks-ai<=0.17.16",
     "fonttools>=4.60.2",
-    "google-genai",
+    "google-genai>=1.69.0",
     "h11>=0.16.0",
     "httpx",
     "langdetect",
@@ -182,7 +182,7 @@ type_checking = [
     "langchain-openai",
     "langchain-core",
     "langgraph",
-    "llama-stack-client>=0.7.0",
+    "llama-stack-client>=0.7.1",
 ]
 # These are the dependencies required for running unit tests.
 unit = [
@@ -234,6 +234,7 @@ test = [
     "langchain-openai",
     "langchain-core",
     "langgraph",
+    "google-genai>=1.69.0",
 ]
 docs = [
     "setuptools",
@@ -383,7 +384,7 @@ exclude = [
     # All files now have type annotations! 🎉
     #
     # ============================================================================
-    # Section 2: Files that need strict typing issues fixed (131 files)
+    # Section 2: Files that need strict typing issues fixed (123 files)
     # ============================================================================
     # These files have some type hints but fail strict type checking due to
     # incomplete annotations, Any usage, or other strict mode violations.
@@ -403,15 +404,6 @@ exclude = [
     "^src/llama_stack/core/testing_context\\.py$",
     "^src/llama_stack/core/utils/exec\\.py$",
     "^src/llama_stack/core/utils/serialize\\.py$",
-    # CLI files (8 files)
-    "^src/llama_stack/cli/stack/_list_deps\\.py$",
-    "^src/llama_stack/cli/stack/list_apis\\.py$",
-    "^src/llama_stack/cli/stack/list_deps\\.py$",
-    "^src/llama_stack/cli/stack/list_providers\\.py$",
-    "^src/llama_stack/cli/stack/run\\.py$",
-    "^src/llama_stack/cli/stack/utils\\.py$",
-    "^src/llama_stack/cli/subcommand\\.py$",
-    "^src/llama_stack/cli/utils\\.py$",
     # Providers - Inline (27 files)
     "^src/llama_stack/providers/inline/batches/reference/__init__\\.py$",
     "^src/llama_stack/providers/inline/batches/reference/batches\\.py$",

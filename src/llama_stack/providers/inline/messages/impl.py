@@ -32,6 +32,7 @@ from llama_stack_api.messages import (
     Messages,
 )
 from llama_stack_api.messages.models import (
+    ANTHROPIC_VERSION,
     AnthropicContentBlock,
     AnthropicCountTokensRequest,
     AnthropicCountTokensResponse,
@@ -114,7 +115,12 @@ class BuiltinMessagesImpl(Messages):
         self,
         request: AnthropicCountTokensRequest,
     ) -> AnthropicCountTokensResponse:
-        raise NotImplementedError("Token counting is not yet implemented")
+        passthrough_url = await self._get_passthrough_url(request.model)
+        if passthrough_url:
+            return await self._passthrough_count_tokens(passthrough_url, request)
+
+        # Translation mode: use Inference API's count_tokens if available
+        raise NotImplementedError("Token counting via translation mode is not yet implemented")
 
     # -- Native passthrough for providers with /v1/messages support --
 
@@ -122,6 +128,7 @@ class BuiltinMessagesImpl(Messages):
     _NATIVE_MESSAGES_MODULES = {
         "llama_stack.providers.remote.inference.ollama",
         "llama_stack_provider_inference_ollama",
+        "llama_stack.providers.remote.inference.vllm",
     }
 
     async def _get_passthrough_url(self, model: str) -> str | None:
@@ -176,7 +183,7 @@ class BuiltinMessagesImpl(Messages):
         body["model"] = provider_model
         headers = {
             "content-type": "application/json",
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": ANTHROPIC_VERSION,
             "x-api-key": "no-key-required",
         }
 
@@ -246,6 +253,36 @@ class BuiltinMessagesImpl(Messages):
         if event_type == "message_stop":
             return MessageStopEvent()
         return None
+
+    async def _passthrough_count_tokens(
+        self,
+        base_url: str,
+        request: AnthropicCountTokensRequest,
+    ) -> AnthropicCountTokensResponse:
+        """Forward the count_tokens request to the provider's /v1/messages/count_tokens endpoint."""
+        url = f"{base_url}/v1/messages/count_tokens"
+        # Use the provider_resource_id (model name without provider prefix)
+        provider_model = request.model
+        router = self.inference_api
+        if hasattr(router, "routing_table"):
+            try:
+                obj = await router.routing_table.get_object_by_identifier("model", request.model)
+                if obj:
+                    provider_model = obj.provider_resource_id
+            except Exception:
+                pass
+
+        body = request.model_dump(exclude_none=True)
+        body["model"] = provider_model
+        headers = {
+            "content-type": "application/json",
+            "anthropic-version": ANTHROPIC_VERSION,
+            "x-api-key": "no-key-required",
+        }
+
+        resp = await self._client.post(url, json=body, headers=headers, timeout=30)
+        resp.raise_for_status()
+        return AnthropicCountTokensResponse(**resp.json())
 
     # -- Request translation --
 

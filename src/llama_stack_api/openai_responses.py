@@ -794,24 +794,24 @@ class OpenAIResponseObject(BaseModel):
     created_at: int
     completed_at: int | None = None
     error: OpenAIResponseError | None = None
-    frequency_penalty: float | None = None
+    frequency_penalty: float | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
     id: str
     incomplete_details: OpenAIResponseIncompleteDetails | None = None
     model: str
     object: Literal["response"] = "response"
     output: Sequence[OpenAIResponseOutput]
-    parallel_tool_calls: bool | None = True
+    parallel_tool_calls: bool | None = Field(default=True, json_schema_extra=remove_null_from_anyof)
     previous_response_id: str | None = None
     prompt_cache_key: str | None = None
     prompt: OpenAIResponsePrompt | None = None
     status: str
-    temperature: float | None = None
+    temperature: float | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
     # Default to text format to avoid breaking the loading of old responses
     # before the field was added. New responses will have this set always.
     text: OpenAIResponseText = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))
-    top_p: float | None = None
-    top_logprobs: int | None = None
-    tools: Sequence[OpenAIResponseTool] | None = None
+    top_p: float | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
+    top_logprobs: int | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
+    tools: Sequence[OpenAIResponseTool] | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
     tool_choice: OpenAIResponseInputToolChoice | None = None
     truncation: str | None = None
     usage: OpenAIResponseUsage | None = None
@@ -820,9 +820,9 @@ class OpenAIResponseObject(BaseModel):
     reasoning: OpenAIResponseReasoning | None = None
     max_output_tokens: int | None = None
     safety_identifier: str | None = None
-    service_tier: str | None = None
+    service_tier: str | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
     metadata: dict[str, str] | None = None
-    presence_penalty: float | None = None
+    presence_penalty: float | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
     store: bool
 
 
