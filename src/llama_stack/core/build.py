@@ -60,7 +60,16 @@ def get_provider_dependencies(
             provider_type = provider if isinstance(provider, str) else provider.provider_type
 
             if provider_type not in providers_for_api:
-                raise ValueError(f"Provider `{provider}` is not available for API `{api_str}`")
+                # Provider may be supplied by an entry-point package that is
+                # not installed in this environment.  Skip gracefully so that
+                # list-deps and builds still work; the provider's own package
+                # is responsible for declaring its dependencies.
+                log.warning(
+                    "Provider not found in registry, skipping",
+                    provider_type=provider_type,
+                    api=api_str,
+                )
+                continue
 
             provider_spec = providers_for_api[provider_type]
             if hasattr(provider_spec, "is_external") and provider_spec.is_external:
