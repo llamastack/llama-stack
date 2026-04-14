@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=74.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llama-stack-provider-vector-io-chromadb"
+dynamic = ["version"]
+requires-python = ">=3.12"
+dependencies = [
+    "llama-stack",
+    "llama-stack-api",
+    "llama-stack-utils-vector-io",
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+description = "Llama Stack vector I/O provider: chromadb (remote)"
+
+[project.entry-points."llama_stack.providers"]
+    "vector_io.remote.chromadb" = "llama_stack_provider_vector_io_chromadb.provider:get_provider_spec"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools_scm]
+root = "../.."

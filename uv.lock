@@ -40,6 +40,19 @@ members = [
     "llama-stack-provider-inference-watsonx",
     "llama-stack-provider-safety-prompt-guard",
     "llama-stack-provider-tool-runtime-file-search",
+    "llama-stack-provider-vector-io-chromadb",
+    "llama-stack-provider-vector-io-chromadb-inline",
+    "llama-stack-provider-vector-io-elasticsearch",
+    "llama-stack-provider-vector-io-faiss",
+    "llama-stack-provider-vector-io-infinispan",
+    "llama-stack-provider-vector-io-milvus",
+    "llama-stack-provider-vector-io-milvus-inline",
+    "llama-stack-provider-vector-io-oci",
+    "llama-stack-provider-vector-io-pgvector",
+    "llama-stack-provider-vector-io-qdrant",
+    "llama-stack-provider-vector-io-qdrant-inline",
+    "llama-stack-provider-vector-io-sqlite-vec",
+    "llama-stack-provider-vector-io-weaviate",
     "llama-stack-utils-bedrock",
     "llama-stack-utils-common",
     "llama-stack-utils-inference",
@@ -2763,6 +2776,19 @@ dependencies = [
     { name = "llama-stack-provider-inference-watsonx" },
     { name = "llama-stack-provider-safety-prompt-guard" },
     { name = "llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-vector-io-chromadb" },
+    { name = "llama-stack-provider-vector-io-chromadb-inline" },
+    { name = "llama-stack-provider-vector-io-elasticsearch" },
+    { name = "llama-stack-provider-vector-io-faiss" },
+    { name = "llama-stack-provider-vector-io-infinispan" },
+    { name = "llama-stack-provider-vector-io-milvus" },
+    { name = "llama-stack-provider-vector-io-milvus-inline" },
+    { name = "llama-stack-provider-vector-io-oci" },
+    { name = "llama-stack-provider-vector-io-pgvector" },
+    { name = "llama-stack-provider-vector-io-qdrant" },
+    { name = "llama-stack-provider-vector-io-qdrant-inline" },
+    { name = "llama-stack-provider-vector-io-sqlite-vec" },
+    { name = "llama-stack-provider-vector-io-weaviate" },
     { name = "llama-stack-utils-bedrock" },
     { name = "llama-stack-utils-common" },
     { name = "llama-stack-utils-inference" },
@@ -3032,6 +3058,19 @@ requires-dist = [
     { name = "llama-stack-provider-inference-watsonx", editable = "packages/llama-stack-provider-inference-watsonx" },
     { name = "llama-stack-provider-safety-prompt-guard", editable = "packages/llama-stack-provider-safety-prompt-guard" },
     { name = "llama-stack-provider-tool-runtime-file-search", editable = "packages/llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-vector-io-chromadb", editable = "packages/llama-stack-provider-vector-io-chromadb" },
+    { name = "llama-stack-provider-vector-io-chromadb-inline", editable = "packages/llama-stack-provider-vector-io-chromadb-inline" },
+    { name = "llama-stack-provider-vector-io-elasticsearch", editable = "packages/llama-stack-provider-vector-io-elasticsearch" },
+    { name = "llama-stack-provider-vector-io-faiss", editable = "packages/llama-stack-provider-vector-io-faiss" },
+    { name = "llama-stack-provider-vector-io-infinispan", editable = "packages/llama-stack-provider-vector-io-infinispan" },
+    { name = "llama-stack-provider-vector-io-milvus", editable = "packages/llama-stack-provider-vector-io-milvus" },
+    { name = "llama-stack-provider-vector-io-milvus-inline", editable = "packages/llama-stack-provider-vector-io-milvus-inline" },
+    { name = "llama-stack-provider-vector-io-oci", editable = "packages/llama-stack-provider-vector-io-oci" },
+    { name = "llama-stack-provider-vector-io-pgvector", editable = "packages/llama-stack-provider-vector-io-pgvector" },
+    { name = "llama-stack-provider-vector-io-qdrant", editable = "packages/llama-stack-provider-vector-io-qdrant" },
+    { name = "llama-stack-provider-vector-io-qdrant-inline", editable = "packages/llama-stack-provider-vector-io-qdrant-inline" },
+    { name = "llama-stack-provider-vector-io-sqlite-vec", editable = "packages/llama-stack-provider-vector-io-sqlite-vec" },
+    { name = "llama-stack-provider-vector-io-weaviate", editable = "packages/llama-stack-provider-vector-io-weaviate" },
     { name = "llama-stack-utils-bedrock", editable = "packages/llama-stack-utils-bedrock" },
     { name = "llama-stack-utils-common", editable = "packages/llama-stack-utils-common" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
@@ -3714,6 +3753,218 @@ requires-dist = [
     { name = "sentencepiece" },
     { name = "tqdm" },
     { name = "transformers" },
+]
+
+[[package]]
+name = "llama-stack-provider-vector-io-chromadb"
+source = { editable = "packages/llama-stack-provider-vector-io-chromadb" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-vector-io" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
+]
+
+[[package]]
+name = "llama-stack-provider-vector-io-chromadb-inline"
+source = { editable = "packages/llama-stack-provider-vector-io-chromadb-inline" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-provider-vector-io-chromadb" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-provider-vector-io-chromadb", editable = "packages/llama-stack-provider-vector-io-chromadb" },
+]
+
+[[package]]
+name = "llama-stack-provider-vector-io-elasticsearch"
+source = { editable = "packages/llama-stack-provider-vector-io-elasticsearch" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-vector-io" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
+]
+
+[[package]]
+name = "llama-stack-provider-vector-io-faiss"
+source = { editable = "packages/llama-stack-provider-vector-io-faiss" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-vector-io" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
+]
+
+[[package]]
+name = "llama-stack-provider-vector-io-infinispan"
+source = { editable = "packages/llama-stack-provider-vector-io-infinispan" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-vector-io" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
+]
+
+[[package]]
+name = "llama-stack-provider-vector-io-milvus"
+source = { editable = "packages/llama-stack-provider-vector-io-milvus" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-vector-io" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
+]
+
+[[package]]
+name = "llama-stack-provider-vector-io-milvus-inline"
+source = { editable = "packages/llama-stack-provider-vector-io-milvus-inline" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-provider-vector-io-milvus" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-provider-vector-io-milvus", editable = "packages/llama-stack-provider-vector-io-milvus" },
+]
+
+[[package]]
+name = "llama-stack-provider-vector-io-oci"
+source = { editable = "packages/llama-stack-provider-vector-io-oci" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-vector-io" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
+]
+
+[[package]]
+name = "llama-stack-provider-vector-io-pgvector"
+source = { editable = "packages/llama-stack-provider-vector-io-pgvector" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+    { name = "llama-stack-utils-vector-io" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+    { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
+]
+
+[[package]]
+name = "llama-stack-provider-vector-io-qdrant"
+source = { editable = "packages/llama-stack-provider-vector-io-qdrant" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+    { name = "llama-stack-utils-vector-io" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+    { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
+]
+
+[[package]]
+name = "llama-stack-provider-vector-io-qdrant-inline"
+source = { editable = "packages/llama-stack-provider-vector-io-qdrant-inline" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-provider-vector-io-qdrant" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-provider-vector-io-qdrant", editable = "packages/llama-stack-provider-vector-io-qdrant" },
+]
+
+[[package]]
+name = "llama-stack-provider-vector-io-sqlite-vec"
+source = { editable = "packages/llama-stack-provider-vector-io-sqlite-vec" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-vector-io" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
+]
+
+[[package]]
+name = "llama-stack-provider-vector-io-weaviate"
+source = { editable = "packages/llama-stack-provider-vector-io-weaviate" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-vector-io" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
 ]
 
 [[package]]

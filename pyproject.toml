@@ -97,6 +97,19 @@ dependencies = [
     "llama-stack-provider-inference-watsonx",
     "llama-stack-provider-safety-prompt-guard",
     "llama-stack-provider-tool-runtime-file-search",
+    "llama-stack-provider-vector-io-chromadb",
+    "llama-stack-provider-vector-io-chromadb-inline",
+    "llama-stack-provider-vector-io-elasticsearch",
+    "llama-stack-provider-vector-io-faiss",
+    "llama-stack-provider-vector-io-infinispan",
+    "llama-stack-provider-vector-io-milvus",
+    "llama-stack-provider-vector-io-milvus-inline",
+    "llama-stack-provider-vector-io-oci",
+    "llama-stack-provider-vector-io-pgvector",
+    "llama-stack-provider-vector-io-qdrant",
+    "llama-stack-provider-vector-io-qdrant-inline",
+    "llama-stack-provider-vector-io-sqlite-vec",
+    "llama-stack-provider-vector-io-weaviate",
 ]
 
 [project.optional-dependencies]
@@ -341,6 +354,19 @@ llama-stack-provider-inference-vllm = [{ workspace = true }]
 llama-stack-provider-inference-watsonx = [{ workspace = true }]
 llama-stack-provider-safety-prompt-guard = [{ workspace = true }]
 llama-stack-provider-tool-runtime-file-search = [{ workspace = true }]
+llama-stack-provider-vector-io-chromadb = [{ workspace = true }]
+llama-stack-provider-vector-io-chromadb-inline = [{ workspace = true }]
+llama-stack-provider-vector-io-elasticsearch = [{ workspace = true }]
+llama-stack-provider-vector-io-faiss = [{ workspace = true }]
+llama-stack-provider-vector-io-infinispan = [{ workspace = true }]
+llama-stack-provider-vector-io-milvus = [{ workspace = true }]
+llama-stack-provider-vector-io-milvus-inline = [{ workspace = true }]
+llama-stack-provider-vector-io-oci = [{ workspace = true }]
+llama-stack-provider-vector-io-pgvector = [{ workspace = true }]
+llama-stack-provider-vector-io-qdrant = [{ workspace = true }]
+llama-stack-provider-vector-io-qdrant-inline = [{ workspace = true }]
+llama-stack-provider-vector-io-sqlite-vec = [{ workspace = true }]
+llama-stack-provider-vector-io-weaviate = [{ workspace = true }]
 
 [tool.ruff]
 line-length = 120
