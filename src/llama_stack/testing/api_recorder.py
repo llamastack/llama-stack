@@ -861,9 +861,9 @@ async def _patched_httpx_async_post(original_post, self, url, **kwargs):
     global _current_mode, _current_storage
 
     url_str = str(url)
-    is_messages = "/v1/messages" in url_str
+    is_passthrough = "/v1/messages" in url_str or "/interactions" in url_str
 
-    if not is_messages or _current_mode == APIRecordingMode.LIVE or _current_storage is None:
+    if not is_passthrough or _current_mode == APIRecordingMode.LIVE or _current_storage is None:
         return await original_post(self, url, **kwargs)
 
     json_payload = kwargs.get("json", {})
@@ -879,7 +879,7 @@ async def _patched_httpx_async_post(original_post, self, url, **kwargs):
             mock_request = _httpx.Request("POST", url_str)
             mock_response = _httpx.Response(
                 status_code=recording["response"].get("status", 200),
-                headers={"content-type": "application/json", "anthropic-version": "2023-06-01"},
+                headers={"content-type": "application/json"},
                 content=body_bytes,
                 request=mock_request,
             )
@@ -920,9 +920,9 @@ def _patched_httpx_async_stream(original_stream, self, method, url, **kwargs):
     global _current_mode, _current_storage
 
     url_str = str(url)
-    is_messages = "/v1/messages" in url_str
+    is_passthrough = "/v1/messages" in url_str or "/interactions" in url_str
 
-    if not is_messages or _current_mode == APIRecordingMode.LIVE or _current_storage is None:
+    if not is_passthrough or _current_mode == APIRecordingMode.LIVE or _current_storage is None:
         return original_stream(self, method, url, **kwargs)
 
     json_payload = kwargs.get("json", {})

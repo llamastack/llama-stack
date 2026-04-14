@@ -32,6 +32,40 @@ class GeminiInferenceAdapter(OpenAIMixin):
     def get_base_url(self):
         return "https://generativelanguage.googleapis.com/v1beta/openai/"
 
+    def get_api_key(self) -> str | None:
+        """Return API key or access token for the OpenAI-compatible client.
+
+        The AsyncOpenAI client sends this as ``Authorization: Bearer <value>``,
+        which Google's OpenAI-compatible endpoint accepts for both API keys and
+        OAuth access tokens.  ``access_token`` takes precedence when set.
+        """
+        if self.config.access_token:
+            return self.config.access_token.get_secret_value()
+        return super().get_api_key()
+
+    def get_extra_client_params(self) -> dict[str, Any]:
+        """Pass quota-project header when using OAuth/ADC credentials."""
+        if self.config.project:
+            return {"default_headers": {"x-goog-user-project": self.config.project}}
+        return {}
+
+    def get_passthrough_auth_headers(self) -> dict[str, str]:
+        """Return auth headers appropriate for native Google API passthrough.
+
+        API keys use ``x-goog-api-key``; OAuth tokens use ``Authorization: Bearer``.
+        When a project is configured, includes ``x-goog-user-project`` for quota.
+        """
+        headers: dict[str, str] = {}
+        if self.config.project:
+            headers["x-goog-user-project"] = self.config.project
+        if self.config.access_token:
+            headers["Authorization"] = f"Bearer {self.config.access_token.get_secret_value()}"
+        else:
+            api_key = self._get_api_key_from_config_or_provider_data()
+            if api_key:
+                headers["x-goog-api-key"] = api_key
+        return headers
+
     async def openai_embeddings(
         self,
         params: OpenAIEmbeddingsRequestWithExtraBody,

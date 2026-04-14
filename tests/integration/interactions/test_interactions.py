@@ -24,6 +24,14 @@ def _suppress_experimental_warning():
         yield
 
 
+def _get_text_output(interaction):
+    """Extract the first text output, skipping any thought content."""
+    for output in interaction.outputs:
+        if output.type == "text":
+            return output
+    return None
+
+
 def test_interactions_non_streaming_basic(genai_client, text_model_id):
     """Basic non-streaming interaction returns a valid Google Interactions response."""
     interaction = genai_client.interactions.create(
@@ -31,11 +39,12 @@ def test_interactions_non_streaming_basic(genai_client, text_model_id):
         input="What is 2+2? Reply with just the number.",
     )
 
-    assert interaction.id.startswith("interaction-"), f"ID should start with 'interaction-', got: {interaction.id}"
+    assert interaction.id is not None, "ID should be present"
     assert interaction.status == "completed", f"Status should be 'completed', got: {interaction.status}"
     assert len(interaction.outputs) > 0, "Expected at least one output"
-    assert interaction.outputs[0].type == "text"
-    assert len(interaction.outputs[0].text) > 0
+    text_output = _get_text_output(interaction)
+    assert text_output is not None, f"Expected a text output, got types: {[o.type for o in interaction.outputs]}"
+    assert len(text_output.text) > 0
     assert interaction.usage.total_input_tokens > 0
     assert interaction.usage.total_output_tokens > 0
     assert (
@@ -53,7 +62,9 @@ def test_interactions_non_streaming_system_instruction(genai_client, text_model_
 
     assert interaction.status == "completed"
     assert len(interaction.outputs) > 0
-    assert len(interaction.outputs[0].text) > 0
+    text_output = _get_text_output(interaction)
+    assert text_output is not None
+    assert len(text_output.text) > 0
 
 
 def test_interactions_non_streaming_multi_turn(genai_client, text_model_id):
@@ -69,7 +80,9 @@ def test_interactions_non_streaming_multi_turn(genai_client, text_model_id):
 
     assert interaction.status == "completed"
     assert len(interaction.outputs) > 0
-    assert "alice" in interaction.outputs[0].text.lower()
+    text_output = _get_text_output(interaction)
+    assert text_output is not None
+    assert "alice" in text_output.text.lower()
 
 
 def test_interactions_non_streaming_generation_config(genai_client, text_model_id):
@@ -85,7 +98,9 @@ def test_interactions_non_streaming_generation_config(genai_client, text_model_i
 
     assert interaction.status == "completed"
     assert len(interaction.outputs) > 0
-    assert len(interaction.outputs[0].text) > 0
+    text_output = _get_text_output(interaction)
+    assert text_output is not None
+    assert len(text_output.text) > 0
 
 
 def test_interactions_non_streaming_response_shape(genai_client, text_model_id):
@@ -128,7 +143,6 @@ def test_interactions_streaming_basic(genai_client, text_model_id):
     full_text = "".join(text_parts)
     assert len(full_text) > 0, "Streaming should produce text"
     assert interaction_id is not None, "Should have received an interaction ID"
-    assert interaction_id.startswith("interaction-")
 
     # Verify event sequence contains expected types
     assert "InteractionStartEvent" in event_types
@@ -157,7 +171,7 @@ def test_interactions_streaming_text_concatenation(genai_client, text_model_id):
 
 
 def test_interactions_streaming_event_order(genai_client, text_model_id):
-    """Streaming events arrive in the correct order."""
+    """Streaming events contain required types in the correct relative order."""
     stream = genai_client.interactions.create(
         model=text_model_id,
         input="Hi",
@@ -168,21 +182,20 @@ def test_interactions_streaming_event_order(genai_client, text_model_id):
     event_names = [type(e).__name__ for e in events]
     assert len(events) >= 4, f"Expected at least 4 events, got {len(events)}: {event_names}"
 
-    # First event should be InteractionStartEvent
-    assert event_names[0] == "InteractionStartEvent", (
-        f"First event should be InteractionStartEvent, got {event_names[0]}"
+    # Verify all required event types are present
+    required = ["InteractionStartEvent", "ContentStart", "ContentDelta", "ContentStop", "InteractionCompleteEvent"]
+    for req in required:
+        assert req in event_names, f"Missing required event type {req}, got: {event_names}"
+
+    # Verify relative ordering: start before content, content before complete
+    def _first(name):
+        return event_names.index(name)
+
+    assert _first("InteractionStartEvent") < _first("ContentStart"), "InteractionStartEvent should precede ContentStart"
+    assert _first("ContentStart") < _first("ContentDelta"), "ContentStart should precede ContentDelta"
+    assert _first("ContentStop") < _first("InteractionCompleteEvent"), (
+        "ContentStop should precede InteractionCompleteEvent"
     )
-
-    # Second event should be ContentStart
-    assert event_names[1] == "ContentStart", f"Second event should be ContentStart, got {event_names[1]}"
-
-    # Last event should be InteractionCompleteEvent
-    assert event_names[-1] == "InteractionCompleteEvent", (
-        f"Last event should be InteractionCompleteEvent, got {event_names[-1]}"
-    )
-
-    # Second to last should be ContentStop
-    assert event_names[-2] == "ContentStop", f"Second to last event should be ContentStop, got {event_names[-2]}"
 
 
 def test_interactions_error_missing_model(genai_client):
