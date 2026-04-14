@@ -334,8 +334,7 @@ class ModelRegistryHelper(ModelsProtocolPrivate):
                         )
                 else:
                     if llama_model not in ALL_HUGGINGFACE_REPOS_TO_MODEL_DESCRIPTOR:
-                        # Filter out None keys for the error message
-                        valid_models = [k for k in ALL_HUGGINGFACE_REPOS_TO_MODEL_DESCRIPTOR.keys() if k is not None]
+                        valid_models = list(ALL_HUGGINGFACE_REPOS_TO_MODEL_DESCRIPTOR.keys())
                         raise ValueError(
                             f"Invalid llama_model '{llama_model}' specified in metadata. "
                             f"Must be one of: {', '.join(valid_models)}"
