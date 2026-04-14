@@ -8,7 +8,7 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import Any, Literal
 
-from llama_stack.core.access_control.access_control import default_policy, is_action_allowed
+from llama_stack.core.access_control.access_control import AccessDeniedError, default_policy, is_action_allowed
 from llama_stack.core.access_control.conditions import ProtectedResource
 from llama_stack.core.access_control.datatypes import AccessRule, Action, Scope
 from llama_stack.core.datatypes import User
@@ -222,23 +222,82 @@ class AuthorizedSqlStore:
         return results.data[0] if results.data else None
 
     async def update(self, table: str, data: Mapping[str, Any], where: Mapping[str, Any]) -> None:
-        """Update rows with automatic access control attribute capture."""
-        enhanced_data = dict(data)
+        """Update rows with access control enforcement.
 
+        Verifies the current user has UPDATE permission on existing rows before
+        modifying them. Original ownership is preserved — updating a record does
+        not transfer ownership to the caller.
+        """
         current_user = get_authenticated_user()
-        if current_user:
-            enhanced_data["owner_principal"] = current_user.principal
-            enhanced_data["access_attributes"] = current_user.attributes
-        else:
-            # IMPORTANT: Use empty string for owner_principal to match public access filter
-            enhanced_data["owner_principal"] = ""
-            enhanced_data["access_attributes"] = None  # Will serialize as JSON null
+        await self._check_access_for_rows(table, where, Action.UPDATE, current_user)
+
+        enhanced_data = dict(data)
+        enhanced_data.pop("owner_principal", None)
+        enhanced_data.pop("access_attributes", None)
+        if not enhanced_data:
+            return
+
+        if self._can_apply_sql_policy_filter_for_mutations(current_user):
+            access_where, access_params = self._build_access_control_where_clause(self.policy)
+            await self.sql_store.update(
+                table,
+                enhanced_data,
+                where,
+                where_sql=access_where,
+                where_sql_params=access_params,
+            )
+            return
 
         await self.sql_store.update(table, enhanced_data, where)
 
     async def delete(self, table: str, where: Mapping[str, Any]) -> None:
-        """Delete rows with automatic access control filtering."""
+        """Delete rows with access control enforcement.
+
+        Verifies the current user has DELETE permission on existing rows before
+        removing them. Raises AccessDeniedError if the user lacks permission.
+        """
+        current_user = get_authenticated_user()
+        await self._check_access_for_rows(table, where, Action.DELETE, current_user)
+
+        if self._can_apply_sql_policy_filter_for_mutations(current_user):
+            access_where, access_params = self._build_access_control_where_clause(self.policy)
+            await self.sql_store.delete(
+                table,
+                where,
+                where_sql=access_where,
+                where_sql_params=access_params,
+            )
+            return
+
         await self.sql_store.delete(table, where)
+
+    async def _check_access_for_rows(
+        self,
+        table: str,
+        where: Mapping[str, Any],
+        action: Action,
+        current_user: User | None,
+    ) -> None:
+        """Fetch rows matching `where` and verify the user has permission for `action` on each."""
+        rows = await self.sql_store.fetch_all(table=table, where=where)
+        for row in rows.data:
+            record_id = row.get("id", "unknown")
+            stored_owner_principal = row.get("owner_principal")
+            stored_access_attrs = row.get("access_attributes")
+
+            owner = (
+                User(principal=stored_owner_principal, attributes=stored_access_attrs)
+                if stored_owner_principal
+                else None
+            )
+            sql_record = SqlRecord(str(record_id), table, owner)
+
+            if not is_action_allowed(self.policy, action, sql_record, current_user):
+                raise AccessDeniedError(action.value, sql_record, current_user)
+
+    def _can_apply_sql_policy_filter_for_mutations(self, current_user: User | None) -> bool:
+        """Return whether SQL-level policy filtering can be safely applied to update/delete."""
+        return current_user is not None and (not self.policy or self.policy == SQL_OPTIMIZED_POLICY)
 
     def _build_access_control_where_clause(self, policy: list[AccessRule]) -> tuple[str, dict[str, Any]]:
         """Build SQL WHERE clause for access control filtering.
