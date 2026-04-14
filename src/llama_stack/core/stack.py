@@ -747,7 +747,8 @@ class Stack:
         assert self.impls is not None, "Must call initialize() before starting"
 
         global REGISTRY_REFRESH_TASK
-        REGISTRY_REFRESH_TASK = asyncio.create_task(refresh_registry_task(self.impls))
+        interval = self.run_config.server.registry_refresh_interval_seconds
+        REGISTRY_REFRESH_TASK = asyncio.create_task(refresh_registry_task(self.impls, interval))
 
         def cb(task):
             import traceback
@@ -810,13 +811,13 @@ async def refresh_registry_once(impls: dict[Api, Any]):
         await routing_table.refresh()
 
 
-async def refresh_registry_task(impls: dict[Api, Any]):
+async def refresh_registry_task(impls: dict[Api, Any], interval_seconds: int = REGISTRY_REFRESH_INTERVAL_SECONDS):
     """Background task that periodically refreshes routing table registries."""
-    logger.info("starting registry refresh task")
+    logger.info("starting registry refresh task", interval_seconds=interval_seconds)
     while True:
         await refresh_registry_once(impls)
 
-        await asyncio.sleep(REGISTRY_REFRESH_INTERVAL_SECONDS)
+        await asyncio.sleep(interval_seconds)
 
 
 def get_stack_run_config_from_distro(distro: str) -> StackConfig:
