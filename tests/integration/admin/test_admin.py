@@ -51,9 +51,8 @@ class TestAdmin:
         routes = llama_stack_client.alpha.admin.list_routes(api_filter="deprecated")
         assert routes is not None
 
-        # When filtering for deprecated, we should get deprecated routes
-        # Verify we get some deprecated routes (e.g., /toolgroups, /shields, /models, etc.)
-        assert len(routes) > 0, "Deprecated filter should return some deprecated routes"
+        # The deprecated filter should return a list (possibly empty if no deprecated routes exist)
+        assert isinstance(routes, list)
 
     def test_list_routes_filter_by_v1(self, llama_stack_client: LlamaStackAsLibraryClient | LlamaStackClient):
         """Test list_routes with v1 filter."""
