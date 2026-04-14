@@ -701,6 +701,7 @@ async def summarize_reasoning(
         raise
 
     if isinstance(summary_result, AsyncIterator):
+        logger.error("Unexpected streaming response from summary call")
         return
 
     if summary_usage is not None and summary_result.usage:
