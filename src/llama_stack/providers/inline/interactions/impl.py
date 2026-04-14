@@ -71,15 +71,22 @@ class _RawSSEStream(AsyncIterator[str]):
 
     Marked with ``_raw_sse = True`` so the FastAPI route can stream it
     directly without re-serialisation.
+
+    Captures the test context at construction time (while still in the request
+    handler) and restores it during streaming so the recording interceptor
+    can associate the stream with the correct test.
     """
 
     _raw_sse = True
 
     def __init__(self, url: str, body: dict[str, Any], client_kwargs: dict[str, Any]):
+        from llama_stack.core.testing_context import get_test_context
+
         self._url = url
         self._body = body
         self._client_kwargs = client_kwargs
         self._iterator: AsyncIterator[str] | None = None
+        self._test_context = get_test_context()
 
     def __aiter__(self) -> _RawSSEStream:
         return self
@@ -90,11 +97,18 @@ class _RawSSEStream(AsyncIterator[str]):
         return await self._iterator.__anext__()
 
     async def _stream(self) -> AsyncIterator[str]:
-        async with httpx.AsyncClient(**self._client_kwargs) as client:
-            async with client.stream("POST", self._url, json=self._body) as resp:
-                resp.raise_for_status()
-                async for line in resp.aiter_lines():
-                    yield line + "\n"
+        from llama_stack.core.testing_context import reset_test_context, set_test_context
+
+        token = set_test_context(self._test_context) if self._test_context else None
+        try:
+            async with httpx.AsyncClient(**self._client_kwargs) as client:
+                async with client.stream("POST", self._url, json=self._body) as resp:
+                    resp.raise_for_status()
+                    async for line in resp.aiter_lines():
+                        yield line + "\n"
+        finally:
+            if token:
+                reset_test_context(token)
 
 
 class _PassthroughInfo(TypedDict):
