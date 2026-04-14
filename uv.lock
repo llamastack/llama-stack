@@ -16,6 +16,11 @@ members = [
     "efenness-llama-stack-provider-inference-ollama",
     "llama-stack",
     "llama-stack-api",
+    "llama-stack-utils-bedrock",
+    "llama-stack-utils-common",
+    "llama-stack-utils-inference",
+    "llama-stack-utils-safety",
+    "llama-stack-utils-vector-io",
 ]
 constraints = [
     { name = "pyasn1", specifier = ">=0.6.3" },
@@ -2701,6 +2706,11 @@ dependencies = [
     { name = "httpx" },
     { name = "jinja2" },
     { name = "llama-stack-api" },
+    { name = "llama-stack-utils-bedrock" },
+    { name = "llama-stack-utils-common" },
+    { name = "llama-stack-utils-inference" },
+    { name = "llama-stack-utils-safety" },
+    { name = "llama-stack-utils-vector-io" },
     { name = "mcp" },
     { name = "openai" },
     { name = "opentelemetry-distro" },
@@ -2941,6 +2951,11 @@ requires-dist = [
     { name = "langdetect", marker = "extra == 'starter'" },
     { name = "llama-stack-api", editable = "src/llama_stack_api" },
     { name = "llama-stack-client", marker = "extra == 'client'", specifier = ">=0.7.1" },
+    { name = "llama-stack-utils-bedrock", editable = "packages/llama-stack-utils-bedrock" },
+    { name = "llama-stack-utils-common", editable = "packages/llama-stack-utils-common" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+    { name = "llama-stack-utils-safety", editable = "packages/llama-stack-utils-safety" },
+    { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
     { name = "matplotlib", marker = "extra == 'starter'" },
     { name = "mcp", specifier = ">=1.23.0" },
     { name = "mcp", marker = "extra == 'starter'", specifier = ">=1.23.0" },
@@ -3164,6 +3179,106 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d7/3d/c4a268a4b60feb6f7e6da3fad2504aa157a52384529766560f8f3cfca43f/llama_stack_client-0.7.2.tar.gz", hash = "sha256:0e3458800af6a18fd8fc5e0760ed626931a416f6c1fdf24aeba4001e6fca9aec", size = 372953, upload-time = "2026-04-08T14:19:32.02Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/78/a8/cc7fa209471abcaac51139b3e6655c3b18ea718f0afa7cfa6ad974dd9eab/llama_stack_client-0.7.2-py3-none-any.whl", hash = "sha256:8b86156f2522c241ae46280e59287b7716c3cdaf016b6477630eb64bd8cbf150", size = 375337, upload-time = "2026-04-08T14:19:30.444Z" },
+]
+
+[[package]]
+name = "llama-stack-utils-bedrock"
+source = { editable = "packages/llama-stack-utils-bedrock" }
+dependencies = [
+    { name = "boto3" },
+    { name = "botocore" },
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "boto3" },
+    { name = "botocore" },
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+    { name = "pydantic", specifier = ">=2.11.9" },
+]
+
+[[package]]
+name = "llama-stack-utils-common"
+source = { editable = "packages/llama-stack-utils-common" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "mcp" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = ">=0.115.0" },
+    { name = "httpx" },
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "mcp", specifier = ">=1.23.0" },
+    { name = "pydantic", specifier = ">=2.11.9" },
+]
+
+[[package]]
+name = "llama-stack-utils-inference"
+source = { editable = "packages/llama-stack-utils-inference" }
+dependencies = [
+    { name = "httpx" },
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "openai" },
+    { name = "opentelemetry-sdk" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx" },
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "openai", specifier = ">=2.30.0" },
+    { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
+    { name = "pydantic", specifier = ">=2.11.9" },
+]
+
+[[package]]
+name = "llama-stack-utils-safety"
+source = { editable = "packages/llama-stack-utils-safety" }
+dependencies = [
+    { name = "llama-stack-api" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "llama-stack-api", editable = "src/llama_stack_api" }]
+
+[[package]]
+name = "llama-stack-utils-vector-io"
+source = { editable = "packages/llama-stack-utils-vector-io" }
+dependencies = [
+    { name = "chardet" },
+    { name = "fastapi" },
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+    { name = "pydantic" },
+    { name = "pypdf" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "chardet" },
+    { name = "fastapi", specifier = ">=0.115.0" },
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+    { name = "pydantic", specifier = ">=2.11.9" },
+    { name = "pypdf" },
 ]
 
 [[package]]

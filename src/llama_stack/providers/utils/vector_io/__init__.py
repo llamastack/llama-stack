@@ -4,18 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from .vector_utils import (
-    WeightedInMemoryAggregator,
-    generate_chunk_id,
-    load_embedded_chunk_with_backward_compat,
-    proper_case,
-    sanitize_collection_name,
-)
-
-__all__ = [
-    "WeightedInMemoryAggregator",
-    "generate_chunk_id",
-    "load_embedded_chunk_with_backward_compat",
-    "proper_case",
-    "sanitize_collection_name",
-]
+# Re-export from canonical location in utils package.
+# This shim exists for backward compatibility with existing provider code.
+from llama_stack_utils_vector_io.vector_utils import *  # noqa: F401, F403

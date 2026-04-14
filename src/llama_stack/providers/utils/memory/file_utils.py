@@ -4,31 +4,17 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import base64
-import mimetypes
-import os
+# Re-export from canonical location in utils package.
+# This shim exists for backward compatibility with existing provider code.
+# Uses sys.modules aliasing so that unittest.mock.patch works correctly.
+from __future__ import annotations
 
-from llama_stack_api import URL
+import sys
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from llama_stack_utils_vector_io.file_utils import *  # noqa: F401, F403
 
-def data_url_from_file(file_path: str) -> URL:
-    """Create a data URL from a local file path.
+import llama_stack_utils_vector_io.file_utils as _canonical
 
-    Args:
-        file_path: path to the file on disk
-
-    Returns:
-        A URL object containing the base64-encoded data URL
-    """
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"File not found: {file_path}")
-
-    with open(file_path, "rb") as file:
-        file_content = file.read()
-
-    base64_content = base64.b64encode(file_content).decode("utf-8")
-    mime_type, _ = mimetypes.guess_type(file_path)
-
-    data_url = f"data:{mime_type};base64,{base64_content}"
-
-    return URL(uri=data_url)
+sys.modules[__name__] = _canonical

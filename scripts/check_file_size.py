@@ -29,6 +29,7 @@ GRANDFATHERED_FILES = {
     "src/llama_stack/providers/inline/responses/builtin/responses/streaming.py",
     "src/llama_stack/providers/inline/scoring/basic/utils/ifeval_word_list.py",  # pure data file
     "src/llama_stack/providers/utils/memory/openai_vector_store_mixin.py",
+    "packages/llama-stack-utils-vector-io/src/llama_stack_utils_vector_io/openai_vector_store_mixin.py",
     "src/llama_stack/providers/registry/vector_io.py",
     "src/llama_stack/testing/api_recorder.py",
     "src/llama_stack_api/__init__.py",

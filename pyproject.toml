@@ -64,6 +64,13 @@ dependencies = [
     "psycopg2-binary",
     "mcp>=1.23.0",                                    # for connectors
     "zstandard>=0.23.0",                              # server - zstd request decompression
+    # TODO: remove these once all providers are extracted into their own packages.
+    # During the transition, in-tree provider shims import from these packages.
+    "llama-stack-utils-inference",
+    "llama-stack-utils-vector-io",
+    "llama-stack-utils-safety",
+    "llama-stack-utils-bedrock",
+    "llama-stack-utils-common",
 ]
 
 [project.optional-dependencies]
@@ -279,6 +286,11 @@ llama-stack = [{ workspace = true }]
 llama-stack-api = [{ workspace = true }]
 efenness-llama-stack-provider-inference-ollama = [{ workspace = true }]
 efenness-llama-stack-distribution-demo = [{ workspace = true }]
+llama-stack-utils-inference = [{ workspace = true }]
+llama-stack-utils-vector-io = [{ workspace = true }]
+llama-stack-utils-safety = [{ workspace = true }]
+llama-stack-utils-bedrock = [{ workspace = true }]
+llama-stack-utils-common = [{ workspace = true }]
 
 [tool.ruff]
 line-length = 120
@@ -474,31 +486,23 @@ exclude = [
     "^src/llama_stack/providers/remote/vector_io/oci/__init__\\.py$",
     "^src/llama_stack/providers/remote/vector_io/oci/oci26ai\\.py$",
     # Providers - Utils (26 files)
-    "^src/llama_stack/providers/utils/bedrock/client\\.py$",
-    "^src/llama_stack/providers/utils/bedrock/config\\.py$",
-    "^src/llama_stack/providers/utils/bedrock/refreshable_boto_session\\.py$",
-    "^src/llama_stack/providers/utils/common/data_schema_validator\\.py$",
-    "^src/llama_stack/providers/utils/common/data_url\\.py$",
-    "^src/llama_stack/providers/utils/datasetio/url_utils\\.py$",
-    "^src/llama_stack/providers/utils/inference/embedding_mixin\\.py$",
-    "^src/llama_stack/providers/utils/inference/inference_store\\.py$",
-    "^src/llama_stack/providers/utils/inference/model_registry\\.py$",
-    "^src/llama_stack/providers/utils/inference/openai_compat\\.py$",
-    "^src/llama_stack/providers/utils/inference/openai_mixin\\.py$",
-    "^src/llama_stack/providers/utils/inference/prompt_adapter\\.py$",
-    "^src/llama_stack/providers/utils/kvstore/kvstore\\.py$",
-    "^src/llama_stack/providers/utils/kvstore/postgres/postgres\\.py$",
-    "^src/llama_stack/providers/utils/kvstore/redis/redis\\.py$",
-    "^src/llama_stack/providers/utils/memory/vector_store\\.py$",
-    "^src/llama_stack/providers/utils/responses/responses_store\\.py$",
-    "^src/llama_stack/providers/utils/scheduler\\.py$",
-    "^src/llama_stack/providers/utils/scoring/aggregation_utils\\.py$",
-    "^src/llama_stack/providers/utils/scoring/base_scoring_fn\\.py$",
-    "^src/llama_stack/providers/utils/telemetry/dataset_mixin\\.py$",
-    "^src/llama_stack/providers/utils/telemetry/trace_protocol\\.py$",
-    "^src/llama_stack/providers/utils/telemetry/tracing\\.py$",
-    "^src/llama_stack/providers/utils/tools/mcp\\.py$",
-    "^src/llama_stack/providers/utils/tools/ttl_dict\\.py$",
+    # providers/utils/ — all files are now re-export shims using sys.modules aliasing.
+    # mypy cannot follow sys.modules[__name__] = _canonical, so exclude the entire directory.
+    # The canonical code in packages/llama-stack-utils-*/ is not checked by mypy (not in packages list).
+    # TODO: remove this exclude when providers are extracted and shims are deleted.
+    "^src/llama_stack/providers/utils/",
+    # Files with no-any-return errors caused by follow_imports=skip on shim modules above.
+    # TODO: remove when providers are extracted and import directly from utils packages.
+    "^src/llama_stack/core/storage/kvstore/mongodb/mongodb\\.py$",
+    "^src/llama_stack/providers/inline/interactions/impl\\.py$",
+    "^src/llama_stack/providers/inline/responses/builtin/responses/openai_responses\\.py$",
+    "^src/llama_stack/providers/inline/responses/builtin/responses/streaming\\.py$",
+    "^src/llama_stack/providers/remote/files/s3/files\\.py$",
+    "^src/llama_stack/providers/remote/inference/databricks/databricks\\.py$",
+    "^src/llama_stack/providers/remote/inference/llama_cpp_server/llama_cpp_server\\.py$",
+    "^src/llama_stack/providers/remote/inference/vertexai/utils\\.py$",
+    "^src/llama_stack/providers/remote/inference/vllm/vllm\\.py$",
+    "^src/llama_stack/providers/remote/safety/passthrough/passthrough\\.py$",
     "^src/llama_stack/providers/utils/vector_io/vector_utils\\.py$",
     # Distributions (1 files)
     "^src/llama_stack/distributions/template\\.py$",
@@ -574,6 +578,26 @@ module = [
     "docling_core.*",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Shim modules that use sys.modules aliasing for backward compatibility.
+# mypy cannot follow sys.modules[__name__] = _canonical, so skip them entirely.
+# TODO: remove when providers are extracted and shims are deleted.
+module = [
+    "llama_stack.providers.utils.inference.*",
+    "llama_stack.providers.utils.memory.*",
+    "llama_stack.providers.utils.vector_io.*",
+    "llama_stack.providers.utils.bedrock.*",
+    "llama_stack.providers.utils.common.*",
+    "llama_stack.providers.utils.files.*",
+    "llama_stack.providers.utils.tools.*",
+    "llama_stack.providers.utils.responses.*",
+    "llama_stack.providers.utils.safety",
+    "llama_stack.providers.utils.forward_headers",
+    "llama_stack.providers.utils.pagination",
+    "llama_stack.providers.utils.scheduler",
+]
+follow_imports = "skip"
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
