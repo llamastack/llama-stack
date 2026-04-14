@@ -753,7 +753,7 @@ class Stack:
             import traceback
 
             if task.cancelled():
-                logger.error("Model refresh task cancelled")
+                logger.warning("Model refresh task cancelled")
             elif task.exception():
                 logger.error("Model refresh task failed", error=str(task.exception()))
                 traceback.print_exception(task.exception())
