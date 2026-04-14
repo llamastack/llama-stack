@@ -257,7 +257,19 @@ server:
   tls_certfile: "/path/to/cert.pem"  # Optional: Path to TLS certificate for HTTPS
   tls_keyfile: "/path/to/key.pem"    # Optional: Path to TLS key for HTTPS
   cors: true  # Optional: Enable CORS (dev mode) or full config object
+  registry_refresh_interval_seconds: 300  # Optional: Interval between registry refreshes (default: 300)
 ```
+
+### Registry Refresh Interval
+
+The server periodically refreshes its model registry to sync model information from providers. By default this happens every 300 seconds (5 minutes). You can override this interval:
+
+```yaml
+server:
+  registry_refresh_interval_seconds: 60  # Refresh every 60 seconds
+```
+
+The value must be a positive integer representing seconds.
 
 ### CORS Configuration
 
