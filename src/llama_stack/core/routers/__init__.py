@@ -11,8 +11,8 @@ from llama_stack.core.datatypes import (
     RoutedProtocol,
     StackConfig,
 )
+from llama_stack.core.routers.inference_store import InferenceStore
 from llama_stack.core.store import DistributionRegistry
-from llama_stack.providers.utils.inference.inference_store import InferenceStore
 from llama_stack_api import Api, RoutingTable
 
 

@@ -12,8 +12,8 @@ from typing import Annotated
 from fastapi import Body
 
 from llama_stack.core.datatypes import VectorStoresConfig
+from llama_stack.core.routers.vector_io_filters import parse_filter
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.vector_io.filters import parse_filter
 from llama_stack.telemetry.vector_io_metrics import (
     create_vector_metric_attributes,
     vector_chunks_processed_total,
