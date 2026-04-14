@@ -16,8 +16,28 @@ members = [
     "efenness-llama-stack-provider-inference-ollama",
     "llama-stack",
     "llama-stack-api",
+    "llama-stack-provider-inference-anthropic",
+    "llama-stack-provider-inference-azure",
+    "llama-stack-provider-inference-bedrock",
+    "llama-stack-provider-inference-cerebras",
+    "llama-stack-provider-inference-databricks",
+    "llama-stack-provider-inference-fireworks",
+    "llama-stack-provider-inference-gemini",
+    "llama-stack-provider-inference-groq",
+    "llama-stack-provider-inference-llama-cpp-server",
+    "llama-stack-provider-inference-llama-openai-compat",
+    "llama-stack-provider-inference-nvidia",
+    "llama-stack-provider-inference-oci",
+    "llama-stack-provider-inference-openai",
+    "llama-stack-provider-inference-passthrough",
+    "llama-stack-provider-inference-runpod",
+    "llama-stack-provider-inference-sambanova",
     "llama-stack-provider-inference-sentence-transformers",
+    "llama-stack-provider-inference-together",
     "llama-stack-provider-inference-transformers",
+    "llama-stack-provider-inference-vertexai",
+    "llama-stack-provider-inference-vllm",
+    "llama-stack-provider-inference-watsonx",
     "llama-stack-provider-safety-prompt-guard",
     "llama-stack-provider-tool-runtime-file-search",
     "llama-stack-utils-bedrock",
@@ -817,6 +837,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/15/01/13438ebe3bb4f58816ba32ebfada17b94d4f0f30d20f2880f42970e562b2/chromadb_client-1.5.5.tar.gz", hash = "sha256:28c208e9639c9b43cf2f12292d456163bbf72d443b00fda1b947793db195fa57", size = 21867327, upload-time = "2026-03-10T09:15:10.409Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/59/8c711b8ca32a23d606e31f9fe13a4461f7a3fbd426d027e9665d3d8e0ad6/chromadb_client-1.5.5-py3-none-any.whl", hash = "sha256:1ddab20a4266724da6a2e93fff8dbbaebe34c300875702b212d2cb755894d4c6", size = 786479, upload-time = "2026-03-10T09:15:08.181Z" },
+]
+
+[[package]]
+name = "circuitbreaker"
+version = "2.1.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/df/ac/de7a92c4ed39cba31fe5ad9203b76a25ca67c530797f6bb420fff5f65ccb/circuitbreaker-2.1.3.tar.gz", hash = "sha256:1a4baee510f7bea3c91b194dcce7c07805fe96c4423ed5594b75af438531d084", size = 10787, upload-time = "2025-03-31T08:12:08.963Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ae/34/15f08edd4628f65217de1fc3c1a27c82e46fe357d60c217fc9881e12ebcc/circuitbreaker-2.1.3-py3-none-any.whl", hash = "sha256:87ba6a3ed03fdc7032bc175561c2b04d52ade9d5faf94ca2b035fbdc5e6b1dd1", size = 7737, upload-time = "2025-03-31T08:12:07.802Z" },
 ]
 
 [[package]]
@@ -2710,8 +2739,28 @@ dependencies = [
     { name = "httpx" },
     { name = "jinja2" },
     { name = "llama-stack-api" },
+    { name = "llama-stack-provider-inference-anthropic" },
+    { name = "llama-stack-provider-inference-azure" },
+    { name = "llama-stack-provider-inference-bedrock" },
+    { name = "llama-stack-provider-inference-cerebras" },
+    { name = "llama-stack-provider-inference-databricks" },
+    { name = "llama-stack-provider-inference-fireworks" },
+    { name = "llama-stack-provider-inference-gemini" },
+    { name = "llama-stack-provider-inference-groq" },
+    { name = "llama-stack-provider-inference-llama-cpp-server" },
+    { name = "llama-stack-provider-inference-llama-openai-compat" },
+    { name = "llama-stack-provider-inference-nvidia" },
+    { name = "llama-stack-provider-inference-oci" },
+    { name = "llama-stack-provider-inference-openai" },
+    { name = "llama-stack-provider-inference-passthrough" },
+    { name = "llama-stack-provider-inference-runpod" },
+    { name = "llama-stack-provider-inference-sambanova" },
     { name = "llama-stack-provider-inference-sentence-transformers" },
+    { name = "llama-stack-provider-inference-together" },
     { name = "llama-stack-provider-inference-transformers" },
+    { name = "llama-stack-provider-inference-vertexai" },
+    { name = "llama-stack-provider-inference-vllm" },
+    { name = "llama-stack-provider-inference-watsonx" },
     { name = "llama-stack-provider-safety-prompt-guard" },
     { name = "llama-stack-provider-tool-runtime-file-search" },
     { name = "llama-stack-utils-bedrock" },
@@ -2959,8 +3008,28 @@ requires-dist = [
     { name = "langdetect", marker = "extra == 'starter'" },
     { name = "llama-stack-api", editable = "src/llama_stack_api" },
     { name = "llama-stack-client", marker = "extra == 'client'", specifier = ">=0.7.1" },
+    { name = "llama-stack-provider-inference-anthropic", editable = "packages/llama-stack-provider-inference-anthropic" },
+    { name = "llama-stack-provider-inference-azure", editable = "packages/llama-stack-provider-inference-azure" },
+    { name = "llama-stack-provider-inference-bedrock", editable = "packages/llama-stack-provider-inference-bedrock" },
+    { name = "llama-stack-provider-inference-cerebras", editable = "packages/llama-stack-provider-inference-cerebras" },
+    { name = "llama-stack-provider-inference-databricks", editable = "packages/llama-stack-provider-inference-databricks" },
+    { name = "llama-stack-provider-inference-fireworks", editable = "packages/llama-stack-provider-inference-fireworks" },
+    { name = "llama-stack-provider-inference-gemini", editable = "packages/llama-stack-provider-inference-gemini" },
+    { name = "llama-stack-provider-inference-groq", editable = "packages/llama-stack-provider-inference-groq" },
+    { name = "llama-stack-provider-inference-llama-cpp-server", editable = "packages/llama-stack-provider-inference-llama-cpp-server" },
+    { name = "llama-stack-provider-inference-llama-openai-compat", editable = "packages/llama-stack-provider-inference-llama-openai-compat" },
+    { name = "llama-stack-provider-inference-nvidia", editable = "packages/llama-stack-provider-inference-nvidia" },
+    { name = "llama-stack-provider-inference-oci", editable = "packages/llama-stack-provider-inference-oci" },
+    { name = "llama-stack-provider-inference-openai", editable = "packages/llama-stack-provider-inference-openai" },
+    { name = "llama-stack-provider-inference-passthrough", editable = "packages/llama-stack-provider-inference-passthrough" },
+    { name = "llama-stack-provider-inference-runpod", editable = "packages/llama-stack-provider-inference-runpod" },
+    { name = "llama-stack-provider-inference-sambanova", editable = "packages/llama-stack-provider-inference-sambanova" },
     { name = "llama-stack-provider-inference-sentence-transformers", editable = "packages/llama-stack-provider-inference-sentence-transformers" },
+    { name = "llama-stack-provider-inference-together", editable = "packages/llama-stack-provider-inference-together" },
     { name = "llama-stack-provider-inference-transformers", editable = "packages/llama-stack-provider-inference-transformers" },
+    { name = "llama-stack-provider-inference-vertexai", editable = "packages/llama-stack-provider-inference-vertexai" },
+    { name = "llama-stack-provider-inference-vllm", editable = "packages/llama-stack-provider-inference-vllm" },
+    { name = "llama-stack-provider-inference-watsonx", editable = "packages/llama-stack-provider-inference-watsonx" },
     { name = "llama-stack-provider-safety-prompt-guard", editable = "packages/llama-stack-provider-safety-prompt-guard" },
     { name = "llama-stack-provider-tool-runtime-file-search", editable = "packages/llama-stack-provider-tool-runtime-file-search" },
     { name = "llama-stack-utils-bedrock", editable = "packages/llama-stack-utils-bedrock" },
@@ -3194,6 +3263,270 @@ wheels = [
 ]
 
 [[package]]
+name = "llama-stack-provider-inference-anthropic"
+source = { editable = "packages/llama-stack-provider-inference-anthropic" }
+dependencies = [
+    { name = "anthropic" },
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "anthropic" },
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-azure"
+source = { editable = "packages/llama-stack-provider-inference-azure" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-bedrock"
+source = { editable = "packages/llama-stack-provider-inference-bedrock" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-cerebras"
+source = { editable = "packages/llama-stack-provider-inference-cerebras" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-databricks"
+source = { editable = "packages/llama-stack-provider-inference-databricks" }
+dependencies = [
+    { name = "databricks-sdk" },
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "databricks-sdk" },
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-fireworks"
+source = { editable = "packages/llama-stack-provider-inference-fireworks" }
+dependencies = [
+    { name = "fireworks-ai" },
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fireworks-ai", specifier = "<=0.17.16" },
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-gemini"
+source = { editable = "packages/llama-stack-provider-inference-gemini" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-groq"
+source = { editable = "packages/llama-stack-provider-inference-groq" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-llama-cpp-server"
+source = { editable = "packages/llama-stack-provider-inference-llama-cpp-server" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-llama-openai-compat"
+source = { editable = "packages/llama-stack-provider-inference-llama-openai-compat" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-nvidia"
+source = { editable = "packages/llama-stack-provider-inference-nvidia" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-oci"
+source = { editable = "packages/llama-stack-provider-inference-oci" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+    { name = "oci" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+    { name = "oci" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-openai"
+source = { editable = "packages/llama-stack-provider-inference-openai" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-passthrough"
+source = { editable = "packages/llama-stack-provider-inference-passthrough" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-runpod"
+source = { editable = "packages/llama-stack-provider-inference-runpod" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-sambanova"
+source = { editable = "packages/llama-stack-provider-inference-sambanova" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
 name = "llama-stack-provider-inference-sentence-transformers"
 source = { editable = "packages/llama-stack-provider-inference-sentence-transformers" }
 dependencies = [
@@ -3226,6 +3559,24 @@ requires-dist = [
 ]
 
 [[package]]
+name = "llama-stack-provider-inference-together"
+source = { editable = "packages/llama-stack-provider-inference-together" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+    { name = "together" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+    { name = "together", specifier = ">=2" },
+]
+
+[[package]]
 name = "llama-stack-provider-inference-transformers"
 source = { editable = "packages/llama-stack-provider-inference-transformers" }
 dependencies = [
@@ -3246,6 +3597,56 @@ requires-dist = [
     { name = "tokenizers" },
     { name = "torch", index = "https://download.pytorch.org/whl/cpu" },
     { name = "transformers" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-vertexai"
+source = { editable = "packages/llama-stack-provider-inference-vertexai" }
+dependencies = [
+    { name = "google-genai" },
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "google-genai", specifier = ">=1.69.0" },
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-vllm"
+source = { editable = "packages/llama-stack-provider-inference-vllm" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-watsonx"
+source = { editable = "packages/llama-stack-provider-inference-watsonx" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
 
 [[package]]
@@ -4140,6 +4541,24 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/0b/5f/19930f824ffeb0ad4372da4812c50edbd1434f678c90c2733e1188edfc63/oauthlib-3.3.1.tar.gz", hash = "sha256:0f0f8aa759826a193cf66c12ea1af1637f87b9b4622d46e866952bb022e538c9", size = 185918, upload-time = "2025-06-19T22:48:08.269Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/be/9c/92789c596b8df838baa98fa71844d84283302f7604ed565dafe5a6b5041a/oauthlib-3.3.1-py3-none-any.whl", hash = "sha256:88119c938d2b8fb88561af5f6ee0eec8cc8d552b7bb1f712743136eb7523b7a1", size = 160065, upload-time = "2025-06-19T22:48:06.508Z" },
+]
+
+[[package]]
+name = "oci"
+version = "2.171.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "circuitbreaker" },
+    { name = "cryptography" },
+    { name = "pyopenssl" },
+    { name = "python-dateutil" },
+    { name = "pytz" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bd/60/280971906425495ee1b7c81e2bf052a113fbec1adc4de0ec4bd1df07d43c/oci-2.171.0.tar.gz", hash = "sha256:83e46b7d6a54d9d41a1d090c6a3e4e9bd00caa305ceb1958eb5a15191b72cb68", size = 17035917, upload-time = "2026-04-14T03:25:12.714Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9c/2f/4925fcf29e771c62a6892a49d5e35efed2fb0d1ee3aaa1535435cf2e2b87/oci-2.171.0-py3-none-any.whl", hash = "sha256:235e7aa8891c02869ea9d0418ef8ffc7af18b36509bc0b95d74c449569bf894c", size = 34771785, upload-time = "2026-04-14T03:25:04.927Z" },
 ]
 
 [[package]]
@@ -5332,6 +5751,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/5b/fe/7a6a6b331d9f2024ab171028ab53d5d9026959b1d713fe170be591a4d9a8/pymongo-4.15.3-cp314-cp314t-win32.whl", hash = "sha256:e7cde58ef6470c0da922b65e885fb1ffe04deef81e526bd5dea429290fa358ca", size = 1043993, upload-time = "2025-10-07T21:57:28.727Z" },
     { url = "https://files.pythonhosted.org/packages/70/c8/bc64321711e19bd48ea3371f0082f10295c433833245d73e7606d3b9afbe/pymongo-4.15.3-cp314-cp314t-win_amd64.whl", hash = "sha256:fae552767d8e5153ed498f1bca92d905d0d46311d831eefb0f06de38f7695c95", size = 1078481, upload-time = "2025-10-07T21:57:30.372Z" },
     { url = "https://files.pythonhosted.org/packages/39/31/2bb2003bb978eb25dfef7b5f98e1c2d4a86e973e63b367cc508a9308d31c/pymongo-4.15.3-cp314-cp314t-win_arm64.whl", hash = "sha256:47ffb068e16ae5e43580d5c4e3b9437f05414ea80c32a1e5cac44a835859c259", size = 1051179, upload-time = "2025-10-07T21:57:31.829Z" },
+]
+
+[[package]]
+name = "pyopenssl"
+version = "25.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/04/8c/cd89ad05804f8e3c17dea8f178c3f40eeab5694c30e0c9f5bcd49f576fc3/pyopenssl-25.1.0.tar.gz", hash = "sha256:8d031884482e0c67ee92bf9a4d8cceb08d92aba7136432ffb0703c5280fc205b", size = 179937, upload-time = "2025-05-17T16:28:31.31Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/80/28/2659c02301b9500751f8d42f9a6632e1508aa5120de5e43042b8b30f8d5d/pyopenssl-25.1.0-py3-none-any.whl", hash = "sha256:2b11f239acc47ac2e5aca04fd7fa829800aeee22a2eb30d744572a157bd8a1ab", size = 56771, upload-time = "2025-05-17T16:28:29.197Z" },
 ]
 
 [[package]]

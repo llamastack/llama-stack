@@ -75,6 +75,26 @@ dependencies = [
     # During the transition, these provider packages are discovered via entry points.
     "llama-stack-provider-inference-sentence-transformers",
     "llama-stack-provider-inference-transformers",
+    "llama-stack-provider-inference-anthropic",
+    "llama-stack-provider-inference-azure",
+    "llama-stack-provider-inference-bedrock",
+    "llama-stack-provider-inference-cerebras",
+    "llama-stack-provider-inference-databricks",
+    "llama-stack-provider-inference-fireworks",
+    "llama-stack-provider-inference-gemini",
+    "llama-stack-provider-inference-groq",
+    "llama-stack-provider-inference-llama-cpp-server",
+    "llama-stack-provider-inference-llama-openai-compat",
+    "llama-stack-provider-inference-nvidia",
+    "llama-stack-provider-inference-oci",
+    "llama-stack-provider-inference-openai",
+    "llama-stack-provider-inference-passthrough",
+    "llama-stack-provider-inference-runpod",
+    "llama-stack-provider-inference-sambanova",
+    "llama-stack-provider-inference-together",
+    "llama-stack-provider-inference-vertexai",
+    "llama-stack-provider-inference-vllm",
+    "llama-stack-provider-inference-watsonx",
     "llama-stack-provider-safety-prompt-guard",
     "llama-stack-provider-tool-runtime-file-search",
 ]
@@ -297,8 +317,28 @@ llama-stack-utils-vector-io = [{ workspace = true }]
 llama-stack-utils-safety = [{ workspace = true }]
 llama-stack-utils-bedrock = [{ workspace = true }]
 llama-stack-utils-common = [{ workspace = true }]
+llama-stack-provider-inference-anthropic = [{ workspace = true }]
+llama-stack-provider-inference-azure = [{ workspace = true }]
+llama-stack-provider-inference-bedrock = [{ workspace = true }]
+llama-stack-provider-inference-cerebras = [{ workspace = true }]
+llama-stack-provider-inference-databricks = [{ workspace = true }]
+llama-stack-provider-inference-fireworks = [{ workspace = true }]
+llama-stack-provider-inference-gemini = [{ workspace = true }]
+llama-stack-provider-inference-groq = [{ workspace = true }]
+llama-stack-provider-inference-llama-cpp-server = [{ workspace = true }]
+llama-stack-provider-inference-llama-openai-compat = [{ workspace = true }]
+llama-stack-provider-inference-nvidia = [{ workspace = true }]
+llama-stack-provider-inference-oci = [{ workspace = true }]
+llama-stack-provider-inference-openai = [{ workspace = true }]
+llama-stack-provider-inference-passthrough = [{ workspace = true }]
+llama-stack-provider-inference-runpod = [{ workspace = true }]
+llama-stack-provider-inference-sambanova = [{ workspace = true }]
 llama-stack-provider-inference-sentence-transformers = [{ workspace = true }]
+llama-stack-provider-inference-together = [{ workspace = true }]
 llama-stack-provider-inference-transformers = [{ workspace = true }]
+llama-stack-provider-inference-vertexai = [{ workspace = true }]
+llama-stack-provider-inference-vllm = [{ workspace = true }]
+llama-stack-provider-inference-watsonx = [{ workspace = true }]
 llama-stack-provider-safety-prompt-guard = [{ workspace = true }]
 llama-stack-provider-tool-runtime-file-search = [{ workspace = true }]
 

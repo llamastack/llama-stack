@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.1.dev0"
+
+[tool.uv.sources]
+llama-stack = { workspace = true }
+llama-stack-api = { workspace = true }
+llama-stack-utils-inference = { workspace = true }
+
+[project]
+name = "llama-stack-provider-inference-fireworks"
+dynamic = ["version"]
+description = "Fireworks AI inference provider for Llama models and other AI models on the Fireworks platform."
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+    "llama-stack",
+    "llama-stack-api",
+    "llama-stack-utils-inference",
+    "fireworks-ai<=0.17.16",
+]
+
+[project.entry-points."llama_stack.providers"]
+"inference.remote.fireworks" = "llama_stack_provider_inference_fireworks.provider:get_provider_spec"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["llama_stack_provider_inference_fireworks"]
