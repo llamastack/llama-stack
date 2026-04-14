@@ -11,6 +11,7 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 """
 
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -69,6 +70,19 @@ class ResponseStreamOptions(BaseModel):
     )
 
 
+class ContextManagement(BaseModel):
+    """Configuration for automatic context management during response generation."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["compaction"] = Field(
+        ..., description="The context management entry type. Currently only 'compaction' is supported."
+    )
+    compact_threshold: int | None = Field(
+        default=None, description="Token threshold at which compaction should be triggered."
+    )
+
+
 # extra_body can be accessed via .model_extra
 class CreateResponseRequest(BaseModel):
     """Request model for creating a response."""
@@ -106,10 +120,12 @@ class CreateResponseRequest(BaseModel):
     store: bool | None = Field(
         default=True,
         description="Whether to store the response in the database.",
+        json_schema_extra=remove_null_from_anyof,
     )
     stream: bool | None = Field(
         default=False,
         description="Whether to stream the response.",
+        json_schema_extra=remove_null_from_anyof,
     )
     temperature: float | None = Field(
         default=None,
@@ -144,6 +160,7 @@ class CreateResponseRequest(BaseModel):
     include: list[ResponseItemInclude] | None = Field(
         default=None,
         description="Additional fields to include in the response.",
+        json_schema_extra=remove_null_from_anyof,
     )
     max_infer_iters: int | None = Field(
         default=10,
@@ -201,6 +218,10 @@ class CreateResponseRequest(BaseModel):
         default=None,
         description="Options that control streamed response behavior.",
     )
+    context_management: list[ContextManagement] | None = Field(
+        default=None,
+        description="Context management configuration. When set with type 'compaction', automatically compacts conversation history when token count exceeds the compact_threshold.",
+    )
 
 
 class RetrieveResponseRequest(BaseModel):
@@ -243,6 +264,40 @@ class ListResponseInputItemsRequest(BaseModel):
         description="A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 20.",
     )
     order: Order | None = Field(default=Order.desc, description="The order to return the input items in.")
+
+
+class CompactResponseRequest(BaseModel):
+    """Request model for compacting a conversation."""
+
+    model_config = ConfigDict(extra="allow")
+
+    model: str = Field(..., description="The model to use for generating the compacted summary.")
+    input: str | list[OpenAIResponseInput] | None = Field(default=None, description="Input message(s) to compact.")
+    instructions: str | None = Field(default=None, description="Instructions to guide the compaction.")
+    previous_response_id: str | None = Field(
+        default=None, description="ID of a previous response whose history to compact."
+    )
+    prompt_cache_key: str | None = Field(
+        default=None,
+        max_length=64,
+        description="A key to use when reading from or writing to the prompt cache.",
+    )
+    tools: list[OpenAIResponseInputTool] | None = Field(
+        default=None,
+        description="List of tools available to the model. Accepted for compatibility but not used during compaction.",
+    )
+    parallel_tool_calls: bool | None = Field(
+        default=None,
+        description="Whether to enable parallel tool calls. Accepted for compatibility but not used during compaction.",
+    )
+    reasoning: OpenAIResponseReasoning | None = Field(
+        default=None,
+        description="Configuration for reasoning effort. Accepted for compatibility but not used during compaction.",
+    )
+    text: OpenAIResponseText | None = Field(
+        default=None,
+        description="Configuration for text response generation. Accepted for compatibility but not used during compaction.",
+    )
 
 
 class DeleteResponseRequest(BaseModel):

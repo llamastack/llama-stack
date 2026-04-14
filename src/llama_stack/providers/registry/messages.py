@@ -24,6 +24,10 @@ def available_providers() -> list[ProviderSpec]:
             api_dependencies=[
                 Api.inference,
             ],
-            description="Anthropic Messages API adapter that translates to the inference API.",
+            description=(
+                "Implements the Anthropic Messages API with two modes: native passthrough for providers "
+                "that support /v1/messages natively (e.g. Ollama, vLLM), and automatic translation for "
+                "all other providers by converting between Anthropic and OpenAI Chat Completions formats."
+            ),
         ),
     ]

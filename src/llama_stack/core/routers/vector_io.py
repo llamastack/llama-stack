@@ -408,8 +408,8 @@ class VectorIORouter(VectorIO):
 
         # Determine pagination info
         has_more = len(all_stores) > limit
-        first_id = limited_stores[0].id if limited_stores else None
-        last_id = limited_stores[-1].id if limited_stores else None
+        first_id = limited_stores[0].id if limited_stores else ""
+        last_id = limited_stores[-1].id if limited_stores else ""
 
         return VectorStoreListResponse(
             data=limited_stores,

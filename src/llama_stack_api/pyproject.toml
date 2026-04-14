@@ -24,7 +24,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Information Analysis",
 ]
 dependencies = [
-    "openai>=2.5.0",
+    "openai>=2.30.0",
     "fastapi>=0.115.0,<1.0",
     "pydantic>=2.11.9",
     "jsonschema",
@@ -46,25 +46,20 @@ packages = [
     "llama_stack_api.admin",
     "llama_stack_api.responses",
     "llama_stack_api.batches",
-    "llama_stack_api.benchmarks",
     "llama_stack_api.common",
     "llama_stack_api.conversations",
-    "llama_stack_api.datasetio",
-    "llama_stack_api.datasets",
-    "llama_stack_api.eval",
     "llama_stack_api.file_processors",
     "llama_stack_api.files",
     "llama_stack_api.inspect_api",
     "llama_stack_api.inference",
+    "llama_stack_api.interactions",
     "llama_stack_api.internal",
     "llama_stack_api.messages",
     "llama_stack_api.models",
 
     "llama_stack_api.providers",
     "llama_stack_api.shields",
-    "llama_stack_api.scoring_functions",
     "llama_stack_api.prompts",
-    "llama_stack_api.scoring",
     "llama_stack_api.safety",
     "llama_stack_api.tools",
     "llama_stack_api.vector_io",
@@ -85,7 +80,6 @@ py-modules = [
     "llama_stack_api.vector_stores",
     "llama_stack_api.version",
     "llama_stack_api.validators",
-    "llama_stack_api.helpers",
 ]
 
 [tool.setuptools.package-data]
@@ -93,7 +87,7 @@ llama_stack_api = ["py.typed", "**/*.json", "**/*.yaml"]
 
 [tool.setuptools_scm]
 root = "../.."
-fallback_version = "0.7.1.dev0"
+fallback_version = "0.7.2.dev0"
 
 [tool.ruff]
 line-length = 120

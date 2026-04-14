@@ -145,7 +145,7 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
     print(output)
 
 
-def quote_if_needed(dep):
+def quote_if_needed(dep: str) -> str:
     """Wrap a dependency string in quotes if it contains shell-special characters.
 
     Args:
@@ -160,7 +160,7 @@ def quote_if_needed(dep):
     return f"'{dep}'" if needs_quoting else dep
 
 
-def quote_special_dep(dep_string):
+def quote_special_dep(dep_string: str) -> str:
     """
     Quote individual packages in a special dependency string.
     Special deps may contain multiple packages and flags like --extra-index-url.

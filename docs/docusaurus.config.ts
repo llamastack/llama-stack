@@ -46,7 +46,7 @@ const config: Config = {
       tagName: 'meta',
       attributes: {
         name: 'theme-color',
-        content: '#7C3AED', // Purple color from your logo
+        content: '#0d7377', // Teal from logo gradient
       },
     },
     {
@@ -71,6 +71,9 @@ const config: Config = {
           sidebarPath: require.resolve("./sidebars.ts"),
           // disableVersioning: true,
           docItemComponent: "@theme/ApiItem", // Derived from docusaurus-theme-openapi
+          editUrl: 'https://github.com/llamastack/llama-stack/edit/main/',
+          showLastUpdateTime: true,
+          showLastUpdateAuthor: false,
           remarkPlugins: [
             [require('remark-code-import'), {
               rootDir: require('path').join(__dirname, '..') // Repository root
@@ -155,13 +158,13 @@ const config: Config = {
       ],
     },
     footer: {
-      style: 'dark',
+      style: 'light',
       links: [
         {
-          title: 'Docs',
+          title: 'Getting Started',
           items: [
             {
-              label: 'Getting Started',
+              label: 'Quickstart',
               to: '/docs/getting_started/quickstart',
             },
             {
@@ -169,8 +172,33 @@ const config: Config = {
               to: '/docs/concepts',
             },
             {
+              label: 'Distributions',
+              to: '/docs/distributions/building_distro',
+            },
+            {
+              label: 'Providers',
+              to: '/docs/providers',
+            },
+          ],
+        },
+        {
+          title: 'API',
+          items: [
+            {
               label: 'API Reference',
               to: '/docs/api-overview',
+            },
+            {
+              label: 'OpenAI',
+              to: '/docs/api-openai',
+            },
+            {
+              label: 'Anthropic Messages',
+              to: '/docs/api-anthropic-messages',
+            },
+            {
+              label: 'Google Interactions',
+              to: '/docs/api-google-interactions',
             },
           ],
         },
@@ -185,10 +213,14 @@ const config: Config = {
               label: 'Issues',
               href: 'https://github.com/llamastack/llama-stack/issues',
             },
+            {
+              label: 'Contributing',
+              to: '/docs/contributing',
+            },
           ],
         },
         {
-          title: 'More',
+          title: 'Resources',
           items: [
             {
               label: 'GitHub',
@@ -198,14 +230,22 @@ const config: Config = {
               label: 'PyPI',
               href: 'https://pypi.org/project/llama-stack/',
             },
+            {
+              label: 'Releases',
+              href: 'https://github.com/llamastack/llama-stack/releases',
+            },
+            {
+              label: 'Docker Hub',
+              href: 'https://hub.docker.com/u/llamastack',
+            },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Meta Platforms, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Meta Platforms, Inc.`,
     },
     colorMode: {
       defaultMode: 'dark',
-      respectPrefersColorScheme: true,
+      respectPrefersColorScheme: false,
     },
     prism: {
       theme: require('prism-react-renderer').themes.oneDark,
@@ -320,8 +360,8 @@ const config: Config = {
         docsRouteBasePath: '/docs',
 
         // Search behavior optimization for technical docs
-        searchResultLimits: 8,
-        searchResultContextMaxLength: 50,
+        searchResultLimits: 12,
+        searchResultContextMaxLength: 80,
         explicitSearchResultPath: true,
 
         // User experience enhancements

@@ -33,6 +33,7 @@ from llama_stack_api.messages import (
     Messages,
 )
 from llama_stack_api.messages.models import (
+    ANTHROPIC_VERSION,
     AnthropicContentBlock,
     AnthropicCountTokensRequest,
     AnthropicCountTokensResponse,
@@ -130,7 +131,12 @@ class BuiltinMessagesImpl(Messages):
         self,
         request: AnthropicCountTokensRequest,
     ) -> AnthropicCountTokensResponse:
-        raise NotImplementedError("Token counting is not yet implemented")
+        passthrough_url = await self._get_passthrough_url(request.model)
+        if passthrough_url:
+            return await self._passthrough_count_tokens(passthrough_url, request)
+
+        # Translation mode: use Inference API's count_tokens if available
+        raise NotImplementedError("Token counting via translation mode is not yet implemented")
 
     # -- Model resolution with fallback --
 
@@ -170,7 +176,10 @@ class BuiltinMessagesImpl(Messages):
     # -- Native passthrough for providers with /v1/messages support --
 
     # Module paths of provider impls known to support /v1/messages natively
-    _NATIVE_MESSAGES_MODULES = {"llama_stack.providers.remote.inference.ollama"}
+    _NATIVE_MESSAGES_MODULES = {
+        "llama_stack.providers.remote.inference.ollama",
+        "llama_stack.providers.remote.inference.vllm",
+    }
 
     async def _get_passthrough_url(self, model: str) -> str | None:
         """Check if the model's provider supports /v1/messages natively.
@@ -224,7 +233,7 @@ class BuiltinMessagesImpl(Messages):
         body["model"] = provider_model
         headers = {
             "content-type": "application/json",
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": ANTHROPIC_VERSION,
             "x-api-key": "no-key-required",
         }
 
@@ -294,6 +303,36 @@ class BuiltinMessagesImpl(Messages):
         if event_type == "message_stop":
             return MessageStopEvent()
         return None
+
+    async def _passthrough_count_tokens(
+        self,
+        base_url: str,
+        request: AnthropicCountTokensRequest,
+    ) -> AnthropicCountTokensResponse:
+        """Forward the count_tokens request to the provider's /v1/messages/count_tokens endpoint."""
+        url = f"{base_url}/v1/messages/count_tokens"
+        # Use the provider_resource_id (model name without provider prefix)
+        provider_model = request.model
+        router = self.inference_api
+        if hasattr(router, "routing_table"):
+            try:
+                obj = await router.routing_table.get_object_by_identifier("model", request.model)
+                if obj:
+                    provider_model = obj.provider_resource_id
+            except Exception:
+                pass
+
+        body = request.model_dump(exclude_none=True)
+        body["model"] = provider_model
+        headers = {
+            "content-type": "application/json",
+            "anthropic-version": ANTHROPIC_VERSION,
+            "x-api-key": "no-key-required",
+        }
+
+        resp = await self._client.post(url, json=body, headers=headers, timeout=30)
+        resp.raise_for_status()
+        return AnthropicCountTokensResponse(**resp.json())
 
     # -- Request translation --
 
@@ -498,9 +537,14 @@ class BuiltinMessagesImpl(Messages):
 
         usage = AnthropicUsage()
         if response.usage:
+            cache_read = None
+            if response.usage.prompt_tokens_details and hasattr(response.usage.prompt_tokens_details, "cached_tokens"):
+                cache_read = response.usage.prompt_tokens_details.cached_tokens
+
             usage = AnthropicUsage(
                 input_tokens=response.usage.prompt_tokens or 0,
                 output_tokens=response.usage.completion_tokens or 0,
+                cache_read_input_tokens=cache_read,
             )
 
         return AnthropicMessageResponse(
@@ -537,6 +581,7 @@ class BuiltinMessagesImpl(Messages):
         tool_call_index_to_block_index: dict[int, int] = {}
         output_tokens = 0
         input_tokens = 0
+        cache_read_tokens: int | None = None
         stop_reason = "end_turn"
 
         async for chunk in openai_stream:
@@ -545,6 +590,10 @@ class BuiltinMessagesImpl(Messages):
                 if chunk.usage:
                     input_tokens = chunk.usage.prompt_tokens or 0
                     output_tokens = chunk.usage.completion_tokens or 0
+                    if chunk.usage.prompt_tokens_details and hasattr(
+                        chunk.usage.prompt_tokens_details, "cached_tokens"
+                    ):
+                        cache_read_tokens = chunk.usage.prompt_tokens_details.cached_tokens
                 continue
 
             choice = chunk.choices[0]
@@ -601,6 +650,8 @@ class BuiltinMessagesImpl(Messages):
             if chunk.usage:
                 input_tokens = chunk.usage.prompt_tokens or 0
                 output_tokens = chunk.usage.completion_tokens or 0
+                if chunk.usage.prompt_tokens_details and hasattr(chunk.usage.prompt_tokens_details, "cached_tokens"):
+                    cache_read_tokens = chunk.usage.prompt_tokens_details.cached_tokens
 
         # Close any open blocks
         if in_text_block:
@@ -612,6 +663,10 @@ class BuiltinMessagesImpl(Messages):
         # Final events
         yield MessageDeltaEvent(
             delta=_MessageDelta(stop_reason=stop_reason),
-            usage=AnthropicUsage(input_tokens=input_tokens, output_tokens=output_tokens),
+            usage=AnthropicUsage(
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                cache_read_input_tokens=cache_read_tokens,
+            ),
         )
         yield MessageStopEvent()

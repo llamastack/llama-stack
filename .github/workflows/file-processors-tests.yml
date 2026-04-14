@@ -51,6 +51,8 @@ jobs:
         run: uv pip install docling
 
       - name: Start Llama Stack server with docling
+        env:
+          LLAMA_STACK_DISABLE_VERSION_CHECK: "1"
         run: |
           uv run --no-sync llama stack run \
             --providers "file_processors=inline::docling,files=inline::localfs" \
@@ -77,7 +79,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: test-results-file-processors
           path: pytest-report-file-processors.xml

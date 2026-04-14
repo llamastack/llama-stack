@@ -252,6 +252,43 @@ class TestResponseTranslation:
         result = impl._openai_to_anthropic(openai_resp, "m")
         assert result.stop_reason == "max_tokens"
 
+    def test_cache_metrics_mapping(self, impl):
+        openai_resp = MagicMock()
+        openai_resp.choices = [MagicMock()]
+        openai_resp.choices[0].message = MagicMock()
+        openai_resp.choices[0].message.content = "response"
+        openai_resp.choices[0].message.tool_calls = None
+        openai_resp.choices[0].finish_reason = "stop"
+        openai_resp.usage = MagicMock()
+        openai_resp.usage.prompt_tokens = 100
+        openai_resp.usage.completion_tokens = 50
+        openai_resp.usage.prompt_tokens_details = MagicMock()
+        openai_resp.usage.prompt_tokens_details.cached_tokens = 75
+
+        result = impl._openai_to_anthropic(openai_resp, "m")
+        assert result.usage.input_tokens == 100
+        assert result.usage.output_tokens == 50
+        assert result.usage.cache_read_input_tokens == 75
+        assert result.usage.cache_creation_input_tokens is None
+
+    def test_cache_metrics_missing(self, impl):
+        openai_resp = MagicMock()
+        openai_resp.choices = [MagicMock()]
+        openai_resp.choices[0].message = MagicMock()
+        openai_resp.choices[0].message.content = "response"
+        openai_resp.choices[0].message.tool_calls = None
+        openai_resp.choices[0].finish_reason = "stop"
+        openai_resp.usage = MagicMock()
+        openai_resp.usage.prompt_tokens = 100
+        openai_resp.usage.completion_tokens = 50
+        openai_resp.usage.prompt_tokens_details = None
+
+        result = impl._openai_to_anthropic(openai_resp, "m")
+        assert result.usage.input_tokens == 100
+        assert result.usage.output_tokens == 50
+        assert result.usage.cache_read_input_tokens is None
+        assert result.usage.cache_creation_input_tokens is None
+
 
 class TestStreamingTranslation:
     async def test_text_streaming(self, impl):

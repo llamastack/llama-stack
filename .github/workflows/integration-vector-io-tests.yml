@@ -215,7 +215,7 @@ jobs:
           INFINISPAN_PASSWORD: ${{ matrix.vector-io-provider == 'remote::infinispan' && 'password' || '' }}
         run: |
           uv run --no-sync \
-            pytest -sv --stack-config="files=inline::localfs,inference=inline::sentence-transformers?trust_remote_code=true,vector_io=${{ matrix.vector-io-provider }}" \
+            pytest -sv --stack-config="files=inline::localfs,inference=inline::sentence-transformers?trust_remote_code=true,vector_io=${{ matrix.vector-io-provider }},file_processors=inline::pypdf" \
             tests/integration/vector_io
 
       - name: Check Storage and Memory Available After Tests
@@ -251,7 +251,7 @@ jobs:
 
       - name: Upload all logs to artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: vector-io-logs-${{ github.run_id }}-${{ github.run_attempt }}-${{ env.SANITIZED_PROVIDER }}-${{ matrix.python-version }}
           path: |
