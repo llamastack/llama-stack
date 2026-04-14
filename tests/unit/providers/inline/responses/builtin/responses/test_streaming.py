@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from collections.abc import AsyncIterator
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -668,24 +669,22 @@ class TestSummarizeReasoning:
 
         assert events == []
 
-    async def test_unexpected_return_type_yields_nothing(self):
-        """If the inference API returns an unexpected type, no events should be yielded."""
+    async def test_unexpected_return_type_raises_error(self):
+        """If the inference API returns an unexpected type, a RuntimeError should be raised."""
         mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = MagicMock()
+        mock_inference.openai_chat_completion.return_value = MagicMock(spec=AsyncIterator)
 
-        events = []
-        async for event in summarize_reasoning(
-            inference_api=mock_inference,
-            model="test-model",
-            reasoning_text="reasoning",
-            reasoning_item_id="rs_unexpected",
-            output_index=0,
-            summary_mode="concise",
-            start_sequence_number=0,
-        ):
-            events.append(event)
-
-        assert events == []
+        with pytest.raises(RuntimeError, match="Expected non-streaming response"):
+            async for _ in summarize_reasoning(
+                inference_api=mock_inference,
+                model="test-model",
+                reasoning_text="reasoning",
+                reasoning_item_id="rs_unexpected",
+                output_index=0,
+                summary_mode="concise",
+                start_sequence_number=0,
+            ):
+                pass
 
     async def test_usage_collected(self):
         """Usage data from the completion should be collected in summary_usage list."""
