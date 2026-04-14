@@ -21,22 +21,13 @@ from llama_stack.core.storage.datatypes import (
 from llama_stack.log import LoggingConfig
 from llama_stack_api import (
     Api,
-    Benchmark,
-    BenchmarkInput,
     ConnectorInput,
-    Dataset,
-    DatasetInput,
-    DatasetIO,
-    Eval,
     Inference,
     Model,
     ModelInput,
     ProviderSpec,
     Resource,
     Safety,
-    Scoring,
-    ScoringFn,
-    ScoringFnInput,
     Shield,
     ShieldInput,
     ToolGroup,
@@ -99,44 +90,20 @@ class VectorStoreWithOwner(VectorStore, ResourceWithOwner):
     pass
 
 
-class DatasetWithOwner(Dataset, ResourceWithOwner):
-    """A Dataset resource extended with ownership information for access control."""
-
-    pass
-
-
-class ScoringFnWithOwner(ScoringFn, ResourceWithOwner):
-    """A ScoringFn resource extended with ownership information for access control."""
-
-    pass
-
-
-class BenchmarkWithOwner(Benchmark, ResourceWithOwner):
-    """A Benchmark resource extended with ownership information for access control."""
-
-    pass
-
-
 class ToolGroupWithOwner(ToolGroup, ResourceWithOwner):
     """A ToolGroup resource extended with ownership information for access control."""
 
     pass
 
 
-RoutableObject = Model | Shield | VectorStore | Dataset | ScoringFn | Benchmark | ToolGroup
+RoutableObject = Model | Shield | VectorStore | ToolGroup
 
 RoutableObjectWithProvider = Annotated[
-    ModelWithOwner
-    | ShieldWithOwner
-    | VectorStoreWithOwner
-    | DatasetWithOwner
-    | ScoringFnWithOwner
-    | BenchmarkWithOwner
-    | ToolGroupWithOwner,
+    ModelWithOwner | ShieldWithOwner | VectorStoreWithOwner | ToolGroupWithOwner,
     Field(discriminator="type"),
 ]
 
-RoutedProtocol = Inference | Safety | VectorIO | DatasetIO | Scoring | Eval | ToolRuntime
+RoutedProtocol = Inference | Safety | VectorIO | ToolRuntime
 
 
 # Example: /inference, /safety
@@ -749,9 +716,6 @@ class RegisteredResources(BaseModel):
     models: list[ModelInput] = Field(default_factory=list)
     shields: list[ShieldInput] = Field(default_factory=list)
     vector_stores: list[VectorStoreInput] = Field(default_factory=list)
-    datasets: list[DatasetInput] = Field(default_factory=list)
-    scoring_fns: list[ScoringFnInput] = Field(default_factory=list)
-    benchmarks: list[BenchmarkInput] = Field(default_factory=list)
     tool_groups: list[ToolGroupInput] = Field(default_factory=list, deprecated=True)
 
     @model_validator(mode="after")
@@ -810,6 +774,11 @@ class ServerConfig(BaseModel):
     workers: int = Field(
         default=1,
         description="Number of workers to use for the server",
+    )
+    registry_refresh_interval_seconds: int = Field(
+        default=300,
+        description="Interval in seconds between registry refreshes for syncing model information from providers",
+        gt=0,
     )
 
 

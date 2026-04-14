@@ -196,12 +196,18 @@ jobs:
             .distribution_spec.container_image = "registry.access.redhat.com/ubi9:latest"
           ' src/llama_stack/distributions/ci-tests/config.yaml
 
+      - name: Create UBI9 pip constraints
+        run: |
+          # UBI9 ships glibc 2.34; semgrep >= 1.158 requires manylinux_2_35
+          echo "semgrep<1.158" > ubi9-constraints.txt
+
       - name: Build UBI9 container image
         run: |
           BASE_IMAGE=$(yq -r '.distribution_spec.container_image // "registry.access.redhat.com/ubi9:latest"' src/llama_stack/distributions/ci-tests/config.yaml)
           BUILD_ARGS=(--build-arg "INSTALL_MODE=editable" --build-arg "DISTRO_NAME=ci-tests")
           BUILD_ARGS+=(--build-arg "BASE_IMAGE=$BASE_IMAGE")
           BUILD_ARGS+=(--build-arg "RUN_CONFIG_PATH=/workspace/src/llama_stack/distributions/ci-tests/config.yaml")
+          BUILD_ARGS+=(--build-arg "PIP_CONSTRAINT_FILE=/workspace/ubi9-constraints.txt")
           if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
             BUILD_ARGS+=(--build-arg "UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL")
           fi

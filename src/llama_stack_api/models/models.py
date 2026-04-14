@@ -10,10 +10,11 @@ This module defines the request and response models for the Models API
 using Pydantic with Field descriptions for OpenAPI schema generation.
 """
 
+import time
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 from llama_stack_api.resource import Resource, ResourceType
 from llama_stack_api.schema_utils import json_schema_type
@@ -55,6 +56,24 @@ class Model(CommonModelFields, Resource):
     """
 
     type: Literal[ResourceType.model] = ResourceType.model
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def id(self) -> str:
+        """The model identifier (OpenAI-compatible alias for identifier)."""
+        return self.identifier
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def object(self) -> Literal["model"]:
+        """The object type, always 'model'."""
+        return "model"
+
+    created: int = Field(
+        default_factory=lambda: int(time.time()),
+        description="The Unix timestamp in seconds when the model was created.",
+    )
+    owned_by: str = Field(default="llama_stack", description="The owner of the model.")
 
     @property
     def model_id(self) -> str:
@@ -120,6 +139,7 @@ class OpenAIModel(BaseModel):
 class OpenAIListModelsResponse(BaseModel):
     """Response containing a list of OpenAI model objects."""
 
+    object: Literal["list"] = "list"
     data: list[OpenAIModel] = Field(..., description="List of OpenAI model objects.")
 
 

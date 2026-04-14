@@ -39,6 +39,7 @@ response = client.chat.completions.create(
 - **Vector Stores & Files** — `/v1/vector_stores` and `/v1/files` for managed document storage and search
 - **Batches** — `/v1/batches` for offline batch processing
 - **[Open Responses](https://www.openresponses.org/) conformant** — the Responses API implementation passes the Open Responses conformance test suite
+- **Multi-SDK support** — use the [Anthropic SDK](https://docs.anthropic.com/en/api/messages) (`/v1/messages`) or [Google GenAI SDK](https://ai.google.dev/gemini-api/docs/interactions) (`/v1alpha/interactions`) natively alongside the OpenAI API
 
 ## Use any model, use any infrastructure
 
@@ -55,13 +56,13 @@ Install and run a Llama Stack server:
 curl -LsSf https://github.com/llamastack/llama-stack/raw/main/scripts/install.sh | bash
 
 # Or install via uv
-uv pip install llama-stack
+uv pip install llama-stack[starter]
 
 # Start the server (uses the starter distribution with Ollama)
-llama stack run
+uv run llama stack run starter
 ```
 
-Then connect with any OpenAI client — [Python](https://github.com/openai/openai-python), [TypeScript](https://github.com/openai/openai-node), [curl](https://platform.openai.com/docs/api-reference), or any framework that speaks the OpenAI API.
+Then connect with any OpenAI, Anthropic, or Google GenAI client — [Python](https://github.com/openai/openai-python), [TypeScript](https://github.com/openai/openai-node), [curl](https://platform.openai.com/docs/api-reference), or any framework that speaks these APIs.
 
 See the [Quick Start guide](https://llamastack.github.io/docs/getting_started/quickstart) for detailed setup.
 

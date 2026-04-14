@@ -26,6 +26,7 @@ from llama_stack_api.common.responses import Order
 from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
+    OpenAICompactedResponse,
     OpenAIDeleteResponseObject,
     OpenAIResponseObject,
 )
@@ -41,6 +42,7 @@ from llama_stack_api.version import LLAMA_STACK_API_V1
 from .api import Responses
 from .models import (
     CancelResponseRequest,
+    CompactResponseRequest,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -216,6 +218,24 @@ def create_router(impl: Responses) -> APIRouter:
         responses=standard_responses,
         route_class=FormURLEncodedRoute,
     )
+
+    @router.post(
+        "/responses/compact",
+        response_model=OpenAICompactedResponse,
+        summary="Compact a conversation. [alpha]",
+        description="**[alpha]** Compresses conversation history into a smaller representation while preserving context. This endpoint is in alpha and may change without notice.",
+        openapi_extra={
+            "requestBody": {
+                "content": {
+                    "application/x-www-form-urlencoded": {},
+                },
+            }
+        },
+    )
+    async def compact_openai_response(
+        request: Annotated[CompactResponseRequest, Body(...)],
+    ) -> OpenAICompactedResponse:
+        return await impl.compact_openai_response(request)
 
     @router.get(
         "/responses/{response_id}",

@@ -20,7 +20,7 @@ The starter distribution consists of the following provider configurations:
 | safety | `inline::llama-guard`                                                                                                                                                                                                                                                                                                                          |
 | scoring | `inline::basic`, `inline::llm-as-judge`, `inline::braintrust`                                                                                                                                                                                                                                                                                  |
 | tool_runtime | `remote::brave-search`, `remote::tavily-search`, `inline::file-search`, `remote::model-context-protocol`                                                                                                                                                                                                                                       |
-| vector_io | `inline::faiss`, `inline::sqlite-vec`, `inline::milvus`, `remote::chromadb`, `remote::pgvector`                                                                                                                                                                                                                                                 |
+| vector_io | `inline::faiss`, `inline::sqlite-vec`, `inline::milvus`, `remote::chromadb`, `remote::pgvector`, `remote::qdrant`, `remote::weaviate`, `remote::elasticsearch`, `remote::infinispan`                                                                                                                                                                 |
 
 ## Inference Providers
 
@@ -60,6 +60,10 @@ The starter distribution includes a comprehensive set of vector IO providers:
 - **[ChromaDB](https://www.trychroma.com/)**: Remote ChromaDB vector store - disabled by default - provider ID: `chromadb`
 - **[PGVector](https://github.com/pgvector/pgvector)**: PostgreSQL vector store - disabled by default - provider ID: `pgvector`
 - **[Milvus](https://milvus.io/)**: Milvus vector store - disabled by default - provider ID: `milvus`
+- **[Qdrant](https://qdrant.tech/)**: Qdrant vector store - disabled by default - provider ID: `qdrant`
+- **[Weaviate](https://weaviate.io/)**: Weaviate vector store - disabled by default - provider ID: `weaviate`
+- **[Elasticsearch](https://www.elastic.co/)**: Elasticsearch vector store - disabled by default - provider ID: `elasticsearch`
+- **[Infinispan](https://infinispan.org/)**: Infinispan vector store - disabled by default - provider ID: `infinispan`
 
 ## Environment Variables
 
@@ -109,6 +113,14 @@ The following environment variables can be configured:
 - `PGVECTOR_DB`: PGVector database name
 - `PGVECTOR_USER`: PGVector username
 - `PGVECTOR_PASSWORD`: PGVector password
+- `MILVUS_URL`: Milvus server URL
+- `QDRANT_URL`: Qdrant server URL
+- `WEAVIATE_CLUSTER_URL`: Weaviate cluster URL
+- `ELASTICSEARCH_URL`: Elasticsearch server URL (default: `localhost:9200`)
+- `ELASTICSEARCH_API_KEY`: Elasticsearch API key
+- `INFINISPAN_URL`: Infinispan server URL (default: `http://localhost:11222`)
+- `INFINISPAN_USERNAME`: Infinispan authentication username (default: `admin`)
+- `INFINISPAN_PASSWORD`: Infinispan authentication password
 
 ### Tool Configuration
 
@@ -133,6 +145,7 @@ export NVIDIA_API_KEY=your_nvidia_api_key   # enables the NVIDIA inference provi
 export MILVUS_URL=http://localhost:19530   # enables the Milvus vector provider
 export CHROMADB_URL=http://localhost:8000/v1   # enables the ChromaDB vector provider
 export PGVECTOR_DB=llama_stack_db   # enables the PGVector vector provider
+export INFINISPAN_URL=http://localhost:11222   # enables the Infinispan vector provider
 ```
 
 This distribution comes with a default "llama-guard" shield that can be enabled by setting the `SAFETY_MODEL` environment variable to point to an appropriate Llama Guard model id. Use `llama-stack-client models list` to see the list of available models.
