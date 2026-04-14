@@ -48,7 +48,9 @@ class GeminiConfig(RemoteInferenceProviderConfig):
         if has_api_key and has_access_token:
             raise ValueError("api_key and access_token are mutually exclusive — set one or the other, not both")
         if has_access_token and not self.project:
-            raise ValueError("project is required when using access_token (Google APIs need a quota project for OAuth/ADC credentials)")
+            raise ValueError(
+                "project is required when using access_token (Google APIs need a quota project for OAuth/ADC credentials)"
+            )
         if self.project and not has_access_token:
             raise ValueError("project requires access_token — api_key authentication does not use a quota project")
         return self
