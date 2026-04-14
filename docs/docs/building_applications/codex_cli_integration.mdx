@@ -8,13 +8,16 @@ This integration is in early development (alpha status). While core functionalit
 
 ## Quick Start
 
-```bash
 # 1. Start Llama Stack with Codex support
+```bash
 export OPENAI_API_KEY="your-key-here"
 llama stack run starter
+```
 
 # 2. Configure Codex CLI
-cat > ~/.codex/config.toml << EOF
+Add the following to your `~/.codex/config.toml`:
+
+```toml
 model = "openai/gpt-4o"
 model_provider = "llama-stack"
 
@@ -23,7 +26,7 @@ name = "OpenAI"
 base_url = "http://localhost:8321/v1"
 wire_api = "responses"
 supports_websockets = false
-EOF
+```
 
 # 3. Test the integration
 codex "Write a hello world function in Python"
@@ -40,21 +43,6 @@ Key benefits:
 - **Tool execution**: Full support for shell commands, file operations, and code generation
 
 ## Configuration
-
-### Codex CLI Setup
-
-Add the following to your `~/.codex/config.toml`:
-
-```toml
-model = "openai/gpt-4o"
-model_provider = "llama-stack"
-
-[model_providers.llama-stack]
-name = "OpenAI"
-base_url = "http://localhost:8321/v1"
-wire_api = "responses"
-supports_websockets = false
-```
 
 ### Model Compatibility
 
