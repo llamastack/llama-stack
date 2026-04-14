@@ -245,7 +245,7 @@ const config: Config = {
     },
     colorMode: {
       defaultMode: 'dark',
-      respectPrefersColorScheme: true,
+      respectPrefersColorScheme: false,
     },
     prism: {
       theme: require('prism-react-renderer').themes.oneDark,

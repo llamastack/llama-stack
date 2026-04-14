@@ -42,7 +42,7 @@ const sidebars: SidebarsConfig = {
             'concepts/apis/api_providers',
             {
               type: 'category',
-              label: 'OpenAI Compatibility',
+              label: 'OpenAI',
               collapsed: false,
               link: { type: 'doc', id: 'api-openai/index' },
               items: [
@@ -57,6 +57,7 @@ const sidebars: SidebarsConfig = {
               collapsed: false,
               link: { type: 'doc', id: 'api-anthropic-messages/index' },
               items: [
+                'api-openai/anthropic_messages',
                 'api-anthropic-messages/conformance',
               ],
             },
@@ -354,13 +355,6 @@ const sidebars: SidebarsConfig = {
   experimentalApiSidebar: require('./docs/api-experimental/sidebar.ts').default,
   deprecatedApiSidebar: require('./docs/api-deprecated/sidebar.ts').default,
 
-  // OpenAI compatibility sidebar
-  openaiCompatSidebar: [
-    'api-openai/index',
-    'api-openai/anthropic_messages',
-    'api-openai/conformance',
-    'api-openai/provider_matrix',
-  ],
 };
 
 export default sidebars;

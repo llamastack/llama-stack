@@ -31,6 +31,7 @@ ARG RUN_CONFIG_PATH=""
 ARG UV_HTTP_TIMEOUT=500
 ARG UV_EXTRA_INDEX_URL=""
 ARG UV_INDEX_STRATEGY=""
+ARG PIP_CONSTRAINT_FILE=""
 ENV UV_HTTP_TIMEOUT=${UV_HTTP_TIMEOUT}
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -121,6 +122,9 @@ RUN set -eux; \
 # Explicitly unset UV index env vars to ensure we only use PyPI for distribution deps
 RUN set -eux; \
     unset UV_EXTRA_INDEX_URL UV_INDEX_STRATEGY; \
+    if [ -n "$PIP_CONSTRAINT_FILE" ] && [ -f "$PIP_CONSTRAINT_FILE" ]; then \
+        export UV_CONSTRAINT="$PIP_CONSTRAINT_FILE"; \
+    fi; \
     if [ -z "$DISTRO_NAME" ]; then \
         echo "DISTRO_NAME must be provided" >&2; \
         exit 1; \
