@@ -71,6 +71,12 @@ dependencies = [
     "llama-stack-utils-safety",
     "llama-stack-utils-bedrock",
     "llama-stack-utils-common",
+    # TODO: remove these once all distributions are extracted into their own packages.
+    # During the transition, these provider packages are discovered via entry points.
+    "llama-stack-provider-inference-sentence-transformers",
+    "llama-stack-provider-inference-transformers",
+    "llama-stack-provider-safety-prompt-guard",
+    "llama-stack-provider-tool-runtime-file-search",
 ]
 
 [project.optional-dependencies]
@@ -291,6 +297,10 @@ llama-stack-utils-vector-io = [{ workspace = true }]
 llama-stack-utils-safety = [{ workspace = true }]
 llama-stack-utils-bedrock = [{ workspace = true }]
 llama-stack-utils-common = [{ workspace = true }]
+llama-stack-provider-inference-sentence-transformers = [{ workspace = true }]
+llama-stack-provider-inference-transformers = [{ workspace = true }]
+llama-stack-provider-safety-prompt-guard = [{ workspace = true }]
+llama-stack-provider-tool-runtime-file-search = [{ workspace = true }]
 
 [tool.ruff]
 line-length = 120

@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.1.dev0"
+
+[tool.uv.sources]
+llama-stack = { workspace = true }
+llama-stack-api = { workspace = true }
+
+[project]
+name = "llama-stack-provider-inference-transformers"
+dynamic = ["version"]
+description = "Transformers inference provider for Llama Stack (neural reranking)"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+    "llama-stack",
+    "llama-stack-api",
+    "torch",
+    "transformers",
+    "tokenizers",
+    "safetensors",
+]
+
+[project.entry-points."llama_stack.providers"]
+"inference.inline.transformers" = "llama_stack_provider_inference_transformers.provider:get_provider_spec"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["llama_stack_provider_inference_transformers"]

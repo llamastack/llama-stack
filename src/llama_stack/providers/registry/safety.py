@@ -16,21 +16,14 @@ from llama_stack_api import (
 def available_providers() -> list[ProviderSpec]:
     """Return the list of available safety provider specifications.
 
+    Includes both in-tree providers and those discovered via entry points.
+
     Returns:
         List of ProviderSpec objects describing available providers
     """
-    return [
-        InlineProviderSpec(
-            api=Api.safety,
-            provider_type="inline::prompt-guard",
-            pip_packages=[
-                "transformers[accelerate]",
-                "torch --index-url https://download.pytorch.org/whl/cpu",
-            ],
-            module="llama_stack.providers.inline.safety.prompt_guard",
-            config_class="llama_stack.providers.inline.safety.prompt_guard.PromptGuardConfig",
-            description="Prompt Guard safety provider for detecting and filtering unsafe prompts and content.",
-        ),
+    from llama_stack.providers.registry import merge_entry_point_providers
+
+    providers = [
         InlineProviderSpec(
             api=Api.safety,
             provider_type="inline::llama-guard",
@@ -91,3 +84,5 @@ def available_providers() -> list[ProviderSpec]:
             description="SambaNova's safety provider for content moderation and safety filtering.",
         ),
     ]
+
+    return merge_entry_point_providers(providers, api=Api.safety)

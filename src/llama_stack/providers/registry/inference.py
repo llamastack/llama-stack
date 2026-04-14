@@ -7,7 +7,6 @@
 
 from llama_stack_api import (
     Api,
-    InlineProviderSpec,
     ProviderSpec,
     RemoteProviderSpec,
 )
@@ -36,38 +35,7 @@ def available_providers() -> list[ProviderSpec]:
     """
     from llama_stack.providers.registry import merge_entry_point_providers
 
-    providers = [
-        InlineProviderSpec(
-            api=Api.inference,
-            provider_type="inline::sentence-transformers",
-            # CrossEncoder depends on torchao.quantization
-            pip_packages=[
-                "torch torchvision torchao>=0.12.0 --extra-index-url https://download.pytorch.org/whl/cpu",
-                "sentence-transformers --no-deps",
-                # required by some SentenceTransformers architectures for tensor rearrange/merge ops
-                "einops",
-                # fast HF tokenization backend used by SentenceTransformers models
-                "tokenizers",
-                # safe and fast file format for storing and loading tensors
-                "safetensors",
-            ],
-            module="llama_stack.providers.inline.inference.sentence_transformers",
-            config_class="llama_stack.providers.inline.inference.sentence_transformers.config.SentenceTransformersInferenceConfig",
-            description="Sentence Transformers inference provider for text embeddings and similarity search.",
-        ),
-        InlineProviderSpec(
-            api=Api.inference,
-            provider_type="inline::transformers",
-            pip_packages=[
-                "torch --extra-index-url https://download.pytorch.org/whl/cpu",
-                "transformers",
-                "tokenizers",
-                "safetensors",
-            ],
-            module="llama_stack.providers.inline.inference.transformers",
-            config_class="llama_stack.providers.inline.inference.transformers.config.TransformersInferenceConfig",
-            description="Transformers inference provider for neural rerank.",
-        ),
+    providers: list[ProviderSpec] = [
         RemoteProviderSpec(
             api=Api.inference,
             adapter_type="cerebras",

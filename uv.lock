@@ -16,6 +16,10 @@ members = [
     "efenness-llama-stack-provider-inference-ollama",
     "llama-stack",
     "llama-stack-api",
+    "llama-stack-provider-inference-sentence-transformers",
+    "llama-stack-provider-inference-transformers",
+    "llama-stack-provider-safety-prompt-guard",
+    "llama-stack-provider-tool-runtime-file-search",
     "llama-stack-utils-bedrock",
     "llama-stack-utils-common",
     "llama-stack-utils-inference",
@@ -2706,6 +2710,10 @@ dependencies = [
     { name = "httpx" },
     { name = "jinja2" },
     { name = "llama-stack-api" },
+    { name = "llama-stack-provider-inference-sentence-transformers" },
+    { name = "llama-stack-provider-inference-transformers" },
+    { name = "llama-stack-provider-safety-prompt-guard" },
+    { name = "llama-stack-provider-tool-runtime-file-search" },
     { name = "llama-stack-utils-bedrock" },
     { name = "llama-stack-utils-common" },
     { name = "llama-stack-utils-inference" },
@@ -2951,6 +2959,10 @@ requires-dist = [
     { name = "langdetect", marker = "extra == 'starter'" },
     { name = "llama-stack-api", editable = "src/llama_stack_api" },
     { name = "llama-stack-client", marker = "extra == 'client'", specifier = ">=0.7.1" },
+    { name = "llama-stack-provider-inference-sentence-transformers", editable = "packages/llama-stack-provider-inference-sentence-transformers" },
+    { name = "llama-stack-provider-inference-transformers", editable = "packages/llama-stack-provider-inference-transformers" },
+    { name = "llama-stack-provider-safety-prompt-guard", editable = "packages/llama-stack-provider-safety-prompt-guard" },
+    { name = "llama-stack-provider-tool-runtime-file-search", editable = "packages/llama-stack-provider-tool-runtime-file-search" },
     { name = "llama-stack-utils-bedrock", editable = "packages/llama-stack-utils-bedrock" },
     { name = "llama-stack-utils-common", editable = "packages/llama-stack-utils-common" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
@@ -3179,6 +3191,128 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d7/3d/c4a268a4b60feb6f7e6da3fad2504aa157a52384529766560f8f3cfca43f/llama_stack_client-0.7.2.tar.gz", hash = "sha256:0e3458800af6a18fd8fc5e0760ed626931a416f6c1fdf24aeba4001e6fca9aec", size = 372953, upload-time = "2026-04-08T14:19:32.02Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/78/a8/cc7fa209471abcaac51139b3e6655c3b18ea718f0afa7cfa6ad974dd9eab/llama_stack_client-0.7.2-py3-none-any.whl", hash = "sha256:8b86156f2522c241ae46280e59287b7716c3cdaf016b6477630eb64bd8cbf150", size = 375337, upload-time = "2026-04-08T14:19:30.444Z" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-sentence-transformers"
+source = { editable = "packages/llama-stack-provider-inference-sentence-transformers" }
+dependencies = [
+    { name = "einops" },
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+    { name = "safetensors" },
+    { name = "sentence-transformers" },
+    { name = "tokenizers" },
+    { name = "torch", version = "2.8.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.8.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
+    { name = "torchao" },
+    { name = "torchvision", version = "0.23.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or sys_platform == 'darwin'" },
+    { name = "torchvision", version = "0.23.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "einops" },
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+    { name = "safetensors" },
+    { name = "sentence-transformers" },
+    { name = "tokenizers" },
+    { name = "torch", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "torchao", specifier = ">=0.12.0" },
+    { name = "torchvision", index = "https://download.pytorch.org/whl/cpu" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-transformers"
+source = { editable = "packages/llama-stack-provider-inference-transformers" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "safetensors" },
+    { name = "tokenizers" },
+    { name = "torch", version = "2.8.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.8.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
+    { name = "transformers" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "safetensors" },
+    { name = "tokenizers" },
+    { name = "torch", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "transformers" },
+]
+
+[[package]]
+name = "llama-stack-provider-safety-prompt-guard"
+source = { editable = "packages/llama-stack-provider-safety-prompt-guard" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+    { name = "llama-stack-utils-safety" },
+    { name = "torch", version = "2.8.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.8.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
+    { name = "transformers", extra = ["accelerate"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+    { name = "llama-stack-utils-safety", editable = "packages/llama-stack-utils-safety" },
+    { name = "torch", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "transformers", extras = ["accelerate"] },
+]
+
+[[package]]
+name = "llama-stack-provider-tool-runtime-file-search"
+source = { editable = "packages/llama-stack-provider-tool-runtime-file-search" }
+dependencies = [
+    { name = "chardet" },
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "jinja2" },
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-common" },
+    { name = "llama-stack-utils-inference" },
+    { name = "nltk" },
+    { name = "numpy" },
+    { name = "pydantic" },
+    { name = "pypdf" },
+    { name = "scikit-learn" },
+    { name = "scipy" },
+    { name = "sentencepiece" },
+    { name = "tqdm" },
+    { name = "transformers" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "chardet" },
+    { name = "fastapi", specifier = ">=0.115.0" },
+    { name = "httpx" },
+    { name = "jinja2", specifier = ">=3.1.6" },
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-common", editable = "packages/llama-stack-utils-common" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+    { name = "nltk", specifier = ">=3.9.4" },
+    { name = "numpy" },
+    { name = "pydantic", specifier = ">=2.11.9" },
+    { name = "pypdf", specifier = ">=6.10.0" },
+    { name = "scikit-learn" },
+    { name = "scipy" },
+    { name = "sentencepiece" },
+    { name = "tqdm" },
+    { name = "transformers" },
 ]
 
 [[package]]
@@ -5211,11 +5345,11 @@ wheels = [
 
 [[package]]
 name = "pypdf"
-version = "6.7.5"
+version = "6.10.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f6/52/37cc0aa9e9d1bf7729a737a0d83f8b3f851c8eb137373d9f71eafb0a3405/pypdf-6.7.5.tar.gz", hash = "sha256:40bb2e2e872078655f12b9b89e2f900888bb505e88a82150b64f9f34fa25651d", size = 5304278, upload-time = "2026-03-02T09:05:21.464Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/66/79/f2730c42ec7891a75a2fcea2eb4f356872bcbc671b711418060424796612/pypdf-6.10.1.tar.gz", hash = "sha256:62e6ca7f65aaa28b3d192addb44f97296e4be1748f57ed0f4efb2d4915841880", size = 5315704, upload-time = "2026-04-14T12:55:20.996Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/05/89/336673efd0a88956562658aba4f0bbef7cb92a6fbcbcaf94926dbc82b408/pypdf-6.7.5-py3-none-any.whl", hash = "sha256:07ba7f1d6e6d9aa2a17f5452e320a84718d4ce863367f7ede2fd72280349ab13", size = 331421, upload-time = "2026-03-02T09:05:19.722Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/04/e3aa7f1f14dbc53429cae34666261eb935d99bd61d24756ab94d7e0309da/pypdf-6.10.1-py3-none-any.whl", hash = "sha256:6331940d3bfe75b7e6601d35db7adabab5fc1d716efaeb384e3c0c3957d033de", size = 335606, upload-time = "2026-04-14T12:55:18.941Z" },
 ]
 
 [[package]]
@@ -6735,6 +6869,15 @@ wheels = [
 ]
 
 [[package]]
+name = "torchao"
+version = "0.17.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/fe/a4036a8e80fa800c92dbcbf75f541cd4c106248b6b579db6dab1800f616a/torchao-0.17.0-cp310-abi3-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:87a418ce0ec064a821ceab83c921b501acef0ce9a6ccd1be358fcd16c3ae8c58", size = 3206172, upload-time = "2026-03-30T22:25:52.974Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/37/ef37ca885265e5f79a168616767dd416a3cea1cc3b28bb6b503ce4a5b652/torchao-0.17.0-py3-none-any.whl", hash = "sha256:02eba449036715b9ae784fbaa1a6f97994bb7b0421ce92d1d5d1c08e5bd6d349", size = 1200680, upload-time = "2026-03-30T22:25:54.457Z" },
+]
+
+[[package]]
 name = "torchdata"
 version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
@@ -6876,6 +7019,11 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d6/68/a39307bcc4116a30b2106f2e689130a48de8bd8a1e635b5e1030e46fcd9e/transformers-4.57.1.tar.gz", hash = "sha256:f06c837959196c75039809636cd964b959f6604b75b8eeec6fdfc0440b89cc55", size = 10142511, upload-time = "2025-10-14T15:39:26.18Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/71/d3/c16c3b3cf7655a67db1144da94b021c200ac1303f82428f2beef6c2e72bb/transformers-4.57.1-py3-none-any.whl", hash = "sha256:b10d05da8fa67dc41644dbbf9bc45a44cb86ae33da6f9295f5fbf5b7890bd267", size = 11990925, upload-time = "2025-10-14T15:39:23.085Z" },
+]
+
+[package.optional-dependencies]
+accelerate = [
+    { name = "accelerate" },
 ]
 
 [[package]]

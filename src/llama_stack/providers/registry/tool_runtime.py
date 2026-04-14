@@ -5,10 +5,8 @@
 # the root directory of this source tree.
 
 
-from llama_stack.providers.registry.vector_io import DEFAULT_VECTOR_IO_DEPS
 from llama_stack_api import (
     Api,
-    InlineProviderSpec,
     ProviderSpec,
     RemoteProviderSpec,
 )
@@ -17,29 +15,14 @@ from llama_stack_api import (
 def available_providers() -> list[ProviderSpec]:
     """Return the list of available tool runtime provider specifications.
 
+    Includes both in-tree providers and those discovered via entry points.
+
     Returns:
         List of ProviderSpec objects describing available providers
     """
-    return [
-        InlineProviderSpec(
-            api=Api.tool_runtime,
-            provider_type="inline::file-search",
-            pip_packages=DEFAULT_VECTOR_IO_DEPS
-            + [
-                "tqdm",
-                "numpy",
-                "scikit-learn",
-                "scipy",
-                "nltk>=3.9.4",
-                "sentencepiece",
-                "transformers",
-            ],
-            module="llama_stack.providers.inline.tool_runtime.file_search",
-            config_class="llama_stack.providers.inline.tool_runtime.file_search.config.FileSearchToolRuntimeConfig",
-            api_dependencies=[Api.vector_io, Api.inference, Api.files],
-            toolgroup_id="builtin::file_search",
-            description="File search tool runtime for document ingestion, chunking, and semantic search.",
-        ),
+    from llama_stack.providers.registry import merge_entry_point_providers
+
+    providers: list[ProviderSpec] = [
         RemoteProviderSpec(
             api=Api.tool_runtime,
             adapter_type="brave-search",
@@ -95,3 +78,5 @@ def available_providers() -> list[ProviderSpec]:
             description="Model Context Protocol (MCP) tool for standardized tool calling and context management.",
         ),
     ]
+
+    return merge_entry_point_providers(providers, api=Api.tool_runtime)

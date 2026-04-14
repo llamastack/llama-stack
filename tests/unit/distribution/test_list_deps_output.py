@@ -64,19 +64,19 @@ def test_stack_list_deps_expands_provider_dependencies():
     This test picks a known dependency (inference), lists its deps, then verifies those
     deps appear in the responses output (proving expansion happened).
     """
-    # First, get dependencies for the inference provider (which responses depends on)
-    inference_args = argparse.Namespace(
+    # First, get dependencies for a vector_io provider (which responses depends on)
+    vector_io_args = argparse.Namespace(
         config=None,
         env_name="test-env",
-        providers="inference=inline::sentence-transformers",
+        providers="vector_io=inline::faiss",
         format="deps-only",
     )
 
     with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
-        run_stack_list_deps_command(inference_args)
-        inference_output = mock_stdout.getvalue()
+        run_stack_list_deps_command(vector_io_args)
+        vector_io_output = mock_stdout.getvalue()
 
-    # Now get dependencies for responses, which should include inference deps
+    # Now get dependencies for responses, which should include vector_io deps
     responses_args = argparse.Namespace(
         config=None,
         env_name="test-env",
@@ -89,18 +89,18 @@ def test_stack_list_deps_expands_provider_dependencies():
         responses_output = mock_stdout.getvalue()
 
     # Verify that dependencies were expanded: responses output should include
-    # inference-specific dependencies. Extract package names from the inference output
+    # vector_io-specific dependencies. Extract package names from the vector_io output
     # and verify at least some appear in the responses output.
-    inference_lines = [line.strip() for line in inference_output.split("\n") if line.strip()]
-    responses_lines = [line.strip() for line in responses_output.split("\n") if line.strip()]
+    vector_io_deps = set(vector_io_output.split())
+    responses_deps = set(responses_output.split())
 
-    # The inference provider should have some dependencies
-    assert len(inference_lines) > 0, "Inference provider should have dependencies"
+    # The vector_io provider should have some dependencies
+    assert len(vector_io_deps) > 0, "Vector IO provider should have dependencies"
 
-    # At least one inference dependency should appear in responses output
+    # At least one vector_io dependency should appear in responses output
     # (proving that dependency expansion happened)
-    common_deps = set(inference_lines) & set(responses_lines)
+    common_deps = vector_io_deps & responses_deps
     assert len(common_deps) > 0, (
-        "Responses dependencies should include at least some inference dependencies, "
+        "Responses dependencies should include at least some vector_io dependencies, "
         "proving that dependency expansion happened"
     )
