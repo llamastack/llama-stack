@@ -1,0 +1,46 @@
+version: 2
+distro_name: demo
+apis:
+- inference
+providers:
+  inference:
+  - provider_id: ollama
+    provider_type: remote::ollama
+    config:
+      base_url: ${env.OLLAMA_URL:=http://localhost:11434/v1}
+storage:
+  backends:
+    kv_default:
+      type: kv_sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/demo}/kvstore.db
+    sql_default:
+      type: sql_sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/demo}/sql_store.db
+  stores:
+    metadata:
+      namespace: registry
+      backend: kv_default
+    inference:
+      table_name: inference_store
+      backend: sql_default
+      max_write_queue_size: 10000
+      num_writers: 4
+    conversations:
+      table_name: openai_conversations
+      backend: sql_default
+    prompts:
+      namespace: prompts
+      backend: kv_default
+    connectors:
+      namespace: connectors
+      backend: kv_default
+registered_resources:
+  models:
+  - model_id: meta-llama/Llama-3.2-3B-Instruct
+    provider_id: ollama
+    provider_model_id: llama3.2:3b-instruct-fp16
+  shields: []
+  vector_dbs: []
+server:
+  port: 8321
+  host: 0.0.0.0

@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import importlib.metadata
 from pathlib import Path
 
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
@@ -37,24 +38,40 @@ def resolve_config_or_distro(
         logger.debug("Using file path", config_path=config_path)
         return config_path.resolve()
 
-    # Strategy 2: Try as distribution name (if no .yaml extension)
+    # Strategy 2: Try as installed distribution package (entry point lookup)
+    distro_name = config_or_distro
+    config_name = "config.yaml"
+    if "::" in config_or_distro:
+        distro_name, config_name = config_or_distro.split("::", 1)
+        if not config_name.endswith(".yaml"):
+            config_name += ".yaml"
+
+    distro_config = resolve_distribution_package(distro_name, config_name)
+    if distro_config:
+        return distro_config
+
+    # If no name given, try the sole installed distribution package
+    if not config_or_distro:
+        distro_config = resolve_sole_distribution_package()
+        if distro_config:
+            return distro_config
+
+    # Strategy 3: Try as in-tree distribution name (if no .yaml extension)
     if not config_or_distro.endswith(".yaml"):
         distro_config = _get_distro_config_path(config_or_distro)
         if distro_config.exists():
-            logger.debug("Using distribution", distro_config=distro_config)
+            logger.debug("Using in-tree distribution", distro_config=distro_config)
             return distro_config
 
-    # Strategy 3: Try as distro config path (if no .yaml extension and contains a slash)
+    # Strategy 4: Try as in-tree distro config path
     # eg: starter::run-with-postgres-store.yaml
-    # Use :: to avoid slash and confusion with a filesystem path
     if "::" in config_or_distro:
-        distro_name, config_name = config_or_distro.split("::")
         distro_config = _get_distro_config_path(distro_name, config_name)
         if distro_config.exists():
-            logger.info("Using distribution", distro_config=distro_config)
+            logger.info("Using in-tree distribution", distro_config=distro_config)
             return distro_config
 
-    # Strategy 4: Try as built distribution name
+    # Strategy 5: Try as built distribution name
     distrib_config = DISTRIBS_BASE_DIR / f"llamastack-{config_or_distro}" / f"{config_or_distro}-config.yaml"
     if distrib_config.exists():
         logger.debug("Using built distribution", distrib_config=distrib_config)
@@ -65,8 +82,51 @@ def resolve_config_or_distro(
         logger.debug("Using built distribution", distrib_config=distrib_config)
         return distrib_config
 
-    # Strategy 5: Failed - provide helpful error
+    # Strategy 6: Failed - provide helpful error
     raise ValueError(_format_resolution_error(config_or_distro))
+
+
+def discover_distribution_packages() -> list[str]:
+    """Discover installed distribution package names via entry points."""
+    eps = importlib.metadata.entry_points(group="llama_stack.distributions")
+    return [ep.name for ep in eps]
+
+
+def resolve_distribution_package(distro_name: str, config_name: str = "config.yaml") -> Path | None:
+    """Resolve a distribution name to a config file inside an installed package."""
+    eps = importlib.metadata.entry_points(group="llama_stack.distributions")
+    matching = [ep for ep in eps if ep.name == distro_name]
+    if not matching:
+        return None
+
+    configs_dir = matching[0].load()
+    if not isinstance(configs_dir, Path):
+        raise TypeError(
+            f"Distribution entry point '{distro_name}' must resolve to a Path, got {type(configs_dir).__name__}"
+        )
+
+    config_path = configs_dir / config_name
+    if config_path.exists():
+        logger.debug(
+            "Using installed distribution package",
+            distro_name=distro_name,
+            config_path=config_path,
+        )
+        return config_path
+
+    return None
+
+
+def resolve_sole_distribution_package() -> Path | None:
+    """If exactly one distribution package is installed, return its default config."""
+    packages = discover_distribution_packages()
+    if len(packages) == 1:
+        name = packages[0]
+        config = resolve_distribution_package(name)
+        if config:
+            logger.info("Auto-selected sole installed distribution", distro_name=name)
+            return config
+    return None
 
 
 def _get_distro_config_path(distro_name: str, path: str | None = None) -> Path:
@@ -91,8 +151,9 @@ def _format_resolution_error(config_or_distro: str) -> str:
 
 Tried the following locations:
   1. As file path: {Path(config_or_distro).resolve()}
-  2. As distribution: {distro_path}
-  3. As built distribution: ({distrib_path}, {distrib_path2})
+  2. As installed distribution package (entry point)
+  3. As in-tree distribution: {distro_path}
+  4. As built distribution: ({distrib_path}, {distrib_path2})
 
 Available distributions: {distros_str}
 
@@ -104,7 +165,7 @@ Did you mean one of these distributions?
 def _get_available_distros() -> list[str]:
     """Get list of available distro names."""
 
-    distros = []
+    distros = discover_distribution_packages()
     if DISTRO_DIR.exists():
         distros.extend([d.name for d in DISTRO_DIR.iterdir() if d.is_dir() and not d.name.startswith(".")])
     if DISTRIBS_BASE_DIR.exists():

@@ -191,6 +191,7 @@ unit = [
     "sqlite-vec",
     "ollama",
     "efenness-llama-stack-provider-inference-ollama",
+    "efenness-llama-stack-distribution-demo",
     "aiosqlite",
     "aiohttp",
     "psycopg2-binary>=2.9.0",
@@ -280,8 +281,10 @@ explicit = true
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu" }]
 torchvision = [{ index = "pytorch-cpu" }]
+llama-stack = [{ workspace = true }]
 llama-stack-api = [{ workspace = true }]
 efenness-llama-stack-provider-inference-ollama = [{ workspace = true }]
+efenness-llama-stack-distribution-demo = [{ workspace = true }]
 
 [tool.ruff]
 line-length = 120

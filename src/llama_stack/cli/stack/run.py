@@ -19,7 +19,7 @@ from llama_stack.cli.subcommand import Subcommand
 from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.stack import cast_distro_name_to_string, replace_env_vars, run_config_from_dynamic_config_spec
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
-from llama_stack.core.utils.config_resolution import resolve_config_or_distro
+from llama_stack.core.utils.config_resolution import resolve_config_or_distro, resolve_sole_distribution_package
 from llama_stack.log import get_logger
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
@@ -75,10 +75,9 @@ class StackRun(Subcommand):
         if args.enable_ui:
             self._start_ui_development_server(args.port)
 
+        config_file: Path | None = None
         if args.config:
             try:
-                from llama_stack.core.utils.config_resolution import resolve_config_or_distro
-
                 config_file = resolve_config_or_distro(args.config)
             except ValueError as e:
                 self.parser.error(str(e))
@@ -102,7 +101,8 @@ class StackRun(Subcommand):
                 yaml.dump(config_dict, f, default_flow_style=False, sort_keys=False)
 
         else:
-            config_file = None
+            # No config or providers given — try sole installed distribution package
+            config_file = resolve_sole_distribution_package()
 
         if config_file:
             logger.info("Using stack configuration", config_file=config_file)
