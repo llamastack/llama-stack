@@ -116,6 +116,8 @@ class _RawSSEStream(AsyncIterator[str]):
         # Restore the test context captured at construction time so that
         # ResponseStorage resolves the correct recordings directory.
         token = set_test_context(self._test_context) if self._test_context else None
+        recorded_lines: list[str] = []
+        should_record = False
         try:
             if mode in (APIRecordingMode.REPLAY, APIRecordingMode.RECORD_IF_MISSING) and storage:
                 recording = storage.find_recording(self._request_hash)
@@ -129,7 +131,9 @@ class _RawSSEStream(AsyncIterator[str]):
                         f"Run with --inference-mode record-if-missing to generate."
                     )
 
-            recorded_lines: list[str] = []
+            should_record = (
+                mode in (APIRecordingMode.RECORD, APIRecordingMode.RECORD_IF_MISSING) and storage is not None
+            )
             async with httpx.AsyncClient(**self._client_kwargs) as client:
                 # Use the original (unpatched) stream to bypass the httpx
                 # recording interceptor — this class handles recording itself
@@ -139,8 +143,10 @@ class _RawSSEStream(AsyncIterator[str]):
                     async for line in resp.aiter_lines():
                         recorded_lines.append(line)
                         yield line + "\n"
-
-            if mode in (APIRecordingMode.RECORD, APIRecordingMode.RECORD_IF_MISSING) and storage:
+        finally:
+            # Store recording in finally so it is saved even when the
+            # generator is closed early by StreamingResponse
+            if should_record and recorded_lines and storage:
                 request_data = {
                     "test_id": self._test_context,
                     "url": self._url,
@@ -152,7 +158,6 @@ class _RawSSEStream(AsyncIterator[str]):
                     "is_streaming": True,
                 }
                 storage.store_recording(self._request_hash, request_data, response_data)
-        finally:
             if token:
                 reset_test_context(token)
 
