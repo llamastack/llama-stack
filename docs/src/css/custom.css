@@ -8,6 +8,10 @@
 
 /* ========== LIGHT MODE ========== */
 :root {
+  /* Search icon - clean Lucide style */
+  --ifm-navbar-search-input-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2368717b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>');
+  --ifm-navbar-search-input-placeholder-color: #68717b;
+
   /* Primary - teal/navy derived from logo */
   --ifm-color-primary: #0d7377;
   --ifm-color-primary-dark: #0b6165;
@@ -72,6 +76,7 @@
 
 /* ========== DARK MODE ========== */
 [data-theme='dark'] {
+  --ifm-navbar-search-input-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%239ca3af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>');
   --ifm-color-primary: #2dbdc2;
   --ifm-color-primary-dark: #1aafb4;
   --ifm-color-primary-darker: #12979b;
@@ -167,6 +172,12 @@ h3 {
 
 [data-theme='dark'] .navbar {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Search input font */
+.navbar__search-input {
+  font-family: var(--ifm-font-family-base);
+  font-size: 0.875rem;
 }
 
 /* Logo styling */

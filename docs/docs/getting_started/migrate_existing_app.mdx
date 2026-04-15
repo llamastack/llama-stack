@@ -5,9 +5,12 @@ sidebar_position: 2
 title: Migrate an existing app
 ---
 
-If you already have an application built on the OpenAI or Anthropic SDK, migrating to Llama Stack is straightforward. In most cases you only need to change the `base_url`.
+If you already have an application built on the OpenAI or Anthropic SDK, migrating to Llama Stack is straightforward. In most cases you only need to change the `base_url`
+and the 'model' name to include the provider for the model you wish to use.
 
 ## From OpenAI
+
+This example shows a move from a direct interaction to the OpenAI API to a local Llama3.2 model hosted via Ollama.
 
 **Before** (talking directly to OpenAI):
 
@@ -34,7 +37,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="llama3.2:3b",  # use a model registered in your server
+    model="ollama/llama3.2:3b",  # use a model registered in your server
     messages=[{"role": "user", "content": "Hello!"}],
 )
 print(response.choices[0].message.content)
@@ -72,7 +75,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="llama3.2:3b",
+    model="ollama/llama3.2:3b",
     messages=[{"role": "user", "content": "Hello!"}],
 )
 print(response.choices[0].message.content)

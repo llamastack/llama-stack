@@ -92,7 +92,7 @@ def generate_docs(
         "---",
         "title: OpenAI API Conformance",
         "description: Detailed conformance status of Llama Stack against the OpenAI API specification",
-        "sidebar_label: API Conformance",
+        "sidebar_label: Conformance",
         "sidebar_position: 2",
         "---",
         "",
