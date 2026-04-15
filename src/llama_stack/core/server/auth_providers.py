@@ -20,6 +20,7 @@ from llama_stack.core.datatypes import (
     GitHubTokenAuthConfig,
     KubernetesAuthProviderConfig,
     OAuth2TokenAuthConfig,
+    UpstreamHeaderAuthConfig,
     User,
 )
 from llama_stack.log import get_logger
@@ -59,6 +60,15 @@ class AuthRequest(BaseModel):
 
 class AuthProvider(ABC):
     """Abstract base class for authentication providers."""
+
+    @property
+    def requires_http_bearer(self) -> bool:
+        """Whether this provider requires a Bearer token from the Authorization header.
+
+        Providers that extract identity from other sources (e.g. gateway-injected
+        headers) should override this to return False.
+        """
+        return True
 
     @abstractmethod
     async def validate_token(self, token: str, scope: Scope | None = None) -> User:
@@ -502,6 +512,70 @@ class KubernetesAuthProvider(AuthProvider):
         pass
 
 
+class UpstreamHeaderAuthProvider(AuthProvider):
+    """Authentication provider that extracts identity from upstream gateway headers.
+
+    Used when an upstream gateway (Authorino, Istio, or any reverse proxy) handles
+    authentication and injects user identity into request headers. This provider
+    trusts the headers and performs no token validation or outbound calls.
+    """
+
+    def __init__(self, config: UpstreamHeaderAuthConfig) -> None:
+        self.config = config
+
+    @property
+    def requires_http_bearer(self) -> bool:
+        return False
+
+    async def validate_token(self, token: str, scope: Scope | None = None) -> User:
+        if scope is None:
+            raise ValueError("Missing required authentication header: " + self.config.principal_header)
+
+        headers = dict(scope.get("headers", []))
+
+        # HTTP headers are case-insensitive; ASGI stores them as lowercase bytes
+        principal_key = self.config.principal_header.lower().encode()
+        principal_value = headers.get(principal_key)
+
+        if not principal_value:
+            raise ValueError("Missing required authentication header: " + self.config.principal_header)
+
+        principal = principal_value.decode()
+
+        attributes: dict[str, list[str]] | None = None
+        if self.config.attributes_header:
+            attributes_key = self.config.attributes_header.lower().encode()
+            attributes_value = headers.get(attributes_key)
+            if attributes_value:
+                import json
+
+                try:
+                    parsed = json.loads(attributes_value.decode())
+                except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                    raise ValueError("Failed to parse authentication attributes header: invalid JSON") from e
+
+                if not isinstance(parsed, dict):
+                    raise ValueError("Failed to parse authentication attributes header: expected JSON object")
+
+                # Normalize values to list[str] to match the User.attributes type
+                attributes = {}
+                for k, v in parsed.items():
+                    if isinstance(v, list):
+                        attributes[k] = [str(item) for item in v]
+                    elif isinstance(v, str):
+                        attributes[k] = [v]
+                    else:
+                        attributes[k] = [str(v)]
+
+        return User(principal=principal, attributes=attributes)
+
+    async def close(self) -> None:
+        pass
+
+    def get_auth_error_message(self, scope: Scope | None = None) -> str:
+        return f"Authentication required. Upstream gateway must set the {self.config.principal_header} header"
+
+
 def create_auth_provider(config: AuthenticationConfig) -> AuthProvider:
     """Factory function to create the appropriate auth provider."""
     provider_config = config.provider_config
@@ -514,5 +588,7 @@ def create_auth_provider(config: AuthenticationConfig) -> AuthProvider:
         return GitHubTokenAuthProvider(provider_config)
     elif isinstance(provider_config, KubernetesAuthProviderConfig):
         return KubernetesAuthProvider(provider_config)
+    elif isinstance(provider_config, UpstreamHeaderAuthConfig):
+        return UpstreamHeaderAuthProvider(provider_config)
     else:
         raise ValueError(f"Unknown authentication provider config type: {type(provider_config)}")
