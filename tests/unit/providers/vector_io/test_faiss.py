@@ -9,13 +9,12 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-
-from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
-from llama_stack.providers.inline.vector_io.faiss.faiss import (
+from llama_stack_api import Chunk, ChunkMetadata, EmbeddedChunk, Files, HealthStatus, QueryChunksResponse, VectorStore
+from llama_stack_provider_vector_io_faiss.config import FaissVectorIOConfig
+from llama_stack_provider_vector_io_faiss.faiss import (
     FaissIndex,
     FaissVectorIOAdapter,
 )
-from llama_stack_api import Chunk, ChunkMetadata, EmbeddedChunk, Files, HealthStatus, QueryChunksResponse, VectorStore
 
 # This test is a unit test for the FaissVectorIOAdapter class. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
@@ -48,7 +47,7 @@ def vector_store_id():
 def sample_chunks():
     import time
 
-    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+    from llama_stack_utils_vector_io.vector_utils import generate_chunk_id
 
     chunk_id_1 = generate_chunk_id("mock-doc-1", "MOCK text content 1")
     chunk_id_2 = generate_chunk_id("mock-doc-2", "MOCK text content 1")
@@ -175,7 +174,7 @@ async def test_meta_index_populated_on_add_chunks(faiss_index, sample_chunks, sa
 
 async def test_meta_index_updated_on_delete_chunks(faiss_index, sample_chunks, sample_embeddings, embedding_dimension):
     """After deleting a chunk, its position should be removed and remaining positions shifted."""
-    from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion
+    from llama_stack_utils_vector_io.vector_store import ChunkForDeletion
 
     embedded_chunks = [
         EmbeddedChunk(
@@ -215,7 +214,7 @@ async def test_resolve_filter_positions_eq(faiss_index, sample_chunks, sample_em
     ]
     await faiss_index.add_chunks(embedded_chunks)
 
-    from llama_stack.providers.utils.vector_io.filters import ComparisonFilter
+    from llama_stack_utils_vector_io.filters import ComparisonFilter
 
     result = faiss_index._resolve_filter_positions(ComparisonFilter(key="document_id", value="mock-doc-1", type="eq"))
     assert result == {0}
@@ -240,7 +239,7 @@ async def test_resolve_filter_positions_in_nin(faiss_index, sample_chunks, sampl
     ]
     await faiss_index.add_chunks(embedded_chunks)
 
-    from llama_stack.providers.utils.vector_io.filters import ComparisonFilter
+    from llama_stack_utils_vector_io.filters import ComparisonFilter
 
     result = faiss_index._resolve_filter_positions(
         ComparisonFilter(key="document_id", value=["mock-doc-1", "mock-doc-2"], type="in")
@@ -269,7 +268,7 @@ async def test_resolve_filter_positions_compound(faiss_index, sample_chunks, sam
     ]
     await faiss_index.add_chunks(embedded_chunks)
 
-    from llama_stack.providers.utils.vector_io.filters import ComparisonFilter, CompoundFilter
+    from llama_stack_utils_vector_io.filters import ComparisonFilter, CompoundFilter
 
     # AND: only positions matching both — no chunk has both doc ids, so empty
     result = faiss_index._resolve_filter_positions(
@@ -300,8 +299,8 @@ async def test_query_vector_with_filter_returns_correct_chunks(embedding_dimensi
     """Filtered query_vector should only return chunks matching the filter."""
     import time
 
-    from llama_stack.providers.utils.vector_io.filters import ComparisonFilter
-    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+    from llama_stack_utils_vector_io.filters import ComparisonFilter
+    from llama_stack_utils_vector_io.vector_utils import generate_chunk_id
 
     idx = await FaissIndex.create(dimension=embedding_dimension)
     rng = np.random.default_rng(0)
@@ -350,7 +349,7 @@ async def test_health_success():
     mock_faiss = MagicMock()
     mock_faiss.IndexFlatL2.return_value = MagicMock()
 
-    with patch("llama_stack.providers.inline.vector_io.faiss.faiss._get_faiss", return_value=mock_faiss):
+    with patch("llama_stack_provider_vector_io_faiss.faiss._get_faiss", return_value=mock_faiss):
         adapter = FaissVectorIOAdapter(config=config, inference_api=inference_api, files_api=files_api)
 
         # Calling the health method directly
@@ -375,7 +374,7 @@ async def test_health_failure():
     mock_faiss = MagicMock()
     mock_faiss.IndexFlatL2.side_effect = Exception("Test error")
 
-    with patch("llama_stack.providers.inline.vector_io.faiss.faiss._get_faiss", return_value=mock_faiss):
+    with patch("llama_stack_provider_vector_io_faiss.faiss._get_faiss", return_value=mock_faiss):
         adapter = FaissVectorIOAdapter(config=config, inference_api=inference_api, files_api=files_api)
 
         # Calling the health method directly

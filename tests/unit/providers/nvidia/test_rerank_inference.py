@@ -8,12 +8,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import aiohttp
 import pytest
-
-from llama_stack.providers.remote.inference.nvidia.config import NVIDIAConfig
-from llama_stack.providers.remote.inference.nvidia.nvidia import NVIDIAInferenceAdapter
-from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import ModelType
 from llama_stack_api.inference import RerankRequest
+from llama_stack_provider_inference_nvidia.config import NVIDIAConfig
+from llama_stack_provider_inference_nvidia.nvidia import NVIDIAInferenceAdapter
+from llama_stack_utils_inference.openai_mixin import OpenAIMixin
 
 
 class MockResponse:

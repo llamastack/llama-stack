@@ -8,6 +8,7 @@ dependencies = [
     "llama-stack",
     "llama-stack-api",
     "llama-stack-utils-inference",
+    "llama-stack-utils-common",
 ]
 
 [project.entry-points."llama_stack.providers"]
@@ -17,6 +18,7 @@ dependencies = [
 llama-stack = { workspace = true }
 llama-stack-api = { workspace = true }
 llama-stack-utils-inference = { workspace = true }
+llama-stack-utils-common = { workspace = true }
 
 [build-system]
 requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]

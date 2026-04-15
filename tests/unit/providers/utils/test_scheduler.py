@@ -7,8 +7,7 @@
 import asyncio
 
 import pytest
-
-from llama_stack.providers.utils.scheduler import JobStatus, Scheduler
+from llama_stack_utils_common.scheduler import JobStatus, Scheduler
 
 
 async def test_scheduler_unknown_backend():

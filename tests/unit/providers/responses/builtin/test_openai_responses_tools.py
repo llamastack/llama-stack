@@ -6,19 +6,7 @@
 
 from unittest.mock import patch
 
-from openai.types.chat.chat_completion_chunk import (
-    ChatCompletionChunk,
-    Choice,
-    ChoiceDelta,
-    ChoiceDeltaToolCall,
-    ChoiceDeltaToolCallFunction,
-)
-
 from llama_stack.core.datatypes import VectorStoresConfig
-from llama_stack.providers.inline.responses.builtin.responses.tool_executor import ToolExecutor
-from llama_stack.providers.utils.responses.responses_store import (
-    _OpenAIResponseObjectWithInputAndMessages,
-)
 from llama_stack_api import (
     GetConnectorRequest,
 )
@@ -36,6 +24,18 @@ from llama_stack_api.vector_io import (
     VectorStoreSearchResponse,
     VectorStoreSearchResponsePage,
 )
+from llama_stack_provider_responses_builtin.responses.tool_executor import ToolExecutor
+from llama_stack_utils_common.responses_store import (
+    _OpenAIResponseObjectWithInputAndMessages,
+)
+from openai.types.chat.chat_completion_chunk import (
+    ChatCompletionChunk,
+    Choice,
+    ChoiceDelta,
+    ChoiceDeltaToolCall,
+    ChoiceDeltaToolCallFunction,
+)
+
 from tests.unit.providers.responses.builtin.test_openai_responses_helpers import fake_stream
 
 
@@ -316,7 +316,7 @@ async def test_create_openai_response_with_tool_call_function_arguments_none(ope
     mock_inference_api.openai_chat_completion.return_value = fake_stream_toolcall()
 
 
-@patch("llama_stack.providers.inline.responses.builtin.responses.streaming.list_mcp_tools")
+@patch("llama_stack_provider_responses_builtin.responses.streaming.list_mcp_tools")
 async def test_reuse_mcp_tool_list(
     mock_list_mcp_tools, openai_responses_impl, mock_responses_store, mock_inference_api
 ):
@@ -368,7 +368,7 @@ async def test_reuse_mcp_tool_list(
     assert listings[0].tools[0].name == "test_tool"
 
 
-@patch("llama_stack.providers.inline.responses.builtin.responses.streaming.list_mcp_tools")
+@patch("llama_stack_provider_responses_builtin.responses.streaming.list_mcp_tools")
 async def test_mcp_tool_connector_id_resolved_to_server_url(
     mock_list_mcp_tools, openai_responses_impl, mock_responses_store, mock_inference_api, mock_connectors_api
 ):

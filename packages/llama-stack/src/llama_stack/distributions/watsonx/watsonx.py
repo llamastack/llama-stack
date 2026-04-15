@@ -5,10 +5,11 @@
 # the root directory of this source tree.
 
 
+from llama_stack_provider_files_localfs.config import LocalfsFilesImplConfig
+from llama_stack_provider_inference_watsonx import WatsonXConfig
+
 from llama_stack.core.datatypes import BuildProvider, Provider
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
-from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
-from llama_stack.providers.remote.inference.watsonx import WatsonXConfig
 
 
 def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:

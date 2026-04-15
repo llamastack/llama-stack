@@ -109,9 +109,8 @@ _install_google_shims()
 from unittest.mock import AsyncMock  # noqa: E402
 
 import pytest  # noqa: E402
-
-from llama_stack.providers.remote.inference.vertexai.config import VertexAIConfig  # noqa: E402
-from llama_stack.providers.remote.inference.vertexai.vertexai import VertexAIInferenceAdapter  # noqa: E402
+from llama_stack_provider_inference_vertexai.config import VertexAIConfig  # noqa: E402
+from llama_stack_provider_inference_vertexai.vertexai import VertexAIInferenceAdapter  # noqa: E402
 
 
 async def _async_pager(items):
@@ -194,7 +193,7 @@ def patch_chat_completion_dependencies(monkeypatch):
                 return None, [{"role": "user", "parts": [{"text": "ok"}]}]
 
         monkeypatch.setattr(
-            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_openai_messages_to_gemini",
+            "llama_stack_provider_inference_vertexai.vertexai.converters.convert_openai_messages_to_gemini",
             _convert_messages,
         )
 
@@ -215,11 +214,11 @@ def patch_chat_completion_dependencies(monkeypatch):
             convert_tools = _convert_tools_passthrough
 
         monkeypatch.setattr(
-            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_openai_tools_to_gemini",
+            "llama_stack_provider_inference_vertexai.vertexai.converters.convert_openai_tools_to_gemini",
             convert_tools,
         )
         monkeypatch.setattr(
-            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_gemini_response_to_openai",
+            "llama_stack_provider_inference_vertexai.vertexai.converters.convert_gemini_response_to_openai",
             lambda response, model: fake_completion,
         )
 

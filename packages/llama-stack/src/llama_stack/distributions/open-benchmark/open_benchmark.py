@@ -6,6 +6,19 @@
 
 
 from llama_stack_api import ModelType
+from llama_stack_provider_inference_anthropic.config import AnthropicConfig
+from llama_stack_provider_inference_gemini.config import GeminiConfig
+from llama_stack_provider_inference_groq.config import GroqConfig
+from llama_stack_provider_inference_openai.config import OpenAIConfig
+from llama_stack_provider_inference_together.config import TogetherImplConfig
+from llama_stack_provider_vector_io_chromadb.config import ChromaVectorIOConfig
+from llama_stack_provider_vector_io_pgvector.config import (
+    PGVectorVectorIOConfig,
+)
+from llama_stack_provider_vector_io_sqlite_vec.config import (
+    SQLiteVectorIOConfig,
+)
+from llama_stack_utils_inference.model_registry import ProviderModelEntry
 
 from llama_stack.core.datatypes import (
     BuildProvider,
@@ -18,19 +31,6 @@ from llama_stack.distributions.template import (
     RunConfigSettings,
     get_model_registry,
 )
-from llama_stack.providers.inline.vector_io.sqlite_vec.config import (
-    SQLiteVectorIOConfig,
-)
-from llama_stack.providers.remote.inference.anthropic.config import AnthropicConfig
-from llama_stack.providers.remote.inference.gemini.config import GeminiConfig
-from llama_stack.providers.remote.inference.groq.config import GroqConfig
-from llama_stack.providers.remote.inference.openai.config import OpenAIConfig
-from llama_stack.providers.remote.inference.together.config import TogetherImplConfig
-from llama_stack.providers.remote.vector_io.chroma.config import ChromaVectorIOConfig
-from llama_stack.providers.remote.vector_io.pgvector.config import (
-    PGVectorVectorIOConfig,
-)
-from llama_stack.providers.utils.inference.model_registry import ProviderModelEntry
 
 
 def get_inference_providers() -> tuple[list[Provider], dict[str, list[ProviderModelEntry]]]:

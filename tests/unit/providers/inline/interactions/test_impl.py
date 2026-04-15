@@ -10,15 +10,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
-
-from llama_stack.providers.inline.interactions.config import InteractionsConfig
-from llama_stack.providers.inline.interactions.impl import BuiltinInteractionsImpl
 from llama_stack_api.interactions.models import (
     GoogleCreateInteractionRequest,
     GoogleGenerationConfig,
     GoogleInputTurn,
     GoogleTextContent,
 )
+from llama_stack_provider_interactions_builtin.config import InteractionsConfig
+from llama_stack_provider_interactions_builtin.impl import BuiltinInteractionsImpl
 
 
 def _msg_to_dict(msg):
@@ -344,7 +343,7 @@ class TestPassthroughDetection:
 
     async def test_gemini_provider_detected(self):
         impl = self._make_impl_with_router(
-            provider_module="llama_stack.providers.remote.inference.gemini.gemini",
+            provider_module="llama_stack_provider_inference_gemini.gemini",
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
         )
         result = await impl._get_passthrough_info("gemini/gemini-2.5-flash")
@@ -356,7 +355,7 @@ class TestPassthroughDetection:
 
     async def test_non_gemini_provider_returns_none(self):
         impl = self._make_impl_with_router(
-            provider_module="llama_stack.providers.remote.inference.openai",
+            provider_module="llama_stack_provider_inference_openai",
             base_url="https://api.openai.com/v1",
         )
         result = await impl._get_passthrough_info("openai/gpt-4o")
@@ -365,7 +364,7 @@ class TestPassthroughDetection:
 
     async def test_no_api_key_returns_none(self):
         impl = self._make_impl_with_router(
-            provider_module="llama_stack.providers.remote.inference.gemini.gemini",
+            provider_module="llama_stack_provider_inference_gemini.gemini",
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
             api_key=None,
         )
@@ -382,7 +381,7 @@ class TestPassthroughDetection:
 
     async def test_openai_suffix_stripped(self):
         impl = self._make_impl_with_router(
-            provider_module="llama_stack.providers.remote.inference.gemini.gemini",
+            provider_module="llama_stack_provider_inference_gemini.gemini",
             base_url="https://generativelanguage.googleapis.com/v1beta/openai",
         )
         result = await impl._get_passthrough_info("gemini/gemini-2.5-flash")
@@ -393,7 +392,7 @@ class TestPassthroughDetection:
     async def test_network_config_propagated(self):
         network_config = MagicMock()
         impl = self._make_impl_with_router(
-            provider_module="llama_stack.providers.remote.inference.gemini.gemini",
+            provider_module="llama_stack_provider_inference_gemini.gemini",
             base_url="https://generativelanguage.googleapis.com/v1beta/openai",
             network_config=network_config,
         )
@@ -431,7 +430,7 @@ class TestCreateInteractionPassthrough:
 
     async def test_non_streaming_uses_native_passthrough(self):
         impl = self._make_impl_with_router(
-            provider_module="llama_stack.providers.remote.inference.gemini.gemini",
+            provider_module="llama_stack_provider_inference_gemini.gemini",
             base_url="https://generativelanguage.googleapis.com/v1beta/openai",
         )
         expected = MagicMock()
@@ -446,7 +445,7 @@ class TestCreateInteractionPassthrough:
 
     async def test_streaming_skips_passthrough_and_uses_translation(self):
         impl = self._make_impl_with_router(
-            provider_module="llama_stack.providers.remote.inference.gemini.gemini",
+            provider_module="llama_stack_provider_inference_gemini.gemini",
             base_url="https://generativelanguage.googleapis.com/v1beta/openai",
         )
         impl._passthrough_request = AsyncMock()
@@ -499,7 +498,7 @@ class TestPassthroughRequest:
         mock_client.__aexit__.return_value = None
         mock_client.post = AsyncMock(return_value=mock_response)
         async_client_ctor = MagicMock(return_value=mock_client)
-        monkeypatch.setattr("llama_stack.providers.inline.interactions.impl.httpx.AsyncClient", async_client_ctor)
+        monkeypatch.setattr("llama_stack_provider_interactions_builtin.impl.httpx.AsyncClient", async_client_ctor)
 
         result = await impl._passthrough_request(passthrough, request)
 
@@ -526,7 +525,7 @@ class TestPassthroughRequest:
         built_kwargs = {"headers": {"x-custom-header": "enabled"}, "timeout": httpx.Timeout(42.0)}
         build_kwargs_mock = MagicMock(return_value=built_kwargs)
         monkeypatch.setattr(
-            "llama_stack.providers.inline.interactions.impl._build_network_client_kwargs",
+            "llama_stack_provider_interactions_builtin.impl._build_network_client_kwargs",
             build_kwargs_mock,
         )
 
@@ -543,7 +542,7 @@ class TestPassthroughRequest:
         mock_client.__aexit__.return_value = None
         mock_client.post = AsyncMock(return_value=mock_response)
         async_client_ctor = MagicMock(return_value=mock_client)
-        monkeypatch.setattr("llama_stack.providers.inline.interactions.impl.httpx.AsyncClient", async_client_ctor)
+        monkeypatch.setattr("llama_stack_provider_interactions_builtin.impl.httpx.AsyncClient", async_client_ctor)
 
         await impl._passthrough_request(passthrough, request)
 
@@ -593,7 +592,7 @@ class TestPassthroughRequest:
         mock_client.__aexit__.return_value = None
         mock_client.post = AsyncMock(return_value=mock_response)
         async_client_ctor = MagicMock(return_value=mock_client)
-        monkeypatch.setattr("llama_stack.providers.inline.interactions.impl.httpx.AsyncClient", async_client_ctor)
+        monkeypatch.setattr("llama_stack_provider_interactions_builtin.impl.httpx.AsyncClient", async_client_ctor)
 
         result = await impl._passthrough_request(passthrough, request)
 

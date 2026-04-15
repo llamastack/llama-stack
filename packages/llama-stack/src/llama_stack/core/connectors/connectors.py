@@ -21,12 +21,12 @@ from llama_stack_api import (
     ListToolsResponse,
     ToolDef,
 )
+from llama_stack_utils_common.mcp import get_mcp_server_info, list_mcp_tools
 from pydantic import BaseModel, Field
 
 from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.storage.kvstore import KVStore, kvstore_impl
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.tools.mcp import get_mcp_server_info, list_mcp_tools
 
 logger = get_logger(name=__name__, category="connectors")
 

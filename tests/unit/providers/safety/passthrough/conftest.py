@@ -10,10 +10,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
-
 from llama_stack.core.request_headers import request_provider_data_context
-from llama_stack.providers.remote.safety.passthrough.config import PassthroughSafetyConfig
-from llama_stack.providers.remote.safety.passthrough.passthrough import PassthroughSafetyAdapter
+from llama_stack_provider_safety_passthrough.config import PassthroughSafetyConfig
+from llama_stack_provider_safety_passthrough.passthrough import PassthroughSafetyAdapter
 
 
 class FakePassthroughSafetyAdapter(PassthroughSafetyAdapter):
@@ -27,7 +26,7 @@ class FakePassthroughSafetyAdapter(PassthroughSafetyAdapter):
 def _stub_provider_spec(adapter: PassthroughSafetyAdapter) -> None:
     adapter.__provider_spec__ = MagicMock()
     adapter.__provider_spec__.provider_data_validator = (
-        "llama_stack.providers.remote.safety.passthrough.config.PassthroughProviderDataValidator"
+        "llama_stack_provider_safety_passthrough.config.PassthroughProviderDataValidator"
     )
 
 

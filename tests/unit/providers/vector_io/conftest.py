@@ -9,19 +9,18 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
 import pytest
-from psycopg2 import sql
-
 from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
 from llama_stack.core.storage.kvstore import register_kvstore_backends
-from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
-from llama_stack.providers.inline.vector_io.faiss.faiss import FaissIndex, FaissVectorIOAdapter
-from llama_stack.providers.inline.vector_io.qdrant.config import QdrantVectorIOConfig
-from llama_stack.providers.inline.vector_io.sqlite_vec import SQLiteVectorIOConfig
-from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import SQLiteVecIndex, SQLiteVecVectorIOAdapter
-from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorHNSWVectorIndex, PGVectorVectorIOConfig
-from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex, PGVectorVectorIOAdapter
-from llama_stack.providers.remote.vector_io.qdrant.qdrant import QdrantIndex, QdrantVectorIOAdapter
 from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse, VectorStore, VectorStoreNotFoundError
+from llama_stack_provider_vector_io_faiss.config import FaissVectorIOConfig
+from llama_stack_provider_vector_io_faiss.faiss import FaissIndex, FaissVectorIOAdapter
+from llama_stack_provider_vector_io_pgvector.config import PGVectorHNSWVectorIndex, PGVectorVectorIOConfig
+from llama_stack_provider_vector_io_pgvector.pgvector import PGVectorIndex, PGVectorVectorIOAdapter
+from llama_stack_provider_vector_io_qdrant.config import QdrantVectorIOConfig
+from llama_stack_provider_vector_io_qdrant.qdrant import QdrantIndex, QdrantVectorIOAdapter
+from llama_stack_provider_vector_io_sqlite_vec import SQLiteVectorIOConfig
+from llama_stack_provider_vector_io_sqlite_vec.sqlite_vec import SQLiteVecIndex, SQLiteVecVectorIOAdapter
+from psycopg2 import sql
 
 EMBEDDING_DIMENSION = 768
 COLLECTION_PREFIX = "test_collection"
@@ -47,7 +46,7 @@ def sample_chunks():
     """Generates chunks that force multiple batches for a single document to expose ID conflicts."""
     import time
 
-    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+    from llama_stack_utils_vector_io.vector_utils import generate_chunk_id
 
     n, k = 10, 3
     sample = [
@@ -246,8 +245,8 @@ async def pgvector_vec_index(embedding_dimension, mock_psycopg2_connection):
         provider_resource_id="pgvector:test-vector-db",
     )
 
-    with patch("llama_stack.providers.remote.vector_io.pgvector.pgvector.psycopg2"):
-        with patch("llama_stack.providers.remote.vector_io.pgvector.pgvector.execute_values"):
+    with patch("llama_stack_provider_vector_io_pgvector.pgvector.psycopg2"):
+        with patch("llama_stack_provider_vector_io_pgvector.pgvector.execute_values"):
             index = PGVectorIndex(
                 vector_store,
                 embedding_dimension,
@@ -292,7 +291,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
 
     adapter = PGVectorVectorIOAdapter(config, mock_inference_api, None)
 
-    with patch("llama_stack.providers.remote.vector_io.pgvector.pgvector.psycopg2.connect") as mock_connect:
+    with patch("llama_stack_provider_vector_io_pgvector.pgvector.psycopg2.connect") as mock_connect:
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cursor.__enter__ = MagicMock(return_value=mock_cursor)
@@ -301,9 +300,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
         mock_conn.autocommit = True
         mock_connect.return_value = mock_conn
 
-        with patch(
-            "llama_stack.providers.remote.vector_io.pgvector.pgvector.check_extension_version"
-        ) as mock_check_version:
+        with patch("llama_stack_provider_vector_io_pgvector.pgvector.check_extension_version") as mock_check_version:
             mock_check_version.return_value = "0.5.1"
 
             with patch("llama_stack.core.storage.kvstore.kvstore_impl") as mock_kvstore_impl:
@@ -311,7 +308,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
                 mock_kvstore_impl.return_value = mock_kvstore
 
                 with patch.object(adapter, "initialize_openai_vector_stores", new_callable=AsyncMock):
-                    with patch("llama_stack.providers.remote.vector_io.pgvector.pgvector.upsert_models"):
+                    with patch("llama_stack_provider_vector_io_pgvector.pgvector.upsert_models"):
                         await adapter.initialize()
                         adapter.conn = mock_conn
 
@@ -407,7 +404,7 @@ async def qdrant_vec_adapter(unique_kvstore_config, mock_inference_api, embeddin
     mock_client.close = AsyncMock()
     mock_client.upsert = AsyncMock()
 
-    with patch("llama_stack.providers.remote.vector_io.qdrant.qdrant.AsyncQdrantClient") as mock_client_class:
+    with patch("llama_stack_provider_vector_io_qdrant.qdrant.AsyncQdrantClient") as mock_client_class:
         mock_client_class.return_value = mock_client
 
         with patch("llama_stack.core.storage.kvstore.kvstore_impl") as mock_kvstore_impl:

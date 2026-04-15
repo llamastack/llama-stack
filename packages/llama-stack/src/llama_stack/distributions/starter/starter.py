@@ -8,6 +8,29 @@
 from typing import Any
 
 from llama_stack_api import RemoteProviderSpec
+from llama_stack_provider_file_processor_pypdf.config import PyPDFFileProcessorConfig
+from llama_stack_provider_files_localfs.config import LocalfsFilesImplConfig
+from llama_stack_provider_inference_sentence_transformers import (
+    SentenceTransformersInferenceConfig,
+)
+from llama_stack_provider_inference_transformers.config import (
+    TransformersInferenceConfig,
+)
+from llama_stack_provider_tool_runtime_brave_search.config import BraveSearchToolConfig
+from llama_stack_provider_tool_runtime_tavily_search.config import TavilySearchToolConfig
+from llama_stack_provider_vector_io_chromadb.config import ChromaVectorIOConfig
+from llama_stack_provider_vector_io_elasticsearch.config import ElasticsearchVectorIOConfig
+from llama_stack_provider_vector_io_faiss.config import FaissVectorIOConfig
+from llama_stack_provider_vector_io_infinispan.config import InfinispanVectorIOConfig
+from llama_stack_provider_vector_io_milvus.inline_config import MilvusVectorIOConfig
+from llama_stack_provider_vector_io_pgvector.config import (
+    PGVectorVectorIOConfig,
+)
+from llama_stack_provider_vector_io_qdrant.config import QdrantVectorIOConfig
+from llama_stack_provider_vector_io_sqlite_vec.config import (
+    SQLiteVectorIOConfig,
+)
+from llama_stack_provider_vector_io_weaviate.config import WeaviateVectorIOConfig
 
 from llama_stack.core.datatypes import (
     BuildProvider,
@@ -23,30 +46,7 @@ from llama_stack.core.storage.kvstore.config import PostgresKVStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import PostgresSqlStoreConfig
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
-from llama_stack.providers.inline.file_processor.pypdf.config import PyPDFFileProcessorConfig
-from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
-from llama_stack.providers.inline.inference.sentence_transformers import (
-    SentenceTransformersInferenceConfig,
-)
-from llama_stack.providers.inline.inference.transformers.config import (
-    TransformersInferenceConfig,
-)
-from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
-from llama_stack.providers.inline.vector_io.milvus.config import MilvusVectorIOConfig
-from llama_stack.providers.inline.vector_io.sqlite_vec.config import (
-    SQLiteVectorIOConfig,
-)
 from llama_stack.providers.registry.inference import available_providers
-from llama_stack.providers.remote.tool_runtime.brave_search.config import BraveSearchToolConfig
-from llama_stack.providers.remote.tool_runtime.tavily_search.config import TavilySearchToolConfig
-from llama_stack.providers.remote.vector_io.chroma.config import ChromaVectorIOConfig
-from llama_stack.providers.remote.vector_io.elasticsearch.config import ElasticsearchVectorIOConfig
-from llama_stack.providers.remote.vector_io.infinispan.config import InfinispanVectorIOConfig
-from llama_stack.providers.remote.vector_io.pgvector.config import (
-    PGVectorVectorIOConfig,
-)
-from llama_stack.providers.remote.vector_io.qdrant.config import QdrantVectorIOConfig
-from llama_stack.providers.remote.vector_io.weaviate.config import WeaviateVectorIOConfig
 
 
 def _get_config_for_provider(provider_spec: ProviderSpec) -> dict[str, Any]:

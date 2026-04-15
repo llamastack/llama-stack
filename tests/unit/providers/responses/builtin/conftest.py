@@ -7,15 +7,14 @@
 from unittest.mock import AsyncMock
 
 import pytest
-
-from llama_stack.providers.inline.responses.builtin.responses.openai_responses import (
-    OpenAIResponsesImpl,
-)
-from llama_stack.providers.utils.responses.responses_store import (
-    ResponsesStore,
-)
 from llama_stack_api import Connectors
 from llama_stack_api.tools import ToolGroups, ToolRuntime
+from llama_stack_provider_responses_builtin.responses.openai_responses import (
+    OpenAIResponsesImpl,
+)
+from llama_stack_utils_common.responses_store import (
+    ResponsesStore,
+)
 
 
 @pytest.fixture

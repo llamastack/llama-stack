@@ -10,7 +10,6 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from llama_stack.core.routers.tool_runtime import ToolRuntimeRouter
 from llama_stack.telemetry.tool_runtime_metrics import (
     create_tool_metric_attributes,

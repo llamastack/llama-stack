@@ -7,12 +7,11 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack_api import (
     VectorStoreChunkingStrategyAuto,
 )
 from llama_stack_api.vector_io.models import OpenAIAttachFileRequest
+from llama_stack_utils_vector_io.openai_vector_store_mixin import OpenAIVectorStoreMixin
 
 
 def _make_store_info():

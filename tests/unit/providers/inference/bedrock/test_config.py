@@ -7,7 +7,7 @@
 import os
 from unittest.mock import patch
 
-from llama_stack.providers.utils.bedrock.config import BedrockBaseConfig
+from llama_stack_utils_bedrock.config import BedrockBaseConfig
 
 
 class TestBedrockBaseConfig:

@@ -7,14 +7,9 @@
 from unittest.mock import AsyncMock
 
 import pytest
-
 from llama_stack.core.access_control.access_control import default_policy
 from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
-from llama_stack.providers.utils.responses.responses_store import (
-    ResponsesStore,
-    _OpenAIResponseObjectWithInputAndMessages,
-)
 from llama_stack_api import (
     Order,
 )
@@ -39,6 +34,11 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseText,
     OpenAIResponseTextFormat,
 )
+from llama_stack_utils_common.responses_store import (
+    ResponsesStore,
+    _OpenAIResponseObjectWithInputAndMessages,
+)
+
 from tests.unit.providers.responses.builtin.test_openai_responses_helpers import fake_stream
 
 

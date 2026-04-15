@@ -10,7 +10,6 @@ import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from llama_stack.core.routers.inference import InferenceRouter
 from llama_stack.telemetry.inference_metrics import (
     create_inference_metric_attributes,

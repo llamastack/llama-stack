@@ -12,13 +12,6 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 
 import tiktoken
-from llama_stack_utils_common.mcp import MCPSessionManager
-from llama_stack_utils_common.responses_store import (
-    ResponsesStore,
-    _OpenAIResponseObjectWithInputAndMessages,
-)
-from pydantic import BaseModel, TypeAdapter
-
 from llama_stack.core.conversations.validation import CONVERSATION_ID_PATTERN
 from llama_stack.core.task import (
     RequestContext,
@@ -27,7 +20,6 @@ from llama_stack.core.task import (
     create_detached_background_task,
 )
 from llama_stack.log import get_logger
-from llama_stack.providers.inline.responses.builtin.config import CompactionConfig
 from llama_stack_api import (
     AddItemsRequest,
     ConflictError,
@@ -79,6 +71,14 @@ from llama_stack_api import (
     VectorIO,
 )
 from llama_stack_api.inference import OpenAIChatCompletionRequestWithExtraBody, ServiceTier
+from llama_stack_utils_common.mcp import MCPSessionManager
+from llama_stack_utils_common.responses_store import (
+    ResponsesStore,
+    _OpenAIResponseObjectWithInputAndMessages,
+)
+from pydantic import BaseModel, TypeAdapter
+
+from llama_stack_provider_responses_builtin.config import CompactionConfig
 
 from .streaming import StreamingResponseOrchestrator
 from .tool_executor import ToolExecutor

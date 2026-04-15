@@ -6,17 +6,6 @@
 
 
 import pytest
-from openai.types.chat.chat_completion_chunk import (
-    ChatCompletionChunk,
-    Choice,
-    ChoiceDelta,
-)
-from openai.types.completion_usage import CompletionUsage
-
-# Fixtures imported from test_openai_responses via root conftest.py for pytest 8.4+ compatibility
-from llama_stack.providers.inline.responses.builtin.responses.openai_responses import (
-    OpenAIResponsesImpl,
-)
 from llama_stack_api.common.errors import (
     ConversationNotFoundError,
     InvalidParameterError,
@@ -31,6 +20,17 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseObjectStreamResponseOutputItemDone,
     OpenAIResponseOutputMessageContentOutputText,
 )
+
+# Fixtures imported from test_openai_responses via root conftest.py for pytest 8.4+ compatibility
+from llama_stack_provider_responses_builtin.responses.openai_responses import (
+    OpenAIResponsesImpl,
+)
+from openai.types.chat.chat_completion_chunk import (
+    ChatCompletionChunk,
+    Choice,
+    ChoiceDelta,
+)
+from openai.types.completion_usage import CompletionUsage
 
 
 @pytest.fixture

@@ -11,7 +11,6 @@ import re
 import uuid
 from collections.abc import Sequence
 
-from llama_stack.providers.inline.responses.builtin.responses.types import AssistantMessageWithReasoning
 from llama_stack_api import (
     Files,
     OpenAIAssistantMessageParam,
@@ -61,6 +60,7 @@ from llama_stack_api import (
     RunModerationRequest,
     Safety,
 )
+from llama_stack_utils_inference.types import AssistantMessageWithReasoning
 
 
 async def extract_bytes_from_file(file_id: str, files_api: Files) -> bytes:

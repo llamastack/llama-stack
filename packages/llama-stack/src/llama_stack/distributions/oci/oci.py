@@ -6,11 +6,12 @@
 
 from pathlib import Path
 
+from llama_stack_provider_files_localfs.config import LocalfsFilesImplConfig
+from llama_stack_provider_inference_oci.config import OCIConfig
+from llama_stack_provider_vector_io_faiss.config import FaissVectorIOConfig
+
 from llama_stack.core.datatypes import BuildProvider, Provider
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
-from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
-from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
-from llama_stack.providers.remote.inference.oci.config import OCIConfig
 
 
 def get_distribution_template(name: str = "oci") -> DistributionTemplate:

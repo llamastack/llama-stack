@@ -21,9 +21,6 @@ from datetime import UTC, datetime
 from typing import Any, TypedDict
 
 import httpx
-from llama_stack_utils_inference.http_client import _build_network_client_kwargs
-from llama_stack_utils_inference.model_registry import NetworkConfig
-
 from llama_stack.log import get_logger
 from llama_stack_api import (
     Inference,
@@ -52,6 +49,8 @@ from llama_stack_api.interactions.models import (
     _InteractionRef,
     _TextDelta,
 )
+from llama_stack_utils_inference.http_client import _build_network_client_kwargs
+from llama_stack_utils_inference.model_registry import NetworkConfig
 
 from .config import InteractionsConfig
 
@@ -105,7 +104,7 @@ class BuiltinInteractionsImpl(Interactions):
     # -- Native passthrough for providers with /interactions support --
 
     # Module paths of provider impls known to support /interactions natively
-    _NATIVE_INTERACTIONS_MODULES = {"llama_stack.providers.remote.inference.gemini"}
+    _NATIVE_INTERACTIONS_MODULES = {"llama_stack_provider_inference_gemini"}
 
     async def _get_passthrough_info(self, model: str) -> _PassthroughInfo | None:
         """Check if the model's provider supports /interactions natively.

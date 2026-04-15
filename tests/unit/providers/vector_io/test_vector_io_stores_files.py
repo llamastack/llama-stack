@@ -23,7 +23,7 @@ import pytest
 def mock_resume_file_batches(request):
     """Mock the resume functionality to prevent stale file batches from being processed during tests."""
     with patch(
-        "llama_stack.providers.utils.memory.openai_vector_store_mixin.OpenAIVectorStoreMixin._resume_incomplete_batches",
+        "llama_stack_utils_vector_io.openai_vector_store_mixin.OpenAIVectorStoreMixin._resume_incomplete_batches",
         new_callable=AsyncMock,
     ):
         yield

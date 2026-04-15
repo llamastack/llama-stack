@@ -12,15 +12,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np
 import pytest
-from tiktoken import get_encoding
-
 from llama_stack.core.datatypes import RerankerModel, VectorStoresConfig
-from llama_stack.providers.utils.memory.vector_store import (
-    VectorStoreWithIndex,
-    _validate_embedding,
-    make_overlapped_chunks,
-)
-from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack_api import (
     Chunk,
     ChunkMetadata,
@@ -31,6 +23,13 @@ from llama_stack_api import (
     RerankData,
     RerankResponse,
 )
+from llama_stack_utils_vector_io.vector_store import (
+    VectorStoreWithIndex,
+    _validate_embedding,
+    make_overlapped_chunks,
+)
+from llama_stack_utils_vector_io.vector_utils import generate_chunk_id
+from tiktoken import get_encoding
 
 DUMMY_PDF_PATH = Path(os.path.abspath(__file__)).parent / "fixtures" / "dummy.pdf"
 # Depending on the machine, this can get parsed a couple of ways

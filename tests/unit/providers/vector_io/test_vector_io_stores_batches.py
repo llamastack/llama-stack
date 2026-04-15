@@ -9,7 +9,6 @@ import time
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from llama_stack_api import (
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     VectorStoreChunkingStrategyAuto,
@@ -31,7 +30,7 @@ from llama_stack_api import (
 def mock_resume_file_batches(request):
     """Mock the resume functionality to prevent stale file batches from being processed during tests."""
     with patch(
-        "llama_stack.providers.utils.memory.openai_vector_store_mixin.OpenAIVectorStoreMixin._resume_incomplete_batches",
+        "llama_stack_utils_vector_io.openai_vector_store_mixin.OpenAIVectorStoreMixin._resume_incomplete_batches",
         new_callable=AsyncMock,
     ):
         yield
@@ -412,7 +411,7 @@ async def test_file_batch_persistence_across_restarts(vector_io_adapter):
     vector_io_adapter.openai_file_batches.clear()
 
     # Temporarily restore the real initialize_openai_vector_stores method
-    from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
+    from llama_stack_utils_vector_io.openai_vector_store_mixin import OpenAIVectorStoreMixin
 
     real_method = OpenAIVectorStoreMixin.initialize_openai_vector_stores
     await real_method(vector_io_adapter)
@@ -517,7 +516,7 @@ async def test_only_in_progress_batches_resumed(vector_io_adapter):
     vector_io_adapter.openai_file_batches.clear()
 
     # Temporarily restore the real initialize_openai_vector_stores method
-    from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
+    from llama_stack_utils_vector_io.openai_vector_store_mixin import OpenAIVectorStoreMixin
 
     real_method = OpenAIVectorStoreMixin.initialize_openai_vector_stores
     await real_method(vector_io_adapter)

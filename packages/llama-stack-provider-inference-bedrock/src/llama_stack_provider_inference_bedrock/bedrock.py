@@ -6,13 +6,7 @@
 
 from collections.abc import AsyncIterator
 
-from llama_stack_utils_inference.openai_mixin import OpenAIMixin
-from openai import AuthenticationError
-
 from llama_stack.log import get_logger
-from llama_stack.providers.inline.responses.builtin.responses.types import (
-    AssistantMessageWithReasoning,
-)
 from llama_stack_api import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
@@ -24,6 +18,9 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
+from llama_stack_utils_inference.openai_mixin import OpenAIMixin
+from llama_stack_utils_inference.types import AssistantMessageWithReasoning
+from openai import AuthenticationError
 
 from .config import BedrockConfig
 

@@ -7,7 +7,6 @@
 import time
 
 import pytest
-
 from llama_stack_api import ChunkMetadata, EmbeddedChunk
 
 from ..conftest import vector_provider_wrapper
@@ -16,8 +15,7 @@ from ..conftest import vector_provider_wrapper
 @pytest.fixture(scope="session")
 def sample_chunks(embedding_dimension):
     import numpy as np
-
-    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+    from llama_stack_utils_vector_io.vector_utils import generate_chunk_id
 
     chunks_data = [
         (
@@ -265,7 +263,7 @@ def test_query_returns_valid_object_when_identical_to_embedding_in_vdb(
 
     actual_vector_store_id = register_response.id
 
-    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+    from llama_stack_utils_vector_io.vector_utils import generate_chunk_id
 
     chunk_id = generate_chunk_id("doc1", "duplicate")
     chunks_with_embeddings = [

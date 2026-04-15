@@ -6,11 +6,10 @@
 
 from typing import Any
 
+from llama_stack_api import json_schema_type
+from llama_stack_utils_common.forward_headers import validate_forward_headers_config
 from llama_stack_utils_inference.model_registry import RemoteInferenceProviderConfig
 from pydantic import Field, HttpUrl, model_validator
-
-from llama_stack.providers.utils.forward_headers import validate_forward_headers_config
-from llama_stack_api import json_schema_type
 
 
 @json_schema_type

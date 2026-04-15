@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 """
-Tests for parse_data_url in llama_stack.providers.utils.common.data_url.
+Tests for parse_data_url in llama_stack_utils_common.data_url.
 
 Categories:
   - Valid URLs: plain data, base64, charset, combined modifiers, complex mime types, multiline data
@@ -13,8 +13,7 @@ Categories:
 """
 
 import pytest
-
-from llama_stack.providers.utils.common.data_url import parse_data_url
+from llama_stack_utils_common.data_url import parse_data_url
 
 
 class TestParseDataUrlValid:

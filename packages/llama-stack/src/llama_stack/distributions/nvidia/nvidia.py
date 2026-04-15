@@ -6,11 +6,12 @@
 
 from pathlib import Path
 
+from llama_stack_provider_files_localfs.config import LocalfsFilesImplConfig
+from llama_stack_provider_inference_nvidia import NVIDIAConfig
+from llama_stack_provider_safety_nvidia import NVIDIASafetyConfig
+
 from llama_stack.core.datatypes import BuildProvider, ModelInput, Provider, ShieldInput
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
-from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
-from llama_stack.providers.remote.inference.nvidia import NVIDIAConfig
-from llama_stack.providers.remote.safety.nvidia import NVIDIASafetyConfig
 
 
 def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:

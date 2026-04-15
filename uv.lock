@@ -4097,6 +4097,7 @@ source = { editable = "packages/llama-stack-provider-inference-passthrough" }
 dependencies = [
     { name = "llama-stack" },
     { name = "llama-stack-api" },
+    { name = "llama-stack-utils-common" },
     { name = "llama-stack-utils-inference" },
 ]
 
@@ -4104,6 +4105,7 @@ dependencies = [
 requires-dist = [
     { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
+    { name = "llama-stack-utils-common", editable = "packages/llama-stack-utils-common" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
 

@@ -11,6 +11,7 @@ import jinja2
 import rich
 import yaml
 from llama_stack_api import ConnectorInput, ConnectorType, ModelType
+from llama_stack_utils_inference.model_registry import ProviderModelEntry
 from pydantic import BaseModel, Field
 
 from llama_stack.core.datatypes import (
@@ -33,7 +34,6 @@ from llama_stack.core.storage.datatypes import (
 from llama_stack.core.storage.kvstore.config import SqliteKVStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import SqliteSqlStoreConfig
 from llama_stack.core.utils.dynamic import instantiate_class_type
-from llama_stack.providers.utils.inference.model_registry import ProviderModelEntry
 
 
 def filter_empty_values(obj: Any) -> Any:

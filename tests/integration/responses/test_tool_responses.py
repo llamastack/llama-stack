@@ -12,9 +12,9 @@ import httpx
 import llama_stack_client
 import openai
 import pytest
-
 from llama_stack.core.datatypes import AuthenticationRequiredError
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
+
 from tests.common.mcp import dependency_tools, make_mcp_server
 
 from .fixtures.test_cases import (
@@ -254,9 +254,7 @@ def test_response_non_streaming_mcp_tool(responses_client, text_model_id, case, 
             else (httpx.HTTPStatusError, openai.AuthenticationError, llama_stack_client.AuthenticationError)
         )
         # Suppress expected auth error logs only for the failing auth attempt
-        with caplog.at_level(
-            logging.CRITICAL, logger="llama_stack.providers.inline.responses.builtin.responses.streaming"
-        ):
+        with caplog.at_level(logging.CRITICAL, logger="llama_stack_provider_responses_builtin.responses.streaming"):
             with pytest.raises(exc_type):
                 responses_client.responses.create(
                     model=text_model_id,

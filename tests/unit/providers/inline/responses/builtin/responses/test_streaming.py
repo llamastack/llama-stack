@@ -7,12 +7,6 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from llama_stack.providers.inline.responses.builtin.responses.streaming import (
-    StreamingResponseOrchestrator,
-    convert_tooldef_to_chat_tool,
-)
-from llama_stack.providers.inline.responses.builtin.responses.types import ChatCompletionContext, ToolContext
 from llama_stack_api import ToolDef
 from llama_stack_api.inference.models import (
     OpenAIAssistantMessageParam,
@@ -22,6 +16,11 @@ from llama_stack_api.inference.models import (
     OpenAIChoice,
 )
 from llama_stack_api.openai_responses import OpenAIResponseInputToolMCP
+from llama_stack_provider_responses_builtin.responses.streaming import (
+    StreamingResponseOrchestrator,
+    convert_tooldef_to_chat_tool,
+)
+from llama_stack_provider_responses_builtin.responses.types import ChatCompletionContext, ToolContext
 
 
 @pytest.fixture

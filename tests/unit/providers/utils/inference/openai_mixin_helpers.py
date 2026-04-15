@@ -9,11 +9,10 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
-from pydantic import BaseModel, Field, SecretStr
-
-from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
-from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import Model, ModelType
+from llama_stack_utils_inference.model_registry import RemoteInferenceProviderConfig
+from llama_stack_utils_inference.openai_mixin import OpenAIMixin
+from pydantic import BaseModel, Field, SecretStr
 
 
 class OpenAIMixinImpl(OpenAIMixin):

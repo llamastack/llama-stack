@@ -6,12 +6,8 @@
 
 from collections.abc import AsyncIterator
 
-from llama_stack_utils_inference.stream_utils import wrap_async_stream
-from openai import AsyncOpenAI
-
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.forward_headers import build_forwarded_headers
 from llama_stack_api import (
     Inference,
     Model,
@@ -23,6 +19,9 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
+from llama_stack_utils_common.forward_headers import build_forwarded_headers
+from llama_stack_utils_inference.stream_utils import wrap_async_stream
+from openai import AsyncOpenAI
 
 from .config import PassthroughImplConfig
 

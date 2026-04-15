@@ -6,11 +6,11 @@
 
 import time
 
-from llama_stack.providers.utils.vector_io.vector_utils import (
+from llama_stack_api import Chunk, ChunkMetadata, VectorStoreFileObject
+from llama_stack_utils_vector_io.vector_utils import (
     generate_chunk_id,
     load_embedded_chunk_with_backward_compat,
 )
-from llama_stack_api import Chunk, ChunkMetadata, VectorStoreFileObject
 
 # This test is a unit test for the chunk_utils.py helpers. This should only contain
 # tests which are specific to this file. More general (API-level) tests should be placed in

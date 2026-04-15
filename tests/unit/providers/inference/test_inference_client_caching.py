@@ -8,36 +8,35 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
-
 from llama_stack.core.request_headers import request_provider_data_context
-from llama_stack.providers.remote.inference.anthropic.anthropic import AnthropicInferenceAdapter
-from llama_stack.providers.remote.inference.anthropic.config import AnthropicConfig
-from llama_stack.providers.remote.inference.cerebras.cerebras import CerebrasInferenceAdapter
-from llama_stack.providers.remote.inference.cerebras.config import CerebrasImplConfig
-from llama_stack.providers.remote.inference.databricks.config import DatabricksImplConfig
-from llama_stack.providers.remote.inference.databricks.databricks import DatabricksInferenceAdapter
-from llama_stack.providers.remote.inference.fireworks.config import FireworksImplConfig
-from llama_stack.providers.remote.inference.fireworks.fireworks import FireworksInferenceAdapter
-from llama_stack.providers.remote.inference.gemini.config import GeminiConfig
-from llama_stack.providers.remote.inference.gemini.gemini import GeminiInferenceAdapter
-from llama_stack.providers.remote.inference.groq.config import GroqConfig
-from llama_stack.providers.remote.inference.groq.groq import GroqInferenceAdapter
-from llama_stack.providers.remote.inference.llama_openai_compat.config import LlamaCompatConfig
-from llama_stack.providers.remote.inference.llama_openai_compat.llama import LlamaCompatInferenceAdapter
-from llama_stack.providers.remote.inference.nvidia.config import NVIDIAConfig
-from llama_stack.providers.remote.inference.nvidia.nvidia import NVIDIAInferenceAdapter
-from llama_stack.providers.remote.inference.openai.config import OpenAIConfig
-from llama_stack.providers.remote.inference.openai.openai import OpenAIInferenceAdapter
-from llama_stack.providers.remote.inference.runpod.config import RunpodImplConfig
-from llama_stack.providers.remote.inference.runpod.runpod import RunpodInferenceAdapter
-from llama_stack.providers.remote.inference.sambanova.config import SambaNovaImplConfig
-from llama_stack.providers.remote.inference.sambanova.sambanova import SambaNovaInferenceAdapter
-from llama_stack.providers.remote.inference.together.config import TogetherImplConfig
-from llama_stack.providers.remote.inference.together.together import TogetherInferenceAdapter
-from llama_stack.providers.remote.inference.vllm.config import VLLMInferenceAdapterConfig
-from llama_stack.providers.remote.inference.vllm.vllm import VLLMInferenceAdapter
-from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
-from llama_stack.providers.remote.inference.watsonx.watsonx import WatsonXInferenceAdapter
+from llama_stack_provider_inference_anthropic.anthropic import AnthropicInferenceAdapter
+from llama_stack_provider_inference_anthropic.config import AnthropicConfig
+from llama_stack_provider_inference_cerebras.cerebras import CerebrasInferenceAdapter
+from llama_stack_provider_inference_cerebras.config import CerebrasImplConfig
+from llama_stack_provider_inference_databricks.config import DatabricksImplConfig
+from llama_stack_provider_inference_databricks.databricks import DatabricksInferenceAdapter
+from llama_stack_provider_inference_fireworks.config import FireworksImplConfig
+from llama_stack_provider_inference_fireworks.fireworks import FireworksInferenceAdapter
+from llama_stack_provider_inference_gemini.config import GeminiConfig
+from llama_stack_provider_inference_gemini.gemini import GeminiInferenceAdapter
+from llama_stack_provider_inference_groq.config import GroqConfig
+from llama_stack_provider_inference_groq.groq import GroqInferenceAdapter
+from llama_stack_provider_inference_llama_openai_compat.config import LlamaCompatConfig
+from llama_stack_provider_inference_llama_openai_compat.llama import LlamaCompatInferenceAdapter
+from llama_stack_provider_inference_nvidia.config import NVIDIAConfig
+from llama_stack_provider_inference_nvidia.nvidia import NVIDIAInferenceAdapter
+from llama_stack_provider_inference_openai.config import OpenAIConfig
+from llama_stack_provider_inference_openai.openai import OpenAIInferenceAdapter
+from llama_stack_provider_inference_runpod.config import RunpodImplConfig
+from llama_stack_provider_inference_runpod.runpod import RunpodInferenceAdapter
+from llama_stack_provider_inference_sambanova.config import SambaNovaImplConfig
+from llama_stack_provider_inference_sambanova.sambanova import SambaNovaInferenceAdapter
+from llama_stack_provider_inference_together.config import TogetherImplConfig
+from llama_stack_provider_inference_together.together import TogetherInferenceAdapter
+from llama_stack_provider_inference_vllm.config import VLLMInferenceAdapterConfig
+from llama_stack_provider_inference_vllm.vllm import VLLMInferenceAdapter
+from llama_stack_provider_inference_watsonx.config import WatsonXConfig
+from llama_stack_provider_inference_watsonx.watsonx import WatsonXInferenceAdapter
 
 
 @pytest.mark.parametrize(
@@ -46,79 +45,79 @@ from llama_stack.providers.remote.inference.watsonx.watsonx import WatsonXInfere
         (
             GroqConfig,
             GroqInferenceAdapter,
-            "llama_stack.providers.remote.inference.groq.config.GroqProviderDataValidator",
+            "llama_stack_provider_inference_groq.config.GroqProviderDataValidator",
             {},
         ),
         (
             OpenAIConfig,
             OpenAIInferenceAdapter,
-            "llama_stack.providers.remote.inference.openai.config.OpenAIProviderDataValidator",
+            "llama_stack_provider_inference_openai.config.OpenAIProviderDataValidator",
             {},
         ),
         (
             TogetherImplConfig,
             TogetherInferenceAdapter,
-            "llama_stack.providers.remote.inference.together.TogetherProviderDataValidator",
+            "llama_stack_provider_inference_together.TogetherProviderDataValidator",
             {},
         ),
         (
             LlamaCompatConfig,
             LlamaCompatInferenceAdapter,
-            "llama_stack.providers.remote.inference.llama_openai_compat.config.LlamaProviderDataValidator",
+            "llama_stack_provider_inference_llama_openai_compat.config.LlamaProviderDataValidator",
             {},
         ),
         (
             CerebrasImplConfig,
             CerebrasInferenceAdapter,
-            "llama_stack.providers.remote.inference.cerebras.config.CerebrasProviderDataValidator",
+            "llama_stack_provider_inference_cerebras.config.CerebrasProviderDataValidator",
             {},
         ),
         (
             DatabricksImplConfig,
             DatabricksInferenceAdapter,
-            "llama_stack.providers.remote.inference.databricks.config.DatabricksProviderDataValidator",
+            "llama_stack_provider_inference_databricks.config.DatabricksProviderDataValidator",
             {},
         ),
         (
             NVIDIAConfig,
             NVIDIAInferenceAdapter,
-            "llama_stack.providers.remote.inference.nvidia.config.NVIDIAProviderDataValidator",
+            "llama_stack_provider_inference_nvidia.config.NVIDIAProviderDataValidator",
             {},
         ),
         (
             RunpodImplConfig,
             RunpodInferenceAdapter,
-            "llama_stack.providers.remote.inference.runpod.config.RunpodProviderDataValidator",
+            "llama_stack_provider_inference_runpod.config.RunpodProviderDataValidator",
             {},
         ),
         (
             FireworksImplConfig,
             FireworksInferenceAdapter,
-            "llama_stack.providers.remote.inference.fireworks.FireworksProviderDataValidator",
+            "llama_stack_provider_inference_fireworks.FireworksProviderDataValidator",
             {},
         ),
         (
             AnthropicConfig,
             AnthropicInferenceAdapter,
-            "llama_stack.providers.remote.inference.anthropic.config.AnthropicProviderDataValidator",
+            "llama_stack_provider_inference_anthropic.config.AnthropicProviderDataValidator",
             {},
         ),
         (
             GeminiConfig,
             GeminiInferenceAdapter,
-            "llama_stack.providers.remote.inference.gemini.config.GeminiProviderDataValidator",
+            "llama_stack_provider_inference_gemini.config.GeminiProviderDataValidator",
             {},
         ),
         (
             SambaNovaImplConfig,
             SambaNovaInferenceAdapter,
-            "llama_stack.providers.remote.inference.sambanova.config.SambaNovaProviderDataValidator",
+            "llama_stack_provider_inference_sambanova.config.SambaNovaProviderDataValidator",
             {},
         ),
         (
             VLLMInferenceAdapterConfig,
             VLLMInferenceAdapter,
-            "llama_stack.providers.remote.inference.vllm.VLLMProviderDataValidator",
+            "llama_stack_provider_inference_vllm.VLLMProviderDataValidator",
             {
                 "base_url": "http://fake",
             },
@@ -145,7 +144,7 @@ def test_openai_provider_data_used(config_cls, adapter_cls, provider_data_valida
         (
             WatsonXConfig,
             WatsonXInferenceAdapter,
-            "llama_stack.providers.remote.inference.watsonx.config.WatsonXProviderDataValidator",
+            "llama_stack_provider_inference_watsonx.config.WatsonXProviderDataValidator",
         ),
     ],
 )

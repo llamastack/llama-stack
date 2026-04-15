@@ -7,14 +7,7 @@ from collections.abc import AsyncIterator
 from urllib.parse import urljoin
 
 import httpx
-from llama_stack_utils_inference.http_client import _build_network_client_kwargs
-from llama_stack_utils_inference.openai_mixin import OpenAIMixin
-from pydantic import ConfigDict
-
 from llama_stack.log import get_logger
-from llama_stack.providers.inline.responses.builtin.responses.types import (
-    AssistantMessageWithReasoning,
-)
 from llama_stack_api import (
     HealthResponse,
     HealthStatus,
@@ -31,6 +24,10 @@ from llama_stack_api import (
     RerankResponse,
 )
 from llama_stack_api.inference import RerankRequest
+from llama_stack_utils_inference.http_client import _build_network_client_kwargs
+from llama_stack_utils_inference.openai_mixin import OpenAIMixin
+from llama_stack_utils_inference.types import AssistantMessageWithReasoning
+from pydantic import ConfigDict
 
 from .config import VLLMInferenceAdapterConfig
 

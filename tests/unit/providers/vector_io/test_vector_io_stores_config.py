@@ -8,13 +8,12 @@ from unittest.mock import AsyncMock, patch
 
 import numpy as np
 import pytest
-from psycopg2 import sql
-
 from llama_stack_api import (
     OpenAICreateVectorStoreRequestWithExtraBody,
     QueryChunksResponse,
     VectorStore,
 )
+from psycopg2 import sql
 
 # This test is a unit test for the inline VectorIO providers. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
@@ -30,7 +29,7 @@ from llama_stack_api import (
 def mock_resume_file_batches(request):
     """Mock the resume functionality to prevent stale file batches from being processed during tests."""
     with patch(
-        "llama_stack.providers.utils.memory.openai_vector_store_mixin.OpenAIVectorStoreMixin._resume_incomplete_batches",
+        "llama_stack_utils_vector_io.openai_vector_store_mixin.OpenAIVectorStoreMixin._resume_incomplete_batches",
         new_callable=AsyncMock,
     ):
         yield
@@ -193,8 +192,8 @@ async def test_search_vector_store_ignores_rewrite_query(vector_io_adapter):
 async def test_create_gin_index_executes_correct_sql():
     from unittest.mock import MagicMock
 
-    from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorHNSWVectorIndex
-    from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex
+    from llama_stack_provider_vector_io_pgvector.config import PGVectorHNSWVectorIndex
+    from llama_stack_provider_vector_io_pgvector.pgvector import PGVectorIndex
 
     connection = MagicMock()
     cursor = MagicMock()
@@ -209,7 +208,7 @@ async def test_create_gin_index_executes_correct_sql():
         provider_id="pgvector",
     )
 
-    with patch("llama_stack.providers.remote.vector_io.pgvector.pgvector.psycopg2"):
+    with patch("llama_stack_provider_vector_io_pgvector.pgvector.psycopg2"):
         index = PGVectorIndex(
             vector_store=vector_store,
             dimension=768,
@@ -234,9 +233,8 @@ async def test_create_gin_index_raises_runtime_error_on_db_error():
     from unittest.mock import MagicMock
 
     import psycopg2
-
-    from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorHNSWVectorIndex
-    from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex
+    from llama_stack_provider_vector_io_pgvector.config import PGVectorHNSWVectorIndex
+    from llama_stack_provider_vector_io_pgvector.pgvector import PGVectorIndex
 
     connection = MagicMock()
     cursor = MagicMock()
@@ -252,7 +250,7 @@ async def test_create_gin_index_raises_runtime_error_on_db_error():
         provider_id="pgvector",
     )
 
-    with patch("llama_stack.providers.remote.vector_io.pgvector.pgvector.psycopg2"):
+    with patch("llama_stack_provider_vector_io_pgvector.pgvector.psycopg2"):
         index = PGVectorIndex(
             vector_store=vector_store,
             dimension=768,
@@ -270,8 +268,8 @@ async def test_create_gin_index_raises_runtime_error_on_db_error():
 async def test_gin_index_creation_in_initialize_call():
     from unittest.mock import MagicMock
 
-    from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorHNSWVectorIndex
-    from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex
+    from llama_stack_provider_vector_io_pgvector.config import PGVectorHNSWVectorIndex
+    from llama_stack_provider_vector_io_pgvector.pgvector import PGVectorIndex
 
     connection = MagicMock()
     cursor = MagicMock()
@@ -286,7 +284,7 @@ async def test_gin_index_creation_in_initialize_call():
         provider_id="pgvector",
     )
 
-    with patch("llama_stack.providers.remote.vector_io.pgvector.pgvector.psycopg2") as mock_psycopg2:
+    with patch("llama_stack_provider_vector_io_pgvector.pgvector.psycopg2") as mock_psycopg2:
         mock_psycopg2.extras.DictCursor = MagicMock()
 
         index = PGVectorIndex(
@@ -303,8 +301,8 @@ async def test_gin_index_creation_in_initialize_call():
 
 
 async def test_set_ef_search_called_before_select_in_query_vector(mock_psycopg2_connection, embedding_dimension):
-    from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorHNSWVectorIndex
-    from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex
+    from llama_stack_provider_vector_io_pgvector.config import PGVectorHNSWVectorIndex
+    from llama_stack_provider_vector_io_pgvector.pgvector import PGVectorIndex
 
     connection, cursor = mock_psycopg2_connection
     cursor.fetchall.return_value = []
@@ -339,8 +337,8 @@ async def test_set_ef_search_called_before_select_in_query_vector(mock_psycopg2_
 
 
 async def test_apply_default_ef_search_for_query_vector(mock_psycopg2_connection, embedding_dimension):
-    from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorHNSWVectorIndex
-    from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex
+    from llama_stack_provider_vector_io_pgvector.config import PGVectorHNSWVectorIndex
+    from llama_stack_provider_vector_io_pgvector.pgvector import PGVectorIndex
 
     connection, cursor = mock_psycopg2_connection
     cursor.fetchall.return_value = []

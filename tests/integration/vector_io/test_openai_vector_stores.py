@@ -8,13 +8,12 @@ import time
 from io import BytesIO
 
 import pytest
-from llama_stack_client import BadRequestError
-from openai import BadRequestError as OpenAIBadRequestError
-from openai import OpenAI
-
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.log import get_logger
 from llama_stack_api import ChunkMetadata, EmbeddedChunk, ExpiresAfter
+from llama_stack_client import BadRequestError
+from openai import BadRequestError as OpenAIBadRequestError
+from openai import OpenAI
 
 from ..conftest import vector_provider_wrapper
 
@@ -149,7 +148,7 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(
 def sample_chunks():
     import time
 
-    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+    from llama_stack_utils_vector_io.vector_utils import generate_chunk_id
 
     chunks_data = [
         (

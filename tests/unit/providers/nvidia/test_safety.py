@@ -9,9 +9,6 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-from llama_stack.providers.remote.safety.nvidia.config import NVIDIASafetyConfig
-from llama_stack.providers.remote.safety.nvidia.nvidia import NVIDIASafetyAdapter
 from llama_stack_api import (
     GetShieldRequest,
     OpenAIAssistantMessageParam,
@@ -22,6 +19,8 @@ from llama_stack_api import (
     Shield,
     ViolationLevel,
 )
+from llama_stack_provider_safety_nvidia.config import NVIDIASafetyConfig
+from llama_stack_provider_safety_nvidia.nvidia import NVIDIASafetyAdapter
 
 
 class FakeNVIDIASafetyAdapter(NVIDIASafetyAdapter):
@@ -54,7 +53,7 @@ def nvidia_adapter():
 @pytest.fixture
 def mock_guardrails_post():
     """Mock the HTTP request methods."""
-    with patch("llama_stack.providers.remote.safety.nvidia.nvidia.NeMoGuardrails._guardrails_post") as mock_post:
+    with patch("llama_stack_provider_safety_nvidia.nvidia.NeMoGuardrails._guardrails_post") as mock_post:
         mock_post.return_value = {"status": "allowed"}
         yield mock_post
 
@@ -315,7 +314,7 @@ async def test_run_shield_http_error(nvidia_adapter, mock_guardrails_post):
 
 
 def test_init_nemo_guardrails():
-    from llama_stack.providers.remote.safety.nvidia.nvidia import NeMoGuardrails
+    from llama_stack_provider_safety_nvidia.nvidia import NeMoGuardrails
 
     os.environ["NVIDIA_GUARDRAILS_URL"] = "http://nemo.test"
 
@@ -347,7 +346,7 @@ def test_init_nemo_guardrails():
 
 
 def test_init_nemo_guardrails_invalid_temperature():
-    from llama_stack.providers.remote.safety.nvidia.nvidia import NeMoGuardrails
+    from llama_stack_provider_safety_nvidia.nvidia import NeMoGuardrails
 
     os.environ["NVIDIA_GUARDRAILS_URL"] = "http://nemo.test"
 

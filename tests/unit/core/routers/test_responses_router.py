@@ -7,10 +7,6 @@
 from unittest.mock import AsyncMock
 
 from fastapi import FastAPI
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import InMemoryMetricReader
-from starlette.testclient import TestClient
-
 from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
 from llama_stack.core.server.server import global_exception_handler
 from llama_stack.telemetry.constants import RESPONSES_PARAMETER_USAGE_TOTAL
@@ -28,6 +24,9 @@ from llama_stack_api.responses.models import (
     ListResponsesRequest,
     RetrieveResponseRequest,
 )
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import InMemoryMetricReader
+from starlette.testclient import TestClient
 
 
 def test_openapi_create_response_advertises_json_and_sse_200():
@@ -720,8 +719,8 @@ def test_parameter_usage_records_only_explicitly_provided_params():
     that was explicitly provided in the request body (via model_fields_set),
     and ignores required fields (input, model) and default-valued fields.
     """
-    import llama_stack.providers.inline.responses.builtin.impl as responses_mod
-    from llama_stack.providers.inline.responses.builtin.impl import _record_parameter_usage
+    import llama_stack_provider_responses_builtin.impl as responses_mod
+    from llama_stack_provider_responses_builtin.impl import _record_parameter_usage
 
     reader = InMemoryMetricReader()
     provider = MeterProvider(metric_readers=[reader])
@@ -783,8 +782,8 @@ def test_parameter_usage_ignores_extra_keys():
     user-supplied extra keys end up in model_fields_set.  Without filtering,
     this would cause unbounded Prometheus label cardinality.
     """
-    import llama_stack.providers.inline.responses.builtin.impl as responses_mod
-    from llama_stack.providers.inline.responses.builtin.impl import _record_parameter_usage
+    import llama_stack_provider_responses_builtin.impl as responses_mod
+    from llama_stack_provider_responses_builtin.impl import _record_parameter_usage
 
     reader = InMemoryMetricReader()
     provider = MeterProvider(metric_readers=[reader])

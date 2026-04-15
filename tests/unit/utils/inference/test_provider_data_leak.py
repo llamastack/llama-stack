@@ -20,13 +20,12 @@ the leak without needing a Postgres instance.
 import time
 
 import pytest
-
 from llama_stack.core.access_control.datatypes import AccessRule, Action, Scope
 from llama_stack.core.datatypes import User
 from llama_stack.core.request_headers import PROVIDER_DATA_VAR
+from llama_stack.core.routers.inference_store import InferenceStore
 from llama_stack.core.storage.datatypes import InferenceStoreReference, SqliteSqlStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
-from llama_stack.providers.utils.inference.inference_store import InferenceStore
 from llama_stack_api import (
     OpenAIChatCompletion,
     OpenAIChatCompletionResponseMessage,

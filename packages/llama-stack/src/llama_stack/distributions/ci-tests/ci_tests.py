@@ -6,13 +6,13 @@
 
 
 from llama_stack_api import ConnectorInput, ModelInput, ModelType
+from llama_stack_provider_inference_sentence_transformers.config import (
+    SentenceTransformersInferenceConfig,
+)
+from llama_stack_provider_inference_watsonx.config import WatsonXConfig
 
 from llama_stack.core.datatypes import Provider
 from llama_stack.distributions.template import DistributionTemplate
-from llama_stack.providers.inline.inference.sentence_transformers.config import (
-    SentenceTransformersInferenceConfig,
-)
-from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
 
 from ..starter.starter import get_distribution_template as get_starter_distribution_template
 
