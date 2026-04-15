@@ -377,12 +377,20 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             await self.unregister_object(model)
 
         for model in models:
-            if model.provider_resource_id in model_ids:
-                # avoid overwriting a non-provider-registered model entry
-                continue
-
+            # Determine what the identifier will be for this provider-listed model
             if model.identifier == model.provider_resource_id:
                 model.identifier = f"{provider_id}/{model.provider_resource_id}"
+
+            # Only skip if a user-registered model already has this exact identifier
+            # (Different identifiers with the same provider_resource_id can coexist,
+            # e.g., "claude-haiku-..." and "vllm/Qwen3-0.6B" both pointing to the same underlying model)
+            if model.provider_resource_id in model_ids and model.identifier == model_ids[model.provider_resource_id]:
+                logger.debug(
+                    "Skipping provider-listed model (user-registered alias exists)",
+                    model=model.identifier,
+                    provider_resource_id=model.provider_resource_id,
+                )
+                continue
 
             logger.debug("Registering model", model=model.identifier, provider_resource_id=model.provider_resource_id)
             await self.register_object(
