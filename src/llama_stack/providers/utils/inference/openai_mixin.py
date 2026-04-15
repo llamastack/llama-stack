@@ -13,6 +13,7 @@ from typing import Any
 
 import httpx
 from openai import AsyncOpenAI, DefaultAsyncHttpxClient
+from openai.types.chat import ChatCompletionChunk
 from pydantic import BaseModel, ConfigDict, Field
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
@@ -327,8 +328,6 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
                         chunk.usage = None
                     yield chunk
                 if fix_usage and last_usage is not None:
-                    from openai.types.chat import ChatCompletionChunk
-
                     yield ChatCompletionChunk(
                         id=last_id,
                         choices=[],
