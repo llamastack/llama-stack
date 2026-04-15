@@ -317,7 +317,11 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             # Remove the internal marker from metadata before storing
             metadata = {k: v for k, v in metadata.items() if k != "_unprefixed_alias"}
         else:
-            identifier = f"{provider_id}/{model_id}"
+            # Avoid double-prefixing if model_id already contains the provider prefix
+            if model_id.startswith(f"{provider_id}/"):
+                identifier = model_id
+            else:
+                identifier = f"{provider_id}/{model_id}"
 
         model = ModelWithOwner(
             identifier=identifier,
