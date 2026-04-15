@@ -486,9 +486,14 @@ class BuiltinMessagesImpl(Messages):
 
         usage = AnthropicUsage()
         if response.usage:
+            cache_read = None
+            if response.usage.prompt_tokens_details and hasattr(response.usage.prompt_tokens_details, "cached_tokens"):
+                cache_read = response.usage.prompt_tokens_details.cached_tokens
+
             usage = AnthropicUsage(
                 input_tokens=response.usage.prompt_tokens or 0,
                 output_tokens=response.usage.completion_tokens or 0,
+                cache_read_input_tokens=cache_read,
             )
 
         return AnthropicMessageResponse(
@@ -525,6 +530,7 @@ class BuiltinMessagesImpl(Messages):
         tool_call_index_to_block_index: dict[int, int] = {}
         output_tokens = 0
         input_tokens = 0
+        cache_read_tokens: int | None = None
         stop_reason = "end_turn"
 
         async for chunk in openai_stream:
@@ -533,6 +539,10 @@ class BuiltinMessagesImpl(Messages):
                 if chunk.usage:
                     input_tokens = chunk.usage.prompt_tokens or 0
                     output_tokens = chunk.usage.completion_tokens or 0
+                    if chunk.usage.prompt_tokens_details and hasattr(
+                        chunk.usage.prompt_tokens_details, "cached_tokens"
+                    ):
+                        cache_read_tokens = chunk.usage.prompt_tokens_details.cached_tokens
                 continue
 
             choice = chunk.choices[0]
@@ -589,6 +599,8 @@ class BuiltinMessagesImpl(Messages):
             if chunk.usage:
                 input_tokens = chunk.usage.prompt_tokens or 0
                 output_tokens = chunk.usage.completion_tokens or 0
+                if chunk.usage.prompt_tokens_details and hasattr(chunk.usage.prompt_tokens_details, "cached_tokens"):
+                    cache_read_tokens = chunk.usage.prompt_tokens_details.cached_tokens
 
         # Close any open blocks
         if in_text_block:
@@ -600,6 +612,10 @@ class BuiltinMessagesImpl(Messages):
         # Final events
         yield MessageDeltaEvent(
             delta=_MessageDelta(stop_reason=stop_reason),
-            usage=AnthropicUsage(input_tokens=input_tokens, output_tokens=output_tokens),
+            usage=AnthropicUsage(
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                cache_read_input_tokens=cache_read_tokens,
+            ),
         )
         yield MessageStopEvent()
