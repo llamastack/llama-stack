@@ -38,6 +38,50 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
 
     listed_providers: set[str] = set()
 
+    async def _resolve_auto_model(self, provider_id: str, model_type: ModelType) -> str:
+        """Resolve {$:AUTO:$} to an actual model from the provider.
+
+        Queries the provider's list_models() to get truly available models,
+        filters by model_type, and returns the first matching model.
+
+        Args:
+            provider_id: The provider to query for models
+            model_type: The type of model to filter for (llm, embedding, rerank)
+
+        Returns:
+            The provider_model_id of a model that matches the criteria
+
+        Raises:
+            ValueError: If no suitable model is found for the provider
+        """
+        if provider_id not in self.impls_by_provider_id:
+            raise ValueError(f"Provider '{provider_id}' not found in routing table")
+
+        provider = self.impls_by_provider_id[provider_id]
+
+        try:
+            models = await provider.list_models()
+        except Exception as e:
+            raise ValueError(
+                f"Failed to list models from provider '{provider_id}' for auto model resolution: {e}"
+            ) from e
+
+        if not models:
+            raise ValueError(f"Provider '{provider_id}' returned no models for auto resolution")
+
+        # Filter by model_type
+        matching_models = [m for m in models if m.model_type == model_type]
+
+        if not matching_models:
+            raise ValueError(f"No {model_type} models found in provider '{provider_id}' for auto model resolution")
+
+        # Use the first matching model
+        # In the future, we could enhance this to:
+        # - Prefer recently-used models (likely cached/warm)
+        # - Validate availability with a lightweight health check
+        selected_model = matching_models[0]
+        return selected_model.provider_resource_id
+
     async def refresh(self) -> None:
         for provider_id, provider in self.impls_by_provider_id.items():
             refresh = await provider.should_refresh_models()
@@ -255,7 +299,26 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         if "embedding_dimension" not in metadata and model_type == ModelType.embedding:
             raise ValueError("Embedding model must have an embedding dimension in its metadata")
 
-        identifier = f"{provider_id}/{provider_model_id}"
+        # Resolve {$:AUTO:$} to an actual model from the provider
+        if provider_model_id == "{$:AUTO:$}":
+            provider_model_id = await self._resolve_auto_model(provider_id, model_type)
+            logger.info(
+                "Resolved auto model alias",
+                model_id=model_id,
+                provider_id=provider_id,
+                resolved_provider_model_id=provider_model_id,
+            )
+
+        # Check if this is an unprefixed alias (from {$:ALL:$} expansion)
+        # If so, use model_id directly as identifier without provider prefix
+        is_unprefixed = metadata and metadata.get("_unprefixed_alias", False)
+        if is_unprefixed:
+            identifier = model_id
+            # Remove the internal marker from metadata before storing
+            metadata = {k: v for k, v in metadata.items() if k != "_unprefixed_alias"}
+        else:
+            identifier = f"{provider_id}/{model_id}"
+
         model = ModelWithOwner(
             identifier=identifier,
             provider_resource_id=provider_model_id,
