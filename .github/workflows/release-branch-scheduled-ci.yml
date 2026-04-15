@@ -176,8 +176,8 @@ jobs:
           activate-environment: true
 
       - name: Build Llama Stack API package
-        if: hashFiles('src/llama_stack_api/pyproject.toml') != ''
-        working-directory: src/llama_stack_api
+        if: hashFiles('packages/llama-stack-api/pyproject.toml') != ''
+        working-directory: packages/llama-stack-api
         run: uv build
 
       - name: Build Llama Stack package
@@ -185,8 +185,8 @@ jobs:
 
       - name: Install Llama Stack package (with api stubs from local build)
         run: |
-          if [ -d "src/llama_stack_api/dist" ]; then
-            uv pip install --find-links src/llama_stack_api/dist dist/*.whl
+          if [ -d "packages/llama-stack-api/dist" ]; then
+            uv pip install --find-links packages/llama-stack-api/dist dist/*.whl
           else
             uv pip install dist/*.whl
           fi

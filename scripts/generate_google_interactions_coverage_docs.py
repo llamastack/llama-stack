@@ -135,7 +135,7 @@ def generate_docs(coverage_path: Path, output_path: Path) -> None:
             "To improve coverage scores:",
             "",
             "1. **Add Missing Properties**: Implement missing fields in request/response models"
-            " in `src/llama_stack_api/interactions/models.py`",
+            " in `packages/llama-stack-api/src/llama_stack_api/interactions/models.py`",
             "2. **Add Content Types**: Support additional content types beyond text"
             " (images, audio, function calls, etc.)",
             "3. **Add Tool Support**: Implement tool declarations (Function, GoogleSearch, CodeExecution, etc.)",

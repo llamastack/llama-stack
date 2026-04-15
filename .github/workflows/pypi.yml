@@ -194,7 +194,7 @@ jobs:
         include:
           # Local packages (in this repo)
           - package: llama-stack-api
-            path: src/llama_stack_api
+            path: packages/llama-stack-api
             type: local
             registry: pypi
           - package: llama-stack
@@ -308,7 +308,7 @@ jobs:
       # === LOCAL PYTHON PACKAGE BUILD ===
       - name: Check for missing package entries (llama-stack-api)
         if: steps.should-build.outputs.skip != 'true' && matrix.package == 'llama-stack-api'
-        working-directory: src/llama_stack_api
+        working-directory: packages/llama-stack-api
         run: |
           for f in *.py; do
             [[ "$f" == "__init__.py" ]] && continue

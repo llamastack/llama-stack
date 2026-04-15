@@ -15,7 +15,6 @@ constraint-dependencies = [
 
 [tool.uv.workspace]
 members = [
-    "src/llama_stack_api",
     "packages/*",
 ]
 
@@ -486,7 +485,7 @@ convention = "google"
 ] # Using import * is acceptable (or at least tolerated) in an __init__.py of a package API
 
 [tool.mypy]
-mypy_path = ["src"]
+mypy_path = ["src", "packages/llama-stack-api/src"]
 packages = ["llama_stack", "llama_stack_api"]
 plugins = ['pydantic.mypy']
 disable_error_code = []
@@ -509,8 +508,8 @@ exclude = [
     # incomplete annotations, Any usage, or other strict mode violations.
     #
     # llama_stack_api files (3 files)
-    "^src/llama_stack_api/models/models\\.py$",
-    "^src/llama_stack_api/prompts/models\\.py$",
+    "^packages/llama-stack-api/src/llama_stack_api/models/models\\.py$",
+    "^packages/llama-stack-api/src/llama_stack_api/prompts/models\\.py$",
     # Core files (15 files)
     "^src/llama_stack/core/distribution\\.py$",
     "^src/llama_stack/core/library_client\\.py$",

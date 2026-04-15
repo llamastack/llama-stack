@@ -128,7 +128,7 @@ repos:
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^src/llama_stack_api/.*$
+        files: ^packages/llama-stack-api/src/llama_stack_api/.*$
       - id: api-conformance
         name: Check API spec for breaking changes
         entry: ./scripts/check-api-conformance.sh
@@ -155,7 +155,7 @@ repos:
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^docs/static/(llama-stack-spec\.yaml|anthropic-spec\.json|anthropic-coverage\.json)$|^docs/docs/api-anthropic-messages/conformance\.mdx$|^scripts/(anthropic_coverage|generate_anthropic_coverage_docs)\.py$|^src/llama_stack_api/messages/models\.py$
+        files: ^docs/static/(llama-stack-spec\.yaml|anthropic-spec\.json|anthropic-coverage\.json)$|^docs/docs/api-anthropic-messages/conformance\.mdx$|^scripts/(anthropic_coverage|generate_anthropic_coverage_docs)\.py$|^packages/llama-stack-api/src/llama_stack_api/messages/models\.py$
       - id: google-interactions-coverage
         name: Google Interactions API Coverage
         additional_dependencies:
@@ -164,7 +164,7 @@ repos:
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^docs/static/google-interactions-(spec|coverage)\.json$|^docs/docs/api-google-interactions/conformance\.mdx$|^scripts/(google_interactions_coverage|generate_google_interactions_coverage_docs)\.py$|^src/llama_stack_api/interactions/models\.py$
+        files: ^docs/static/google-interactions-(spec|coverage)\.json$|^docs/docs/api-google-interactions/conformance\.mdx$|^scripts/(google_interactions_coverage|generate_google_interactions_coverage_docs)\.py$|^packages/llama-stack-api/src/llama_stack_api/interactions/models\.py$
       - id: provider-compat-matrix
         name: Provider Compatibility Matrix
         additional_dependencies:
@@ -300,11 +300,11 @@ repos:
         pass_filenames: false
         require_serial: true
         always_run: true
-        files: ^src/llama_stack_api/.*$
+        files: ^packages/llama-stack-api/src/llama_stack_api/.*$
         args:
           - -c
           - |
-            API_DIR="src/llama_stack_api"
+            API_DIR="packages/llama-stack-api/src/llama_stack_api"
             grep -rn --include="*.py" -E '^[^#]*(import llama_stack\b|from llama_stack\b)' "$API_DIR" 2>/dev/null && {
               echo "llama_stack_api must not import llama_stack";
               exit 1;

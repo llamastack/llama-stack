@@ -8,13 +8,6 @@
 import asyncio
 from collections.abc import AsyncIterator
 
-from llama_stack_utils_inference.openai_mixin import OpenAIMixin
-from ollama import AsyncClient as AsyncOllamaClient
-
-from llama_stack.log import get_logger
-from llama_stack.providers.inline.responses.builtin.responses.types import (
-    AssistantMessageWithReasoning,
-)
 from llama_stack_api import (
     HealthResponse,
     HealthStatus,
@@ -23,6 +16,13 @@ from llama_stack_api import (
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionWithReasoning,
     UnsupportedModelError,
+)
+from llama_stack_utils_inference.openai_mixin import OpenAIMixin
+from ollama import AsyncClient as AsyncOllamaClient
+
+from llama_stack.log import get_logger
+from llama_stack.providers.inline.responses.builtin.responses.types import (
+    AssistantMessageWithReasoning,
 )
 
 from .config import OllamaImplConfig
