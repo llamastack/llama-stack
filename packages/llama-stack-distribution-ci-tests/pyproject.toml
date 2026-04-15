@@ -1,6 +1,6 @@
 [project]
 name = "llama-stack-distribution-ci-tests"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Distribution for CI integration tests"
 requires-python = ">=3.12"
 dependencies = [
@@ -49,8 +49,12 @@ dependencies = [
 ci-tests = "llama_stack_distribution_ci_tests:CONFIGS_DIR"
 
 [build-system]
-requires = ["setuptools>=75.8.2"]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.2.dev0"
 
 [tool.setuptools.packages.find]
 where = ["src"]

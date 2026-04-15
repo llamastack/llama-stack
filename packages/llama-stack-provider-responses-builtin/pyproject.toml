@@ -1,6 +1,6 @@
 [project]
 name = "llama-stack-provider-responses-builtin"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Meta's reference implementation of an agent system that can use tools, access vector databases, and perform complex reasoning tasks."
 requires-python = ">=3.12"
 dependencies = [
@@ -16,13 +16,6 @@ dependencies = [
     "mcp>=1.23.0",
 ]
 
-[build-system]
-requires = ["setuptools>=75.0"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
 [project.entry-points."llama_stack.providers"]
 "responses.inline.builtin" = "llama_stack_provider_responses_builtin.provider:get_provider_spec"
 
@@ -31,3 +24,14 @@ llama-stack = { workspace = true }
 llama-stack-api = { workspace = true }
 llama-stack-utils-inference = { workspace = true }
 llama-stack-utils-common = { workspace = true }
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.2.dev0"
+
+[tool.setuptools.packages.find]
+where = ["src"]

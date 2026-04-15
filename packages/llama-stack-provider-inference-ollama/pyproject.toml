@@ -1,16 +1,3 @@
-[build-system]
-requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools_scm]
-root = "../.."
-fallback_version = "0.7.1.dev0"
-
-[tool.uv.sources]
-llama-stack = { workspace = true }
-llama-stack-api = { workspace = true }
-llama-stack-utils-inference = { workspace = true }
-
 [project]
 name = "llama-stack-provider-inference-ollama"
 dynamic = ["version"]
@@ -28,6 +15,19 @@ dependencies = [
 
 [project.entry-points."llama_stack.providers"]
 "inference.remote.ollama" = "llama_stack_provider_inference_ollama.provider:get_provider_spec"
+
+[tool.uv.sources]
+llama-stack = { workspace = true }
+llama-stack-api = { workspace = true }
+llama-stack-utils-inference = { workspace = true }
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.2.dev0"
 
 [tool.setuptools.packages.find]
 where = ["src"]

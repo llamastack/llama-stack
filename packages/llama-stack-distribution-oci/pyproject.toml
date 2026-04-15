@@ -1,6 +1,6 @@
 [project]
 name = "llama-stack-distribution-oci"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Distribution for Oracle Cloud Infrastructure"
 requires-python = ">=3.12"
 dependencies = [
@@ -22,8 +22,12 @@ dependencies = [
 oci = "llama_stack_distribution_oci:CONFIGS_DIR"
 
 [build-system]
-requires = ["setuptools>=75.8.2"]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.2.dev0"
 
 [tool.setuptools.packages.find]
 where = ["src"]

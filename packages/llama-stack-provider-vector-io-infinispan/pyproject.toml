@@ -1,7 +1,3 @@
-[build-system]
-requires = ["setuptools>=74.0", "setuptools-scm>=8.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "llama-stack-provider-vector-io-infinispan"
 dynamic = ["version"]
@@ -18,11 +14,16 @@ description = "Llama Stack vector I/O provider: infinispan"
 [project.entry-points."llama_stack.providers"]
     "vector_io.remote.infinispan" = "llama_stack_provider_vector_io_infinispan.provider:get_provider_spec"
 
+[build-system]
+requires = ["setuptools>=74.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.2.dev0"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.setuptools_scm]
-root = "../.."

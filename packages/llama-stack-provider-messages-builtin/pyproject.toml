@@ -1,6 +1,6 @@
 [project]
 name = "llama-stack-provider-messages-builtin"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Implements the Anthropic Messages API with native passthrough and automatic translation modes."
 requires-python = ">=3.12"
 dependencies = [
@@ -8,16 +8,20 @@ dependencies = [
     "llama-stack-api",
 ]
 
-[build-system]
-requires = ["setuptools>=75.0"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
 [project.entry-points."llama_stack.providers"]
 "messages.inline.builtin" = "llama_stack_provider_messages_builtin.provider:get_provider_spec"
 
 [tool.uv.sources]
 llama-stack = { workspace = true }
 llama-stack-api = { workspace = true }
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.2.dev0"
+
+[tool.setuptools.packages.find]
+where = ["src"]
