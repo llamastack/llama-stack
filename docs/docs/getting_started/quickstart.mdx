@@ -19,6 +19,7 @@ Install [Ollama](https://ollama.com/download), then pull a model and start the s
 
 ```bash
 ollama pull llama3.2:3b
+export OLLAMA_URL=http://localhost:11434/v1
 uvx --from 'llama-stack[starter]' llama stack run starter
 ```
 
@@ -39,6 +40,7 @@ The `uvx` command above is great for trying things out. For a real project, inst
 ```bash
 uv init my-ai-app && cd my-ai-app
 uv add 'llama-stack[starter]' openai
+export OLLAMA_URL=http://localhost:11434/v1
 uv run llama stack run starter
 ```
 :::
@@ -77,9 +79,9 @@ You should see output listing available models, for example:
 {
     "data": [
         {
-            "id": "llama3.2:3b",
+            "id": "ollama/llama3.2:3b",
             "object": "model",
-            "owned_by": "ollama",
+            "owned_by": "llama_stack",
             ...
         }
     ]
@@ -98,7 +100,7 @@ from openai import OpenAI
 client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
 
 response = client.responses.create(
-    model="llama3.2:3b",
+    model="ollama/llama3.2:3b",
     input="What is Llama Stack?",
 )
 print(response.output_text)
@@ -131,7 +133,7 @@ vector_store = client.vector_stores.create(
 
 # Ask questions with file search
 response = client.responses.create(
-    model="llama3.2:3b",
+    model="ollama/llama3.2:3b",
     input="Summarize the key points",
     tools=[{
         "type": "file_search",
