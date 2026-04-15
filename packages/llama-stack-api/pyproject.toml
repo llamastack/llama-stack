@@ -36,9 +36,6 @@ build-backend = "setuptools.build_meta"
 root = "../../"
 fallback_version = "0.7.2.dev0"
 
-[tool.uv]
-required-version = ">=0.7.0"
-
 [tool.setuptools.packages.find]
 where = ["src"]
 
