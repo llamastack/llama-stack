@@ -290,6 +290,7 @@ convention = "google"
 # Ignore the following errors for the following files
 # TODO: Fix in follow up PRs
 [tool.ruff.lint.per-file-ignores]
+"packages/llama-stack-api/src/llama_stack_api/apis/**/__init__.py" = ["F403"]
 "tests/**/*.py" = ["DTZ", "D101"] # Ignore datetime and docstring rules for tests
 "benchmarking/**/*.py" = ["D101"] # Ignore docstring rules for benchmarking scripts
 "client-sdks/**/*.py" = ["D101"] # Ignore docstring rules for client SDKs
