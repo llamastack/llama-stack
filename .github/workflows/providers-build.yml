@@ -139,7 +139,7 @@ jobs:
 
       - name: Build a single provider
         run: |
-          uv pip install -e .
+          uv pip install -e packages/llama-stack
           uv run --no-sync llama stack list-deps --providers inference=remote::ollama | xargs -L1 uv pip install
   build-custom-container-distribution:
     runs-on: ubuntu-latest

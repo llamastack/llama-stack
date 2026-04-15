@@ -50,7 +50,7 @@ jobs:
         run: |
           uv venv ci-test
           source ci-test/bin/activate
-          uv pip install -e .
+          uv pip install -e packages/llama-stack
           LLAMA_STACK_LOGGING=all=CRITICAL llama stack list-deps tests/external/config.yaml | xargs -L1 uv pip install
 
       - name: Start Llama Stack server in background
