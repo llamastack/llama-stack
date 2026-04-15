@@ -182,7 +182,7 @@ def generate_docs(
             "",
             "To improve conformance scores:",
             "",
-            "1. **Fix Schema Issues**: Update Pydantic models in `src/llama_stack_api/messages/` to match Anthropic's schema",
+            "1. **Fix Schema Issues**: Update Pydantic models in `packages/llama-stack-api/src/llama_stack_api/messages/` to match Anthropic's schema",
             "2. **Add Missing Properties**: Implement missing fields in request/response models",
             "3. **Add Missing Endpoints**: Implement endpoints listed in the Missing Endpoints section",
             "",

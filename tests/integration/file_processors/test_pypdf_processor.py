@@ -11,15 +11,14 @@ from unittest.mock import AsyncMock
 
 import pytest
 from fastapi import UploadFile
-
-from llama_stack.providers.inline.file_processor.pypdf import PyPDFFileProcessorConfig
-from llama_stack.providers.inline.file_processor.pypdf.pypdf import PyPDFFileProcessor
 from llama_stack_api.common.errors import OpenAIFileObjectNotFoundError
 from llama_stack_api.vector_io import (
     VectorStoreChunkingStrategyAuto,
     VectorStoreChunkingStrategyStatic,
     VectorStoreChunkingStrategyStaticConfig,
 )
+from llama_stack_provider_file_processor_pypdf import PyPDFFileProcessorConfig
+from llama_stack_provider_file_processor_pypdf.pypdf import PyPDFFileProcessor
 
 # Minimal valid PDF for testing edge cases
 MINIMAL_PDF_CONTENT = b"""%PDF-1.4

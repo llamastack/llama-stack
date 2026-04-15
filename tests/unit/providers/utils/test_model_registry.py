@@ -34,9 +34,8 @@
 #
 
 import pytest
-
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper, ProviderModelEntry
 from llama_stack_api import Model, UnsupportedModelError
+from llama_stack_utils_inference.model_registry import ModelRegistryHelper, ProviderModelEntry
 
 
 @pytest.fixture

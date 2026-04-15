@@ -15,9 +15,8 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-
-from llama_stack.providers.remote.inference.vertexai import converters as vertexai_converters
-from llama_stack.providers.remote.inference.vertexai.converters import (
+from llama_stack_provider_inference_vertexai import converters as vertexai_converters
+from llama_stack_provider_inference_vertexai.converters import (
     _extract_logprobs,
     convert_gemini_response_to_openai,
     convert_gemini_stream_chunk_to_openai,

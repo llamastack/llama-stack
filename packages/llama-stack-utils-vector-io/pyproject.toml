@@ -1,0 +1,32 @@
+[project]
+name = "llama-stack-utils-vector-io"
+dynamic = ["version"]
+description = "Shared vector I/O utilities for Llama Stack providers"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+    "llama-stack",
+    "llama-stack-api",
+    "llama-stack-utils-inference",
+    "chardet",
+    "pypdf",
+    "fastapi>=0.115.0",
+    "pydantic>=2.11.9",
+]
+
+[tool.uv.sources]
+llama-stack = { workspace = true }
+llama-stack-api = { workspace = true }
+llama-stack-utils-inference = { workspace = true }
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.2.dev0"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["llama_stack_utils_vector_io"]

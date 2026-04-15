@@ -1,0 +1,37 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the terms described in the LICENSE file in
+# the root directory of this source tree.
+
+
+from llama_stack_api import (
+    Api,
+    ProviderSpec,
+)
+
+BUILTIN_DEPS = [
+    "accelerate",
+    "fairscale",
+    "torch",
+    "torchvision",
+    "transformers",
+    "zmq",
+    "lm-format-enforcer",
+    "sentence-transformers",
+    "torchao==0.8.0",
+    "fbgemm-gpu-genai==1.1.2",
+]
+
+
+def available_providers() -> list[ProviderSpec]:
+    """Return the list of available inference provider specifications.
+
+    All inference providers are now discovered via entry points.
+
+    Returns:
+        List of ProviderSpec objects describing available providers
+    """
+    from llama_stack.providers.registry import merge_entry_point_providers
+
+    return merge_entry_point_providers([], api=Api.inference)

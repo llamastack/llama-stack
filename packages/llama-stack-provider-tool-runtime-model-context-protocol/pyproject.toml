@@ -1,0 +1,32 @@
+[project]
+name = "llama-stack-provider-tool-runtime-model-context-protocol"
+dynamic = ["version"]
+description = "Model Context Protocol (MCP) tool for standardized tool calling and context management."
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+    "llama-stack",
+    "llama-stack-api",
+    "llama-stack-utils-common",
+    "mcp>=1.23.0",
+]
+
+[project.entry-points."llama_stack.providers"]
+"tool_runtime.remote.model-context-protocol" = "llama_stack_provider_tool_runtime_model_context_protocol.provider:get_provider_spec"
+
+[tool.uv.sources]
+llama-stack = { workspace = true }
+llama-stack-api = { workspace = true }
+llama-stack-utils-common = { workspace = true }
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.2.dev0"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["llama_stack_provider_tool_runtime_model_context_protocol"]

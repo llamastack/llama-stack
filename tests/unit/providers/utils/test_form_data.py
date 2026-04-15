@@ -7,12 +7,11 @@
 import json
 from unittest.mock import AsyncMock, MagicMock
 
-from pydantic import BaseModel
-
-from llama_stack.providers.utils.files.form_data import (
+from llama_stack_utils_common.form_data import (
     parse_expires_after,
     parse_pydantic_from_form,
 )
+from pydantic import BaseModel
 
 
 class _TestModel(BaseModel):

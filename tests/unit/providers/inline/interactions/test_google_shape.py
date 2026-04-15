@@ -17,9 +17,8 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-
-from llama_stack.providers.inline.interactions.config import InteractionsConfig
-from llama_stack.providers.inline.interactions.impl import BuiltinInteractionsImpl
+from llama_stack_provider_interactions_builtin.config import InteractionsConfig
+from llama_stack_provider_interactions_builtin.impl import BuiltinInteractionsImpl
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 

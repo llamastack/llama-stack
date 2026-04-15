@@ -8,9 +8,7 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from llama_stack.core.datatypes import ContextualRetrievalParams, QualifiedModel, VectorStoresConfig
-from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack_api import (
     Chunk,
     ChunkMetadata,
@@ -22,6 +20,7 @@ from llama_stack_api import (
     TextContentItem,
     VectorStoreChunkingStrategyContextualConfig,
 )
+from llama_stack_utils_vector_io.openai_vector_store_mixin import OpenAIVectorStoreMixin
 
 # This test is a unit test for contextual retrieval functionality in the OpenAIVectorStoreMixin.
 # More general (API-level) tests should be placed in tests/integration/vector_io/
@@ -93,7 +92,7 @@ def provider_with_model(inference_api):
 @pytest.fixture(autouse=False)
 def fast_retry(monkeypatch):
     """Eliminate backoff delays in retry tests."""
-    import llama_stack.providers.utils.memory.openai_vector_store_mixin as mod
+    import llama_stack_utils_vector_io.openai_vector_store_mixin as mod
 
     monkeypatch.setattr(mod, "_RETRY_BASE_DELAY", 0.0)
     monkeypatch.setattr(mod.random, "uniform", lambda _a, _b: 0.0)

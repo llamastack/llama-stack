@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack.providers.remote.inference.bedrock.config import BedrockConfig
+from llama_stack_provider_inference_bedrock.config import BedrockConfig
 
 
 def test_bedrock_config_defaults_no_env(monkeypatch):

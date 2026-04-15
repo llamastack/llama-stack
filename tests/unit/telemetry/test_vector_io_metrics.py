@@ -10,7 +10,6 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from llama_stack.core.routers.vector_io import VectorIORouter
 from llama_stack.telemetry.vector_io_metrics import (
     create_vector_metric_attributes,

@@ -9,7 +9,6 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from llama_stack.core.connectors.connectors import (
     KEY_PREFIX,
     ConnectorServiceImpl,
@@ -381,7 +380,7 @@ class TestConnectorIdResolution:
 
     async def test_connector_id_resolved_to_server_url(self, mock_connectors_api, sample_connector):
         """Test that connector_id is resolved to server_url via connectors API."""
-        from llama_stack.providers.inline.responses.builtin.responses.streaming import (
+        from llama_stack_provider_responses_builtin.responses.streaming import (
             resolve_mcp_connector_id,
         )
 
@@ -401,7 +400,7 @@ class TestConnectorIdResolution:
 
     async def test_server_url_not_overwritten_when_provided(self, mock_connectors_api):
         """Test that existing server_url is not overwritten even if connector_id provided."""
-        from llama_stack.providers.inline.responses.builtin.responses.streaming import (
+        from llama_stack_provider_responses_builtin.responses.streaming import (
             resolve_mcp_connector_id,
         )
 
@@ -422,7 +421,7 @@ class TestConnectorIdResolution:
 
     async def test_connector_id_resolution_propagates_not_found_error(self, mock_connectors_api):
         """Test that ConnectorNotFoundError propagates when connector doesn't exist."""
-        from llama_stack.providers.inline.responses.builtin.responses.streaming import (
+        from llama_stack_provider_responses_builtin.responses.streaming import (
             resolve_mcp_connector_id,
         )
 

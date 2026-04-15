@@ -8,13 +8,9 @@ import asyncio
 import time
 
 import pytest
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExporter, SpanExportResult
-
+from llama_stack.core.routers.inference_store import InferenceStore
 from llama_stack.core.storage.datatypes import InferenceStoreReference, SqliteSqlStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
-from llama_stack.providers.utils.inference.inference_store import InferenceStore
 from llama_stack_api import (
     OpenAIChatCompletion,
     OpenAIChatCompletionResponseMessage,
@@ -22,6 +18,9 @@ from llama_stack_api import (
     OpenAIUserMessageParam,
     Order,
 )
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExporter, SpanExportResult
 
 
 class _CollectingExporter(SpanExporter):

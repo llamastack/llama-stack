@@ -8,8 +8,8 @@ on:
       - main
       - 'release-[0-9]+.[0-9]+.x'
     paths:
-      - 'src/llama_stack/providers/inline/file_processor/**'
-      - 'src/llama_stack/providers/registry/file_processors.py'
+      - 'packages/llama-stack/src/llama_stack/providers/inline/file_processor/**'
+      - 'packages/llama-stack/src/llama_stack/providers/registry/file_processors.py'
       - 'tests/integration/file_processors/**'
       - '.github/workflows/file-processors-tests.yml'
   pull_request:
@@ -17,8 +17,8 @@ on:
       - main
       - 'release-[0-9]+.[0-9]+.x'
     paths:
-      - 'src/llama_stack/providers/inline/file_processor/**'
-      - 'src/llama_stack/providers/registry/file_processors.py'
+      - 'packages/llama-stack/src/llama_stack/providers/inline/file_processor/**'
+      - 'packages/llama-stack/src/llama_stack/providers/registry/file_processors.py'
       - 'tests/integration/file_processors/**'
       - '.github/workflows/file-processors-tests.yml'
   merge_group:

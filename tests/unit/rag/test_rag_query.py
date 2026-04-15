@@ -7,10 +7,9 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from llama_stack.providers.inline.tool_runtime.file_search.config import FileSearchToolRuntimeConfig
-from llama_stack.providers.inline.tool_runtime.file_search.file_search import FileSearchToolRuntimeImpl
 from llama_stack_api import Chunk, ChunkMetadata, EmbeddedChunk, QueryChunksResponse, RAGQueryConfig
+from llama_stack_provider_tool_runtime_file_search.config import FileSearchToolRuntimeConfig
+from llama_stack_provider_tool_runtime_file_search.file_search import FileSearchToolRuntimeImpl
 
 
 class TestRagQuery:

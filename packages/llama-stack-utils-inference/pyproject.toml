@@ -1,0 +1,30 @@
+[project]
+name = "llama-stack-utils-inference"
+dynamic = ["version"]
+description = "Shared inference utilities for Llama Stack providers"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+    "llama-stack",
+    "llama-stack-api",
+    "openai>=2.30.0",
+    "httpx",
+    "pydantic>=2.11.9",
+    "opentelemetry-sdk>=1.30.0",
+]
+
+[tool.uv.sources]
+llama-stack = { workspace = true }
+llama-stack-api = { workspace = true }
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.2.dev0"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["llama_stack_utils_inference"]

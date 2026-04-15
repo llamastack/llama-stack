@@ -1,0 +1,35 @@
+[project]
+name = "llama-stack-provider-safety-prompt-guard"
+dynamic = ["version"]
+description = "Prompt Guard safety provider for Llama Stack"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+    "llama-stack",
+    "llama-stack-api",
+    "llama-stack-utils-inference",
+    "llama-stack-utils-safety",
+    "transformers[accelerate]",
+    "torch",
+]
+
+[project.entry-points."llama_stack.providers"]
+"safety.inline.prompt-guard" = "llama_stack_provider_safety_prompt_guard.provider:get_provider_spec"
+
+[tool.uv.sources]
+llama-stack = { workspace = true }
+llama-stack-api = { workspace = true }
+llama-stack-utils-inference = { workspace = true }
+llama-stack-utils-safety = { workspace = true }
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.2.dev0"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["llama_stack_provider_safety_prompt_guard"]

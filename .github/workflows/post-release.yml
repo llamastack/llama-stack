@@ -142,14 +142,15 @@ jobs:
 
           git checkout -b "$BRANCH" origin/main
 
-          # Update fallback_version in root pyproject.toml
-          sed -i "s/^fallback_version = .*/fallback_version = \"${NEXT_FALLBACK}\"/" pyproject.toml
-
-          # Update fallback_version in src/llama_stack_api/pyproject.toml
-          sed -i "s/^fallback_version = .*/fallback_version = \"${NEXT_FALLBACK}\"/" src/llama_stack_api/pyproject.toml
+          # Update fallback_version in ALL workspace packages
+          for f in packages/*/pyproject.toml; do
+            if grep -q 'fallback_version' "$f"; then
+              sed -i "s/^fallback_version = .*/fallback_version = \"${NEXT_FALLBACK}\"/" "$f"
+            fi
+          done
 
           # Bump llama-stack-client minimum version to match the release
-          sed -i "s/\"llama-stack-client>=.*\"/\"llama-stack-client>=${VERSION}\"/" pyproject.toml
+          sed -i "s/\"llama-stack-client>=.*\"/\"llama-stack-client>=${VERSION}\"/" packages/llama-stack/pyproject.toml
 
           # Regenerate lockfile to resolve the updated client version
           uv lock
@@ -162,7 +163,7 @@ jobs:
 
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml src/llama_stack_api/pyproject.toml uv.lock
+          git add packages/*/pyproject.toml uv.lock
           git commit -s -m "chore: bump fallback_version to ${NEXT_FALLBACK} after ${VERSION} release"
           git push origin "$BRANCH"
 

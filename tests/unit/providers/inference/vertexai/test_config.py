@@ -8,12 +8,11 @@ import os
 from unittest.mock import patch
 
 import pytest
-from pydantic import SecretStr, ValidationError
-
-from llama_stack.providers.remote.inference.vertexai.config import (
+from llama_stack_provider_inference_vertexai.config import (
     VertexAIConfig,
     VertexAIProviderDataValidator,
 )
+from pydantic import SecretStr, ValidationError
 
 
 @pytest.fixture

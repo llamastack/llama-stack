@@ -6,14 +6,9 @@
 
 
 import pytest
-
 from llama_stack.core.access_control.access_control import default_policy
 from llama_stack.core.storage.datatypes import SqliteSqlStoreConfig, SqlStoreReference
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
-from llama_stack.providers.inline.files.localfs import (
-    LocalfsFilesImpl,
-    LocalfsFilesImplConfig,
-)
 from llama_stack_api import OpenAIFilePurpose, Order, ResourceNotFoundError
 from llama_stack_api.files.models import (
     DeleteFileRequest,
@@ -22,6 +17,10 @@ from llama_stack_api.files.models import (
     RetrieveFileContentRequest,
     RetrieveFileRequest,
     UploadFileRequest,
+)
+from llama_stack_provider_files_localfs import (
+    LocalfsFilesImpl,
+    LocalfsFilesImplConfig,
 )
 
 

@@ -11,11 +11,10 @@ from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
-
 from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
 from llama_stack.core.storage.kvstore import kvstore_impl, register_kvstore_backends
-from llama_stack.providers.inline.batches.reference.batches import ReferenceBatchesImpl
-from llama_stack.providers.inline.batches.reference.config import ReferenceBatchesImplConfig
+from llama_stack_provider_batches_reference.batches import ReferenceBatchesImpl
+from llama_stack_provider_batches_reference.config import ReferenceBatchesImplConfig
 
 
 @pytest.fixture

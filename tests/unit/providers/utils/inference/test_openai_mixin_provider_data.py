@@ -9,9 +9,9 @@ from collections.abc import Iterable
 from unittest.mock import MagicMock, Mock
 
 import pytest
-
 from llama_stack.core.request_headers import request_provider_data_context
-from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
+from llama_stack_utils_inference.model_registry import RemoteInferenceProviderConfig
+
 from tests.unit.providers.utils.inference.openai_mixin_helpers import (
     CustomListProviderModelIdsImplementation,
     OpenAIMixinImpl,

@@ -7,16 +7,6 @@
 from unittest.mock import AsyncMock
 
 import pytest
-
-from llama_stack.providers.inline.safety.prompt_guard.prompt_guard import (
-    PromptGuardSafetyImpl,
-)
-from llama_stack.providers.remote.safety.bedrock.bedrock import BedrockSafetyAdapter
-from llama_stack.providers.remote.safety.nvidia.nvidia import NVIDIASafetyAdapter
-from llama_stack.providers.remote.safety.sambanova.sambanova import (
-    SambaNovaSafetyAdapter,
-)
-from llama_stack.providers.utils.safety import ShieldToModerationMixin
 from llama_stack_api import (
     OpenAIUserMessageParam,
     RunModerationRequest,
@@ -27,6 +17,15 @@ from llama_stack_api import (
     ShieldsProtocolPrivate,
     ViolationLevel,
 )
+from llama_stack_provider_safety_bedrock.bedrock import BedrockSafetyAdapter
+from llama_stack_provider_safety_nvidia.nvidia import NVIDIASafetyAdapter
+from llama_stack_provider_safety_prompt_guard.prompt_guard import (
+    PromptGuardSafetyImpl,
+)
+from llama_stack_provider_safety_sambanova.sambanova import (
+    SambaNovaSafetyAdapter,
+)
+from llama_stack_utils_safety import ShieldToModerationMixin
 
 
 @pytest.mark.parametrize(

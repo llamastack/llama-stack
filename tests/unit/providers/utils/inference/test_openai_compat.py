@@ -6,7 +6,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from llama_stack.providers.utils.inference.openai_compat import (
+from llama_stack_utils_inference.openai_compat import (
     get_stream_options_for_telemetry,
 )
 

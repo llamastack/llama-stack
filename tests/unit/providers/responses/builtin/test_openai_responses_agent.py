@@ -7,14 +7,6 @@
 from unittest.mock import patch
 
 import pytest
-from openai.types.chat.chat_completion_chunk import (
-    ChatCompletionChunk,
-    Choice,
-    ChoiceDelta,
-    ChoiceDeltaToolCall,
-    ChoiceDeltaToolCallFunction,
-)
-
 from llama_stack_api import (
     InternalServerError,
     OpenAISystemMessageParam,
@@ -26,6 +18,13 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseObjectStreamResponseFailed,
 )
 from llama_stack_api.tools import ToolDef, ToolInvocationResult
+from openai.types.chat.chat_completion_chunk import (
+    ChatCompletionChunk,
+    Choice,
+    ChoiceDelta,
+    ChoiceDeltaToolCall,
+    ChoiceDeltaToolCallFunction,
+)
 
 
 async def test_failed_stream_persists_non_system_messages(openai_responses_impl, mock_responses_store):
@@ -51,7 +50,7 @@ async def test_failed_stream_persists_non_system_messages(openai_responses_impl,
             yield OpenAIResponseObjectStreamResponseFailed(response=failed_response, sequence_number=0)
 
     with patch(
-        "llama_stack.providers.inline.responses.builtin.responses.openai_responses.StreamingResponseOrchestrator",
+        "llama_stack_provider_responses_builtin.responses.openai_responses.StreamingResponseOrchestrator",
         FakeOrchestrator,
     ):
         stream = await openai_responses_impl.create_openai_response(
@@ -119,7 +118,7 @@ async def test_failed_stream_raises_internal_server_error_in_non_streaming_mode(
             yield OpenAIResponseObjectStreamResponseFailed(response=failed_response, sequence_number=0)
 
     with patch(
-        "llama_stack.providers.inline.responses.builtin.responses.openai_responses.StreamingResponseOrchestrator",
+        "llama_stack_provider_responses_builtin.responses.openai_responses.StreamingResponseOrchestrator",
         FakeOrchestrator,
     ):
         with pytest.raises(InternalServerError) as exc_info:

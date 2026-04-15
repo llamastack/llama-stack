@@ -14,12 +14,12 @@ See: https://github.com/meta-llama/llama-stack/issues/5287
 
 from unittest.mock import AsyncMock, MagicMock
 
-from llama_stack.providers.inline.responses.builtin.responses.streaming import StreamingResponseOrchestrator
-from llama_stack.providers.inline.responses.builtin.responses.types import ChatCompletionContext, ToolContext
 from llama_stack_api.openai_responses import (
     ApprovalFilter,
     OpenAIResponseInputToolMCP,
 )
+from llama_stack_provider_responses_builtin.responses.streaming import StreamingResponseOrchestrator
+from llama_stack_provider_responses_builtin.responses.types import ChatCompletionContext, ToolContext
 
 
 def _build_orchestrator(mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP]) -> StreamingResponseOrchestrator:

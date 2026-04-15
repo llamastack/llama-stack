@@ -59,23 +59,60 @@ jobs:
 
           echo "Preparing release v${VERSION} on ${BRANCH}"
 
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
       - name: Update version files and commit directly to release branch
         run: |
           VERSION="${{ inputs.version }}"
           RELEASE_BRANCH="${{ inputs.release_branch }}"
 
-          # --- Update fallback_version in both pyproject.toml files ---
-          sed -i "s/^fallback_version = .*/fallback_version = \"${VERSION}\"/" pyproject.toml
-          sed -i "s/^fallback_version = .*/fallback_version = \"${VERSION}\"/" src/llama_stack_api/pyproject.toml
+          # --- Update fallback_version in ALL workspace packages ---
+          for f in packages/*/pyproject.toml; do
+            if grep -q 'fallback_version' "$f"; then
+              sed -i "s/^fallback_version = .*/fallback_version = \"${VERSION}\"/" "$f"
+            fi
+          done
 
-          # --- Update llama-stack-client pins in pyproject.toml ---
-          # Update the pin in [project.optional-dependencies] and [dependency-groups]
-          # Match patterns like: "llama-stack-client>=X.Y.Z" or "llama-stack-client==X.Y.Z"
-          sed -i -E "s/\"llama-stack-client[><=!]+[0-9]+\.[0-9]+\.[0-9]+[^\"]*\"/\"llama-stack-client==${VERSION}\"/" pyproject.toml
+          # --- Pin all internal workspace deps to ==${VERSION} ---
+          python3 << 'PYEOF'
+          import tomllib, pathlib, re, os
+
+          version = os.environ["VERSION"]
+          pyprojects = sorted(pathlib.Path("packages").glob("*/pyproject.toml"))
+
+          # Collect all workspace package names, normalized to hyphens (PEP 503)
+          internal = set()
+          for f in pyprojects:
+              name = tomllib.loads(f.read_text()).get("project", {}).get("name", "")
+              if name:
+                  internal.add(name.replace("_", "-"))
+
+          # Build a single regex that matches any internal package in a dependency string
+          escaped = "|".join(re.escape(pkg) for pkg in sorted(internal))
+          dep_re = re.compile(rf'"({escaped})([><=!][^"]*)?(?=")')
+
+          for f in pyprojects:
+              text = f.read_text()
+              new_lines = []
+              for line in text.splitlines(keepends=True):
+                  # Only touch indented lines (dependency arrays), skip top-level name = "..."
+                  if line.startswith((" ", "\t")):
+                      line = dep_re.sub(rf'"\1=={version}', line)
+                  new_lines.append(line)
+              result = "".join(new_lines)
+              if result != text:
+                  f.write_text(result)
+          PYEOF
+
+          # --- Update llama-stack-client pins ---
+          sed -i -E "s/\"llama-stack-client[><=!]+[0-9]+\.[0-9]+\.[0-9]+[^\"]*\"/\"llama-stack-client==${VERSION}\"/" packages/llama-stack/pyproject.toml
 
           # Show what changed
           echo "=== Changes ==="
-          git diff
+          git diff --stat
 
           # Check if there are changes
           if git diff --quiet; then
@@ -85,7 +122,7 @@ jobs:
 
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml src/llama_stack_api/pyproject.toml
+          git add packages/*/pyproject.toml
           git commit -s -m "chore: prepare release v${VERSION}"
           git push origin "HEAD:${RELEASE_BRANCH}"
           echo "Committed version updates directly to ${RELEASE_BRANCH}"

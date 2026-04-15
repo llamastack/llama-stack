@@ -22,9 +22,6 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from llama_stack.providers.remote.safety.passthrough.config import PassthroughSafetyConfig
-from llama_stack.providers.remote.safety.passthrough.passthrough import PassthroughSafetyAdapter
 from llama_stack_api import (
     OpenAIUserMessageParam,
     ResourceType,
@@ -32,6 +29,8 @@ from llama_stack_api import (
     RunShieldRequest,
     Shield,
 )
+from llama_stack_provider_safety_passthrough.config import PassthroughSafetyConfig
+from llama_stack_provider_safety_passthrough.passthrough import PassthroughSafetyAdapter
 
 # -- mock downstream /v1/moderations server --
 
@@ -92,7 +91,7 @@ async def _make_adapter(base_url: str, **kwargs) -> PassthroughSafetyAdapter:
     await adapter.initialize()
     adapter.__provider_spec__ = MagicMock()
     adapter.__provider_spec__.provider_data_validator = (
-        "llama_stack.providers.remote.safety.passthrough.config.PassthroughProviderDataValidator"
+        "llama_stack_provider_safety_passthrough.config.PassthroughProviderDataValidator"
     )
 
     shield_store = AsyncMock()

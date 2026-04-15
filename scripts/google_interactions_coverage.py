@@ -116,7 +116,7 @@ def _collect_streaming_events(spec: dict[str, Any]) -> list[str]:
 # ──────────────────────────────────────────────────────────────────────
 
 # What Llama Stack currently implements, derived from the Pydantic models
-# in src/llama_stack_api/interactions/models.py and the FastAPI routes.
+# in packages/llama-stack-api/src/llama_stack_api/interactions/models.py and the FastAPI routes.
 
 IMPLEMENTED_ENDPOINTS = {
     "POST /{api_version}/interactions": True,

@@ -9,11 +9,10 @@ from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from pydantic import SecretStr
-
-from llama_stack.providers.remote.inference.vertexai.config import VertexAIConfig, VertexAIProviderDataValidator
-from llama_stack.providers.remote.inference.vertexai.vertexai import VertexAIInferenceAdapter
 from llama_stack_api import Model, ModelType
+from llama_stack_provider_inference_vertexai.config import VertexAIConfig, VertexAIProviderDataValidator
+from llama_stack_provider_inference_vertexai.vertexai import VertexAIInferenceAdapter
+from pydantic import SecretStr
 
 from .conftest import _async_pager
 
@@ -54,7 +53,7 @@ class TestVertexAIClientManagement:
     def test_create_client_with_access_token_uses_credentials(self, monkeypatch):
         """Test that create client with access token uses credentials."""
         client_ctor = MagicMock(return_value=object())
-        monkeypatch.setattr("llama_stack.providers.remote.inference.vertexai.vertexai.Client", client_ctor)
+        monkeypatch.setattr("llama_stack_provider_inference_vertexai.vertexai.Client", client_ctor)
 
         adapter = VertexAIInferenceAdapter(config=VertexAIConfig(project="test-project", location="global"))
         client = adapter._create_client(

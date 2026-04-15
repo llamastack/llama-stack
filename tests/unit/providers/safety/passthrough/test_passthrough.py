@@ -8,8 +8,6 @@ from unittest.mock import MagicMock
 
 import httpx
 import pytest
-
-from llama_stack.providers.remote.safety.passthrough.config import PassthroughSafetyConfig
 from llama_stack_api import (
     GetShieldRequest,
     OpenAIUserMessageParam,
@@ -20,6 +18,7 @@ from llama_stack_api import (
     Shield,
     ViolationLevel,
 )
+from llama_stack_provider_safety_passthrough.config import PassthroughSafetyConfig
 
 from .conftest import (
     FakePassthroughSafetyAdapter,

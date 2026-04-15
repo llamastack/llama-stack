@@ -1,0 +1,30 @@
+[project]
+name = "llama-stack-provider-vector-io-sqlite-vec"
+dynamic = ["version"]
+requires-python = ">=3.12"
+dependencies = [
+    "llama-stack",
+    "llama-stack-api",
+    "llama-stack-utils-vector-io",
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+description = "Llama Stack vector I/O provider: sqlite-vec"
+
+[project.entry-points."llama_stack.providers"]
+    "vector_io.inline.sqlite-vec" = "llama_stack_provider_vector_io_sqlite_vec.provider:get_provider_spec"
+    "vector_io.inline.sqlite_vec" = "llama_stack_provider_vector_io_sqlite_vec.provider:get_deprecated_underscore_spec"
+
+[build-system]
+requires = ["setuptools>=74.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.2.dev0"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

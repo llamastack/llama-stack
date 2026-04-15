@@ -7,22 +7,22 @@ on:
     branches:
       - main
     paths:
-      - 'src/llama_stack/cli/stack/list_deps.py'
-      - 'src/llama_stack/cli/stack/_list_deps.py'
-      - 'src/llama_stack/core/build.*'
-      - 'src/llama_stack/core/*.sh'
+      - 'packages/llama-stack/src/llama_stack/cli/stack/list_deps.py'
+      - 'packages/llama-stack/src/llama_stack/cli/stack/_list_deps.py'
+      - 'packages/llama-stack/src/llama_stack/core/build.*'
+      - 'packages/llama-stack/src/llama_stack/core/*.sh'
       - '.github/workflows/providers-list-deps.yml'
-      - 'src/llama_stack/templates/**'
+      - 'packages/llama-stack/src/llama_stack/templates/**'
       - 'pyproject.toml'
 
   pull_request:
     paths:
-      - 'src/llama_stack/cli/stack/list_deps.py'
-      - 'src/llama_stack/cli/stack/_list_deps.py'
-      - 'src/llama_stack/core/build.*'
-      - 'src/llama_stack/core/*.sh'
+      - 'packages/llama-stack/src/llama_stack/cli/stack/list_deps.py'
+      - 'packages/llama-stack/src/llama_stack/cli/stack/_list_deps.py'
+      - 'packages/llama-stack/src/llama_stack/core/build.*'
+      - 'packages/llama-stack/src/llama_stack/core/*.sh'
       - '.github/workflows/providers-list-deps.yml'
-      - 'src/llama_stack/templates/**'
+      - 'packages/llama-stack/src/llama_stack/templates/**'
       - 'pyproject.toml'
   merge_group:
     branches:
@@ -45,7 +45,7 @@ jobs:
       - name: Generate Distribution List
         id: set-matrix
         run: |
-          distros=$(find src/llama_stack/distributions -mindepth 1 -maxdepth 1 -type d 2>/dev/null | \
+          distros=$(find packages/llama-stack/src/llama_stack/distributions -mindepth 1 -maxdepth 1 -type d 2>/dev/null | \
             awk -F'/' '{print $NF}' | \
             grep -v '^__pycache__$' | \
             grep -v '^ci-tests$' | \
@@ -110,4 +110,4 @@ jobs:
           USE_COPY_NOT_MOUNT: "true"
           LLAMA_STACK_DIR: "."
         run: |
-          uv run llama stack list-deps src/llama_stack/distributions/ci-tests/config.yaml
+          uv run llama stack list-deps packages/llama-stack/src/llama_stack/distributions/ci-tests/config.yaml

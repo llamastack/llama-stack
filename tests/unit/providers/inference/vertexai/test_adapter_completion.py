@@ -12,11 +12,10 @@ from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from llama_stack.providers.remote.inference.vertexai.config import VertexAIConfig
-from llama_stack.providers.remote.inference.vertexai.vertexai import VertexAIInferenceAdapter
 from llama_stack_api import OpenAICompletion
 from llama_stack_api.inference.models import OpenAICompletionRequestWithExtraBody
+from llama_stack_provider_inference_vertexai.config import VertexAIConfig
+from llama_stack_provider_inference_vertexai.vertexai import VertexAIInferenceAdapter
 
 
 async def _async_pager(items):
@@ -115,7 +114,7 @@ class TestOpenAICompletion:
             suffix="end",
             logit_bias={"50256": -100},
         )
-        with caplog.at_level(logging.WARNING, logger="llama_stack.providers.remote.inference.vertexai.vertexai"):
+        with caplog.at_level(logging.WARNING, logger="llama_stack_provider_inference_vertexai.vertexai"):
             await adapter.openai_completion(params)
         messages = " ".join(r.message for r in caplog.records)
         assert "best_of" in messages
@@ -131,7 +130,7 @@ class TestOpenAICompletion:
             prompt="hi",
             user="alice",
         )
-        with caplog.at_level(logging.DEBUG, logger="llama_stack.providers.remote.inference.vertexai.vertexai"):
+        with caplog.at_level(logging.DEBUG, logger="llama_stack_provider_inference_vertexai.vertexai"):
             await adapter.openai_completion(params)
         messages = " ".join(r.message for r in caplog.records)
         assert "user" in messages
@@ -446,7 +445,7 @@ class TestCompletionStreamOptions:
         monkeypatch.setattr(adapter, "_validate_model_allowed", lambda _: None)
         monkeypatch.setattr(adapter, "_get_client", lambda: fake_client)
         monkeypatch.setattr(
-            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_completion_prompt_to_contents",
+            "llama_stack_provider_inference_vertexai.vertexai.converters.convert_completion_prompt_to_contents",
             lambda _: [{"role": "user", "parts": [{"text": "ok"}]}],
         )
         monkeypatch.setattr(adapter, "_stream_completion", _stream_completion)

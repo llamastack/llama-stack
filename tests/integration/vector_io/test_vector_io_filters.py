@@ -17,7 +17,6 @@ filtering and will be skipped in these tests.
 import time
 
 import pytest
-
 from llama_stack_api import ChunkMetadata, EmbeddedChunk
 from llama_stack_api.filters import ComparisonFilter, CompoundFilter
 
@@ -43,8 +42,7 @@ def skip_if_provider_doesnt_support_filters(vector_io_provider_id: str):
 def filter_test_chunks(embedding_dimension):
     """Create test chunks with varied metadata for filter testing."""
     import numpy as np
-
-    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+    from llama_stack_utils_vector_io.vector_utils import generate_chunk_id
 
     # Create chunks with diverse metadata for comprehensive filter testing
     chunks_data = [

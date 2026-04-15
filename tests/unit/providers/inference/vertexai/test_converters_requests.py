@@ -14,9 +14,8 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-
-from llama_stack.providers.remote.inference.vertexai import converters as vertexai_converters
-from llama_stack.providers.remote.inference.vertexai.converters import (
+from llama_stack_provider_inference_vertexai import converters as vertexai_converters
+from llama_stack_provider_inference_vertexai.converters import (
     _convert_user_message,
     _extract_text_content,
     convert_deprecated_function_call_to_tool_choice,

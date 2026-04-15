@@ -1,0 +1,27 @@
+[project]
+name = "llama-stack-provider-batches-reference"
+dynamic = ["version"]
+description = "Reference implementation of batches API with KVStore persistence."
+requires-python = ">=3.12"
+dependencies = [
+    "llama-stack",
+    "llama-stack-api",
+]
+
+[project.entry-points."llama_stack.providers"]
+"batches.inline.reference" = "llama_stack_provider_batches_reference.provider:get_provider_spec"
+
+[tool.uv.sources]
+llama-stack = { workspace = true }
+llama-stack-api = { workspace = true }
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.2.dev0"
+
+[tool.setuptools.packages.find]
+where = ["src"]

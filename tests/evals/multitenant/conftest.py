@@ -20,12 +20,11 @@ Embedding design:
 
 import numpy as np
 import pytest
-
 from llama_stack.apis.vector_io import Chunk, ChunkMetadata
 from llama_stack.core.access_control.access_control import default_policy
 from llama_stack.core.access_control.datatypes import AccessRule, Action, Scope
 from llama_stack.core.datatypes import User
-from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import SQLiteVecIndex
+from llama_stack_provider_vector_io_sqlite_vec.sqlite_vec import SQLiteVecIndex
 
 EMBEDDING_DIMENSION = 128
 NUM_TOPICS = 5

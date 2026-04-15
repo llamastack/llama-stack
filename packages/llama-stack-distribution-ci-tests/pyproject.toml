@@ -1,0 +1,63 @@
+[project]
+name = "llama-stack-distribution-ci-tests"
+dynamic = ["version"]
+description = "Distribution for CI integration tests"
+requires-python = ">=3.12"
+dependencies = [
+    "llama-stack",
+    "llama-stack-provider-batches-reference",
+    "llama-stack-provider-file-processor-pypdf",
+    "llama-stack-provider-files-localfs",
+    "llama-stack-provider-inference-anthropic",
+    "llama-stack-provider-inference-azure",
+    "llama-stack-provider-inference-bedrock",
+    "llama-stack-provider-inference-cerebras",
+    "llama-stack-provider-inference-fireworks",
+    "llama-stack-provider-inference-gemini",
+    "llama-stack-provider-inference-groq",
+    "llama-stack-provider-inference-nvidia",
+    "llama-stack-provider-inference-ollama",
+    "llama-stack-provider-inference-openai",
+    "llama-stack-provider-inference-sambanova",
+    "llama-stack-provider-inference-sentence-transformers",
+    "llama-stack-provider-inference-together",
+    "llama-stack-provider-inference-transformers",
+    "llama-stack-provider-inference-vertexai",
+    "llama-stack-provider-inference-vllm",
+    "llama-stack-provider-inference-watsonx",
+    "llama-stack-provider-interactions-builtin",
+    "llama-stack-provider-messages-builtin",
+    "llama-stack-provider-responses-builtin",
+    "llama-stack-provider-safety-code-scanner",
+    "llama-stack-provider-safety-llama-guard",
+    "llama-stack-provider-tool-runtime-brave-search",
+    "llama-stack-provider-tool-runtime-file-search",
+    "llama-stack-provider-tool-runtime-model-context-protocol",
+    "llama-stack-provider-tool-runtime-tavily-search",
+    "llama-stack-provider-vector-io-chromadb",
+    "llama-stack-provider-vector-io-elasticsearch",
+    "llama-stack-provider-vector-io-faiss",
+    "llama-stack-provider-vector-io-infinispan",
+    "llama-stack-provider-vector-io-milvus-inline",
+    "llama-stack-provider-vector-io-pgvector",
+    "llama-stack-provider-vector-io-qdrant",
+    "llama-stack-provider-vector-io-sqlite-vec",
+    "llama-stack-provider-vector-io-weaviate",
+]
+
+[project.entry-points."llama_stack.distributions"]
+ci-tests = "llama_stack_distribution_ci_tests:CONFIGS_DIR"
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.2.dev0"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+llama_stack_distribution_ci_tests = ["configs/*.yaml"]

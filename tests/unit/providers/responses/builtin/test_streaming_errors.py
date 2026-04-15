@@ -8,7 +8,7 @@
 
 from unittest.mock import MagicMock
 
-from llama_stack.providers.inline.responses.builtin.responses.streaming import (
+from llama_stack_provider_responses_builtin.responses.streaming import (
     extract_openai_error,
 )
 

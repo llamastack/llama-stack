@@ -7,17 +7,16 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from pydantic import ValidationError
-
-from llama_stack.providers.inline.inference.transformers.transformers import (
-    DEFAULT_RERANKER_INSTRUCTION,
-    TransformersInferenceImpl,
-)
 from llama_stack_api import (
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartTextParam,
 )
 from llama_stack_api.inference import RerankRequest
+from llama_stack_provider_inference_transformers.transformers import (
+    DEFAULT_RERANKER_INSTRUCTION,
+    TransformersInferenceImpl,
+)
+from pydantic import ValidationError
 
 
 class ConcreteRerankerImpl(TransformersInferenceImpl):

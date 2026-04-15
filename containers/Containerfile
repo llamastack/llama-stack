@@ -97,11 +97,15 @@ RUN set -eux; \
             echo "INSTALL_MODE=editable requires LLAMA_STACK_DIR to point to a directory inside the build context" >&2; \
             exit 1; \
         fi; \
+        CORE_PKG_DIR="$LLAMA_STACK_DIR/packages/llama-stack"; \
+        if [ ! -d "$CORE_PKG_DIR" ]; then \
+            CORE_PKG_DIR="$LLAMA_STACK_DIR"; \
+        fi; \
         if [ -n "$SAVED_UV_EXTRA_INDEX_URL" ] && [ -n "$SAVED_UV_INDEX_STRATEGY" ]; then \
             UV_EXTRA_INDEX_URL="$SAVED_UV_EXTRA_INDEX_URL" UV_INDEX_STRATEGY="$SAVED_UV_INDEX_STRATEGY" \
-                uv pip install --no-cache -e "$LLAMA_STACK_DIR"; \
+                uv pip install --no-cache -e "$CORE_PKG_DIR"; \
         else \
-            uv pip install --no-cache -e "$LLAMA_STACK_DIR"; \
+            uv pip install --no-cache -e "$CORE_PKG_DIR"; \
         fi; \
     elif [ "$INSTALL_MODE" = "test-pypi" ]; then \
         uv pip install --no-cache fastapi libcst; \

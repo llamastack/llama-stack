@@ -1,45 +1,5 @@
 ---
-description: |
-  [Docling](https://github.com/docling-project/docling) is a layout-aware, structure-preserving
-  document parser for Llama Stack. Unlike simple text extraction, Docling understands document
-  structure — headings, tables, lists, and sections — and produces Markdown-formatted output that
-  preserves semantic boundaries. It supports PDF, DOCX, PPTX, HTML, and images.
-
-  ## Features
-
-  - **Structure-aware chunking** — splits at semantic boundaries (headings, sections) using Docling's HybridChunker
-  - **Layout preservation** — tables, lists, and nested structures are converted to Markdown
-  - **Multi-format support** — PDF, DOCX, PPTX, HTML, and images
-  - **Better RAG quality** — structured chunks with heading metadata produce more relevant retrieval results
-
-  ## Usage
-
-  Start Llama Stack with the Docling file processor using the `--providers` flag:
-
-  ```bash
-  OLLAMA_URL=http://localhost:11434/v1 llama stack run \
-    --providers "file_processors=inline::docling,files=inline::localfs,vector_io=inline::faiss,inference=inline::sentence-transformers,inference=remote::ollama" \
-    --port 8321
-  ```
-
-  Or add it to a custom `run.yaml`:
-
-  ```yaml
-  file_processors:
-    - provider_id: docling
-      provider_type: inline::docling
-      config: {}
-  ```
-
-  ## Installation
-
-  ```bash
-  pip install docling
-  ```
-
-  ## Documentation
-
-  See [Docling's documentation](https://docling-project.github.io/docling/) for more details.
+description: "Docling file processor for layout-aware, structure-preserving document parsing."
 sidebar_label: Docling
 title: inline::docling
 ---
@@ -48,48 +8,7 @@ title: inline::docling
 
 ## Description
 
-
-[Docling](https://github.com/docling-project/docling) is a layout-aware, structure-preserving
-document parser for Llama Stack. Unlike simple text extraction, Docling understands document
-structure — headings, tables, lists, and sections — and produces Markdown-formatted output that
-preserves semantic boundaries. It supports PDF, DOCX, PPTX, HTML, and images.
-
-## Features
-
-- **Structure-aware chunking** — splits at semantic boundaries (headings, sections) using Docling's HybridChunker
-- **Layout preservation** — tables, lists, and nested structures are converted to Markdown
-- **Multi-format support** — PDF, DOCX, PPTX, HTML, and images
-- **Better RAG quality** — structured chunks with heading metadata produce more relevant retrieval results
-
-## Usage
-
-Start Llama Stack with the Docling file processor using the `--providers` flag:
-
-```bash
-OLLAMA_URL=http://localhost:11434/v1 llama stack run \
-  --providers "file_processors=inline::docling,files=inline::localfs,vector_io=inline::faiss,inference=inline::sentence-transformers,inference=remote::ollama" \
-  --port 8321
-```
-
-Or add it to a custom `run.yaml`:
-
-```yaml
-file_processors:
-  - provider_id: docling
-    provider_type: inline::docling
-    config: {}
-```
-
-## Installation
-
-```bash
-pip install docling
-```
-
-## Documentation
-
-See [Docling's documentation](https://docling-project.github.io/docling/) for more details.
-
+Docling file processor for layout-aware, structure-preserving document parsing.
 
 ## Configuration
 

@@ -5,26 +5,25 @@
 # the root directory of this source tree.
 
 import pytest
-
 from llama_stack.core.stack import replace_env_vars
-from llama_stack.providers.remote.inference.anthropic import AnthropicConfig
-from llama_stack.providers.remote.inference.azure import AzureConfig
-from llama_stack.providers.remote.inference.bedrock import BedrockConfig
-from llama_stack.providers.remote.inference.cerebras import CerebrasImplConfig
-from llama_stack.providers.remote.inference.databricks import DatabricksImplConfig
-from llama_stack.providers.remote.inference.fireworks import FireworksImplConfig
-from llama_stack.providers.remote.inference.gemini import GeminiConfig
-from llama_stack.providers.remote.inference.groq import GroqConfig
-from llama_stack.providers.remote.inference.llama_openai_compat import LlamaCompatConfig
-from llama_stack.providers.remote.inference.nvidia import NVIDIAConfig
-from llama_stack.providers.remote.inference.ollama import OllamaImplConfig
-from llama_stack.providers.remote.inference.openai import OpenAIConfig
-from llama_stack.providers.remote.inference.runpod import RunpodImplConfig
-from llama_stack.providers.remote.inference.sambanova import SambaNovaImplConfig
-from llama_stack.providers.remote.inference.together import TogetherImplConfig
-from llama_stack.providers.remote.inference.vertexai import VertexAIConfig
-from llama_stack.providers.remote.inference.vllm import VLLMInferenceAdapterConfig
-from llama_stack.providers.remote.inference.watsonx import WatsonXConfig
+from llama_stack_provider_inference_anthropic import AnthropicConfig
+from llama_stack_provider_inference_azure import AzureConfig
+from llama_stack_provider_inference_bedrock import BedrockConfig
+from llama_stack_provider_inference_cerebras import CerebrasImplConfig
+from llama_stack_provider_inference_databricks import DatabricksImplConfig
+from llama_stack_provider_inference_fireworks import FireworksImplConfig
+from llama_stack_provider_inference_gemini import GeminiConfig
+from llama_stack_provider_inference_groq import GroqConfig
+from llama_stack_provider_inference_llama_openai_compat import LlamaCompatConfig
+from llama_stack_provider_inference_nvidia import NVIDIAConfig
+from llama_stack_provider_inference_ollama import OllamaImplConfig
+from llama_stack_provider_inference_openai import OpenAIConfig
+from llama_stack_provider_inference_runpod import RunpodImplConfig
+from llama_stack_provider_inference_sambanova import SambaNovaImplConfig
+from llama_stack_provider_inference_together import TogetherImplConfig
+from llama_stack_provider_inference_vertexai import VertexAIConfig
+from llama_stack_provider_inference_vllm import VLLMInferenceAdapterConfig
+from llama_stack_provider_inference_watsonx import WatsonXConfig
 
 
 class TestRemoteInferenceProviderConfig:

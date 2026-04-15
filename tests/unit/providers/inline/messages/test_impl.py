@@ -10,9 +10,6 @@ import json
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from llama_stack.providers.inline.messages.config import MessagesConfig
-from llama_stack.providers.inline.messages.impl import BuiltinMessagesImpl
 from llama_stack_api.messages.models import (
     AnthropicCreateMessageRequest,
     AnthropicMessage,
@@ -21,6 +18,8 @@ from llama_stack_api.messages.models import (
     AnthropicToolResultBlock,
     AnthropicToolUseBlock,
 )
+from llama_stack_provider_messages_builtin.config import MessagesConfig
+from llama_stack_provider_messages_builtin.impl import BuiltinMessagesImpl
 
 
 def _msg_to_dict(msg):

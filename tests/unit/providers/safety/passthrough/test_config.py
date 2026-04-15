@@ -5,12 +5,11 @@
 # the root directory of this source tree.
 
 import pytest
-from pydantic import ValidationError
-
-from llama_stack.providers.remote.safety.passthrough.config import (
+from llama_stack_provider_safety_passthrough.config import (
     PassthroughProviderDataValidator,
     PassthroughSafetyConfig,
 )
+from pydantic import ValidationError
 
 
 def test_config_requires_base_url():

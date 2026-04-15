@@ -17,9 +17,8 @@ from collections.abc import AsyncIterator
 from unittest.mock import MagicMock
 
 import pytest
-
-from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
-from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+from llama_stack_utils_inference.model_registry import RemoteInferenceProviderConfig
+from llama_stack_utils_inference.openai_mixin import OpenAIMixin
 
 
 class MockAsyncStream:

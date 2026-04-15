@@ -8,9 +8,6 @@ from unittest.mock import AsyncMock
 
 import httpx
 import pytest
-from pydantic import ValidationError
-
-from llama_stack.providers.remote.safety.passthrough.config import PassthroughSafetyConfig
 from llama_stack_api import (
     OpenAIUserMessageParam,
     ResourceType,
@@ -18,6 +15,8 @@ from llama_stack_api import (
     RunShieldRequest,
     Shield,
 )
+from llama_stack_provider_safety_passthrough.config import PassthroughSafetyConfig
+from pydantic import ValidationError
 
 from .conftest import (
     FakePassthroughSafetyAdapter,

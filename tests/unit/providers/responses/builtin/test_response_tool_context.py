@@ -5,10 +5,6 @@
 # the root directory of this source tree.
 
 
-from llama_stack.providers.inline.responses.builtin.responses.streaming import (
-    _process_tool_choice,
-)
-from llama_stack.providers.inline.responses.builtin.responses.types import ToolContext
 from llama_stack_api import (
     MCPListToolsTool,
     OpenAIChatCompletionToolChoiceAllowedTools,
@@ -29,6 +25,10 @@ from llama_stack_api import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseToolMCP,
 )
+from llama_stack_provider_responses_builtin.responses.streaming import (
+    _process_tool_choice,
+)
+from llama_stack_provider_responses_builtin.responses.types import ToolContext
 
 
 class TestToolContext:
