@@ -8,6 +8,7 @@ from llama_stack_api import (
     Api,
     InlineProviderSpec,
     ProviderSpec,
+    RemoteProviderSpec,
 )
 
 
@@ -75,6 +76,63 @@ pip install docling
 ## Documentation
 
 See [Docling's documentation](https://docling-project.github.io/docling/) for more details.
+""",
+        ),
+        RemoteProviderSpec(
+            api=Api.file_processors,
+            provider_type="remote::docling-serve",
+            adapter_type="docling-serve",
+            pip_packages=["httpx"],
+            module="llama_stack.providers.remote.file_processor.docling_serve",
+            config_class="llama_stack.providers.remote.file_processor.docling_serve.DoclingServeFileProcessorConfig",
+            api_dependencies=[Api.files],
+            description="""
+[Docling Serve](https://github.com/docling-project/docling-serve) is a remote file processor that
+delegates document parsing and chunking to a running Docling Serve instance. It provides the same
+layout-aware, structure-preserving document conversion as the inline Docling provider, but runs as a
+separate service — enabling GPU acceleration, horizontal scaling, and shared processing across
+multiple Llama Stack instances.
+
+Docling Serve supports PDF, DOCX, PPTX, HTML, images, and more.
+
+## Features
+
+- **GPU-accelerated parsing** — offload document conversion to a GPU-equipped Docling Serve instance
+- **Structure-aware chunking** — splits at semantic boundaries using Docling's HybridChunker
+- **Layout preservation** — tables, lists, and nested structures are converted to Markdown
+- **Multi-format support** — PDF, DOCX, PPTX, HTML, and images
+- **Scalable architecture** — run Docling Serve as a shared service for multiple Llama Stack instances
+
+## Usage
+
+Start Docling Serve (see [Docling Serve docs](https://github.com/docling-project/docling-serve/blob/main/docs/README.md) for setup):
+
+```bash
+docker run -p 5001:5001 quay.io/docling-project/docling-serve
+```
+
+Then start Llama Stack with the remote Docling Serve provider:
+
+```bash
+DOCLING_SERVE_URL=http://localhost:5001/v1 llama stack run \\
+  --providers "file_processors=remote::docling-serve,files=inline::localfs,vector_io=inline::faiss,inference=inline::sentence-transformers,inference=remote::ollama" \\
+  --port 8321
+```
+
+Or add it to a custom `run.yaml`:
+
+```yaml
+file_processors:
+  - provider_id: docling-serve
+    provider_type: remote::docling-serve
+    config:
+      base_url: ${env.DOCLING_SERVE_URL:=http://localhost:5001/v1}
+      api_key: ${env.DOCLING_SERVE_API_KEY:=}
+```
+
+## Documentation
+
+See [Docling Serve's documentation](https://github.com/docling-project/docling-serve/blob/main/docs/README.md) for more details on setup and configuration.
 """,
         ),
     ]
