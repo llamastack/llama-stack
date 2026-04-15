@@ -213,6 +213,7 @@ class AuthProviderType(StrEnum):
     GITHUB_TOKEN = "github_token"
     CUSTOM = "custom"
     KUBERNETES = "kubernetes"
+    UPSTREAM_HEADER = "upstream_header"
 
 
 class OAuth2TokenAuthConfig(BaseModel):
@@ -320,8 +321,30 @@ class KubernetesAuthProviderConfig(BaseModel):
         return v
 
 
+class UpstreamHeaderAuthConfig(BaseModel):
+    """Configuration for upstream header authentication.
+
+    Used when an upstream gateway (Authorino, Istio, or any reverse proxy) handles
+    authentication and injects user identity into request headers. Llama Stack trusts
+    these headers and extracts the principal and optional attributes from them.
+    """
+
+    type: Literal[AuthProviderType.UPSTREAM_HEADER] = AuthProviderType.UPSTREAM_HEADER
+    principal_header: str = Field(
+        description="HTTP header containing the authenticated user's identity (e.g. x-auth-user-id)",
+    )
+    attributes_header: str | None = Field(
+        default=None,
+        description="HTTP header containing JSON-encoded user attributes for access control (e.g. x-auth-attributes)",
+    )
+
+
 AuthProviderConfig = Annotated[
-    OAuth2TokenAuthConfig | GitHubTokenAuthConfig | CustomAuthConfig | KubernetesAuthProviderConfig,
+    OAuth2TokenAuthConfig
+    | GitHubTokenAuthConfig
+    | CustomAuthConfig
+    | KubernetesAuthProviderConfig
+    | UpstreamHeaderAuthConfig,
     Field(discriminator="type"),
 ]
 
