@@ -1002,31 +1002,6 @@ wheels = [
 ]
 
 [[package]]
-name = "chromadb-client"
-version = "1.5.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "httpx" },
-    { name = "jsonschema" },
-    { name = "numpy" },
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-exporter-otlp-proto-grpc" },
-    { name = "opentelemetry-sdk" },
-    { name = "orjson" },
-    { name = "overrides" },
-    { name = "pybase64" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "pyyaml" },
-    { name = "tenacity" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/15/01/13438ebe3bb4f58816ba32ebfada17b94d4f0f30d20f2880f42970e562b2/chromadb_client-1.5.5.tar.gz", hash = "sha256:28c208e9639c9b43cf2f12292d456163bbf72d443b00fda1b947793db195fa57", size = 21867327, upload-time = "2026-03-10T09:15:10.409Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/04/59/8c711b8ca32a23d606e31f9fe13a4461f7a3fbd426d027e9665d3d8e0ad6/chromadb_client-1.5.5-py3-none-any.whl", hash = "sha256:1ddab20a4266724da6a2e93fff8dbbaebe34c300875702b212d2cb755894d4c6", size = 786479, upload-time = "2026-03-10T09:15:08.181Z" },
-]
-
-[[package]]
 name = "circuitbreaker"
 version = "2.1.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1633,15 +1608,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/42/7b/70b9d16069eda6f91d45fadd9e12faed8e4442f242ca8a81de84bc626f1b/elasticsearch-8.19.2.tar.gz", hash = "sha256:622efa6a3e662db45285f16ab57bf198ea73ac9e137e7ed8b1d1d1e47638959d", size = 797401, upload-time = "2025-10-28T16:36:44.953Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/56/01/6f77d042b83260ef9ed73ea9647dfa0ef8414eba0a3fc57a509a088ad39b/elasticsearch-8.19.2-py3-none-any.whl", hash = "sha256:c16ba20c4c76cf6952e836dae7f4e724e00ba7bf31b94b79472b873683accdd4", size = 949706, upload-time = "2025-10-28T16:36:41.003Z" },
-]
-
-[[package]]
-name = "emoji"
-version = "2.15.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a2/78/0d2db9382c92a163d7095fc08efff7800880f830a152cfced40161e7638d/emoji-2.15.0.tar.gz", hash = "sha256:eae4ab7d86456a70a00a985125a03263a5eac54cd55e51d7e184b1ed3b6757e4", size = 615483, upload-time = "2025-09-21T12:13:02.755Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/5e/4b5aaaabddfacfe36ba7768817bd1f71a7a810a43705e531f3ae4c690767/emoji-2.15.0-py3-none-any.whl", hash = "sha256:205296793d66a89d88af4688fa57fd6496732eb48917a87175a023c8138995eb", size = 608433, upload-time = "2025-09-21T12:13:01.197Z" },
 ]
 
 [[package]]
@@ -2944,15 +2910,6 @@ wheels = [
 ]
 
 [[package]]
-name = "langdetect"
-version = "1.0.9"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "six" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/0e/72/a3add0e4eec4eb9e2569554f7c70f4a3c27712f40e3284d483e88094cc0e/langdetect-1.0.9.tar.gz", hash = "sha256:cbc1fef89f8d062739774bd51eda3da3274006b3661d199c2655f6b3f6d605a0", size = 981474, upload-time = "2021-05-07T07:54:13.562Z" }
-
-[[package]]
 name = "langgraph"
 version = "1.1.6"
 source = { registry = "https://pypi.org/simple" }
@@ -3159,91 +3116,16 @@ dependencies = [
 client = [
     { name = "llama-stack-client" },
 ]
-starter = [
-    { name = "aiohttp" },
-    { name = "aiosqlite" },
-    { name = "anthropic" },
-    { name = "asyncpg" },
-    { name = "autoevals" },
-    { name = "chardet" },
-    { name = "chromadb-client" },
-    { name = "codeshield" },
-    { name = "datasets" },
-    { name = "einops" },
-    { name = "elasticsearch" },
-    { name = "emoji" },
-    { name = "faiss-cpu" },
-    { name = "fastapi" },
-    { name = "fire" },
-    { name = "fireworks-ai" },
-    { name = "fonttools" },
-    { name = "google-genai" },
-    { name = "h11" },
-    { name = "httpx" },
-    { name = "langdetect" },
-    { name = "matplotlib" },
-    { name = "mcp" },
-    { name = "nltk" },
-    { name = "numpy" },
-    { name = "ollama" },
-    { name = "opentelemetry-exporter-otlp-proto-http" },
-    { name = "opentelemetry-sdk" },
-    { name = "pandas" },
-    { name = "pillow" },
-    { name = "psycopg2-binary" },
-    { name = "pymilvus", extra = ["milvus-lite"] },
-    { name = "pymongo" },
-    { name = "pypdf" },
-    { name = "pythainlp" },
-    { name = "qdrant-client" },
-    { name = "redis" },
-    { name = "requests" },
-    { name = "safetensors" },
-    { name = "scikit-learn" },
-    { name = "scipy" },
-    { name = "sentence-transformers" },
-    { name = "sentencepiece" },
-    { name = "sqlite-vec" },
-    { name = "together" },
-    { name = "tokenizers" },
-    { name = "torch", version = "2.8.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
-    { name = "torch", version = "2.8.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
-    { name = "tqdm" },
-    { name = "tree-sitter" },
-    { name = "uvicorn" },
-    { name = "weaviate-client" },
-]
 
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.3" },
-    { name = "aiohttp", marker = "extra == 'starter'" },
     { name = "aiosqlite", specifier = ">=0.21.0" },
-    { name = "aiosqlite", marker = "extra == 'starter'" },
-    { name = "anthropic", marker = "extra == 'starter'" },
     { name = "asyncpg" },
-    { name = "asyncpg", marker = "extra == 'starter'" },
-    { name = "autoevals", marker = "extra == 'starter'" },
-    { name = "chardet", marker = "extra == 'starter'" },
-    { name = "chromadb-client", marker = "extra == 'starter'" },
-    { name = "codeshield", marker = "extra == 'starter'" },
-    { name = "datasets", marker = "extra == 'starter'", specifier = ">=4.0.0" },
-    { name = "einops", marker = "extra == 'starter'" },
-    { name = "elasticsearch", marker = "extra == 'starter'", specifier = ">=8.16.0,<9.0.0" },
-    { name = "emoji", marker = "extra == 'starter'" },
-    { name = "faiss-cpu", marker = "extra == 'starter'" },
     { name = "fastapi", specifier = ">=0.115.0,<1.0" },
-    { name = "fastapi", marker = "extra == 'starter'" },
-    { name = "fire", marker = "extra == 'starter'" },
-    { name = "fireworks-ai", marker = "extra == 'starter'", specifier = "<=0.17.16" },
-    { name = "fonttools", marker = "extra == 'starter'", specifier = ">=4.60.2" },
-    { name = "google-genai", marker = "extra == 'starter'", specifier = ">=1.69.0" },
     { name = "h11", specifier = ">=0.16.0" },
-    { name = "h11", marker = "extra == 'starter'", specifier = ">=0.16.0" },
     { name = "httpx" },
-    { name = "httpx", marker = "extra == 'starter'" },
     { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "langdetect", marker = "extra == 'starter'" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-client", marker = "extra == 'client'", specifier = ">=0.7.1" },
     { name = "llama-stack-provider-file-processor-pypdf", editable = "packages/llama-stack-provider-file-processor-pypdf" },
@@ -3272,56 +3154,26 @@ requires-dist = [
     { name = "llama-stack-provider-vector-io-weaviate", editable = "packages/llama-stack-provider-vector-io-weaviate" },
     { name = "llama-stack-utils-common", editable = "packages/llama-stack-utils-common" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
-    { name = "matplotlib", marker = "extra == 'starter'" },
     { name = "mcp", specifier = ">=1.23.0" },
-    { name = "mcp", marker = "extra == 'starter'", specifier = ">=1.23.0" },
-    { name = "nltk", marker = "extra == 'starter'", specifier = ">=3.9.4" },
-    { name = "numpy", marker = "extra == 'starter'" },
-    { name = "ollama", marker = "extra == 'starter'" },
     { name = "openai", specifier = ">=2.30.0" },
     { name = "opentelemetry-distro", specifier = ">=0.60b1" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.30.0" },
-    { name = "opentelemetry-exporter-otlp-proto-http", marker = "extra == 'starter'" },
     { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
-    { name = "opentelemetry-sdk", marker = "extra == 'starter'" },
-    { name = "pandas", marker = "extra == 'starter'" },
-    { name = "pillow", marker = "extra == 'starter'" },
     { name = "psycopg2-binary" },
-    { name = "psycopg2-binary", marker = "extra == 'starter'" },
     { name = "pydantic", specifier = ">=2.11.9" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.12.0" },
-    { name = "pymilvus", extras = ["milvus-lite"], marker = "extra == 'starter'", specifier = ">=2.4.10" },
-    { name = "pymongo", marker = "extra == 'starter'" },
-    { name = "pypdf", marker = "extra == 'starter'", specifier = ">=6.7.2" },
-    { name = "pythainlp", marker = "extra == 'starter'" },
     { name = "python-dotenv" },
     { name = "python-multipart", specifier = ">=0.0.22" },
     { name = "pyyaml", specifier = ">=6.0" },
-    { name = "qdrant-client", marker = "extra == 'starter'" },
-    { name = "redis", marker = "extra == 'starter'" },
-    { name = "requests", marker = "extra == 'starter'" },
     { name = "rich" },
-    { name = "safetensors", marker = "extra == 'starter'" },
-    { name = "scikit-learn", marker = "extra == 'starter'" },
-    { name = "scipy", marker = "extra == 'starter'" },
-    { name = "sentence-transformers", marker = "extra == 'starter'" },
-    { name = "sentencepiece", marker = "extra == 'starter'" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.41" },
-    { name = "sqlite-vec", marker = "extra == 'starter'" },
     { name = "starlette", specifier = ">=0.49.1" },
     { name = "structlog", specifier = ">=24.1.0" },
     { name = "termcolor" },
-    { name = "together", marker = "extra == 'starter'", specifier = ">=2" },
-    { name = "tokenizers", marker = "extra == 'starter'" },
-    { name = "torch", marker = "extra == 'starter'", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "tqdm", marker = "extra == 'starter'" },
-    { name = "tree-sitter", marker = "extra == 'starter'" },
     { name = "uvicorn", specifier = ">=0.34.0" },
-    { name = "uvicorn", marker = "extra == 'starter'" },
-    { name = "weaviate-client", marker = "extra == 'starter'", specifier = ">=4.16.5" },
     { name = "zstandard", specifier = ">=0.23.0" },
 ]
-provides-extras = ["client", "starter"]
+provides-extras = ["client"]
 
 [[package]]
 name = "llama-stack-api"
@@ -6863,11 +6715,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/9c/1c/bccb331d71f824738f80f11e9b8b4da47973c903826355526ae4fa2b762f/pymilvus-2.6.11-py3-none-any.whl", hash = "sha256:a11e1718b15045361c71ca671b959900cb7e2faae863c896f6b7e87bf2e4d10a", size = 315252, upload-time = "2026-03-27T06:25:44.215Z" },
 ]
 
-[package.optional-dependencies]
-milvus-lite = [
-    { name = "milvus-lite", marker = "sys_platform != 'win32'" },
-]
-
 [[package]]
 name = "pymongo"
 version = "4.15.3"
@@ -7191,18 +7038,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pythainlp"
-version = "5.3.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "tzdata", marker = "sys_platform == 'win32'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/8b/38/df3a9f7042158269a758b975273fd06c7f2b1fb4a1153cabc78506e889f0/pythainlp-5.3.3.tar.gz", hash = "sha256:c7e5d43238ac882479dd3f303e76838255ba7358da77553ed2a1296395ffe7b5", size = 19306211, upload-time = "2026-03-26T11:53:28.159Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d1/c4/a24d9e3094487d2961a1c16f8ce659b45f4b2446b79c9de376035e846e7f/pythainlp-5.3.3-py3-none-any.whl", hash = "sha256:b223291af6dba4882702272812e5927fc2eb2848cd657c8c2a2a13ca50ed6161", size = 19849553, upload-time = "2026-03-26T11:53:25.404Z" },
-]
-
-[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -7418,15 +7253,6 @@ dependencies = [
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ea/4a/fa521d947f0fc7bb304bf11bec4cb66266bd81494588b4cb48dc01001719/rapidocr-3.8.1-py3-none-any.whl", hash = "sha256:650044b1fbce9e6bae5cae462dcf8be754cde11e2f23fc51f65dcc08deae2c46", size = 15080319, upload-time = "2026-04-11T07:13:22.56Z" },
-]
-
-[[package]]
-name = "redis"
-version = "7.4.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7b/7f/3759b1d0d72b7c92f0d70ffd9dc962b7b7b5ee74e135f9d7d8ab06b8a318/redis-7.4.0.tar.gz", hash = "sha256:64a6ea7bf567ad43c964d2c30d82853f8df927c5c9017766c55a1d1ed95d18ad", size = 4943913, upload-time = "2026-03-24T09:14:37.53Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/74/3a/95deec7db1eb53979973ebd156f3369a72732208d1391cd2e5d127062a32/redis-7.4.0-py3-none-any.whl", hash = "sha256:a9c74a5c893a5ef8455a5adb793a31bb70feb821c86eccb62eebef5a19c429ec", size = 409772, upload-time = "2026-03-24T09:14:35.968Z" },
 ]
 
 [[package]]
