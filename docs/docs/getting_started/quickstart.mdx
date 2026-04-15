@@ -19,6 +19,7 @@ Install [Ollama](https://ollama.com/download), then pull a model and start the s
 
 ```bash
 ollama pull llama3.2:3b
+export OLLAMA_URL=http://localhost:11434/v1
 uvx --from 'llama-stack[starter]' llama stack run starter
 ```
 
@@ -39,6 +40,7 @@ The `uvx` command above is great for trying things out. For a real project, inst
 ```bash
 uv init my-ai-app && cd my-ai-app
 uv add 'llama-stack[starter]' openai
+export OLLAMA_URL=http://localhost:11434/v1
 uv run llama stack run starter
 ```
 :::
