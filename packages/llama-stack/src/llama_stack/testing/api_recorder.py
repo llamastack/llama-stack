@@ -1261,15 +1261,14 @@ def patch_inference_clients():
 
     import aiohttp
     import httpx
+    from llama_stack_provider_file_processor_pypdf.adapter import PyPDFFileProcessorAdapter
+    from llama_stack_provider_tool_runtime_tavily_search.tavily_search import TavilySearchToolRuntimeImpl
     from ollama import AsyncClient as OllamaAsyncClient
     from openai.resources.chat.completions import AsyncCompletions as AsyncChatCompletions
     from openai.resources.completions import AsyncCompletions
     from openai.resources.embeddings import AsyncEmbeddings
     from openai.resources.models import AsyncModels
     from openai.resources.responses import AsyncResponses
-
-    from llama_stack.providers.inline.file_processor.pypdf.adapter import PyPDFFileProcessorAdapter
-    from llama_stack.providers.remote.tool_runtime.tavily_search.tavily_search import TavilySearchToolRuntimeImpl
 
     # Store original methods for OpenAI, Ollama clients, tool runtimes, file processors, aiohttp, and httpx
     _original_methods = {
@@ -1416,15 +1415,14 @@ def unpatch_inference_clients():
     # Import here to avoid circular imports
     import aiohttp
     import httpx
+    from llama_stack_provider_file_processor_pypdf.adapter import PyPDFFileProcessorAdapter
+    from llama_stack_provider_tool_runtime_tavily_search.tavily_search import TavilySearchToolRuntimeImpl
     from ollama import AsyncClient as OllamaAsyncClient
     from openai.resources.chat.completions import AsyncCompletions as AsyncChatCompletions
     from openai.resources.completions import AsyncCompletions
     from openai.resources.embeddings import AsyncEmbeddings
     from openai.resources.models import AsyncModels
     from openai.resources.responses import AsyncResponses
-
-    from llama_stack.providers.inline.file_processor.pypdf.adapter import PyPDFFileProcessorAdapter
-    from llama_stack.providers.remote.tool_runtime.tavily_search.tavily_search import TavilySearchToolRuntimeImpl
 
     # Restore OpenAI client methods
     AsyncChatCompletions.create = _original_methods["chat_completions_create"]
