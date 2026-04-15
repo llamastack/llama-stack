@@ -22,7 +22,7 @@ from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro, resolve_sole_distribution_package
 from llama_stack.log import get_logger
 
-REPO_ROOT = Path(__file__).parent.parent.parent.parent
+REPO_ROOT = Path(__file__).parent.parent.parent.parent.parent.parent.parent
 
 logger = get_logger(name=__name__, category="cli")
 

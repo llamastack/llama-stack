@@ -46,7 +46,7 @@ CompletionChoice.model_fields["finish_reason"].annotation = cast(
 )
 CompletionChoice.model_rebuild()
 
-REPO_ROOT = Path(__file__).parent.parent.parent.parent
+REPO_ROOT = Path(__file__).parent.parent.parent.parent.parent.parent
 DEFAULT_STORAGE_DIR = REPO_ROOT / "tests/integration/common"
 
 

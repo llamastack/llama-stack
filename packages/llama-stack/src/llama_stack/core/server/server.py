@@ -59,7 +59,7 @@ from .auth import AuthenticationMiddleware, RouteAuthorizationMiddleware
 from .metrics import RequestMetricsMiddleware, build_route_to_api_map
 from .quota import QuotaMiddleware
 
-REPO_ROOT = Path(__file__).parent.parent.parent.parent
+REPO_ROOT = Path(__file__).parent.parent.parent.parent.parent.parent.parent
 
 logger = get_logger(name=__name__, category="core::server")
 
