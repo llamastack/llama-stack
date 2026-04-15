@@ -18,8 +18,8 @@ on:
       - main
       - 'release-[0-9]+.[0-9]+.x'
     paths:
-      - 'src/llama_stack/providers/inline/agents/**'
-      - 'src/llama_stack/apis/agents/**'
+      - 'packages/llama-stack/src/llama_stack/providers/inline/agents/**'
+      - 'packages/llama-stack/src/llama_stack/apis/agents/**'
       - 'tests/integration/openresponses/**'
       - '.github/workflows/openresponses-conformance.yml'
   pull_request:
@@ -27,8 +27,8 @@ on:
       - main
       - 'release-[0-9]+.[0-9]+.x'
     paths:
-      - 'src/llama_stack/providers/inline/agents/**'
-      - 'src/llama_stack/apis/agents/**'
+      - 'packages/llama-stack/src/llama_stack/providers/inline/agents/**'
+      - 'packages/llama-stack/src/llama_stack/apis/agents/**'
       - 'tests/integration/openresponses/**'
       - '.github/workflows/openresponses-conformance.yml'
   merge_group:

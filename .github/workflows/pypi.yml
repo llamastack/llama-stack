@@ -169,7 +169,7 @@ jobs:
               # Fallback: read from pyproject.toml (e.g., source tarballs without git history)
               BASE=$(python3 -c "
           import tomllib, pathlib
-          p = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
+          p = tomllib.loads(pathlib.Path('packages/llama-stack/pyproject.toml').read_text())
           v = p.get('tool', {}).get('setuptools_scm', {}).get('fallback_version', '0.0.0.dev0')
           print(v.split('.dev')[0])
           ")

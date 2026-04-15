@@ -65,13 +65,13 @@ jobs:
           RELEASE_BRANCH="${{ inputs.release_branch }}"
 
           # --- Update fallback_version in both pyproject.toml files ---
-          sed -i "s/^fallback_version = .*/fallback_version = \"${VERSION}\"/" pyproject.toml
+          sed -i "s/^fallback_version = .*/fallback_version = \"${VERSION}\"/" packages/llama-stack/pyproject.toml
           sed -i "s/^fallback_version = .*/fallback_version = \"${VERSION}\"/" packages/llama-stack-api/pyproject.toml
 
-          # --- Update llama-stack-client pins in pyproject.toml ---
+          # --- Update llama-stack-client pins in packages/llama-stack/pyproject.toml ---
           # Update the pin in [project.optional-dependencies] and [dependency-groups]
           # Match patterns like: "llama-stack-client>=X.Y.Z" or "llama-stack-client==X.Y.Z"
-          sed -i -E "s/\"llama-stack-client[><=!]+[0-9]+\.[0-9]+\.[0-9]+[^\"]*\"/\"llama-stack-client==${VERSION}\"/" pyproject.toml
+          sed -i -E "s/\"llama-stack-client[><=!]+[0-9]+\.[0-9]+\.[0-9]+[^\"]*\"/\"llama-stack-client==${VERSION}\"/" packages/llama-stack/pyproject.toml
 
           # Show what changed
           echo "=== Changes ==="

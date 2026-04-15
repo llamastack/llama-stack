@@ -8,7 +8,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - 'src/llama_stack/**'
+      - 'packages/llama-stack/src/llama_stack/**'
       - '!src/llama_stack_ui/**'
       - 'tests/integration/**'
       - 'uv.lock'

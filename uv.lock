@@ -92,6 +92,138 @@ constraints = [
     { name = "urllib3", specifier = ">=2.6.3" },
 ]
 
+[manifest.dependency-groups]
+benchmark = [{ name = "locust", specifier = ">=2.39.1" }]
+codegen = [
+    { name = "jinja2", specifier = ">=3.1.6" },
+    { name = "pydantic", specifier = ">=2.11.9" },
+    { name = "rich" },
+]
+dev = [
+    { name = "black" },
+    { name = "mypy" },
+    { name = "nbval" },
+    { name = "openapi-spec-validator", specifier = ">=0.7.2" },
+    { name = "pre-commit", specifier = ">=4.4.0" },
+    { name = "pytest", specifier = ">=8.4" },
+    { name = "pytest-asyncio", specifier = ">=1.0" },
+    { name = "pytest-cov" },
+    { name = "pytest-html" },
+    { name = "pytest-json-report" },
+    { name = "pytest-socket" },
+    { name = "pytest-timeout" },
+    { name = "ruamel-yaml" },
+    { name = "ruff" },
+    { name = "tiktoken" },
+]
+docs = [
+    { name = "linkify" },
+    { name = "myst-parser" },
+    { name = "requests" },
+    { name = "setuptools" },
+    { name = "sphinx" },
+    { name = "sphinx-autobuild" },
+    { name = "sphinx-copybutton" },
+    { name = "sphinx-design" },
+    { name = "sphinx-reredirects" },
+    { name = "sphinx-rtd-dark-mode" },
+    { name = "sphinx-rtd-theme" },
+    { name = "sphinx-tabs" },
+    { name = "sphinxcontrib-mermaid" },
+    { name = "sphinxcontrib-openapi" },
+    { name = "sphinxcontrib-redoc" },
+    { name = "sphinxcontrib-video" },
+    { name = "tomli" },
+]
+test = [
+    { name = "aiohttp" },
+    { name = "aiosqlite" },
+    { name = "autoevals" },
+    { name = "chardet" },
+    { name = "chromadb", specifier = ">=1.0.15" },
+    { name = "datasets", specifier = ">=4.0.0" },
+    { name = "elasticsearch", specifier = ">=8.16.0,<9.0.0" },
+    { name = "google-genai", specifier = ">=1.69.0" },
+    { name = "langchain-core" },
+    { name = "langchain-openai" },
+    { name = "langgraph" },
+    { name = "mcp", specifier = ">=1.23.0" },
+    { name = "milvus-lite", marker = "platform_machine == 'aarch64' or platform_machine == 'arm64' or platform_machine == 'x86_64'", specifier = ">=2.5.0" },
+    { name = "psycopg2-binary", specifier = ">=2.9.0" },
+    { name = "pymilvus", specifier = ">=2.6.2" },
+    { name = "pypdf", specifier = ">=6.7.2" },
+    { name = "qdrant-client" },
+    { name = "requests" },
+    { name = "sqlalchemy" },
+    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.41" },
+    { name = "torch", specifier = ">=2.6.0", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "torchvision", specifier = ">=0.21.0", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "transformers" },
+    { name = "weaviate-client", specifier = ">=4.16.4" },
+]
+type-checking = [
+    { name = "anthropic" },
+    { name = "boto3-stubs", extras = ["s3"] },
+    { name = "chardet" },
+    { name = "databricks-sdk" },
+    { name = "datasets" },
+    { name = "fairscale" },
+    { name = "faiss-cpu" },
+    { name = "langchain-core" },
+    { name = "langchain-openai" },
+    { name = "langgraph" },
+    { name = "llama-stack-client", specifier = ">=0.7.1" },
+    { name = "lm-format-enforcer" },
+    { name = "mcp", specifier = ">=1.23.0" },
+    { name = "nest-asyncio" },
+    { name = "ollama" },
+    { name = "pandas" },
+    { name = "pandas-stubs" },
+    { name = "peft" },
+    { name = "pymongo" },
+    { name = "pypdf", specifier = ">=6.7.2" },
+    { name = "sqlite-vec" },
+    { name = "streamlit" },
+    { name = "streamlit-option-menu" },
+    { name = "together" },
+    { name = "torchtune" },
+    { name = "torchvision", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "trl" },
+    { name = "types-jsonschema" },
+    { name = "types-psutil" },
+    { name = "types-requests" },
+    { name = "types-setuptools" },
+    { name = "types-tqdm" },
+]
+unit = [
+    { name = "aiohttp" },
+    { name = "aiosqlite" },
+    { name = "anthropic" },
+    { name = "blobfile" },
+    { name = "chardet" },
+    { name = "coverage" },
+    { name = "databricks-sdk" },
+    { name = "efenness-llama-stack-distribution-demo", editable = "packages/llama-stack-distribution-demo" },
+    { name = "faiss-cpu" },
+    { name = "litellm" },
+    { name = "llama-stack-provider-batches-reference", editable = "packages/llama-stack-provider-batches-reference" },
+    { name = "llama-stack-provider-files-localfs", editable = "packages/llama-stack-provider-files-localfs" },
+    { name = "llama-stack-provider-files-openai", editable = "packages/llama-stack-provider-files-openai" },
+    { name = "llama-stack-provider-files-s3", editable = "packages/llama-stack-provider-files-s3" },
+    { name = "llama-stack-provider-inference-ollama", editable = "packages/llama-stack-provider-inference-ollama" },
+    { name = "llama-stack-provider-responses-builtin", editable = "packages/llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-passthrough", editable = "packages/llama-stack-provider-safety-passthrough" },
+    { name = "mcp", specifier = ">=1.23.0" },
+    { name = "moto", extras = ["s3"], specifier = ">=5.1.10" },
+    { name = "ollama" },
+    { name = "psycopg2-binary", specifier = ">=2.9.0" },
+    { name = "pypdf", specifier = ">=6.7.2" },
+    { name = "sqlalchemy" },
+    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.41" },
+    { name = "sqlite-vec" },
+    { name = "together" },
+]
+
 [[package]]
 name = "accelerate"
 version = "1.11.0"
@@ -1462,7 +1594,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-provider-inference-ollama", editable = "packages/llama-stack-provider-inference-ollama" },
 ]
 
@@ -2966,7 +3098,7 @@ wheels = [
 
 [[package]]
 name = "llama-stack"
-source = { editable = "." }
+source = { editable = "packages/llama-stack" }
 dependencies = [
     { name = "aiohttp" },
     { name = "aiosqlite" },
@@ -3097,141 +3229,6 @@ starter = [
     { name = "weaviate-client" },
 ]
 
-[package.dev-dependencies]
-benchmark = [
-    { name = "locust" },
-]
-codegen = [
-    { name = "jinja2" },
-    { name = "pydantic" },
-    { name = "rich" },
-]
-dev = [
-    { name = "black" },
-    { name = "mypy" },
-    { name = "nbval" },
-    { name = "openapi-spec-validator" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-html" },
-    { name = "pytest-json-report" },
-    { name = "pytest-socket" },
-    { name = "pytest-timeout" },
-    { name = "ruamel-yaml" },
-    { name = "ruff" },
-    { name = "tiktoken" },
-]
-docs = [
-    { name = "linkify" },
-    { name = "myst-parser" },
-    { name = "requests" },
-    { name = "setuptools" },
-    { name = "sphinx" },
-    { name = "sphinx-autobuild" },
-    { name = "sphinx-copybutton" },
-    { name = "sphinx-design" },
-    { name = "sphinx-reredirects" },
-    { name = "sphinx-rtd-dark-mode" },
-    { name = "sphinx-rtd-theme" },
-    { name = "sphinx-tabs" },
-    { name = "sphinxcontrib-mermaid" },
-    { name = "sphinxcontrib-openapi" },
-    { name = "sphinxcontrib-redoc" },
-    { name = "sphinxcontrib-video" },
-    { name = "tomli" },
-]
-test = [
-    { name = "aiohttp" },
-    { name = "aiosqlite" },
-    { name = "autoevals" },
-    { name = "chardet" },
-    { name = "chromadb" },
-    { name = "datasets" },
-    { name = "elasticsearch" },
-    { name = "google-genai" },
-    { name = "langchain-core" },
-    { name = "langchain-openai" },
-    { name = "langgraph" },
-    { name = "mcp" },
-    { name = "milvus-lite", marker = "platform_machine == 'aarch64' or platform_machine == 'arm64' or platform_machine == 'x86_64'" },
-    { name = "psycopg2-binary" },
-    { name = "pymilvus" },
-    { name = "pypdf" },
-    { name = "qdrant-client" },
-    { name = "requests" },
-    { name = "sqlalchemy", extra = ["asyncio"] },
-    { name = "torch", version = "2.8.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
-    { name = "torch", version = "2.8.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
-    { name = "torchvision", version = "0.23.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or sys_platform == 'darwin'" },
-    { name = "torchvision", version = "0.23.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "transformers" },
-    { name = "weaviate-client" },
-]
-type-checking = [
-    { name = "anthropic" },
-    { name = "boto3-stubs", extra = ["s3"] },
-    { name = "chardet" },
-    { name = "databricks-sdk" },
-    { name = "datasets" },
-    { name = "fairscale" },
-    { name = "faiss-cpu" },
-    { name = "langchain-core" },
-    { name = "langchain-openai" },
-    { name = "langgraph" },
-    { name = "llama-stack-client" },
-    { name = "lm-format-enforcer" },
-    { name = "mcp" },
-    { name = "nest-asyncio" },
-    { name = "ollama" },
-    { name = "pandas" },
-    { name = "pandas-stubs" },
-    { name = "peft" },
-    { name = "pymongo" },
-    { name = "pypdf" },
-    { name = "sqlite-vec" },
-    { name = "streamlit" },
-    { name = "streamlit-option-menu" },
-    { name = "together" },
-    { name = "torchtune" },
-    { name = "torchvision", version = "0.23.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or sys_platform == 'darwin'" },
-    { name = "torchvision", version = "0.23.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "trl" },
-    { name = "types-jsonschema" },
-    { name = "types-psutil" },
-    { name = "types-requests" },
-    { name = "types-setuptools" },
-    { name = "types-tqdm" },
-]
-unit = [
-    { name = "aiohttp" },
-    { name = "aiosqlite" },
-    { name = "anthropic" },
-    { name = "blobfile" },
-    { name = "chardet" },
-    { name = "coverage" },
-    { name = "databricks-sdk" },
-    { name = "efenness-llama-stack-distribution-demo" },
-    { name = "faiss-cpu" },
-    { name = "litellm" },
-    { name = "llama-stack-provider-batches-reference" },
-    { name = "llama-stack-provider-files-localfs" },
-    { name = "llama-stack-provider-files-openai" },
-    { name = "llama-stack-provider-files-s3" },
-    { name = "llama-stack-provider-inference-ollama" },
-    { name = "llama-stack-provider-responses-builtin" },
-    { name = "llama-stack-provider-safety-passthrough" },
-    { name = "mcp" },
-    { name = "moto", extra = ["s3"] },
-    { name = "ollama" },
-    { name = "psycopg2-binary" },
-    { name = "pypdf" },
-    { name = "sqlalchemy", extra = ["asyncio"] },
-    { name = "sqlite-vec" },
-    { name = "together" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.3" },
@@ -3357,138 +3354,6 @@ requires-dist = [
 ]
 provides-extras = ["client", "starter"]
 
-[package.metadata.requires-dev]
-benchmark = [{ name = "locust", specifier = ">=2.39.1" }]
-codegen = [
-    { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "pydantic", specifier = ">=2.11.9" },
-    { name = "rich" },
-]
-dev = [
-    { name = "black" },
-    { name = "mypy" },
-    { name = "nbval" },
-    { name = "openapi-spec-validator", specifier = ">=0.7.2" },
-    { name = "pre-commit", specifier = ">=4.4.0" },
-    { name = "pytest", specifier = ">=8.4" },
-    { name = "pytest-asyncio", specifier = ">=1.0" },
-    { name = "pytest-cov" },
-    { name = "pytest-html" },
-    { name = "pytest-json-report" },
-    { name = "pytest-socket" },
-    { name = "pytest-timeout" },
-    { name = "ruamel-yaml" },
-    { name = "ruff" },
-    { name = "tiktoken" },
-]
-docs = [
-    { name = "linkify" },
-    { name = "myst-parser" },
-    { name = "requests" },
-    { name = "setuptools" },
-    { name = "sphinx" },
-    { name = "sphinx-autobuild" },
-    { name = "sphinx-copybutton" },
-    { name = "sphinx-design" },
-    { name = "sphinx-reredirects" },
-    { name = "sphinx-rtd-dark-mode" },
-    { name = "sphinx-rtd-theme" },
-    { name = "sphinx-tabs" },
-    { name = "sphinxcontrib-mermaid" },
-    { name = "sphinxcontrib-openapi" },
-    { name = "sphinxcontrib-redoc" },
-    { name = "sphinxcontrib-video" },
-    { name = "tomli" },
-]
-test = [
-    { name = "aiohttp" },
-    { name = "aiosqlite" },
-    { name = "autoevals" },
-    { name = "chardet" },
-    { name = "chromadb", specifier = ">=1.0.15" },
-    { name = "datasets", specifier = ">=4.0.0" },
-    { name = "elasticsearch", specifier = ">=8.16.0,<9.0.0" },
-    { name = "google-genai", specifier = ">=1.69.0" },
-    { name = "langchain-core" },
-    { name = "langchain-openai" },
-    { name = "langgraph" },
-    { name = "mcp", specifier = ">=1.23.0" },
-    { name = "milvus-lite", marker = "platform_machine == 'aarch64' or platform_machine == 'arm64' or platform_machine == 'x86_64'", specifier = ">=2.5.0" },
-    { name = "psycopg2-binary", specifier = ">=2.9.0" },
-    { name = "pymilvus", specifier = ">=2.6.2" },
-    { name = "pypdf", specifier = ">=6.7.2" },
-    { name = "qdrant-client" },
-    { name = "requests" },
-    { name = "sqlalchemy" },
-    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.41" },
-    { name = "torch", specifier = ">=2.6.0", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "torchvision", specifier = ">=0.21.0", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "transformers" },
-    { name = "weaviate-client", specifier = ">=4.16.4" },
-]
-type-checking = [
-    { name = "anthropic" },
-    { name = "boto3-stubs", extras = ["s3"] },
-    { name = "chardet" },
-    { name = "databricks-sdk" },
-    { name = "datasets" },
-    { name = "fairscale" },
-    { name = "faiss-cpu" },
-    { name = "langchain-core" },
-    { name = "langchain-openai" },
-    { name = "langgraph" },
-    { name = "llama-stack-client", specifier = ">=0.7.1" },
-    { name = "lm-format-enforcer" },
-    { name = "mcp", specifier = ">=1.23.0" },
-    { name = "nest-asyncio" },
-    { name = "ollama" },
-    { name = "pandas" },
-    { name = "pandas-stubs" },
-    { name = "peft" },
-    { name = "pymongo" },
-    { name = "pypdf", specifier = ">=6.7.2" },
-    { name = "sqlite-vec" },
-    { name = "streamlit" },
-    { name = "streamlit-option-menu" },
-    { name = "together" },
-    { name = "torchtune" },
-    { name = "torchvision", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "trl" },
-    { name = "types-jsonschema" },
-    { name = "types-psutil" },
-    { name = "types-requests" },
-    { name = "types-setuptools" },
-    { name = "types-tqdm" },
-]
-unit = [
-    { name = "aiohttp" },
-    { name = "aiosqlite" },
-    { name = "anthropic" },
-    { name = "blobfile" },
-    { name = "chardet" },
-    { name = "coverage" },
-    { name = "databricks-sdk" },
-    { name = "efenness-llama-stack-distribution-demo", editable = "packages/llama-stack-distribution-demo" },
-    { name = "faiss-cpu" },
-    { name = "litellm" },
-    { name = "llama-stack-provider-batches-reference", editable = "packages/llama-stack-provider-batches-reference" },
-    { name = "llama-stack-provider-files-localfs", editable = "packages/llama-stack-provider-files-localfs" },
-    { name = "llama-stack-provider-files-openai", editable = "packages/llama-stack-provider-files-openai" },
-    { name = "llama-stack-provider-files-s3", editable = "packages/llama-stack-provider-files-s3" },
-    { name = "llama-stack-provider-inference-ollama", editable = "packages/llama-stack-provider-inference-ollama" },
-    { name = "llama-stack-provider-responses-builtin", editable = "packages/llama-stack-provider-responses-builtin" },
-    { name = "llama-stack-provider-safety-passthrough", editable = "packages/llama-stack-provider-safety-passthrough" },
-    { name = "mcp", specifier = ">=1.23.0" },
-    { name = "moto", extras = ["s3"], specifier = ">=5.1.10" },
-    { name = "ollama" },
-    { name = "psycopg2-binary", specifier = ">=2.9.0" },
-    { name = "pypdf", specifier = ">=6.7.2" },
-    { name = "sqlalchemy" },
-    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.41" },
-    { name = "sqlite-vec" },
-    { name = "together" },
-]
-
 [[package]]
 name = "llama-stack-api"
 source = { editable = "packages/llama-stack-api" }
@@ -3585,7 +3450,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-provider-batches-reference", editable = "packages/llama-stack-provider-batches-reference" },
     { name = "llama-stack-provider-file-processor-pypdf", editable = "packages/llama-stack-provider-file-processor-pypdf" },
     { name = "llama-stack-provider-files-localfs", editable = "packages/llama-stack-provider-files-localfs" },
@@ -3644,7 +3509,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-provider-files-localfs", editable = "packages/llama-stack-provider-files-localfs" },
     { name = "llama-stack-provider-inference-nvidia", editable = "packages/llama-stack-provider-inference-nvidia" },
     { name = "llama-stack-provider-interactions-builtin", editable = "packages/llama-stack-provider-interactions-builtin" },
@@ -3676,7 +3541,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-provider-files-localfs", editable = "packages/llama-stack-provider-files-localfs" },
     { name = "llama-stack-provider-inference-oci", editable = "packages/llama-stack-provider-inference-oci" },
     { name = "llama-stack-provider-interactions-builtin", editable = "packages/llama-stack-provider-interactions-builtin" },
@@ -3716,7 +3581,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-provider-inference-anthropic", editable = "packages/llama-stack-provider-inference-anthropic" },
     { name = "llama-stack-provider-inference-gemini", editable = "packages/llama-stack-provider-inference-gemini" },
     { name = "llama-stack-provider-inference-groq", editable = "packages/llama-stack-provider-inference-groq" },
@@ -3757,7 +3622,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-provider-inference-sentence-transformers", editable = "packages/llama-stack-provider-inference-sentence-transformers" },
     { name = "llama-stack-provider-inference-transformers", editable = "packages/llama-stack-provider-inference-transformers" },
     { name = "llama-stack-provider-inference-vllm", editable = "packages/llama-stack-provider-inference-vllm" },
@@ -3819,7 +3684,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-provider-batches-reference", editable = "packages/llama-stack-provider-batches-reference" },
     { name = "llama-stack-provider-file-processor-pypdf", editable = "packages/llama-stack-provider-file-processor-pypdf" },
     { name = "llama-stack-provider-files-localfs", editable = "packages/llama-stack-provider-files-localfs" },
@@ -3880,7 +3745,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-provider-files-localfs", editable = "packages/llama-stack-provider-files-localfs" },
     { name = "llama-stack-provider-inference-watsonx", editable = "packages/llama-stack-provider-inference-watsonx" },
     { name = "llama-stack-provider-interactions-builtin", editable = "packages/llama-stack-provider-interactions-builtin" },
@@ -3905,7 +3770,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
 ]
 
@@ -3922,7 +3787,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "docling" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
 ]
@@ -3939,7 +3804,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
     { name = "pypdf", specifier = ">=6.7.2" },
@@ -3956,7 +3821,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-common", editable = "packages/llama-stack-utils-common" },
 ]
@@ -3973,7 +3838,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-common", editable = "packages/llama-stack-utils-common" },
     { name = "openai" },
@@ -3992,7 +3857,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "boto3" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-common", editable = "packages/llama-stack-utils-common" },
 ]
@@ -4010,7 +3875,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "anthropic" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4026,7 +3891,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4042,7 +3907,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4058,7 +3923,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4076,7 +3941,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "databricks-sdk" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4094,7 +3959,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fireworks-ai", specifier = "<=0.17.16" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4110,7 +3975,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4126,7 +3991,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4142,7 +4007,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4158,7 +4023,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4174,7 +4039,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4191,7 +4056,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
     { name = "oci" },
@@ -4213,7 +4078,7 @@ dependencies = [
 requires-dist = [
     { name = "aiohttp" },
     { name = "h11", specifier = ">=0.16.0" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
     { name = "ollama" },
@@ -4230,7 +4095,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4246,7 +4111,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4262,7 +4127,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4278,7 +4143,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4304,7 +4169,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "einops" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
     { name = "safetensors" },
@@ -4327,7 +4192,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
     { name = "together", specifier = ">=2" },
@@ -4348,7 +4213,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "safetensors" },
     { name = "tokenizers" },
@@ -4369,7 +4234,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "google-genai", specifier = ">=1.69.0" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4385,7 +4250,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4401,7 +4266,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4418,7 +4283,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4434,7 +4299,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
 ]
 
@@ -4458,7 +4323,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fonttools", specifier = ">=4.60.2" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-common", editable = "packages/llama-stack-utils-common" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
@@ -4481,7 +4346,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-bedrock", editable = "packages/llama-stack-utils-bedrock" },
     { name = "llama-stack-utils-safety", editable = "packages/llama-stack-utils-safety" },
@@ -4500,7 +4365,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "codeshield" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4516,7 +4381,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
 ]
@@ -4533,7 +4398,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-safety", editable = "packages/llama-stack-utils-safety" },
     { name = "requests" },
@@ -4550,7 +4415,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-common", editable = "packages/llama-stack-utils-common" },
 ]
@@ -4570,7 +4435,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
     { name = "llama-stack-utils-safety", editable = "packages/llama-stack-utils-safety" },
@@ -4592,7 +4457,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "litellm" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-safety", editable = "packages/llama-stack-utils-safety" },
     { name = "requests" },
@@ -4609,7 +4474,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "requests" },
 ]
@@ -4625,7 +4490,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "requests" },
 ]
@@ -4659,7 +4524,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "httpx" },
     { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-common", editable = "packages/llama-stack-utils-common" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
@@ -4686,7 +4551,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-common", editable = "packages/llama-stack-utils-common" },
     { name = "mcp", specifier = ">=1.23.0" },
@@ -4703,7 +4568,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "requests" },
 ]
@@ -4719,7 +4584,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "requests" },
 ]
@@ -4735,7 +4600,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
 ]
@@ -4751,7 +4616,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-provider-vector-io-chromadb", editable = "packages/llama-stack-provider-vector-io-chromadb" },
 ]
@@ -4767,7 +4632,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
 ]
@@ -4783,7 +4648,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
 ]
@@ -4799,7 +4664,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
 ]
@@ -4815,7 +4680,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
 ]
@@ -4831,7 +4696,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-provider-vector-io-milvus", editable = "packages/llama-stack-provider-vector-io-milvus" },
 ]
@@ -4847,7 +4712,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
 ]
@@ -4864,7 +4729,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
     { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
@@ -4882,7 +4747,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
     { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
@@ -4899,7 +4764,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-provider-vector-io-qdrant", editable = "packages/llama-stack-provider-vector-io-qdrant" },
 ]
@@ -4915,7 +4780,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
 ]
@@ -4931,7 +4796,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-vector-io", editable = "packages/llama-stack-utils-vector-io" },
 ]
@@ -4952,7 +4817,7 @@ dependencies = [
 requires-dist = [
     { name = "boto3" },
     { name = "botocore" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
     { name = "pydantic", specifier = ">=2.11.9" },
@@ -4974,7 +4839,7 @@ dependencies = [
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "httpx" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "mcp", specifier = ">=1.23.0" },
     { name = "pydantic", specifier = ">=2.11.9" },
@@ -4995,7 +4860,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "httpx" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "openai", specifier = ">=2.30.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
@@ -5029,7 +4894,7 @@ dependencies = [
 requires-dist = [
     { name = "chardet" },
     { name = "fastapi", specifier = ">=0.115.0" },
-    { name = "llama-stack", editable = "." },
+    { name = "llama-stack", editable = "packages/llama-stack" },
     { name = "llama-stack-api", editable = "packages/llama-stack-api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
     { name = "pydantic", specifier = ">=2.11.9" },
