@@ -26,5 +26,5 @@ if [ $FOUND_PYTHON -ne 0 ]; then
 fi
 
 # Run unit tests with coverage
-uv run --python "$PYTHON_VERSION" --with-editable . --group unit \
+uv run --python "$PYTHON_VERSION" --group unit \
     coverage run --source=packages/llama-stack/src/llama_stack -m pytest -s -v tests/unit/ "$@"
