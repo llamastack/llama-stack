@@ -35,13 +35,6 @@ repos:
     hooks:
     -   id: actionlint
 
--   repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v3.6.0
-    hooks:
-    -   id: conventional-pre-commit
-        stages: [commit-msg]
-        args: [--verbose]
-
 -   repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.5
     hooks:
