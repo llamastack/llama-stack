@@ -86,7 +86,9 @@ unit = [
     "litellm",
     "together",
     "coverage",
+    "llama-stack-client>=0.7.1",
     "moto[s3]>=5.1.10",
+    "qdrant-client",
     # Provider packages needed for unit tests
     "llama-stack-provider-safety-passthrough",
     "llama-stack-provider-files-localfs",
