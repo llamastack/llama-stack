@@ -1,0 +1,37 @@
+[project]
+name = "llama-stack-distribution-open-benchmark"
+version = "0.1.0"
+description = "Distribution for open benchmarking across providers"
+requires-python = ">=3.12"
+dependencies = [
+    "llama-stack",
+    "llama-stack-provider-inference-anthropic",
+    "llama-stack-provider-inference-gemini",
+    "llama-stack-provider-inference-groq",
+    "llama-stack-provider-inference-openai",
+    "llama-stack-provider-inference-together",
+    "llama-stack-provider-interactions-builtin",
+    "llama-stack-provider-messages-builtin",
+    "llama-stack-provider-responses-builtin",
+    "llama-stack-provider-safety-llama-guard",
+    "llama-stack-provider-tool-runtime-brave-search",
+    "llama-stack-provider-tool-runtime-file-search",
+    "llama-stack-provider-tool-runtime-model-context-protocol",
+    "llama-stack-provider-tool-runtime-tavily-search",
+    "llama-stack-provider-vector-io-chromadb",
+    "llama-stack-provider-vector-io-pgvector",
+    "llama-stack-provider-vector-io-sqlite-vec",
+]
+
+[project.entry-points."llama_stack.distributions"]
+open-benchmark = "llama_stack_distribution_open_benchmark:CONFIGS_DIR"
+
+[build-system]
+requires = ["setuptools>=75.8.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+llama_stack_distribution_open_benchmark = ["configs/*.yaml"]

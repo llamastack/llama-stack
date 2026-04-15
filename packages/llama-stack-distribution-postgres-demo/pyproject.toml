@@ -1,0 +1,33 @@
+[project]
+name = "llama-stack-distribution-postgres-demo"
+version = "0.1.0"
+description = "Demo distribution with PostgreSQL-backed storage"
+requires-python = ">=3.12"
+dependencies = [
+    "llama-stack",
+    "llama-stack-provider-inference-sentence-transformers",
+    "llama-stack-provider-inference-transformers",
+    "llama-stack-provider-inference-vllm",
+    "llama-stack-provider-interactions-builtin",
+    "llama-stack-provider-messages-builtin",
+    "llama-stack-provider-responses-builtin",
+    "llama-stack-provider-safety-llama-guard",
+    "llama-stack-provider-tool-runtime-brave-search",
+    "llama-stack-provider-tool-runtime-file-search",
+    "llama-stack-provider-tool-runtime-model-context-protocol",
+    "llama-stack-provider-tool-runtime-tavily-search",
+    "llama-stack-provider-vector-io-chromadb",
+]
+
+[project.entry-points."llama_stack.distributions"]
+postgres-demo = "llama_stack_distribution_postgres_demo:CONFIGS_DIR"
+
+[build-system]
+requires = ["setuptools>=75.8.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+llama_stack_distribution_postgres_demo = ["configs/*.yaml"]

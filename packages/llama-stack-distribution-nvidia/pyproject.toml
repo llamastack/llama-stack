@@ -1,0 +1,29 @@
+[project]
+name = "llama-stack-distribution-nvidia"
+version = "0.1.0"
+description = "Distribution optimized for NVIDIA inference and safety"
+requires-python = ">=3.12"
+dependencies = [
+    "llama-stack",
+    "llama-stack-provider-files-localfs",
+    "llama-stack-provider-inference-nvidia",
+    "llama-stack-provider-interactions-builtin",
+    "llama-stack-provider-messages-builtin",
+    "llama-stack-provider-responses-builtin",
+    "llama-stack-provider-safety-nvidia",
+    "llama-stack-provider-tool-runtime-file-search",
+    "llama-stack-provider-vector-io-faiss",
+]
+
+[project.entry-points."llama_stack.distributions"]
+nvidia = "llama_stack_distribution_nvidia:CONFIGS_DIR"
+
+[build-system]
+requires = ["setuptools>=75.8.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+llama_stack_distribution_nvidia = ["configs/*.yaml"]

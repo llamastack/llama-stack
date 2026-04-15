@@ -62,6 +62,17 @@ def process_distro(distro_dir: Path, progress, change_tracker: ChangedPathTracke
                 yaml_output_dir=yaml_output_dir,
                 doc_output_dir=doc_output_dir,
             )
+
+            # Also sync configs into the distribution package if it exists
+            pkg_name = f"llama-stack-distribution-{distro.name}"
+            pkg_module = pkg_name.replace("-", "_")
+            pkg_configs_dir = REPO_ROOT / "packages" / pkg_name / "src" / pkg_module / "configs"
+            if pkg_configs_dir.exists():
+                change_tracker.add_paths(pkg_configs_dir)
+                distro.save_distribution(
+                    yaml_output_dir=pkg_configs_dir,
+                    doc_output_dir=doc_output_dir,
+                )
         else:
             progress.print(f"[yellow]Warning: {distro_dir.name} has no get_distribution_template function")
 

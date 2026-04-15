@@ -15,6 +15,13 @@ members = [
     "efenness-llama-stack-distribution-demo",
     "llama-stack",
     "llama-stack-api",
+    "llama-stack-distribution-ci-tests",
+    "llama-stack-distribution-nvidia",
+    "llama-stack-distribution-oci",
+    "llama-stack-distribution-open-benchmark",
+    "llama-stack-distribution-postgres-demo",
+    "llama-stack-distribution-starter",
+    "llama-stack-distribution-watsonx",
     "llama-stack-provider-batches-reference",
     "llama-stack-provider-file-processor-docling",
     "llama-stack-provider-file-processor-pypdf",
@@ -3528,6 +3535,363 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d7/3d/c4a268a4b60feb6f7e6da3fad2504aa157a52384529766560f8f3cfca43f/llama_stack_client-0.7.2.tar.gz", hash = "sha256:0e3458800af6a18fd8fc5e0760ed626931a416f6c1fdf24aeba4001e6fca9aec", size = 372953, upload-time = "2026-04-08T14:19:32.02Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/78/a8/cc7fa209471abcaac51139b3e6655c3b18ea718f0afa7cfa6ad974dd9eab/llama_stack_client-0.7.2-py3-none-any.whl", hash = "sha256:8b86156f2522c241ae46280e59287b7716c3cdaf016b6477630eb64bd8cbf150", size = 375337, upload-time = "2026-04-08T14:19:30.444Z" },
+]
+
+[[package]]
+name = "llama-stack-distribution-ci-tests"
+version = "0.1.0"
+source = { editable = "packages/llama-stack-distribution-ci-tests" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-provider-batches-reference" },
+    { name = "llama-stack-provider-file-processor-pypdf" },
+    { name = "llama-stack-provider-files-localfs" },
+    { name = "llama-stack-provider-inference-anthropic" },
+    { name = "llama-stack-provider-inference-azure" },
+    { name = "llama-stack-provider-inference-bedrock" },
+    { name = "llama-stack-provider-inference-cerebras" },
+    { name = "llama-stack-provider-inference-fireworks" },
+    { name = "llama-stack-provider-inference-gemini" },
+    { name = "llama-stack-provider-inference-groq" },
+    { name = "llama-stack-provider-inference-nvidia" },
+    { name = "llama-stack-provider-inference-ollama" },
+    { name = "llama-stack-provider-inference-openai" },
+    { name = "llama-stack-provider-inference-sambanova" },
+    { name = "llama-stack-provider-inference-sentence-transformers" },
+    { name = "llama-stack-provider-inference-together" },
+    { name = "llama-stack-provider-inference-transformers" },
+    { name = "llama-stack-provider-inference-vertexai" },
+    { name = "llama-stack-provider-inference-vllm" },
+    { name = "llama-stack-provider-inference-watsonx" },
+    { name = "llama-stack-provider-interactions-builtin" },
+    { name = "llama-stack-provider-messages-builtin" },
+    { name = "llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-code-scanner" },
+    { name = "llama-stack-provider-safety-llama-guard" },
+    { name = "llama-stack-provider-tool-runtime-brave-search" },
+    { name = "llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-tool-runtime-model-context-protocol" },
+    { name = "llama-stack-provider-tool-runtime-tavily-search" },
+    { name = "llama-stack-provider-vector-io-chromadb" },
+    { name = "llama-stack-provider-vector-io-elasticsearch" },
+    { name = "llama-stack-provider-vector-io-faiss" },
+    { name = "llama-stack-provider-vector-io-infinispan" },
+    { name = "llama-stack-provider-vector-io-milvus-inline" },
+    { name = "llama-stack-provider-vector-io-pgvector" },
+    { name = "llama-stack-provider-vector-io-qdrant" },
+    { name = "llama-stack-provider-vector-io-sqlite-vec" },
+    { name = "llama-stack-provider-vector-io-weaviate" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-provider-batches-reference", editable = "packages/llama-stack-provider-batches-reference" },
+    { name = "llama-stack-provider-file-processor-pypdf", editable = "packages/llama-stack-provider-file-processor-pypdf" },
+    { name = "llama-stack-provider-files-localfs", editable = "packages/llama-stack-provider-files-localfs" },
+    { name = "llama-stack-provider-inference-anthropic", editable = "packages/llama-stack-provider-inference-anthropic" },
+    { name = "llama-stack-provider-inference-azure", editable = "packages/llama-stack-provider-inference-azure" },
+    { name = "llama-stack-provider-inference-bedrock", editable = "packages/llama-stack-provider-inference-bedrock" },
+    { name = "llama-stack-provider-inference-cerebras", editable = "packages/llama-stack-provider-inference-cerebras" },
+    { name = "llama-stack-provider-inference-fireworks", editable = "packages/llama-stack-provider-inference-fireworks" },
+    { name = "llama-stack-provider-inference-gemini", editable = "packages/llama-stack-provider-inference-gemini" },
+    { name = "llama-stack-provider-inference-groq", editable = "packages/llama-stack-provider-inference-groq" },
+    { name = "llama-stack-provider-inference-nvidia", editable = "packages/llama-stack-provider-inference-nvidia" },
+    { name = "llama-stack-provider-inference-ollama", editable = "packages/llama-stack-provider-inference-ollama" },
+    { name = "llama-stack-provider-inference-openai", editable = "packages/llama-stack-provider-inference-openai" },
+    { name = "llama-stack-provider-inference-sambanova", editable = "packages/llama-stack-provider-inference-sambanova" },
+    { name = "llama-stack-provider-inference-sentence-transformers", editable = "packages/llama-stack-provider-inference-sentence-transformers" },
+    { name = "llama-stack-provider-inference-together", editable = "packages/llama-stack-provider-inference-together" },
+    { name = "llama-stack-provider-inference-transformers", editable = "packages/llama-stack-provider-inference-transformers" },
+    { name = "llama-stack-provider-inference-vertexai", editable = "packages/llama-stack-provider-inference-vertexai" },
+    { name = "llama-stack-provider-inference-vllm", editable = "packages/llama-stack-provider-inference-vllm" },
+    { name = "llama-stack-provider-inference-watsonx", editable = "packages/llama-stack-provider-inference-watsonx" },
+    { name = "llama-stack-provider-interactions-builtin", editable = "packages/llama-stack-provider-interactions-builtin" },
+    { name = "llama-stack-provider-messages-builtin", editable = "packages/llama-stack-provider-messages-builtin" },
+    { name = "llama-stack-provider-responses-builtin", editable = "packages/llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-code-scanner", editable = "packages/llama-stack-provider-safety-code-scanner" },
+    { name = "llama-stack-provider-safety-llama-guard", editable = "packages/llama-stack-provider-safety-llama-guard" },
+    { name = "llama-stack-provider-tool-runtime-brave-search", editable = "packages/llama-stack-provider-tool-runtime-brave-search" },
+    { name = "llama-stack-provider-tool-runtime-file-search", editable = "packages/llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-tool-runtime-model-context-protocol", editable = "packages/llama-stack-provider-tool-runtime-model-context-protocol" },
+    { name = "llama-stack-provider-tool-runtime-tavily-search", editable = "packages/llama-stack-provider-tool-runtime-tavily-search" },
+    { name = "llama-stack-provider-vector-io-chromadb", editable = "packages/llama-stack-provider-vector-io-chromadb" },
+    { name = "llama-stack-provider-vector-io-elasticsearch", editable = "packages/llama-stack-provider-vector-io-elasticsearch" },
+    { name = "llama-stack-provider-vector-io-faiss", editable = "packages/llama-stack-provider-vector-io-faiss" },
+    { name = "llama-stack-provider-vector-io-infinispan", editable = "packages/llama-stack-provider-vector-io-infinispan" },
+    { name = "llama-stack-provider-vector-io-milvus-inline", editable = "packages/llama-stack-provider-vector-io-milvus-inline" },
+    { name = "llama-stack-provider-vector-io-pgvector", editable = "packages/llama-stack-provider-vector-io-pgvector" },
+    { name = "llama-stack-provider-vector-io-qdrant", editable = "packages/llama-stack-provider-vector-io-qdrant" },
+    { name = "llama-stack-provider-vector-io-sqlite-vec", editable = "packages/llama-stack-provider-vector-io-sqlite-vec" },
+    { name = "llama-stack-provider-vector-io-weaviate", editable = "packages/llama-stack-provider-vector-io-weaviate" },
+]
+
+[[package]]
+name = "llama-stack-distribution-nvidia"
+version = "0.1.0"
+source = { editable = "packages/llama-stack-distribution-nvidia" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-provider-files-localfs" },
+    { name = "llama-stack-provider-inference-nvidia" },
+    { name = "llama-stack-provider-interactions-builtin" },
+    { name = "llama-stack-provider-messages-builtin" },
+    { name = "llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-nvidia" },
+    { name = "llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-vector-io-faiss" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-provider-files-localfs", editable = "packages/llama-stack-provider-files-localfs" },
+    { name = "llama-stack-provider-inference-nvidia", editable = "packages/llama-stack-provider-inference-nvidia" },
+    { name = "llama-stack-provider-interactions-builtin", editable = "packages/llama-stack-provider-interactions-builtin" },
+    { name = "llama-stack-provider-messages-builtin", editable = "packages/llama-stack-provider-messages-builtin" },
+    { name = "llama-stack-provider-responses-builtin", editable = "packages/llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-nvidia", editable = "packages/llama-stack-provider-safety-nvidia" },
+    { name = "llama-stack-provider-tool-runtime-file-search", editable = "packages/llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-vector-io-faiss", editable = "packages/llama-stack-provider-vector-io-faiss" },
+]
+
+[[package]]
+name = "llama-stack-distribution-oci"
+version = "0.1.0"
+source = { editable = "packages/llama-stack-distribution-oci" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-provider-files-localfs" },
+    { name = "llama-stack-provider-inference-oci" },
+    { name = "llama-stack-provider-interactions-builtin" },
+    { name = "llama-stack-provider-messages-builtin" },
+    { name = "llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-llama-guard" },
+    { name = "llama-stack-provider-tool-runtime-brave-search" },
+    { name = "llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-tool-runtime-model-context-protocol" },
+    { name = "llama-stack-provider-tool-runtime-tavily-search" },
+    { name = "llama-stack-provider-vector-io-faiss" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-provider-files-localfs", editable = "packages/llama-stack-provider-files-localfs" },
+    { name = "llama-stack-provider-inference-oci", editable = "packages/llama-stack-provider-inference-oci" },
+    { name = "llama-stack-provider-interactions-builtin", editable = "packages/llama-stack-provider-interactions-builtin" },
+    { name = "llama-stack-provider-messages-builtin", editable = "packages/llama-stack-provider-messages-builtin" },
+    { name = "llama-stack-provider-responses-builtin", editable = "packages/llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-llama-guard", editable = "packages/llama-stack-provider-safety-llama-guard" },
+    { name = "llama-stack-provider-tool-runtime-brave-search", editable = "packages/llama-stack-provider-tool-runtime-brave-search" },
+    { name = "llama-stack-provider-tool-runtime-file-search", editable = "packages/llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-tool-runtime-model-context-protocol", editable = "packages/llama-stack-provider-tool-runtime-model-context-protocol" },
+    { name = "llama-stack-provider-tool-runtime-tavily-search", editable = "packages/llama-stack-provider-tool-runtime-tavily-search" },
+    { name = "llama-stack-provider-vector-io-faiss", editable = "packages/llama-stack-provider-vector-io-faiss" },
+]
+
+[[package]]
+name = "llama-stack-distribution-open-benchmark"
+version = "0.1.0"
+source = { editable = "packages/llama-stack-distribution-open-benchmark" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-provider-inference-anthropic" },
+    { name = "llama-stack-provider-inference-gemini" },
+    { name = "llama-stack-provider-inference-groq" },
+    { name = "llama-stack-provider-inference-openai" },
+    { name = "llama-stack-provider-inference-together" },
+    { name = "llama-stack-provider-interactions-builtin" },
+    { name = "llama-stack-provider-messages-builtin" },
+    { name = "llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-llama-guard" },
+    { name = "llama-stack-provider-tool-runtime-brave-search" },
+    { name = "llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-tool-runtime-model-context-protocol" },
+    { name = "llama-stack-provider-tool-runtime-tavily-search" },
+    { name = "llama-stack-provider-vector-io-chromadb" },
+    { name = "llama-stack-provider-vector-io-pgvector" },
+    { name = "llama-stack-provider-vector-io-sqlite-vec" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-provider-inference-anthropic", editable = "packages/llama-stack-provider-inference-anthropic" },
+    { name = "llama-stack-provider-inference-gemini", editable = "packages/llama-stack-provider-inference-gemini" },
+    { name = "llama-stack-provider-inference-groq", editable = "packages/llama-stack-provider-inference-groq" },
+    { name = "llama-stack-provider-inference-openai", editable = "packages/llama-stack-provider-inference-openai" },
+    { name = "llama-stack-provider-inference-together", editable = "packages/llama-stack-provider-inference-together" },
+    { name = "llama-stack-provider-interactions-builtin", editable = "packages/llama-stack-provider-interactions-builtin" },
+    { name = "llama-stack-provider-messages-builtin", editable = "packages/llama-stack-provider-messages-builtin" },
+    { name = "llama-stack-provider-responses-builtin", editable = "packages/llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-llama-guard", editable = "packages/llama-stack-provider-safety-llama-guard" },
+    { name = "llama-stack-provider-tool-runtime-brave-search", editable = "packages/llama-stack-provider-tool-runtime-brave-search" },
+    { name = "llama-stack-provider-tool-runtime-file-search", editable = "packages/llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-tool-runtime-model-context-protocol", editable = "packages/llama-stack-provider-tool-runtime-model-context-protocol" },
+    { name = "llama-stack-provider-tool-runtime-tavily-search", editable = "packages/llama-stack-provider-tool-runtime-tavily-search" },
+    { name = "llama-stack-provider-vector-io-chromadb", editable = "packages/llama-stack-provider-vector-io-chromadb" },
+    { name = "llama-stack-provider-vector-io-pgvector", editable = "packages/llama-stack-provider-vector-io-pgvector" },
+    { name = "llama-stack-provider-vector-io-sqlite-vec", editable = "packages/llama-stack-provider-vector-io-sqlite-vec" },
+]
+
+[[package]]
+name = "llama-stack-distribution-postgres-demo"
+version = "0.1.0"
+source = { editable = "packages/llama-stack-distribution-postgres-demo" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-provider-inference-sentence-transformers" },
+    { name = "llama-stack-provider-inference-transformers" },
+    { name = "llama-stack-provider-inference-vllm" },
+    { name = "llama-stack-provider-interactions-builtin" },
+    { name = "llama-stack-provider-messages-builtin" },
+    { name = "llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-llama-guard" },
+    { name = "llama-stack-provider-tool-runtime-brave-search" },
+    { name = "llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-tool-runtime-model-context-protocol" },
+    { name = "llama-stack-provider-tool-runtime-tavily-search" },
+    { name = "llama-stack-provider-vector-io-chromadb" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-provider-inference-sentence-transformers", editable = "packages/llama-stack-provider-inference-sentence-transformers" },
+    { name = "llama-stack-provider-inference-transformers", editable = "packages/llama-stack-provider-inference-transformers" },
+    { name = "llama-stack-provider-inference-vllm", editable = "packages/llama-stack-provider-inference-vllm" },
+    { name = "llama-stack-provider-interactions-builtin", editable = "packages/llama-stack-provider-interactions-builtin" },
+    { name = "llama-stack-provider-messages-builtin", editable = "packages/llama-stack-provider-messages-builtin" },
+    { name = "llama-stack-provider-responses-builtin", editable = "packages/llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-llama-guard", editable = "packages/llama-stack-provider-safety-llama-guard" },
+    { name = "llama-stack-provider-tool-runtime-brave-search", editable = "packages/llama-stack-provider-tool-runtime-brave-search" },
+    { name = "llama-stack-provider-tool-runtime-file-search", editable = "packages/llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-tool-runtime-model-context-protocol", editable = "packages/llama-stack-provider-tool-runtime-model-context-protocol" },
+    { name = "llama-stack-provider-tool-runtime-tavily-search", editable = "packages/llama-stack-provider-tool-runtime-tavily-search" },
+    { name = "llama-stack-provider-vector-io-chromadb", editable = "packages/llama-stack-provider-vector-io-chromadb" },
+]
+
+[[package]]
+name = "llama-stack-distribution-starter"
+version = "0.1.0"
+source = { editable = "packages/llama-stack-distribution-starter" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-provider-batches-reference" },
+    { name = "llama-stack-provider-file-processor-pypdf" },
+    { name = "llama-stack-provider-files-localfs" },
+    { name = "llama-stack-provider-inference-anthropic" },
+    { name = "llama-stack-provider-inference-azure" },
+    { name = "llama-stack-provider-inference-bedrock" },
+    { name = "llama-stack-provider-inference-cerebras" },
+    { name = "llama-stack-provider-inference-fireworks" },
+    { name = "llama-stack-provider-inference-gemini" },
+    { name = "llama-stack-provider-inference-groq" },
+    { name = "llama-stack-provider-inference-nvidia" },
+    { name = "llama-stack-provider-inference-ollama" },
+    { name = "llama-stack-provider-inference-openai" },
+    { name = "llama-stack-provider-inference-sambanova" },
+    { name = "llama-stack-provider-inference-sentence-transformers" },
+    { name = "llama-stack-provider-inference-together" },
+    { name = "llama-stack-provider-inference-transformers" },
+    { name = "llama-stack-provider-inference-vertexai" },
+    { name = "llama-stack-provider-inference-vllm" },
+    { name = "llama-stack-provider-interactions-builtin" },
+    { name = "llama-stack-provider-messages-builtin" },
+    { name = "llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-code-scanner" },
+    { name = "llama-stack-provider-safety-llama-guard" },
+    { name = "llama-stack-provider-tool-runtime-brave-search" },
+    { name = "llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-tool-runtime-model-context-protocol" },
+    { name = "llama-stack-provider-tool-runtime-tavily-search" },
+    { name = "llama-stack-provider-vector-io-chromadb" },
+    { name = "llama-stack-provider-vector-io-elasticsearch" },
+    { name = "llama-stack-provider-vector-io-faiss" },
+    { name = "llama-stack-provider-vector-io-infinispan" },
+    { name = "llama-stack-provider-vector-io-milvus-inline" },
+    { name = "llama-stack-provider-vector-io-pgvector" },
+    { name = "llama-stack-provider-vector-io-qdrant" },
+    { name = "llama-stack-provider-vector-io-sqlite-vec" },
+    { name = "llama-stack-provider-vector-io-weaviate" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-provider-batches-reference", editable = "packages/llama-stack-provider-batches-reference" },
+    { name = "llama-stack-provider-file-processor-pypdf", editable = "packages/llama-stack-provider-file-processor-pypdf" },
+    { name = "llama-stack-provider-files-localfs", editable = "packages/llama-stack-provider-files-localfs" },
+    { name = "llama-stack-provider-inference-anthropic", editable = "packages/llama-stack-provider-inference-anthropic" },
+    { name = "llama-stack-provider-inference-azure", editable = "packages/llama-stack-provider-inference-azure" },
+    { name = "llama-stack-provider-inference-bedrock", editable = "packages/llama-stack-provider-inference-bedrock" },
+    { name = "llama-stack-provider-inference-cerebras", editable = "packages/llama-stack-provider-inference-cerebras" },
+    { name = "llama-stack-provider-inference-fireworks", editable = "packages/llama-stack-provider-inference-fireworks" },
+    { name = "llama-stack-provider-inference-gemini", editable = "packages/llama-stack-provider-inference-gemini" },
+    { name = "llama-stack-provider-inference-groq", editable = "packages/llama-stack-provider-inference-groq" },
+    { name = "llama-stack-provider-inference-nvidia", editable = "packages/llama-stack-provider-inference-nvidia" },
+    { name = "llama-stack-provider-inference-ollama", editable = "packages/llama-stack-provider-inference-ollama" },
+    { name = "llama-stack-provider-inference-openai", editable = "packages/llama-stack-provider-inference-openai" },
+    { name = "llama-stack-provider-inference-sambanova", editable = "packages/llama-stack-provider-inference-sambanova" },
+    { name = "llama-stack-provider-inference-sentence-transformers", editable = "packages/llama-stack-provider-inference-sentence-transformers" },
+    { name = "llama-stack-provider-inference-together", editable = "packages/llama-stack-provider-inference-together" },
+    { name = "llama-stack-provider-inference-transformers", editable = "packages/llama-stack-provider-inference-transformers" },
+    { name = "llama-stack-provider-inference-vertexai", editable = "packages/llama-stack-provider-inference-vertexai" },
+    { name = "llama-stack-provider-inference-vllm", editable = "packages/llama-stack-provider-inference-vllm" },
+    { name = "llama-stack-provider-interactions-builtin", editable = "packages/llama-stack-provider-interactions-builtin" },
+    { name = "llama-stack-provider-messages-builtin", editable = "packages/llama-stack-provider-messages-builtin" },
+    { name = "llama-stack-provider-responses-builtin", editable = "packages/llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-code-scanner", editable = "packages/llama-stack-provider-safety-code-scanner" },
+    { name = "llama-stack-provider-safety-llama-guard", editable = "packages/llama-stack-provider-safety-llama-guard" },
+    { name = "llama-stack-provider-tool-runtime-brave-search", editable = "packages/llama-stack-provider-tool-runtime-brave-search" },
+    { name = "llama-stack-provider-tool-runtime-file-search", editable = "packages/llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-tool-runtime-model-context-protocol", editable = "packages/llama-stack-provider-tool-runtime-model-context-protocol" },
+    { name = "llama-stack-provider-tool-runtime-tavily-search", editable = "packages/llama-stack-provider-tool-runtime-tavily-search" },
+    { name = "llama-stack-provider-vector-io-chromadb", editable = "packages/llama-stack-provider-vector-io-chromadb" },
+    { name = "llama-stack-provider-vector-io-elasticsearch", editable = "packages/llama-stack-provider-vector-io-elasticsearch" },
+    { name = "llama-stack-provider-vector-io-faiss", editable = "packages/llama-stack-provider-vector-io-faiss" },
+    { name = "llama-stack-provider-vector-io-infinispan", editable = "packages/llama-stack-provider-vector-io-infinispan" },
+    { name = "llama-stack-provider-vector-io-milvus-inline", editable = "packages/llama-stack-provider-vector-io-milvus-inline" },
+    { name = "llama-stack-provider-vector-io-pgvector", editable = "packages/llama-stack-provider-vector-io-pgvector" },
+    { name = "llama-stack-provider-vector-io-qdrant", editable = "packages/llama-stack-provider-vector-io-qdrant" },
+    { name = "llama-stack-provider-vector-io-sqlite-vec", editable = "packages/llama-stack-provider-vector-io-sqlite-vec" },
+    { name = "llama-stack-provider-vector-io-weaviate", editable = "packages/llama-stack-provider-vector-io-weaviate" },
+]
+
+[[package]]
+name = "llama-stack-distribution-watsonx"
+version = "0.1.0"
+source = { editable = "packages/llama-stack-distribution-watsonx" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-provider-files-localfs" },
+    { name = "llama-stack-provider-inference-watsonx" },
+    { name = "llama-stack-provider-interactions-builtin" },
+    { name = "llama-stack-provider-messages-builtin" },
+    { name = "llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-llama-guard" },
+    { name = "llama-stack-provider-tool-runtime-brave-search" },
+    { name = "llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-tool-runtime-model-context-protocol" },
+    { name = "llama-stack-provider-tool-runtime-tavily-search" },
+    { name = "llama-stack-provider-vector-io-faiss" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-provider-files-localfs", editable = "packages/llama-stack-provider-files-localfs" },
+    { name = "llama-stack-provider-inference-watsonx", editable = "packages/llama-stack-provider-inference-watsonx" },
+    { name = "llama-stack-provider-interactions-builtin", editable = "packages/llama-stack-provider-interactions-builtin" },
+    { name = "llama-stack-provider-messages-builtin", editable = "packages/llama-stack-provider-messages-builtin" },
+    { name = "llama-stack-provider-responses-builtin", editable = "packages/llama-stack-provider-responses-builtin" },
+    { name = "llama-stack-provider-safety-llama-guard", editable = "packages/llama-stack-provider-safety-llama-guard" },
+    { name = "llama-stack-provider-tool-runtime-brave-search", editable = "packages/llama-stack-provider-tool-runtime-brave-search" },
+    { name = "llama-stack-provider-tool-runtime-file-search", editable = "packages/llama-stack-provider-tool-runtime-file-search" },
+    { name = "llama-stack-provider-tool-runtime-model-context-protocol", editable = "packages/llama-stack-provider-tool-runtime-model-context-protocol" },
+    { name = "llama-stack-provider-tool-runtime-tavily-search", editable = "packages/llama-stack-provider-tool-runtime-tavily-search" },
+    { name = "llama-stack-provider-vector-io-faiss", editable = "packages/llama-stack-provider-vector-io-faiss" },
 ]
 
 [[package]]

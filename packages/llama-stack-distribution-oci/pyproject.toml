@@ -1,0 +1,32 @@
+[project]
+name = "llama-stack-distribution-oci"
+version = "0.1.0"
+description = "Distribution for Oracle Cloud Infrastructure"
+requires-python = ">=3.12"
+dependencies = [
+    "llama-stack",
+    "llama-stack-provider-files-localfs",
+    "llama-stack-provider-inference-oci",
+    "llama-stack-provider-interactions-builtin",
+    "llama-stack-provider-messages-builtin",
+    "llama-stack-provider-responses-builtin",
+    "llama-stack-provider-safety-llama-guard",
+    "llama-stack-provider-tool-runtime-brave-search",
+    "llama-stack-provider-tool-runtime-file-search",
+    "llama-stack-provider-tool-runtime-model-context-protocol",
+    "llama-stack-provider-tool-runtime-tavily-search",
+    "llama-stack-provider-vector-io-faiss",
+]
+
+[project.entry-points."llama_stack.distributions"]
+oci = "llama_stack_distribution_oci:CONFIGS_DIR"
+
+[build-system]
+requires = ["setuptools>=75.8.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+llama_stack_distribution_oci = ["configs/*.yaml"]
