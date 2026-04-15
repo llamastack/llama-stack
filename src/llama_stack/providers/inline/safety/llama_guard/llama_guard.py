@@ -141,6 +141,8 @@ logger = get_logger(name=__name__, category="safety")
 
 
 class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
+    """Safety provider implementation using Llama Guard models for content moderation."""
+
     def __init__(self, config: LlamaGuardConfig, deps) -> None:
         self.config = config
         self.inference_api = deps[Api.inference]
@@ -228,6 +230,8 @@ class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
 
 
 class LlamaGuardShield:
+    """Runs Llama Guard inference to detect safety category violations in messages."""
+
     def __init__(
         self,
         model: str,
@@ -418,7 +422,7 @@ class LlamaGuardShield:
             unsafe_code_list = [code.strip() for code in unsafe_code.split(",")]
             invalid_codes = [code for code in unsafe_code_list if code not in SAFETY_CODE_TO_CATEGORIES_MAP]
             if invalid_codes:
-                logger.warning(f"Invalid safety codes returned: {invalid_codes}")
+                logger.warning("Invalid safety codes returned", invalid_codes=invalid_codes)
                 # just returning safe object, as we don't know what the invalid codes can map to
                 return ModerationObject(
                     id=f"modr-{uuid.uuid4()}",

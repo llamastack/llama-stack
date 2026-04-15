@@ -6,28 +6,18 @@
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, SecretStr, field_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, SecretStr, model_validator
 
+from llama_stack.providers.utils.forward_headers import validate_forward_headers_config
 from llama_stack_api import json_schema_type
-
-_BLOCKED_HEADERS = frozenset(
-    {
-        "host",
-        "content-type",
-        "content-length",
-        "transfer-encoding",
-        "connection",
-        "upgrade",
-        "te",
-        "trailer",
-        "cookie",
-        "set-cookie",
-    }
-)
 
 
 class PassthroughProviderDataValidator(BaseModel):
-    # allow arbitrary keys so forward_headers can access them
+    """Validates provider-specific request data for passthrough safety forwarding."""
+
+    # extra="allow" because forward_headers key names (e.g. "maas_api_token") are
+    # deployer-defined at config time — they can't be declared as typed fields.
+    # Without it, Pydantic drops them before build_forwarded_headers() can read them.
     model_config = ConfigDict(extra="allow")
 
     passthrough_api_key: SecretStr | None = Field(
@@ -38,6 +28,8 @@ class PassthroughProviderDataValidator(BaseModel):
 
 @json_schema_type
 class PassthroughSafetyConfig(BaseModel):
+    """Configuration for the passthrough safety provider that forwards to a downstream service."""
+
     model_config = ConfigDict(extra="forbid")
     base_url: HttpUrl = Field(
         description="Base URL of the downstream safety service (e.g. https://safety.example.com/v1)",
@@ -46,27 +38,29 @@ class PassthroughSafetyConfig(BaseModel):
         default=None,
         description="API key for the downstream safety service. If set, takes precedence over provider data.",
     )
-    forward_headers: dict[str, str] = Field(
-        default_factory=dict,
+    forward_headers: dict[str, str] | None = Field(
+        default=None,
         description=(
             "Mapping of provider data keys to outbound HTTP header names. "
-            "Only keys listed here are forwarded from X-LlamaStack-Provider-Data "
-            'to the downstream service. Example: {"maas_api_token": "Authorization"}'
+            "Only keys listed here are forwarded from X-LlamaStack-Provider-Data to the downstream service. "
+            "Keys with a __ prefix and core security-sensitive headers (for example Host, "
+            "Content-Type, Transfer-Encoding, Cookie) are rejected at config parse time. "
+            'Example: {"maas_api_token": "Authorization"}'
+        ),
+    )
+    extra_blocked_headers: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Additional outbound header names to block in forward_headers. "
+            "Names are matched case-insensitively and added to the core blocked list. "
+            "This can tighten policy but cannot unblock core security-sensitive headers."
         ),
     )
 
-    @field_validator("forward_headers")
-    @classmethod
-    def validate_forward_headers(cls, v: dict[str, str]) -> dict[str, str]:
-        errors: list[str] = []
-        for provider_key, header_name in v.items():
-            if provider_key.startswith("__"):
-                errors.append(f"provider key '{provider_key}' uses reserved __ prefix")
-            if header_name.lower() in _BLOCKED_HEADERS:
-                errors.append(f"header '{header_name}' is blocked (security-sensitive)")
-        if errors:
-            raise ValueError(f"invalid forward_headers: {'; '.join(errors)}")
-        return v
+    @model_validator(mode="after")
+    def validate_forward_headers(self) -> "PassthroughSafetyConfig":
+        validate_forward_headers_config(self.forward_headers, self.extra_blocked_headers)
+        return self
 
     @classmethod
     def sample_run_config(
@@ -74,6 +68,7 @@ class PassthroughSafetyConfig(BaseModel):
         base_url: str = "${env.PASSTHROUGH_SAFETY_URL}",
         api_key: str = "${env.PASSTHROUGH_SAFETY_API_KEY:=}",
         forward_headers: dict[str, str] | None = None,
+        extra_blocked_headers: list[str] | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         config: dict[str, Any] = {
@@ -82,4 +77,6 @@ class PassthroughSafetyConfig(BaseModel):
         }
         if forward_headers:
             config["forward_headers"] = forward_headers
+        if extra_blocked_headers:
+            config["extra_blocked_headers"] = extra_blocked_headers
         return config

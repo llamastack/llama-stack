@@ -64,6 +64,7 @@ from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryA
 from llama_stack_api import (
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     InsertChunksRequest,
@@ -243,7 +244,7 @@ class SQLiteVecIndex(EmbeddingIndex):
 
             except sqlite3.Error as e:
                 connection.rollback()
-                logger.error(f"Error inserting into {self.vector_table}: {e}")
+                logger.error("Error inserting into", vector_table=self.vector_table, error=str(e))
                 raise
 
             finally:
@@ -361,7 +362,7 @@ class SQLiteVecIndex(EmbeddingIndex):
                 chunk_data = json.loads(chunk_json)
                 embedded_chunk = load_embedded_chunk_with_backward_compat(chunk_data)
             except Exception as e:
-                logger.error(f"Error parsing chunk JSON for id {_id}: {e}")
+                logger.error("Error parsing chunk JSON for id", _id=_id, error=str(e))
                 continue
             chunks.append(embedded_chunk)
             scores.append(score)
@@ -410,10 +411,12 @@ class SQLiteVecIndex(EmbeddingIndex):
                 chunk_data = json.loads(chunk_json)
                 embedded_chunk = load_embedded_chunk_with_backward_compat(chunk_data)
             except Exception as e:
-                logger.error(f"Error parsing chunk JSON for id {_id}: {e}")
+                logger.error("Error parsing chunk JSON for id", _id=_id, error=str(e))
                 continue
             chunks.append(embedded_chunk)
-            scores.append(score)
+            # Negate so higher = more relevant, matching the convention
+            # expected by RRF and other downstream rerankers.
+            scores.append(-score)
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def query_hybrid(
@@ -507,7 +510,7 @@ class SQLiteVecIndex(EmbeddingIndex):
                 connection.commit()
             except Exception as e:
                 connection.rollback()
-                logger.error(f"Error deleting chunks: {e}")
+                logger.error("Error deleting chunks", error=str(e))
                 raise
             finally:
                 cur.close()
@@ -523,8 +526,16 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
     and creates a cache of VectorStoreWithIndex instances (each wrapping a SQLiteVecIndex).
     """
 
-    def __init__(self, config, inference_api: Inference, files_api: Files | None) -> None:
-        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
+    def __init__(
+        self,
+        config,
+        inference_api: Inference,
+        files_api: Files | None,
+        file_processor_api: FileProcessors | None = None,
+    ) -> None:
+        super().__init__(
+            inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api
+        )
         self.config = config
         self.cache: dict[str, VectorStoreWithIndex] = {}
         self.vector_store_table = None

@@ -82,6 +82,14 @@ Methods:
 
 ## Agents
 
+:::warning DEPRECATED API
+
+**The Agents API is deprecated. Use the [Responses API](/docs/building_applications/responses) instead.**
+
+The Responses API provides equivalent functionality with an OpenAI-compatible interface. New applications should use `client.responses.create()` rather than the agents workflow below.
+
+:::
+
 Types:
 
 ```python
@@ -138,8 +146,6 @@ Methods:
 
 - <code title="post /v1/agents/{agent_id}/session/{session_id}/turn">client.agents.turn.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/agents/turn.py">create</a>(session_id, \*, agent_id, \*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/agents/turn_create_params.py">params</a>) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/agents/turn_create_response.py">TurnCreateResponse</a></code>
 - <code title="get /v1/agents/{agent_id}/session/{session_id}/turn/{turn_id}">client.agents.turn.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/agents/turn.py">retrieve</a>(turn_id, \*, agent_id, session_id) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/agents/turn.py">Turn</a></code>
-
-
 
 ## Datasets
 
@@ -224,7 +230,8 @@ Methods:
 
 **This API is deprecated and will be removed in a future version.**
 
-Use the OpenAI-compatible [Vector Stores API](#vectorstores) instead:
+Use the OpenAI-compatible Vector Stores API instead:
+
 - Instead of `client.vector_io.insert()`, use `client.vector_stores.files.create()` and `client.vector_stores.files.chunks.create()`
 - Instead of `client.vector_io.query()`, use `client.vector_stores.search()`
 
@@ -251,7 +258,8 @@ Methods:
 
 **This API is deprecated and will be removed in a future version.**
 
-Use the OpenAI-compatible [Vector Stores API](#vectorstores) instead:
+Use the OpenAI-compatible Vector Stores API instead:
+
 - Instead of `client.vector_dbs.register()`, use `client.vector_stores.create()`
 - Instead of `client.vector_dbs.list()`, use `client.vector_stores.list()`
 - Instead of `client.vector_dbs.retrieve()`, use `client.vector_stores.retrieve()`
@@ -297,6 +305,12 @@ Methods:
 - <code title="delete /v1/models/{model_id}">client.models.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/models.py">unregister</a>(model_id) -> None</code>
 
 ## PostTraining
+
+:::warning UNAVAILABLE API
+
+**The Post Training API is not currently available in Llama Stack.** There are no active providers implementing this API. The SDK types remain for forward compatibility but these endpoints are non-functional.
+
+:::
 
 Types:
 
@@ -379,6 +393,12 @@ Methods:
 - <code title="post /v1/shields">client.shields.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/shields.py">register</a>(\*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/shield_register_params.py">params</a>) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/shield.py">Shield</a></code>
 
 ## SyntheticDataGeneration
+
+:::warning UNAVAILABLE API
+
+**The Synthetic Data Generation API is not currently available in Llama Stack.** There are no active providers implementing this API. The SDK types remain for forward compatibility but these endpoints are non-functional.
+
+:::
 
 Types:
 

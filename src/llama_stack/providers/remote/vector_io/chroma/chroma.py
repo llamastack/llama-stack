@@ -22,6 +22,7 @@ from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryA
 from llama_stack_api import (
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     InsertChunksRequest,
@@ -49,12 +50,22 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 # this is a helper to allow us to use async and non-async chroma clients interchangeably
 async def maybe_await(result):
+    """Await a coroutine if needed, otherwise return the value directly.
+
+    Args:
+        result: a coroutine or plain value
+
+    Returns:
+        The resolved value
+    """
     if asyncio.iscoroutine(result):
         return await result
     return result
 
 
 class ChromaIndex(EmbeddingIndex):
+    """Embedding index backed by a ChromaDB collection."""
+
     def __init__(self, client: ChromaClientType, collection, kvstore: KVStore | None = None):
         self.client = client
         self.collection = collection
@@ -230,13 +241,18 @@ class ChromaIndex(EmbeddingIndex):
 
 
 class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+    """Vector I/O adapter for remote ChromaDB instances."""
+
     def __init__(
         self,
         config: RemoteChromaVectorIOConfig | InlineChromaVectorIOConfig,
         inference_api: Inference,
         files_api: Files | None,
+        file_processor_api: FileProcessors | None = None,
     ) -> None:
-        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
+        super().__init__(
+            inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api
+        )
         log.info(f"Initializing ChromaVectorIOAdapter with url: {config}")
         self.config = config
         self.client = None

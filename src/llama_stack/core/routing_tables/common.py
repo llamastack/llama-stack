@@ -13,7 +13,6 @@ from llama_stack.core.datatypes import (
     RoutableObject,
     RoutableObjectWithProvider,
     RoutedProtocol,
-    ScoringFnWithOwner,
 )
 from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.core.store import DistributionRegistry
@@ -24,11 +23,30 @@ logger = get_logger(name=__name__, category="core::routing_tables")
 
 
 def get_impl_api(p: Any) -> Api:
+    """Get the API type from a provider implementation's spec.
+
+    Args:
+        p: A provider implementation with a __provider_spec__ attribute.
+
+    Returns:
+        The Api enum value for this provider.
+    """
     return p.__provider_spec__.api
 
 
-# TODO: this should return the registered object for all APIs
 async def register_object_with_provider(obj: RoutableObject, p: Any) -> RoutableObject:
+    """Register a routable object with the appropriate provider based on its API type.
+
+    Args:
+        obj: The routable object to register.
+        p: The provider implementation to register with.
+
+    Returns:
+        The registered object (may be modified by the provider).
+
+    Raises:
+        ValueError: If the provider's API type is unknown.
+    """
     api = get_impl_api(p)
 
     assert obj.provider_id != "remote", "Remote provider should not be registered"
@@ -39,12 +57,6 @@ async def register_object_with_provider(obj: RoutableObject, p: Any) -> Routable
         return await p.register_shield(obj)
     elif api == Api.vector_io:
         return await p.register_vector_store(obj)
-    elif api == Api.datasetio:
-        return await p.register_dataset(obj)
-    elif api == Api.scoring:
-        return await p.register_scoring_function(obj)
-    elif api == Api.eval:
-        return await p.register_benchmark(obj)
     elif api == Api.tool_runtime:
         return await p.register_toolgroup(obj)
     else:
@@ -52,6 +64,15 @@ async def register_object_with_provider(obj: RoutableObject, p: Any) -> Routable
 
 
 async def unregister_object_from_provider(obj: RoutableObject, p: Any) -> None:
+    """Unregister a routable object from the appropriate provider based on its API type.
+
+    Args:
+        obj: The routable object to unregister.
+        p: The provider implementation to unregister from.
+
+    Raises:
+        ValueError: If the provider's API type does not support unregistration.
+    """
     api = get_impl_api(p)
     if api == Api.vector_io:
         return await p.unregister_vector_store(obj.identifier)
@@ -59,12 +80,6 @@ async def unregister_object_from_provider(obj: RoutableObject, p: Any) -> None:
         return await p.unregister_model(obj.identifier)
     elif api == Api.safety:
         return await p.unregister_shield(obj.identifier)
-    elif api == Api.datasetio:
-        return await p.unregister_dataset(obj.identifier)
-    elif api == Api.eval:
-        return await p.unregister_benchmark(obj.identifier)
-    elif api == Api.scoring:
-        return await p.unregister_scoring_function(obj.identifier)
     elif api == Api.tool_runtime:
         return await p.unregister_toolgroup(obj.identifier)
     else:
@@ -75,6 +90,8 @@ Registry = dict[str, list[RoutableObjectWithProvider]]
 
 
 class CommonRoutingTableImpl(RoutingTable):
+    """Base implementation for routing tables that manage object registration and provider dispatch."""
+
     def __init__(
         self,
         impls_by_provider_id: dict[str, RoutedProtocol],
@@ -98,7 +115,7 @@ class CommonRoutingTableImpl(RoutingTable):
                 await self.dist_registry.register(obj)
 
         # Register all objects from providers
-        for pid, p in self.impls_by_provider_id.items():
+        for _pid, p in self.impls_by_provider_id.items():
             api = get_impl_api(p)
             if api == Api.inference:
                 p.model_store = self
@@ -106,14 +123,6 @@ class CommonRoutingTableImpl(RoutingTable):
                 p.shield_store = self
             elif api == Api.vector_io:
                 p.vector_store_store = self
-            elif api == Api.datasetio:
-                p.dataset_store = self
-            elif api == Api.scoring:
-                p.scoring_function_store = self
-                scoring_functions = await p.list_scoring_functions()
-                await add_objects(scoring_functions, pid, ScoringFnWithOwner)
-            elif api == Api.eval:
-                p.benchmark_store = self
             elif api == Api.tool_runtime:
                 p.tool_store = self
 
@@ -125,10 +134,7 @@ class CommonRoutingTableImpl(RoutingTable):
         pass
 
     async def get_provider_impl(self, routing_key: str, provider_id: str | None = None) -> Any:
-        from .benchmarks import BenchmarksRoutingTable
-        from .datasets import DatasetsRoutingTable
         from .models import ModelsRoutingTable
-        from .scoring_functions import ScoringFunctionsRoutingTable
         from .shields import ShieldsRoutingTable
         from .toolgroups import ToolGroupsRoutingTable
         from .vector_stores import VectorStoresRoutingTable
@@ -140,12 +146,6 @@ class CommonRoutingTableImpl(RoutingTable):
                 return ("Safety", "shield")
             elif isinstance(self, VectorStoresRoutingTable):
                 return ("VectorIO", "vector_store")
-            elif isinstance(self, DatasetsRoutingTable):
-                return ("DatasetIO", "dataset")
-            elif isinstance(self, ScoringFunctionsRoutingTable):
-                return ("Scoring", "scoring_function")
-            elif isinstance(self, BenchmarksRoutingTable):
-                return ("Eval", "benchmark")
             elif isinstance(self, ToolGroupsRoutingTable):
                 return ("ToolGroups", "tool_group")
             else:
@@ -178,7 +178,7 @@ class CommonRoutingTableImpl(RoutingTable):
 
         # Check if user has permission to access this object
         if not is_action_allowed(self.policy, "read", obj, get_authenticated_user()):
-            logger.debug(f"Access denied to {type} '{identifier}'")
+            logger.debug("Access denied", resource_type=type, identifier=identifier)
             return None
 
         return obj
@@ -206,7 +206,7 @@ class CommonRoutingTableImpl(RoutingTable):
             raise AccessDeniedError("create", obj, creator)
         if creator:
             obj.owner = creator
-            logger.info(f"Setting owner for {obj.type} '{obj.identifier}' to {obj.owner.principal}")
+            logger.info("Setting owner", resource_type=obj.type, identifier=obj.identifier, owner=obj.owner.principal)
 
         registered_obj = await register_object_with_provider(obj, p)
 
@@ -216,8 +216,9 @@ class CommonRoutingTableImpl(RoutingTable):
                 await p._ensure_openai_metadata_exists(obj)
             else:
                 logger.warning(
-                    f"Provider {obj.provider_id} does not support OpenAI metadata creation. "
-                    f"Vector store {obj.identifier} may not work with OpenAI-compatible APIs."
+                    "Provider does not support OpenAI metadata creation. Vector store may not work with OpenAI-compatible APIs.",
+                    provider_id=obj.provider_id,
+                    identifier=obj.identifier,
                 )
 
         # TODO: This needs to be fixed for all APIs once they return the registered object
@@ -256,6 +257,18 @@ class CommonRoutingTableImpl(RoutingTable):
 
 
 async def lookup_model(routing_table: CommonRoutingTableImpl, model_id: str) -> Model:
+    """Look up a model by identifier from the routing table.
+
+    Args:
+        routing_table: The routing table to search.
+        model_id: The model identifier to look up.
+
+    Returns:
+        The found Model object.
+
+    Raises:
+        ModelNotFoundError: If no model with the given identifier exists.
+    """
     model = await routing_table.get_object_by_identifier("model", model_id)
     if not model:
         raise ModelNotFoundError(model_id)

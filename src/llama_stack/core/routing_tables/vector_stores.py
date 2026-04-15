@@ -78,7 +78,8 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
                 provider_id = list(self.impls_by_provider_id.keys())[0]
                 if len(self.impls_by_provider_id) > 1:
                     logger.warning(
-                        f"No provider specified and multiple providers available. Arbitrarily selected the first provider {provider_id}."
+                        "No provider specified and multiple providers available. Arbitrarily selected the first provider .",
+                        provider_id=provider_id,
                     )
             else:
                 raise ValueError("No provider available. Please configure a vector_io provider.")
@@ -151,7 +152,9 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
                 await self.unregister_object(vector_store_obj)
         except Exception as e:
             # Log the error but don't fail the operation
-            logger.warning(f"Failed to unregister vector store {vector_store_id} from routing table: {e}")
+            logger.warning(
+                "Failed to unregister vector store from routing table", vector_store_id=vector_store_id, error=str(e)
+            )
 
     async def openai_search_vector_store(
         self,

@@ -1,12 +1,9 @@
 version: 2
 distro_name: open-benchmark
 apis:
-- agents
-- datasetio
-- eval
 - inference
+- responses
 - safety
-- scoring
 - tool_runtime
 - vector_io
 providers:
@@ -71,9 +68,9 @@ providers:
     provider_type: inline::llama-guard
     config:
       excluded_categories: []
-  agents:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  responses:
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       persistence:
         agent_state:
@@ -84,35 +81,6 @@ providers:
           backend: sql_default
           max_write_queue_size: 10000
           num_writers: 4
-  eval:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
-    config:
-      kvstore:
-        namespace: eval
-        backend: kv_default
-  datasetio:
-  - provider_id: huggingface
-    provider_type: remote::huggingface
-    config:
-      kvstore:
-        namespace: datasetio::huggingface
-        backend: kv_default
-  - provider_id: localfs
-    provider_type: inline::localfs
-    config:
-      kvstore:
-        namespace: datasetio::localfs
-        backend: kv_default
-  scoring:
-  - provider_id: basic
-    provider_type: inline::basic
-  - provider_id: llm-as-judge
-    provider_type: inline::llm-as-judge
-  - provider_id: braintrust
-    provider_type: inline::braintrust
-    config:
-      openai_api_key: ${env.OPENAI_API_KEY:=}
   tool_runtime:
   - provider_id: brave-search
     provider_type: remote::brave-search
@@ -124,8 +92,8 @@ providers:
     config:
       api_key: ${env.TAVILY_SEARCH_API_KEY:=}
       max_results: 3
-  - provider_id: rag-runtime
-    provider_type: inline::rag-runtime
+  - provider_id: file-search
+    provider_type: inline::file-search
   - provider_id: model-context-protocol
     provider_type: remote::model-context-protocol
 storage:
@@ -184,79 +152,5 @@ registered_resources:
   shields:
   - shield_id: meta-llama/Llama-Guard-3-8B
   vector_dbs: []
-  datasets:
-  - purpose: eval/messages-answer
-    source:
-      type: uri
-      uri: huggingface://datasets/llamastack/simpleqa?split=train
-    metadata: {}
-    dataset_id: simpleqa
-  - purpose: eval/messages-answer
-    source:
-      type: uri
-      uri: huggingface://datasets/llamastack/mmlu_cot?split=test&name=all
-    metadata: {}
-    dataset_id: mmlu_cot
-  - purpose: eval/messages-answer
-    source:
-      type: uri
-      uri: huggingface://datasets/llamastack/gpqa_0shot_cot?split=test&name=gpqa_main
-    metadata: {}
-    dataset_id: gpqa_cot
-  - purpose: eval/messages-answer
-    source:
-      type: uri
-      uri: huggingface://datasets/llamastack/math_500?split=test
-    metadata: {}
-    dataset_id: math_500
-  - purpose: eval/messages-answer
-    source:
-      type: uri
-      uri: huggingface://datasets/llamastack/IfEval?split=train
-    metadata: {}
-    dataset_id: ifeval
-  - purpose: eval/messages-answer
-    source:
-      type: uri
-      uri: huggingface://datasets/llamastack/docvqa?split=val
-    metadata: {}
-    dataset_id: docvqa
-  scoring_fns: []
-  benchmarks:
-  - dataset_id: simpleqa
-    scoring_functions:
-    - llm-as-judge::405b-simpleqa
-    metadata: {}
-    benchmark_id: meta-reference-simpleqa
-  - dataset_id: mmlu_cot
-    scoring_functions:
-    - basic::regex_parser_multiple_choice_answer
-    metadata: {}
-    benchmark_id: meta-reference-mmlu-cot
-  - dataset_id: gpqa_cot
-    scoring_functions:
-    - basic::regex_parser_multiple_choice_answer
-    metadata: {}
-    benchmark_id: meta-reference-gpqa-cot
-  - dataset_id: math_500
-    scoring_functions:
-    - basic::regex_parser_math_response
-    metadata: {}
-    benchmark_id: meta-reference-math-500
-  - dataset_id: ifeval
-    scoring_functions:
-    - basic::ifeval
-    metadata: {}
-    benchmark_id: meta-reference-ifeval
-  - dataset_id: docvqa
-    scoring_functions:
-    - basic::docvqa
-    metadata: {}
-    benchmark_id: meta-reference-docvqa
-  tool_groups:
-  - toolgroup_id: builtin::websearch
-    provider_id: tavily-search
-  - toolgroup_id: builtin::rag
-    provider_id: rag-runtime
 server:
   port: 8321

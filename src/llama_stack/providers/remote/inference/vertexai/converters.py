@@ -25,6 +25,7 @@ from llama_stack.log import get_logger
 from llama_stack_api import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionCustomToolCall,
     OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
@@ -109,7 +110,7 @@ class _CandidateData:
     index: int
     text: str | None
     reasoning_content: str | None  # thinking text from part.thought
-    tool_calls: list[OpenAIChatCompletionToolCall]
+    tool_calls: list[OpenAIChatCompletionToolCall | OpenAIChatCompletionCustomToolCall]
     finish_reason_raw: Any
     logprobs: OpenAIChoiceLogprobs | None
 
@@ -137,17 +138,6 @@ def convert_finish_reason(
         return "stop"
     reason_str = str(finish_reason).upper()
     return _GEMINI_TO_OPENAI_FINISH_REASON.get(reason_str, "stop")
-
-
-def convert_model_name(model: str) -> str:
-    """Ensure model ID is in the bare form expected by the Gemini API.
-
-    Strips ``google/`` or ``models/`` prefixes if present so callers can
-    pass either ``"gemini-2.5-flash"`` or ``"google/gemini-2.5-flash"``.
-    """
-    model = model.removeprefix("google/")
-    model = model.removeprefix("models/")
-    return model
 
 
 def convert_response_format(
@@ -214,7 +204,7 @@ def _convert_image_url_part(part: dict[str, Any]) -> dict[str, Any] | None:
         logger.warning("HTTP image URL reached converter without pre-download; skipping")
         return None
 
-    logger.warning("Unsupported image URL scheme in user message; skipping: %s", url[:50])
+    logger.warning("Unsupported image URL scheme in user message, skipping", url=url[:50])
     return None
 
 
@@ -422,14 +412,16 @@ def generate_completion_id() -> str:
     return f"chatcmpl-{uuid.uuid4()}"
 
 
-def _extract_candidate_parts(candidate: Any) -> tuple[list[str], list[str], list[OpenAIChatCompletionToolCall]]:
+def _extract_candidate_parts(
+    candidate: Any,
+) -> tuple[list[str], list[str], list[OpenAIChatCompletionToolCall | OpenAIChatCompletionCustomToolCall]]:
     """Extract text segments, thinking segments, and tool calls from a Gemini candidate's parts."""
     content_obj = getattr(candidate, "content", None)
     parts = getattr(content_obj, "parts", None) or []
 
     text_parts: list[str] = []
     thinking_parts: list[str] = []
-    tool_calls: list[OpenAIChatCompletionToolCall] = []
+    tool_calls: list[OpenAIChatCompletionToolCall | OpenAIChatCompletionCustomToolCall] = []
 
     for part in parts:
         # Check for thinking/reasoning content first (part.thought is a bool flag;
@@ -679,7 +671,7 @@ def convert_gemini_stream_chunk_to_openai(
             delta=OpenAIChoiceDelta(
                 role=role,
                 content=cd.text,
-                tool_calls=cd.tool_calls or None,
+                tool_calls=cd.tool_calls or None,  # type: ignore[arg-type]
                 reasoning_content=cd.reasoning_content,
             ),
             finish_reason=_resolve_stream_finish_reason(cd.finish_reason_raw, bool(cd.tool_calls)),

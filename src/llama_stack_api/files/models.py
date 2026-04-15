@@ -30,9 +30,21 @@ class OpenAIFileObject(BaseModel):
     id: str = Field(..., description="The file identifier, which can be referenced in the API endpoints.")
     bytes: int = Field(..., description="The size of the file, in bytes.")
     created_at: int = Field(..., description="The Unix timestamp (in seconds) for when the file was created.")
-    expires_at: int = Field(..., description="The Unix timestamp (in seconds) for when the file expires.")
+    expires_at: int | None = Field(
+        default=None, description="The Unix timestamp (in seconds) for when the file expires."
+    )
     filename: str = Field(..., description="The name of the file.")
     purpose: OpenAIFilePurpose = Field(..., description="The intended purpose of the file.")
+    status: Literal["uploaded", "processed", "error"] = Field(
+        ...,
+        description="Deprecated. The current status of the file.",
+        deprecated=True,
+    )
+    status_details: str = Field(
+        ...,
+        description="Deprecated. For details on why a fine-tuning training file failed validation, see the error field on fine_tuning.job.",
+        deprecated=True,
+    )
 
 
 @json_schema_type

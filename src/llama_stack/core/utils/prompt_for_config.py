@@ -18,7 +18,7 @@ from llama_stack.log import get_logger
 log = get_logger(name=__name__, category="core")
 
 
-def is_list_of_primitives(field_type):
+def is_list_of_primitives(field_type: Any) -> bool:
     """Check if a field type is a List of primitive types."""
     origin = get_origin(field_type)
     if origin is list or origin is list:
@@ -28,32 +28,58 @@ def is_list_of_primitives(field_type):
     return False
 
 
-def is_basemodel_without_fields(typ):
-    return inspect.isclass(typ) and issubclass(typ, BaseModel) and len(typ.__fields__) == 0
+def is_basemodel_without_fields(typ: Any) -> bool:
+    """Check if a type is a Pydantic BaseModel subclass with no defined fields.
+
+    Args:
+        typ: The type to check.
+
+    Returns:
+        True if typ is a BaseModel subclass with zero fields.
+    """
+    return inspect.isclass(typ) and issubclass(typ, BaseModel) and len(typ.__fields__) == 0  # type: ignore[arg-type]
 
 
-def can_recurse(typ):
-    return inspect.isclass(typ) and issubclass(typ, BaseModel) and len(typ.__fields__) > 0
+def can_recurse(typ: Any) -> bool:
+    """Check if a type is a Pydantic BaseModel subclass with fields that can be recursively prompted.
+
+    Args:
+        typ: The type to check.
+
+    Returns:
+        True if typ is a BaseModel subclass with one or more fields.
+    """
+    return inspect.isclass(typ) and issubclass(typ, BaseModel) and len(typ.__fields__) > 0  # type: ignore[arg-type]
 
 
-def get_literal_values(field):
+def get_literal_values(field: FieldInfo) -> tuple[Any, ...] | None:
     """Extract literal values from a field if it's a Literal type."""
     if get_origin(field.annotation) is Literal:
         return get_args(field.annotation)
     return None
 
 
-def is_optional(field_type):
+def is_optional(field_type: Any) -> bool:
     """Check if a field type is Optional."""
     return get_origin(field_type) is Union and type(None) in get_args(field_type)
 
 
-def get_non_none_type(field_type):
+def get_non_none_type(field_type: Any) -> Any:
     """Get the non-None type from an Optional type."""
     return next(arg for arg in get_args(field_type) if arg is not type(None))
 
 
-def manually_validate_field(model: type[BaseModel], field_name: str, value: Any):
+def manually_validate_field(model: type[BaseModel], field_name: str, value: Any) -> Any:
+    """Run Pydantic field validators manually on a single field value.
+
+    Args:
+        model: The Pydantic model class containing the validators.
+        field_name: The name of the field to validate.
+        value: The value to validate.
+
+    Returns:
+        The validated value.
+    """
     validators = model.__pydantic_decorators__.field_validators
     for _name, validator in validators.items():
         if field_name in validator.info.fields:
@@ -62,21 +88,39 @@ def manually_validate_field(model: type[BaseModel], field_name: str, value: Any)
     return value
 
 
-def is_discriminated_union(typ) -> bool:
+def is_discriminated_union(typ: Any) -> bool:
+    """Check if a type or FieldInfo represents a discriminated union.
+
+    Args:
+        typ: A type hint or Pydantic FieldInfo to check.
+
+    Returns:
+        True if the type is a discriminated union.
+    """
     if isinstance(typ, FieldInfo):
-        return typ.discriminator
+        return bool(typ.discriminator)
     else:
         if get_origin(typ) is not Annotated:
             return False
         args = get_args(typ)
-        return len(args) >= 2 and args[1].discriminator
+        return len(args) >= 2 and bool(args[1].discriminator)
 
 
 def prompt_for_discriminated_union(
-    field_name,
-    typ,
-    existing_value,
-):
+    field_name: str,
+    typ: Any,
+    existing_value: BaseModel | None,
+) -> BaseModel:
+    """Interactively prompt the user to select and configure a discriminated union variant.
+
+    Args:
+        field_name: The name of the field being configured.
+        typ: The type hint or FieldInfo for the discriminated union.
+        existing_value: An existing value to use as default, or None.
+
+    Returns:
+        A configured instance of the selected union variant.
+    """
     if isinstance(typ, FieldInfo):
         inner_type = typ.annotation
         discriminator = typ.discriminator
@@ -110,12 +154,12 @@ def prompt_for_discriminated_union(
             chosen_type = type_map[discriminator_value]
             log.info(f"\nConfiguring {chosen_type.__name__}:")
 
-            if existing_value and (getattr(existing_value, discriminator) != discriminator_value):
+            if existing_value and (getattr(existing_value, str(discriminator)) != discriminator_value):
                 existing_value = None
 
             sub_config = prompt_for_config(chosen_type, existing_value)
             # Set the discriminator field in the sub-config
-            setattr(sub_config, discriminator, discriminator_value)
+            setattr(sub_config, str(discriminator), discriminator_value)
             return sub_config
         else:
             log.error(f"Invalid {discriminator}. Please try again.")
@@ -138,7 +182,7 @@ def prompt_for_config(config_type: type[BaseModel], existing_config: BaseModel |
     """
     config_data = {}
 
-    for field_name, field in config_type.__fields__.items():
+    for field_name, field in config_type.__fields__.items():  # type: ignore[attr-defined]
         field_type = field.annotation
         existing_value = getattr(existing_config, field_name) if existing_config else None
         if existing_value:
@@ -162,8 +206,8 @@ def prompt_for_config(config_type: type[BaseModel], existing_config: BaseModel |
                 # this branch does not handle existing and default values yet
                 user_input = input(prompt + " ")
                 try:
-                    value = field_type[user_input]
-                    validated_value = manually_validate_field(config_type, field, value)
+                    enum_value: Any = field_type[user_input]
+                    validated_value = manually_validate_field(config_type, field, enum_value)
                     config_data[field_name] = validated_value
                     break
                 except KeyError:
@@ -228,7 +272,7 @@ def prompt_for_config(config_type: type[BaseModel], existing_config: BaseModel |
                         # Handle Optional types
                         if is_optional(field_type):
                             if user_input.lower() == "none":
-                                value = None
+                                value: Any = None
                             else:
                                 field_type = get_non_none_type(field_type)
                                 value = user_input

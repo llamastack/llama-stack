@@ -95,6 +95,7 @@ export default function ChatPlaygroundPage() {
   const [selectedVectorDBs, setSelectedVectorDBs] = useState<string[]>([]);
   const client = useAuthClient();
   const abortControllerRef = useRef<AbortController | null>(null);
+  const lastResponseIdRef = useRef<string | null>(null);
 
   const isModelsLoading = modelsLoading ?? true;
 
@@ -364,7 +365,78 @@ export default function ChatPlaygroundPage() {
           // Note: loadAgentSessions will be called after models are loaded
         }
       } catch (error) {
-        console.error("Error fetching agents:", error);
+        console.error("Error fetching agents (may be unavailable):", error);
+        // Agents API not available - load persisted local agents
+        const savedAgents = SessionUtils.loadAgentsList();
+        if (savedAgents.length > 0) {
+          setAgents(savedAgents);
+          const savedAgentId = SessionUtils.loadCurrentAgentId();
+          const agentToSelect =
+            savedAgentId && savedAgents.find(a => a.agent_id === savedAgentId)
+              ? savedAgentId
+              : savedAgents[0].agent_id;
+          setSelectedAgentId(agentToSelect);
+          // Load the saved session
+          const savedSessionId =
+            SessionUtils.loadActiveSessionId(agentToSelect);
+          if (savedSessionId) {
+            const savedSession = SessionUtils.loadSessionData(
+              agentToSelect,
+              savedSessionId
+            );
+            if (savedSession) {
+              setCurrentSession(savedSession);
+              lastResponseIdRef.current = null;
+              // Load instructions
+              const agent = savedAgents.find(a => a.agent_id === agentToSelect);
+              if (agent?.agent_config?.instructions) {
+                setNewAgentInstructions(agent.agent_config.instructions);
+              }
+            }
+          }
+          if (!currentSession) {
+            // No saved session found, create a fresh one
+            const sessionId = `session-${Date.now()}`;
+            const localSession: ChatSession = {
+              id: sessionId,
+              agentId: agentToSelect,
+              name:
+                savedAgents.find(a => a.agent_id === agentToSelect)
+                  ?.agent_config?.name || "Chat",
+              messages: [],
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            };
+            setCurrentSession(localSession);
+            SessionUtils.saveActiveSessionId(agentToSelect, sessionId);
+            lastResponseIdRef.current = null;
+          }
+        } else {
+          // No saved agents - create a default one
+          const defaultAgent = {
+            agent_id: `chat-${Date.now()}`,
+            agent_config: {
+              name: "New Chat",
+              instructions: "You are a helpful assistant.",
+            },
+          };
+          setAgents([defaultAgent]);
+          SessionUtils.saveAgentsList([defaultAgent]);
+          setSelectedAgentId(defaultAgent.agent_id);
+          SessionUtils.saveCurrentAgentId(defaultAgent.agent_id);
+          const sessionId = `session-${Date.now()}`;
+          const localSession: ChatSession = {
+            id: sessionId,
+            agentId: defaultAgent.agent_id,
+            name: "New Chat",
+            messages: [],
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          };
+          setCurrentSession(localSession);
+          SessionUtils.saveActiveSessionId(defaultAgent.agent_id, sessionId);
+          lastResponseIdRef.current = null;
+        }
       } finally {
         setAgentsLoading(false);
       }
@@ -400,13 +472,31 @@ export default function ChatPlaygroundPage() {
           console.error("Invalid toolgroups data format:", toolgroups);
         }
       } catch (error) {
-        console.error("Error fetching toolgroups:", error);
-        if (error instanceof Error) {
-          console.error("Error details:", {
-            name: error.name,
-            message: error.message,
-            stack: error.stack,
-          });
+        console.error(
+          "Error fetching toolgroups, falling back to /v1/tools:",
+          error
+        );
+        // Fallback: fetch individual tools and present them as toolgroups
+        try {
+          const res = await fetch("/api/v1/tools");
+          if (res.ok) {
+            const data = await res.json();
+            const tools = Array.isArray(data) ? data : (data.data ?? []);
+            const toolsAsToolgroups = tools.map(
+              (t: Record<string, unknown>) => ({
+                identifier: (t.identifier ??
+                  t.tool_name ??
+                  t.name ??
+                  "") as string,
+                provider_id: (t.provider_id ?? "") as string,
+                type: "tool",
+                provider_resource_id: (t.provider_resource_id ?? "") as string,
+              })
+            );
+            setAvailableToolgroups(toolsAsToolgroups);
+          }
+        } catch {
+          // both failed, leave empty
         }
       }
     };
@@ -437,59 +527,51 @@ export default function ChatPlaygroundPage() {
       name: string,
       instructions: string,
       model: string,
-      toolgroups: string[] = [],
-      vectorDBs: string[] = []
+      _toolgroups: string[] = [],
+      _vectorDBs: string[] = []
     ) => {
-      try {
-        const processedToolgroups = toolgroups.map(toolgroup => {
-          if (toolgroup === "builtin::rag" && vectorDBs.length > 0) {
-            return {
-              name: "builtin::rag/knowledge_search",
-              args: {
-                vector_db_ids: vectorDBs,
-              },
-            };
-          }
-          return toolgroup;
-        });
+      // Create a local responses-mode chat session
+      const agentId = `chat-${Date.now()}`;
+      const sessionId = `session-${Date.now()}`;
 
-        const agentConfig = {
-          model,
-          instructions,
-          name: name || undefined,
-          enable_session_persistence: true,
-          toolgroups:
-            processedToolgroups.length > 0 ? processedToolgroups : undefined,
-        };
-
-        const response = await client.agents.create({
-          agent_config: agentConfig,
-        });
-
-        const agentList = await client.agents.list();
-        setAgents(
-          (agentList.data as Array<{
-            agent_id: string;
-            agent_config?: {
-              agent_name?: string;
-              name?: string;
-              instructions?: string;
-            };
-            [key: string]: unknown;
-          }>) || []
-        );
-
-        setSelectedAgentId(response.agent_id);
-        await loadAgentConfig(response.agent_id);
-        await loadAgentSessions(response.agent_id);
-
-        return response.agent_id;
-      } catch (error) {
-        console.error("Error creating agent:", error);
-        throw error;
+      if (model) {
+        setSelectedModel(model);
       }
+      setNewAgentInstructions(instructions);
+
+      const newAgent = {
+        agent_id: agentId,
+        agent_config: {
+          name: name || "New Chat",
+          instructions,
+        },
+      };
+
+      setAgents(prev => {
+        const updated = [...prev, newAgent];
+        SessionUtils.saveAgentsList(updated);
+        return updated;
+      });
+
+      const localSession: ChatSession = {
+        id: sessionId,
+        agentId,
+        name: name || "New Chat",
+        messages: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      setSelectedAgentId(agentId);
+      setCurrentSession(localSession);
+      lastResponseIdRef.current = null;
+      SessionUtils.saveCurrentAgentId(agentId);
+      SessionUtils.saveActiveSessionId(agentId, sessionId);
+      SessionUtils.saveSessionData(agentId, localSession);
+
+      return agentId;
     },
-    [client, loadAgentSessions, loadAgentConfig]
+    []
   );
 
   const handleVectorDBCreated = useCallback(
@@ -711,6 +793,8 @@ export default function ChatPlaygroundPage() {
   useEffect(() => {
     if (
       selectedAgentId &&
+      !selectedAgentId.startsWith("chat-") &&
+      selectedAgentId !== "__responses_mode__" &&
       !agentsLoading &&
       !modelsLoading &&
       selectedModel &&
@@ -758,8 +842,190 @@ export default function ChatPlaygroundPage() {
     await handleSubmitWithContent(userMessage.content);
   };
 
+  const handleSubmitViaResponses = async (content: string) => {
+    setIsGenerating(true);
+    setError(null);
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    try {
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "",
+        createdAt: new Date(),
+      };
+
+      setCurrentSession(prev => {
+        if (!prev) return prev;
+        const updated = {
+          ...prev,
+          messages: [...prev.messages, assistantMessage],
+          updatedAt: Date.now(),
+        };
+        SessionUtils.saveSessionData(prev.agentId, updated);
+        return updated;
+      });
+
+      const body: Record<string, unknown> = {
+        model: selectedModel,
+        input: content,
+        stream: true,
+      };
+      if (lastResponseIdRef.current) {
+        body.previous_response_id = lastResponseIdRef.current;
+      }
+      if (
+        newAgentInstructions &&
+        newAgentInstructions !== "You are a helpful assistant."
+      ) {
+        body.instructions = newAgentInstructions;
+      }
+      // Map selected tools to Responses API format
+      if (selectedToolgroups.length > 0) {
+        const tools: Record<string, unknown>[] = [];
+        for (const toolId of selectedToolgroups) {
+          if (toolId === "web_search" || toolId.includes("websearch")) {
+            tools.push({ type: "web_search" });
+          } else if (
+            toolId === "file_search" ||
+            toolId.includes("file_search")
+          ) {
+            const toolConfig: Record<string, unknown> = { type: "file_search" };
+            if (selectedVectorDBs.length > 0) {
+              toolConfig.vector_store_ids = selectedVectorDBs;
+            }
+            tools.push(toolConfig);
+          }
+        }
+        if (tools.length > 0) {
+          body.tools = tools;
+        }
+      }
+
+      const res = await fetch("/api/v1/responses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: abortController.signal,
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Failed to get response: ${res.status} ${errText}`);
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No response body");
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulatedText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6).trim();
+          if (data === "[DONE]") continue;
+
+          try {
+            const event = JSON.parse(data);
+
+            // Capture the response ID for conversation continuity
+            if (event.response?.id) {
+              lastResponseIdRef.current = event.response.id;
+            }
+
+            // Extract text from output_text.delta events
+            if (event.type === "response.output_text.delta" && event.delta) {
+              accumulatedText += event.delta;
+              const textSnapshot = accumulatedText;
+              flushSync(() => {
+                setCurrentSession(prev => {
+                  if (!prev) return prev;
+                  const msgs = [...prev.messages];
+                  const lastMsg = msgs[msgs.length - 1];
+                  if (lastMsg?.role === "assistant") {
+                    msgs[msgs.length - 1] = {
+                      ...lastMsg,
+                      content: textSnapshot,
+                    };
+                  }
+                  return { ...prev, messages: msgs, updatedAt: Date.now() };
+                });
+              });
+            }
+
+            // Handle completed response (non-streaming fallback)
+            if (event.type === "response.completed" && event.response) {
+              const resp = event.response;
+              if (resp.id) lastResponseIdRef.current = resp.id;
+              if (!accumulatedText && resp.output) {
+                for (const item of resp.output) {
+                  if (item.type === "message" && item.content) {
+                    for (const block of item.content) {
+                      if (block.type === "output_text" && block.text) {
+                        accumulatedText += block.text;
+                      }
+                    }
+                  }
+                }
+                if (accumulatedText) {
+                  const finalText = accumulatedText;
+                  setCurrentSession(prev => {
+                    if (!prev) return prev;
+                    const msgs = [...prev.messages];
+                    const lastMsg = msgs[msgs.length - 1];
+                    if (lastMsg?.role === "assistant") {
+                      msgs[msgs.length - 1] = {
+                        ...lastMsg,
+                        content: finalText,
+                      };
+                    }
+                    return { ...prev, messages: msgs, updatedAt: Date.now() };
+                  });
+                }
+              }
+            }
+          } catch {
+            // skip unparseable SSE lines
+          }
+        }
+      }
+
+      // Save session
+      setCurrentSession(prev => {
+        if (prev) SessionUtils.saveSessionData(prev.agentId, prev);
+        return prev;
+      });
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      console.error("Error in responses API:", err);
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setIsGenerating(false);
+      abortControllerRef.current = null;
+    }
+  };
+
   const handleSubmitWithContent = async (content: string) => {
-    if (!currentSession || !selectedAgentId) return;
+    if (!currentSession) return;
+
+    // Use Responses API if no agent is selected (agents API unavailable)
+    // Always use Responses API (agents API is unavailable)
+    await handleSubmitViaResponses(content);
+    return;
 
     setIsGenerating(true);
     setError(null);
@@ -808,7 +1074,7 @@ export default function ChatPlaygroundPage() {
         const containsToolCall = (content: string): boolean => {
           return (
             content.includes('"type": "function"') ||
-            content.includes('"name": "knowledge_search"') ||
+            content.includes('"name": "file_search"') ||
             content.includes('"parameters":') ||
             !!content.match(/\{"type":\s*"function".*?\}/)
           );
@@ -1054,7 +1320,7 @@ export default function ChatPlaygroundPage() {
         const { text: deltaText } = processChunk(chunk);
 
         // logging for debugging function calls
-        // if (deltaText && deltaText.includes("knowledge_search")) {
+        // if (deltaText && deltaText.includes("file_search")) {
         //   console.log("🔍 Function call detected in text output:", deltaText);
         //   console.log("🔍 Original chunk:", JSON.stringify(chunk, null, 2));
         // }
@@ -1072,7 +1338,7 @@ export default function ChatPlaygroundPage() {
           ).event;
           if (event?.payload?.event_type === "turn_complete") {
             const content = event?.payload?.turn?.output_message?.content;
-            if (content && content.includes("knowledge_search")) {
+            if (content && content.includes("file_search")) {
               console.log("🔍 Function call found in turn_complete:", content);
             }
           }
@@ -1358,8 +1624,29 @@ export default function ChatPlaygroundPage() {
                   onValueChange={agentId => {
                     setSelectedAgentId(agentId);
                     SessionUtils.saveCurrentAgentId(agentId);
-                    loadAgentConfig(agentId);
-                    loadAgentSessions(agentId);
+                    // Load local session for responses-mode agents
+                    const savedSession = SessionUtils.loadSessionData(agentId);
+                    if (savedSession) {
+                      setCurrentSession(savedSession);
+                    } else {
+                      const localSession: ChatSession = {
+                        id: `session-${Date.now()}`,
+                        agentId,
+                        name:
+                          agents.find(a => a.agent_id === agentId)?.agent_config
+                            ?.name || "Chat",
+                        messages: [],
+                        createdAt: Date.now(),
+                        updatedAt: Date.now(),
+                      };
+                      setCurrentSession(localSession);
+                    }
+                    lastResponseIdRef.current = null;
+                    // Load agent instructions
+                    const agent = agents.find(a => a.agent_id === agentId);
+                    if (agent?.agent_config?.instructions) {
+                      setNewAgentInstructions(agent.agent_config.instructions);
+                    }
                   }}
                   disabled={agentsLoading}
                 >
@@ -1499,7 +1786,7 @@ export default function ChatPlaygroundPage() {
             <div className="space-y-3">
               <div>
                 <label className="text-sm font-medium block mb-2 text-muted-foreground">
-                  Configured Tools (Coming Soon)
+                  Configured Tools
                 </label>
                 <div className="space-y-2">
                   {selectedAgentConfig?.toolgroups &&
@@ -1706,16 +1993,13 @@ export default function ChatPlaygroundPage() {
                 <label className="text-sm font-medium block mb-2">
                   Tools (optional)
                 </label>
-                <label className="text-sm font-small block mb-2">
-                  NOTE: Tools are not yet implemented
-                </label>
                 <p className="text-xs text-muted-foreground mb-2">
                   Available toolgroups: {availableToolgroups.length} found
                 </p>
                 <div className="space-y-2">
                   {availableToolgroups.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      Loading toolgroups...
+                      No tools available
                     </p>
                   ) : (
                     availableToolgroups.map(toolgroup => (
@@ -1775,7 +2059,7 @@ export default function ChatPlaygroundPage() {
               </div>
 
               {/* Vector DB Configuration for RAG */}
-              {selectedToolgroups.includes("builtin::rag") && (
+              {selectedToolgroups.includes("builtin::file_search") && (
                 <div>
                   <label className="text-sm font-medium block mb-2">
                     Vector Databases for RAG
@@ -1839,7 +2123,7 @@ export default function ChatPlaygroundPage() {
                     )}
                   </div>
                   {selectedVectorDBs.length === 0 &&
-                    selectedToolgroups.includes("builtin::rag") && (
+                    selectedToolgroups.includes("builtin::file_search") && (
                       <p className="text-xs text-muted-foreground mt-1">
                         ⚠️ RAG tool selected but no vector databases chosen.
                         Create or select a vector database.

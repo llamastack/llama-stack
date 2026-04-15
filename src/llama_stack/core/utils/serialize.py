@@ -10,6 +10,8 @@ from enum import Enum
 
 
 class EnumEncoder(json.JSONEncoder):
+    """JSON encoder that serializes Enum values and datetime objects."""
+
     def default(self, obj):
         if isinstance(obj, Enum):
             return obj.value

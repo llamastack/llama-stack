@@ -10,7 +10,9 @@ from llama_stack.cli.subcommand import Subcommand
 
 
 class StackListProviders(Subcommand):
-    def __init__(self, subparsers: argparse._SubParsersAction):
+    """CLI subcommand to list available providers for Llama Stack APIs."""
+
+    def __init__(self, subparsers: argparse._SubParsersAction) -> None:
         super().__init__()
         self.parser = subparsers.add_parser(
             "list-providers",
@@ -22,12 +24,12 @@ class StackListProviders(Subcommand):
         self.parser.set_defaults(func=self._run_providers_list_cmd)
 
     @property
-    def providable_apis(self):
+    def providable_apis(self) -> list[str]:
         from llama_stack.core.distribution import providable_apis
 
         return [api.value for api in providable_apis()]
 
-    def _add_arguments(self):
+    def _add_arguments(self) -> None:
         self.parser.add_argument(
             "api",
             type=str,

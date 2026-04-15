@@ -5,29 +5,29 @@ orphan: true
 
 The `llamastack/distribution-{{ name }}` distribution consists of the following provider configurations.
 
-{{ providers_table }}
+{{ providers_table }}{% if run_config_env_vars %}
 
-{% if run_config_env_vars %}
-### Environment Variables
+## Environment Variables
 
 The following environment variables can be configured:
-
 {% for var, (default_value, description) in run_config_env_vars.items() %}
+
 - `{{ var }}`: {{ description }} (default: `{{ default_value }}`)
 {% endfor %}
 {% endif %}
-
 {% if default_models %}
-### Models
+
+## Models
 
 The following models are available by default:
-
 {% for model in default_models %}
+
 - `{{ model.model_id }} {{ model.doc_string }}`
 {% endfor %}
 {% endif %}
 
 ## Prerequisites
+
 ### Oracle Cloud Infrastructure Setup
 
 Before using the OCI Generative AI distribution, ensure you have:
@@ -42,20 +42,23 @@ Before using the OCI Generative AI distribution, ensure you have:
 ### Authentication Methods
 
 #### Instance Principal Authentication (Recommended)
+
 Instance Principal authentication allows OCI resources to authenticate using the identity of the compute instance they're running on. This is the most secure method for production deployments.
 
 Requirements:
+
 - Instance must be running in an Oracle Cloud Infrastructure compartment
 - Instance must have appropriate IAM policies to access Generative AI services
 
 #### API Key Authentication
+
 For development or on-premises deployments, follow [this doc](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm) to learn how to create your API signing key for your config file.
 
 ### Required IAM Policies
 
 Ensure your OCI user or instance has the following policy statements:
 
-```
+```text
 Allow group <group_name> to use generative-ai-inference-endpoints in compartment <compartment_name>
 Allow group <group_name> to manage generative-ai-inference-endpoints in compartment <compartment_name>
 ```
@@ -63,27 +66,34 @@ Allow group <group_name> to manage generative-ai-inference-endpoints in compartm
 ## Supported Services
 
 ### Inference: OCI Generative AI
+
 Oracle Cloud Infrastructure Generative AI provides access to high-performance AI models through OCI's Platform-as-a-Service offering. The service supports:
 
 - **Chat Completions**: Conversational AI with context awareness
 - **Text Generation**: Complete prompts and generate text content
 
 #### Available Models
+
 Common OCI Generative AI models include access to Meta, Cohere, OpenAI, Grok, and more models.
 
 ### Safety: Llama Guard
+
 For content safety and moderation, this distribution uses Meta's LlamaGuard model through the OCI Generative AI service to provide:
+
 - Content filtering and moderation
 - Policy compliance checking
 - Harmful content detection
 
 ### Vector Storage: Multiple Options
+
 The distribution supports several vector storage providers:
+
 - **FAISS**: Local in-memory vector search
 - **ChromaDB**: Distributed vector database
 - **PGVector**: PostgreSQL with vector extensions
 
 ### Additional Services
+
 - **Dataset I/O**: Local filesystem and Hugging Face integration
 - **Tool Runtime**: Web search (Brave, Tavily) and RAG capabilities
 - **Evaluation**: Meta reference evaluation framework
@@ -103,6 +113,7 @@ OCI_AUTH=$OCI_AUTH_TYPE OCI_REGION=$OCI_REGION OCI_COMPARTMENT_OCID=$OCI_COMPART
 ### Configuration Examples
 
 #### Using Instance Principal (Recommended for Production)
+
 ```bash
 export OCI_AUTH_TYPE=instance_principal
 export OCI_REGION=us-chicago-1
@@ -110,6 +121,7 @@ export OCI_COMPARTMENT_OCID=ocid1.compartment.oc1..<your-compartment-id>
 ```
 
 #### Using API Key Authentication (Development)
+
 ```bash
 export OCI_AUTH_TYPE=config_file
 export OCI_CONFIG_FILE_PATH=~/.oci/config
@@ -122,7 +134,7 @@ export OCI_COMPARTMENT_OCID=ocid1.compartment.oc1..your-compartment-id
 
 OCI Generative AI is available in multiple regions. The service automatically routes to the appropriate regional endpoint based on your configuration. For a full list of regional model availability, visit:
 
-https://docs.oracle.com/en-us/iaas/Content/generative-ai/overview.htm#regions
+<https://docs.oracle.com/en-us/iaas/Content/generative-ai/overview.htm#regions>
 
 ## Troubleshooting
 
@@ -136,5 +148,6 @@ https://docs.oracle.com/en-us/iaas/Content/generative-ai/overview.htm#regions
 ### Getting Help
 
 For additional support:
+
 - [OCI Generative AI Documentation](https://docs.oracle.com/en-us/iaas/Content/generative-ai/home.htm)
 - [Llama Stack Issues](https://github.com/meta-llama/llama-stack/issues)

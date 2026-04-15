@@ -114,7 +114,7 @@ jobs:
             --schedule "${{ github.event.schedule }}" \
             --test-setup "${{ github.event.inputs.test-setup || '' }}" \
             --matrix-key "${{ inputs.matrix_key || 'default' }}")
-          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
           echo "Generated matrix: $MATRIX"
 
   run-replay-mode-tests:
@@ -131,7 +131,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        client: [library, docker, server]
+        client: [library, server]
         # Use Python 3.13 only on nightly schedule (daily latest client test), otherwise use 3.12
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
         node-version: [22]
@@ -150,7 +150,7 @@ jobs:
       # called from pull_request_target workflows.
       - name: Setup test environment
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
-        uses: llamastack/llama-stack/.github/actions/setup-test-environment@d35ac34a22bc87ebf52728793f7081d0cb2d8db7
+        uses: llamastack/llama-stack/.github/actions/setup-test-environment@e92196d200bca6fc220af5996142c42528df0c56
         with:
           python-version: ${{ matrix.python-version }}
           client-version: ${{ matrix.client-version }}
@@ -171,19 +171,23 @@ jobs:
       - name: Setup TypeScript client
         if: ${{ matrix.client == 'server' }}
         id: setup-ts-client
-        uses: llamastack/llama-stack/.github/actions/setup-typescript-client@d35ac34a22bc87ebf52728793f7081d0cb2d8db7
+        uses: llamastack/llama-stack/.github/actions/setup-typescript-client@e92196d200bca6fc220af5996142c42528df0c56
         with:
           client-version: ${{ matrix.client-version }}
 
       - name: Run tests
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
-        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@d35ac34a22bc87ebf52728793f7081d0cb2d8db7
+        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@e92196d200bca6fc220af5996142c42528df0c56
         env:
           OPENAI_API_KEY: dummy
           AZURE_API_KEY: replay-mode-dummy-key
           AZURE_API_BASE: https://dummy.openai.azure.com/openai/v1
+          WATSONX_API_KEY: replay-mode-dummy-key
+          WATSONX_BASE_URL: https://us-south.ml.cloud.ibm.com
+          WATSONX_PROJECT_ID: replay-mode-dummy-project
           AWS_BEARER_TOKEN_BEDROCK: replay-mode-dummy-key
           AWS_DEFAULT_REGION: us-west-2
+          TAVILY_SEARCH_API_KEY: ${{ secrets.TAVILY_SEARCH_API_KEY || 'replay-mode-dummy-key' }}
           TS_CLIENT_PATH: ${{ steps.setup-ts-client.outputs.ts-client-path || '' }}
         with:
           stack-config: >-

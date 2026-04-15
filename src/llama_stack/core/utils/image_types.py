@@ -8,5 +8,7 @@ import enum
 
 
 class LlamaStackImageType(enum.Enum):
+    """Supported image types for Llama Stack distributions."""
+
     CONTAINER = "container"
     VENV = "venv"

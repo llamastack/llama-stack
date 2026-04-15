@@ -4,6 +4,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from __future__ import annotations
+
 import json
 
 from pydantic import BaseModel, Field
@@ -35,7 +37,7 @@ class ConnectorServiceConfig(BaseModel):
     config: StackConfig = Field(..., description="Stack run configuration for resolving persistence")
 
 
-async def get_provider_impl(config: ConnectorServiceConfig):
+async def get_provider_impl(config: ConnectorServiceConfig) -> ConnectorServiceImpl:
     """Get the connector service implementation."""
     impl = ConnectorServiceImpl(config)
     return impl
@@ -55,7 +57,7 @@ class ConnectorServiceImpl(Connectors):
         """Get the KVStore key for a connector."""
         return f"{KEY_PREFIX}{connector_id}"
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the connector service."""
 
         # Use connectors store reference from run config
@@ -101,7 +103,7 @@ class ConnectorServiceImpl(Connectors):
 
         return connector
 
-    async def unregister_connector(self, connector_id: str):
+    async def unregister_connector(self, connector_id: str) -> None:
         """Unregister a connector."""
         key = self._get_key(connector_id)
         if not await self.kvstore.get(key):
@@ -128,13 +130,8 @@ class ConnectorServiceImpl(Connectors):
 
     async def list_connectors(self) -> ListConnectorsResponse:
         """List all connectors."""
-        connectors = []
-        for key in await self.kvstore.keys_in_range(start_key=KEY_PREFIX, end_key=KEY_PREFIX + "\uffff"):
-            connector_json = await self.kvstore.get(key)
-            if not connector_json:
-                continue
-            connector = Connector.model_validate_json(connector_json)
-            connectors.append(connector)
+        values = await self.kvstore.values_in_range(start_key=KEY_PREFIX, end_key=KEY_PREFIX + "\uffff")
+        connectors = [Connector.model_validate_json(v) for v in values]
         return ListConnectorsResponse(data=connectors)
 
     async def get_connector_tool(self, request: GetConnectorToolRequest, authorization: str | None = None) -> ToolDef:
@@ -157,6 +154,6 @@ class ConnectorServiceImpl(Connectors):
         tools = await list_mcp_tools(endpoint=connector.url, authorization=authorization)
         return ListToolsResponse(data=tools.data)
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the connector service."""
         await self.kvstore.shutdown()

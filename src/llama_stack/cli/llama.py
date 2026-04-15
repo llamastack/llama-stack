@@ -11,14 +11,14 @@ from llama_stack.log import setup_logging
 # Initialize logging early before any loggers get created
 setup_logging()
 
-from .stack import StackParser
+from .stack import StackParser  # type: ignore[attr-defined]
 from .stack.utils import print_subcommand_description
 
 
 class LlamaCLIParser:
     """Defines CLI parser for Llama CLI"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.parser = argparse.ArgumentParser(
             prog="llama",
             description="Welcome to the Llama CLI",
@@ -46,7 +46,8 @@ class LlamaCLIParser:
         args.func(args)
 
 
-def main():
+def main() -> None:
+    """Entry point for the Llama CLI."""
     parser = LlamaCLIParser()
     args = parser.parse_args()
     parser.run(args)

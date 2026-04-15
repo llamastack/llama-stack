@@ -6,7 +6,6 @@ distribution_spec:
     - provider_type: remote::cerebras
     - provider_type: remote::ollama
     - provider_type: remote::vllm
-    - provider_type: remote::tgi
     - provider_type: remote::fireworks
     - provider_type: remote::together
     - provider_type: remote::bedrock
@@ -36,21 +35,12 @@ distribution_spec:
     safety:
     - provider_type: inline::llama-guard
     - provider_type: inline::code-scanner
-    agents:
-    - provider_type: inline::meta-reference
-    eval:
-    - provider_type: inline::meta-reference
-    datasetio:
-    - provider_type: remote::huggingface
-    - provider_type: inline::localfs
-    scoring:
-    - provider_type: inline::basic
-    - provider_type: inline::llm-as-judge
-    - provider_type: inline::braintrust
+    responses:
+    - provider_type: inline::builtin
     tool_runtime:
     - provider_type: remote::brave-search
     - provider_type: remote::tavily-search
-    - provider_type: inline::rag-runtime
+    - provider_type: inline::file-search
     - provider_type: remote::model-context-protocol
     batches:
     - provider_type: inline::reference

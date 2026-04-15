@@ -14,6 +14,8 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class QdrantVectorIOConfig(BaseModel):
+    """Configuration for the remote Qdrant vector I/O provider."""
+
     location: str | None = None
     url: str | None = None
     port: int | None = 6333

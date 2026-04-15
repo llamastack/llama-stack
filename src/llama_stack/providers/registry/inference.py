@@ -12,7 +12,7 @@ from llama_stack_api import (
     RemoteProviderSpec,
 )
 
-META_REFERENCE_DEPS = [
+BUILTIN_DEPS = [
     "accelerate",
     "fairscale",
     "torch",
@@ -27,6 +27,11 @@ META_REFERENCE_DEPS = [
 
 
 def available_providers() -> list[ProviderSpec]:
+    """Return the list of available inference provider specifications.
+
+    Returns:
+        List of ProviderSpec objects describing available providers
+    """
     return [
         InlineProviderSpec(
             api=Api.inference,
@@ -87,33 +92,6 @@ def available_providers() -> list[ProviderSpec]:
             config_class="llama_stack.providers.remote.inference.vllm.VLLMInferenceAdapterConfig",
             provider_data_validator="llama_stack.providers.remote.inference.vllm.VLLMProviderDataValidator",
             description="Remote vLLM inference provider for connecting to vLLM servers.",
-        ),
-        RemoteProviderSpec(
-            api=Api.inference,
-            adapter_type="tgi",
-            provider_type="remote::tgi",
-            pip_packages=["huggingface_hub", "aiohttp"],
-            module="llama_stack.providers.remote.inference.tgi",
-            config_class="llama_stack.providers.remote.inference.tgi.TGIImplConfig",
-            description="Text Generation Inference (TGI) provider for HuggingFace model serving.",
-        ),
-        RemoteProviderSpec(
-            api=Api.inference,
-            adapter_type="hf::serverless",
-            provider_type="remote::hf::serverless",
-            pip_packages=["huggingface_hub", "aiohttp"],
-            module="llama_stack.providers.remote.inference.tgi",
-            config_class="llama_stack.providers.remote.inference.tgi.InferenceAPIImplConfig",
-            description="HuggingFace Inference API serverless provider for on-demand model inference.",
-        ),
-        RemoteProviderSpec(
-            api=Api.inference,
-            provider_type="remote::hf::endpoint",
-            adapter_type="hf::endpoint",
-            pip_packages=["huggingface_hub", "aiohttp"],
-            module="llama_stack.providers.remote.inference.tgi",
-            config_class="llama_stack.providers.remote.inference.tgi.InferenceEndpointImplConfig",
-            description="HuggingFace Inference Endpoints provider for dedicated model serving.",
         ),
         RemoteProviderSpec(
             api=Api.inference,
@@ -214,7 +192,7 @@ def available_providers() -> list[ProviderSpec]:
             adapter_type="vertexai",
             provider_type="remote::vertexai",
             pip_packages=[
-                "google-genai",
+                "google-genai>=1.69.0",
             ],
             module="llama_stack.providers.remote.inference.vertexai",
             config_class="llama_stack.providers.remote.inference.vertexai.VertexAIConfig",

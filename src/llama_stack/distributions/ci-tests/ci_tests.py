@@ -7,6 +7,9 @@
 
 from llama_stack.core.datatypes import Provider
 from llama_stack.distributions.template import DistributionTemplate
+from llama_stack.providers.inline.inference.sentence_transformers.config import (
+    SentenceTransformersInferenceConfig,
+)
 from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
 from llama_stack_api import ConnectorInput, ModelInput, ModelType
 
@@ -14,6 +17,11 @@ from ..starter.starter import get_distribution_template as get_starter_distribut
 
 
 def get_distribution_template() -> DistributionTemplate:
+    """Build the CI tests distribution template with test-specific overrides.
+
+    Returns:
+        A DistributionTemplate based on the starter template with CI-specific connectors and auth config.
+    """
     template = get_starter_distribution_template(name="ci-tests")
     template.description = "CI tests for Llama Stack"
 
@@ -42,6 +50,15 @@ def get_distribution_template() -> DistributionTemplate:
         model_type=ModelType.llm,
     )
 
+    # Bedrock model must be pre-registered because the recording system cannot
+    # replay model-list discovery calls against the Bedrock endpoint in CI.
+    bedrock_model = ModelInput(
+        model_id="bedrock/openai.gpt-oss-20b",
+        provider_id="${env.AWS_BEARER_TOKEN_BEDROCK:+bedrock}",
+        provider_model_id="openai.gpt-oss-20b",
+        model_type=ModelType.llm,
+    )
+
     # Add conditional authentication config (disabled by default for CI tests)
     # This tests the conditional auth provider feature and provides a template for users
     # To enable: export AUTH_PROVIDER=enabled and configure the auth env vars
@@ -67,6 +84,13 @@ def get_distribution_template() -> DistributionTemplate:
         config=WatsonXConfig.sample_run_config(),
     )
 
+    # Override sentence-transformers to use trust_remote_code=True for CI tests
+    sentence_transformers_provider = Provider(
+        provider_id="sentence-transformers",
+        provider_type="inline::sentence-transformers",
+        config=SentenceTransformersInferenceConfig(trust_remote_code=True).model_dump(),
+    )
+
     for run_config in template.run_configs.values():
         if run_config.default_connectors is None:
             run_config.default_connectors = []
@@ -76,9 +100,17 @@ def get_distribution_template() -> DistributionTemplate:
             run_config.default_models = []
         run_config.default_models.append(azure_model)
         run_config.default_models.append(watsonx_model)
+        run_config.default_models.append(bedrock_model)
 
         # Add WatsonX inference provider
         run_config.provider_overrides["inference"].append(watsonx_provider)
+
+        # Replace sentence-transformers provider with one that has trust_remote_code=True
+        inference_providers = run_config.provider_overrides["inference"]
+        for i, provider in enumerate(inference_providers):
+            if provider.provider_id == "sentence-transformers":
+                inference_providers[i] = sentence_transformers_provider
+                break
 
         # Add conditional auth config
         run_config.auth_config = auth_config

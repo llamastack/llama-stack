@@ -4,7 +4,7 @@ This directory contains configuration files and a setup script to deploy a full 
 
 ## Architecture
 
-```
+```text
 ┌──────────────┐
 │  Llama Stack │──┐
 │  Server      │  │  OTLP     ┌───────────────────┐   scrape    ┌──────────────┐
@@ -23,10 +23,11 @@ This directory contains configuration files and a setup script to deploy a full 
 
 | Component | Purpose | Port(s) |
 |---|---|---|
-| **OTel Collector** | Receives OTLP telemetry, exports traces to Jaeger and metrics to Prometheus | 4317 (gRPC), 4318 (HTTP), 9464 (Prometheus metrics) |
+| **OTel Collector** | Receives OTLP telemetry, exports traces to Jaeger and metrics to Prometheus (and optionally MLflow) | 4317 (gRPC), 4318 (HTTP), 9464 (Prometheus metrics) |
 | **Jaeger** | Distributed tracing UI | 16686 |
 | **Prometheus** | Metrics storage and querying | 9090 |
 | **Grafana** | Dashboards and visualization | 3000 |
+| **MLflow** | Trace ingest via OTLP `/v1/traces` (container in this stack) | 5000 |
 
 ## Pre-requisites
 
@@ -61,9 +62,16 @@ Run the setup script to start Jaeger, OTel Collector, Prometheus, and Grafana:
 ```
 
 This will:
+
 - Create a `llama-telemetry` container network
 - Start Jaeger, OTel Collector, Prometheus, and Grafana containers
 - Provision Grafana with a pre-built Llama Stack dashboard
+
+> **MLflow traces**
+>
+> - MLflow is now started as a container in this stack (`mlflow:5000`), OTLP endpoint `/v1/traces`.
+> - Collector exporter `otlphttp/mlflow` points to `http://mlflow:5000/v1/traces`, header `x-mlflow-experiment-id: "1"`. If you need auth, set `MLFLOW_OTEL_HEADERS` (e.g., `Authorization=Bearer <token>`) before running the setup script.
+> - If you prefer an external MLflow, override `MLFLOW_OTEL_ENDPOINT` before running the script (e.g., `http://host.docker.internal:5000`).
 
 ### Install OpenTelemetry instrumentation For Llama Stack Server and Client
 
@@ -123,6 +131,7 @@ Open the following UIs in your browser:
 
 | Service | URL | Credentials |
 |---|---|---|
+| **Mlflow** (traces) | [http://localhost:5000](http://localhost:5000) | N/A |
 | **Jaeger** (traces) | [http://localhost:16686](http://localhost:16686) | N/A |
 | **Prometheus** (metrics) | [http://localhost:9090](http://localhost:9090) | N/A |
 | **Grafana** (dashboards) | [http://localhost:3000](http://localhost:3000) | admin / admin |
@@ -148,6 +157,7 @@ sum(llama_stack_http_server_duration_milliseconds_count)
 #### Grafana dashboard
 
 A pre-provisioned **Llama Stack** dashboard is available in Grafana with panels for:
+
 - Prompt Tokens (input token usage by model)
 - Completion Tokens (output token usage by model)
 - P95 / P99 HTTP Server Duration
@@ -162,6 +172,7 @@ A pre-provisioned **Llama Stack** dashboard is available in Grafana with panels 
 ### Exporter examples
 
 **Local console (debugging):**
+
 ```bash
 OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true \
 OTEL_TRACES_EXPORTER=console \
@@ -170,6 +181,7 @@ opentelemetry-instrument python llama-stack-client.py
 ```
 
 **Send to Collector (recommended):**
+
 ```bash
 OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true \
 OTEL_TRACES_EXPORTER=otlp \
@@ -216,6 +228,7 @@ service:
 ```
 
 Use with:
+
 ```bash
 OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true \
 OTEL_TRACES_EXPORTER=otlp \
@@ -237,10 +250,12 @@ docker network rm llama-telemetry
 
 ## Known Issues
 
-Some database instrumentation libraries have a known bug where spans get wrapped twice or do not get connected to a trace. To prevent this, disable database-specific tracing:
+When OpenTelemetry auto-instrumentation is enabled, both the low-level database driver instrumentor
+(e.g. `asyncpg`, `sqlite3`) and the SQLAlchemy ORM instrumentor activate simultaneously. This causes
+duplicate spans and inflated traces. To prevent this, disable the driver-level instrumentors:
 
 ```bash
-export OTEL_PYTHON_DISABLED_INSTRUMENTATIONS="sqlite3"
+export OTEL_PYTHON_DISABLED_INSTRUMENTATIONS="sqlite3,asyncpg"
 ```
 
 ## References

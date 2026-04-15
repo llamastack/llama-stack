@@ -39,6 +39,33 @@ runs:
         sdk_install_url: ${{ inputs.sdk_install_url }}
         branch: ${{ inputs.branch }}
 
+    - name: Cache HuggingFace models and datasets
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/huggingface
+        key: hf-cache-${{ runner.os }}-${{ inputs.python-version }}
+        restore-keys: |
+          hf-cache-${{ runner.os }}-
+
+    - name: Pre-download HuggingFace assets for offline use
+      shell: bash
+      env:
+        HF_HUB_ENABLE_HF_TRANSFER: "1"
+      run: |
+        # Download the embedding model used by inline::sentence-transformers
+        uv run python -c "
+        from sentence_transformers import SentenceTransformer
+        SentenceTransformer('nomic-ai/nomic-embed-text-v1.5', trust_remote_code=True)
+        print('Embedding model cached')
+        " 2>/dev/null || echo "Embedding model download failed (may already be cached)"
+
+        # Download the test dataset
+        uv run python -c "
+        from datasets import load_dataset
+        load_dataset('llamastack/simpleqa', split='train')
+        print('Dataset cached')
+        " 2>/dev/null || echo "Dataset download failed (may already be cached)"
+
     - name: Setup ollama
       if: ${{ (inputs.setup == 'ollama' || inputs.setup == 'ollama-vision') && inputs.inference-mode == 'record' }}
       uses: ./.github/actions/setup-ollama

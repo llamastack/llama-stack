@@ -9,25 +9,26 @@ Schema transformations and fixes for OpenAPI generation.
 """
 
 import copy
-from collections import OrderedDict
-from pathlib import Path
 from typing import Any
 
-import yaml
-from openapi_spec_validator import validate_spec
-from openapi_spec_validator.exceptions import OpenAPISpecValidatorError
-
 from . import endpoints, schema_collection
-from ._legacy_order import (
-    LEGACY_OPERATION_KEYS,
-    LEGACY_PATH_ORDER,
-    LEGACY_RESPONSE_ORDER,
-    LEGACY_SCHEMA_ORDER,
-    LEGACY_SECURITY,
-    LEGACY_TAG_GROUPS,
-    LEGACY_TAGS,
+from ._schema_output import (
+    _apply_legacy_sorting,
+    _dedupe_create_response_request_input_union_for_stainless,
+    _extract_duplicate_union_types,
+    _write_yaml_file,
+    validate_openapi_schema,
 )
 from .state import _extra_body_fields
+
+# re-export so main.py can still access via schema_transforms.<func>
+__all__ = [
+    "_apply_legacy_sorting",
+    "_dedupe_create_response_request_input_union_for_stainless",
+    "_extract_duplicate_union_types",
+    "_write_yaml_file",
+    "validate_openapi_schema",
+]
 
 
 def _fix_ref_references(openapi_schema: dict[str, Any]) -> dict[str, Any]:
@@ -358,6 +359,62 @@ def _add_titles_to_unions(obj: Any, parent_key: str | None = None) -> None:
             _add_titles_to_unions(item, parent_key)
 
 
+def _restore_const_enum_defaults(openapi_schema: dict[str, Any]) -> None:
+    """Restore defaults on single-value enum ``object`` fields where the OpenAI spec expects them.
+
+    ``_convert_standalone_const_to_enum`` strips all defaults from single-value
+    enums because most OpenAI schemas omit them.  A handful of schemas (Conversations,
+    Responses, Compact, Chat list) DO include a default on their ``object`` field.
+    This function adds the default back for those specific schemas so the conformance
+    checker doesn't flag them as mismatches.
+    """
+    schemas = openapi_schema.get("components", {}).get("schemas", {})
+
+    # Mapping of our schema name → property name → expected default value.
+    # These correspond to OpenAI schemas that have explicit defaults on
+    # single-value enum fields (verified against openai-spec-2.3.0.yml).
+    _defaults_to_restore: dict[str, dict[str, str]] = {
+        "Conversation": {"object": "conversation"},
+        "ListOpenAIChatCompletionResponse": {"object": "list"},
+        "OpenAICompactedResponse": {"object": "response.compaction"},
+        "OpenAIResponseObject": {"object": "response"},
+        "OpenAIResponseObjectWithInput": {"object": "response"},
+    }
+
+    for schema_name, props_to_fix in _defaults_to_restore.items():
+        schema_def = schemas.get(schema_name)
+        if not isinstance(schema_def, dict) or "properties" not in schema_def:
+            continue
+        for prop_name, default_val in props_to_fix.items():
+            prop = schema_def["properties"].get(prop_name)
+            if isinstance(prop, dict) and "enum" in prop and prop["enum"] == [default_val] and "default" not in prop:
+                prop["default"] = default_val
+
+
+def _convert_standalone_const_to_enum(obj: Any) -> None:
+    """Convert standalone const values to single-value enums to match OpenAI spec style.
+
+    Converts: {const: "value", type: "string", default: "value"}
+    To:       {enum: ["value"], type: "string"}
+
+    OpenAI uses enum with a single value rather than const. Defaults are stripped
+    because most OpenAI schemas omit defaults on single-value enums.  Schemas that
+    need a default restored are handled individually in ``_fix_schema_issues``.
+    """
+    if isinstance(obj, dict):
+        if "const" in obj and "anyOf" not in obj:
+            const_val = obj.pop("const")
+            obj["enum"] = [const_val]
+            if "default" in obj and obj["default"] == const_val:
+                del obj["default"]
+
+        for value in obj.values():
+            _convert_standalone_const_to_enum(value)
+    elif isinstance(obj, list):
+        for item in obj:
+            _convert_standalone_const_to_enum(item)
+
+
 def _convert_anyof_const_to_enum(obj: Any) -> None:
     """Convert anyOf with multiple const string values to a proper enum."""
     if isinstance(obj, dict):
@@ -686,362 +743,215 @@ def _remove_request_bodies_from_get_endpoints(openapi_schema: dict[str, Any]) ->
     return openapi_schema
 
 
-def _extract_duplicate_union_types(openapi_schema: dict[str, Any]) -> dict[str, Any]:
+def _remove_type_object_from_openai_schemas(openapi_schema: dict[str, Any]) -> dict[str, Any]:
+    """Remove 'type: object' from specific schemas that omit it in the OpenAI spec.
+
+    Most OpenAI schemas (766 of 772) include ``type: object`` alongside
+    ``properties``.  Only 6 omit it.  We strip the field only from those
+    specific schemas to avoid hurting conformance on the majority that keep it.
     """
-    Extract duplicate union types to shared schema references.
+    # Only these schemas in the OpenAI spec omit type: object while having properties.
+    # Includes both the OpenAI schema names and our equivalent schema names.
+    schemas_without_type_object = {
+        "ListMessagesResponse",
+        "ListRunStepsResponse",
+        "ListVectorStoreFilesResponse",
+        "ListVectorStoresResponse",
+        "Model",
+        "OpenAIFile",
+        "OpenAIFileObject",
+        "OpenAIModel",
+    }
 
-    Stainless generates type names from union types based on their context, which can cause
-    duplicate names when the same union appears in different places. This function extracts
-    these duplicate unions to shared schema definitions and replaces inline definitions with
-    references to them.
-
-    According to Stainless docs, when duplicate types are detected, they should be extracted
-    to the same ref and declared as a model. This ensures Stainless generates consistent
-    type names regardless of where the union is referenced.
-
-    Fixes: https://www.stainless.com/docs/reference/diagnostics#Python/DuplicateDeclaration
-    """
-    if "components" not in openapi_schema or "schemas" not in openapi_schema["components"]:
-        return openapi_schema
-
-    schemas = openapi_schema["components"]["schemas"]
-
-    # Extract the Output union type (used in OpenAIResponseObjectWithInput-Output and ListOpenAIResponseInputItem)
-    output_union_schema_name = "OpenAIResponseMessageOutputUnion"
-    output_union_title = None
-
-    # Get the union type from OpenAIResponseObjectWithInput-Output.input.items.anyOf
-    if "OpenAIResponseObjectWithInput-Output" in schemas:
-        schema = schemas["OpenAIResponseObjectWithInput-Output"]
-        if isinstance(schema, dict) and "properties" in schema:
-            input_prop = schema["properties"].get("input")
-            if isinstance(input_prop, dict) and "items" in input_prop:
-                items = input_prop["items"]
-                if isinstance(items, dict) and "anyOf" in items:
-                    # Extract the union schema with deep copy
-                    output_union_schema = copy.deepcopy(items["anyOf"])
-                    output_union_title = items.get("title", "OpenAIResponseMessageOutputUnion")
-
-                    # Collect all refs from the oneOf to detect duplicates
-                    refs_in_oneof = set()
-                    for item in output_union_schema:
-                        if isinstance(item, dict) and "oneOf" in item:
-                            oneof = item["oneOf"]
-                            if isinstance(oneof, list):
-                                for variant in oneof:
-                                    if isinstance(variant, dict) and "$ref" in variant:
-                                        refs_in_oneof.add(variant["$ref"])
-                            item["x-stainless-naming"] = "OpenAIResponseMessageOutputOneOf"
-
-                    # Remove duplicate refs from anyOf that are already in oneOf
-                    deduplicated_schema = []
-                    for item in output_union_schema:
-                        if isinstance(item, dict) and "$ref" in item:
-                            if item["$ref"] not in refs_in_oneof:
-                                deduplicated_schema.append(item)
-                        else:
-                            deduplicated_schema.append(item)
-                    output_union_schema = deduplicated_schema
-
-                    # Create the shared schema with x-stainless-naming to ensure consistent naming
-                    if output_union_schema_name not in schemas:
-                        schemas[output_union_schema_name] = {
-                            "anyOf": output_union_schema,
-                            "title": output_union_title,
-                            "x-stainless-naming": output_union_schema_name,
-                        }
-                    # Replace with reference
-                    input_prop["items"] = {"$ref": f"#/components/schemas/{output_union_schema_name}"}
-
-    # Replace the same union in ListOpenAIResponseInputItem.data.items.anyOf
-    if "ListOpenAIResponseInputItem" in schemas and output_union_schema_name in schemas:
-        schema = schemas["ListOpenAIResponseInputItem"]
-        if isinstance(schema, dict) and "properties" in schema:
-            data_prop = schema["properties"].get("data")
-            if isinstance(data_prop, dict) and "items" in data_prop:
-                items = data_prop["items"]
-                if isinstance(items, dict) and "anyOf" in items:
-                    # Replace with reference
-                    data_prop["items"] = {"$ref": f"#/components/schemas/{output_union_schema_name}"}
-
-    # Extract the Input union type (used in _responses_Request.input.anyOf[1].items.anyOf)
-    input_union_schema_name = "OpenAIResponseMessageInputUnion"
-
-    if "_responses_Request" in schemas:
-        schema = schemas["_responses_Request"]
-        if isinstance(schema, dict) and "properties" in schema:
-            input_prop = schema["properties"].get("input")
-            if isinstance(input_prop, dict) and "anyOf" in input_prop:
-                any_of = input_prop["anyOf"]
-                if isinstance(any_of, list) and len(any_of) > 1:
-                    # Check the second item (index 1) which should be the array type
-                    second_item = any_of[1]
-                    if isinstance(second_item, dict) and "items" in second_item:
-                        items = second_item["items"]
-                        if isinstance(items, dict) and "anyOf" in items:
-                            # Extract the union schema with deep copy
-                            input_union_schema = copy.deepcopy(items["anyOf"])
-                            input_union_title = items.get("title", "OpenAIResponseMessageInputUnion")
-
-                            # Collect all refs from the oneOf to detect duplicates
-                            refs_in_oneof = set()
-                            for item in input_union_schema:
-                                if isinstance(item, dict) and "oneOf" in item:
-                                    oneof = item["oneOf"]
-                                    if isinstance(oneof, list):
-                                        for variant in oneof:
-                                            if isinstance(variant, dict) and "$ref" in variant:
-                                                refs_in_oneof.add(variant["$ref"])
-                                    item["x-stainless-naming"] = "OpenAIResponseMessageInputOneOf"
-
-                            # Remove duplicate refs from anyOf that are already in oneOf
-                            deduplicated_schema = []
-                            for item in input_union_schema:
-                                if isinstance(item, dict) and "$ref" in item:
-                                    if item["$ref"] not in refs_in_oneof:
-                                        deduplicated_schema.append(item)
-                                else:
-                                    deduplicated_schema.append(item)
-                            input_union_schema = deduplicated_schema
-
-                            # Create the shared schema with x-stainless-naming to ensure consistent naming
-                            if input_union_schema_name not in schemas:
-                                schemas[input_union_schema_name] = {
-                                    "anyOf": input_union_schema,
-                                    "title": input_union_title,
-                                    "x-stainless-naming": input_union_schema_name,
-                                }
-                            # Replace with reference
-                            second_item["items"] = {"$ref": f"#/components/schemas/{input_union_schema_name}"}
-
+    schemas = openapi_schema.get("components", {}).get("schemas", {})
+    for schema_name, schema_def in schemas.items():
+        if (
+            schema_name in schemas_without_type_object
+            and isinstance(schema_def, dict)
+            and schema_def.get("type") == "object"
+            and "properties" in schema_def
+        ):
+            del schema_def["type"]
     return openapi_schema
 
 
-def _dedupe_create_response_request_input_union_for_stainless(openapi_schema: dict[str, Any]) -> dict[str, Any]:
-    """Deduplicate inline unions in `CreateResponseRequest.input` for Stainless.
+def _strip_titles_recursive(obj: Any) -> None:
+    """Recursively remove 'title' fields from a schema.
 
-    The stable OpenAPI spec intentionally preserves legacy structure for oasdiff
-    compatibility, but Stainless codegen treats duplicated inline unions as separate
-    types and can generate name clashes.
-
-    This transform is intended to run only on the combined (stainless) spec.
+    Pydantic auto-generates titles for all properties, but OpenAI's spec
+    generally omits them. Removing titles helps oasdiff match schemas
+    that are otherwise structurally identical.
     """
-    if "components" not in openapi_schema or "schemas" not in openapi_schema["components"]:
-        return openapi_schema
+    if isinstance(obj, dict):
+        obj.pop("title", None)
+        for value in obj.values():
+            _strip_titles_recursive(value)
+    elif isinstance(obj, list):
+        for item in obj:
+            _strip_titles_recursive(item)
 
-    schemas = openapi_schema["components"]["schemas"]
-    create_request = schemas.get("CreateResponseRequest")
-    if not isinstance(create_request, dict):
-        return openapi_schema
 
-    properties = create_request.get("properties")
-    if not isinstance(properties, dict):
-        return openapi_schema
+def _rename_schema_component(openapi_schema: dict[str, Any], old_name: str, new_name: str) -> None:
+    """Rename a schema component and update all $ref references throughout the spec."""
+    schemas = openapi_schema.get("components", {}).get("schemas", {})
+    if old_name not in schemas:
+        return
 
-    input_prop = properties.get("input")
-    if not isinstance(input_prop, dict):
-        return openapi_schema
+    # Move the schema definition
+    schemas[new_name] = schemas.pop(old_name)
 
-    any_of = input_prop.get("anyOf")
-    if not isinstance(any_of, list):
-        return openapi_schema
+    old_ref = f"#/components/schemas/{old_name}"
+    new_ref = f"#/components/schemas/{new_name}"
 
-    array_schema: dict[str, Any] | None = None
-    for item in any_of:
-        if isinstance(item, dict) and (item.get("type") == "array" or "items" in item):
-            array_schema = item
-            break
-
-    if array_schema is None:
-        return openapi_schema
-
-    items_schema = array_schema.get("items")
-    if not isinstance(items_schema, dict):
-        return openapi_schema
-
-    items_any_of = items_schema.get("anyOf")
-    if not isinstance(items_any_of, list):
-        return openapi_schema
-
-    def _collect_refs(obj: Any, refs: set[str]) -> None:
+    def _update_refs(obj: Any) -> None:
         if isinstance(obj, dict):
-            ref = obj.get("$ref")
-            if isinstance(ref, str):
-                refs.add(ref)
+            if obj.get("$ref") == old_ref:
+                obj["$ref"] = new_ref
             for value in obj.values():
-                _collect_refs(value, refs)
+                _update_refs(value)
         elif isinstance(obj, list):
-            for value in obj:
-                _collect_refs(value, refs)
+            for item in obj:
+                _update_refs(item)
 
-    def _is_direct_ref_item(item: dict[str, Any]) -> bool:
-        if "$ref" not in item:
-            return False
-        # Direct refs are the sibling entries like: {$ref: ..., title: ...}
-        # Union/nesting containers also include oneOf/anyOf/items/etc.
-        container_keys = {"oneOf", "anyOf", "items", "properties", "additionalProperties"}
-        return not any(key in item for key in container_keys)
-
-    refs_in_nested_unions: set[str] = set()
-    for item in items_any_of:
-        if isinstance(item, dict) and not _is_direct_ref_item(item):
-            _collect_refs(item, refs_in_nested_unions)
-
-    if not refs_in_nested_unions:
-        return openapi_schema
-
-    # Remove sibling direct refs that are duplicates of refs found elsewhere
-    deduplicated: list[Any] = []
-    for item in items_any_of:
-        if isinstance(item, dict) and _is_direct_ref_item(item) and item["$ref"] in refs_in_nested_unions:
-            continue
-        deduplicated.append(item)
-
-    items_schema["anyOf"] = deduplicated
-    return openapi_schema
+    _update_refs(openapi_schema)
 
 
-def _convert_multiline_strings_to_literal(obj: Any) -> Any:
-    """Recursively convert multi-line strings to LiteralScalarString for YAML block scalar formatting."""
-    try:
-        from ruamel.yaml.scalarstring import LiteralScalarString
+def _inline_component_refs(openapi_schema: dict[str, Any], components_to_inline: set[str]) -> None:
+    """Inline specific component $refs to match OpenAI's spec style.
 
-        if isinstance(obj, str) and "\n" in obj:
-            return LiteralScalarString(obj)
-        elif isinstance(obj, dict):
-            return {key: _convert_multiline_strings_to_literal(value) for key, value in obj.items()}
+    Some components in OpenAI's spec are defined inline rather than as separate
+    named components. This function resolves specified $refs by replacing them
+    with the actual schema content, which allows oasdiff to match the schemas.
+
+    Handles both anyOf/oneOf variant refs and direct property refs.
+    """
+    schemas = openapi_schema.get("components", {}).get("schemas", {})
+    prefix = "#/components/schemas/"
+
+    def _get_ref_name(ref: str) -> str:
+        return ref[len(prefix) :] if ref.startswith(prefix) else ""
+
+    def _inline_refs(obj: Any) -> None:
+        if isinstance(obj, dict):
+            # Handle anyOf/oneOf arrays that contain $refs to inline
+            for key in ("anyOf", "oneOf"):
+                if key in obj and isinstance(obj[key], list):
+                    new_items = []
+                    for item in obj[key]:
+                        if isinstance(item, dict) and "$ref" in item:
+                            name = _get_ref_name(item["$ref"])
+                            if name in components_to_inline and name in schemas:
+                                resolved = copy.deepcopy(schemas[name])
+                                resolved.pop("title", None)
+                                resolved.pop("description", None)
+                                new_items.append(resolved)
+                                continue
+                        new_items.append(item)
+                    obj[key] = new_items
+
+            # Handle direct $ref properties (e.g., function: {$ref: ...})
+            for key, value in list(obj.items()):
+                if isinstance(value, dict) and "$ref" in value:
+                    name = _get_ref_name(value["$ref"])
+                    if name in components_to_inline and name in schemas:
+                        resolved = copy.deepcopy(schemas[name])
+                        resolved.pop("title", None)
+                        # Preserve description from the referencing field if present
+                        if "description" in value:
+                            resolved["description"] = value["description"]
+                        obj[key] = resolved
+
+            # Recurse into all values
+            for value in obj.values():
+                _inline_refs(value)
         elif isinstance(obj, list):
-            return [_convert_multiline_strings_to_literal(item) for item in obj]
-        else:
-            return obj
-    except ImportError:
-        return obj
+            for item in obj:
+                _inline_refs(item)
 
-
-def _write_yaml_file(file_path: Path, schema: dict[str, Any]) -> None:
-    """Write schema to YAML file using ruamel.yaml if available, otherwise standard yaml."""
-    try:
-        from ruamel.yaml import YAML
-
-        yaml_writer = YAML()
-        yaml_writer.default_flow_style = False
-        yaml_writer.sort_keys = False
-        yaml_writer.width = 4096
-        yaml_writer.allow_unicode = True
-        schema = _convert_multiline_strings_to_literal(schema)
-        with open(file_path, "w") as f:
-            yaml_writer.dump(schema, f)
-    except ImportError:
-        with open(file_path, "w") as f:
-            yaml.dump(schema, f, default_flow_style=False, sort_keys=False)
-
-    # Post-process to remove trailing whitespace from all lines
-    with open(file_path) as f:
-        lines = f.readlines()
-
-    # Strip trailing whitespace from each line, preserving newlines
-    cleaned_lines = [line.rstrip() + "\n" if line.endswith("\n") else line.rstrip() for line in lines]
-
-    with open(file_path, "w") as f:
-        f.writelines(cleaned_lines)
-
-
-def _apply_legacy_sorting(openapi_schema: dict[str, Any]) -> dict[str, Any]:
-    """
-    Temporarily match the legacy ordering from origin/main so diffs are easier to read.
-    Remove this once the generator output stabilizes and we no longer need legacy diffs.
-    """
-
-    def order_mapping(data: dict[str, Any], priority: list[str]) -> OrderedDict[str, Any]:
-        ordered: OrderedDict[str, Any] = OrderedDict()
-        for key in priority:
-            if key in data:
-                ordered[key] = data[key]
-        for key, value in data.items():
-            if key not in ordered:
-                ordered[key] = value
-        return ordered
-
-    paths = openapi_schema.get("paths")
-    if isinstance(paths, dict):
-        openapi_schema["paths"] = order_mapping(paths, LEGACY_PATH_ORDER)
-        for path, path_item in openapi_schema["paths"].items():
-            if not isinstance(path_item, dict):
-                continue
-            ordered_path_item = OrderedDict()
-            for method in ["get", "post", "put", "delete", "patch", "head", "options"]:
-                if method in path_item:
-                    ordered_path_item[method] = order_mapping(path_item[method], LEGACY_OPERATION_KEYS)
-            for key, value in path_item.items():
-                if key not in ordered_path_item:
-                    if isinstance(value, dict) and key.lower() in {
-                        "get",
-                        "post",
-                        "put",
-                        "delete",
-                        "patch",
-                        "head",
-                        "options",
-                    }:
-                        ordered_path_item[key] = order_mapping(value, LEGACY_OPERATION_KEYS)
-                    else:
-                        ordered_path_item[key] = value
-            openapi_schema["paths"][path] = ordered_path_item
-
-    components = openapi_schema.setdefault("components", {})
-    schemas = components.get("schemas")
-    if isinstance(schemas, dict):
-        components["schemas"] = order_mapping(schemas, LEGACY_SCHEMA_ORDER)
-    responses = components.get("responses")
-    if isinstance(responses, dict):
-        components["responses"] = order_mapping(responses, LEGACY_RESPONSE_ORDER)
-
-    if LEGACY_TAGS:
-        openapi_schema["tags"] = LEGACY_TAGS
-
-    if LEGACY_TAG_GROUPS:
-        openapi_schema["x-tagGroups"] = LEGACY_TAG_GROUPS
-
-    if LEGACY_SECURITY:
-        openapi_schema["security"] = LEGACY_SECURITY
-
-    return openapi_schema
+    _inline_refs(openapi_schema)
 
 
 def _fix_schema_issues(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     """Fix common schema issues: exclusiveMinimum, null defaults, and add titles to unions."""
+    # Convert standalone const values to single-value enums (OpenAI style)
+    _convert_standalone_const_to_enum(openapi_schema)
+
     # Convert anyOf with const values to enums across the entire schema
     _convert_anyof_const_to_enum(openapi_schema)
+
+    # Restore defaults on single-value enums where the OpenAI spec expects them.
+    # _convert_standalone_const_to_enum strips all defaults; these specific schemas
+    # need them back to match the reference spec (e.g. CompactResource.object).
+    _restore_const_enum_defaults(openapi_schema)
+
+    # Align tool call schemas with OpenAI's spec BEFORE inlining (inlining copies schema content).
+    if "components" in openapi_schema and "schemas" in openapi_schema["components"]:
+        tc_schema = openapi_schema["components"]["schemas"].get("OpenAIChatCompletionToolCall")
+        if tc_schema:
+            props = tc_schema.get("properties", {})
+            # Make id non-nullable (remove anyOf, use plain string).
+            # The Pydantic model keeps id optional for streaming delta parsing,
+            # but the response schema should match OpenAI's non-nullable definition.
+            if "id" in props and "anyOf" in props["id"]:
+                non_null = [s for s in props["id"]["anyOf"] if s.get("type") != "null"]
+                if len(non_null) == 1:
+                    desc = props["id"].get("description", "")
+                    props["id"] = non_null[0]
+                    if desc:
+                        props["id"]["description"] = desc
+            # Make function non-nullable (remove anyOf, use plain $ref).
+            # Same rationale as id above.
+            if "function" in props and "anyOf" in props["function"]:
+                non_null = [s for s in props["function"]["anyOf"] if s.get("type") != "null"]
+                if len(non_null) == 1:
+                    desc = props["function"].get("description", "")
+                    props["function"] = non_null[0]
+                    if desc:
+                        props["function"]["description"] = desc
+            # Remove 'index' property (only used for streaming chunks, not in OpenAI response type)
+            if "index" in props:
+                del props["index"]
+            # Strip auto-generated titles from properties (OpenAI doesn't include them)
+            _strip_titles_recursive(tc_schema)
+            # Set required fields to match OpenAI
+            tc_schema["required"] = ["id", "type", "function"]
+
+        ctc_schema = openapi_schema["components"]["schemas"].get("OpenAIChatCompletionCustomToolCall")
+        if ctc_schema:
+            _strip_titles_recursive(ctc_schema)
+            # Set required fields to match OpenAI's ChatCompletionMessageCustomToolCall
+            ctc_schema["required"] = ["id", "type", "custom"]
+
+    # Inline specific component refs to match OpenAI's spec style.
+    # This must run AFTER the schema fixes above since it copies the schema content.
+    _inline_component_refs(
+        openapi_schema,
+        {
+            "OpenAIChoiceLogprobs",
+            "OpenAIChatCompletionToolCallFunction",
+            "OpenAIChatCompletionCustomToolCallFunction",
+        },
+    )
+
+    # Rename tool call components to match OpenAI's names for oasdiff matching.
+    _rename_schema_component(openapi_schema, "OpenAIChatCompletionToolCall", "ChatCompletionMessageToolCall")
+    _rename_schema_component(
+        openapi_schema, "OpenAIChatCompletionCustomToolCall", "ChatCompletionMessageCustomToolCall"
+    )
+
+    # Add discriminator to tool_calls items anyOf (OpenAI uses propertyName: "type")
+    if "components" in openapi_schema and "schemas" in openapi_schema["components"]:
+        msg_schema = openapi_schema["components"]["schemas"].get("OpenAIChatCompletionResponseMessage")
+        if msg_schema:
+            tc_prop = msg_schema.get("properties", {}).get("tool_calls", {})
+            items = tc_prop.get("items", {})
+            if "anyOf" in items:
+                items["discriminator"] = {"propertyName": "type"}
 
     # Fix other schema issues and add titles to unions
     if "components" in openapi_schema and "schemas" in openapi_schema["components"]:
         for schema_name, schema_def in openapi_schema["components"]["schemas"].items():
             _fix_schema_recursive(schema_def)
             _add_titles_to_unions(schema_def, schema_name)
+
     return openapi_schema
-
-
-def validate_openapi_schema(schema: dict[str, Any], schema_name: str = "OpenAPI schema") -> bool:
-    """
-    Validate an OpenAPI schema using openapi-spec-validator.
-
-    Args:
-        schema: The OpenAPI schema dictionary to validate
-        schema_name: Name of the schema for error reporting
-
-    Returns:
-        True if valid, False otherwise
-
-    Raises:
-        OpenAPIValidationError: If validation fails
-    """
-    try:
-        validate_spec(schema)
-        print(f"{schema_name} is valid")
-        return True
-    except OpenAPISpecValidatorError as e:
-        print(f"{schema_name} validation failed: {e}")
-        return False
-    except Exception as e:
-        print(f"{schema_name} validation error: {e}")
-        return False

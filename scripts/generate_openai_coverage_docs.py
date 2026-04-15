@@ -92,7 +92,7 @@ def generate_docs(
         "---",
         "title: OpenAI API Conformance",
         "description: Detailed conformance status of Llama Stack against the OpenAI API specification",
-        "sidebar_label: API Conformance",
+        "sidebar_label: Conformance",
         "sidebar_position: 2",
         "---",
         "",
@@ -123,7 +123,7 @@ def generate_docs(
                 "",
                 "## Integration Test Coverage",
                 "",
-                f"**Overall Test Coverage Score: {test_score}%**",
+                f"Overall Test Coverage Score: {test_score}%",
                 "",
                 "| Category | Covered | Total | Score |",
                 "|----------|---------|-------|-------|",
@@ -250,6 +250,8 @@ def generate_docs(
                         details = "; ".join(issue["details"])
                         # Escape pipe characters in details
                         details = details.replace("|", "\\|")
+                        # Escape < and > for MDX compatibility (prevents JSX parse errors)
+                        details = details.replace("<", "&lt;").replace(">", "&gt;")
                         if show_tested:
                             prop_name = _extract_property_name(issue["property"])
                             is_tested = prop_name in tested_properties if prop_name else False

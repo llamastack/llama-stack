@@ -492,6 +492,9 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_parallel_tool_calls_enabled(self, openai_client, text_model_id):
         """Test that parallel_tool_calls=True produces multiple function calls."""
+        if "watsonx" in text_model_id:
+            pytest.skip("WatsonX does not reliably produce parallel tool calls.")
+
         response = openai_client.responses.create(
             model=text_model_id,
             input="What is the weather in Paris and the current time in London?",
@@ -655,11 +658,152 @@ class TestOpenAIResponses:
         assert response.background is False
         assert len(response.output) > 0
 
+    def test_cancel_queued_or_in_progress_response(self, openai_client, text_model_id):
+        """Test cancelling a background response that is queued or in progress."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX rate limits cause cancel tests to fail")
+        # Create a background response
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="Write a detailed 5000 word essay about quantum physics and the nature of reality.",
+            background=True,
+        )
+
+        assert response.status == "queued"
+        response_id = response.id
+
+        # Cancel immediately - in replay mode, background worker starts very quickly
+        openai_client.responses.cancel(response_id=response_id)
+
+        # Poll for cancelled status (background worker may have picked up task)
+        max_wait = 5
+        poll_interval = 0.1
+        elapsed = 0
+
+        while elapsed < max_wait:
+            time.sleep(poll_interval)
+            elapsed += poll_interval
+
+            retrieved = openai_client.responses.retrieve(response_id=response_id)
+            if retrieved.status == "cancelled":
+                return
+
+            # In replay mode, worker may have started processing before cancel completed
+            assert retrieved.status in ("queued", "in_progress", "cancelled"), (
+                f"Unexpected status '{retrieved.status}' - expected queued/in_progress/cancelled"
+            )
+
+        pytest.fail(f"Response did not transition to cancelled within {max_wait} seconds")
+
+    def test_cancel_already_cancelled_is_idempotent(self, openai_client, text_model_id):
+        """Test that cancelling an already-cancelled response is idempotent."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX rate limits cause cancel tests to fail")
+        # Create and cancel a background response
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="Write a long story.",
+            background=True,
+        )
+
+        response_id = response.id
+        openai_client.responses.cancel(response_id=response_id)
+
+        # Poll for cancelled status
+        max_wait = 5
+        poll_interval = 0.1
+        elapsed = 0
+
+        while elapsed < max_wait:
+            time.sleep(poll_interval)
+            elapsed += poll_interval
+
+            retrieved = openai_client.responses.retrieve(response_id=response_id)
+            if retrieved.status == "cancelled":
+                break
+
+            assert retrieved.status in ("queued", "in_progress", "cancelled"), f"Unexpected status '{retrieved.status}'"
+        else:
+            pytest.fail(f"Response did not transition to cancelled within {max_wait} seconds")
+
+        # Cancel again - should return same state without error
+        cancelled_again = openai_client.responses.cancel(response_id=response_id)
+        assert cancelled_again.id == response_id
+        assert cancelled_again.status == "cancelled"
+
+    def test_cancel_completed_response_fails(self, openai_client, text_model_id):
+        """Test that cancelling a completed response returns 409 Conflict."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX rate limits cause cancel tests to fail")
+        # Create a synchronous (completed) response
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="Say hello",
+            background=False,
+        )
+
+        assert response.status == "completed"
+        response_id = response.id
+
+        # Try to cancel it - should fail with 409
+        with pytest.raises(Exception) as exc_info:
+            openai_client.responses.cancel(response_id=response_id)
+
+        # Check for conflict error (different clients may raise different exceptions)
+        error_str = str(exc_info.value).lower()
+        assert "409" in error_str or "conflict" in error_str or "cannot cancel" in error_str
+
+    def test_cancel_nonexistent_response_fails(self, openai_client, text_model_id):
+        """Test that cancelling a non-existent response returns 404."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX rate limits cause cancel tests to fail")
+        fake_id = "resp_fake_nonexistent_id"
+
+        with pytest.raises(Exception) as exc_info:
+            openai_client.responses.cancel(response_id=fake_id)
+
+        # Check for not found error
+        error_str = str(exc_info.value).lower()
+        assert "404" in error_str or "not found" in error_str
+
+    def test_cancel_prevents_completion(self, openai_client, text_model_id):
+        """Test that a cancelled response does not complete."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX rate limits cause cancel tests to fail")
+        # Create a background response
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="Write a detailed essay.",
+            background=True,
+        )
+
+        response_id = response.id
+        assert response.status == "queued"
+
+        # Cancel immediately
+        cancelled = openai_client.responses.cancel(response_id=response_id)
+        assert cancelled.status == "cancelled"
+
+        # Poll to verify it stays cancelled and doesn't complete
+        max_wait = 5
+        poll_interval = 0.5
+        elapsed = 0
+
+        while elapsed < max_wait:
+            time.sleep(poll_interval)
+            elapsed += poll_interval
+
+            retrieved = openai_client.responses.retrieve(response_id=response_id)
+            assert retrieved.status == "cancelled", f"Expected 'cancelled' but got '{retrieved.status}'"
+            assert len(retrieved.output) == 0
+
     def _skip_service_tier_for_unsupported(self, text_model_id):
         if text_model_id.startswith("azure/"):
             pytest.skip("Azure OpenAI does not support the service_tier parameter")
         if text_model_id.startswith("watsonx/"):
             pytest.skip("WatsonX does not support the service_tier parameter")
+        if text_model_id.startswith("vllm/"):
+            pytest.skip("vLLM does not support the service_tier parameter")
 
     def test_openai_response_with_service_tier_auto(self, openai_client, text_model_id):
         """Test OpenAI response with service_tier='auto'.
@@ -867,7 +1011,6 @@ class TestOpenAIResponses:
 
         response = completed_events[0].response
         assert len(response.output_text.strip()) > 0
-        # Verify usage is populated (include_usage=True is always set internally)
         assert response.usage is not None
         assert response.usage.output_tokens > 0
         assert response.usage.total_tokens > 0
@@ -891,7 +1034,6 @@ class TestOpenAIResponses:
 
         response = completed_events[0].response
         assert len(response.output_text.strip()) > 0
-        # Verify usage is still populated when stream_options is provided
         assert response.usage is not None
         assert response.usage.output_tokens > 0
         assert response.usage.total_tokens > 0
@@ -938,6 +1080,161 @@ class TestOpenAIResponses:
 
         response = completed_events[0].response
         assert len(response.output_text.strip()) > 0
+        assert response.usage is not None
+        assert response.usage.output_tokens > 0
+        assert response.usage.total_tokens > 0
+
+    def test_openai_response_incomplete_details_null_when_completed(self, openai_client, text_model_id):
+        """Test that a completed response has incomplete_details as None."""
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 2+2?"}],
+        )
+
+        assert response.id.startswith("resp_")
+        assert response.status == "completed"
+        assert response.incomplete_details is None
+
+    def test_openai_response_incomplete_details_length(self, openai_client, text_model_id):
+        """Test incomplete_details.reason is 'length' when chat completion returns finish_reason='length'.
+
+        A small max_output_tokens with a long prompt causes the provider to truncate
+        the output in a single inference call, returning finish_reason='length'.
+        """
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[
+                {
+                    "role": "user",
+                    "content": "Write a very long and detailed essay about the entire history of the Roman Empire from founding to fall.",
+                }
+            ],
+            max_output_tokens=16,
+        )
+
+        assert response.id.startswith("resp_")
+        assert response.status == "incomplete"
+        assert response.incomplete_details is not None
+        assert response.incomplete_details.reason == "length"
+
+    def test_openai_response_incomplete_details_length_streaming(self, openai_client, text_model_id):
+        """Test streaming incomplete_details.reason is 'length' when chat completion returns finish_reason='length'."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[
+                {
+                    "role": "user",
+                    "content": "Write a very long and detailed essay about the entire history of the Roman Empire from founding to fall.",
+                }
+            ],
+            max_output_tokens=16,
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+
+        incomplete_events = [e for e in chunks if e.type == "response.incomplete"]
+        assert len(incomplete_events) == 1
+        assert incomplete_events[0].response.status == "incomplete"
+        assert incomplete_events[0].response.incomplete_details is not None
+        assert incomplete_events[0].response.incomplete_details.reason == "length"
+
+    def test_openai_response_incomplete_details_max_iterations_exceeded(self, openai_client, text_model_id):
+        """Test incomplete_details.reason is 'max_iterations_exceeded' when the agent loop
+        hits the max_infer_iters limit.
+
+        This uses web_search (a server-side tool) with max_infer_iters=1 so the loop
+        exits after the first tool-calling iteration.
+        Note: _function_tools cannot be used here because function (client-side) tools
+        break the loop immediately, so n_iter never increments.
+        """
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="Search for the latest news about artificial intelligence.",
+            tools=[{"type": "web_search"}],
+            extra_body={"max_infer_iters": 1},
+        )
+
+        assert response.id.startswith("resp_")
+        assert response.status == "incomplete"
+        assert response.incomplete_details is not None
+        assert response.incomplete_details.reason == "max_iterations_exceeded"
+
+    def test_openai_response_incomplete_details_max_iterations_exceeded_streaming(self, openai_client, text_model_id):
+        """Test streaming incomplete_details.reason is 'max_iterations_exceeded' when the agent loop
+        hits the max_infer_iters limit."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input="Search for the latest news about artificial intelligence.",
+            tools=[{"type": "web_search"}],
+            extra_body={"max_infer_iters": 1},
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+
+        incomplete_events = [e for e in chunks if e.type == "response.incomplete"]
+        assert len(incomplete_events) == 1
+        assert incomplete_events[0].response.status == "incomplete"
+        assert incomplete_events[0].response.incomplete_details is not None
+        assert incomplete_events[0].response.incomplete_details.reason == "max_iterations_exceeded"
+
+    @staticmethod
+    def _is_reasoning_model(model_id: str) -> bool:
+        """Check if the model supports reasoning_effort based on model name patterns."""
+        # Strip provider prefix (e.g., "openai/", "azure/") to get base model name
+        base_model = model_id.split("/")[-1] if "/" in model_id else model_id
+        # OpenAI reasoning models: o1, o3, o4, etc.
+        reasoning_prefixes = ("o1", "o3", "o4")
+        return base_model.startswith(reasoning_prefixes)
+
+    def _skip_reasoning_effort_for_unsupported(self, text_model_id):
+        if not self._is_reasoning_model(text_model_id):
+            pytest.skip(f"Model {text_model_id} does not support the reasoning_effort parameter")
+
+    @pytest.mark.parametrize("effort", ["low", "medium", "high"])
+    def test_openai_response_reasoning_effort(self, openai_client, text_model_id, effort):
+        """Test that reasoning.effort is accepted and reflected in the response."""
+        self._skip_reasoning_effort_for_unsupported(text_model_id)
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 2+2?"}],
+            reasoning={"effort": effort},
+        )
+
+        assert response.id.startswith("resp_")
+        assert response.status == "completed"
+        assert len(response.output_text.strip()) > 0
+        assert response.reasoning is not None
+        assert response.reasoning.effort == effort
+
+    @pytest.mark.parametrize("effort", ["low", "medium", "high"])
+    def test_openai_response_reasoning_effort_streaming(self, openai_client, text_model_id, effort):
+        """Test that reasoning.effort works correctly in streaming mode."""
+        self._skip_reasoning_effort_for_unsupported(text_model_id)
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 2+2?"}],
+            reasoning={"effort": effort},
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+
+        response = completed_events[0].response
+        assert response.status == "completed"
+        assert len(response.output_text.strip()) > 0
+        assert response.reasoning is not None
+        assert response.reasoning.effort == effort
         assert response.usage is not None
         assert response.usage.output_tokens > 0
         assert response.usage.total_tokens > 0

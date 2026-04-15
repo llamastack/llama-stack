@@ -48,6 +48,9 @@ class MockDistRegistry:
     def __init__(self):
         self.dist = None
 
+    def get_cached(self, type_name: str, identifier: str):
+        return None
+
 
 @pytest.fixture
 def mock_provider():
@@ -60,6 +63,9 @@ def mock_provider():
         return_value=VectorStoreObject(
             id="vs_123",
             created_at=1234567890,
+            name="test",
+            usage_bytes=0,
+            status="completed",
             file_counts=VectorStoreFileCounts(completed=0, cancelled=0, failed=0, in_progress=0, total=0),
         )
     )
@@ -67,6 +73,9 @@ def mock_provider():
         return_value=VectorStoreObject(
             id="vs_123",
             created_at=1234567890,
+            name="test",
+            usage_bytes=0,
+            status="completed",
             file_counts=VectorStoreFileCounts(completed=0, cancelled=0, failed=0, in_progress=0, total=0),
         )
     )
@@ -82,11 +91,12 @@ def mock_provider():
             ),
             created_at=1234567890,
             status="completed",
+            usage_bytes=0,
             vector_store_id="vs_123",
         )
     )
     provider.openai_list_files_in_vector_store = AsyncMock(
-        return_value=VectorStoreListFilesResponse(data=[], has_more=False)
+        return_value=VectorStoreListFilesResponse(data=[], first_id="", last_id="", has_more=False)
     )
     provider.openai_retrieve_vector_store_file = AsyncMock(
         return_value=VectorStoreFileObject(
@@ -96,6 +106,7 @@ def mock_provider():
             ),
             created_at=1234567890,
             status="completed",
+            usage_bytes=0,
             vector_store_id="vs_123",
         )
     )
@@ -107,6 +118,7 @@ def mock_provider():
             ),
             created_at=1234567890,
             status="completed",
+            usage_bytes=0,
             vector_store_id="vs_123",
         )
     )
@@ -132,7 +144,7 @@ def mock_provider():
         )
     )
     provider.openai_list_files_in_vector_store_file_batch = AsyncMock(
-        return_value=VectorStoreFilesListInBatchResponse(data=[], has_more=False)
+        return_value=VectorStoreFilesListInBatchResponse(data=[], first_id="", last_id="", has_more=False)
     )
     provider.openai_cancel_vector_store_file_batch = AsyncMock(
         return_value=VectorStoreFileBatchObject(
