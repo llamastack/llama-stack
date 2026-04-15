@@ -6,9 +6,8 @@
 
 from typing import Any
 
+from llama_stack_utils_inference.model_registry import RemoteInferenceProviderConfig
 from pydantic import Field, HttpUrl, SecretStr
-
-from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434/v1"
 

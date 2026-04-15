@@ -5,7 +5,7 @@ description = "Demo distribution for Llama Stack — ollama inference."
 requires-python = ">=3.12"
 dependencies = [
     "llama-stack",
-    "efenness-llama-stack-provider-inference-ollama",
+    "llama-stack-provider-inference-ollama",
 ]
 
 [project.entry-points."llama_stack.distributions"]

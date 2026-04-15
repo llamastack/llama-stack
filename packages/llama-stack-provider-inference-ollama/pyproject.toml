@@ -9,9 +9,10 @@ fallback_version = "0.7.1.dev0"
 [tool.uv.sources]
 llama-stack = { workspace = true }
 llama-stack-api = { workspace = true }
+llama-stack-utils-inference = { workspace = true }
 
 [project]
-name = "efenness-llama-stack-provider-inference-ollama"
+name = "llama-stack-provider-inference-ollama"
 dynamic = ["version"]
 description = "Ollama inference provider for Llama Stack"
 requires-python = ">=3.12"
@@ -19,6 +20,7 @@ license = "MIT"
 dependencies = [
     "llama-stack",
     "llama-stack-api",
+    "llama-stack-utils-inference",
     "ollama",
     "aiohttp",
     "h11>=0.16.0",

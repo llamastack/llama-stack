@@ -13,7 +13,6 @@ resolution-markers = [
 [manifest]
 members = [
     "efenness-llama-stack-distribution-demo",
-    "efenness-llama-stack-provider-inference-ollama",
     "llama-stack",
     "llama-stack-api",
     "llama-stack-provider-inference-anthropic",
@@ -28,6 +27,7 @@ members = [
     "llama-stack-provider-inference-llama-openai-compat",
     "llama-stack-provider-inference-nvidia",
     "llama-stack-provider-inference-oci",
+    "llama-stack-provider-inference-ollama",
     "llama-stack-provider-inference-openai",
     "llama-stack-provider-inference-passthrough",
     "llama-stack-provider-inference-runpod",
@@ -1272,34 +1272,14 @@ name = "efenness-llama-stack-distribution-demo"
 version = "0.1.0"
 source = { editable = "packages/llama-stack-distribution-demo" }
 dependencies = [
-    { name = "efenness-llama-stack-provider-inference-ollama" },
     { name = "llama-stack" },
+    { name = "llama-stack-provider-inference-ollama" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "efenness-llama-stack-provider-inference-ollama", editable = "packages/llama-stack-provider-inference-ollama" },
     { name = "llama-stack", editable = "." },
-]
-
-[[package]]
-name = "efenness-llama-stack-provider-inference-ollama"
-source = { editable = "packages/llama-stack-provider-inference-ollama" }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "h11" },
-    { name = "llama-stack" },
-    { name = "llama-stack-api" },
-    { name = "ollama" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiohttp" },
-    { name = "h11", specifier = ">=0.16.0" },
-    { name = "llama-stack", editable = "." },
-    { name = "llama-stack-api", editable = "src/llama_stack_api" },
-    { name = "ollama" },
+    { name = "llama-stack-provider-inference-ollama", editable = "packages/llama-stack-provider-inference-ollama" },
 ]
 
 [[package]]
@@ -2989,9 +2969,9 @@ unit = [
     { name = "coverage" },
     { name = "databricks-sdk" },
     { name = "efenness-llama-stack-distribution-demo" },
-    { name = "efenness-llama-stack-provider-inference-ollama" },
     { name = "faiss-cpu" },
     { name = "litellm" },
+    { name = "llama-stack-provider-inference-ollama" },
     { name = "mcp" },
     { name = "moto", extra = ["s3"] },
     { name = "ollama" },
@@ -3239,9 +3219,9 @@ unit = [
     { name = "coverage" },
     { name = "databricks-sdk" },
     { name = "efenness-llama-stack-distribution-demo", editable = "packages/llama-stack-distribution-demo" },
-    { name = "efenness-llama-stack-provider-inference-ollama", editable = "packages/llama-stack-provider-inference-ollama" },
     { name = "faiss-cpu" },
     { name = "litellm" },
+    { name = "llama-stack-provider-inference-ollama", editable = "packages/llama-stack-provider-inference-ollama" },
     { name = "mcp", specifier = ">=1.23.0" },
     { name = "moto", extras = ["s3"], specifier = ">=5.1.10" },
     { name = "ollama" },
@@ -3499,6 +3479,28 @@ requires-dist = [
     { name = "llama-stack-api", editable = "src/llama_stack_api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
     { name = "oci" },
+]
+
+[[package]]
+name = "llama-stack-provider-inference-ollama"
+source = { editable = "packages/llama-stack-provider-inference-ollama" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "h11" },
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+    { name = "ollama" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiohttp" },
+    { name = "h11", specifier = ">=0.16.0" },
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+    { name = "ollama" },
 ]
 
 [[package]]

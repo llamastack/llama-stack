@@ -230,7 +230,7 @@ unit = [
     "databricks-sdk",
     "sqlite-vec",
     "ollama",
-    "efenness-llama-stack-provider-inference-ollama",
+    "llama-stack-provider-inference-ollama",
     "efenness-llama-stack-distribution-demo",
     "aiosqlite",
     "aiohttp",
@@ -323,7 +323,7 @@ torch = [{ index = "pytorch-cpu" }]
 torchvision = [{ index = "pytorch-cpu" }]
 llama-stack = [{ workspace = true }]
 llama-stack-api = [{ workspace = true }]
-efenness-llama-stack-provider-inference-ollama = [{ workspace = true }]
+llama-stack-provider-inference-ollama = [{ workspace = true }]
 efenness-llama-stack-distribution-demo = [{ workspace = true }]
 llama-stack-utils-inference = [{ workspace = true }]
 llama-stack-utils-vector-io = [{ workspace = true }]
