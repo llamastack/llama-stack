@@ -5,48 +5,17 @@
 # the root directory of this source tree.
 
 
-from llama_stack.core.storage.kvstore import kvstore_dependencies
-from llama_stack_api import (
-    Api,
-    InlineProviderSpec,
-    ProviderSpec,
-)
+from llama_stack_api import Api, ProviderSpec
 
 
 def available_providers() -> list[ProviderSpec]:
-    """Return the list of available agent provider specifications.
+    """Return the list of available responses provider specifications.
+
+    All responses providers are discovered via entry points.
 
     Returns:
         List of ProviderSpec objects describing available providers
     """
-    return [
-        InlineProviderSpec(
-            api=Api.responses,
-            provider_type="inline::builtin",
-            pip_packages=[
-                "matplotlib",
-                "fonttools>=4.60.2",
-                "pillow",
-                "pandas",
-                "scikit-learn",
-                "mcp>=1.23.0",
-            ]
-            + kvstore_dependencies(),  # TODO make this dynamic based on the kvstore config
-            module="llama_stack.providers.inline.responses.builtin",
-            config_class="llama_stack.providers.inline.responses.builtin.BuiltinResponsesImplConfig",
-            api_dependencies=[
-                Api.inference,
-                Api.vector_io,
-                Api.tool_runtime,
-                Api.tool_groups,
-                Api.conversations,
-                Api.prompts,
-                Api.files,
-                Api.connectors,
-            ],
-            optional_api_dependencies=[
-                Api.safety,
-            ],
-            description="Meta's reference implementation of an agent system that can use tools, access vector databases, and perform complex reasoning tasks.",
-        ),
-    ]
+    from llama_stack.providers.registry import merge_entry_point_providers
+
+    return merge_entry_point_providers([], api=Api.responses)

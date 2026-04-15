@@ -5,29 +5,17 @@
 # the root directory of this source tree.
 
 
-from llama_stack_api import (
-    Api,
-    InlineProviderSpec,
-    ProviderSpec,
-)
+from llama_stack_api import Api, ProviderSpec
 
 
 def available_providers() -> list[ProviderSpec]:
-    """Return the list of available messages provider specifications."""
-    return [
-        InlineProviderSpec(
-            api=Api.messages,
-            provider_type="inline::builtin",
-            pip_packages=[],
-            module="llama_stack.providers.inline.messages",
-            config_class="llama_stack.providers.inline.messages.config.MessagesConfig",
-            api_dependencies=[
-                Api.inference,
-            ],
-            description=(
-                "Implements the Anthropic Messages API with two modes: native passthrough for providers "
-                "that support /v1/messages natively (e.g. Ollama, vLLM), and automatic translation for "
-                "all other providers by converting between Anthropic and OpenAI Chat Completions formats."
-            ),
-        ),
-    ]
+    """Return the list of available messages provider specifications.
+
+    All messages providers are discovered via entry points.
+
+    Returns:
+        List of ProviderSpec objects describing available providers
+    """
+    from llama_stack.providers.registry import merge_entry_point_providers
+
+    return merge_entry_point_providers([], api=Api.messages)

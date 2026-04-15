@@ -15,6 +15,7 @@ members = [
     "efenness-llama-stack-distribution-demo",
     "llama-stack",
     "llama-stack-api",
+    "llama-stack-provider-batches-reference",
     "llama-stack-provider-file-processor-docling",
     "llama-stack-provider-file-processor-pypdf",
     "llama-stack-provider-files-localfs",
@@ -43,6 +44,9 @@ members = [
     "llama-stack-provider-inference-vertexai",
     "llama-stack-provider-inference-vllm",
     "llama-stack-provider-inference-watsonx",
+    "llama-stack-provider-interactions-builtin",
+    "llama-stack-provider-messages-builtin",
+    "llama-stack-provider-responses-builtin",
     "llama-stack-provider-safety-bedrock",
     "llama-stack-provider-safety-code-scanner",
     "llama-stack-provider-safety-llama-guard",
@@ -3204,10 +3208,12 @@ unit = [
     { name = "efenness-llama-stack-distribution-demo" },
     { name = "faiss-cpu" },
     { name = "litellm" },
+    { name = "llama-stack-provider-batches-reference" },
     { name = "llama-stack-provider-files-localfs" },
     { name = "llama-stack-provider-files-openai" },
     { name = "llama-stack-provider-files-s3" },
     { name = "llama-stack-provider-inference-ollama" },
+    { name = "llama-stack-provider-responses-builtin" },
     { name = "llama-stack-provider-safety-passthrough" },
     { name = "mcp" },
     { name = "moto", extra = ["s3"] },
@@ -3458,10 +3464,12 @@ unit = [
     { name = "efenness-llama-stack-distribution-demo", editable = "packages/llama-stack-distribution-demo" },
     { name = "faiss-cpu" },
     { name = "litellm" },
+    { name = "llama-stack-provider-batches-reference", editable = "packages/llama-stack-provider-batches-reference" },
     { name = "llama-stack-provider-files-localfs", editable = "packages/llama-stack-provider-files-localfs" },
     { name = "llama-stack-provider-files-openai", editable = "packages/llama-stack-provider-files-openai" },
     { name = "llama-stack-provider-files-s3", editable = "packages/llama-stack-provider-files-s3" },
     { name = "llama-stack-provider-inference-ollama", editable = "packages/llama-stack-provider-inference-ollama" },
+    { name = "llama-stack-provider-responses-builtin", editable = "packages/llama-stack-provider-responses-builtin" },
     { name = "llama-stack-provider-safety-passthrough", editable = "packages/llama-stack-provider-safety-passthrough" },
     { name = "mcp", specifier = ">=1.23.0" },
     { name = "moto", extras = ["s3"], specifier = ">=5.1.10" },
@@ -3520,6 +3528,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d7/3d/c4a268a4b60feb6f7e6da3fad2504aa157a52384529766560f8f3cfca43f/llama_stack_client-0.7.2.tar.gz", hash = "sha256:0e3458800af6a18fd8fc5e0760ed626931a416f6c1fdf24aeba4001e6fca9aec", size = 372953, upload-time = "2026-04-08T14:19:32.02Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/78/a8/cc7fa209471abcaac51139b3e6655c3b18ea718f0afa7cfa6ad974dd9eab/llama_stack_client-0.7.2-py3-none-any.whl", hash = "sha256:8b86156f2522c241ae46280e59287b7716c3cdaf016b6477630eb64bd8cbf150", size = 375337, upload-time = "2026-04-08T14:19:30.444Z" },
+]
+
+[[package]]
+name = "llama-stack-provider-batches-reference"
+version = "0.1.0"
+source = { editable = "packages/llama-stack-provider-batches-reference" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
 ]
 
 [[package]]
@@ -4017,6 +4040,69 @@ requires-dist = [
     { name = "llama-stack", editable = "." },
     { name = "llama-stack-api", editable = "src/llama_stack_api" },
     { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-interactions-builtin"
+version = "0.1.0"
+source = { editable = "packages/llama-stack-provider-interactions-builtin" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-inference" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+]
+
+[[package]]
+name = "llama-stack-provider-messages-builtin"
+version = "0.1.0"
+source = { editable = "packages/llama-stack-provider-messages-builtin" }
+dependencies = [
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+]
+
+[[package]]
+name = "llama-stack-provider-responses-builtin"
+version = "0.1.0"
+source = { editable = "packages/llama-stack-provider-responses-builtin" }
+dependencies = [
+    { name = "fonttools" },
+    { name = "llama-stack" },
+    { name = "llama-stack-api" },
+    { name = "llama-stack-utils-common" },
+    { name = "llama-stack-utils-inference" },
+    { name = "matplotlib" },
+    { name = "mcp" },
+    { name = "pandas" },
+    { name = "pillow" },
+    { name = "scikit-learn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fonttools", specifier = ">=4.60.2" },
+    { name = "llama-stack", editable = "." },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
+    { name = "llama-stack-utils-common", editable = "packages/llama-stack-utils-common" },
+    { name = "llama-stack-utils-inference", editable = "packages/llama-stack-utils-inference" },
+    { name = "matplotlib" },
+    { name = "mcp", specifier = ">=1.23.0" },
+    { name = "pandas" },
+    { name = "pillow" },
+    { name = "scikit-learn" },
 ]
 
 [[package]]

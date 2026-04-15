@@ -1,0 +1,25 @@
+[project]
+name = "llama-stack-provider-interactions-builtin"
+version = "0.1.0"
+description = "Serves the Google Interactions API so that Google GenAI SDK and ADK clients can call Llama Stack without code changes."
+requires-python = ">=3.12"
+dependencies = [
+    "llama-stack",
+    "llama-stack-api",
+    "llama-stack-utils-inference",
+]
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.entry-points."llama_stack.providers"]
+"interactions.inline.builtin" = "llama_stack_provider_interactions_builtin.provider:get_provider_spec"
+
+[tool.uv.sources]
+llama-stack = { workspace = true }
+llama-stack-api = { workspace = true }
+llama-stack-utils-inference = { workspace = true }
