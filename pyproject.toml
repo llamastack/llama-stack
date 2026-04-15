@@ -246,6 +246,11 @@ unit = [
     "together",
     "coverage",
     "moto[s3]>=5.1.10",
+    # Provider packages needed for unit tests
+    "llama-stack-provider-safety-passthrough",
+    "llama-stack-provider-files-localfs",
+    "llama-stack-provider-files-s3",
+    "llama-stack-provider-files-openai",
 ]
 # These are the core dependencies required for running integration tests. They are shared across all
 # providers. If a provider requires additional dependencies, please add them to your environment
@@ -367,6 +372,22 @@ llama-stack-provider-vector-io-qdrant = [{ workspace = true }]
 llama-stack-provider-vector-io-qdrant-inline = [{ workspace = true }]
 llama-stack-provider-vector-io-sqlite-vec = [{ workspace = true }]
 llama-stack-provider-vector-io-weaviate = [{ workspace = true }]
+llama-stack-provider-safety-llama-guard = [{ workspace = true }]
+llama-stack-provider-safety-code-scanner = [{ workspace = true }]
+llama-stack-provider-safety-bedrock = [{ workspace = true }]
+llama-stack-provider-safety-nvidia = [{ workspace = true }]
+llama-stack-provider-safety-passthrough = [{ workspace = true }]
+llama-stack-provider-safety-sambanova = [{ workspace = true }]
+llama-stack-provider-tool-runtime-brave-search = [{ workspace = true }]
+llama-stack-provider-tool-runtime-bing-search = [{ workspace = true }]
+llama-stack-provider-tool-runtime-tavily-search = [{ workspace = true }]
+llama-stack-provider-tool-runtime-wolfram-alpha = [{ workspace = true }]
+llama-stack-provider-tool-runtime-model-context-protocol = [{ workspace = true }]
+llama-stack-provider-files-localfs = [{ workspace = true }]
+llama-stack-provider-files-s3 = [{ workspace = true }]
+llama-stack-provider-files-openai = [{ workspace = true }]
+llama-stack-provider-file-processor-pypdf = [{ workspace = true }]
+llama-stack-provider-file-processor-docling = [{ workspace = true }]
 
 [tool.ruff]
 line-length = 120

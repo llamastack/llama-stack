@@ -7,82 +7,18 @@
 
 from llama_stack_api import (
     Api,
-    InlineProviderSpec,
     ProviderSpec,
-    RemoteProviderSpec,
 )
 
 
 def available_providers() -> list[ProviderSpec]:
     """Return the list of available safety provider specifications.
 
-    Includes both in-tree providers and those discovered via entry points.
+    All safety providers are discovered via entry points.
 
     Returns:
         List of ProviderSpec objects describing available providers
     """
     from llama_stack.providers.registry import merge_entry_point_providers
 
-    providers = [
-        InlineProviderSpec(
-            api=Api.safety,
-            provider_type="inline::llama-guard",
-            pip_packages=[],
-            module="llama_stack.providers.inline.safety.llama_guard",
-            config_class="llama_stack.providers.inline.safety.llama_guard.LlamaGuardConfig",
-            api_dependencies=[
-                Api.inference,
-            ],
-            description="Llama Guard safety provider for content moderation and safety filtering using Meta's Llama Guard model.",
-        ),
-        InlineProviderSpec(
-            api=Api.safety,
-            provider_type="inline::code-scanner",
-            pip_packages=[
-                "codeshield",
-            ],
-            module="llama_stack.providers.inline.safety.code_scanner",
-            config_class="llama_stack.providers.inline.safety.code_scanner.CodeScannerConfig",
-            description="Code Scanner safety provider for detecting security vulnerabilities and unsafe code patterns.",
-        ),
-        RemoteProviderSpec(
-            api=Api.safety,
-            adapter_type="bedrock",
-            provider_type="remote::bedrock",
-            pip_packages=["boto3"],
-            module="llama_stack.providers.remote.safety.bedrock",
-            config_class="llama_stack.providers.remote.safety.bedrock.BedrockSafetyConfig",
-            description="AWS Bedrock safety provider for content moderation using AWS's safety services.",
-        ),
-        RemoteProviderSpec(
-            api=Api.safety,
-            adapter_type="nvidia",
-            provider_type="remote::nvidia",
-            pip_packages=["requests"],
-            module="llama_stack.providers.remote.safety.nvidia",
-            config_class="llama_stack.providers.remote.safety.nvidia.NVIDIASafetyConfig",
-            description="NVIDIA's safety provider for content moderation and safety filtering.",
-        ),
-        RemoteProviderSpec(
-            api=Api.safety,
-            adapter_type="passthrough",
-            provider_type="remote::passthrough",
-            pip_packages=[],
-            module="llama_stack.providers.remote.safety.passthrough",
-            config_class="llama_stack.providers.remote.safety.passthrough.PassthroughSafetyConfig",
-            provider_data_validator="llama_stack.providers.remote.safety.passthrough.config.PassthroughProviderDataValidator",
-            description="Passthrough safety provider that forwards moderation calls to a downstream HTTP service.",
-        ),
-        RemoteProviderSpec(
-            api=Api.safety,
-            adapter_type="sambanova",
-            provider_type="remote::sambanova",
-            pip_packages=["litellm", "requests"],
-            module="llama_stack.providers.remote.safety.sambanova",
-            config_class="llama_stack.providers.remote.safety.sambanova.SambaNovaSafetyConfig",
-            provider_data_validator="llama_stack.providers.remote.safety.sambanova.config.SambaNovaProviderDataValidator",
-            description="SambaNova's safety provider for content moderation and safety filtering.",
-        ),
-    ]
-
-    return merge_entry_point_providers(providers, api=Api.safety)
+    return merge_entry_point_providers([], api=Api.safety)

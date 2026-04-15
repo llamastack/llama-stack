@@ -23,11 +23,11 @@ def test_passthrough_registry_has_provider_data_validator():
 def test_passthrough_registry_module_path():
     providers = available_providers()
     passthrough = next(p for p in providers if p.provider_type == "remote::passthrough")
-    assert passthrough.module == "llama_stack.providers.remote.safety.passthrough"
+    assert passthrough.module == "llama_stack_provider_safety_passthrough"
 
 
-def test_registry_alphabetical_order():
+def test_passthrough_provider_discovered():
+    """Verify the passthrough safety provider is discovered via entry points."""
     providers = available_providers()
-    remote_providers = [p for p in providers if p.provider_type.startswith("remote::")]
-    adapter_types = [p.adapter_type for p in remote_providers]
-    assert adapter_types == sorted(adapter_types)
+    provider_types = [p.provider_type for p in providers]
+    assert "remote::passthrough" in provider_types

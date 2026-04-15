@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.1.dev0"
+
+[tool.uv.sources]
+llama-stack = { workspace = true }
+llama-stack-api = { workspace = true }
+llama-stack-utils-common = { workspace = true }
+
+[project]
+name = "llama-stack-provider-files-s3"
+dynamic = ["version"]
+description = "AWS S3-based file storage provider for scalable cloud file management."
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+    "llama-stack",
+    "llama-stack-api",
+    "llama-stack-utils-common",
+    "boto3",
+]
+
+[project.entry-points."llama_stack.providers"]
+"files.remote.s3" = "llama_stack_provider_files_s3.provider:get_provider_spec"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["llama_stack_provider_files_s3"]

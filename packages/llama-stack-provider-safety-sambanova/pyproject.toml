@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.1.dev0"
+
+[tool.uv.sources]
+llama-stack = { workspace = true }
+llama-stack-api = { workspace = true }
+llama-stack-utils-safety = { workspace = true }
+
+[project]
+name = "llama-stack-provider-safety-sambanova"
+dynamic = ["version"]
+description = "SambaNova safety provider for content moderation and safety filtering."
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+    "llama-stack",
+    "llama-stack-api",
+    "llama-stack-utils-safety",
+    "litellm",
+    "requests",
+]
+
+[project.entry-points."llama_stack.providers"]
+"safety.remote.sambanova" = "llama_stack_provider_safety_sambanova.provider:get_provider_spec"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["llama_stack_provider_safety_sambanova"]
