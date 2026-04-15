@@ -189,7 +189,7 @@ const config: Config = {
               to: '/docs/api-overview',
             },
             {
-              label: 'OpenAI Compatibility',
+              label: 'OpenAI',
               to: '/docs/api-openai',
             },
             {
@@ -200,10 +200,6 @@ const config: Config = {
               label: 'Google Interactions',
               to: '/docs/api-google-interactions',
             },
-            {
-              label: 'Blog',
-              to: '/blog',
-            },
           ],
         },
         {
@@ -212,10 +208,6 @@ const config: Config = {
             {
               label: 'Discord',
               href: 'https://discord.gg/llama-stack',
-            },
-            {
-              label: 'GitHub Discussions',
-              href: 'https://github.com/llamastack/llama-stack/discussions',
             },
             {
               label: 'Issues',
@@ -253,7 +245,7 @@ const config: Config = {
     },
     colorMode: {
       defaultMode: 'dark',
-      respectPrefersColorScheme: true,
+      respectPrefersColorScheme: false,
     },
     prism: {
       theme: require('prism-react-renderer').themes.oneDark,

@@ -775,6 +775,11 @@ class ServerConfig(BaseModel):
         default=1,
         description="Number of workers to use for the server",
     )
+    registry_refresh_interval_seconds: int = Field(
+        default=300,
+        description="Interval in seconds between registry refreshes for syncing model information from providers",
+        gt=0,
+    )
 
 
 class StackConfig(BaseModel):

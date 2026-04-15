@@ -56,10 +56,10 @@ Install and run a Llama Stack server:
 curl -LsSf https://github.com/llamastack/llama-stack/raw/main/scripts/install.sh | bash
 
 # Or install via uv
-uv pip install llama-stack
+uv pip install llama-stack[starter]
 
 # Start the server (uses the starter distribution with Ollama)
-llama stack run
+uv run llama stack run starter
 ```
 
 Then connect with any OpenAI, Anthropic, or Google GenAI client — [Python](https://github.com/openai/openai-python), [TypeScript](https://github.com/openai/openai-node), [curl](https://platform.openai.com/docs/api-reference), or any framework that speaks these APIs.
