@@ -1585,7 +1585,6 @@ wheels = [
 
 [[package]]
 name = "efenness-llama-stack-distribution-demo"
-version = "0.1.0"
 source = { editable = "packages/llama-stack-distribution-demo" }
 dependencies = [
     { name = "llama-stack" },
@@ -3404,7 +3403,6 @@ wheels = [
 
 [[package]]
 name = "llama-stack-distribution-ci-tests"
-version = "0.1.0"
 source = { editable = "packages/llama-stack-distribution-ci-tests" }
 dependencies = [
     { name = "llama-stack" },
@@ -3493,7 +3491,6 @@ requires-dist = [
 
 [[package]]
 name = "llama-stack-distribution-nvidia"
-version = "0.1.0"
 source = { editable = "packages/llama-stack-distribution-nvidia" }
 dependencies = [
     { name = "llama-stack" },
@@ -3522,7 +3519,6 @@ requires-dist = [
 
 [[package]]
 name = "llama-stack-distribution-oci"
-version = "0.1.0"
 source = { editable = "packages/llama-stack-distribution-oci" }
 dependencies = [
     { name = "llama-stack" },
@@ -3557,7 +3553,6 @@ requires-dist = [
 
 [[package]]
 name = "llama-stack-distribution-open-benchmark"
-version = "0.1.0"
 source = { editable = "packages/llama-stack-distribution-open-benchmark" }
 dependencies = [
     { name = "llama-stack" },
@@ -3602,7 +3597,6 @@ requires-dist = [
 
 [[package]]
 name = "llama-stack-distribution-postgres-demo"
-version = "0.1.0"
 source = { editable = "packages/llama-stack-distribution-postgres-demo" }
 dependencies = [
     { name = "llama-stack" },
@@ -3639,7 +3633,6 @@ requires-dist = [
 
 [[package]]
 name = "llama-stack-distribution-starter"
-version = "0.1.0"
 source = { editable = "packages/llama-stack-distribution-starter" }
 dependencies = [
     { name = "llama-stack" },
@@ -3726,7 +3719,6 @@ requires-dist = [
 
 [[package]]
 name = "llama-stack-distribution-watsonx"
-version = "0.1.0"
 source = { editable = "packages/llama-stack-distribution-watsonx" }
 dependencies = [
     { name = "llama-stack" },
@@ -3761,7 +3753,6 @@ requires-dist = [
 
 [[package]]
 name = "llama-stack-provider-batches-reference"
-version = "0.1.0"
 source = { editable = "packages/llama-stack-provider-batches-reference" }
 dependencies = [
     { name = "llama-stack" },
@@ -4273,7 +4264,6 @@ requires-dist = [
 
 [[package]]
 name = "llama-stack-provider-interactions-builtin"
-version = "0.1.0"
 source = { editable = "packages/llama-stack-provider-interactions-builtin" }
 dependencies = [
     { name = "llama-stack" },
@@ -4290,7 +4280,6 @@ requires-dist = [
 
 [[package]]
 name = "llama-stack-provider-messages-builtin"
-version = "0.1.0"
 source = { editable = "packages/llama-stack-provider-messages-builtin" }
 dependencies = [
     { name = "llama-stack" },
@@ -4305,7 +4294,6 @@ requires-dist = [
 
 [[package]]
 name = "llama-stack-provider-responses-builtin"
-version = "0.1.0"
 source = { editable = "packages/llama-stack-provider-responses-builtin" }
 dependencies = [
     { name = "fonttools" },

@@ -180,10 +180,61 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Computed version: ${VERSION}"
 
-  # Build and validate release artifacts
-  build-package:
+  # Build all workspace packages in a single job using uv build --workspace
+  build-local-packages:
+    name: Build workspace packages
+    if: inputs.docker_only != true && (inputs.packages || 'all') != 'clients-only'
+    needs: compute-version
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout local repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0  # for setuptools-scm
+
+      - name: Install dependent PRs if needed
+        uses: depends-on/depends-on-action@826c144163ac67bf08347590a5f81afd45da63ca # main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+
+      - name: Build all workspace packages
+        run: uv build --all-packages --out-dir dist
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ needs.compute-version.outputs.version }}
+
+      - name: Validate packages
+        run: |
+          uv pip install --system twine check-wheel-contents
+          echo "=== Validating wheels ==="
+          check-wheel-contents --ignore W002,W004 dist/*.whl
+          echo "=== Validating with twine ==="
+          twine check dist/*
+
+      - name: List built packages
+        run: |
+          echo "Built $(find dist -name '*.whl' | wc -l) wheels:"
+          find dist -name '*.whl' -o -name '*.tar.gz' | sort
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Packages-local
+          path: dist/*
+
+  # Build external client SDKs (from other repos)
+  build-external-package:
     name: Build ${{ matrix.package }}
-    if: inputs.docker_only != true
+    if: inputs.docker_only != true && (inputs.packages || 'all') != 'llama-stack-only'
     needs: compute-version
     permissions:
       contents: read
@@ -192,76 +243,26 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Local packages (in this repo)
-          - package: llama-stack-api
-            path: packages/llama-stack-api
-            type: local
-            registry: pypi
-          - package: llama-stack
-            path: .
-            type: local
-            registry: pypi
-          # External packages (client SDKs from other repos)
           - package: llama-stack-client-python
             repo: llamastack/llama-stack-client-python
-            type: external
             registry: pypi
           - package: llama-stack-client-typescript
             repo: llamastack/llama-stack-client-typescript
-            type: external
             registry: npm
 
     steps:
-      # Skip check for package selection
-      - name: Check if package should be built
-        id: should-build
-        run: |
-          PACKAGES="${{ inputs.packages || 'all' }}"
-          PACKAGE="${{ matrix.package }}"
-          TYPE="${{ matrix.type }}"
-
-          if [ "$PACKAGES" == "all" ]; then
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          elif [ "$PACKAGES" == "llama-stack-only" ] && [ "$TYPE" == "local" ]; then
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          elif [ "$PACKAGES" == "clients-only" ] && [ "$TYPE" == "external" ]; then
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::Skipping $PACKAGE (packages=$PACKAGES)"
-          fi
-
-      # === LOCAL PACKAGE STEPS ===
-      - name: Checkout local repo
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local'
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0  # for setuptools-scm
-
-      - name: Install dependent PRs if needed
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local'
-        uses: depends-on/depends-on-action@826c144163ac67bf08347590a5f81afd45da63ca # main
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
       # === DETERMINE CLIENT REF ===
-      # Use release branch from client repos when running on a release branch,
-      # unless client_ref is explicitly provided via workflow_dispatch.
       - name: Determine client ref
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
         id: client-ref
         run: |
           if [ -n "${{ inputs.client_ref }}" ] && [ "${{ inputs.client_ref }}" != "main" ]; then
-            # Explicit override from workflow_dispatch
             echo "ref=${{ inputs.client_ref }}" >> "$GITHUB_OUTPUT"
             echo "Using explicit client_ref: ${{ inputs.client_ref }}"
           elif [[ "$GITHUB_REF" == refs/heads/release-* ]]; then
-            # Running on a release branch — use the same branch name in client repos
             BRANCH="${GITHUB_REF#refs/heads/}"
             echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
             echo "Using release branch: $BRANCH"
           elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            # Running from a version tag — derive release branch (e.g., v0.5.1 -> release-0.5.x)
             TAG="${GITHUB_REF#refs/tags/v}"
             MAJOR_MINOR="${TAG%.*}"
             BRANCH="release-${MAJOR_MINOR}.x"
@@ -272,9 +273,7 @@ jobs:
             echo "Using default: main"
           fi
 
-      # === EXTERNAL PACKAGE STEPS ===
       - name: Checkout external repo
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ matrix.repo }}
@@ -282,91 +281,60 @@ jobs:
           path: external-repo
           fetch-depth: 0
 
-      # === PYTHON SETUP (for all Python packages) ===
+      # === PYTHON SETUP ===
       - name: Set up Python
-        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
+        if: matrix.registry == 'pypi'
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
 
       - name: Install uv
-        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
+        if: matrix.registry == 'pypi'
         uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
 
-      - name: Install build dependencies
-        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
-        run: uv pip install --system setuptools setuptools-scm wheel build
-
-      # === NODE SETUP (for npm packages) ===
+      # === NODE SETUP ===
       - name: Set up Node.js
-        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm'
+        if: matrix.registry == 'npm'
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      # === LOCAL PYTHON PACKAGE BUILD ===
-      - name: Check for missing package entries (llama-stack-api)
-        if: steps.should-build.outputs.skip != 'true' && matrix.package == 'llama-stack-api'
-        working-directory: packages/llama-stack-api
-        run: |
-          for f in *.py; do
-            [[ "$f" == "__init__.py" ]] && continue
-            grep -q "llama_stack_api.${f%.py}" pyproject.toml || echo "::warning::Missing from py-modules: ${f%.py}"
-          done
-          for d in */; do
-            [[ "$d" =~ ^(__pycache__|dist|build|.*egg-info|\..*)/$ ]] && continue
-            grep -q "llama_stack_api.${d%/}" pyproject.toml || echo "::warning::Missing from packages: ${d%/}"
-          done
-
-      - name: Build local Python package
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local' && matrix.registry == 'pypi'
-        run: uv build --out-dir dist --no-build-isolation
-        working-directory: ${{ matrix.path }}
-        env:
-          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ needs.compute-version.outputs.version }}
-
       # === EXTERNAL PYTHON PACKAGE BUILD ===
       - name: Check and bump version if exists on PyPI
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
+        if: matrix.registry == 'pypi'
         id: version-check
         run: |
           BASE_VERSION="${{ needs.compute-version.outputs.version }}"
           MATRIX_PACKAGE="${{ matrix.package }}"
 
-          # Map matrix package name to actual PyPI package name
           if [ "$MATRIX_PACKAGE" == "llama-stack-client-python" ]; then
             PACKAGE="llama-stack-client"
           else
             PACKAGE="$MATRIX_PACKAGE"
           fi
 
-          # Function to check if version exists on PyPI
           check_version_exists() {
             local pkg=$1
             local ver=$2
             if curl -sf "https://pypi.org/pypi/${pkg}/${ver}/json" -o /dev/null 2>&1; then
-              return 0  # exists
+              return 0
             else
-              return 1  # does not exist
+              return 1
             fi
           }
 
-          # Start with the base version and increment patch if needed
           VERSION="$BASE_VERSION"
 
-          # Only check/bump for non-dev versions (production releases)
           if [[ ! "$VERSION" =~ \.dev ]]; then
             echo "Checking if ${PACKAGE} ${VERSION} exists on PyPI..."
 
-            # Parse version components
             if [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(.*)$ ]]; then
               MAJOR="${BASH_REMATCH[1]}"
               MINOR="${BASH_REMATCH[2]}"
               PATCH="${BASH_REMATCH[3]}"
               SUFFIX="${BASH_REMATCH[4]}"
 
-              # Keep incrementing patch version until we find one that doesn't exist
               MAX_ATTEMPTS=10
               ATTEMPT=0
               while check_version_exists "$PACKAGE" "$VERSION"; do
@@ -375,20 +343,14 @@ jobs:
                   echo "::error::Reached maximum attempts ($MAX_ATTEMPTS) trying to find unused version"
                   exit 1
                 fi
-
                 echo "Version ${VERSION} already exists on PyPI, trying next patch version..."
                 PATCH=$((PATCH + 1))
                 VERSION="${MAJOR}.${MINOR}.${PATCH}${SUFFIX}"
-                echo "Checking ${VERSION}..."
               done
 
               if [ "$VERSION" != "$BASE_VERSION" ]; then
-                echo "::notice::Bumped ${MATRIX_PACKAGE} (PyPI: ${PACKAGE}) version from ${BASE_VERSION} to ${VERSION} (already existed on PyPI)"
-              else
-                echo "Version ${VERSION} is available on PyPI for ${PACKAGE}"
+                echo "::notice::Bumped ${MATRIX_PACKAGE} (PyPI: ${PACKAGE}) version from ${BASE_VERSION} to ${VERSION}"
               fi
-            else
-              echo "::warning::Could not parse version ${VERSION}, using as-is"
             fi
           else
             echo "Dev version detected (${VERSION}), skipping PyPI check"
@@ -398,63 +360,54 @@ jobs:
           echo "Final version: ${VERSION}"
 
       - name: Build external Python package
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
+        if: matrix.registry == 'pypi'
         working-directory: external-repo
         run: |
           VERSION="${{ steps.version-check.outputs.version }}"
           echo "Setting version to $VERSION"
           sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
-          # Also update __version__ in _version.py if it exists
           VERSION_FILE=$(find . -name "_version.py" -path "*/llama_stack_client/*" | head -1)
           if [ -n "$VERSION_FILE" ]; then
             sed -i "s/__version__ = .*/__version__ = \"$VERSION\"/" "$VERSION_FILE"
           fi
-          # Use python -m build for better compatibility
           uv pip install --system build
           python -m build --outdir dist
 
       # === NPM PACKAGE BUILD ===
       - name: Check and bump npm version if exists
-        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm'
+        if: matrix.registry == 'npm'
         id: npm-version-check
         run: |
           BASE_VERSION="${{ needs.compute-version.outputs.version }}"
           MATRIX_PACKAGE="${{ matrix.package }}"
 
-          # Map matrix package name to actual npm package name
           if [ "$MATRIX_PACKAGE" == "llama-stack-client-typescript" ]; then
             PACKAGE="llama-stack-client"
           else
             PACKAGE="$MATRIX_PACKAGE"
           fi
 
-          # Convert PEP 440 dev version to valid semver for npm
-          # e.g. 0.4.5.dev20260202 -> 0.4.5-dev.20260202
           VERSION="${BASE_VERSION/.dev/-dev.}"
 
-          # Function to check if version exists on npm using registry API
           check_npm_version_exists() {
             local pkg=$1
             local ver=$2
             if curl -sf "https://registry.npmjs.org/${pkg}/${ver}" -o /dev/null 2>&1; then
-              return 0  # exists
+              return 0
             else
-              return 1  # does not exist
+              return 1
             fi
           }
 
-          # Only check/bump for non-dev versions (production releases)
           if [[ ! "$VERSION" =~ -dev\. ]]; then
             echo "Checking if ${PACKAGE} ${VERSION} exists on npm..."
 
-            # Parse version components (semver format)
             if [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(.*)$ ]]; then
               MAJOR="${BASH_REMATCH[1]}"
               MINOR="${BASH_REMATCH[2]}"
               PATCH="${BASH_REMATCH[3]}"
               SUFFIX="${BASH_REMATCH[4]}"
 
-              # Keep incrementing patch version until we find one that doesn't exist
               MAX_ATTEMPTS=10
               ATTEMPT=0
               while check_npm_version_exists "$PACKAGE" "$VERSION"; do
@@ -463,20 +416,14 @@ jobs:
                   echo "::error::Reached maximum attempts ($MAX_ATTEMPTS) trying to find unused version"
                   exit 1
                 fi
-
                 echo "Version ${VERSION} already exists on npm, trying next patch version..."
                 PATCH=$((PATCH + 1))
                 VERSION="${MAJOR}.${MINOR}.${PATCH}${SUFFIX}"
-                echo "Checking ${VERSION}..."
               done
 
               if [ "$VERSION" != "${BASE_VERSION/.dev/-dev.}" ]; then
-                echo "::notice::Bumped ${MATRIX_PACKAGE} (npm: ${PACKAGE}) version from ${BASE_VERSION/.dev/-dev.} to ${VERSION} (already existed on npm)"
-              else
-                echo "Version ${VERSION} is available on npm for ${PACKAGE}"
+                echo "::notice::Bumped ${MATRIX_PACKAGE} (npm: ${PACKAGE}) version from ${BASE_VERSION/.dev/-dev.} to ${VERSION}"
               fi
-            else
-              echo "::warning::Could not parse version ${VERSION}, using as-is"
             fi
           else
             echo "Dev version detected (${VERSION}), skipping npm check"
@@ -486,7 +433,7 @@ jobs:
           echo "Final version: ${VERSION}"
 
       - name: Build TypeScript package
-        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm'
+        if: matrix.registry == 'npm'
         working-directory: external-repo
         run: |
           NPM_VERSION="${{ steps.npm-version-check.outputs.version }}"
@@ -495,38 +442,16 @@ jobs:
           npm install
           npm run build
 
-      # === PYTHON PACKAGE VALIDATION ===
-      - name: Install validation tools
-        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
-        run: uv pip install --system twine check-wheel-contents
+      # === VALIDATION ===
+      - name: Validate Python package
+        if: matrix.registry == 'pypi'
+        run: |
+          uv pip install --system twine check-wheel-contents
+          check-wheel-contents --ignore W002,W004 external-repo/dist/*.whl
+          twine check external-repo/dist/*
 
-      - name: Check wheel contents (local)
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local' && matrix.registry == 'pypi'
-        run: check-wheel-contents --ignore W002,W004 ${{ matrix.path }}/dist/*.whl
-
-      - name: Check wheel contents (external)
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
-        run: check-wheel-contents --ignore W002,W004 external-repo/dist/*.whl
-
-      - name: Validate package with twine (local)
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local' && matrix.registry == 'pypi'
-        run: twine check ${{ matrix.path }}/dist/*
-
-      - name: Validate package with twine (external)
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
-        run: twine check external-repo/dist/*
-
-      # === LIST AND UPLOAD ARTIFACTS ===
-      - name: List dist contents (local)
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local'
-        run: ls -la ${{ matrix.path }}/dist/
-
-      - name: List dist contents (external Python)
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
-        run: ls -la external-repo/dist/
-
-      - name: List package contents (external npm)
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'npm'
+      - name: List package contents (npm)
+        if: matrix.registry == 'npm'
         working-directory: external-repo
         run: |
           npm pack --dry-run
@@ -534,15 +459,10 @@ jobs:
           npm pack --pack-destination dist
           ls -la dist/
 
-      - name: Upload artifacts (local)
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: Packages-${{ matrix.package }}
-          path: ${{ matrix.path }}/dist/*
+      - name: List dist contents
+        run: ls -la external-repo/dist/
 
-      - name: Upload artifacts (external)
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
+      - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Packages-${{ matrix.package }}
@@ -552,7 +472,8 @@ jobs:
   test-package:
     name: Test packages (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
-    needs: build-package
+    needs: [build-local-packages, build-external-package]
+    if: always() && (needs.build-local-packages.result == 'success' || needs.build-external-package.result == 'success')
     strategy:
       matrix:
         python-version: ['3.12', '3.13']
@@ -569,20 +490,12 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Download llama-stack-api artifacts
-        id: download-api
+      - name: Download local package artifacts
+        id: download-local
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: Packages-llama-stack-api
-          path: dist-api
-        continue-on-error: true
-
-      - name: Download llama-stack artifacts
-        id: download-stack
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: Packages-llama-stack
-          path: dist-stack
+          name: Packages-local
+          path: dist-local
         continue-on-error: true
 
       - name: Download llama-stack-client-python artifacts
@@ -606,10 +519,11 @@ jobs:
           uv venv .venv
           source .venv/bin/activate
 
-          # Install available Python packages
-          if [ -d "dist-api" ] && ls dist-api/*.whl 1>/dev/null 2>&1; then
-            echo "Installing llama-stack-api..."
-            uv pip install dist-api/*.whl
+          # Install all local workspace wheels (includes llama-stack, llama-stack-api,
+          # all providers, utils, and distributions)
+          if [ -d "dist-local" ] && find dist-local -name '*.whl' | grep -q .; then
+            echo "Installing $(find dist-local -name '*.whl' | wc -l) local workspace packages..."
+            uv pip install dist-local/*.whl
           fi
 
           if [ -d "dist-client-python" ] && ls dist-client-python/*.whl 1>/dev/null 2>&1; then
@@ -617,22 +531,10 @@ jobs:
             uv pip install dist-client-python/*.whl
           fi
 
-          if [ -d "dist-stack" ] && ls dist-stack/*.whl 1>/dev/null 2>&1; then
-            echo "Installing llama-stack..."
-            uv pip install dist-stack/*.whl
-          fi
-
-      - name: List Wheel Contents (llama-stack-api)
-        if: steps.download-api.outcome == 'success'
-        run: |
-          source .venv/bin/activate
-          python -m zipfile -l dist-api/*.whl
-
       - name: Verify Llama Stack package
-        if: steps.download-stack.outcome == 'success'
+        if: steps.download-local.outcome == 'success'
         run: |
           source .venv/bin/activate
-          uv pip list
           uv pip show llama-stack
           command -v llama
           llama stack list-apis
@@ -643,11 +545,8 @@ jobs:
         run: |
           source .venv/bin/activate
 
-          if [ -d "dist-stack" ] && ls dist-stack/*.whl 1>/dev/null 2>&1; then
+          if [ -d "dist-local" ] && ls dist-local/*.whl 1>/dev/null 2>&1; then
             python -c "import llama_stack; print(f'llama_stack imported successfully from {llama_stack.__file__}')"
-          fi
-
-          if [ -d "dist-api" ] && ls dist-api/*.whl 1>/dev/null 2>&1; then
             python -c "import llama_stack_api; print(f'llama_stack_api imported successfully from {llama_stack_api.__file__}')"
           fi
 
@@ -662,24 +561,22 @@ jobs:
             echo "TypeScript package tarball found:"
             ls -la dist-client-ts/*.tgz
 
-            # Create a test directory and install the package
             mkdir -p ts-test
             cd ts-test
             npm init -y
             npm install ../dist-client-ts/*.tgz
             echo "TypeScript package installed successfully"
 
-            # Verify the package is importable
             node -e "const pkg = require('llama-stack-client'); console.log('llama-stack-client package loaded successfully');" || echo "Package may use ES modules, skipping require test"
           fi
 
-  # Publish packages to PyPI/npm
-  # Order: llama-stack-client-python, llama-stack-client-typescript, llama-stack-api, llama-stack
-  publish-packages:
-    name: Publish ${{ matrix.package }}
+  # Publish all local workspace packages to PyPI in a single job
+  publish-local-packages:
+    name: Publish workspace packages to PyPI
     if: |
       github.repository_owner == 'llamastack' &&
-      (inputs.dry_run || 'test-pypi') != 'build-only' && (
+      (inputs.dry_run || 'test-pypi') != 'build-only' &&
+      (inputs.packages || 'all') != 'clients-only' && (
         github.event_name == 'workflow_dispatch' ||
         github.event.action == 'published' ||
         github.event_name == 'schedule'
@@ -689,46 +586,93 @@ jobs:
       id-token: write  # for PyPI trusted publishing
     runs-on: ubuntu-latest
     needs: test-package
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Download local package artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: Packages-local
+          path: dist
+
+      - name: List artifacts
+        run: |
+          echo "Publishing $(find dist -name '*.whl' | wc -l) packages:"
+          find dist -name '*.whl' -o -name '*.tar.gz' | sort
+
+      - name: Determine PyPI target
+        id: pypi-target
+        run: |
+          DRY_RUN="${{ inputs.dry_run }}"
+          EVENT="${{ github.event_name }}"
+
+          if [ "$EVENT" == "release" ] || [ "$DRY_RUN" == "off" ]; then
+            {
+              echo "url=https://upload.pypi.org/legacy/"
+              echo "target=pypi.org"
+              echo "is_production=true"
+            } >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo "url=https://test.pypi.org/legacy/"
+              echo "target=test.pypi.org"
+              echo "is_production=false"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Sign artifacts with Sigstore (production only)
+        if: steps.pypi-target.outputs.is_production == 'true'
+        uses: sigstore/gh-action-sigstore-python@04cffa1d795717b140764e8b640de88853c92acc # v3.3.0
+        with:
+          inputs: >-
+            ./dist/*.tar.gz
+            ./dist/*.whl
+          release-signing-artifacts: false
+
+      - name: Upload artifacts to GitHub release (production only)
+        if: steps.pypi-target.outputs.is_production == 'true' && github.event_name == 'release'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload '${{ github.ref_name }}' dist/* --repo '${{ github.repository }}' || true
+
+      - name: Remove sigstore signatures before PyPI upload
+        if: steps.pypi-target.outputs.is_production == 'true'
+        run: rm -f ./dist/*.sigstore.json
+
+      - name: Upload to PyPI
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        with:
+          repository-url: ${{ steps.pypi-target.outputs.url }}
+          verbose: true
+
+  # Publish external client packages (PyPI + npm)
+  publish-external-packages:
+    name: Publish ${{ matrix.package }}
+    if: |
+      github.repository_owner == 'llamastack' &&
+      (inputs.dry_run || 'test-pypi') != 'build-only' &&
+      (inputs.packages || 'all') != 'llama-stack-only' && (
+        github.event_name == 'workflow_dispatch' ||
+        github.event.action == 'published' ||
+        github.event_name == 'schedule'
+      )
+    permissions:
+      contents: write
+      id-token: write
+    runs-on: ubuntu-latest
+    needs: test-package
     strategy:
       max-parallel: 1
       matrix:
         include:
-          # Order matters! Dependencies are published first
           - package: llama-stack-client-python
             registry: pypi
-            type: external
           - package: llama-stack-client-typescript
             registry: npm
-            type: external
-          - package: llama-stack-api
-            registry: pypi
-            type: local
-          - package: llama-stack
-            registry: pypi
-            type: local
 
     steps:
-      # Skip check for package selection
-      - name: Check if package should be published
-        id: should-publish
-        run: |
-          PACKAGES="${{ inputs.packages || 'all' }}"
-          PACKAGE="${{ matrix.package }}"
-          TYPE="${{ matrix.type }}"
-
-          if [ "$PACKAGES" == "all" ]; then
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          elif [ "$PACKAGES" == "llama-stack-only" ] && [ "$TYPE" == "local" ]; then
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          elif [ "$PACKAGES" == "clients-only" ] && [ "$TYPE" == "external" ]; then
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::Skipping publish for $PACKAGE (packages=$PACKAGES)"
-          fi
-
       - name: Download build artifacts
-        if: steps.should-publish.outputs.skip != 'true'
         id: download
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -737,12 +681,10 @@ jobs:
         continue-on-error: true
 
       - name: Check if artifacts exist
-        if: steps.should-publish.outputs.skip != 'true'
         id: check-artifacts
         run: |
           if [ -d "dist" ] && [ "$(ls -A dist 2>/dev/null)" ]; then
             echo "has_artifacts=true" >> "$GITHUB_OUTPUT"
-            echo "Artifacts found:"
             ls -la dist/
           else
             echo "has_artifacts=false" >> "$GITHUB_OUTPUT"
@@ -751,20 +693,13 @@ jobs:
 
       # === PYPI PUBLISHING ===
       - name: Determine PyPI target
-        if: steps.should-publish.outputs.skip != 'true' && matrix.registry == 'pypi' && steps.check-artifacts.outputs.has_artifacts == 'true'
+        if: matrix.registry == 'pypi' && steps.check-artifacts.outputs.has_artifacts == 'true'
         id: pypi-target
         run: |
           DRY_RUN="${{ inputs.dry_run }}"
           EVENT="${{ github.event_name }}"
 
-          # Determine target registry
-          if [ "$EVENT" == "release" ]; then
-            {
-              echo "url=https://upload.pypi.org/legacy/"
-              echo "target=pypi.org"
-              echo "is_production=true"
-            } >> "$GITHUB_OUTPUT"
-          elif [ "$DRY_RUN" == "off" ]; then
+          if [ "$EVENT" == "release" ] || [ "$DRY_RUN" == "off" ]; then
             {
               echo "url=https://upload.pypi.org/legacy/"
               echo "target=pypi.org"
@@ -780,7 +715,6 @@ jobs:
 
       - name: Sign artifacts with Sigstore (production only)
         if: |
-          steps.should-publish.outputs.skip != 'true' &&
           matrix.registry == 'pypi' &&
           steps.check-artifacts.outputs.has_artifacts == 'true' &&
           steps.pypi-target.outputs.is_production == 'true'
@@ -791,28 +725,15 @@ jobs:
             ./dist/*.whl
           release-signing-artifacts: false
 
-      - name: Upload artifacts to GitHub release (production only)
-        if: |
-          steps.should-publish.outputs.skip != 'true' &&
-          matrix.registry == 'pypi' &&
-          steps.check-artifacts.outputs.has_artifacts == 'true' &&
-          steps.pypi-target.outputs.is_production == 'true' &&
-          github.event_name == 'release'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          gh release upload '${{ github.ref_name }}' dist/* --repo '${{ github.repository }}' || true
-
       - name: Remove sigstore signatures before PyPI upload
         if: |
-          steps.should-publish.outputs.skip != 'true' &&
           matrix.registry == 'pypi' &&
           steps.check-artifacts.outputs.has_artifacts == 'true' &&
           steps.pypi-target.outputs.is_production == 'true'
         run: rm -f ./dist/*.sigstore.json
 
       - name: Upload to PyPI
-        if: steps.should-publish.outputs.skip != 'true' && matrix.registry == 'pypi' && steps.check-artifacts.outputs.has_artifacts == 'true'
+        if: matrix.registry == 'pypi' && steps.check-artifacts.outputs.has_artifacts == 'true'
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:
           repository-url: ${{ steps.pypi-target.outputs.url }}
@@ -820,49 +741,32 @@ jobs:
 
       # === NPM PUBLISHING ===
       - name: Set up Node.js
-        if: steps.should-publish.outputs.skip != 'true' && matrix.registry == 'npm' && steps.check-artifacts.outputs.has_artifacts == 'true'
+        if: matrix.registry == 'npm' && steps.check-artifacts.outputs.has_artifacts == 'true'
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Publish to npm
-        if: steps.should-publish.outputs.skip != 'true' && matrix.registry == 'npm' && steps.check-artifacts.outputs.has_artifacts == 'true'
+        if: matrix.registry == 'npm' && steps.check-artifacts.outputs.has_artifacts == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           DRY_RUN="${{ inputs.dry_run }}"
           EVENT="${{ github.event_name }}"
 
-          echo "Event: $EVENT"
-          echo "Dry run: $DRY_RUN"
-
-          # Check if we should do production publish
-          if [ "$EVENT" == "release" ]; then
-            IS_PRODUCTION=true
-          elif [ "$DRY_RUN" == "off" ]; then
-            IS_PRODUCTION=true
-          else
-            IS_PRODUCTION=false
-          fi
-
-          if [ "$IS_PRODUCTION" == "true" ]; then
+          if [ "$EVENT" == "release" ] || [ "$DRY_RUN" == "off" ]; then
             echo "PRODUCTION: Publishing to npm"
             if [ -z "$NODE_AUTH_TOKEN" ]; then
               echo "::error::NPM_TOKEN secret not configured. Cannot publish to npm."
               exit 1
             fi
-            # Extract and publish from the tarball
             TARBALL=$(find ./dist -name '*.tgz' | head -1)
             npm publish "$TARBALL" --access public
           else
             echo "DRY RUN: Verifying npm package (not publishing)"
-            echo "Package tarball:"
-            find dist -name '*.tgz' -exec ls -la {} +
-            # Verify the tarball is valid
             TARBALL=$(find ./dist -name '*.tgz' | head -1)
             tar -tzf "$TARBALL" 2>/dev/null | head -20 || true
-            echo "... (truncated)"
           fi
 
   # ==========================================================================
@@ -880,7 +784,7 @@ jobs:
     if: |
       always() &&
       needs.compute-version.result == 'success' &&
-      (needs.publish-packages.result == 'success' || needs.publish-packages.result == 'skipped') &&
+      (needs.publish-local-packages.result == 'success' || needs.publish-local-packages.result == 'skipped') &&
       github.repository_owner == 'llamastack' &&
       (inputs.dry_run || 'test-pypi') != 'build-only' &&
       (inputs.packages || 'all') != 'clients-only' && (
@@ -891,7 +795,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    needs: [publish-packages, compute-version]
+    needs: [publish-local-packages, publish-external-packages, compute-version]
     strategy:
       fail-fast: false
       matrix:
