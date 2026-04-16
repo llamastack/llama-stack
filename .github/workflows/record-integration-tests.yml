@@ -199,6 +199,8 @@ jobs:
             suite: responses
           - setup: vertexai
             suite: responses
+          - setup: gemini
+            suite: interactions
     steps:
       - name: Check if provider should run
         id: should_run
@@ -260,6 +262,7 @@ jobs:
           AWS_DEFAULT_REGION: ${{ matrix.provider.setup == 'bedrock' && 'us-west-2' || '' }}
           VERTEX_AI_PROJECT: ${{ matrix.provider.setup == 'vertexai' && secrets.VERTEX_AI_PROJECT || '' }}
           VERTEX_AI_LOCATION: ${{ matrix.provider.setup == 'vertexai' && 'global' || '' }}
+          GEMINI_API_KEY: ${{ matrix.provider.setup == 'gemini' && secrets.GEMINI_API_KEY || '' }}
         with:
           stack-config: 'server:ci-tests'
           setup: ${{ matrix.provider.setup }}

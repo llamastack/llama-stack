@@ -133,7 +133,7 @@ You can enable specific providers by setting appropriate environment variables. 
 
 ```bash
 # self-hosted
-export OLLAMA_URL=http://localhost:11434   # enables the Ollama inference provider
+export OLLAMA_URL=http://localhost:11434/v1   # enables the Ollama inference provider
 export VLLM_URL=http://localhost:8000/v1   # enables the vLLM inference provider
 export TGI_URL=http://localhost:8000/v1   # enables the TGI inference provider
 
