@@ -16,5 +16,7 @@ def get_provider_spec() -> InlineProviderSpec:
         config_class="llama_stack_provider_vector_io_milvus.inline_config.MilvusVectorIOConfig",
         api_dependencies=[Api.inference],
         optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
-        description="Inline vector I/O provider using milvus.",
+        description="""
+Please refer to the remote provider documentation.
+""",
     )

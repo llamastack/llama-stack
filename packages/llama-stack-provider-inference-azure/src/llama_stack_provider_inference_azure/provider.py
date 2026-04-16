@@ -16,5 +16,9 @@ def get_provider_spec() -> RemoteProviderSpec:
         module="llama_stack_provider_inference_azure",
         config_class="llama_stack_provider_inference_azure.AzureConfig",
         provider_data_validator="llama_stack_provider_inference_azure.config.AzureProviderDataValidator",
-        description="Azure OpenAI inference provider for accessing GPT models and other Azure services.",
+        description="""
+Azure OpenAI inference provider for accessing GPT models and other Azure services.
+Provider documentation
+https://learn.microsoft.com/en-us/azure/ai-foundry/openai/overview
+""",
     )

@@ -10,19 +10,6 @@ from llama_stack_api import (
     ProviderSpec,
 )
 
-BUILTIN_DEPS = [
-    "accelerate",
-    "fairscale",
-    "torch",
-    "torchvision",
-    "transformers",
-    "zmq",
-    "lm-format-enforcer",
-    "sentence-transformers",
-    "torchao==0.8.0",
-    "fbgemm-gpu-genai==1.1.2",
-]
-
 
 def available_providers() -> list[ProviderSpec]:
     """Return the list of available inference provider specifications.

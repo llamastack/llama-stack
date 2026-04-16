@@ -1,0 +1,23 @@
+---
+description: "RAG (Retrieval-Augmented Generation) tool runtime for document ingestion, chunking, and semantic search."
+sidebar_label: Rag-Runtime
+title: inline::rag-runtime
+---
+
+# inline::rag-runtime
+
+## Description
+
+RAG (Retrieval-Augmented Generation) tool runtime for document ingestion, chunking, and semantic search.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `vector_stores_config` | `VectorStoresConfig` | No | `default_provider_id=None default_embedding_model=None rewrite_query_params=None file_search_params=FileSearchParams(header_template='knowledge_search tool found {num_chunks} chunks:\nBEGIN of knowledge_search tool results.\n', footer_template='END of knowledge_search tool results.\n') context_prompt_params=ContextPromptParams(chunk_annotation_template='Result {index}\nContent: {chunk.content}\nMetadata: {metadata}\n', context_template='The above results were retrieved to help answer the user\'s query: "{query}". Use them as supporting information only in answering this query. {annotation_instruction}\n') annotation_prompt_params=AnnotationPromptParams(enable_annotations=True, annotation_instruction_template="Cite sources immediately at the end of sentences before punctuation, using `&lt;|file-id|&gt;` format like 'This is a fact &lt;|file-Cn3MSNn72ENTiiq11Qda4A|&gt;.'. Do not add extra punctuation. Use only the file IDs provided, do not invent new ones.", chunk_annotation_template='[{index}] {metadata_text} cite as &lt;|{file_id}|&gt;\n{chunk_text}\n') file_ingestion_params=FileIngestionParams(default_chunk_size_tokens=512, default_chunk_overlap_tokens=128) chunk_retrieval_params=ChunkRetrievalParams(chunk_multiplier=5, max_tokens_in_context=4000, default_reranker_strategy='rrf', rrf_impact_factor=60.0, weighted_search_alpha=0.5) file_batch_params=FileBatchParams(max_concurrent_files_per_batch=3, file_batch_chunk_size=10, cleanup_interval_seconds=86400)` | Configuration for vector store prompt templates and behavior |
+
+## Sample Configuration
+
+```yaml
+{}
+```

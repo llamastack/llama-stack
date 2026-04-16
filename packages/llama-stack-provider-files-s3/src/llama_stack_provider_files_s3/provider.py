@@ -16,5 +16,5 @@ def get_provider_spec() -> RemoteProviderSpec:
         pip_packages=[],
         module="llama_stack_provider_files_s3",
         config_class="llama_stack_provider_files_s3.config.S3FilesImplConfig",
-        description="AWS S3-based file storage provider for scalable cloud file management.",
+        description="AWS S3-based file storage provider for scalable cloud file management with metadata persistence.",
     )

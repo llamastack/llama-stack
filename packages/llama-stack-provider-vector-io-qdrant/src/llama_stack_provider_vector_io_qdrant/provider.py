@@ -17,5 +17,7 @@ def get_provider_spec() -> RemoteProviderSpec:
         config_class="llama_stack_provider_vector_io_qdrant.config.QdrantVectorIOConfig",
         api_dependencies=[Api.inference],
         optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
-        description="Vector I/O provider using qdrant.",
+        description="""
+Please refer to the inline provider documentation.
+""",
     )

@@ -16,5 +16,5 @@ def get_provider_spec() -> InlineProviderSpec:
         module="llama_stack_provider_safety_llama_guard",
         config_class="llama_stack_provider_safety_llama_guard.config.LlamaGuardConfig",
         api_dependencies=[Api.inference],
-        description="Llama Guard safety provider for content moderation using Meta's Llama Guard model.",
+        description="Llama Guard safety provider for content moderation and safety filtering using Meta's Llama Guard model.",
     )
