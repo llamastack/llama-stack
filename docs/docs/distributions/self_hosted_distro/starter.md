@@ -180,10 +180,6 @@ uvx --from 'llama-stack[starter]' llama stack run starter::run-with-postgres-sto
 
 A pre-built container image with PostgreSQL storage is also available as [`llamastack/distribution-postgres-demo`](https://hub.docker.com/r/llamastack/distribution-postgres-demo).
 
-### GPU Post-Training
-
-For workflows requiring GPU-accelerated post-training via HuggingFace, use the [`llamastack/distribution-starter-gpu`](https://hub.docker.com/r/llamastack/distribution-starter-gpu) container image.
-
 Required environment variables for PostgreSQL:
 
 | Variable | Default |

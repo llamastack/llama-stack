@@ -10,7 +10,6 @@ sidebar_position: 2
 | Distribution | Use Case | Inference | Container Image |
 |-------------|----------|-----------|-----------------|
 | `starter` | General purpose, prototyping, production | Ollama, OpenAI, vLLM, Bedrock, and more | [`llamastack/distribution-starter`](https://hub.docker.com/r/llamastack/distribution-starter) |
-| `starter-gpu` | GPU post-training with HuggingFace | Same as starter + HuggingFace GPU provider | [`llamastack/distribution-starter-gpu`](https://hub.docker.com/r/llamastack/distribution-starter-gpu) |
 | `postgres-demo` | Starter with PostgreSQL storage | Same as starter | [`llamastack/distribution-postgres-demo`](https://hub.docker.com/r/llamastack/distribution-postgres-demo) |
 | `dell` | Dell hardware optimizations | Dell-specific providers | [`llamastack/distribution-dell`](https://hub.docker.com/r/llamastack/distribution-dell) |
 | `nvidia` | NVIDIA NeMo Microservices | NVIDIA NIM | — |
@@ -25,17 +24,6 @@ uv run llama stack run starter
 ```
 
 It supports local inference (Ollama), cloud providers (OpenAI, Bedrock, Azure, etc.), and everything in between. See the [Starter Guide](self_hosted_distro/starter) for details.
-
-## Starter GPU
-
-The starter distribution with the HuggingFace GPU provider added for post-training workflows. Run it with the pre-built container image:
-
-```bash
-docker run -it --gpus all \
-  -p 8321:8321 \
-  -v ~/.llama:/root/.llama \
-  llamastack/distribution-starter-gpu
-```
 
 ## PostgreSQL Demo
 
@@ -80,9 +68,7 @@ graph TD
     B -->|Dell| G[Use dell distro]
     B -->|No| D{Want managed hosting?}
     D -->|Yes| E[Use remote-hosted]
-    D -->|No| H{Need GPU post-training?}
-    H -->|Yes| I[Use starter-gpu]
-    H -->|No| J{Need PostgreSQL storage?}
+    D -->|No| J{Need PostgreSQL storage?}
     J -->|Yes| K[Use postgres-demo]
     J -->|No| F[Use starter]
 ```
