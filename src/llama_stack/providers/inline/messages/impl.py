@@ -14,13 +14,16 @@ requests are forwarded directly without translation.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import uuid
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
 
+from llama_stack.core.storage.kvstore import KVStore
 from llama_stack.log import get_logger
 from llama_stack_api import (
     Inference,
@@ -50,9 +53,18 @@ from llama_stack_api.messages.models import (
     ContentBlockDeltaEvent,
     ContentBlockStartEvent,
     ContentBlockStopEvent,
+    CreateMessageBatchRequest,
+    ListMessageBatchesResponse,
+    MessageBatch,
+    MessageBatchCanceledResult,
+    MessageBatchErroredResult,
+    MessageBatchIndividualResponse,
+    MessageBatchRequestCounts,
+    MessageBatchSucceededResult,
     MessageDeltaEvent,
     MessageStartEvent,
     MessageStopEvent,
+    _AnthropicErrorDetail,
     _InputJsonDelta,
     _MessageDelta,
     _TextDelta,
@@ -61,7 +73,24 @@ from llama_stack_api.messages.models import (
 
 from .config import MessagesConfig
 
+_BATCH_PREFIX = "msgbatch:"
+_BATCH_RESULTS_PREFIX = "msgbatch_results:"
+_BATCH_EXPIRY_HOURS = 24
+
 logger = get_logger(name=__name__, category="messages")
+
+
+async def _empty_async_iter() -> AsyncIterator[MessageBatchIndividualResponse]:
+    return
+    yield  # make this an async generator
+
+
+async def _list_to_async_iter(
+    items: list[MessageBatchIndividualResponse],
+) -> AsyncIterator[MessageBatchIndividualResponse]:
+    for item in items:
+        yield item
+
 
 # Maps Anthropic stop_reason -> OpenAI finish_reason
 _STOP_REASON_TO_FINISH = {
@@ -83,15 +112,24 @@ _FINISH_TO_STOP_REASON = {
 class BuiltinMessagesImpl(Messages):
     """Anthropic Messages API adapter that translates to the inference API."""
 
-    def __init__(self, config: MessagesConfig, inference_api: Inference):
+    def __init__(self, config: MessagesConfig, inference_api: Inference, kvstore: KVStore):
         self.config = config
         self.inference_api = inference_api
+        self.kvstore = kvstore
+        self._processing_tasks: dict[str, asyncio.Task] = {}
+        self._batch_semaphore = asyncio.Semaphore(config.max_concurrent_batches)
+        self._update_lock = asyncio.Lock()
 
     async def initialize(self) -> None:
         self._client = httpx.AsyncClient()
 
     async def shutdown(self) -> None:
         await self._client.aclose()
+        if self._processing_tasks:
+            logger.info(
+                "Shutdown initiated with active batch processing tasks",
+                active_tasks=len(self._processing_tasks),
+            )
 
     async def create_message(
         self,
@@ -121,6 +159,254 @@ class BuiltinMessagesImpl(Messages):
 
         # Translation mode: use Inference API's count_tokens if available
         raise NotImplementedError("Token counting via translation mode is not yet implemented")
+
+    # -- Message Batches --
+
+    async def create_message_batch(
+        self,
+        request: CreateMessageBatchRequest,
+    ) -> MessageBatch:
+        seen_ids: set[str] = set()
+        for req in request.requests:
+            if req.custom_id in seen_ids:
+                raise ValueError(f"Duplicate custom_id: {req.custom_id}")
+            seen_ids.add(req.custom_id)
+
+        now = datetime.now(UTC)
+        batch_id = f"msgbatch_{uuid.uuid4().hex[:24]}"
+        batch = MessageBatch(
+            id=batch_id,
+            processing_status="in_progress",
+            request_counts=MessageBatchRequestCounts(processing=len(request.requests)),
+            created_at=now.isoformat(),
+            expires_at=(now + timedelta(hours=_BATCH_EXPIRY_HOURS)).isoformat(),
+        )
+
+        await self.kvstore.set(f"{_BATCH_PREFIX}{batch_id}", batch.model_dump_json())
+        logger.info("Created message batch", batch_id=batch_id, request_count=len(request.requests))
+
+        task = asyncio.create_task(self._process_message_batch(batch_id, request))
+        self._processing_tasks[batch_id] = task
+        return batch
+
+    async def retrieve_message_batch(self, batch_id: str) -> MessageBatch:
+        data = await self.kvstore.get(f"{_BATCH_PREFIX}{batch_id}")
+        if data is None:
+            raise KeyError(batch_id)
+        return MessageBatch.model_validate_json(data)
+
+    async def list_message_batches(
+        self,
+        limit: int = 20,
+        before_id: str | None = None,
+        after_id: str | None = None,
+    ) -> ListMessageBatchesResponse:
+        batch_values = await self.kvstore.values_in_range(f"{_BATCH_PREFIX}", f"{_BATCH_PREFIX}\xff")
+
+        batches = [MessageBatch.model_validate_json(v) for v in batch_values]
+        batches.sort(key=lambda b: b.created_at, reverse=True)
+
+        if after_id:
+            idx = next((i for i, b in enumerate(batches) if b.id == after_id), None)
+            if idx is not None:
+                batches = batches[idx + 1 :]
+
+        if before_id:
+            idx = next((i for i, b in enumerate(batches) if b.id == before_id), None)
+            if idx is not None:
+                batches = batches[:idx]
+
+        has_more = len(batches) > limit
+        batches = batches[:limit]
+
+        return ListMessageBatchesResponse(
+            data=batches,
+            has_more=has_more,
+            first_id=batches[0].id if batches else None,
+            last_id=batches[-1].id if batches else None,
+        )
+
+    async def cancel_message_batch(self, batch_id: str) -> MessageBatch:
+        batch = await self.retrieve_message_batch(batch_id)
+
+        if batch.processing_status == "canceling":
+            return batch
+        if batch.processing_status == "ended":
+            raise ValueError(f"Cannot cancel batch '{batch_id}' that has already ended")
+
+        async with self._update_lock:
+            batch.processing_status = "canceling"
+            batch.cancel_initiated_at = datetime.now(UTC).isoformat()
+            await self.kvstore.set(f"{_BATCH_PREFIX}{batch_id}", batch.model_dump_json())
+
+        if batch_id in self._processing_tasks:
+            self._processing_tasks[batch_id].cancel()
+
+        return await self.retrieve_message_batch(batch_id)
+
+    async def retrieve_message_batch_results(
+        self,
+        batch_id: str,
+    ) -> AsyncIterator[MessageBatchIndividualResponse]:
+        batch = await self.retrieve_message_batch(batch_id)
+        if batch.processing_status != "ended":
+            raise ValueError(
+                f"Results are not yet available for batch '{batch_id}' (status: {batch.processing_status})"
+            )
+
+        data = await self.kvstore.get(f"{_BATCH_RESULTS_PREFIX}{batch_id}")
+        if data is None:
+            return _empty_async_iter()
+
+        results = json.loads(data)
+        return _list_to_async_iter([MessageBatchIndividualResponse.model_validate(item) for item in results])
+
+    async def _process_message_batch(
+        self,
+        batch_id: str,
+        request: CreateMessageBatchRequest,
+    ) -> None:
+        try:
+            async with self._batch_semaphore:
+                await self._process_message_batch_impl(batch_id, request)
+        except asyncio.CancelledError:
+            await self._finalize_batch_canceled(batch_id, request)
+        except Exception:
+            logger.exception("Failed to process message batch", batch_id=batch_id)
+            await self._finalize_batch_error(batch_id)
+        finally:
+            self._processing_tasks.pop(batch_id, None)
+
+    async def _process_message_batch_impl(
+        self,
+        batch_id: str,
+        request: CreateMessageBatchRequest,
+    ) -> None:
+        results: list[dict[str, Any]] = []
+        succeeded = 0
+        errored = 0
+        semaphore = asyncio.Semaphore(self.config.max_concurrent_requests_per_batch)
+
+        async def process_one(custom_id: str, params: AnthropicCreateMessageRequest) -> dict[str, Any]:
+            async with semaphore:
+                # Force non-streaming for batch requests
+                params.stream = False
+                try:
+                    response = await self.create_message(params)
+                    if isinstance(response, AnthropicMessageResponse):
+                        return MessageBatchIndividualResponse(
+                            custom_id=custom_id,
+                            result=MessageBatchSucceededResult(message=response),
+                        ).model_dump()
+                    else:
+                        return MessageBatchIndividualResponse(
+                            custom_id=custom_id,
+                            result=MessageBatchErroredResult(
+                                error=_AnthropicErrorDetail(type="api_error", message="Unexpected streaming response"),
+                            ),
+                        ).model_dump()
+                except Exception as e:
+                    return MessageBatchIndividualResponse(
+                        custom_id=custom_id,
+                        result=MessageBatchErroredResult(
+                            error=_AnthropicErrorDetail(type="api_error", message=str(e)),
+                        ),
+                    ).model_dump()
+
+        tasks = [process_one(req.custom_id, req.params) for req in request.requests]
+        results = await asyncio.gather(*tasks)
+
+        for r in results:
+            if r["result"]["type"] == "succeeded":
+                succeeded += 1
+            else:
+                errored += 1
+
+        await self.kvstore.set(f"{_BATCH_RESULTS_PREFIX}{batch_id}", json.dumps(results))
+
+        async with self._update_lock:
+            batch = await self.retrieve_message_batch(batch_id)
+            batch.processing_status = "ended"
+            batch.ended_at = datetime.now(UTC).isoformat()
+            batch.request_counts = MessageBatchRequestCounts(
+                processing=0,
+                succeeded=succeeded,
+                errored=errored,
+            )
+            batch.results_url = f"/v1/messages/batches/{batch_id}/results"
+            await self.kvstore.set(f"{_BATCH_PREFIX}{batch_id}", batch.model_dump_json())
+
+        logger.info(
+            "Message batch completed",
+            batch_id=batch_id,
+            succeeded=succeeded,
+            errored=errored,
+        )
+
+    async def _finalize_batch_canceled(
+        self,
+        batch_id: str,
+        request: CreateMessageBatchRequest,
+    ) -> None:
+        existing_data = await self.kvstore.get(f"{_BATCH_RESULTS_PREFIX}{batch_id}")
+        completed_ids: set[str] = set()
+        results: list[dict[str, Any]] = []
+        succeeded = 0
+        errored = 0
+        canceled = 0
+
+        if existing_data:
+            results = json.loads(existing_data)
+            for r in results:
+                completed_ids.add(r["custom_id"])
+                if r["result"]["type"] == "succeeded":
+                    succeeded += 1
+                else:
+                    errored += 1
+
+        for req in request.requests:
+            if req.custom_id not in completed_ids:
+                results.append(
+                    MessageBatchIndividualResponse(
+                        custom_id=req.custom_id,
+                        result=MessageBatchCanceledResult(),
+                    ).model_dump()
+                )
+                canceled += 1
+
+        await self.kvstore.set(f"{_BATCH_RESULTS_PREFIX}{batch_id}", json.dumps(results))
+
+        async with self._update_lock:
+            batch = await self.retrieve_message_batch(batch_id)
+            batch.processing_status = "ended"
+            batch.ended_at = datetime.now(UTC).isoformat()
+            batch.request_counts = MessageBatchRequestCounts(
+                processing=0,
+                succeeded=succeeded,
+                errored=errored,
+                canceled=canceled,
+            )
+            batch.results_url = f"/v1/messages/batches/{batch_id}/results"
+            await self.kvstore.set(f"{_BATCH_PREFIX}{batch_id}", batch.model_dump_json())
+
+        logger.info(
+            "Message batch canceled",
+            batch_id=batch_id,
+            succeeded=succeeded,
+            errored=errored,
+            canceled=canceled,
+        )
+
+    async def _finalize_batch_error(self, batch_id: str) -> None:
+        async with self._update_lock:
+            batch = await self.retrieve_message_batch(batch_id)
+            batch.processing_status = "ended"
+            batch.ended_at = datetime.now(UTC).isoformat()
+            batch.request_counts = MessageBatchRequestCounts(
+                processing=0,
+                errored=batch.request_counts.processing,
+            )
+            await self.kvstore.set(f"{_BATCH_PREFIX}{batch_id}", batch.model_dump_json())
 
     # -- Native passthrough for providers with /v1/messages support --
 
