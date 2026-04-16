@@ -1,7 +1,7 @@
 ---
 title: OpenAI API Conformance
 description: Detailed conformance status of Llama Stack against the OpenAI API specification
-sidebar_label: API Conformance
+sidebar_label: Conformance
 sidebar_position: 2
 ---
 
@@ -18,20 +18,20 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 87.9% |
-| **Endpoints Implemented** | 28/146 |
+| **Overall Conformance Score** | 91.7% |
+| **Endpoints Implemented** | 29/146 |
 | **Total Properties Checked** | 3441 |
-| **Schema/Type Issues** | 288 |
-| **Missing Properties** | 130 |
-| **Total Issues to Fix** | 418 |
+| **Schema/Type Issues** | 184 |
+| **Missing Properties** | 101 |
+| **Total Issues to Fix** | 285 |
 
 ## Integration Test Coverage
 
-Overall Test Coverage Score: 44.1%
+Overall Test Coverage Score: 43.8%
 
 | Category | Covered | Total | Score |
 |----------|---------|-------|-------|
-| CRUD Operations | 5 | 6 | 83.3% |
+| CRUD Operations | 5 | 7 | 71.4% |
 | Conversations | 5 | 9 | 55.6% |
 | Request Parameters | 21 | 25 | 84.0% |
 | Streaming Events | 16 | 53 | 30.2% |
@@ -44,16 +44,16 @@ Categories are sorted by conformance score (lowest first, needing most attention
 
 | Category | Score | Properties | Issues | Missing |
 |----------|-------|------------|--------|---------|
-| Moderations | 15.1% | 53 | 6 | 39 |
-| Batch | 39.3% | 168 | 61 | 41 |
-| Completions | 56.5% | 46 | 18 | 2 |
-| Vector stores | 61.3% | 310 | 106 | 14 |
-| Embeddings | 64.3% | 14 | 5 | 0 |
-| Files | 66.7% | 42 | 8 | 6 |
-| Models | 66.7% | 15 | 0 | 5 |
-| Chat | 87.1% | 403 | 33 | 19 |
-| Responses | 87.1% | 225 | 29 | 0 |
-| Conversations | 98.8% | 2165 | 22 | 4 |
+| Moderations | 17.0% | 53 | 5 | 39 |
+| Batch | 39.9% | 168 | 60 | 41 |
+| Completions | 58.7% | 46 | 17 | 2 |
+| Files | 76.2% | 42 | 8 | 2 |
+| Embeddings | 78.6% | 14 | 3 | 0 |
+| Vector stores | 82.9% | 310 | 41 | 12 |
+| Responses | 88.9% | 225 | 25 | 0 |
+| Models | 93.3% | 15 | 1 | 0 |
+| Chat | 98.5% | 403 | 5 | 1 |
+| Conversations | 98.9% | 2165 | 19 | 4 |
 
 ## Missing Endpoints
 
@@ -175,7 +175,6 @@ The following OpenAI API endpoints are not yet implemented in Llama Stack:
 
 ### /responses
 
-- `/responses/compact`
 - `/responses/input_tokens`
 
 ### /skills
@@ -225,7 +224,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Moderations
 
-**Score:** 15.1% · **Issues:** 6 · **Missing:** 39
+**Score:** 17.0% · **Issues:** 5 · **Missing:** 39
 
 #### `/moderations`
 
@@ -277,13 +276,12 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 </details>
 
 <details>
-<summary>Schema Issues (6)</summary>
+<summary>Schema Issues (5)</summary>
 
 | Property | Issues |
 |----------|--------|
 | `requestBody.content.application/json.properties.input` | Union variants added: 2 |
 | `requestBody.content.application/json.properties.model` | Nullable added (OpenAI non-nullable); Default changed: omni-moderation-latest -&gt; None |
-| `responses.200.content.application/json.properties.results.items` | Type removed: ['object'] |
 | `responses.200.content.application/json.properties.results.items.properties.categories` | Type removed: ['object']; Union variants added: 2 |
 | `responses.200.content.application/json.properties.results.items.properties.category_applied_input_types` | Type removed: ['object']; Union variants added: 2 |
 | `responses.200.content.application/json.properties.results.items.properties.category_scores` | Type removed: ['object']; Union variants added: 2 |
@@ -292,7 +290,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Batch
 
-**Score:** 39.3% · **Issues:** 61 · **Missing:** 41
+**Score:** 39.9% · **Issues:** 60 · **Missing:** 41
 
 #### `/batches`
 
@@ -315,11 +313,10 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 </details>
 
 <details>
-<summary>Schema Issues (18)</summary>
+<summary>Schema Issues (17)</summary>
 
 | Property | Issues |
 |----------|--------|
-| `responses.200.content.application/json.properties.data.items` | Type removed: ['object'] |
 | `responses.200.content.application/json.properties.data.items.properties.cancelled_at` | Type removed: ['integer']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.application/json.properties.data.items.properties.cancelling_at` | Type removed: ['integer']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.application/json.properties.data.items.properties.completed_at` | Type removed: ['integer']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
@@ -468,7 +465,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Completions
 
-**Score:** 56.5% · **Issues:** 18 · **Missing:** 2
+**Score:** 58.7% · **Issues:** 17 · **Missing:** 2
 
 #### `/completions`
 
@@ -483,7 +480,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 </details>
 
 <details>
-<summary>Schema Issues (18)</summary>
+<summary>Schema Issues (17)</summary>
 
 | Property | Issues |
 |----------|--------|
@@ -504,374 +501,12 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `requestBody.content.application/json.properties.temperature` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: 1 -&gt; None |
 | `requestBody.content.application/json.properties.top_p` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: 1 -&gt; None |
 | `requestBody.content.application/json.properties.user` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.choices.items` | Type removed: ['object'] |
-
-</details>
-
-### Vector stores
-
-**Score:** 61.3% · **Issues:** 106 · **Missing:** 14
-
-#### `/vector_stores`
-
-**GET**
-
-<details>
-<summary>Missing Properties (2)</summary>
-
-- `responses.200.content.application/json.properties.data.items.properties.expires_after.properties.anchor`
-- `responses.200.content.application/json.properties.data.items.properties.expires_after.properties.days`
-
-</details>
-
-<details>
-<summary>Schema Issues (12)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.data.items` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.data.items.properties.expires_after` | Type removed: ['object']; Union variants added: 2 |
-| `responses.200.content.application/json.properties.data.items.properties.file_counts` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.data.items.properties.metadata` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 |
-| `responses.200.content.application/json.properties.data.items.properties.name` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.data.items.properties.object` | Enum removed: ['vector_store']; Default changed: None -&gt; vector_store |
-| `responses.200.content.application/json.properties.data.items.properties.status` | Enum removed: ['expired', 'in_progress', 'completed']; Default changed: None -&gt; completed |
-| `responses.200.content.application/json.properties.data.items.properties.usage_bytes` | Default changed: None -&gt; 0 |
-| `responses.200.content.application/json.properties.first_id` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.has_more` | Default changed: None -&gt; False |
-| `responses.200.content.application/json.properties.last_id` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.object` | Default changed: None -&gt; list |
-
-</details>
-
-**POST**
-
-<details>
-<summary>Missing Properties (5)</summary>
-
-- `requestBody.content.application/json.properties.description`
-- `requestBody.content.application/json.properties.expires_after.properties.anchor`
-- `requestBody.content.application/json.properties.expires_after.properties.days`
-- `responses.200.content.application/json.properties.expires_after.properties.anchor`
-- `responses.200.content.application/json.properties.expires_after.properties.days`
-
-</details>
-
-<details>
-<summary>Schema Issues (11)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `requestBody.content.application/json.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 2 |
-| `requestBody.content.application/json.properties.expires_after` | Type removed: ['object']; Union variants added: 2 |
-| `requestBody.content.application/json.properties.file_ids` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `requestBody.content.application/json.properties.name` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.expires_after` | Type removed: ['object']; Union variants added: 2 |
-| `responses.200.content.application/json.properties.file_counts` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.metadata` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 |
-| `responses.200.content.application/json.properties.name` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['vector_store']; Default changed: None -&gt; vector_store |
-| `responses.200.content.application/json.properties.status` | Enum removed: ['expired', 'in_progress', 'completed']; Default changed: None -&gt; completed |
-| `responses.200.content.application/json.properties.usage_bytes` | Default changed: None -&gt; 0 |
-
-</details>
-
-#### `/vector_stores/{vector_store_id}`
-
-**DELETE**
-
-<details>
-<summary>Schema Issues (2)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.deleted` | Default changed: None -&gt; True |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['vector_store.deleted']; Default changed: None -&gt; vector_store.deleted |
-
-</details>
-
-**GET**
-
-<details>
-<summary>Missing Properties (2)</summary>
-
-- `responses.200.content.application/json.properties.expires_after.properties.anchor`
-- `responses.200.content.application/json.properties.expires_after.properties.days`
-
-</details>
-
-<details>
-<summary>Schema Issues (7)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.expires_after` | Type removed: ['object']; Union variants added: 2 |
-| `responses.200.content.application/json.properties.file_counts` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.metadata` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 |
-| `responses.200.content.application/json.properties.name` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['vector_store']; Default changed: None -&gt; vector_store |
-| `responses.200.content.application/json.properties.status` | Enum removed: ['expired', 'in_progress', 'completed']; Default changed: None -&gt; completed |
-| `responses.200.content.application/json.properties.usage_bytes` | Default changed: None -&gt; 0 |
-
-</details>
-
-**POST**
-
-<details>
-<summary>Missing Properties (2)</summary>
-
-- `responses.200.content.application/json.properties.expires_after.properties.anchor`
-- `responses.200.content.application/json.properties.expires_after.properties.days`
-
-</details>
-
-<details>
-<summary>Schema Issues (9)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `requestBody.content.application/json.properties.expires_after` | Union variants added: 2 |
-| `requestBody.content.application/json.properties.name` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.expires_after` | Type removed: ['object']; Union variants added: 2 |
-| `responses.200.content.application/json.properties.file_counts` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.metadata` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 |
-| `responses.200.content.application/json.properties.name` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['vector_store']; Default changed: None -&gt; vector_store |
-| `responses.200.content.application/json.properties.status` | Enum removed: ['expired', 'in_progress', 'completed']; Default changed: None -&gt; completed |
-| `responses.200.content.application/json.properties.usage_bytes` | Default changed: None -&gt; 0 |
-
-</details>
-
-#### `/vector_stores/{vector_store_id}/file_batches`
-
-**POST**
-
-<details>
-<summary>Missing Properties (1)</summary>
-
-- `requestBody.content.application/json.properties.files`
-
-</details>
-
-<details>
-<summary>Schema Issues (4)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `requestBody.content.application/json.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 2 |
-| `responses.200.content.application/json.properties.file_counts` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['vector_store.files_batch']; Default changed: None -&gt; vector_store.file_batch |
-| `responses.200.content.application/json.properties.status` | Enum removed: ['in_progress', 'completed', 'cancelled', 'failed']; Type removed: ['string']; Union variants added: 4 |
-
-</details>
-
-#### `/vector_stores/{vector_store_id}/file_batches/{batch_id}`
-
-**GET**
-
-<details>
-<summary>Schema Issues (3)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.file_counts` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['vector_store.files_batch']; Default changed: None -&gt; vector_store.file_batch |
-| `responses.200.content.application/json.properties.status` | Enum removed: ['in_progress', 'completed', 'cancelled', 'failed']; Type removed: ['string']; Union variants added: 4 |
-
-</details>
-
-#### `/vector_stores/{vector_store_id}/file_batches/{batch_id}/cancel`
-
-**POST**
-
-<details>
-<summary>Schema Issues (3)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.file_counts` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['vector_store.files_batch']; Default changed: None -&gt; vector_store.file_batch |
-| `responses.200.content.application/json.properties.status` | Enum removed: ['in_progress', 'completed', 'cancelled', 'failed']; Type removed: ['string']; Union variants added: 4 |
-
-</details>
-
-#### `/vector_stores/{vector_store_id}/file_batches/{batch_id}/files`
-
-**GET**
-
-<details>
-<summary>Schema Issues (11)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.data.items` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.data.items.properties.attributes` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 |
-| `responses.200.content.application/json.properties.data.items.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 3; Union variants removed: 2 |
-| `responses.200.content.application/json.properties.data.items.properties.last_error` | Union variants added: 1; Union variants removed: 1 |
-| `responses.200.content.application/json.properties.data.items.properties.object` | Enum removed: ['vector_store.file']; Default changed: None -&gt; vector_store.file |
-| `responses.200.content.application/json.properties.data.items.properties.status` | Enum removed: ['in_progress', 'completed', 'cancelled', 'failed']; Type removed: ['string']; Union variants added: 4 |
-| `responses.200.content.application/json.properties.data.items.properties.usage_bytes` | Default changed: None -&gt; 0 |
-| `responses.200.content.application/json.properties.first_id` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.has_more` | Default changed: None -&gt; False |
-| `responses.200.content.application/json.properties.last_id` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.object` | Default changed: None -&gt; list |
-
-</details>
-
-#### `/vector_stores/{vector_store_id}/files`
-
-**GET**
-
-<details>
-<summary>Schema Issues (11)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.data.items` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.data.items.properties.attributes` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 |
-| `responses.200.content.application/json.properties.data.items.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 3; Union variants removed: 2 |
-| `responses.200.content.application/json.properties.data.items.properties.last_error` | Union variants added: 1; Union variants removed: 1 |
-| `responses.200.content.application/json.properties.data.items.properties.object` | Enum removed: ['vector_store.file']; Default changed: None -&gt; vector_store.file |
-| `responses.200.content.application/json.properties.data.items.properties.status` | Enum removed: ['in_progress', 'completed', 'cancelled', 'failed']; Type removed: ['string']; Union variants added: 4 |
-| `responses.200.content.application/json.properties.data.items.properties.usage_bytes` | Default changed: None -&gt; 0 |
-| `responses.200.content.application/json.properties.first_id` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.has_more` | Default changed: None -&gt; False |
-| `responses.200.content.application/json.properties.last_id` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.object` | Default changed: None -&gt; list |
-
-</details>
-
-**POST**
-
-<details>
-<summary>Schema Issues (7)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `requestBody.content.application/json.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 2 |
-| `responses.200.content.application/json.properties.attributes` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 |
-| `responses.200.content.application/json.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 3; Union variants removed: 2 |
-| `responses.200.content.application/json.properties.last_error` | Union variants added: 1; Union variants removed: 1 |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['vector_store.file']; Default changed: None -&gt; vector_store.file |
-| `responses.200.content.application/json.properties.status` | Enum removed: ['in_progress', 'completed', 'cancelled', 'failed']; Type removed: ['string']; Union variants added: 4 |
-| `responses.200.content.application/json.properties.usage_bytes` | Default changed: None -&gt; 0 |
-
-</details>
-
-#### `/vector_stores/{vector_store_id}/files/{file_id}`
-
-**DELETE**
-
-<details>
-<summary>Schema Issues (2)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.deleted` | Default changed: None -&gt; True |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['vector_store.file.deleted']; Default changed: None -&gt; vector_store.file.deleted |
-
-</details>
-
-**GET**
-
-<details>
-<summary>Schema Issues (6)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.attributes` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 |
-| `responses.200.content.application/json.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 3; Union variants removed: 2 |
-| `responses.200.content.application/json.properties.last_error` | Union variants added: 1; Union variants removed: 1 |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['vector_store.file']; Default changed: None -&gt; vector_store.file |
-| `responses.200.content.application/json.properties.status` | Enum removed: ['in_progress', 'completed', 'cancelled', 'failed']; Type removed: ['string']; Union variants added: 4 |
-| `responses.200.content.application/json.properties.usage_bytes` | Default changed: None -&gt; 0 |
-
-</details>
-
-**POST**
-
-<details>
-<summary>Schema Issues (7)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `requestBody.content.application/json.properties.attributes` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 |
-| `responses.200.content.application/json.properties.attributes` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 |
-| `responses.200.content.application/json.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 3; Union variants removed: 2 |
-| `responses.200.content.application/json.properties.last_error` | Union variants added: 1; Union variants removed: 1 |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['vector_store.file']; Default changed: None -&gt; vector_store.file |
-| `responses.200.content.application/json.properties.status` | Enum removed: ['in_progress', 'completed', 'cancelled', 'failed']; Type removed: ['string']; Union variants added: 4 |
-| `responses.200.content.application/json.properties.usage_bytes` | Default changed: None -&gt; 0 |
-
-</details>
-
-#### `/vector_stores/{vector_store_id}/files/{file_id}/content`
-
-**GET**
-
-<details>
-<summary>Schema Issues (2)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.data.items` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.has_more` | Default changed: None -&gt; False |
-
-</details>
-
-#### `/vector_stores/{vector_store_id}/search`
-
-**POST**
-
-<details>
-<summary>Missing Properties (2)</summary>
-
-- `requestBody.content.application/json.properties.ranking_options.properties.ranker`
-- `requestBody.content.application/json.properties.ranking_options.properties.score_threshold`
-
-</details>
-
-<details>
-<summary>Schema Issues (9)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `requestBody.content.application/json.properties.filters` | Union variants added: 2 |
-| `requestBody.content.application/json.properties.max_num_results` | Type removed: ['integer']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `requestBody.content.application/json.properties.query` | Union variants added: 2 |
-| `requestBody.content.application/json.properties.ranking_options` | Type removed: ['object']; Union variants added: 2 |
-| `requestBody.content.application/json.properties.rewrite_query` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.data.items` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.data.items.properties.content.items` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.has_more` | Default changed: None -&gt; False |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['vector_store.search_results.page']; Default changed: None -&gt; vector_store.search_results.page |
-
-</details>
-
-### Embeddings
-
-**Score:** 64.3% · **Issues:** 5 · **Missing:** 0
-
-#### `/embeddings`
-
-**POST**
-
-<details>
-<summary>Schema Issues (5)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `requestBody.content.application/json.properties.input` | Union variants added: 4 |
-| `requestBody.content.application/json.properties.model` | Type added: ['string']; Union variants removed: 2 |
-| `responses.200.content.application/json.properties.data.items` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.data.items.properties.embedding` | Type removed: ['array']; Union variants added: 2 |
-| `responses.200.content.application/json.properties.usage` | Type removed: ['object'] |
 
 </details>
 
 ### Files
 
-**Score:** 66.7% · **Issues:** 8 · **Missing:** 6
+**Score:** 76.2% · **Issues:** 8 · **Missing:** 2
 
 #### `/files`
 
@@ -890,12 +525,10 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **POST**
 
 <details>
-<summary>Missing Properties (4)</summary>
+<summary>Missing Properties (2)</summary>
 
 - `requestBody.content.multipart/form-data.properties.expires_after.properties.anchor`
 - `requestBody.content.multipart/form-data.properties.expires_after.properties.seconds`
-- `responses.200.content.application/json.properties.status`
-- `responses.200.content.application/json.properties.status_details`
 
 </details>
 
@@ -916,14 +549,6 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **GET**
 
 <details>
-<summary>Missing Properties (2)</summary>
-
-- `responses.200.content.application/json.properties.status`
-- `responses.200.content.application/json.properties.status_details`
-
-</details>
-
-<details>
 <summary>Schema Issues (2)</summary>
 
 | Property | Issues |
@@ -933,193 +558,275 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 </details>
 
-### Models
+### Embeddings
 
-**Score:** 66.7% · **Issues:** 0 · **Missing:** 5
+**Score:** 78.6% · **Issues:** 3 · **Missing:** 0
 
-#### `/models`
+#### `/embeddings`
 
-**GET**
-
-<details>
-<summary>Missing Properties (1)</summary>
-
-- `responses.200.content.application/json.properties.object`
-
-</details>
-
-#### `/models/{model}`
-
-**GET**
+**POST**
 
 <details>
-<summary>Missing Properties (4)</summary>
-
-- `responses.200.content.application/json.properties.created`
-- `responses.200.content.application/json.properties.id`
-- `responses.200.content.application/json.properties.object`
-- `responses.200.content.application/json.properties.owned_by`
-
-</details>
-
-### Chat
-
-**Score:** 87.1% · **Issues:** 33 · **Missing:** 19
-
-#### `/chat/completions`
-
-**GET**
-
-<details>
-<summary>Missing Properties (5)</summary>
-
-- `parameters.query.metadata`
-- `responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens_details.properties.accepted_prediction_tokens`
-- `responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens_details.properties.audio_tokens`
-- `responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens_details.properties.rejected_prediction_tokens`
-- `responses.200.content.application/json.properties.data.items.properties.usage.properties.prompt_tokens_details.properties.audio_tokens`
-
-</details>
-
-<details>
-<summary>Schema Issues (9)</summary>
+<summary>Schema Issues (3)</summary>
 
 | Property | Issues |
 |----------|--------|
-| `responses.200.content.application/json.properties.data.items` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.data.items.properties.choices.items` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.function_call` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.tool_calls.items` | Union variants added: 2 |
-| `responses.200.content.application/json.properties.data.items.properties.usage` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens_details` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.data.items.properties.usage.properties.prompt_tokens_details` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.object` | Default changed: list -&gt; None |
+| `requestBody.content.application/json.properties.input` | Union variants added: 4 |
+| `requestBody.content.application/json.properties.model` | Type added: ['string']; Union variants removed: 2 |
+| `responses.200.content.application/json.properties.data.items.properties.embedding` | Type removed: ['array']; Union variants added: 2 |
+
+</details>
+
+### Vector stores
+
+**Score:** 82.9% · **Issues:** 41 · **Missing:** 12
+
+#### `/vector_stores`
+
+**GET**
+
+<details>
+<summary>Missing Properties (2)</summary>
+
+- `responses.200.content.application/json.properties.data.items.properties.expires_after.properties.anchor`
+- `responses.200.content.application/json.properties.data.items.properties.expires_after.properties.days`
+
+</details>
+
+<details>
+<summary>Schema Issues (3)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `responses.200.content.application/json.properties.data.items.properties.expires_after` | Type removed: ['object']; Union variants added: 2 |
+| `responses.200.content.application/json.properties.data.items.properties.name` | Default changed: None -&gt;  |
+| `responses.200.content.application/json.properties.data.items.properties.usage_bytes` | Default changed: None -&gt; 0 |
 
 </details>
 
 **POST**
 
 <details>
-<summary>Missing Properties (10)</summary>
+<summary>Missing Properties (4)</summary>
 
-- `responses.200.content.application/json.properties.usage.properties.completion_tokens_details.properties.accepted_prediction_tokens`
-- `responses.200.content.application/json.properties.usage.properties.completion_tokens_details.properties.audio_tokens`
-- `responses.200.content.application/json.properties.usage.properties.completion_tokens_details.properties.rejected_prediction_tokens`
-- `responses.200.content.application/json.properties.usage.properties.prompt_tokens_details.properties.audio_tokens`
-- `responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.function_call`
-- `responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.tool_calls.items.properties.index`
-- `responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details.properties.accepted_prediction_tokens`
-- `responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details.properties.audio_tokens`
-- `responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details.properties.rejected_prediction_tokens`
-- `responses.200.content.text/event-stream.properties.usage.properties.prompt_tokens_details.properties.audio_tokens`
+- `requestBody.content.application/json.properties.expires_after.properties.anchor`
+- `requestBody.content.application/json.properties.expires_after.properties.days`
+- `responses.200.content.application/json.properties.expires_after.properties.anchor`
+- `responses.200.content.application/json.properties.expires_after.properties.days`
 
 </details>
 
 <details>
-<summary>Schema Issues (17)</summary>
+<summary>Schema Issues (8)</summary>
 
 | Property | Issues |
 |----------|--------|
-| `responses.200.content.application/json.properties.choices.items` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.choices.items.properties.message` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls.items` | Union variants added: 2 |
-| `responses.200.content.application/json.properties.usage` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.usage.properties.completion_tokens_details` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.usage.properties.prompt_tokens_details` | Type removed: ['object'] |
-| `responses.200.content.text/event-stream.properties.choices.items` | Type removed: ['object'] |
-| `responses.200.content.text/event-stream.properties.choices.items.properties.delta` | Type removed: ['object'] |
-| `responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.tool_calls.items` | Type removed: ['object'] |
-| `responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.tool_calls.items.properties.function` | Type removed: ['object'] |
-| `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs` | Type removed: ['object'] |
-| `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.content` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.refusal` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.text/event-stream.properties.usage` | Type removed: ['object'] |
-| `responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details` | Type removed: ['object'] |
-| `responses.200.content.text/event-stream.properties.usage.properties.prompt_tokens_details` | Type removed: ['object'] |
+| `requestBody.content.application/json.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 2 |
+| `requestBody.content.application/json.properties.description` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `requestBody.content.application/json.properties.expires_after` | Type removed: ['object']; Union variants added: 2 |
+| `requestBody.content.application/json.properties.file_ids` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `requestBody.content.application/json.properties.name` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `responses.200.content.application/json.properties.expires_after` | Type removed: ['object']; Union variants added: 2 |
+| `responses.200.content.application/json.properties.name` | Default changed: None -&gt;  |
+| `responses.200.content.application/json.properties.usage_bytes` | Default changed: None -&gt; 0 |
 
 </details>
 
-#### `/chat/completions/{completion_id}`
+#### `/vector_stores/{vector_store_id}`
 
 **GET**
 
 <details>
-<summary>Missing Properties (4)</summary>
+<summary>Missing Properties (2)</summary>
 
-- `responses.200.content.application/json.properties.usage.properties.completion_tokens_details.properties.accepted_prediction_tokens`
-- `responses.200.content.application/json.properties.usage.properties.completion_tokens_details.properties.audio_tokens`
-- `responses.200.content.application/json.properties.usage.properties.completion_tokens_details.properties.rejected_prediction_tokens`
-- `responses.200.content.application/json.properties.usage.properties.prompt_tokens_details.properties.audio_tokens`
+- `responses.200.content.application/json.properties.expires_after.properties.anchor`
+- `responses.200.content.application/json.properties.expires_after.properties.days`
 
 </details>
 
 <details>
-<summary>Schema Issues (7)</summary>
+<summary>Schema Issues (3)</summary>
 
 | Property | Issues |
 |----------|--------|
-| `responses.200.content.application/json.properties.choices.items` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.choices.items.properties.message` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls.items` | Union variants added: 2 |
-| `responses.200.content.application/json.properties.usage` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.usage.properties.completion_tokens_details` | Type removed: ['object'] |
-| `responses.200.content.application/json.properties.usage.properties.prompt_tokens_details` | Type removed: ['object'] |
+| `responses.200.content.application/json.properties.expires_after` | Type removed: ['object']; Union variants added: 2 |
+| `responses.200.content.application/json.properties.name` | Default changed: None -&gt;  |
+| `responses.200.content.application/json.properties.usage_bytes` | Default changed: None -&gt; 0 |
+
+</details>
+
+**POST**
+
+<details>
+<summary>Missing Properties (2)</summary>
+
+- `responses.200.content.application/json.properties.expires_after.properties.anchor`
+- `responses.200.content.application/json.properties.expires_after.properties.days`
+
+</details>
+
+<details>
+<summary>Schema Issues (5)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `requestBody.content.application/json.properties.expires_after` | Union variants added: 2 |
+| `requestBody.content.application/json.properties.name` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `responses.200.content.application/json.properties.expires_after` | Type removed: ['object']; Union variants added: 2 |
+| `responses.200.content.application/json.properties.name` | Default changed: None -&gt;  |
+| `responses.200.content.application/json.properties.usage_bytes` | Default changed: None -&gt; 0 |
+
+</details>
+
+#### `/vector_stores/{vector_store_id}/file_batches`
+
+**POST**
+
+<details>
+<summary>Schema Issues (2)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `requestBody.content.application/json.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 2 |
+| `requestBody.content.application/json.properties.files` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+
+</details>
+
+#### `/vector_stores/{vector_store_id}/file_batches/{batch_id}/files`
+
+**GET**
+
+<details>
+<summary>Schema Issues (3)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `responses.200.content.application/json.properties.data.items.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 3; Union variants removed: 2 |
+| `responses.200.content.application/json.properties.data.items.properties.last_error` | Union variants added: 1; Union variants removed: 1 |
+| `responses.200.content.application/json.properties.data.items.properties.usage_bytes` | Default changed: None -&gt; 0 |
+
+</details>
+
+#### `/vector_stores/{vector_store_id}/files`
+
+**GET**
+
+<details>
+<summary>Schema Issues (3)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `responses.200.content.application/json.properties.data.items.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 3; Union variants removed: 2 |
+| `responses.200.content.application/json.properties.data.items.properties.last_error` | Union variants added: 1; Union variants removed: 1 |
+| `responses.200.content.application/json.properties.data.items.properties.usage_bytes` | Default changed: None -&gt; 0 |
+
+</details>
+
+**POST**
+
+<details>
+<summary>Schema Issues (4)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `requestBody.content.application/json.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 2 |
+| `responses.200.content.application/json.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 3; Union variants removed: 2 |
+| `responses.200.content.application/json.properties.last_error` | Union variants added: 1; Union variants removed: 1 |
+| `responses.200.content.application/json.properties.usage_bytes` | Default changed: None -&gt; 0 |
+
+</details>
+
+#### `/vector_stores/{vector_store_id}/files/{file_id}`
+
+**GET**
+
+<details>
+<summary>Schema Issues (3)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `responses.200.content.application/json.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 3; Union variants removed: 2 |
+| `responses.200.content.application/json.properties.last_error` | Union variants added: 1; Union variants removed: 1 |
+| `responses.200.content.application/json.properties.usage_bytes` | Default changed: None -&gt; 0 |
+
+</details>
+
+**POST**
+
+<details>
+<summary>Schema Issues (4)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `requestBody.content.application/json.properties.attributes` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 |
+| `responses.200.content.application/json.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 3; Union variants removed: 2 |
+| `responses.200.content.application/json.properties.last_error` | Union variants added: 1; Union variants removed: 1 |
+| `responses.200.content.application/json.properties.usage_bytes` | Default changed: None -&gt; 0 |
+
+</details>
+
+#### `/vector_stores/{vector_store_id}/search`
+
+**POST**
+
+<details>
+<summary>Missing Properties (2)</summary>
+
+- `requestBody.content.application/json.properties.ranking_options.properties.ranker`
+- `requestBody.content.application/json.properties.ranking_options.properties.score_threshold`
+
+</details>
+
+<details>
+<summary>Schema Issues (3)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `requestBody.content.application/json.properties.filters` | Union variants added: 2 |
+| `requestBody.content.application/json.properties.query` | Union variants added: 2 |
+| `requestBody.content.application/json.properties.ranking_options` | Type removed: ['object']; Union variants added: 2 |
 
 </details>
 
 ### Responses
 
-**Score:** 87.1% · **Issues:** 29 · **Missing:** 0
+**Score:** 88.9% · **Issues:** 25 · **Missing:** 0
 
 #### `/responses`
 
 **POST**
 
 <details>
-<summary>Schema Issues (29)</summary>
+<summary>Schema Issues (22)</summary>
 
 | Property | Issues | Tested |
 |----------|--------|--------|
-| `requestBody.content.application/json.properties.include` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 | No |
 | `requestBody.content.application/json.properties.input` | Union variants added: 2; Union variants removed: 2 | Yes |
 | `requestBody.content.application/json.properties.model` | Type added: ['string']; Nullable removed (OpenAI nullable); Union variants removed: 2 | Yes |
 | `requestBody.content.application/json.properties.parallel_tool_calls` | Default changed: None -&gt; True | Yes |
 | `requestBody.content.application/json.properties.reasoning` | Union variants added: 1; Union variants removed: 1 | Yes |
 | `requestBody.content.application/json.properties.service_tier` | Union variants added: 2 | Yes |
-| `requestBody.content.application/json.properties.store` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: None -&gt; True | Yes |
-| `requestBody.content.application/json.properties.stream` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: None -&gt; False | Yes |
+| `requestBody.content.application/json.properties.store` | Default changed: None -&gt; True | Yes |
+| `requestBody.content.application/json.properties.stream` | Default changed: None -&gt; False | Yes |
 | `requestBody.content.application/json.properties.stream_options` | Union variants added: 1; Union variants removed: 1 | No |
 | `requestBody.content.application/json.properties.text` | Union variants added: 1; Union variants removed: 1 | No |
 | `requestBody.content.application/json.properties.tool_choice` | Union variants added: 2; Union variants removed: 1 | Yes |
 | `requestBody.content.application/json.properties.truncation` | Union variants added: 2 | Yes |
 | `responses.200.content.application/json.properties.error` | Union variants added: 1; Union variants removed: 1 | Yes |
-| `responses.200.content.application/json.properties.frequency_penalty` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2 | No |
 | `responses.200.content.application/json.properties.incomplete_details` | Union variants added: 1; Union variants removed: 1 | Yes |
 | `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | Yes |
-| `responses.200.content.application/json.properties.object` | Default changed: response -&gt; None | No |
 | `responses.200.content.application/json.properties.output.items` | Union variants added: 8; Union variants removed: 4 | Yes |
-| `responses.200.content.application/json.properties.parallel_tool_calls` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: None -&gt; True | Yes |
-| `responses.200.content.application/json.properties.presence_penalty` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2 | No |
+| `responses.200.content.application/json.properties.parallel_tool_calls` | Default changed: None -&gt; True | Yes |
 | `responses.200.content.application/json.properties.reasoning` | Union variants added: 1; Union variants removed: 1 | Yes |
-| `responses.200.content.application/json.properties.service_tier` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 | Yes |
-| `responses.200.content.application/json.properties.temperature` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2 | Yes |
+| `responses.200.content.application/json.properties.text` | Type added: ['object'] | No |
 | `responses.200.content.application/json.properties.tool_choice` | Union variants added: 3 | Yes |
-| `responses.200.content.application/json.properties.tools` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 | Yes |
-| `responses.200.content.application/json.properties.top_logprobs` | Type removed: ['integer']; Nullable added (OpenAI non-nullable); Union variants added: 2 | Yes |
-| `responses.200.content.application/json.properties.top_p` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2 | Yes |
+| `responses.200.content.application/json.properties.tools.items` | Union variants added: 4; Union variants removed: 1 | Yes |
 | `responses.200.content.application/json.properties.truncation` | Union variants added: 2 | Yes |
 | `responses.200.content.application/json.properties.usage` | Union variants added: 1; Union variants removed: 1 | Yes |
 
 </details>
 
-### Conversations
-
-**Score:** 98.8% · **Issues:** 22 · **Missing:** 4
-
-#### `/conversations`
+#### `/responses/compact`
 
 **POST**
 
@@ -1128,9 +835,94 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 | Property | Issues | Tested |
 |----------|--------|--------|
+| `requestBody.content.application/json.properties.input` | Union variants added: 2; Union variants removed: 1 | Yes |
+| `requestBody.content.application/json.properties.model` | Type added: ['string']; Union variants removed: 3 | Yes |
+| `responses.200.content.application/json.properties.output.items` | Union variants added: 4 | Yes |
+
+</details>
+
+### Models
+
+**Score:** 93.3% · **Issues:** 1 · **Missing:** 0
+
+#### `/models/{model}`
+
+**GET**
+
+<details>
+<summary>Schema Issues (1)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `responses.200.content.application/json.properties.owned_by` | Default changed: None -&gt; llama_stack |
+
+</details>
+
+### Chat
+
+**Score:** 98.5% · **Issues:** 5 · **Missing:** 1
+
+#### `/chat/completions`
+
+**GET**
+
+<details>
+<summary>Missing Properties (1)</summary>
+
+- `parameters.query.metadata`
+
+</details>
+
+<details>
+<summary>Schema Issues (1)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.tool_calls.items` | Union variants added: 2 |
+
+</details>
+
+**POST**
+
+<details>
+<summary>Schema Issues (3)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls.items` | Union variants added: 2 |
+| `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.content` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.refusal` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+
+</details>
+
+#### `/chat/completions/{completion_id}`
+
+**GET**
+
+<details>
+<summary>Schema Issues (1)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls.items` | Union variants added: 2 |
+
+</details>
+
+### Conversations
+
+**Score:** 98.9% · **Issues:** 19 · **Missing:** 4
+
+#### `/conversations`
+
+**POST**
+
+<details>
+<summary>Schema Issues (2)</summary>
+
+| Property | Issues | Tested |
+|----------|--------|--------|
 | `requestBody.content.application/json.properties.metadata` | Union variants added: 1; Union variants removed: 1 | Yes |
 | `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | Yes |
-| `responses.200.content.application/json.properties.object` | Default changed: conversation -&gt; None | No |
 
 </details>
 
@@ -1151,25 +943,23 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **GET**
 
 <details>
-<summary>Schema Issues (2)</summary>
+<summary>Schema Issues (1)</summary>
 
 | Property | Issues | Tested |
 |----------|--------|--------|
 | `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | Yes |
-| `responses.200.content.application/json.properties.object` | Default changed: conversation -&gt; None | No |
 
 </details>
 
 **POST**
 
 <details>
-<summary>Schema Issues (3)</summary>
+<summary>Schema Issues (2)</summary>
 
 | Property | Issues | Tested |
 |----------|--------|--------|
 | `requestBody.content.application/json.properties.metadata` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 | Yes |
 | `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | Yes |
-| `responses.200.content.application/json.properties.object` | Default changed: conversation -&gt; None | No |
 
 </details>
 

@@ -98,8 +98,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           echo "Breaking changes detected. Checking for acknowledgment..."
+
+          # In merge_group context, github.event.pull_request is empty.
+          # Extract PR number from the merge queue branch name
+          # (format: gh-readonly-queue/main/pr-<NUMBER>-<SHA>)
+          if [ -z "$PR_TITLE" ]; then
+            PR_NUM="$PR_NUMBER"
+            if [ -z "$PR_NUM" ]; then
+              PR_NUM=$(echo "${GITHUB_REF_NAME}" | sed -n 's|.*pr-\([0-9]*\)-.*|\1|p')
+            fi
+            if [ -n "$PR_NUM" ]; then
+              PR_TITLE=$(gh pr view "$PR_NUM" --json title --jq '.title' 2>/dev/null || echo "")
+              echo "Resolved PR title from PR #${PR_NUM}: $PR_TITLE"
+            fi
+          fi
 
           # Check PR title for '!:' marker (conventional commits)
           if [[ "$PR_TITLE" =~ ^[a-z]+\!: ]]; then
@@ -190,8 +205,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           echo "Integration tests failed. Checking for acknowledgment..."
+
+          # In merge_group context, github.event.pull_request is empty.
+          # Extract PR number from the merge queue branch name
+          # (format: gh-readonly-queue/main/pr-<NUMBER>-<SHA>)
+          if [ -z "$PR_TITLE" ]; then
+            PR_NUM="$PR_NUMBER"
+            if [ -z "$PR_NUM" ]; then
+              PR_NUM=$(echo "${GITHUB_REF_NAME}" | sed -n 's|.*pr-\([0-9]*\)-.*|\1|p')
+            fi
+            if [ -n "$PR_NUM" ]; then
+              PR_TITLE=$(gh pr view "$PR_NUM" --json title --jq '.title' 2>/dev/null || echo "")
+              echo "Resolved PR title from PR #${PR_NUM}: $PR_TITLE"
+            fi
+          fi
 
           # Check PR title for '!:' marker (conventional commits)
           if [[ "$PR_TITLE" =~ ^[a-z]+\!: ]]; then

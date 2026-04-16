@@ -4,8 +4,12 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from __future__ import annotations
+
+import argparse
 from enum import Enum
 from pathlib import Path
+from typing import Any
 
 from llama_stack.core.datatypes import Provider, ProviderSpec
 from llama_stack.core.utils.dynamic import instantiate_class_type
@@ -21,7 +25,7 @@ class ImageType(Enum):
     VENV = "venv"
 
 
-def print_subcommand_description(parser, subparsers):
+def print_subcommand_description(parser: argparse.ArgumentParser, subparsers: argparse._SubParsersAction[Any]) -> None:
     """Print descriptions of subcommands."""
     description_text = ""
     for name, subcommand in subparsers.choices.items():

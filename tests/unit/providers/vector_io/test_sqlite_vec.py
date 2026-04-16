@@ -92,6 +92,37 @@ async def test_query_chunks_full_text_search(sqlite_vec_index, sample_chunks, sa
     assert len(response_no_results.chunks) == 0, f"Expected 0 results, but got {len(response_no_results.chunks)}"
 
 
+async def test_query_keyword_scores_are_positive(sqlite_vec_index, sample_chunks, sample_embeddings):
+    """Test that keyword search returns positive scores (higher = more relevant).
+
+    FTS5 BM25 internally returns negative scores (more negative = more relevant),
+    but query_keyword must negate them so downstream consumers like RRF can sort
+    descending (higher = better) without inverting the ranking.
+    """
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
+
+    response = await sqlite_vec_index.query_keyword(k=5, score_threshold=0.0, query_string="Sentence 5")
+    assert len(response.chunks) > 0, "Expected at least one result"
+    for score in response.scores:
+        assert score > 0, f"Keyword score should be positive (higher = more relevant), got {score}"
+    # Scores should be in descending order (most relevant first)
+    assert all(response.scores[i] >= response.scores[i + 1] for i in range(len(response.scores) - 1)), (
+        "Keyword scores should be in descending order"
+    )
+
+
 async def test_query_chunks_hybrid(sqlite_vec_index, sample_chunks, sample_embeddings):
     # Create EmbeddedChunk objects
     embedded_chunks = [

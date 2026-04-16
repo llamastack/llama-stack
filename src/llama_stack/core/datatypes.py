@@ -21,22 +21,13 @@ from llama_stack.core.storage.datatypes import (
 from llama_stack.log import LoggingConfig
 from llama_stack_api import (
     Api,
-    Benchmark,
-    BenchmarkInput,
     ConnectorInput,
-    Dataset,
-    DatasetInput,
-    DatasetIO,
-    Eval,
     Inference,
     Model,
     ModelInput,
     ProviderSpec,
     Resource,
     Safety,
-    Scoring,
-    ScoringFn,
-    ScoringFnInput,
     Shield,
     ShieldInput,
     ToolGroup,
@@ -99,44 +90,20 @@ class VectorStoreWithOwner(VectorStore, ResourceWithOwner):
     pass
 
 
-class DatasetWithOwner(Dataset, ResourceWithOwner):
-    """A Dataset resource extended with ownership information for access control."""
-
-    pass
-
-
-class ScoringFnWithOwner(ScoringFn, ResourceWithOwner):
-    """A ScoringFn resource extended with ownership information for access control."""
-
-    pass
-
-
-class BenchmarkWithOwner(Benchmark, ResourceWithOwner):
-    """A Benchmark resource extended with ownership information for access control."""
-
-    pass
-
-
 class ToolGroupWithOwner(ToolGroup, ResourceWithOwner):
     """A ToolGroup resource extended with ownership information for access control."""
 
     pass
 
 
-RoutableObject = Model | Shield | VectorStore | Dataset | ScoringFn | Benchmark | ToolGroup
+RoutableObject = Model | Shield | VectorStore | ToolGroup
 
 RoutableObjectWithProvider = Annotated[
-    ModelWithOwner
-    | ShieldWithOwner
-    | VectorStoreWithOwner
-    | DatasetWithOwner
-    | ScoringFnWithOwner
-    | BenchmarkWithOwner
-    | ToolGroupWithOwner,
+    ModelWithOwner | ShieldWithOwner | VectorStoreWithOwner | ToolGroupWithOwner,
     Field(discriminator="type"),
 ]
 
-RoutedProtocol = Inference | Safety | VectorIO | DatasetIO | Scoring | Eval | ToolRuntime
+RoutedProtocol = Inference | Safety | VectorIO | ToolRuntime
 
 
 # Example: /inference, /safety
@@ -246,6 +213,7 @@ class AuthProviderType(StrEnum):
     GITHUB_TOKEN = "github_token"
     CUSTOM = "custom"
     KUBERNETES = "kubernetes"
+    UPSTREAM_HEADER = "upstream_header"
 
 
 class OAuth2TokenAuthConfig(BaseModel):
@@ -353,8 +321,30 @@ class KubernetesAuthProviderConfig(BaseModel):
         return v
 
 
+class UpstreamHeaderAuthConfig(BaseModel):
+    """Configuration for upstream header authentication.
+
+    Used when an upstream gateway (Authorino, Istio, or any reverse proxy) handles
+    authentication and injects user identity into request headers. Llama Stack trusts
+    these headers and extracts the principal and optional attributes from them.
+    """
+
+    type: Literal[AuthProviderType.UPSTREAM_HEADER] = AuthProviderType.UPSTREAM_HEADER
+    principal_header: str = Field(
+        description="HTTP header containing the authenticated user's identity (e.g. x-auth-user-id)",
+    )
+    attributes_header: str | None = Field(
+        default=None,
+        description="HTTP header containing JSON-encoded user attributes for access control (e.g. x-auth-attributes)",
+    )
+
+
 AuthProviderConfig = Annotated[
-    OAuth2TokenAuthConfig | GitHubTokenAuthConfig | CustomAuthConfig | KubernetesAuthProviderConfig,
+    OAuth2TokenAuthConfig
+    | GitHubTokenAuthConfig
+    | CustomAuthConfig
+    | KubernetesAuthProviderConfig
+    | UpstreamHeaderAuthConfig,
     Field(discriminator="type"),
 ]
 
@@ -571,6 +561,10 @@ class ChunkRetrievalParams(BaseModel):
         default=0.5,
         description="Alpha weight for weighted search reranking (0.0-1.0)",
     )
+    default_search_mode: str = Field(
+        default="vector",
+        description="Default search mode: 'vector', 'keyword', or 'hybrid'",
+    )
 
 
 class FileBatchParams(BaseModel):
@@ -745,9 +739,6 @@ class RegisteredResources(BaseModel):
     models: list[ModelInput] = Field(default_factory=list)
     shields: list[ShieldInput] = Field(default_factory=list)
     vector_stores: list[VectorStoreInput] = Field(default_factory=list)
-    datasets: list[DatasetInput] = Field(default_factory=list)
-    scoring_fns: list[ScoringFnInput] = Field(default_factory=list)
-    benchmarks: list[BenchmarkInput] = Field(default_factory=list)
     tool_groups: list[ToolGroupInput] = Field(default_factory=list, deprecated=True)
 
     @model_validator(mode="after")
@@ -806,6 +797,11 @@ class ServerConfig(BaseModel):
     workers: int = Field(
         default=1,
         description="Number of workers to use for the server",
+    )
+    registry_refresh_interval_seconds: int = Field(
+        default=300,
+        description="Interval in seconds between registry refreshes for syncing model information from providers",
+        gt=0,
     )
 
 

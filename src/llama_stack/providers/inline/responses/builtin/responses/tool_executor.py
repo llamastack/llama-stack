@@ -136,6 +136,15 @@ class ToolExecutor:
         # Create search tasks for all vector stores
         async def search_single_store(vector_store_id):
             try:
+                # Use default_search_mode from config if available
+                search_mode = "vector"
+                if (
+                    self.vector_stores_config
+                    and hasattr(self.vector_stores_config, "chunk_retrieval_params")
+                    and hasattr(self.vector_stores_config.chunk_retrieval_params, "default_search_mode")
+                ):
+                    search_mode = self.vector_stores_config.chunk_retrieval_params.default_search_mode
+
                 search_response = await self.vector_io_api.openai_search_vector_store(
                     vector_store_id=vector_store_id,
                     request=OpenAISearchVectorStoreRequest(
@@ -144,6 +153,7 @@ class ToolExecutor:
                         max_num_results=response_file_search_tool.max_num_results,
                         ranking_options=response_file_search_tool.ranking_options,
                         rewrite_query=False,
+                        search_mode=search_mode,
                     ),
                 )
                 return search_response.data

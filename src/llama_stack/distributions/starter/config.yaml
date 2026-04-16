@@ -2,14 +2,13 @@ version: 2
 distro_name: starter
 apis:
 - batches
-- datasetio
-- eval
 - file_processors
 - files
 - inference
+- interactions
+- messages
 - responses
 - safety
-- scoring
 - tool_runtime
 - vector_io
 providers:
@@ -191,6 +190,12 @@ providers:
       excluded_categories: []
   - provider_id: code-scanner
     provider_type: inline::code-scanner
+  interactions:
+  - provider_id: builtin
+    provider_type: inline::builtin
+  messages:
+  - provider_id: builtin
+    provider_type: inline::builtin
   responses:
   - provider_id: builtin
     provider_type: inline::builtin
@@ -204,35 +209,6 @@ providers:
           backend: sql_default
           max_write_queue_size: 10000
           num_writers: 4
-  eval:
-  - provider_id: builtin
-    provider_type: inline::builtin
-    config:
-      kvstore:
-        namespace: eval
-        backend: kv_default
-  datasetio:
-  - provider_id: huggingface
-    provider_type: remote::huggingface
-    config:
-      kvstore:
-        namespace: datasetio::huggingface
-        backend: kv_default
-  - provider_id: localfs
-    provider_type: inline::localfs
-    config:
-      kvstore:
-        namespace: datasetio::localfs
-        backend: kv_default
-  scoring:
-  - provider_id: basic
-    provider_type: inline::basic
-  - provider_id: llm-as-judge
-    provider_type: inline::llm-as-judge
-  - provider_id: braintrust
-    provider_type: inline::braintrust
-    config:
-      openai_api_key: ${env.OPENAI_API_KEY:=}
   tool_runtime:
   - provider_id: brave-search
     provider_type: remote::brave-search
@@ -291,9 +267,6 @@ registered_resources:
     provider_id: ${env.CODE_SCANNER_MODEL:+code-scanner}
     provider_shield_id: ${env.CODE_SCANNER_MODEL:=}
   vector_dbs: []
-  datasets: []
-  scoring_fns: []
-  benchmarks: []
 server:
   port: 8321
 vector_stores:
@@ -346,6 +319,7 @@ vector_stores:
     default_reranker_strategy: rrf
     rrf_impact_factor: 60.0
     weighted_search_alpha: 0.5
+    default_search_mode: vector
   file_batch_params:
     max_concurrent_files_per_batch: 3
     file_batch_chunk_size: 10

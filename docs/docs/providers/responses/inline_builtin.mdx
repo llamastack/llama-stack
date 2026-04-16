@@ -63,12 +63,13 @@ Metadata: &#123;metadata&#125;
 | `vector_stores_config.file_ingestion_params` | `FileIngestionParams` | No | default_chunk_size_tokens=512 default_chunk_overlap_tokens=128 | Configuration for file processing during ingestion. |
 | `vector_stores_config.file_ingestion_params.default_chunk_size_tokens` | `int` | No | 512 | Default chunk size for RAG tool operations when not specified |
 | `vector_stores_config.file_ingestion_params.default_chunk_overlap_tokens` | `int` | No | 128 | Default overlap in tokens between chunks (original default: 512 // 4 = 128) |
-| `vector_stores_config.chunk_retrieval_params` | `ChunkRetrievalParams` | No | chunk_multiplier=5 max_tokens_in_context=4000 default_reranker_strategy='rrf' rrf_impact_factor=60.0 weighted_search_alpha=0.5 | Configuration for chunk retrieval and ranking during search. |
+| `vector_stores_config.chunk_retrieval_params` | `ChunkRetrievalParams` | No | chunk_multiplier=5 max_tokens_in_context=4000 default_reranker_strategy='rrf' rrf_impact_factor=60.0 weighted_search_alpha=0.5 default_search_mode='vector' | Configuration for chunk retrieval and ranking during search. |
 | `vector_stores_config.chunk_retrieval_params.chunk_multiplier` | `int` | No | 5 | Multiplier for OpenAI API over-retrieval (affects all providers) |
 | `vector_stores_config.chunk_retrieval_params.max_tokens_in_context` | `int` | No | 4000 | Maximum tokens allowed in RAG context before truncation |
 | `vector_stores_config.chunk_retrieval_params.default_reranker_strategy` | `str` | No | rrf | Default reranker when not specified: 'rrf', 'weighted', or 'normalized' |
 | `vector_stores_config.chunk_retrieval_params.rrf_impact_factor` | `float` | No | 60.0 | Impact factor for RRF (Reciprocal Rank Fusion) reranking |
 | `vector_stores_config.chunk_retrieval_params.weighted_search_alpha` | `float` | No | 0.5 | Alpha weight for weighted search reranking (0.0-1.0) |
+| `vector_stores_config.chunk_retrieval_params.default_search_mode` | `str` | No | vector | Default search mode: 'vector', 'keyword', or 'hybrid' |
 | `vector_stores_config.file_batch_params` | `FileBatchParams` | No | max_concurrent_files_per_batch=3 file_batch_chunk_size=10 cleanup_interval_seconds=86400 | Configuration for file batch processing. |
 | `vector_stores_config.file_batch_params.max_concurrent_files_per_batch` | `int` | No | 3 | Maximum files processed concurrently in file batches |
 | `vector_stores_config.file_batch_params.file_batch_chunk_size` | `int` | No | 10 | Number of files to process in each batch chunk |
@@ -78,6 +79,20 @@ Metadata: &#123;metadata&#125;
 | `vector_stores_config.contextual_retrieval_params.default_timeout_seconds` | `int` | No | 120 | Default timeout in seconds for each LLM contextualization call. |
 | `vector_stores_config.contextual_retrieval_params.default_max_concurrency` | `int` | No | 3 | Default maximum concurrent LLM calls for contextualization. |
 | `vector_stores_config.contextual_retrieval_params.max_document_tokens` | `int` | No | 100000 | Maximum document size in tokens. Documents exceeding this are rejected for contextual retrieval. |
+| `compaction_config` | `CompactionConfig` | No | summarization_prompt='You are performing a CONTEXT CHECKPOINT COMPACTION. Create a handoff summary for another LLM that will resume the task.\n\nInclude:\n- Current progress and key decisions made\n- Important context, constraints, or user preferences\n- What remains to be done (clear next steps)\n- Any critical data, examples, or references needed to continue\n\nBe concise, structured, and focused on helping the next LLM seamlessly continue the work.' summary_prefix='Another language model started to solve this problem and produced a summary of its thinking process. You also have access to the state of the tools that were used by that language model. Use this to build on the work that has already been done and avoid duplicating work. Here is the summary produced by the other language model, use the information in this summary to assist with your own analysis:' summarization_model=None default_compact_threshold=None tokenizer_encoding=None | Configuration for conversation compaction behavior and prompt templates |
+| `compaction_config.summarization_prompt` | `str` | No | You are performing a CONTEXT CHECKPOINT COMPACTION. Create a handoff summary for another LLM that will resume the task.
+
+Include:
+- Current progress and key decisions made
+- Important context, constraints, or user preferences
+- What remains to be done (clear next steps)
+- Any critical data, examples, or references needed to continue
+
+Be concise, structured, and focused on helping the next LLM seamlessly continue the work. | Prompt template used to instruct the model to summarize conversation history during compaction. |
+| `compaction_config.summary_prefix` | `str` | No | Another language model started to solve this problem and produced a summary of its thinking process. You also have access to the state of the tools that were used by that language model. Use this to build on the work that has already been done and avoid duplicating work. Here is the summary produced by the other language model, use the information in this summary to assist with your own analysis: | Text prepended to the compaction summary to frame it as a handoff for the next LLM. |
+| `compaction_config.summarization_model` | `str \| None` | No |  | Model to use for generating compaction summaries. If not set, uses the same model as the conversation. |
+| `compaction_config.default_compact_threshold` | `int \| None` | No |  | Default token threshold for auto-compaction via context_management. If set, conversations exceeding this token count will be automatically compacted. |
+| `compaction_config.tokenizer_encoding` | `str \| None` | No |  | Tiktoken encoding name for token counting (e.g. 'o200k_base', 'cl100k_base'). If not set, the encoding is resolved from the model name via tiktoken.encoding_for_model(). |
 
 ## Sample Configuration
 

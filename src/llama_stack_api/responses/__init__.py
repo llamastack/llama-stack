@@ -15,6 +15,8 @@ from . import fastapi_routes
 from .api import Responses
 from .models import (
     CancelResponseRequest,
+    CompactResponseRequest,
+    ContextManagement,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -30,6 +32,8 @@ from .models import (
 __all__ = [
     "Responses",
     "CancelResponseRequest",
+    "CompactResponseRequest",
+    "ContextManagement",
     "CreateResponseRequest",
     "DeleteResponseRequest",
     "ListResponseInputItemsRequest",

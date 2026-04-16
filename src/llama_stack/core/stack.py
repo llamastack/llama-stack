@@ -49,12 +49,8 @@ from llama_stack.log import get_logger
 from llama_stack_api import (
     Api,
     Batches,
-    Benchmarks,
     Connectors,
     Conversations,
-    DatasetIO,
-    Datasets,
-    Eval,
     Files,
     Inference,
     Inspect,
@@ -62,19 +58,14 @@ from llama_stack_api import (
     ModelType,
     Prompts,
     Providers,
-    RegisterBenchmarkRequest,
     RegisterModelRequest,
-    RegisterScoringFunctionRequest,
     RegisterShieldRequest,
     Responses,
     Safety,
-    Scoring,
-    ScoringFunctions,
     Shields,
     ToolGroupNotFoundError,
     VectorIO,
 )
-from llama_stack_api.datasets import RegisterDatasetRequest
 
 logger = get_logger(name=__name__, category="core")
 
@@ -85,13 +76,7 @@ class LlamaStack(
     Responses,
     Batches,
     Safety,
-    Datasets,
     VectorIO,
-    Eval,
-    Benchmarks,
-    Scoring,
-    ScoringFunctions,
-    DatasetIO,
     Models,
     Shields,
     Inspect,
@@ -110,15 +95,6 @@ class LlamaStack(
 RESOURCES = [
     ("models", Api.models, "register_model", "list_models", RegisterModelRequest),
     ("shields", Api.shields, "register_shield", "list_shields", RegisterShieldRequest),
-    ("datasets", Api.datasets, "register_dataset", "list_datasets", RegisterDatasetRequest),
-    (
-        "scoring_fns",
-        Api.scoring_functions,
-        "register_scoring_function",
-        "list_scoring_functions",
-        RegisterScoringFunctionRequest,
-    ),
-    ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks", RegisterBenchmarkRequest),
     ("vector_stores", Api.vector_stores, "register_vector_store", "list_vector_stores", None),
 ]
 
@@ -133,9 +109,6 @@ RESOURCE_ID_FIELDS = [
     "vector_store_id",
     "model_id",
     "shield_id",
-    "dataset_id",
-    "scoring_fn_id",
-    "benchmark_id",
 ]
 
 
@@ -774,13 +747,14 @@ class Stack:
         assert self.impls is not None, "Must call initialize() before starting"
 
         global REGISTRY_REFRESH_TASK
-        REGISTRY_REFRESH_TASK = asyncio.create_task(refresh_registry_task(self.impls))
+        interval = self.run_config.server.registry_refresh_interval_seconds
+        REGISTRY_REFRESH_TASK = asyncio.create_task(refresh_registry_task(self.impls, interval))
 
         def cb(task):
             import traceback
 
             if task.cancelled():
-                logger.error("Model refresh task cancelled")
+                logger.warning("Model refresh task cancelled")
             elif task.exception():
                 logger.error("Model refresh task failed", error=str(task.exception()))
                 traceback.print_exception(task.exception())
@@ -837,13 +811,13 @@ async def refresh_registry_once(impls: dict[Api, Any]):
         await routing_table.refresh()
 
 
-async def refresh_registry_task(impls: dict[Api, Any]):
+async def refresh_registry_task(impls: dict[Api, Any], interval_seconds: int = REGISTRY_REFRESH_INTERVAL_SECONDS):
     """Background task that periodically refreshes routing table registries."""
-    logger.info("starting registry refresh task")
+    logger.info("starting registry refresh task", interval_seconds=interval_seconds)
     while True:
         await refresh_registry_once(impls)
 
-        await asyncio.sleep(REGISTRY_REFRESH_INTERVAL_SECONDS)
+        await asyncio.sleep(interval_seconds)
 
 
 def get_stack_run_config_from_distro(distro: str) -> StackConfig:
