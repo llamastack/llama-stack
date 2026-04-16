@@ -46,32 +46,6 @@ dependencies = [
     # Core and connectors import from these utils packages directly.
     "llama-stack-utils-inference",
     "llama-stack-utils-common",
-    # TODO: remove these once all distributions are extracted into their own packages.
-    # Distribution config modules import provider configs directly.
-    "llama-stack-provider-files-localfs",
-    "llama-stack-provider-file-processor-pypdf",
-    "llama-stack-provider-inference-sentence-transformers",
-    "llama-stack-provider-inference-transformers",
-    "llama-stack-provider-inference-anthropic",
-    "llama-stack-provider-inference-gemini",
-    "llama-stack-provider-inference-groq",
-    "llama-stack-provider-inference-nvidia",
-    "llama-stack-provider-inference-oci",
-    "llama-stack-provider-inference-openai",
-    "llama-stack-provider-inference-together",
-    "llama-stack-provider-inference-watsonx",
-    "llama-stack-provider-safety-nvidia",
-    "llama-stack-provider-tool-runtime-brave-search",
-    "llama-stack-provider-tool-runtime-tavily-search",
-    "llama-stack-provider-vector-io-chromadb",
-    "llama-stack-provider-vector-io-elasticsearch",
-    "llama-stack-provider-vector-io-faiss",
-    "llama-stack-provider-vector-io-infinispan",
-    "llama-stack-provider-vector-io-milvus",
-    "llama-stack-provider-vector-io-pgvector",
-    "llama-stack-provider-vector-io-qdrant",
-    "llama-stack-provider-vector-io-sqlite-vec",
-    "llama-stack-provider-vector-io-weaviate",
 ]
 
 [project.optional-dependencies]

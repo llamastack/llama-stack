@@ -1,0 +1,44 @@
+composition:
+  storage: postgres
+
+finalizers:
+  conditional_providers:
+    chromadb: ENABLE_CHROMADB
+
+patch:
+  providers:
+    inference:
+    - provider_type: remote::vllm
+      provider_id: vllm-inference
+      config:
+        tls_verify: ${env.VLLM_TLS_VERIFY:=true}
+    - provider_type: inline::sentence-transformers
+      config: {}
+    vector_io:
+    - provider_type: remote::chromadb
+      config:
+        url: ${env.CHROMADB_URL:=}
+    responses:
+    - provider_type: inline::builtin
+      config:
+        persistence:
+          agent_state:
+            namespace: responses
+
+  registered_resources:
+    models:
+    - model_id: ${env.INFERENCE_MODEL}
+      provider_id: vllm-inference
+      model_type: llm
+      metadata: {}
+    - model_id: nomic-embed-text-v1.5
+      provider_id: sentence-transformers
+      model_type: embedding
+      metadata:
+        embedding_dimension: 768
+    - model_id: Qwen/Qwen3-Reranker-0.6B
+      provider_id: transformers
+      model_type: rerank
+      metadata: {}
+    shields:
+    - shield_id: meta-llama/Llama-Guard-3-8B

@@ -8,13 +8,21 @@ apis:
 - tool_runtime
 - vector_io
 providers:
-  inference:
-  - provider_id: watsonx
-    provider_type: remote::watsonx
+  tool_runtime:
+  - provider_id: file-search
+    provider_type: inline::file-search
+  - provider_id: brave-search
+    provider_type: remote::brave-search
     config:
-      base_url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
-      api_key: ${env.WATSONX_API_KEY:=}
-      project_id: ${env.WATSONX_PROJECT_ID:=}
+      api_key: ${env.BRAVE_SEARCH_API_KEY:=}
+      max_results: 3
+  - provider_id: model-context-protocol
+    provider_type: remote::model-context-protocol
+  - provider_id: tavily-search
+    provider_type: remote::tavily-search
+    config:
+      api_key: ${env.TAVILY_SEARCH_API_KEY:=}
+      max_results: 3
   vector_io:
   - provider_id: faiss
     provider_type: inline::faiss
@@ -27,6 +35,21 @@ providers:
     provider_type: inline::llama-guard
     config:
       excluded_categories: []
+  inference:
+  - provider_id: watsonx
+    provider_type: remote::watsonx
+    config:
+      base_url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
+      api_key: ${env.WATSONX_API_KEY:=}
+      project_id: ${env.WATSONX_PROJECT_ID:=}
+  files:
+  - provider_id: builtin-files
+    provider_type: inline::localfs
+    config:
+      storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/watsonx/files}
+      metadata_store:
+        table_name: files_metadata
+        backend: sql_default
   responses:
   - provider_id: builtin
     provider_type: inline::builtin
@@ -40,29 +63,6 @@ providers:
           backend: sql_default
           max_write_queue_size: 10000
           num_writers: 4
-  tool_runtime:
-  - provider_id: brave-search
-    provider_type: remote::brave-search
-    config:
-      api_key: ${env.BRAVE_SEARCH_API_KEY:=}
-      max_results: 3
-  - provider_id: tavily-search
-    provider_type: remote::tavily-search
-    config:
-      api_key: ${env.TAVILY_SEARCH_API_KEY:=}
-      max_results: 3
-  - provider_id: file-search
-    provider_type: inline::file-search
-  - provider_id: model-context-protocol
-    provider_type: remote::model-context-protocol
-  files:
-  - provider_id: builtin-files
-    provider_type: inline::localfs
-    config:
-      storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/watsonx/files}
-      metadata_store:
-        table_name: files_metadata
-        backend: sql_default
 storage:
   backends:
     kv_default:
@@ -95,3 +95,57 @@ registered_resources:
   vector_dbs: []
 server:
   port: 8321
+vector_stores:
+  file_search_params:
+    header_template: 'file_search tool found {num_chunks} chunks:
+
+      BEGIN of file_search tool results.
+
+      '
+    footer_template: 'END of file_search tool results.
+
+      '
+  context_prompt_params:
+    chunk_annotation_template: 'Result {index}
+
+      Content: {chunk.content}
+
+      Metadata: {metadata}
+
+      '
+    context_template: 'The above results were retrieved to help answer the user''s
+      query: "{query}". Use them as supporting information only in answering this
+      query. {annotation_instruction}
+
+      '
+  annotation_prompt_params:
+    enable_annotations: true
+    annotation_instruction_template: Cite sources immediately at the end of sentences
+      before punctuation, using `<|file-id|>` format like 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'.
+      Do not add extra punctuation. Use only the file IDs provided, do not invent
+      new ones.
+    chunk_annotation_template: '[{index}] {metadata_text} cite as <|{file_id}|>
+
+      {chunk_text}
+
+      '
+  file_ingestion_params:
+    default_chunk_size_tokens: 512
+    default_chunk_overlap_tokens: 128
+  chunk_retrieval_params:
+    chunk_multiplier: 5
+    max_tokens_in_context: 4000
+    default_reranker_strategy: rrf
+    rrf_impact_factor: 60.0
+    weighted_search_alpha: 0.5
+    default_search_mode: vector
+  file_batch_params:
+    max_concurrent_files_per_batch: 3
+    file_batch_chunk_size: 10
+    cleanup_interval_seconds: 86400
+  contextual_retrieval_params:
+    default_timeout_seconds: 120
+    default_max_concurrency: 3
+    max_document_tokens: 100000
+safety: {}
+connectors: []

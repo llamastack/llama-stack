@@ -8,11 +8,12 @@ import argparse
 import copy
 import importlib.metadata
 import sys
+from enum import Enum
 from pathlib import Path
 from typing import Any, Literal
 
 import yaml
-from llama_stack_api import ProviderSpec, RemoteProviderSpec
+from llama_stack_api import Api, ProviderSpec, RemoteProviderSpec
 from pydantic import BaseModel
 
 from llama_stack.core.datatypes import (
@@ -57,12 +58,30 @@ class FinalizerDirectives(BaseModel):
     conditional_providers: dict[str, str] | None = None
 
 
+class MergeStrategy(Enum):
+    """Strategy for merging provider lists during overlay application."""
+
+    strategic_merge = "strategic_merge"
+    replace = "replace"
+
+
+class MergeDirectives(BaseModel):
+    """Per-API merge strategy overrides for provider lists.
+
+    By default, provider lists are merged using ``strategic_merge`` which
+    matches entries by ``provider_type`` and deep-merges them.  Set an API
+    to ``replace`` to completely replace the base provider list instead.
+    """
+
+    providers: dict[Api, MergeStrategy] | None = None
+
+
 class ConfigOverlay(BaseModel):
     """Schema for distribution overlay YAML files.
 
     Execution order per overlay in the chain:
         1. composition — pre-merge setup (e.g. swap storage to postgres)
-        2. patch — strategic merge onto the config
+        2. patch — strategic merge onto the config (respecting merge_strategy)
         3. finalizers — post-merge transforms (e.g. conditional provider ID wrapping)
     """
 
@@ -70,6 +89,7 @@ class ConfigOverlay(BaseModel):
 
     base: str | None = None
     composition: CompositionDirectives | None = None
+    merge_strategy: MergeDirectives | None = None
     patch: dict[str, Any] | None = None
     finalizers: FinalizerDirectives | None = None
 
@@ -141,13 +161,26 @@ def _strategic_merge_provider_lists(
     return merged
 
 
-def strategic_merge(base: dict[str, Any], patch: dict[str, Any]) -> dict[str, Any]:
+def strategic_merge(
+    base: dict[str, Any],
+    patch: dict[str, Any],
+    merge_directives: MergeDirectives | None = None,
+) -> dict[str, Any]:
     """Deep-merge with strategic list merging for provider lists.
 
     Provider lists under the ``providers`` key are merged by matching
     on ``provider_type`` (like Kubernetes strategic merge patch).
     All other keys use standard deep_merge.
+
+    Per-API merge strategy can be overridden via ``merge_directives``.
+    APIs set to ``replace`` will have their provider list replaced
+    entirely by the patch list instead of being strategically merged.
     """
+    provider_strategies: dict[str, MergeStrategy] = {}
+    if merge_directives and merge_directives.providers:
+        for api, strategy in merge_directives.providers.items():
+            provider_strategies[api.value] = strategy
+
     base_providers = base.get("providers", {})
     patch_providers = patch.pop("providers", None)
 
@@ -156,8 +189,12 @@ def strategic_merge(base: dict[str, Any], patch: dict[str, Any]) -> dict[str, An
     if patch_providers is not None:
         merged_providers = copy.deepcopy(base_providers)
         for api_str, patch_list in patch_providers.items():
-            base_list = base_providers.get(api_str, [])
-            merged_providers[api_str] = _strategic_merge_provider_lists(base_list, patch_list)
+            strategy = provider_strategies.get(api_str, MergeStrategy.strategic_merge)
+            if strategy == MergeStrategy.replace:
+                merged_providers[api_str] = copy.deepcopy(patch_list)
+            else:
+                base_list = base_providers.get(api_str, [])
+                merged_providers[api_str] = _strategic_merge_provider_lists(base_list, patch_list)
         merged["providers"] = merged_providers
 
     return merged
@@ -519,7 +556,7 @@ def generate_config(overlay_path: str | None = None, distribution: str | None = 
             if overlay.composition:
                 config = _apply_composition(config, overlay.composition)
             if overlay.patch:
-                config = strategic_merge(config, overlay.patch)
+                config = strategic_merge(config, overlay.patch, overlay.merge_strategy)
             if overlay.finalizers:
                 config = _apply_finalizers(config, overlay.finalizers)
 

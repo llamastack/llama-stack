@@ -12,7 +12,6 @@ from termcolor import cprint
 
 from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.distribution import get_provider_registry
-from llama_stack.distributions.template import DistributionTemplate
 from llama_stack.log import get_logger
 
 log = get_logger(name=__name__, category="core")
@@ -41,9 +40,6 @@ def get_provider_dependencies(
     config: StackConfig,
 ) -> tuple[list[str], list[str], list[str]]:
     """Get normal and special dependencies from provider configuration."""
-    if isinstance(config, DistributionTemplate):
-        config = config.build_config()
-
     deps = []
     external_provider_deps = []
     registry = get_provider_registry(config=config, listing=True)

@@ -7,30 +7,6 @@ apis:
 - tool_runtime
 - vector_io
 providers:
-  inference:
-  - provider_id: openai
-    provider_type: remote::openai
-    config:
-      api_key: ${env.OPENAI_API_KEY:=}
-      base_url: ${env.OPENAI_BASE_URL:=https://api.openai.com/v1}
-  - provider_id: anthropic
-    provider_type: remote::anthropic
-    config:
-      api_key: ${env.ANTHROPIC_API_KEY:=}
-  - provider_id: gemini
-    provider_type: remote::gemini
-    config:
-      api_key: ${env.GEMINI_API_KEY:=}
-  - provider_id: groq
-    provider_type: remote::groq
-    config:
-      base_url: https://api.groq.com/openai/v1
-      api_key: ${env.GROQ_API_KEY:=}
-  - provider_id: together
-    provider_type: remote::together
-    config:
-      base_url: https://api.together.xyz/v1
-      api_key: ${env.TOGETHER_API_KEY:=}
   vector_io:
   - provider_id: sqlite-vec
     provider_type: inline::sqlite-vec
@@ -63,6 +39,45 @@ providers:
       persistence:
         namespace: vector_io::pgvector
         backend: kv_default
+  inference:
+  - provider_id: anthropic
+    provider_type: remote::anthropic
+    config:
+      api_key: ${env.ANTHROPIC_API_KEY:=}
+  - provider_id: gemini
+    provider_type: remote::gemini
+    config:
+      api_key: ${env.GEMINI_API_KEY:=}
+  - provider_id: groq
+    provider_type: remote::groq
+    config:
+      base_url: https://api.groq.com/openai/v1
+      api_key: ${env.GROQ_API_KEY:=}
+  - provider_id: openai
+    provider_type: remote::openai
+    config:
+      api_key: ${env.OPENAI_API_KEY:=}
+      base_url: ${env.OPENAI_BASE_URL:=https://api.openai.com/v1}
+  - provider_id: together
+    provider_type: remote::together
+    config:
+      base_url: https://api.together.xyz/v1
+      api_key: ${env.TOGETHER_API_KEY:=}
+  tool_runtime:
+  - provider_id: file-search
+    provider_type: inline::file-search
+  - provider_id: brave-search
+    provider_type: remote::brave-search
+    config:
+      api_key: ${env.BRAVE_SEARCH_API_KEY:=}
+      max_results: 3
+  - provider_id: model-context-protocol
+    provider_type: remote::model-context-protocol
+  - provider_id: tavily-search
+    provider_type: remote::tavily-search
+    config:
+      api_key: ${env.TAVILY_SEARCH_API_KEY:=}
+      max_results: 3
   safety:
   - provider_id: llama-guard
     provider_type: inline::llama-guard
@@ -81,21 +96,6 @@ providers:
           backend: sql_default
           max_write_queue_size: 10000
           num_writers: 4
-  tool_runtime:
-  - provider_id: brave-search
-    provider_type: remote::brave-search
-    config:
-      api_key: ${env.BRAVE_SEARCH_API_KEY:=}
-      max_results: 3
-  - provider_id: tavily-search
-    provider_type: remote::tavily-search
-    config:
-      api_key: ${env.TAVILY_SEARCH_API_KEY:=}
-      max_results: 3
-  - provider_id: file-search
-    provider_type: inline::file-search
-  - provider_id: model-context-protocol
-    provider_type: remote::model-context-protocol
 storage:
   backends:
     kv_default:
@@ -124,33 +124,87 @@ storage:
       backend: kv_default
 registered_resources:
   models:
-  - metadata: {}
-    model_id: gpt-4o
+  - model_id: gpt-4o
     provider_id: openai
     provider_model_id: gpt-4o
     model_type: llm
-  - metadata: {}
-    model_id: claude-3-5-sonnet-latest
+    metadata: {}
+  - model_id: claude-3-5-sonnet-latest
     provider_id: anthropic
     provider_model_id: claude-3-5-sonnet-latest
     model_type: llm
-  - metadata: {}
-    model_id: gemini/gemini-1.5-flash
+    metadata: {}
+  - model_id: gemini/gemini-1.5-flash
     provider_id: gemini
     provider_model_id: gemini/gemini-1.5-flash
     model_type: llm
-  - metadata: {}
-    model_id: meta-llama/Llama-3.3-70B-Instruct
+    metadata: {}
+  - model_id: meta-llama/Llama-3.3-70B-Instruct
     provider_id: groq
     provider_model_id: groq/llama-3.3-70b-versatile
     model_type: llm
-  - metadata: {}
-    model_id: meta-llama/Llama-3.1-405B-Instruct
+    metadata: {}
+  - model_id: meta-llama/Llama-3.1-405B-Instruct
     provider_id: together
     provider_model_id: meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo
     model_type: llm
+    metadata: {}
   shields:
   - shield_id: meta-llama/Llama-Guard-3-8B
   vector_dbs: []
 server:
   port: 8321
+vector_stores:
+  file_search_params:
+    header_template: 'file_search tool found {num_chunks} chunks:
+
+      BEGIN of file_search tool results.
+
+      '
+    footer_template: 'END of file_search tool results.
+
+      '
+  context_prompt_params:
+    chunk_annotation_template: 'Result {index}
+
+      Content: {chunk.content}
+
+      Metadata: {metadata}
+
+      '
+    context_template: 'The above results were retrieved to help answer the user''s
+      query: "{query}". Use them as supporting information only in answering this
+      query. {annotation_instruction}
+
+      '
+  annotation_prompt_params:
+    enable_annotations: true
+    annotation_instruction_template: Cite sources immediately at the end of sentences
+      before punctuation, using `<|file-id|>` format like 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'.
+      Do not add extra punctuation. Use only the file IDs provided, do not invent
+      new ones.
+    chunk_annotation_template: '[{index}] {metadata_text} cite as <|{file_id}|>
+
+      {chunk_text}
+
+      '
+  file_ingestion_params:
+    default_chunk_size_tokens: 512
+    default_chunk_overlap_tokens: 128
+  chunk_retrieval_params:
+    chunk_multiplier: 5
+    max_tokens_in_context: 4000
+    default_reranker_strategy: rrf
+    rrf_impact_factor: 60.0
+    weighted_search_alpha: 0.5
+    default_search_mode: vector
+  file_batch_params:
+    max_concurrent_files_per_batch: 3
+    file_batch_chunk_size: 10
+    cleanup_interval_seconds: 86400
+  contextual_retrieval_params:
+    default_timeout_seconds: 120
+    default_max_concurrency: 3
+    max_document_tokens: 100000
+safety: {}
+connectors: []

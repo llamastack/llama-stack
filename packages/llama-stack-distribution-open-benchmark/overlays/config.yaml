@@ -1,0 +1,46 @@
+finalizers:
+  conditional_providers:
+    chromadb: ENABLE_CHROMADB
+    pgvector: ENABLE_PGVECTOR
+
+patch:
+  providers:
+    vector_io:
+    - provider_type: remote::chromadb
+      config:
+        url: ${env.CHROMADB_URL:=}
+    - provider_type: remote::pgvector
+      config:
+        db: ${env.PGVECTOR_DB:=}
+        user: ${env.PGVECTOR_USER:=}
+        password: ${env.PGVECTOR_PASSWORD:=}
+
+  registered_resources:
+    models:
+    - model_id: gpt-4o
+      provider_id: openai
+      provider_model_id: gpt-4o
+      model_type: llm
+      metadata: {}
+    - model_id: claude-3-5-sonnet-latest
+      provider_id: anthropic
+      provider_model_id: claude-3-5-sonnet-latest
+      model_type: llm
+      metadata: {}
+    - model_id: gemini/gemini-1.5-flash
+      provider_id: gemini
+      provider_model_id: gemini/gemini-1.5-flash
+      model_type: llm
+      metadata: {}
+    - model_id: meta-llama/Llama-3.3-70B-Instruct
+      provider_id: groq
+      provider_model_id: groq/llama-3.3-70b-versatile
+      model_type: llm
+      metadata: {}
+    - model_id: meta-llama/Llama-3.1-405B-Instruct
+      provider_id: together
+      provider_model_id: meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo
+      model_type: llm
+      metadata: {}
+    shields:
+    - shield_id: meta-llama/Llama-Guard-3-8B
