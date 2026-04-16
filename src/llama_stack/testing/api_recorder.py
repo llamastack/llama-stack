@@ -962,11 +962,12 @@ def _patched_httpx_async_stream(original_stream, self, method, url, **kwargs):
     class _RecordingStreamResponse:
         """Wraps a real httpx streaming response to capture SSE lines for recording."""
 
-        def __init__(self, response, url_str, json_payload, request_hash):
+        def __init__(self, response, url_str, json_payload, request_hash, test_id):
             self._response = response
             self._url = url_str
             self._payload = json_payload
             self._hash = request_hash
+            self._test_id = test_id
             self._recorded_lines: list[str] = []
             self.status_code = response.status_code
             self.headers = response.headers
@@ -979,9 +980,12 @@ def _patched_httpx_async_stream(original_stream, self, method, url, **kwargs):
                 self._recorded_lines.append(line)
                 yield line
 
-            # After the stream is exhausted, store the recording
+        def store(self):
+            """Store the recording. Called from __aexit__ so it runs even when the generator is cancelled."""
+            if not self._recorded_lines or not _current_storage:
+                return
             request_data = {
-                "test_id": get_test_context(),
+                "test_id": self._test_id,
                 "url": self._url,
                 "method": "POST",
                 "payload": self._payload,
@@ -990,8 +994,7 @@ def _patched_httpx_async_stream(original_stream, self, method, url, **kwargs):
                 "body": self._recorded_lines,
                 "is_streaming": True,
             }
-            if _current_storage:
-                _current_storage.store_recording(self._hash, request_data, response_data)
+            _current_storage.store_recording(self._hash, request_data, response_data)
 
     if _current_mode in (APIRecordingMode.REPLAY, APIRecordingMode.RECORD_IF_MISSING):
         recording = _current_storage.find_recording(request_hash)
@@ -1005,17 +1008,31 @@ def _patched_httpx_async_stream(original_stream, self, method, url, **kwargs):
             )
 
     if _current_mode in (APIRecordingMode.RECORD, APIRecordingMode.RECORD_IF_MISSING):
-        # Capture the httpx client instance before defining the inner class
+        # Capture test context now — StreamingResponse runs in a different
+        # task where the request's test context ContextVar has been reset.
+        captured_test_id = get_test_context()
         httpx_client = self
 
         class _RecordCtx:
             async def __aenter__(self):
                 self._cm = original_stream(httpx_client, method, url, **kwargs)
                 resp = await self._cm.__aenter__()
-                self._wrapper = _RecordingStreamResponse(resp, url_str, json_payload, request_hash)
+                self._wrapper = _RecordingStreamResponse(resp, url_str, json_payload, request_hash, captured_test_id)
                 return self._wrapper
 
             async def __aexit__(self, *args):
+                # Store before closing — runs even when the consumer
+                # (StreamingResponse) cancels the generator early.
+                # Restore the captured test context so ResponseStorage
+                # resolves the correct recordings directory.
+                from llama_stack.core.testing_context import reset_test_context, set_test_context
+
+                token = set_test_context(captured_test_id) if captured_test_id else None
+                try:
+                    self._wrapper.store()
+                finally:
+                    if token:
+                        reset_test_context(token)
                 return await self._cm.__aexit__(*args)
 
         return _RecordCtx()

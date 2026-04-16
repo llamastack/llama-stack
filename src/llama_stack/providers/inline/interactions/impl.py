@@ -72,99 +72,30 @@ class _RawSSEStream(AsyncIterator[str]):
     Marked with ``_raw_sse = True`` so the FastAPI route can stream it
     directly without re-serialisation.
 
-    Handles its own recording/replay instead of relying on the httpx
-    interceptor, because StreamingResponse runs in a different async task
-    where the request's test context ContextVar has been reset.
     """
 
     _raw_sse = True
 
     def __init__(self, url: str, body: dict[str, Any], client_kwargs: dict[str, Any]):
-        from llama_stack.core.testing_context import get_test_context
-        from llama_stack.testing.api_recorder import (
-            _original_methods,
-            get_api_recording_mode,
-            normalize_http_request,
-        )
-
         self._url = url
         self._body = body
         self._client_kwargs = client_kwargs
         self._iterator: AsyncIterator[str] | None = None
-        self._test_context = get_test_context()
-        self._recording_mode = get_api_recording_mode()
-        self._request_hash = normalize_http_request(url, "POST", body)
-        # Use the original (unpatched) httpx stream to avoid double-interception
-        # by the recording system's httpx interceptor
-        self._original_stream = _original_methods.get("httpx_async_stream")
 
     def __aiter__(self) -> _RawSSEStream:
         return self
 
     async def __anext__(self) -> str:
         if self._iterator is None:
-            self._iterator = self._resolve_stream()
+            self._iterator = self._stream()
         return await self._iterator.__anext__()
 
-    async def _resolve_stream(self) -> AsyncIterator[str]:
-        from llama_stack.core.testing_context import reset_test_context, set_test_context
-        from llama_stack.testing.api_recorder import APIRecordingMode
-
-        mode = self._recording_mode
-        storage = self._get_storage()
-
-        # Restore the test context captured at construction time so that
-        # ResponseStorage resolves the correct recordings directory.
-        token = set_test_context(self._test_context) if self._test_context else None
-        recorded_lines: list[str] = []
-        should_record = False
-        try:
-            if mode in (APIRecordingMode.REPLAY, APIRecordingMode.RECORD_IF_MISSING) and storage:
-                recording = storage.find_recording(self._request_hash)
-                if recording:
-                    for line in recording["response"]["body"]:
-                        yield line + "\n" if not line.endswith("\n") else line
-                    return
-                if mode == APIRecordingMode.REPLAY:
-                    raise RuntimeError(
-                        f"Recording not found for streaming passthrough POST {self._url}\n"
-                        f"Run with --inference-mode record-if-missing to generate."
-                    )
-
-            should_record = (
-                mode in (APIRecordingMode.RECORD, APIRecordingMode.RECORD_IF_MISSING) and storage is not None
-            )
-            async with httpx.AsyncClient(**self._client_kwargs) as client:
-                # Use the original (unpatched) stream to bypass the httpx
-                # recording interceptor — this class handles recording itself
-                stream_fn = self._original_stream or type(client).stream
-                async with stream_fn(client, "POST", self._url, json=self._body) as resp:
-                    resp.raise_for_status()
-                    async for line in resp.aiter_lines():
-                        recorded_lines.append(line)
-                        yield line + "\n"
-        finally:
-            # Store recording in finally so it is saved even when the
-            # generator is closed early by StreamingResponse
-            if should_record and recorded_lines and storage:
-                request_data = {
-                    "test_id": self._test_context,
-                    "url": self._url,
-                    "method": "POST",
-                    "payload": self._body,
-                }
-                response_data = {
-                    "body": recorded_lines,
-                    "is_streaming": True,
-                }
-                storage.store_recording(self._request_hash, request_data, response_data)
-            if token:
-                reset_test_context(token)
-
-    def _get_storage(self):
-        from llama_stack.testing.api_recorder import _current_storage
-
-        return _current_storage
+    async def _stream(self) -> AsyncIterator[str]:
+        async with httpx.AsyncClient(**self._client_kwargs) as client:
+            async with client.stream("POST", self._url, json=self._body) as resp:
+                resp.raise_for_status()
+                async for line in resp.aiter_lines():
+                    yield line + "\n"
 
 
 class _PassthroughInfo(TypedDict):
