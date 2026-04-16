@@ -184,7 +184,6 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]) -> 
                 if not obj.provider_id or obj.provider_id == "__disabled__":
                     logger.debug("Skipping registration for disabled provider", resource=rsrc.capitalize())
                     continue
-
                 # Handle provider_id="all" - register unprefixed alias using first active provider
                 if obj.provider_id == "all":
                     if rsrc != "models":
@@ -193,7 +192,6 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]) -> 
                             resource=rsrc.capitalize(),
                         )
                         continue
-
                     # Get all active inference providers from the routing table
                     routing_table = impls[api]
                     if not hasattr(routing_table, "impls_by_provider_id"):
@@ -202,7 +200,6 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]) -> 
                             resource=rsrc.capitalize(),
                         )
                         continue
-
                     provider_ids = list(routing_table.impls_by_provider_id.keys())
                     if not provider_ids:
                         logger.warning(
@@ -210,7 +207,6 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]) -> 
                             resource=rsrc.capitalize(),
                         )
                         continue
-
                     # Use first active provider for the unprefixed alias
                     first_provider = provider_ids[0]
                     logger.info(
