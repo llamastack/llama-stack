@@ -15,7 +15,7 @@ import contextvars
 import json
 import logging  # allow-direct-logging
 from collections.abc import AsyncIterator
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -147,9 +147,13 @@ def create_router(impl: Interactions) -> APIRouter:
             logger.exception("Failed to create interaction")
             return _google_error_response(500, "Internal server error")
 
+        if getattr(result, "_raw_sse", False):
+            # Raw SSE passthrough — forward bytes directly, no context wrapping
+            # needed since the stream doesn't access request contextvars
+            return StreamingResponse(cast(AsyncIterator[str], result), media_type="text/event-stream")
         if isinstance(result, AsyncIterator):
             return StreamingResponse(
-                _preserve_context_for_sse(_google_sse_generator(result)),
+                _preserve_context_for_sse(_google_sse_generator(cast(AsyncIterator[Any], result))),
                 media_type="text/event-stream",
             )
 
