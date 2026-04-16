@@ -298,18 +298,18 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
     claude_model_aliases = [
         ModelInput(
             model_id="claude-haiku-4-5-20251001",
-            provider_id="{$:ALL:$}",
-            provider_model_id="{$:AUTO:$}",
+            provider_id="all",
+            provider_model_id="auto",
         ),
         ModelInput(
             model_id="claude-sonnet-4-5-20250514",
-            provider_id="{$:ALL:$}",
-            provider_model_id="{$:AUTO:$}",
+            provider_id="all",
+            provider_model_id="auto",
         ),
         ModelInput(
             model_id="claude-opus-4-6-20260314",
-            provider_id="{$:ALL:$}",
-            provider_model_id="{$:AUTO:$}",
+            provider_id="all",
+            provider_model_id="auto",
         ),
     ]
 

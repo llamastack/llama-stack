@@ -39,7 +39,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
     listed_providers: set[str] = set()
 
     async def _resolve_auto_model(self, provider_id: str, model_type: ModelType) -> str:
-        """Resolve {$:AUTO:$} to an actual model from the provider.
+        """Resolve provider_model_id="auto" to an actual model from the provider.
 
         Queries the provider's list_models() to get truly available models,
         filters by model_type, and returns the first matching model.
@@ -299,8 +299,8 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         if "embedding_dimension" not in metadata and model_type == ModelType.embedding:
             raise ValueError("Embedding model must have an embedding dimension in its metadata")
 
-        # Resolve {$:AUTO:$} to an actual model from the provider
-        if provider_model_id == "{$:AUTO:$}":
+        # Resolve provider_model_id="auto" to an actual model from the provider
+        if provider_model_id == "auto":
             provider_model_id = await self._resolve_auto_model(provider_id, model_type)
             logger.info(
                 "Resolved auto model alias",
@@ -309,7 +309,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                 resolved_provider_model_id=provider_model_id,
             )
 
-        # Check if this is an unprefixed alias (from {$:ALL:$} expansion)
+        # Check if this is an unprefixed alias (from provider_id="all" expansion)
         # If so, use model_id directly as identifier without provider prefix
         is_unprefixed = metadata and metadata.get("_unprefixed_alias", False)
         if is_unprefixed:

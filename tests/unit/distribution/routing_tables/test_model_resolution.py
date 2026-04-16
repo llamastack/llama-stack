@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-"""Unit tests for {$:AUTO:$} model resolution in ModelsRoutingTable."""
+"""Unit tests for provider_model_id="auto" model resolution in ModelsRoutingTable."""
 
 from unittest.mock import AsyncMock, MagicMock
 
@@ -34,7 +34,7 @@ def routing_table(mock_provider):
 
 class TestAutoModelResolution:
     async def test_resolves_to_first_matching_model(self, routing_table, mock_provider):
-        """Resolves {$:AUTO:$} to the first model matching the type."""
+        """Resolves provider_model_id="auto" to the first model matching the type."""
         # Setup mock provider to return multiple models
         mock_models = [
             Model(
@@ -116,7 +116,7 @@ class TestAutoModelResolution:
 
 class TestRegisterModelWithAuto:
     async def test_register_model_resolves_auto(self, routing_table, mock_provider):
-        """register_model resolves {$:AUTO:$} to an actual model."""
+        """register_model resolves provider_model_id="auto" to an actual model."""
         mock_models = [
             Model(
                 identifier="test-provider/actual-model",
@@ -139,7 +139,7 @@ class TestRegisterModelWithAuto:
 
         await routing_table.register_model(
             model_id="claude-haiku",
-            provider_model_id="{$:AUTO:$}",
+            provider_model_id="auto",
             provider_id="test-provider",
             model_type=ModelType.llm,
         )

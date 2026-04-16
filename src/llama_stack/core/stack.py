@@ -185,11 +185,11 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]) -> 
                     logger.debug("Skipping registration for disabled provider", resource=rsrc.capitalize())
                     continue
 
-                # Handle {$:ALL:$} - register unprefixed alias using first active provider
-                if obj.provider_id == "{$:ALL:$}":
+                # Handle provider_id="all" - register unprefixed alias using first active provider
+                if obj.provider_id == "all":
                     if rsrc != "models":
                         logger.warning(
-                            "provider_id={$:ALL:$} is only supported for models, skipping",
+                            "provider_id=all is only supported for models, skipping",
                             resource=rsrc.capitalize(),
                         )
                         continue
@@ -198,7 +198,7 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]) -> 
                     routing_table = impls[api]
                     if not hasattr(routing_table, "impls_by_provider_id"):
                         logger.warning(
-                            "Cannot resolve {$:ALL:$} provider_id - routing table has no providers",
+                            "Cannot resolve provider_id=all - routing table has no providers",
                             resource=rsrc.capitalize(),
                         )
                         continue
@@ -206,7 +206,7 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]) -> 
                     provider_ids = list(routing_table.impls_by_provider_id.keys())
                     if not provider_ids:
                         logger.warning(
-                            "Cannot resolve {$:ALL:$} provider_id - no active providers found",
+                            "Cannot resolve provider_id=all - no active providers found",
                             resource=rsrc.capitalize(),
                         )
                         continue
