@@ -52,10 +52,18 @@ class StackConfigGenerate(Subcommand):
             help="Output file path. If not specified, writes to stdout.",
         )
         self.parser.add_argument(
-            "--patch",
+            "--overlay",
             type=str,
             default=None,
-            help="Path to a patch YAML file to apply on top of the generated base config.",
+            help="Path to an overlay YAML file to apply on top of the generated base config.",
+        )
+        self.parser.add_argument(
+            "--distribution",
+            type=str,
+            default=None,
+            help="Distribution package name to filter providers by (e.g. llama-stack-distribution-starter). "
+            "Only providers declared as direct dependencies of this distribution will be included. "
+            "Useful in development environments where all providers are installed.",
         )
 
     def _run_config_generate_command(self, args: argparse.Namespace) -> None:

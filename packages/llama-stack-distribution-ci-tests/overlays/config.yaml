@@ -1,0 +1,54 @@
+base: ../../llama-stack-distribution-starter/overlays/config.yaml
+
+finalizers:
+  conditional_providers:
+    watsonx: WATSONX_API_KEY
+
+patch:
+  distro_name: ci-tests
+
+  providers:
+    inference:
+    - provider_type: inline::sentence-transformers
+      config:
+        trust_remote_code: true
+    - provider_type: remote::watsonx
+      provider_id: watsonx
+      config:
+        api_key: ${env.WATSONX_API_KEY:=}
+        base_url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
+        project_id: ${env.WATSONX_PROJECT_ID:=}
+
+  connectors:
+  - connector_id: test-mcp-connector
+    connector_type: mcp
+    url: http://localhost:5199/sse
+
+  registered_resources:
+    models:
+    - model_id: azure/gpt-4o
+      model_type: llm
+      provider_id: ${env.AZURE_API_KEY:+azure}
+      provider_model_id: gpt-4o
+      metadata: {}
+    - model_id: watsonx/meta-llama/llama-3-3-70b-instruct
+      model_type: llm
+      provider_id: ${env.WATSONX_API_KEY:+watsonx}
+      provider_model_id: meta-llama/llama-3-3-70b-instruct
+      metadata: {}
+    - model_id: bedrock/openai.gpt-oss-20b
+      model_type: llm
+      provider_id: ${env.AWS_BEARER_TOKEN_BEDROCK:+bedrock}
+      provider_model_id: openai.gpt-oss-20b
+      metadata: {}
+
+  server:
+    auth:
+      provider_config:
+        type: ${env.AUTH_PROVIDER:+oauth2_token}
+        audience: ${env.AUTH_AUDIENCE:=llama-stack}
+        issuer: ${env.AUTH_ISSUER:=}
+        jwks:
+          uri: ${env.AUTH_JWKS_URI:=}
+          key_recheck_period: ${env.AUTH_JWKS_RECHECK_PERIOD:=3600}
+        verify_tls: ${env.AUTH_VERIFY_TLS:=true}

@@ -8,17 +8,17 @@
 # Generate distribution configs in an isolated environment.
 #
 # Usage:
-#   ./scripts/distro_generate_config.sh <distro_dir> [--patch <patch>] [--output <output>]
+#   ./scripts/distro_generate_config.sh <distro_dir> [--overlay <overlay>] [--output <output>]
 #
 # Examples:
 #   ./scripts/distro_generate_config.sh packages/llama-stack-distribution-demo \
-#       --patch packages/llama-stack-distribution-demo/patches/config.yaml \
+#       --overlay packages/llama-stack-distribution-demo/patches/config.yaml \
 #       --output packages/llama-stack-distribution-demo/src/llama_stack_distribution_demo/dist/config.yaml
 
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
-    echo "Usage: $0 <distro_dir> [--patch <patch>] [--output <output>]" >&2
+    echo "Usage: $0 <distro_dir> [--overlay <overlay>] [--output <output>]" >&2
     exit 1
 fi
 

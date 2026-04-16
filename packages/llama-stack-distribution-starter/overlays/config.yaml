@@ -1,0 +1,52 @@
+finalizers:
+  conditional_providers:
+    cerebras: CEREBRAS_API_KEY
+    vllm: VLLM_URL
+    azure: AZURE_API_KEY
+    nvidia: NVIDIA_API_KEY
+    ollama: OLLAMA_URL
+    vertexai: VERTEX_AI_PROJECT
+    milvus: MILVUS_URL
+    chromadb: CHROMADB_URL
+    pgvector: PGVECTOR_DB
+    qdrant: QDRANT_URL
+    weaviate: WEAVIATE_CLUSTER_URL
+    elasticsearch: ELASTICSEARCH_URL
+    infinispan: INFINISPAN_URL
+
+patch:
+  # Strategic merge: only override specific providers by provider_type
+  providers:
+    vector_io:
+    - provider_type: remote::chromadb
+      config:
+        url: ${env.CHROMADB_URL:=}
+    - provider_type: remote::pgvector
+      config:
+        db: ${env.PGVECTOR_DB:=}
+        user: ${env.PGVECTOR_USER:=}
+        password: ${env.PGVECTOR_PASSWORD:=}
+    files:
+    - provider_type: inline::localfs
+      provider_id: builtin-files
+
+  registered_resources:
+    shields:
+    - shield_id: llama-guard
+      provider_id: ${env.SAFETY_MODEL:+llama-guard}
+      provider_shield_id: ${env.SAFETY_MODEL:=}
+    - shield_id: code-scanner
+      provider_id: ${env.CODE_SCANNER_MODEL:+code-scanner}
+      provider_shield_id: ${env.CODE_SCANNER_MODEL:=}
+
+  vector_stores:
+    default_provider_id: faiss
+    default_embedding_model:
+      provider_id: sentence-transformers
+      model_id: nomic-ai/nomic-embed-text-v1.5
+    default_reranker_model:
+      provider_id: transformers
+      model_id: Qwen/Qwen3-Reranker-0.6B
+
+  safety:
+    default_shield_id: llama-guard
