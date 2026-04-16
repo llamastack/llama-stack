@@ -10,14 +10,12 @@ from typing import Any
 
 
 class TTLDict(dict):
-    """
-    A dictionary with a ttl for each item
-    """
+    """A dictionary with a TTL for each item."""
 
     def __init__(self, ttl_seconds: float, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ttl_seconds = ttl_seconds
-        self._expires: dict[Any, Any] = {}  # expires holds when an item will expire
+        self._expires: dict[Any, Any] = {}
         self._lock = RLock()
 
         if args or kwargs:

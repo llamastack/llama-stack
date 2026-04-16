@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 
 import tiktoken
 from llama_stack.core.conversations.validation import CONVERSATION_ID_PATTERN
+from llama_stack.core.mcp import MCPSessionManager
 from llama_stack.core.task import (
     RequestContext,
     activate_request_context,
@@ -71,7 +72,6 @@ from llama_stack_api import (
     VectorIO,
 )
 from llama_stack_api.inference import OpenAIChatCompletionRequestWithExtraBody, ServiceTier
-from llama_stack_utils_common.mcp import MCPSessionManager
 from llama_stack_utils_common.responses_store import (
     ResponsesStore,
     _OpenAIResponseObjectWithInputAndMessages,

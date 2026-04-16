@@ -9,8 +9,6 @@ import json
 from collections.abc import AsyncIterator
 from typing import Any
 
-from opentelemetry import trace
-
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack_api import (
@@ -41,6 +39,7 @@ from llama_stack_api import (
     ToolRuntime,
     VectorIO,
 )
+from opentelemetry import trace
 
 from .types import ChatCompletionContext, ToolExecutionResult
 
@@ -335,7 +334,7 @@ class ToolExecutor:
 
         try:
             if mcp_tool_to_server and function_name in mcp_tool_to_server:
-                from llama_stack_utils_common.mcp import invoke_mcp_tool
+                from llama_stack.core.mcp import invoke_mcp_tool
 
                 mcp_tool = mcp_tool_to_server[function_name]
                 if not mcp_tool.server_url:

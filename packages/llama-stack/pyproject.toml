@@ -43,9 +43,6 @@ dependencies = [
     "psycopg2-binary",
     "mcp>=1.23.0",                                    # for connectors
     "zstandard>=0.23.0",                              # server - zstd request decompression
-    # Core and connectors import from these utils packages directly.
-    "llama-stack-utils-inference",
-    "llama-stack-utils-common",
 ]
 
 [project.optional-dependencies]

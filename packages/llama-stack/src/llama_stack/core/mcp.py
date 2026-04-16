@@ -13,13 +13,6 @@ from enum import Enum
 from typing import Any, cast
 
 import httpx
-from mcp import ClientSession, McpError
-from mcp import types as mcp_types
-from mcp.client.sse import sse_client
-from mcp.client.streamable_http import streamablehttp_client
-
-from llama_stack.core.datatypes import AuthenticationRequiredError
-from llama_stack.log import get_logger
 from llama_stack_api import (
     ImageContentItem,
     InterleavedContentItem,
@@ -29,7 +22,14 @@ from llama_stack_api import (
     ToolInvocationResult,
     _URLOrData,
 )
-from llama_stack_utils_common.ttl_dict import TTLDict
+from mcp import ClientSession, McpError
+from mcp import types as mcp_types
+from mcp.client.sse import sse_client
+from mcp.client.streamable_http import streamablehttp_client
+
+from llama_stack.core.datatypes import AuthenticationRequiredError
+from llama_stack.core.utils.ttl_dict import TTLDict
+from llama_stack.log import get_logger
 
 logger = get_logger(__name__, category="tools")
 

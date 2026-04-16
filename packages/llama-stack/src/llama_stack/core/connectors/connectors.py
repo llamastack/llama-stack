@@ -21,10 +21,10 @@ from llama_stack_api import (
     ListToolsResponse,
     ToolDef,
 )
-from llama_stack_utils_common.mcp import get_mcp_server_info, list_mcp_tools
 from pydantic import BaseModel, Field
 
 from llama_stack.core.datatypes import StackConfig
+from llama_stack.core.mcp import get_mcp_server_info, list_mcp_tools
 from llama_stack.core.storage.kvstore import KVStore, kvstore_impl
 from llama_stack.log import get_logger
 
