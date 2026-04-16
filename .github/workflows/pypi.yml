@@ -901,6 +901,8 @@ jobs:
             platforms: linux/amd64,linux/arm64
           - distro: postgres-demo
             platforms: linux/amd64,linux/arm64
+          - distro: nvidia
+            platforms: linux/amd64,linux/arm64
 
     steps:
       - name: Free disk space
