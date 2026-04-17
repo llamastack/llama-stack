@@ -1188,9 +1188,7 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
                 logger.error(f"  Endpoint: {endpoint}")
                 logger.error(f"  Model: {body.get('model', 'unknown')}")
                 logger.error(f"  Test context: {get_test_context()}")
-                logger.error(
-                    f"  Stack config type: {os.environ.get('OGX_TEST_STACK_CONFIG_TYPE', 'library_client')}"
-                )
+                logger.error(f"  Stack config type: {os.environ.get('OGX_TEST_STACK_CONFIG_TYPE', 'library_client')}")
             raise RuntimeError(
                 f"Recording not found for request hash: {request_hash}\n"
                 f"Model: {body.get('model', 'unknown')} | Request: {method} {url}\n"

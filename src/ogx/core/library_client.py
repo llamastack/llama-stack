@@ -33,9 +33,7 @@ try:
         OGXClient,
     )
 except ImportError as e:
-    raise ImportError(
-        "ogx-client is not installed. Please install it with `uv pip install ogx[client]`."
-    ) from e
+    raise ImportError("ogx-client is not installed. Please install it with `uv pip install ogx[client]`.") from e
 
 from pydantic import BaseModel, TypeAdapter
 from rich.console import Console
