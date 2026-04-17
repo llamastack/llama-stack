@@ -1381,12 +1381,11 @@ class OpenAIResponsesImpl:
             model_name = model.split("/")[-1] if "/" in model else model
             try:
                 encoding = tiktoken.encoding_for_model(model_name)
-            except KeyError as e:
-                raise ValueError(
-                    f"Failed to resolve tiktoken encoding for model '{model}'. "
-                    "Set 'tokenizer_encoding' in compaction_config (e.g. 'o200k_base') "
-                    "or use an OpenAI model name that tiktoken recognizes."
-                ) from e
+            except KeyError:
+                # Fall back to o200k_base for non-OpenAI models (e.g. Vertex AI, Bedrock).
+                # Token counting here is an estimate for compaction thresholds, so an
+                # approximate encoding is acceptable.
+                encoding = tiktoken.get_encoding("o200k_base")
 
         if isinstance(input, str):
             return len(encoding.encode(input))
