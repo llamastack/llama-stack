@@ -116,12 +116,12 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
     "bedrock": Setup(
         name="bedrock",
         description=(
-            "AWS Bedrock via OpenAI-compatible Mantle API (OpenAI GPT-OSS; "
+            "AWS Bedrock via OpenAI-compatible API (OpenAI GPT-OSS; "
             "see AWS Chat Completions docs). No default vision model — GPT-OSS is text-only; "
             "tests that require vision_model_id skip unless you pass --vision-model."
         ),
         defaults={
-            "text_model": "bedrock/openai.gpt-oss-20b",
+            "text_model": "bedrock/openai.gpt-oss-20b-1:0",
             "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
             "embedding_dimension": 768,
         },
