@@ -487,7 +487,9 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
         return result
 
     elif isinstance(config, list):
-        result = []
+        # result is assigned as list here but dict/str in other branches.
+        # Mypy cannot track that only one branch executes.
+        result = []  # type: ignore[assignment]
         for i, v in enumerate(config):
             try:
                 # Special handling for providers: first resolve the provider_id to check if provider
@@ -535,7 +537,8 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
                         continue
 
                 # Normal processing
-                result.append(replace_env_vars(v, f"{path}[{i}]"))
+                # result is a list here, but mypy sees it could be dict/str
+                result.append(replace_env_vars(v, f"{path}[{i}]"))  # type: ignore[attr-defined]
             except EnvVarError as e:
                 raise EnvVarError(e.var_name, e.path) from None
         return result
@@ -587,10 +590,12 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
             return os.path.expanduser(value)
 
         try:
-            result = re.sub(pattern, get_env_var, config)
+            # re.sub returns str, but result could be dict/list in other branches
+            result = re.sub(pattern, get_env_var, config)  # type: ignore[assignment]
             # Only apply type conversion if substitution actually happened
             if result != config:
-                return _convert_string_to_proper_type(result)
+                # result is str here but mypy sees it could be dict/list
+                return _convert_string_to_proper_type(result)  # type: ignore[arg-type]
             return result
         except EnvVarError as e:
             raise EnvVarError(e.var_name, e.path) from None
@@ -635,21 +640,23 @@ def cast_distro_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
 
 def add_internal_implementations(impls: dict[Api, Any], config: StackConfig, policy: list) -> None:
     """Add internal implementations (inspect, providers, admin, etc.) to the implementations dictionary."""
+    # deps expects dict[str, Any] but receives dict[Api, Any].
+    # Api is an enum, runtime compatible as dict key.
     inspect_impl = DistributionInspectImpl(
         DistributionInspectConfig(config=config),
-        deps=impls,
+        deps=impls,  # type: ignore[arg-type]
     )
     impls[Api.inspect] = inspect_impl
 
     providers_impl = ProviderImpl(
         ProviderImplConfig(config=config),
-        deps=impls,
+        deps=impls,  # type: ignore[arg-type]
     )
     impls[Api.providers] = providers_impl
 
     admin_impl = AdminImpl(
         AdminImplConfig(config=config),
-        deps=impls,
+        deps=impls,  # type: ignore[arg-type]
     )
     impls[Api.admin] = admin_impl
 
@@ -852,7 +859,8 @@ def run_config_from_dynamic_config_spec(
     provider_registry = get_provider_registry() if provider_registry is None else provider_registry
 
     distro_dir = distro_dir or Path(tempfile.mkdtemp())
-    provider_configs_by_api = {}
+    # Explicit type annotation for better type inference in the loop below
+    provider_configs_by_api: dict[str, Any] = {}
     for api_provider in api_providers:
         if "=" not in api_provider:
             raise ValueError(

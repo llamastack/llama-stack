@@ -69,9 +69,22 @@ class SqlStore(Protocol):
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
     ) -> dict[str, Any] | None: ...
 
-    async def update(self, table: str, data: Mapping[str, Any], where: Mapping[str, Any]) -> None: ...
+    async def update(
+        self,
+        table: str,
+        data: Mapping[str, Any],
+        where: Mapping[str, Any],
+        where_sql: str | None = None,
+        where_sql_params: Mapping[str, Any] | None = None,
+    ) -> None: ...
 
-    async def delete(self, table: str, where: Mapping[str, Any]) -> None: ...
+    async def delete(
+        self,
+        table: str,
+        where: Mapping[str, Any],
+        where_sql: str | None = None,
+        where_sql_params: Mapping[str, Any] | None = None,
+    ) -> None: ...
 
     async def add_column_if_not_exists(
         self,

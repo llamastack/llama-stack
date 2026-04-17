@@ -14,14 +14,18 @@ requests are forwarded directly without translation.
 
 from __future__ import annotations
 
-import json
 import uuid
 from collections.abc import AsyncIterator
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, TypedDict
 
 import httpx
 
+from llama_stack.core.access_control.access_control import is_action_allowed
+from llama_stack.core.access_control.conditions import User as AccessControlUser
+from llama_stack.core.access_control.datatypes import Action
+from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.http_client import _build_network_client_kwargs
 from llama_stack.providers.utils.inference.model_registry import NetworkConfig
@@ -62,11 +66,50 @@ def _now_iso() -> str:
     return datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S+00:00")
 
 
+class _RawSSEStream(AsyncIterator[str]):
+    """Async iterator that forwards raw SSE lines from an upstream provider.
+
+    Marked with ``_raw_sse = True`` so the FastAPI route can stream it
+    directly without re-serialisation.
+
+    """
+
+    _raw_sse = True
+
+    def __init__(self, url: str, body: dict[str, Any], client_kwargs: dict[str, Any]):
+        self._url = url
+        self._body = body
+        self._client_kwargs = client_kwargs
+        self._iterator: AsyncIterator[str] | None = None
+
+    def __aiter__(self) -> _RawSSEStream:
+        return self
+
+    async def __anext__(self) -> str:
+        if self._iterator is None:
+            self._iterator = self._stream()
+        return await self._iterator.__anext__()
+
+    async def _stream(self) -> AsyncIterator[str]:
+        async with httpx.AsyncClient(**self._client_kwargs) as client:
+            async with client.stream("POST", self._url, json=self._body) as resp:
+                resp.raise_for_status()
+                async for line in resp.aiter_lines():
+                    yield line + "\n"
+
+
 class _PassthroughInfo(TypedDict):
     base_url: str
-    api_key: str
+    auth_headers: dict[str, str]
     provider_resource_id: str
     network_config: NetworkConfig | None
+
+
+@dataclass
+class _FallbackModelResource:
+    type: str
+    identifier: str
+    owner: AccessControlUser | None = None
 
 
 class BuiltinInteractionsImpl(Interactions):
@@ -85,11 +128,8 @@ class BuiltinInteractionsImpl(Interactions):
     async def create_interaction(
         self,
         request: GoogleCreateInteractionRequest,
-    ) -> GoogleInteractionResponse | AsyncIterator[GoogleStreamEvent]:
-        # Stream translation currently supports the subset of events exposed by GoogleStreamEvent.
-        # Native Gemini streaming can emit additional event/content types, so only passthrough
-        # non-streaming requests for now.
-        passthrough = await self._get_passthrough_info(request.model) if not request.stream else None
+    ) -> GoogleInteractionResponse | AsyncIterator[GoogleStreamEvent] | AsyncIterator[str]:
+        passthrough = await self._get_passthrough_info(request.model)
         if passthrough:
             return await self._passthrough_request(passthrough, request)
 
@@ -110,17 +150,43 @@ class BuiltinInteractionsImpl(Interactions):
     async def _get_passthrough_info(self, model: str) -> _PassthroughInfo | None:
         """Check if the model's provider supports /interactions natively.
 
-        Returns a dict with 'base_url' and 'api_key' for passthrough, or None to use translation.
+        Returns passthrough config for native /interactions, or None to use translation.
         """
         routing_table = getattr(self.inference_api, "routing_table", None)
         if routing_table is None:
             return None
 
         obj = await routing_table.get_object_by_identifier("model", model)
-        if obj is None:
-            return None
+        provider_resource_id = obj.provider_resource_id if obj else None
 
-        provider_impl = await routing_table.get_provider_impl(obj.identifier)
+        # Fall back to provider_id/model_id format (e.g. "gemini/gemini-2.5-flash")
+        # to match the inference router's _get_provider_by_fallback behavior
+        if obj is None:
+            splits = model.split("/", maxsplit=1)
+            if len(splits) != 2:
+                return None
+            provider_id, provider_resource_id = splits
+            if provider_id not in routing_table.impls_by_provider_id:
+                return None
+
+            # Mirror inference fallback RBAC checks for provider_id/model_id lookups.
+            temp_model = _FallbackModelResource(
+                type="model",
+                identifier=model,
+            )
+            user = get_authenticated_user()
+            if not is_action_allowed(routing_table.policy, Action.READ, temp_model, user):
+                logger.debug(
+                    "Access denied to model via interactions fallback path",
+                    model=model,
+                    user=user.principal if user else "anonymous",
+                )
+                return None
+
+            provider_impl = routing_table.impls_by_provider_id[provider_id]
+        else:
+            provider_impl = await routing_table.get_provider_impl(obj.identifier)
+
         provider_module = type(provider_impl).__module__
         is_native = any(provider_module.startswith(m) for m in self._NATIVE_INTERACTIONS_MODULES)
 
@@ -132,12 +198,19 @@ class BuiltinInteractionsImpl(Interactions):
             if base_url.endswith("/openai"):
                 base_url = base_url[: -len("/openai")]
 
-            api_key = None
-            if hasattr(provider_impl, "_get_api_key_from_config_or_provider_data"):
+            auth_headers: dict[str, str] = {}
+            if hasattr(provider_impl, "get_passthrough_auth_headers"):
+                auth_headers = provider_impl.get_passthrough_auth_headers()
+            elif hasattr(provider_impl, "_get_api_key_from_config_or_provider_data"):
                 api_key = provider_impl._get_api_key_from_config_or_provider_data()
+                if api_key:
+                    auth_headers = {"x-goog-api-key": api_key}
 
-            if not api_key:
-                logger.debug("No API key for passthrough, falling back to translation", model=model)
+            if not auth_headers:
+                logger.debug("No credentials for passthrough, falling back to translation", model=model)
+                return None
+            if provider_resource_id is None:
+                logger.debug("No provider resource id for passthrough, falling back to translation", model=model)
                 return None
 
             provider_config = getattr(provider_impl, "config", None)
@@ -145,8 +218,8 @@ class BuiltinInteractionsImpl(Interactions):
             logger.info("Using native /interactions passthrough", model=model, base_url=base_url)
             return {
                 "base_url": base_url,
-                "api_key": api_key,
-                "provider_resource_id": obj.provider_resource_id,
+                "auth_headers": auth_headers,
+                "provider_resource_id": provider_resource_id,
                 "network_config": network_config,
             }
 
@@ -155,12 +228,8 @@ class BuiltinInteractionsImpl(Interactions):
     def _build_passthrough_client_kwargs(self, passthrough: _PassthroughInfo) -> dict[str, Any]:
         client_kwargs = _build_network_client_kwargs(passthrough["network_config"])
         headers = dict(client_kwargs.get("headers", {}))
-        headers.update(
-            {
-                "content-type": "application/json",
-                "x-goog-api-key": passthrough["api_key"],
-            }
-        )
+        headers["content-type"] = "application/json"
+        headers.update(passthrough["auth_headers"])
         client_kwargs["headers"] = headers
         client_kwargs.setdefault("timeout", httpx.Timeout(300.0))
         return client_kwargs
@@ -169,7 +238,7 @@ class BuiltinInteractionsImpl(Interactions):
         self,
         passthrough: _PassthroughInfo,
         request: GoogleCreateInteractionRequest,
-    ) -> GoogleInteractionResponse | AsyncIterator[GoogleStreamEvent]:
+    ) -> GoogleInteractionResponse | _RawSSEStream:
         """Forward the request directly to the provider's /interactions endpoint."""
         base_url = passthrough["base_url"]
         provider_model = passthrough["provider_resource_id"]
@@ -188,27 +257,20 @@ class BuiltinInteractionsImpl(Interactions):
             resp.raise_for_status()
             return GoogleInteractionResponse(**resp.json())
 
-    async def _passthrough_stream(
+    def _passthrough_stream(
         self,
         url: str,
         body: dict[str, Any],
         client_kwargs: dict[str, Any],
-    ) -> AsyncIterator[GoogleStreamEvent]:
-        """Stream SSE events directly from the provider."""
-        async with httpx.AsyncClient(**client_kwargs) as client:
-            async with client.stream("POST", url, json=body) as resp:
-                resp.raise_for_status()
-                event_type = None
-                async for line in resp.aiter_lines():
-                    line = line.strip()
-                    if line.startswith("event: "):
-                        event_type = line[7:]
-                    elif line.startswith("data: ") and event_type:
-                        data = json.loads(line[6:])
-                        event = self._parse_sse_event(event_type, data)
-                        if event:
-                            yield event
-                        event_type = None
+    ) -> _RawSSEStream:
+        """Stream raw SSE lines directly from the provider.
+
+        Returns raw SSE-formatted strings instead of parsed event objects,
+        preserving all event types (including thought events from thinking models).
+        The returned iterator is marked with ``_raw_sse = True`` so the route
+        layer can forward it without re-serialisation.
+        """
+        return _RawSSEStream(url, body, client_kwargs)
 
     def _parse_sse_event(self, event_type: str, data: dict[str, Any]) -> GoogleStreamEvent | None:
         """Parse a Google Interactions SSE event from its type and data."""

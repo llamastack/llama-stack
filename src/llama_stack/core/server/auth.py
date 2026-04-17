@@ -120,17 +120,20 @@ class AuthenticationMiddleware:
                 return await self.app(scope, receive, send)
 
             # Handle authentication
-            headers = dict(scope.get("headers", []))
-            auth_header = headers.get(b"authorization", b"").decode()
+            if self.auth_provider.requires_http_bearer:
+                headers = dict(scope.get("headers", []))
+                auth_header = headers.get(b"authorization", b"").decode()
 
-            if not auth_header:
-                error_msg = self.auth_provider.get_auth_error_message(scope)
-                return await self._send_auth_error(send, error_msg)
+                if not auth_header:
+                    error_msg = self.auth_provider.get_auth_error_message(scope)
+                    return await self._send_auth_error(send, error_msg)
 
-            if not auth_header.startswith("Bearer "):
-                return await self._send_auth_error(send, "Invalid Authorization header format")
+                if not auth_header.startswith("Bearer "):
+                    return await self._send_auth_error(send, "Invalid Authorization header format")
 
-            token = auth_header.split("Bearer ", 1)[1]
+                token = auth_header.split("Bearer ", 1)[1]
+            else:
+                token = ""
 
             # Validate token and get access attributes
             try:
@@ -147,7 +150,7 @@ class AuthenticationMiddleware:
 
             # Store the client ID in the request scope so that downstream middleware (like QuotaMiddleware)
             # can identify the requester and enforce per-client rate limits.
-            scope["authenticated_client_id"] = token
+            scope["authenticated_client_id"] = token or validation_result.principal
 
             # Store attributes in request scope
             scope["principal"] = validation_result.principal

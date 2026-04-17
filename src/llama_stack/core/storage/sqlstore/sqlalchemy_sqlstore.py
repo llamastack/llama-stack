@@ -343,6 +343,8 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         table: str,
         data: Mapping[str, Any],
         where: Mapping[str, Any],
+        where_sql: str | None = None,
+        where_sql_params: Mapping[str, Any] | None = None,
     ) -> None:
         await self._ensure_engine()  # Lazy init in current event loop
         assert self.async_session is not None  # _ensure_engine guarantees this
@@ -353,10 +355,21 @@ class SqlAlchemySqlStoreImpl(SqlStore):
             stmt = self.metadata.tables[table].update()
             for key, value in where.items():
                 stmt = stmt.where(_build_where_expr(self.metadata.tables[table].c[key], value))
+            if where_sql:
+                clause = text(where_sql)
+                if where_sql_params:
+                    clause = clause.bindparams(**where_sql_params)
+                stmt = stmt.where(clause)
             await session.execute(stmt, data)
             await session.commit()
 
-    async def delete(self, table: str, where: Mapping[str, Any]) -> None:
+    async def delete(
+        self,
+        table: str,
+        where: Mapping[str, Any],
+        where_sql: str | None = None,
+        where_sql_params: Mapping[str, Any] | None = None,
+    ) -> None:
         await self._ensure_engine()  # Lazy init in current event loop
         assert self.async_session is not None  # _ensure_engine guarantees this
         if not where:
@@ -366,6 +379,11 @@ class SqlAlchemySqlStoreImpl(SqlStore):
             stmt = self.metadata.tables[table].delete()
             for key, value in where.items():
                 stmt = stmt.where(_build_where_expr(self.metadata.tables[table].c[key], value))
+            if where_sql:
+                clause = text(where_sql)
+                if where_sql_params:
+                    clause = clause.bindparams(**where_sql_params)
+                stmt = stmt.where(clause)
             await session.execute(stmt)
             await session.commit()
 

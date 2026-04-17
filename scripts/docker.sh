@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # All rights reserved.
 #
@@ -213,6 +213,23 @@ build_image() {
         exit 1
     fi
 
+    # Determine version for labels
+    local version
+    if ! version=$(git describe --tags --always --dirty 2>&1); then
+        echo "❌ Failed to determine version from git: $version"
+        exit 1
+    fi
+
+    # Generate config labels (one per line, read into array)
+    echo "Generating config labels for distribution: $DISTRO"
+    local config_labels_output
+    if ! config_labels_output=$("$script_dir/generate-config-labels.sh" "$DISTRO" "$version"); then
+        echo "❌ Failed to generate config labels"
+        exit 1
+    fi
+    local config_labels
+    mapfile -t config_labels <<< "$config_labels_output"
+
     # Determine if we should use buildx for multi-arch builds
     local use_buildx=false
     if [[ -n "$PLATFORM" ]]; then
@@ -266,11 +283,14 @@ build_image() {
         build_cmd+=(--build-arg "UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY")
     fi
 
+    # Add config labels to build command
+    build_cmd+=("${config_labels[@]}")
+
     if ! "${build_cmd[@]}"; then
         echo "❌ Failed to build Docker image"
         exit 1
     fi
-    echo "✅ Docker image built successfully"
+    echo "✅ Docker image built successfully with embedded config labels"
 }
 
 # Function to start container

@@ -133,7 +133,7 @@ You can enable specific providers by setting appropriate environment variables. 
 
 ```bash
 # self-hosted
-export OLLAMA_URL=http://localhost:11434   # enables the Ollama inference provider
+export OLLAMA_URL=http://localhost:11434/v1   # enables the Ollama inference provider
 export VLLM_URL=http://localhost:8000/v1   # enables the vLLM inference provider
 export TGI_URL=http://localhost:8000/v1   # enables the TGI inference provider
 
@@ -160,6 +160,16 @@ Quick start:
 uvx --from 'llama-stack[starter]' llama stack run starter
 ```
 
+Or run the pre-built container image from [Docker Hub](https://hub.docker.com/r/llamastack/distribution-starter):
+
+```bash
+docker run -it \
+  -p 8321:8321 \
+  -v ~/.llama:/root/.llama \
+  -e OLLAMA_URL=http://host.docker.internal:11434 \
+  llamastack/distribution-starter
+```
+
 ### PostgreSQL Storage
 
 By default, the starter distribution uses SQLite. For production, use PostgreSQL:
@@ -167,6 +177,8 @@ By default, the starter distribution uses SQLite. For production, use PostgreSQL
 ```bash
 uvx --from 'llama-stack[starter]' llama stack run starter::run-with-postgres-store.yaml
 ```
+
+A pre-built container image with PostgreSQL storage is also available as [`llamastack/distribution-postgres-demo`](https://hub.docker.com/r/llamastack/distribution-postgres-demo).
 
 Required environment variables for PostgreSQL:
 

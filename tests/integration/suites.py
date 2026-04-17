@@ -205,6 +205,15 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "text_model": "llama_openai_compat/Llama-3.3-8B-Instruct",
         },
     ),
+    "gemini": Setup(
+        name="gemini",
+        description="Google Gemini models via GenAI API",
+        defaults={
+            "text_model": "gemini/gemini-2.5-flash-lite",
+            "embedding_model": "gemini/text-embedding-004",
+            "embedding_dimension": 768,
+        },
+    ),
     "groq": Setup(
         name="groq",
         description="Groq models",
@@ -292,7 +301,7 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
     "interactions": Suite(
         name="interactions",
         roots=["tests/integration/interactions"],
-        default_setup="ollama",
+        default_setup="gemini",
     ),
     # Bedrock-specific tests with pre-recorded responses (no live API calls in CI)
     "bedrock": Suite(
