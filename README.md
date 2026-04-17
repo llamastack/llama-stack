@@ -8,11 +8,11 @@
   <a href="https://join.slack.com/t/ogx-ai/shared_invite/zt-3uyw5bxj9-tSEwsNZncgkGEKbd4dXIpw"><img src="https://img.shields.io/slack/1257833999603335178?color=6A7EC2&logo=slack&logoColor=ffffff" alt="Slack"></a>
   <a href="https://github.com/ogx-ai/ogx/actions/workflows/unit-tests.yml?query=branch%3Amain"><img src="https://github.com/ogx-ai/ogx/actions/workflows/unit-tests.yml/badge.svg?branch=main" alt="Unit Tests"></a>
   <a href="https://github.com/ogx-ai/ogx/actions/workflows/integration-tests.yml?query=branch%3Amain"><img src="https://github.com/ogx-ai/ogx/actions/workflows/integration-tests.yml/badge.svg?branch=main" alt="Integration Tests"></a>
-  <a href="https://ogx.github.io/docs/api-openai/conformance"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmeta-llama%2Fogx%2Fmain%2Fdocs%2Fstatic%2Fopenai-coverage.json&query=%24.summary.conformance.score&suffix=%25&label=OpenResponses%20Conformance&color=brightgreen" alt="OpenResponses Conformance"></a>
+  <a href="https://ogx-ai.github.io/docs/api-openai/conformance"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmeta-llama%2Fogx%2Fmain%2Fdocs%2Fstatic%2Fopenai-coverage.json&query=%24.summary.conformance.score&suffix=%25&label=OpenResponses%20Conformance&color=brightgreen" alt="OpenResponses Conformance"></a>
   <a href="https://deepwiki.com/ogx/ogx"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
-[**Quick Start**](https://ogx.github.io/docs/getting_started/quickstart) | [**Documentation**](https://ogx.github.io/docs) | [**OpenAI API Compatibility**](https://ogx.github.io/docs/api-openai) | [**Slack**](https://join.slack.com/t/ogx-ai/shared_invite/zt-3uyw5bxj9-tSEwsNZncgkGEKbd4dXIpw)
+[**Quick Start**](https://ogx-ai.github.io/docs/getting_started/quickstart) | [**Documentation**](https://ogx-ai.github.io/docs) | [**OpenAI API Compatibility**](https://ogx-ai.github.io/docs/api-openai) | [**Slack**](https://join.slack.com/t/ogx-ai/shared_invite/zt-3uyw5bxj9-tSEwsNZncgkGEKbd4dXIpw)
 
 **Open-source agentic API server for building AI applications. OpenAI-compatible. Any model, any infrastructure.**
 
@@ -35,7 +35,7 @@ response = client.chat.completions.create(
 ## What you get
 
 - **Chat Completions & Embeddings** — standard `/v1/chat/completions`, `/v1/completions`, and `/v1/embeddings` endpoints, compatible with any OpenAI client
-- **Responses API** — server-side agentic orchestration with tool calling, MCP server integration, and built-in file search (RAG) in a single API call ([learn more](https://ogx.github.io/docs/api-openai))
+- **Responses API** — server-side agentic orchestration with tool calling, MCP server integration, and built-in file search (RAG) in a single API call ([learn more](https://ogx-ai.github.io/docs/api-openai))
 - **Vector Stores & Files** — `/v1/vector_stores` and `/v1/files` for managed document storage and search
 - **Batches** — `/v1/batches` for offline batch processing
 - **[Open Responses](https://www.openresponses.org/) conformant** — the Responses API implementation passes the Open Responses conformance test suite
@@ -45,7 +45,7 @@ response = client.chat.completions.create(
 
 OGX has a pluggable provider architecture. Develop locally with Ollama, deploy to production with vLLM, or connect to a managed service — the API stays the same.
 
-See the [provider documentation](https://ogx.github.io/docs/providers) for the full list.
+See the [provider documentation](https://ogx-ai.github.io/docs/providers) for the full list.
 
 ## Get started
 
@@ -64,12 +64,12 @@ uv run ogx run starter
 
 Then connect with any OpenAI, Anthropic, or Google GenAI client — [Python](https://github.com/openai/openai-python), [TypeScript](https://github.com/openai/openai-node), [curl](https://platform.openai.com/docs/api-reference), or any framework that speaks these APIs.
 
-See the [Quick Start guide](https://ogx.github.io/docs/getting_started/quickstart) for detailed setup.
+See the [Quick Start guide](https://ogx-ai.github.io/docs/getting_started/quickstart) for detailed setup.
 
 ## Resources
 
-- [Documentation](https://ogx.github.io/docs) — full reference
-- [OpenAI API Compatibility](https://ogx.github.io/docs/api-openai) — endpoint coverage and provider matrix
+- [Documentation](https://ogx-ai.github.io/docs) — full reference
+- [OpenAI API Compatibility](https://ogx-ai.github.io/docs/api-openai) — endpoint coverage and provider matrix
 - [Getting Started Notebook](./docs/getting_started.ipynb) — text and vision inference walkthrough
 - [Contributing](CONTRIBUTING.md) — how to contribute
 

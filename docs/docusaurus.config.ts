@@ -9,7 +9,7 @@ import type * as OpenApiPlugin from "docusaurus-plugin-openapi-docs";
 const config: Config = {
   title: 'OGX',
   tagline: 'The open-source framework for building generative AI applications',
-  url: 'https://ogx.github.io',
+  url: 'https://ogx-ai.github.io',
   baseUrl: '/',
   onBrokenLinks: "warn",
   favicon: "img/favicon.ico",
@@ -91,7 +91,7 @@ const config: Config = {
             type: 'all',
             title: 'OGX Blog',
             description: 'Blog posts about OGX',
-            copyright: `Copyright © ${new Date().getFullYear()} Meta Platforms, Inc.`,
+            copyright: `Copyright © ${new Date().getFullYear()} The OGX Contributors`,
             language: 'en',
           },
         },
@@ -241,7 +241,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Meta Platforms, Inc.`,
+      copyright: `Copyright © ${new Date().getFullYear()} The OGX Contributors`,
     },
     colorMode: {
       defaultMode: 'dark',
@@ -310,7 +310,7 @@ const config: Config = {
           stable: {
             specPath: "static/ogx-spec.yaml",
             outputDir: "docs/api",
-            downloadUrl: "https://raw.githubusercontent.com/meta-llama/ogx/main/docs/static/ogx-spec.yaml",
+            downloadUrl: "https://raw.githubusercontent.com/ogx-ai/ogx/main/docs/static/ogx-spec.yaml",
             sidebarOptions: {
               groupPathsBy: "tag",
               categoryLinkSource: "tag",
@@ -319,7 +319,7 @@ const config: Config = {
           experimental: {
             specPath: "static/experimental-ogx-spec.yaml",
             outputDir: "docs/api-experimental",
-            downloadUrl: "https://raw.githubusercontent.com/meta-llama/ogx/main/docs/static/experimental-ogx-spec.yaml",
+            downloadUrl: "https://raw.githubusercontent.com/ogx-ai/ogx/main/docs/static/experimental-ogx-spec.yaml",
             sidebarOptions: {
               groupPathsBy: "tag",
               categoryLinkSource: "tag",
@@ -328,7 +328,7 @@ const config: Config = {
           deprecated: {
             specPath: "static/deprecated-ogx-spec.yaml",
             outputDir: "docs/api-deprecated",
-            downloadUrl: "https://raw.githubusercontent.com/meta-llama/ogx/main/docs/static/deprecated-ogx-spec.yaml",
+            downloadUrl: "https://raw.githubusercontent.com/ogx-ai/ogx/main/docs/static/deprecated-ogx-spec.yaml",
             sidebarOptions: {
               groupPathsBy: "tag",
               categoryLinkSource: "tag",

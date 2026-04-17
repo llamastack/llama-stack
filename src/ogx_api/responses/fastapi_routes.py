@@ -21,7 +21,6 @@ from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from ogx_api.common.errors import OpenAIErrorResponse
 from ogx_api.common.responses import Order
 from ogx_api.openai_responses import (
     ListOpenAIResponseInputItem,

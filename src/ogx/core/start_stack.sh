@@ -112,6 +112,6 @@ if [[ "$env_type" == "venv" ]]; then
     $other_args
 elif [[ "$env_type" == "container" ]]; then
     echo -e "${RED}Warning: OGX no longer supports running Containers via the 'ogx run' command.${NC}"
-    echo -e "Please refer to the documentation for more information: https://ogx.github.io/latest/distributions/building_distro.html#ogx-build"
+    echo -e "Please refer to the documentation for more information: https://ogx-ai.github.io/latest/distributions/building_distro.html#ogx-build"
     exit 1
 fi

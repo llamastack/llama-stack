@@ -283,7 +283,7 @@ This command initializes the model to interact with your local OGX instance.
 
 **Explore Other Guides**: Dive deeper into specific topics by following these guides:
 
-- [Understanding Distribution](https://ogx.github.io/latest/concepts/index.html#distributions)
+- [Understanding Distribution](https://ogx-ai.github.io/latest/concepts/index.html#distributions)
 - [Inference 101](00_Inference101.ipynb)
 - [Local and Cloud Model Toggling 101](01_Local_Cloud_Inference101.ipynb)
 - [Prompt Engineering](02_Prompt_Engineering101.ipynb)
@@ -300,7 +300,7 @@ This command initializes the model to interact with your local OGX instance.
 - [Swift SDK](https://github.com/ogx-ai/ogx-client-swift)
 - [Kotlin SDK](https://github.com/ogx-ai/ogx-client-kotlin)
 
-**Advanced Configuration**: Learn how to customize your OGX distribution by referring to the [Building a OGX Distribution](https://ogx.github.io/latest/distributions/building_distro.html) guide.
+**Advanced Configuration**: Learn how to customize your OGX distribution by referring to the [Building a OGX Distribution](https://ogx-ai.github.io/latest/distributions/building_distro.html) guide.
 
 **Explore Example Apps**: Check out [ogx-apps](https://github.com/ogx-ai/ogx-apps/tree/main/examples) for example applications built using OGX.
 

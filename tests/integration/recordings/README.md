@@ -3,7 +3,7 @@
 This directory contains recorded inference API responses used for deterministic testing without requiring live API access.
 
 For more information, see the
-[docs](https://ogx.github.io/docs/contributing/testing/record-replay).
+[docs](https://ogx-ai.github.io/docs/contributing/testing/record-replay).
 This README provides more technical information.
 
 ## Structure

@@ -41,7 +41,7 @@ base_url: ${env.OLLAMA_URL:=http://localhost:11434/v1}
 
 ```
 
-The current set of OGX APIs can be found here: [https://ogx.github.io/docs/api-overview](https://ogx.github.io/docs/api-overview)
+The current set of OGX APIs can be found here: [https://ogx-ai.github.io/docs/api-overview](https://ogx-ai.github.io/docs/api-overview)
 
 All of these APIs, if set in the `config.yaml` which defines the stack to be stood up, will be available via a REST API with their initialized providers. Each API can have one or more providers and the `provider_id` can be specified at request time.
 
@@ -91,4 +91,4 @@ curl -X POST http://localhost:8321/v1/chat/completions \
 
 ```
 
-Notice, the model name must be prefixed with the `provider_id` in order for the request to route properly! In this example, we are just utilizing the `/chat/completions` route in the Inference API. The starter distribution has a large amount of APIs and ready to use providers baked in. Example API requests, similar to the one above, for other APIs can be found in the [OGX API specification](https://ogx.github.io/docs/api/ogx-specification). Take it for a spin and see what you can do with OGX!
+Notice, the model name must be prefixed with the `provider_id` in order for the request to route properly! In this example, we are just utilizing the `/chat/completions` route in the Inference API. The starter distribution has a large amount of APIs and ready to use providers baked in. Example API requests, similar to the one above, for other APIs can be found in the [OGX API specification](https://ogx-ai.github.io/docs/api/ogx-specification). Take it for a spin and see what you can do with OGX!

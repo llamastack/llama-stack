@@ -92,7 +92,7 @@ OGX consists of two main components:
 
 The server handles all the complexity of managing different providers, while the client SDKs provide a simple, consistent interface for your application code.
 
-Refer to the [Quick Start Guide](https://ogx.github.io/docs/getting_started/quickstart) to get started building your first AI application with OGX.
+Refer to the [Quick Start Guide](https://ogx-ai.github.io/docs/getting_started/quickstart) to get started building your first AI application with OGX.
 
 ## What's Next?
 

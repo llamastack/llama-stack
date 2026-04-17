@@ -290,10 +290,10 @@ OGX represents something new in the AI infrastructure landscape: **enterprise-gr
 
 Ready to get started?
 
-- **📚 [Documentation](https://ogx.github.io/docs/)**: Comprehensive guides and API references
-- **🚀 [Getting Started](https://ogx.github.io/docs/getting_started/)**: Quick setup tutorials
-- **🔧 [OpenAI Implementation Guide](https://ogx.github.io/docs/providers/openai)**: Detailed compatibility examples
-- **🔌 [MCP Integration](https://ogx.github.io/docs/building_applications/)**: Tool ecosystem and connector guides
+- **📚 [Documentation](https://ogx-ai.github.io/docs/)**: Comprehensive guides and API references
+- **🚀 [Getting Started](https://ogx-ai.github.io/docs/getting_started/)**: Quick setup tutorials
+- **🔧 [OpenAI Implementation Guide](https://ogx-ai.github.io/docs/providers/openai)**: Detailed compatibility examples
+- **🔌 [MCP Integration](https://ogx-ai.github.io/docs/building_applications/)**: Tool ecosystem and connector guides
 - **💬 [Community](https://github.com/ogx-ai/ogx)**: Join discussions and contribute
 
 The future of AI infrastructure is open, interoperable, and under your control. Welcome to OGX.

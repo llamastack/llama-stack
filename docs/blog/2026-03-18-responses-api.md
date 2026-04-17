@@ -87,6 +87,6 @@ For the OGX community, this means that investing in the Responses API is about m
 
 ## Getting started
 
-If you're new to OGX, the [Getting Started guide](https://ogx.github.io/docs/getting_started/) will walk you through setting up a server with your preferred inference provider. From there, the [OpenAI Implementation Guide](https://ogx.github.io/docs/providers/openai) has examples of using the Responses API for everything from simple text generation to multi-tool agentic workflows.
+If you're new to OGX, the [Getting Started guide](https://ogx-ai.github.io/docs/getting_started/) will walk you through setting up a server with your preferred inference provider. From there, the [OpenAI Implementation Guide](https://ogx-ai.github.io/docs/providers/openai) has examples of using the Responses API for everything from simple text generation to multi-tool agentic workflows.
 
 The Responses API is still evolving, both in OGX and in the Open Responses specification, and contributions are welcome. Whether it's implementing new features, improving test coverage, or reporting issues, the project benefits from developers who are building real applications and sharing what they learn.

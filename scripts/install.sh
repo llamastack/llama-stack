@@ -415,7 +415,7 @@ Options:
     -h, --help                 Show this help message
 
 For more information:
-    Documentation: https://ogx.github.io/latest/
+    Documentation: https://ogx-ai.github.io/latest/
     GitHub: https://github.com/ogx-ai/ogx
 
 Report issues:
@@ -654,7 +654,7 @@ fi
 log ""
 log "🎉 OGX is ready!"
 log "👉  API endpoint: http://localhost:${PORT}"
-log "📖 Documentation: https://ogx.github.io/latest/references/api_reference/index.html"
+log "📖 Documentation: https://ogx-ai.github.io/latest/references/api_reference/index.html"
 log "💻 To access the ogx CLI, exec into the container:"
 log "   $ENGINE exec -ti ogx bash"
 if [ "$WITH_TELEMETRY" = true ]; then

@@ -149,7 +149,7 @@ Each release includes:
 - **npm package**: `ogx-client`
 - **Docker images**: Distribution images on Docker Hub
 - **GitHub Release**: Tagged release with release notes
-- **Documentation**: Updated docs at <https://ogx.github.io>
+- **Documentation**: Updated docs at <https://ogx-ai.github.io>
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for general contribution guidelines.
 

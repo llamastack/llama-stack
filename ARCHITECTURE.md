@@ -1,6 +1,6 @@
 # OGX Architecture
 
-This document describes the internal architecture of OGX for contributors and AI agents working with the codebase. For user-facing documentation, see [ogx.github.io](https://ogx.github.io/). For contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+This document describes the internal architecture of OGX for contributors and AI agents working with the codebase. For user-facing documentation, see [ogx-ai.github.io](https://ogx-ai.github.io/). For contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## System Overview
 
