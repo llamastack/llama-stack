@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -8,7 +8,7 @@ from typing import Protocol
 
 from fastapi import APIRouter
 
-from llama_stack_api import Api, ProviderSpec, RemoteProviderSpec
+from ogx_api import Api, ProviderSpec, RemoteProviderSpec
 
 
 def available_providers() -> list[ProviderSpec]:
@@ -16,10 +16,10 @@ def available_providers() -> list[ProviderSpec]:
         RemoteProviderSpec(
             api=Api.weather,
             provider_type="remote::kaze",
-            config_class="llama_stack_provider_kaze.KazeProviderConfig",
+            config_class="ogx_provider_kaze.KazeProviderConfig",
             adapter_type="kaze",
-            module="llama_stack_provider_kaze",
-            pip_packages=["llama_stack_provider_kaze"],
+            module="ogx_provider_kaze",
+            pip_packages=["ogx_provider_kaze"],
         ),
     ]
 

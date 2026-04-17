@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -79,10 +79,10 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "SAFETY_MODEL": "ollama/llama-guard3:1b",
             "POSTGRES_HOST": "127.0.0.1",
             "POSTGRES_PORT": "5432",
-            "POSTGRES_DB": "llamastack",
-            "POSTGRES_USER": "llamastack",
-            "POSTGRES_PASSWORD": "llamastack",
-            "LLAMA_STACK_LOGGING": "openai_responses=info",
+            "POSTGRES_DB": "ogx",
+            "POSTGRES_USER": "ogx",
+            "POSTGRES_PASSWORD": "ogx",
+            "OGX_LOGGING": "openai_responses=info",
         },
         defaults={
             "text_model": "ollama/llama3.2:3b-instruct-fp16",

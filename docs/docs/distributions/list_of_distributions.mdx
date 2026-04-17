@@ -1,6 +1,6 @@
 ---
 title: Available Distributions
-description: List of available distributions for Llama Stack
+description: List of available distributions for OGX
 sidebar_label: Available Distributions
 sidebar_position: 2
 ---
@@ -19,7 +19,7 @@ sidebar_position: 2
 The starter distribution works for most use cases. It includes all providers and auto-enables them based on available environment variables:
 
 ```bash
-uv run llama stack run starter
+uv run ogx run starter
 ```
 
 It supports local inference (Ollama), cloud providers (OpenAI, Bedrock, Azure, etc.), and everything in between. See the [Starter Guide](self_hosted_distro/starter) for details.
@@ -34,10 +34,10 @@ docker run -it \
   -v ~/.llama:/root/.llama \
   -e POSTGRES_HOST=host.docker.internal \
   -e POSTGRES_PORT=5432 \
-  -e POSTGRES_DB=llamastack \
-  -e POSTGRES_USER=llamastack \
-  -e POSTGRES_PASSWORD=llamastack \
-  llamastack/distribution-postgres-demo
+  -e POSTGRES_DB=ogx \
+  -e POSTGRES_USER=ogx \
+  -e POSTGRES_PASSWORD=ogx \
+  ogx/distribution-postgres-demo
 ```
 
 ## NVIDIA
@@ -46,11 +46,11 @@ Optimized for NVIDIA NeMo Microservices. See the [NVIDIA Guide](self_hosted_dist
 
 ## Passthrough
 
-A minimal distribution that forwards requests to a remote Llama Stack server. See the [Passthrough Guide](self_hosted_distro/passthrough).
+A minimal distribution that forwards requests to a remote OGX server. See the [Passthrough Guide](self_hosted_distro/passthrough).
 
 ## Remote-Hosted
 
-Some partners host Llama Stack endpoints that you can connect to directly. See [Remote-Hosted Distributions](./remote_hosted_distro/) for available options.
+Some partners host OGX endpoints that you can connect to directly. See [Remote-Hosted Distributions](./remote_hosted_distro/) for available options.
 
 ## Custom
 

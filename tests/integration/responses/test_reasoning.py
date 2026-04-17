@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -11,7 +11,7 @@ from .streaming_assertions import StreamingValidator
 
 def _get_attr(item, key, default=None):
     """Get attribute from typed object or dict — works with both
-    the current LlamaStack client (returns dicts) and OpenAI client
+    the current OGX client (returns dicts) and OpenAI client
     (returns typed objects)."""
     if isinstance(item, dict):
         return item.get(key, default)

@@ -1,20 +1,20 @@
 ---
 title: Google Interactions API
-description: Google Interactions API compatibility layer in Llama Stack
+description: Google Interactions API compatibility layer in OGX
 sidebar_label: Google Interactions
 sidebar_position: 5
 ---
 
 # Google Interactions API
 
-Llama Stack provides a compatibility layer for the [Google Interactions API](https://ai.google.dev/gemini-api/docs/interactions) (v1alpha). This lets teams using the Google GenAI SDK point at a Llama Stack server with minimal code changes, similar to how the OpenAI compatibility layer works.
+OGX provides a compatibility layer for the [Google Interactions API](https://ai.google.dev/gemini-api/docs/interactions) (v1alpha). This lets teams using the Google GenAI SDK point at a OGX server with minimal code changes, similar to how the OpenAI compatibility layer works.
 
 ## How it works
 
-The adapter translates Google Interactions requests into OpenAI Chat Completion calls through Llama Stack's inference API. Any inference provider that Llama Stack supports (vLLM, Ollama, OpenAI, Bedrock, etc.) can serve the Google Interactions API.
+The adapter translates Google Interactions requests into OpenAI Chat Completion calls through OGX's inference API. Any inference provider that OGX supports (vLLM, Ollama, OpenAI, Bedrock, etc.) can serve the Google Interactions API.
 
 ```
-Google GenAI SDK → /v1alpha/interactions → Llama Stack Inference → Any Provider
+Google GenAI SDK → /v1alpha/interactions → OGX Inference → Any Provider
 ```
 
 ## Quick example
@@ -27,7 +27,7 @@ client = genai.Client(
     vertexai=False,
     api_key="fake",
 )
-# Override the base URL to point at Llama Stack
+# Override the base URL to point at OGX
 client._api_client._url = "http://localhost:8321"
 
 response = client.models.generate_interaction(

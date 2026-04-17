@@ -460,7 +460,7 @@ function Hero() {
               <Link className={styles.secondaryBtn} to="/docs/api-openai">
                 API docs
               </Link>
-              <a className={styles.githubBtn} href="https://github.com/llamastack/llama-stack" target="_blank" rel="noopener noreferrer">
+              <a className={styles.githubBtn} href="https://github.com/ogx-ai/ogx" target="_blank" rel="noopener noreferrer">
                 GitHub
               </a>
             </div>
@@ -481,7 +481,7 @@ function ApiSurface() {
         <div className={styles.apiHeader}>
           <h2>Everything your AI app needs. One server.</h2>
           <p>
-            More than inference routing. Llama Stack composes inference, storage,
+            More than inference routing. OGX composes inference, storage,
             safety, and orchestration into a single process. Your agent can search
             a vector store, call a tool, check safety, and stream the response.
             No glue code. No sidecar services.
@@ -522,7 +522,7 @@ function ServerNotLibrary() {
             <h2>A server, not a library</h2>
             <p>
               SDK abstractions couple your app to a specific language, release
-              cycle, and import path. Llama Stack is an HTTP server. Your app
+              cycle, and import path. OGX is an HTTP server. Your app
               talks to a standard API.
             </p>
             <p>
@@ -538,7 +538,7 @@ function ServerNotLibrary() {
               <span className={styles.comparisonNote}>coupled</span>
             </div>
             <div className={styles.comparisonRow}>
-              <span className={styles.comparisonLabel}>Llama Stack</span>
+              <span className={styles.comparisonLabel}>OGX</span>
               <code className={styles.comparisonCode}>POST /v1/responses</code>
               <span className={styles.comparisonGood}>any language</span>
             </div>
@@ -583,7 +583,7 @@ function Architecture() {
           not in your application code.
         </p>
         <div className={styles.archImg}>
-          <img src="/img/architecture-animated.svg" alt="Llama Stack Architecture" loading="lazy" />
+          <img src="/img/architecture-animated.svg" alt="OGX Architecture" loading="lazy" />
         </div>
       </div>
     </Section>
@@ -602,10 +602,10 @@ function Bottom() {
             </p>
           </div>
           <div className={styles.bottomLinks}>
-            <a href="https://github.com/llamastack/llama-stack" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/ogx-ai/ogx" target="_blank" rel="noopener noreferrer">
               GitHub
             </a>
-            <a href="https://discord.gg/llama-stack" target="_blank" rel="noopener noreferrer">
+            <a href="https://join.slack.com/t/ogx-ai" target="_blank" rel="noopener noreferrer">
               Discord
             </a>
             <Link to="/docs/">

@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -8,7 +8,7 @@
 
 These tests verify the full request/response cycle through the server
 using the official Google GenAI SDK, proving that ADK/Gemini ecosystem
-clients can call Llama Stack natively.
+clients can call OGX natively.
 """
 
 import warnings

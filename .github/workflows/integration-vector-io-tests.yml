@@ -12,8 +12,8 @@ on:
       - main
       - 'release-[0-9]+.[0-9]+.x'
     paths:
-      - 'src/llama_stack/**'
-      - '!src/llama_stack_ui/**'
+      - 'src/ogx/**'
+      - '!src/ogx_ui/**'
       - 'tests/integration/vector_io/**'
       - 'tests/integration/conftest.py' # Test configuration that affects vector IO tests
       - 'uv.lock'
@@ -184,9 +184,9 @@ jobs:
           docker logs infinispan
           exit 1
 
-      - name: Build Llama Stack
+      - name: Build OGX
         run: |
-          uv run --no-sync llama stack list-deps ci-tests | xargs -L1 uv pip install
+          uv run --no-sync ogx list-deps ci-tests | xargs -L1 uv pip install
 
       - name: Check Storage and Memory Available Before Tests
         if: ${{ always() }}

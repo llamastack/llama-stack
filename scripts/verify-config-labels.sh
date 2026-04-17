@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -111,7 +111,7 @@ for config in "${CONFIGS[@]}"; do
     fi
 
     # Compare with source file
-    source_file="src/llama_stack/distributions/${distro_name}/${config}"
+    source_file="src/ogx/distributions/${distro_name}/${config}"
     if [ ! -f "$source_file" ]; then
         echo "   ⚠️  Source file not found: $source_file (skipping comparison)"
         rm -f "$decoded_file"

@@ -1,21 +1,21 @@
 ---
 title: RAG Benchmarks
-description: Benchmark results comparing Llama Stack's RAG quality against OpenAI across retrieval and end-to-end evaluations
+description: Benchmark results comparing OGX's RAG quality against OpenAI across retrieval and end-to-end evaluations
 sidebar_label: RAG Benchmarks
 sidebar_position: 3
 ---
 
 # RAG Benchmarks
 
-Llama Stack implements an OpenAI-compatible API surface for RAG — Files, Vector Stores, and the Responses API with the `file_search` tool. This page presents benchmark results comparing Llama Stack's RAG quality against OpenAI SaaS, and describes the evaluation methodology.
+OGX implements an OpenAI-compatible API surface for RAG — Files, Vector Stores, and the Responses API with the `file_search` tool. This page presents benchmark results comparing OGX's RAG quality against OpenAI SaaS, and describes the evaluation methodology.
 
 ## Summary of Results
 
-We evaluated Llama Stack against OpenAI across four benchmark suites covering retrieval accuracy, end-to-end answer quality, and multi-turn conversational RAG. Llama Stack was tested in two search modes: **vector** (pure semantic search) and **hybrid** (semantic + keyword search with reranking).
+We evaluated OGX against OpenAI across four benchmark suites covering retrieval accuracy, end-to-end answer quality, and multi-turn conversational RAG. OGX was tested in two search modes: **vector** (pure semantic search) and **hybrid** (semantic + keyword search with reranking).
 
 ### Retrieval Quality (BEIR)
 
-| Dataset | Corpus Size | Queries | OpenAI | Llama Stack (vector) | Llama Stack (hybrid) |
+| Dataset | Corpus Size | Queries | OpenAI | OGX (vector) | OGX (hybrid) |
 |---|---|---|---|---|---|
 | nfcorpus | 3,633 | 323 | 0.3156 | 0.3106 | **0.3350** |
 | scifact | 5,183 | 300 | **0.7165** | 0.6943 | 0.7137 |
@@ -26,7 +26,7 @@ We evaluated Llama Stack against OpenAI across four benchmark suites covering re
 
 ### End-to-End RAG Quality
 
-| Benchmark | Type | OpenAI (F1) | Llama Stack vector (F1) | Llama Stack hybrid (F1) |
+| Benchmark | Type | OpenAI (F1) | OGX vector (F1) | OGX hybrid (F1) |
 |---|---|---|---|---|
 | MultiHOP RAG | Multi-hop reasoning | 0.0114 | 0.0141 | **0.0141** |
 | Doc2Dial | Document-grounded dialogue | **0.1337** | 0.0962 | 0.0966 |
@@ -35,8 +35,8 @@ We evaluated Llama Stack against OpenAI across four benchmark suites covering re
 
 ### Key Takeaways
 
-- **Hybrid search matches or beats OpenAI on 3 of 4 BEIR datasets** (nfcorpus, scifact, arguana), demonstrating that Llama Stack's combination of semantic search, keyword search, and reranking is competitive with OpenAI's proprietary retrieval.
-- **Llama Stack outperforms OpenAI on arguana by 29%** (0.3835 vs 0.2960), a dataset that benefits from keyword matching on argumentative text.
+- **Hybrid search matches or beats OpenAI on 3 of 4 BEIR datasets** (nfcorpus, scifact, arguana), demonstrating that OGX's combination of semantic search, keyword search, and reranking is competitive with OpenAI's proprietary retrieval.
+- **OGX outperforms OpenAI on arguana by 29%** (0.3835 vs 0.2960), a dataset that benefits from keyword matching on argumentative text.
 - **fiqa is the gap** — OpenAI leads by 19% on this financial QA dataset (0.2862 vs 0.2399), likely due to differences in embedding models and chunking strategies for longer financial documents.
 - **End-to-end RAG scores are low across both backends**, reflecting the difficulty of these benchmarks (multi-hop reasoning, document-grounded dialogue) rather than a RAG-specific weakness. Both backends use the same LLM (GPT-4.1) for generation.
 
@@ -123,9 +123,9 @@ The benchmark suite exercises three layers of the OpenAI-compatible API:
 3. **Vector Stores Search API** (`POST /v1/vector_stores/{id}/search`) — Direct retrieval evaluation (BEIR)
 4. **Responses API** (`POST /v1/responses` with `file_search` tool) — End-to-end RAG with automatic retrieval and generation (MultiHOP, Doc2Dial)
 
-The same benchmark code runs against both OpenAI and Llama Stack — the only difference is the `--base-url` flag.
+The same benchmark code runs against both OpenAI and OGX — the only difference is the `--base-url` flag.
 
-### Llama Stack Configuration
+### OGX Configuration
 
 | Component | Configuration |
 |---|---|
@@ -171,7 +171,7 @@ BEIR benchmarks are **retrieval-only** — no LLM is involved. Documents are upl
 
 ## Running the Benchmarks
 
-The benchmark suite lives in [`benchmarking/rag/`](https://github.com/meta-llama/llama-stack/tree/main/benchmarking/rag). See the [README](https://github.com/meta-llama/llama-stack/tree/main/benchmarking/rag/README.md) for full setup instructions.
+The benchmark suite lives in [`benchmarking/rag/`](https://github.com/ogx-ai/ogx/tree/main/benchmarking/rag). See the [README](https://github.com/ogx-ai/ogx/tree/main/benchmarking/rag/README.md) for full setup instructions.
 
 ### Quick Start
 
@@ -193,10 +193,10 @@ python run_benchmark.py --benchmark multihop --base-url https://api.openai.com/v
 python run_benchmark.py --benchmark doc2dial --base-url https://api.openai.com/v1
 ```
 
-### Run Against Llama Stack
+### Run Against OGX
 
 ```bash
-# Start Llama Stack with Milvus backend
+# Start OGX with Milvus backend
 bash start_stack.sh
 
 # Vector search mode

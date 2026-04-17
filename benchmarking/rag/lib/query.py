@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -110,7 +110,7 @@ def rag_query_batch(
 
     Args:
         use_batch_api: If True, use OpenAI Batch API for 50% cost savings and
-            higher throughput. Only works with OpenAI SaaS, not Llama Stack.
+            higher throughput. Only works with OpenAI SaaS, not OGX.
         batch_id: If provided, resume polling an existing batch instead of submitting.
 
     Returns:

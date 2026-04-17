@@ -19,8 +19,8 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'tests/integration/**'
-      - 'src/llama_stack/**'
-      - '!src/llama_stack_ui/**'
+      - 'src/ogx/**'
+      - '!src/ogx_ui/**'
   workflow_dispatch:
     inputs:
       pr_number:
@@ -241,7 +241,7 @@ jobs:
       # a trusted commit, not from PR checkout. This is critical for security.
       - name: Setup test environment
         if: steps.should_run.outputs.run == 'true'
-        uses: llamastack/llama-stack/.github/actions/setup-test-environment@2e08be040be2cd15b528d23e39b58b286e02d379
+        uses: ogx-ai/ogx/.github/actions/setup-test-environment@2e08be040be2cd15b528d23e39b58b286e02d379
         with:
           python-version: "3.12"
           client-version: "latest"
@@ -251,7 +251,7 @@ jobs:
 
       - name: Run and record tests
         if: steps.should_run.outputs.run == 'true'
-        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@2e08be040be2cd15b528d23e39b58b286e02d379
+        uses: ogx-ai/ogx/.github/actions/run-and-record-tests@2e08be040be2cd15b528d23e39b58b286e02d379
         env:
           OPENAI_API_KEY: ${{ matrix.provider.setup == 'gpt' && secrets.OPENAI_API_KEY || '' }}
           AZURE_API_KEY: ${{ matrix.provider.setup == 'azure' && secrets.AZURE_API_KEY || '' }}

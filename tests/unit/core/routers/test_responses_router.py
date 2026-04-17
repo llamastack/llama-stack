@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -13,18 +13,18 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 from starlette.testclient import TestClient
 
-from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
-from llama_stack.core.server.server import global_exception_handler
-from llama_stack.telemetry.constants import RESPONSES_PARAMETER_USAGE_TOTAL
-from llama_stack_api import Api, Responses
-from llama_stack_api.openai_responses import (
+from ogx.core.server.fastapi_router_registry import build_fastapi_router
+from ogx.core.server.server import global_exception_handler
+from ogx.telemetry.constants import RESPONSES_PARAMETER_USAGE_TOTAL
+from ogx_api import Api, Responses
+from ogx_api.openai_responses import (
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
     OpenAIDeleteResponseObject,
     OpenAIResponseObject,
     OpenAIResponseObjectStreamResponseOutputTextDelta,
 )
-from llama_stack_api.responses.models import (
+from ogx_api.responses.models import (
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -190,7 +190,7 @@ async def test_sse_format_is_correct():
 
 
 async def test_sse_stream_keeps_provider_context():
-    from llama_stack.core.request_headers import PROVIDER_DATA_VAR
+    from ogx.core.request_headers import PROVIDER_DATA_VAR
 
     app = FastAPI()
     impl = AsyncMock(spec=Responses)
@@ -748,9 +748,9 @@ def test_exception_translating_route_converts_value_error_to_400():
 def test_unknown_exception_propagates_to_global_handler():
     """Unknown exception types (e.g. RuntimeError) propagate past the route class.
 
-    The route class only translates known types (ValueError, LlamaStackError).
+    The route class only translates known types (ValueError, OGXError).
     Unknown exceptions are left for the server's global exception handler,
-    which uses the full translate_exception pipeline from llama_stack.core.
+    which uses the full translate_exception pipeline from ogx.core.
     """
     app = FastAPI()
     app.add_exception_handler(Exception, global_exception_handler)
@@ -800,8 +800,8 @@ def test_parameter_usage_records_only_explicitly_provided_params():
     that was explicitly provided in the request body (via model_fields_set),
     and ignores required fields (input, model) and default-valued fields.
     """
-    import llama_stack.providers.inline.responses.builtin.impl as responses_mod
-    from llama_stack.providers.inline.responses.builtin.impl import _record_parameter_usage
+    import ogx.providers.inline.responses.builtin.impl as responses_mod
+    from ogx.providers.inline.responses.builtin.impl import _record_parameter_usage
 
     reader = InMemoryMetricReader()
     provider = MeterProvider(metric_readers=[reader])
@@ -863,8 +863,8 @@ def test_parameter_usage_ignores_extra_keys():
     user-supplied extra keys end up in model_fields_set.  Without filtering,
     this would cause unbounded Prometheus label cardinality.
     """
-    import llama_stack.providers.inline.responses.builtin.impl as responses_mod
-    from llama_stack.providers.inline.responses.builtin.impl import _record_parameter_usage
+    import ogx.providers.inline.responses.builtin.impl as responses_mod
+    from ogx.providers.inline.responses.builtin.impl import _record_parameter_usage
 
     reader = InMemoryMetricReader()
     provider = MeterProvider(metric_readers=[reader])

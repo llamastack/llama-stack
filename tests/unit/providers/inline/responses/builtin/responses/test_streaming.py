@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -9,18 +9,18 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from llama_stack.providers.inline.responses.builtin.responses.streaming import (
+from ogx.providers.inline.responses.builtin.responses.streaming import (
     StreamingResponseOrchestrator,
     convert_tooldef_to_chat_tool,
 )
-from llama_stack.providers.inline.responses.builtin.responses.types import ChatCompletionContext, ToolContext
-from llama_stack.providers.inline.responses.builtin.responses.utils import (
+from ogx.providers.inline.responses.builtin.responses.types import ChatCompletionContext, ToolContext
+from ogx.providers.inline.responses.builtin.responses.utils import (
     build_summary_prompt,
     should_summarize_reasoning,
     summarize_reasoning,
 )
-from llama_stack_api import ToolDef
-from llama_stack_api.inference.models import (
+from ogx_api import ToolDef
+from ogx_api.inference.models import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionResponseMessage,
@@ -29,7 +29,7 @@ from llama_stack_api.inference.models import (
     OpenAIChatCompletionUsage,
     OpenAIChoice,
 )
-from llama_stack_api.openai_responses import (
+from ogx_api.openai_responses import (
     OpenAIResponseInputToolMCP,
     OpenAIResponseReasoning,
 )
@@ -95,7 +95,7 @@ def test_convert_tooldef_to_chat_tool_preserves_items_field():
 
 # ---------------------------------------------------------------------------
 # _separate_tool_calls regression tests
-# See: https://github.com/llamastack/llama-stack/issues/5301
+# See: https://github.com/ogx-ai/ogx/issues/5301
 # ---------------------------------------------------------------------------
 
 

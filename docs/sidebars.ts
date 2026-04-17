@@ -99,8 +99,8 @@ const sidebars: SidebarsConfig = {
         'distributions/customizing_run_yaml',
         'distributions/importing_as_library',
         'distributions/configuration',
-        'distributions/starting_llama_stack_server',
-        'distributions/llama_stack_ui',
+        'distributions/starting_ogx_server',
+        'distributions/ogx_ui',
         {
           type: 'category',
           label: 'Self-Hosted Distributions',
@@ -344,8 +344,8 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'references/index',
-        'references/llama_cli_reference/index',
-        'references/llama_stack_client_cli_reference',
+        'references/ogx_cli_reference/index',
+        'references/ogx_client_cli_reference',
         'references/python_sdk_reference/index',
       ],
     },

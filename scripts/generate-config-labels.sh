@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -22,7 +22,7 @@ if [ -z "$VERSION" ]; then
     exit 1
 fi
 
-DISTRO_DIR="src/llama_stack/distributions/${DISTRO_NAME}"
+DISTRO_DIR="src/ogx/distributions/${DISTRO_NAME}"
 
 if [ ! -d "$DISTRO_DIR" ]; then
     echo "Error: Distribution directory not found: $DISTRO_DIR" >&2
@@ -74,6 +74,6 @@ echo "com.llamastack.distribution.configs=${CONFIG_LIST}"
 
 # Output OCI standard labels (one per line)
 echo "--label"
-echo "org.opencontainers.image.title=Llama Stack - ${DISTRO_NAME}"
+echo "org.opencontainers.image.title=OGX - ${DISTRO_NAME}"
 echo "--label"
 echo "org.opencontainers.image.version=${VERSION}"
