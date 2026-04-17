@@ -298,6 +298,16 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         roots=["tests/integration/messages"],
         default_setup="ollama-reasoning",
     ),
+    # Exercises the /v1/messages translation path: Anthropic request format is
+    # translated to OpenAI Chat Completions, dispatched to OpenAI, and the response
+    # is translated back to Anthropic format. OpenAI is not in _NATIVE_MESSAGES_MODULES,
+    # so this setup guarantees the translation codepath in providers/inline/messages/impl.py
+    # is covered end-to-end (rather than the native passthrough used by the ollama suite).
+    "messages-openai": Suite(
+        name="messages-openai",
+        roots=["tests/integration/messages"],
+        default_setup="gpt",
+    ),
     "interactions": Suite(
         name="interactions",
         roots=["tests/integration/interactions"],
