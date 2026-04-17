@@ -450,7 +450,9 @@ class TestOpenAIMixinModelRegistration:
                 ValueError, match="Model final-mock-model-id is not available from provider test-provider"
             ):
                 await mixin.register_model(disallowed_model)
-            mock_client_with_models.models.list.assert_called_once()
+            # With allowed_models configured, the API is not called
+            # Models are taken directly from the allowed_models list
+            mock_client_with_models.models.list.assert_not_called()
 
     async def test_register_embedding_model(self, mixin_with_embeddings, mock_client_context):
         """Test registration of embedding models with metadata"""
