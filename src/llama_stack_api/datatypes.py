@@ -4,17 +4,15 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from collections.abc import Iterator
 from enum import Enum, EnumMeta, StrEnum
 from typing import Any, Protocol
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field
 
-from llama_stack_api.benchmarks import Benchmark
-from llama_stack_api.datasets import Dataset
 from llama_stack_api.models import Model
 from llama_stack_api.schema_utils import json_schema_type
-from llama_stack_api.scoring_functions import ScoringFn
 from llama_stack_api.shields import Shield
 from llama_stack_api.tools import ToolGroup
 from llama_stack_api.vector_stores import VectorStore
@@ -23,27 +21,27 @@ from llama_stack_api.vector_stores import VectorStore
 class DynamicApiMeta(EnumMeta):
     """Metaclass that allows dynamic addition of enum members at runtime."""
 
-    def __new__(cls, name, bases, namespace):
+    def __new__(cls, name: str, bases: tuple[type, ...], namespace: dict[str, Any]) -> type:
         # Store the original enum values
         original_values = {k: v for k, v in namespace.items() if not k.startswith("_")}
 
         # Create the enum class
-        cls = super().__new__(cls, name, bases, namespace)
+        enum_cls = super().__new__(cls, name, bases, namespace)  # type: ignore[arg-type]
 
         # Store the original values for reference
-        cls._original_values = original_values
+        enum_cls._original_values = original_values  # type: ignore[attr-defined]
         # Initialize _dynamic_values
-        cls._dynamic_values = {}
+        enum_cls._dynamic_values: dict[str, Any] = {}  # type: ignore[attr-defined,misc]
 
-        return cls
+        return enum_cls
 
-    def __call__(cls, value):
+    def __call__(cls, value: Any) -> Any:  # type: ignore[override]
         try:
             return super().__call__(value)
         except ValueError as e:
             # If this value was already dynamically added, return it
-            if value in cls._dynamic_values:
-                return cls._dynamic_values[value]
+            if value in cls._dynamic_values:  # type: ignore[attr-defined]
+                return cls._dynamic_values[value]  # type: ignore[attr-defined]
 
             # If the value doesn't exist, create a new enum member
             # Create a new member name from the value
@@ -57,13 +55,13 @@ class DynamicApiMeta(EnumMeta):
             # register new APIs explicitly
             raise ValueError(f"API '{value}' does not exist. Use Api.add() to register new APIs.") from e
 
-    def __iter__(cls):
+    def __iter__(cls) -> Iterator[Any]:
         # Allow iteration over both static and dynamic members
         yield from super().__iter__()
         if hasattr(cls, "_dynamic_values"):
             yield from cls._dynamic_values.values()
 
-    def add(cls, value):
+    def add(cls, value: str) -> Any:
         """
         Add a new API to the enum.
         Used to register external APIs.
@@ -75,7 +73,7 @@ class DynamicApiMeta(EnumMeta):
             return cls._member_map_[member_name]
 
         # Create a new enum member
-        member = object.__new__(cls)
+        member: Any = object.__new__(cls)  # type: ignore[arg-type]
         member._name_ = member_name
         member._value_ = value
 
@@ -85,7 +83,7 @@ class DynamicApiMeta(EnumMeta):
         cls._member_type_ = str
 
         # Store it in our dynamic values
-        cls._dynamic_values[value] = member
+        cls._dynamic_values[value] = member  # type: ignore[attr-defined]
 
         return member
 
@@ -99,21 +97,17 @@ class Api(Enum, metaclass=DynamicApiMeta):
     :cvar responses: Response orchestration and execution
     :cvar batches: Batch processing for asynchronous API requests
     :cvar vector_io: Vector database operations and queries
-    :cvar datasetio: Dataset input/output operations
-    :cvar scoring: Model output evaluation and scoring
-    :cvar eval: Model evaluation and benchmarking framework
     :cvar tool_runtime: Tool execution and management
     :cvar telemetry: Observability and system monitoring
     :cvar models: Model metadata and management
     :cvar shields: Safety shield implementations
-    :cvar datasets: Dataset creation and management
-    :cvar scoring_functions: Scoring function definitions
-    :cvar benchmarks: Benchmark suite management
     :cvar tool_groups: Tool group organization
     :cvar files: File storage and management
     :cvar file_processors: File parsing and processing operations
     :cvar prompts: Prompt versions and management
     :cvar connectors: External connector management (e.g., MCP servers)
+    :cvar messages: Anthropic Messages API compatibility layer
+    :cvar interactions: Google Interactions API compatibility layer
     :cvar inspect: Built-in system inspection and introspection
     """
 
@@ -123,23 +117,19 @@ class Api(Enum, metaclass=DynamicApiMeta):
     responses = "responses"
     batches = "batches"
     vector_io = "vector_io"
-    datasetio = "datasetio"
-    scoring = "scoring"
-    eval = "eval"
     tool_runtime = "tool_runtime"
 
     models = "models"
     shields = "shields"
     vector_stores = "vector_stores"  # only used for routing table
-    datasets = "datasets"
-    scoring_functions = "scoring_functions"
-    benchmarks = "benchmarks"
     tool_groups = "tool_groups"
     files = "files"
     file_processors = "file_processors"
     prompts = "prompts"
     conversations = "conversations"
     connectors = "connectors"
+    messages = "messages"
+    interactions = "interactions"
 
     # built-in API
     inspect = "inspect"
@@ -234,28 +224,6 @@ class VectorStoresProtocolPrivate(Protocol):
     async def unregister_vector_store(self, vector_store_id: str) -> None: ...
 
 
-class DatasetsProtocolPrivate(Protocol):
-    """Protocol for provider-side dataset registration and unregistration."""
-
-    async def register_dataset(self, dataset: Dataset) -> None: ...
-
-    async def unregister_dataset(self, dataset_id: str) -> None: ...
-
-
-class ScoringFunctionsProtocolPrivate(Protocol):
-    """Protocol for provider-side scoring function listing and registration."""
-
-    async def list_scoring_functions(self) -> list[ScoringFn]: ...
-
-    async def register_scoring_function(self, scoring_fn: ScoringFn) -> None: ...
-
-
-class BenchmarksProtocolPrivate(Protocol):
-    """Protocol for provider-side benchmark registration."""
-
-    async def register_benchmark(self, benchmark: Benchmark) -> None: ...
-
-
 class ToolGroupsProtocolPrivate(Protocol):
     """Protocol for provider-side tool group registration and unregistration."""
 
@@ -310,7 +278,10 @@ class ProviderSpec(BaseModel):
         default=None,
     )
 
-    is_external: bool = Field(default=False, description="Notes whether this provider is an external provider.")
+    is_external: bool = Field(
+        default=False,
+        description="Notes whether this provider is an external provider.",
+    )
 
     toolgroup_id: str | None = Field(
         default=None,

@@ -31,7 +31,7 @@ on:
         description: 'Comma-separated list of providers to record'
         type: string
         required: false
-        default: 'gpt,azure,watsonx'
+        default: 'gpt,azure,watsonx,vertexai'
       suite:
         description: 'Test suite override (default: per-provider from matrix)'
         type: string
@@ -53,9 +53,11 @@ concurrency:
   cancel-in-progress: true
 
 # Read-only permissions - no write access
+# id-token: write is required for GCP Workload Identity Federation (OIDC token exchange)
 permissions:
   contents: read
   pull-requests: read
+  id-token: write
 
 jobs:
   # Compute PR information for both pull_request and workflow_dispatch
@@ -170,7 +172,7 @@ jobs:
           cat pr-metadata/pr-info.json
 
       - name: Upload PR metadata
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: pr-metadata-${{ github.run_id }}
           path: pr-metadata/
@@ -195,6 +197,10 @@ jobs:
             suite: bedrock-responses
           - setup: watsonx
             suite: responses
+          - setup: vertexai
+            suite: responses
+          - setup: gemini
+            suite: interactions
     steps:
       - name: Check if provider should run
         id: should_run
@@ -222,11 +228,18 @@ jobs:
           ref: ${{ needs.compute-pr-info.outputs.pr_head_sha }}
           fetch-depth: 0
 
+      - name: Authenticate to Google Cloud (Vertex AI)
+        if: steps.should_run.outputs.run == 'true' && matrix.provider.setup == 'vertexai' && needs.compute-pr-info.outputs.is_fork_pr != 'true'
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ secrets.VERTEX_AI_PROJECT }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+
       # Note: Using full repo path with pinned SHA ensures actions are loaded from
       # a trusted commit, not from PR checkout. This is critical for security.
       - name: Setup test environment
         if: steps.should_run.outputs.run == 'true'
-        uses: llamastack/llama-stack/.github/actions/setup-test-environment@700b202df7e520c1b19977e97657b3aebc055e56
+        uses: llamastack/llama-stack/.github/actions/setup-test-environment@e92196d200bca6fc220af5996142c42528df0c56
         with:
           python-version: "3.12"
           client-version: "latest"
@@ -236,7 +249,7 @@ jobs:
 
       - name: Run and record tests
         if: steps.should_run.outputs.run == 'true'
-        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@700b202df7e520c1b19977e97657b3aebc055e56
+        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@e92196d200bca6fc220af5996142c42528df0c56
         env:
           OPENAI_API_KEY: ${{ matrix.provider.setup == 'gpt' && secrets.OPENAI_API_KEY || '' }}
           AZURE_API_KEY: ${{ matrix.provider.setup == 'azure' && secrets.AZURE_API_KEY || '' }}
@@ -247,6 +260,9 @@ jobs:
           TAVILY_SEARCH_API_KEY: ${{ contains(fromJSON('["gpt","azure"]'), matrix.provider.setup) && secrets.TAVILY_SEARCH_API_KEY || '' }}
           AWS_BEARER_TOKEN_BEDROCK: ${{ matrix.provider.setup == 'bedrock' && secrets.AWS_BEARER_TOKEN_BEDROCK || '' }}
           AWS_DEFAULT_REGION: ${{ matrix.provider.setup == 'bedrock' && 'us-west-2' || '' }}
+          VERTEX_AI_PROJECT: ${{ matrix.provider.setup == 'vertexai' && secrets.VERTEX_AI_PROJECT || '' }}
+          VERTEX_AI_LOCATION: ${{ matrix.provider.setup == 'vertexai' && 'global' || '' }}
+          GEMINI_API_KEY: ${{ matrix.provider.setup == 'gemini' && secrets.GEMINI_API_KEY || '' }}
         with:
           stack-config: 'server:ci-tests'
           setup: ${{ matrix.provider.setup }}
@@ -260,7 +276,7 @@ jobs:
       # Upload recordings as artifacts for the companion workflow to commit
       - name: Upload recordings as artifacts
         if: steps.should_run.outputs.run == 'true'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: recordings-${{ matrix.provider.setup }}-${{ github.run_id }}-${{ github.run_attempt || '1' }}
           path: |
@@ -278,7 +294,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Update PR comment
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         env:
           PROVIDERS_TO_RUN: ${{ needs.compute-pr-info.outputs.providers_to_run }}
           RECORD_STATUS: ${{ needs.record-providers.result }}

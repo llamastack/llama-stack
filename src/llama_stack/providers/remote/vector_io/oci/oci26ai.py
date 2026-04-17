@@ -31,6 +31,7 @@ from llama_stack.providers.utils.vector_io.vector_utils import (
 from llama_stack_api import (
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     InsertChunksRequest,
@@ -91,7 +92,7 @@ class OCI26aiIndex(EmbeddingIndex):
         self.vector_datatype = vector_datatype
 
     async def initialize(self) -> None:
-        logger.info(f"Attempting to create table: {self.table_name}")
+        logger.info("Attempting to create table", table_name=self.table_name)
         cursor = self.connection.cursor()
         try:
             #  Create table
@@ -104,9 +105,9 @@ class OCI26aiIndex(EmbeddingIndex):
                     chunk_metadata JSON
                 );
             """
-            logger.debug(f"Executing SQL: {create_table_sql}")
+            logger.debug("Executing SQL", create_table_sql=create_table_sql)
             cursor.execute(create_table_sql)
-            logger.info(f"Table {self.table_name} created successfully")
+            logger.info("Table created successfully", table_name=self.table_name)
 
             await self.create_indexes()
         finally:
@@ -153,15 +154,15 @@ class OCI26aiIndex(EmbeddingIndex):
 
         for idx in indexes:
             if not await self.index_exists(idx["name"]):
-                logger.info(f"Creating index: {idx['name']}")
+                logger.info("Creating index", name=idx["name"])
                 cursor = self.connection.cursor()
                 try:
                     cursor.execute(idx["sql"])
-                    logger.info(f"Index {idx['name']} created successfully")
+                    logger.info("Index created successfully", name=idx["name"])
                 finally:
                     cursor.close()
             else:
-                logger.info(f"Index {idx['name']} already exists, skipping")
+                logger.info("Index already exists, skipping", name=idx["name"])
 
     async def add_chunks(self, embedded_chunks: list[EmbeddedChunk]):
         array_type = "d" if self.vector_datatype == "FLOAT64" else "f"
@@ -203,14 +204,14 @@ class OCI26aiIndex(EmbeddingIndex):
                 INSERT (chunk_id, content, vector, metadata, chunk_metadata)
                 VALUES (s.chunk_id, s.content, TO_VECTOR(s.vector, {self.dimensions}, {self.vector_datatype}), s.metadata, s.chunk_metadata)
                 """
-            logger.debug(f"query: {query}")
+            logger.debug("query", query=query)
             cursor.executemany(
                 query,
                 data,
             )
             logger.info("Merge completed successfully")
         except Exception as e:
-            logger.error(f"Error inserting chunks into Oracle 26AI table {self.table_name}: {e}")
+            logger.error("Error inserting chunks into Oracle 26AI table", table_name=self.table_name, error=str(e))
             raise
         finally:
             cursor.close()
@@ -258,8 +259,8 @@ class OCI26aiIndex(EmbeddingIndex):
         query += " ORDER BY score DESC FETCH FIRST :k ROWS ONLY"
         params["k"] = k
 
-        logger.debug(query)
-        logger.debug(query_vector)
+        logger.debug("Executing query", query=query)
+        logger.debug("Query vector", vector=str(query_vector))
         try:
             cursor.execute(query, params)
             results = cursor.fetchall()
@@ -282,11 +283,11 @@ class OCI26aiIndex(EmbeddingIndex):
 
                 chunks.append(chunk)
                 scores.append(float(score))
-            logger.debug(f"result count: {len(chunks)}")
+            logger.debug("result count", chunks_count=len(chunks))
             return QueryChunksResponse(chunks=chunks, scores=scores)
 
         except Exception as e:
-            logger.error("Error querying vector: %s", e)
+            logger.error("Failed to query vector", error=str(e))
             raise
 
         finally:
@@ -349,10 +350,10 @@ class OCI26aiIndex(EmbeddingIndex):
                 )
                 chunks.append(chunk)
                 scores.append(float(score))
-            logger.debug(f"result count: {len(chunks)}")
+            logger.debug("result count", chunks_count=len(chunks))
             return QueryChunksResponse(chunks=chunks, scores=scores)
         except Exception as e:
-            logger.error(f"Error performing keyword search: {e}")
+            logger.error("Error performing keyword search", error=str(e))
             raise
         finally:
             cursor.close()
@@ -427,7 +428,7 @@ class OCI26aiIndex(EmbeddingIndex):
                 cursor.execute(f"DROP TABLE IF EXISTS {self.table_name}")
             logger.info("Dropped table: {self.table_name}")
         except oracledb.DatabaseError as e:
-            logger.error(f"Error dropping table {self.table_name}: {e}")
+            logger.error("Error dropping table", table_name=self.table_name, error=str(e))
             raise
 
     async def delete_chunks(self, chunks_for_deletion: list[ChunkForDeletion]) -> None:
@@ -443,7 +444,7 @@ class OCI26aiIndex(EmbeddingIndex):
                 params,
             )
         except Exception as e:
-            logger.error(f"Error deleting chunks from Oracle 26AI table {self.table_name}: {e}")
+            logger.error("Error deleting chunks from Oracle 26AI table", table_name=self.table_name, error=str(e))
             raise
         finally:
             cursor.close()
@@ -457,8 +458,11 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
         config: OCI26aiVectorIOConfig,
         inference_api: Inference,
         files_api: Files | None,
+        file_processor_api: FileProcessors | None = None,
     ) -> None:
-        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
+        super().__init__(
+            inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api
+        )
         self.config = config
         self.cache: dict[str, VectorStoreWithIndex] = {}
         self.pool = None
@@ -483,7 +487,7 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
             self.connection.autocommit = True
             logger.info("Oracle connection created successfully")
         except Exception as e:
-            logger.error(f"Error creating Oracle connection: {e}")
+            logger.error("Error creating Oracle connection", error=str(e))
             raise
 
         # Load State
@@ -492,7 +496,11 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
         stored_vector_stores = await self.kvstore.values_in_range(start_key, end_key)
         for vector_store_data in stored_vector_stores:
             vector_store = VectorStore.model_validate_json(vector_store_data)
-            logger.info(f"Loading index {vector_store.vector_store_name}: {vector_store.vector_store_id}")
+            logger.info(
+                "Loading index",
+                vector_store_name=vector_store.vector_store_name,
+                vector_store_id=vector_store.vector_store_id,
+            )
             oci_index = OCI26aiIndex(
                 connection=self.connection,
                 vector_store=vector_store,
@@ -503,7 +511,7 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
             index = VectorStoreWithIndex(vector_store, index=oci_index, inference_api=self.inference_api)
             self.cache[vector_store.identifier] = index
 
-        logger.info(f"Completed loading {len(stored_vector_stores)} indexes")
+        logger.info("Completed loading indexes", stored_vector_stores_count=len(stored_vector_stores))
 
     async def shutdown(self) -> None:
         logger.info("Shutting down Oracle connection")

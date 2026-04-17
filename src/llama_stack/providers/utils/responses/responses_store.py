@@ -20,6 +20,7 @@ from llama_stack_api import (
     OpenAIResponseObjectWithInput,
     Order,
     ResponseInputItemNotFoundError,
+    ResponseItemInclude,
     ResponseNotFoundError,
 )
 from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
@@ -225,7 +226,9 @@ class ResponsesStore:
         )
 
         if not existing_row:
-            logger.critical(f"Response with id {response_object.id} not found during update - this should never happen")
+            logger.critical(
+                "Response not found during update - this should never happen", response_id=response_object.id
+            )
             raise RuntimeError(f"Response with id {response_object.id} not found during update")
 
         existing_data = existing_row["response_object"]
@@ -255,7 +258,7 @@ class ResponsesStore:
         response_id: str,
         after: str | None = None,
         before: str | None = None,
-        include: list[str] | None = None,
+        include: list[ResponseItemInclude] | None = None,
         limit: int | None = 20,
         order: Order | None = Order.desc,
     ) -> ListOpenAIResponseInputItem:
@@ -279,7 +282,12 @@ class ResponsesStore:
             )
 
         response_with_input_and_messages = await self.get_response_object(response_id)
-        items = response_with_input_and_messages.input
+        # Filter out compaction items (matching OpenAI behavior: input_items hides compaction)
+        items = [
+            item
+            for item in response_with_input_and_messages.input
+            if not (hasattr(item, "type") and getattr(item, "type", None) == "compaction")
+        ]
 
         if order == Order.desc:
             items = list(reversed(items))
@@ -326,7 +334,7 @@ class ResponsesStore:
             update_columns=["messages"],
         )
 
-        logger.debug(f"Stored {len(messages)} messages for conversation {conversation_id}")
+        logger.debug("Stored messages for conversation", messages_count=len(messages), conversation_id=conversation_id)
 
     async def get_conversation_messages(self, conversation_id: str) -> list[OpenAIMessageParam] | None:
         """Get stored messages for a conversation.

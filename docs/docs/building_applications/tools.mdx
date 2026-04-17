@@ -10,8 +10,8 @@ import TabItem from '@theme/TabItem';
 
 # Tools
 
-:::note[ToolGroups API Removed]
-The **ToolGroups API** (`/v1/toolgroups`, `/v1/tools`, `/v1/tool-runtime/*`) has been removed. Built-in tools (web search, RAG, WolframAlpha) are now auto-registered based on your provider configuration. For MCP servers, use the [Connectors API](/references/api_reference/connectors).
+:::note[Tool Configuration Simplified]
+Built-in tools (web search, RAG, WolframAlpha) are now auto-registered based on your provider configuration. The `/v1/tools` and `/v1/toolgroups` endpoints are available for tool discovery and management. For MCP servers, use the [Connectors API](/docs/concepts/apis/).
 :::
 
 Tools are functions that can be invoked by an agent to perform tasks. They are organized into tool groups and registered with specific providers. Each tool group represents a collection of related tools from a single provider. They are organized into groups so that state can be externalized: the collection operates on the same state typically.
@@ -45,12 +45,12 @@ The tool requires an API key which can be provided either in the configuration o
 
 The WolframAlpha tool provides access to computational knowledge through the WolframAlpha API. Configure the `remote::wolfram-alpha` provider in your `tool_runtime` providers and the `builtin::wolfram_alpha` tool group will be auto-registered.
 
-### RAG
+### File Search (RAG)
 
-The RAG tool enables retrieval of context from various types of memory banks (vector, key-value, keyword, and graph). Configure the `inline::rag-runtime` provider in your `tool_runtime` providers and the `builtin::rag` tool group will be auto-registered.
+The file search tool enables retrieval-augmented generation by searching through vector stores. Configure the `inline::file-search` provider in your `tool_runtime` providers and the `builtin::file_search` tool group will be auto-registered.
 
 Features:
-- Support for multiple memory bank types
+- Vector store based document retrieval
 - Configurable query generation
 - Context retrieval with token limits
 
@@ -306,8 +306,8 @@ response = agent.create_turn(
 
 ## Related Resources
 
-- **[Agents](./agent)** - Building intelligent agents with tools
-- **[RAG (Retrieval Augmented Generation)](./rag)** - Using knowledge retrieval tools
-- **[Agent Execution Loop](./agent_execution_loop)** - Understanding tool execution flow
+- **[Agents](/docs/building_applications/agent)** - Building intelligent agents with tools
+- **[RAG (Retrieval Augmented Generation)](/docs/building_applications/rag)** - Using knowledge retrieval tools
+- **[Agent Execution Loop](/docs/building_applications/agent_execution_loop)** - Understanding tool execution flow
 - **[Building AI Applications Notebook](https://github.com/meta-llama/llama-stack/blob/main/docs/getting_started.ipynb)** - Comprehensive examples
 - **[Llama Stack Apps Examples](https://github.com/meta-llama/llama-stack-apps)** - Real-world tool implementations

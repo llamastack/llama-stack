@@ -4,6 +4,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import hashlib
+import json
 import ssl
 from pathlib import Path
 from typing import Any
@@ -22,13 +24,36 @@ from llama_stack.providers.utils.inference.model_registry import (
 logger = get_logger(name=__name__, category="providers::utils")
 
 
-def _build_ssl_context(tls_config: TLSConfig) -> ssl.SSLContext | bool | Path:
+_NETWORK_CONFIG_FINGERPRINT_ATTR = "_llama_stack_network_config_fingerprint"
+
+
+def network_config_fingerprint(network_config: NetworkConfig) -> str:
+    dumped = json.dumps(network_config.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(dumped.encode("utf-8")).hexdigest()
+
+
+def _get_client_network_fingerprint(existing_client: httpx.AsyncClient | DefaultAsyncHttpxClient) -> str | None:
+    if isinstance(existing_client, DefaultAsyncHttpxClient):
+        underlying_client = existing_client._client  # type: ignore[union-attr,attr-defined]
+        return getattr(underlying_client, _NETWORK_CONFIG_FINGERPRINT_ATTR, None)
+    return getattr(existing_client, _NETWORK_CONFIG_FINGERPRINT_ATTR, None)
+
+
+def set_client_network_fingerprint(client: httpx.AsyncClient | DefaultAsyncHttpxClient, fingerprint: str) -> None:
+    if isinstance(client, DefaultAsyncHttpxClient):
+        underlying_client = client._client  # type: ignore[union-attr,attr-defined]
+        setattr(underlying_client, _NETWORK_CONFIG_FINGERPRINT_ATTR, fingerprint)
+    else:
+        setattr(client, _NETWORK_CONFIG_FINGERPRINT_ATTR, fingerprint)
+
+
+def _build_ssl_context(tls_config: TLSConfig) -> ssl.SSLContext | bool | str:
     """
     Build an SSL context from TLS configuration.
 
     Returns:
         - ssl.SSLContext if advanced options (min_version, ciphers, or mTLS) are configured
-        - Path if only a CA bundle path is specified
+        - str if only a CA bundle path is specified (httpx requires str, not Path)
         - bool if only verify is specified as boolean
     """
     has_advanced_options = (
@@ -36,6 +61,8 @@ def _build_ssl_context(tls_config: TLSConfig) -> ssl.SSLContext | bool | Path:
     )
 
     if not has_advanced_options:
+        if isinstance(tls_config.verify, Path):
+            return str(tls_config.verify)
         return tls_config.verify
 
     ctx = ssl.create_default_context()
@@ -90,7 +117,7 @@ def _build_proxy_mounts(proxy_config: ProxyConfig) -> dict[str, httpx.AsyncHTTPT
     return mounts if mounts else None
 
 
-def _build_network_client_kwargs(network_config: NetworkConfig | None) -> dict[str, Any]:
+def build_network_client_kwargs(network_config: NetworkConfig | None) -> dict[str, Any]:
     """
     Build httpx.AsyncClient kwargs from network configuration.
 
@@ -185,7 +212,11 @@ def _merge_network_config_into_client(
     if network_config is None:
         return existing_client
 
-    network_kwargs = _build_network_client_kwargs(network_config)
+    fingerprint = network_config_fingerprint(network_config)
+    if _get_client_network_fingerprint(existing_client) == fingerprint:
+        return existing_client
+
+    network_kwargs = build_network_client_kwargs(network_config)
     if not network_kwargs:
         return existing_client
 
@@ -208,13 +239,17 @@ def _merge_network_config_into_client(
         # Create new client with merged config
         new_client = httpx.AsyncClient(**network_kwargs)
 
+        set_client_network_fingerprint(new_client, fingerprint)
+
         # If original was DefaultAsyncHttpxClient, wrap the new client
         if isinstance(existing_client, DefaultAsyncHttpxClient):
-            return DefaultAsyncHttpxClient(client=new_client, headers=network_kwargs.get("headers"))  # type: ignore[call-arg]
+            wrapped = DefaultAsyncHttpxClient(client=new_client, headers=network_kwargs.get("headers"))  # type: ignore[call-arg]
+            set_client_network_fingerprint(wrapped, fingerprint)
+            return wrapped
 
         return new_client
     except Exception as e:
-        logger.debug(f"Could not merge network config into existing http_client: {e}. Using original client.")
+        logger.debug("Could not merge network config into existing http_client, using original client", error=str(e))
         return existing_client
 
 
@@ -232,7 +267,7 @@ def build_http_client(network_config: NetworkConfig | None) -> dict[str, Any]:
         Dictionary of kwargs to pass to httpx.AsyncClient constructor,
         wrapped in {"http_client": AsyncClient(...)} for use with AsyncOpenAI
     """
-    network_kwargs = _build_network_client_kwargs(network_config)
+    network_kwargs = build_network_client_kwargs(network_config)
     if not network_kwargs:
         return {}
 

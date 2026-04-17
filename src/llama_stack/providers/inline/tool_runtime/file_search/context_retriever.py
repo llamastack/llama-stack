@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from jinja2 import Template
+from jinja2.sandbox import SandboxedEnvironment
 
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
@@ -79,7 +79,8 @@ async def llm_rag_query_generator(
     else:
         messages = [interleaved_content_as_str(content)]
 
-    template = Template(config.template)
+    sandbox_env = SandboxedEnvironment()
+    template = sandbox_env.from_string(config.template)
     rendered_content: str = template.render({"messages": messages})
 
     model = config.model

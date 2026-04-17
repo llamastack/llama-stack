@@ -27,20 +27,16 @@ from llama_stack_api import (
     Admin,
     Api,
     Batches,
-    Benchmarks,
-    BenchmarksProtocolPrivate,
     Connectors,
     Conversations,
-    DatasetIO,
-    Datasets,
-    DatasetsProtocolPrivate,
-    Eval,
     ExternalApiSpec,
     FileProcessors,
     Files,
     Inference,
     InferenceProvider,
     Inspect,
+    Interactions,
+    Messages,
     Models,
     ModelsProtocolPrivate,
     Prompts,
@@ -49,9 +45,6 @@ from llama_stack_api import (
     RemoteProviderSpec,
     Responses,
     Safety,
-    Scoring,
-    ScoringFunctions,
-    ScoringFunctionsProtocolPrivate,
     Shields,
     ShieldsProtocolPrivate,
     ToolGroups,
@@ -94,12 +87,6 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Api.models: Models,
         Api.safety: Safety,
         Api.shields: Shields,
-        Api.datasetio: DatasetIO,
-        Api.datasets: Datasets,
-        Api.scoring: Scoring,
-        Api.scoring_functions: ScoringFunctions,
-        Api.eval: Eval,
-        Api.benchmarks: Benchmarks,
         Api.tool_groups: ToolGroups,
         Api.tool_runtime: ToolRuntime,
         Api.files: Files,
@@ -107,6 +94,8 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Api.conversations: Conversations,
         Api.file_processors: FileProcessors,
         Api.connectors: Connectors,
+        Api.messages: Messages,
+        Api.interactions: Interactions,
     }
 
     if external_apis:
@@ -117,7 +106,7 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
 
                 protocols[api] = api_class
             except (ImportError, AttributeError):
-                logger.exception(f"Failed to load external API {api_spec.name}")
+                logger.exception("Failed to load external API", api_name=api_spec.name)
 
     return protocols
 
@@ -148,13 +137,6 @@ def additional_protocols_map() -> dict[Api, Any]:
         Api.inference: (ModelsProtocolPrivate, Models, Api.models),
         Api.tool_groups: (ToolGroupsProtocolPrivate, ToolGroups, Api.tool_groups),
         Api.safety: (ShieldsProtocolPrivate, Shields, Api.shields),
-        Api.datasetio: (DatasetsProtocolPrivate, Datasets, Api.datasets),
-        Api.scoring: (
-            ScoringFunctionsProtocolPrivate,
-            ScoringFunctions,
-            Api.scoring_functions,
-        ),
-        Api.eval: (BenchmarksProtocolPrivate, Benchmarks, Api.benchmarks),
     }
 
 
@@ -260,7 +242,7 @@ def validate_and_prepare_providers(
         specs = {}
         for provider in providers:
             if not provider.provider_id or provider.provider_id == "__disabled__":
-                logger.debug(f"Provider `{provider.provider_type}` for API `{api}` is disabled")
+                logger.debug("Provider is disabled", provider_type=provider.provider_type, api=str(api))
                 continue
 
             validate_provider(provider, api, provider_registry)
@@ -286,7 +268,10 @@ def validate_provider(provider: Provider, api: Api, provider_registry: ProviderR
         raise InvalidProviderError(p.deprecation_error)
     elif p.deprecation_warning:
         logger.warning(
-            f"Provider `{provider.provider_type}` for API `{api}` is deprecated and will be removed in a future release: {p.deprecation_warning}",
+            "Provider is deprecated and will be removed in a future release",
+            provider_type=provider.provider_type,
+            api=str(api),
+            deprecation=p.deprecation_warning,
         )
 
 
@@ -298,9 +283,9 @@ def sort_providers_by_deps(
         {k: list(v.values()) for k, v in providers_with_specs.items()}
     )
 
-    logger.debug(f"Resolved {len(sorted_providers)} providers")
+    logger.debug("Resolved providers", count=len(sorted_providers))
     for api_str, provider in sorted_providers:
-        logger.debug(f" {api_str} => {provider.provider_id}")
+        logger.debug("Provider mapping", api=api_str, provider_id=provider.provider_id)
     return sorted_providers
 
 
@@ -422,7 +407,7 @@ async def instantiate_provider(
     if not hasattr(provider_spec, "module") or provider_spec.module is None:
         raise AttributeError(f"ProviderSpec of type {type(provider_spec)} does not have a 'module' attribute")
 
-    logger.debug(f"Instantiating provider {provider.provider_id} from {provider_spec.module}")
+    logger.debug("Instantiating provider", provider_id=provider.provider_id, module=provider_spec.module)
     module = importlib.import_module(provider_spec.module)
     args = []
     if isinstance(provider_spec, RemoteProviderSpec):
@@ -516,7 +501,9 @@ def check_protocol_compliance(obj: Any, protocol: Any) -> None:
                 obj_params = set(obj_sig.parameters)
                 obj_params.discard("self")
                 if not (proto_params <= obj_params):
-                    logger.error(f"Method {name} incompatible proto: {proto_params} vs. obj: {obj_params}")
+                    logger.error(
+                        "Method signature incompatible", method=name, proto_params=proto_params, obj_params=obj_params
+                    )
                     missing_methods.append((name, "signature_mismatch"))
                 else:
                     # Check if the method has a concrete implementation (not just a protocol stub)

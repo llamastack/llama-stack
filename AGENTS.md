@@ -47,7 +47,10 @@ tests/
 - Good variable naming and clear code organization matters more than comments.
 - Do NOT remove existing comments unless they are factually wrong.
 - Error messages must be prefixed with "Failed to ...".
-- Use debug logging when appropriate via `from llama_stack.log import get_logger`.
+- Use structured logging via `from llama_stack.log import get_logger`. Always use
+  key-value style: `logger.info("Processing request", model=model_id, provider=provider)`
+  instead of f-strings or %-style formatting. The pre-commit hook
+  `Block f-string logging` enforces this.
 - The pre-commit hook `Ensure 'llama_stack.log' usage for logging` enforces that all
   logging uses the project's logger, not the standard library directly.
 
@@ -63,10 +66,44 @@ tests/
 ## Testing
 
 - Unit tests: `./scripts/unit-tests.sh` or `uv run pytest tests/unit/ -x --tb=short`
-- Integration tests: `./scripts/integration-tests.sh` with recording/replay system.
-  Recordings are JSON files in `tests/integration/*/recordings/`. When modifying code
-  that changes request bodies sent to providers, recordings may need to be re-recorded.
 - Run pre-commit checks: `uv run pre-commit run --all-files`
+
+### Integration Tests
+
+Integration tests use a recording/replay system. Recordings are JSON files in
+`tests/integration/*/recordings/` keyed by SHA256 hashes of HTTP request bodies.
+When modifying code that changes request bodies sent to providers, recordings may
+need to be re-recorded.
+
+Run integration tests via the CI script (same command used in GitHub Actions):
+
+```bash
+# Replay mode (default) — uses pre-recorded responses, no API keys needed
+uv run --no-sync ./scripts/integration-tests.sh \
+  --stack-config server:ci-tests --setup gpt \
+  --file tests/integration/responses/test_compact_responses.py
+
+# Re-record missing recordings (requires API keys, e.g. OPENAI_API_KEY)
+uv run --no-sync ./scripts/integration-tests.sh \
+  --stack-config server:ci-tests --setup gpt \
+  --inference-mode record-if-missing \
+  --file tests/integration/responses/test_compact_responses.py
+
+# Run a full suite
+uv run --no-sync ./scripts/integration-tests.sh \
+  --stack-config server:ci-tests --setup gpt --suite responses
+```
+
+Key flags: `--stack-config` (required), `--setup` (`gpt`, `ollama`, `vllm`),
+`--inference-mode` (`replay`, `record`, `record-if-missing`), `--file` (single file),
+`--pattern` (pytest `-k` filter), `--suite` (`base`, `responses`, `vision`).
+
+If a test fails in replay mode with "Recording not found", re-run with
+`--inference-mode record-if-missing` and commit the new recording files.
+Recording locally requires an API key for the provider under test (e.g.
+`OPENAI_API_KEY` for `--setup gpt`). If you do not have a key, repository
+maintainers can trigger the record workflow on GitHub via
+`.github/workflows/record-integration-tests.yml`.
 
 ## Provider Architecture
 

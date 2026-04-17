@@ -9,6 +9,7 @@ from typing import Any
 
 from llama_stack.core.datatypes import (
     BuildProvider,
+    ModelInput,
     Provider,
     ProviderSpec,
     QualifiedModel,
@@ -152,17 +153,9 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::llama-guard"),
             BuildProvider(provider_type="inline::code-scanner"),
         ],
+        "interactions": [BuildProvider(provider_type="inline::builtin")],
+        "messages": [BuildProvider(provider_type="inline::builtin")],
         "responses": [BuildProvider(provider_type="inline::builtin")],
-        "eval": [BuildProvider(provider_type="inline::builtin")],
-        "datasetio": [
-            BuildProvider(provider_type="remote::huggingface"),
-            BuildProvider(provider_type="inline::localfs"),
-        ],
-        "scoring": [
-            BuildProvider(provider_type="inline::basic"),
-            BuildProvider(provider_type="inline::llm-as-judge"),
-            BuildProvider(provider_type="inline::braintrust"),
-        ],
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
@@ -301,9 +294,28 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         ],
     }
 
+    # Claude model aliases for zero-config Claude Code compatibility
+    claude_model_aliases = [
+        ModelInput(
+            model_id="claude-haiku-4-5-20251001",
+            provider_id="all",
+            provider_model_id="auto",
+        ),
+        ModelInput(
+            model_id="claude-sonnet-4-5-20250514",
+            provider_id="all",
+            provider_model_id="auto",
+        ),
+        ModelInput(
+            model_id="claude-opus-4-6-20260314",
+            provider_id="all",
+            provider_model_id="auto",
+        ),
+    ]
+
     base_run_settings = RunConfigSettings(
         provider_overrides=default_overrides,
-        default_models=[],
+        default_models=claude_model_aliases,
         default_shields=default_shields,
         default_connectors=[],
         vector_stores_config=VectorStoresConfig(
@@ -407,6 +419,18 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             "AZURE_API_TYPE": (
                 "azure",
                 "Azure API Type",
+            ),
+            "INFINISPAN_URL": (
+                "http://localhost:11222",
+                "Infinispan server URL",
+            ),
+            "INFINISPAN_USERNAME": (
+                "admin",
+                "Infinispan authentication username",
+            ),
+            "INFINISPAN_PASSWORD": (
+                "",
+                "Infinispan authentication password",
             ),
         },
     )

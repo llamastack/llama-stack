@@ -4893,7 +4893,7 @@ def test_openai_vector_store_file_batch_create_and_retrieve(
     )
 
     assert batch is not None
-    assert batch.object == "vector_store.file_batch"
+    assert batch.object == "vector_store.files_batch"
     assert batch.vector_store_id == vector_store.id
     assert batch.status in ["in_progress", "completed"]
     assert batch.file_counts.total == len(file_ids)
@@ -4917,7 +4917,7 @@ def test_openai_vector_store_file_batch_create_and_retrieve(
     assert retrieved_batch is not None
     assert retrieved_batch.id == batch.id
     assert retrieved_batch.vector_store_id == vector_store.id
-    assert retrieved_batch.object == "vector_store.file_batch"
+    assert retrieved_batch.object == "vector_store.files_batch"
     assert retrieved_batch.file_counts.total == len(file_ids)
     assert retrieved_batch.status == "completed"  # Should be completed after processing
 
@@ -5063,7 +5063,7 @@ def test_openai_vector_store_file_batch_cancel(
         assert cancelled_batch.id == batch.id
         assert cancelled_batch.vector_store_id == vector_store.id
         assert cancelled_batch.status == "cancelled"
-        assert cancelled_batch.object == "vector_store.file_batch"
+        assert cancelled_batch.object == "vector_store.files_batch"
     except Exception:
         # If cancellation fails (e.g., batch completed too quickly),
         # verify the batch reached completion instead

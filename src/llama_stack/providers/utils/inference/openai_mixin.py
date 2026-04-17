@@ -18,8 +18,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.http_client import (
-    _build_network_client_kwargs,
     _merge_network_config_into_client,
+    build_network_client_kwargs,
 )
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.providers.utils.inference.openai_compat import (
@@ -227,7 +227,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             raise ValueError(message)
 
         extra_params = self.get_extra_client_params()
-        network_kwargs = _build_network_client_kwargs(self.config.network)
+        network_kwargs = build_network_client_kwargs(self.config.network)
 
         # Handle http_client creation/merging:
         # - If get_extra_client_params() provides an http_client (e.g., OCI with custom auth),
@@ -494,7 +494,10 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         should_validate = bool(model.model_validation)
 
         if not should_validate:
-            logger.debug(f"Skipping model availability check for {model.provider_model_id} (model_validation=false)")
+            logger.debug(
+                "Skipping model availability check for (model_validation=false)",
+                provider_model_id=model.provider_model_id,
+            )
             return model
 
         if not await self.check_model_availability(model.provider_model_id):
@@ -516,13 +519,15 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
         api_key = self._get_api_key_from_config_or_provider_data()
         if not api_key:
-            logger.debug(f"{self.__class__.__name__}.list_provider_model_ids() disabled because API key not provided")
+            logger.debug(
+                "list_provider_model_ids() disabled because API key not provided", provider=self.__class__.__name__
+            )
             return None
 
         try:
             iterable = await self.list_provider_model_ids()
         except Exception as e:
-            logger.error(f"{self.__class__.__name__}.list_provider_model_ids() failed with: {e}")
+            logger.error("list_provider_model_ids() failed", provider=self.__class__.__name__, error=str(e))
             raise
         if not hasattr(iterable, "__iter__"):
             raise TypeError(
@@ -531,13 +536,17 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             )
 
         provider_models_ids = list(iterable)
-        logger.info(f"{self.__class__.__name__}.list_provider_model_ids() returned {len(provider_models_ids)} models")
+        logger.info(
+            "list_provider_model_ids() returned models",
+            provider=self.__class__.__name__,
+            count=len(provider_models_ids),
+        )
 
         for provider_model_id in provider_models_ids:
             if not isinstance(provider_model_id, str):
                 raise ValueError(f"Model ID {provider_model_id} from list_provider_model_ids() is not a string")
             if self.config.allowed_models is not None and provider_model_id not in self.config.allowed_models:
-                logger.info(f"Skipping model {provider_model_id} as it is not in the allowed models list")
+                logger.info("Skipping model not in allowed models list", model=provider_model_id)
                 continue
             model = self.construct_model_from_identifier(provider_model_id)
             self._model_cache[provider_model_id] = model

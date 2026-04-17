@@ -65,7 +65,29 @@ log = get_logger(name=__name__, category="providers::utils")
 
 @cache
 def _get_encoding(name: str) -> tiktoken.Encoding:
-    return tiktoken.get_encoding(name)
+    try:
+        return tiktoken.get_encoding(name)
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to load tiktoken encoding '{name}'. "
+            "In air-gapped or network-restricted environments, the encoding must be pre-cached "
+            "at image build time. Set TIKTOKEN_CACHE_DIR to a directory containing the cached "
+            f"encoding file, or ensure the container image was built with the encoding pre-cached. "
+            f"Original error: {e}"
+        ) from e
+
+
+def validate_tiktoken_encoding(name: str = "cl100k_base") -> None:
+    """Validate that the tiktoken encoding is available.
+
+    Call this during provider initialization so a misconfigured environment
+    fails fast with a clear operator-facing message to end users on their first vector store file operation.
+
+    Raises:
+        RuntimeError: if the encoding cannot be loaded (e.g. air-gapped env
+            without a pre-cached encoding file).
+    """
+    _get_encoding(name)
 
 
 # Constants for reranker types
@@ -264,7 +286,6 @@ class VectorStoreWithIndex:
     vector_store: VectorStore
     index: EmbeddingIndex
     inference_api: Inference
-    file_processor_api: Any = None
     vector_stores_config: VectorStoresConfig | None = None
 
     async def insert_chunks(

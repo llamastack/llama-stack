@@ -12,7 +12,7 @@ from llama_stack.cli.subcommand import Subcommand
 class StackListApis(Subcommand):
     """CLI subcommand to list all APIs in the Llama Stack implementation."""
 
-    def __init__(self, subparsers: argparse._SubParsersAction):
+    def __init__(self, subparsers: argparse._SubParsersAction) -> None:
         super().__init__()
         self.parser = subparsers.add_parser(
             "list-apis",
@@ -23,7 +23,7 @@ class StackListApis(Subcommand):
         self._add_arguments()
         self.parser.set_defaults(func=self._run_apis_list_cmd)
 
-    def _add_arguments(self):
+    def _add_arguments(self) -> None:
         pass
 
     def _run_apis_list_cmd(self, args: argparse.Namespace) -> None:

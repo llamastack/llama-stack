@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, urljoin, urlparse
 import httpx
 import jwt
 from pydantic import BaseModel, Field
+from starlette.types import Scope
 
 from llama_stack.core.datatypes import (
     AuthenticationConfig,
@@ -19,6 +20,7 @@ from llama_stack.core.datatypes import (
     GitHubTokenAuthConfig,
     KubernetesAuthProviderConfig,
     OAuth2TokenAuthConfig,
+    UpstreamHeaderAuthConfig,
     User,
 )
 from llama_stack.log import get_logger
@@ -59,22 +61,31 @@ class AuthRequest(BaseModel):
 class AuthProvider(ABC):
     """Abstract base class for authentication providers."""
 
+    @property
+    def requires_http_bearer(self) -> bool:
+        """Whether this provider requires a Bearer token from the Authorization header.
+
+        Providers that extract identity from other sources (e.g. gateway-injected
+        headers) should override this to return False.
+        """
+        return True
+
     @abstractmethod
-    async def validate_token(self, token: str, scope: dict | None = None) -> User:
+    async def validate_token(self, token: str, scope: Scope | None = None) -> User:
         """Validate a token and return access attributes."""
         pass
 
     @abstractmethod
-    async def close(self):
+    async def close(self) -> None:
         """Clean up any resources."""
         pass
 
-    def get_auth_error_message(self, scope: dict | None = None) -> str:
+    def get_auth_error_message(self, scope: Scope | None = None) -> str:
         """Return provider-specific authentication error message."""
         return "Authentication required"
 
 
-def get_attributes_from_claims(claims: dict[str, str], mapping: dict[str, str]) -> dict[str, list[str]]:
+def get_attributes_from_claims(claims: dict[str, Any], mapping: dict[str, str]) -> dict[str, list[str]]:
     """Extract user attributes from token claims using the configured claims-to-attributes mapping.
 
     Args:
@@ -125,11 +136,11 @@ class OAuth2TokenAuthProvider(AuthProvider):
     This should be the standard authentication provider for most use cases.
     """
 
-    def __init__(self, config: OAuth2TokenAuthConfig):
+    def __init__(self, config: OAuth2TokenAuthConfig) -> None:
         self.config = config
         self._jwks_client: jwt.PyJWKClient | None = None
 
-    async def validate_token(self, token: str, scope: dict | None = None) -> User:
+    async def validate_token(self, token: str, scope: Scope | None = None) -> User:
         if self.config.jwks:
             return await self.validate_jwt_token(token, scope)
         if self.config.introspection:
@@ -174,7 +185,7 @@ class OAuth2TokenAuthProvider(AuthProvider):
             self._jwks_client = jwt.PyJWKClient(self.config.jwks.uri, **jwks_kwargs)
         return self._jwks_client
 
-    async def validate_jwt_token(self, token: str, scope: dict | None = None) -> User:
+    async def validate_jwt_token(self, token: str, scope: Scope | None = None) -> User:
         """Validate a token using the JWT token."""
         try:
             jwks_client: jwt.PyJWKClient = self._get_jwks_client()
@@ -202,7 +213,7 @@ class OAuth2TokenAuthProvider(AuthProvider):
             attributes=access_attributes,
         )
 
-    async def introspect_token(self, token: str, scope: dict | None = None) -> User:
+    async def introspect_token(self, token: str, scope: Scope | None = None) -> User:
         """Validate a token using token introspection as defined by RFC 7662."""
         form = {
             "token": token,
@@ -236,7 +247,7 @@ class OAuth2TokenAuthProvider(AuthProvider):
             async with httpx.AsyncClient(verify=ssl_ctxt) as client:
                 response = await client.post(**post_kwargs)
                 if response.status_code != httpx.codes.OK:
-                    logger.warning(f"Token introspection failed with status code: {response.status_code}")
+                    logger.warning("Token introspection failed with status code", status_code=response.status_code)
                     raise ValueError(f"Token introspection failed: {response.status_code}")
 
                 fields = response.json()
@@ -258,10 +269,10 @@ class OAuth2TokenAuthProvider(AuthProvider):
             logger.exception("Error during token introspection")
             raise ValueError("Token introspection error") from e
 
-    async def close(self):
+    async def close(self) -> None:
         pass
 
-    def get_auth_error_message(self, scope: dict | None = None) -> str:
+    def get_auth_error_message(self, scope: Scope | None = None) -> str:
         """Return OAuth2-specific authentication error message."""
         if self.config.issuer:
             return f"Authentication required. Please provide a valid OAuth2 Bearer token from {self.config.issuer}"
@@ -276,11 +287,11 @@ class OAuth2TokenAuthProvider(AuthProvider):
 class CustomAuthProvider(AuthProvider):
     """Custom authentication provider that uses an external endpoint."""
 
-    def __init__(self, config: CustomAuthConfig):
+    def __init__(self, config: CustomAuthConfig) -> None:
         self.config = config
-        self._client = None
+        self._client: httpx.AsyncClient | None = None
 
-    async def validate_token(self, token: str, scope: dict | None = None) -> User:
+    async def validate_token(self, token: str, scope: Scope | None = None) -> User:
         """Validate a token using the custom authentication endpoint."""
         if scope is None:
             scope = {}
@@ -315,7 +326,7 @@ class CustomAuthProvider(AuthProvider):
                     timeout=10.0,  # Add a reasonable timeout
                 )
                 if response.status_code != httpx.codes.OK:
-                    logger.warning(f"Authentication failed with status code: {response.status_code}")
+                    logger.warning("Authentication failed with status code", status_code=response.status_code)
                     raise ValueError(f"Authentication failed: {response.status_code}")
 
                 # Parse and validate the auth response
@@ -337,13 +348,13 @@ class CustomAuthProvider(AuthProvider):
             logger.exception("Error during authentication")
             raise ValueError("Authentication service error") from e
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the HTTP client."""
         if self._client:
             await self._client.aclose()
             self._client = None
 
-    def get_auth_error_message(self, scope: dict | None = None) -> str:
+    def get_auth_error_message(self, scope: Scope | None = None) -> str:
         """Return custom auth provider-specific authentication error message."""
         domain = urlparse(self.config.endpoint).netloc
         if domain:
@@ -360,10 +371,10 @@ class GitHubTokenAuthProvider(AuthProvider):
     them against the GitHub API to get user information.
     """
 
-    def __init__(self, config: GitHubTokenAuthConfig):
+    def __init__(self, config: GitHubTokenAuthConfig) -> None:
         self.config = config
 
-    async def validate_token(self, token: str, scope: dict | None = None) -> User:
+    async def validate_token(self, token: str, scope: Scope | None = None) -> User:
         """Validate a GitHub token by calling the GitHub API.
 
         This validates tokens issued by GitHub (personal access tokens or OAuth tokens).
@@ -371,7 +382,7 @@ class GitHubTokenAuthProvider(AuthProvider):
         try:
             user_info = await _get_github_user_info(token, self.config.github_api_base_url)
         except httpx.HTTPStatusError as e:
-            logger.warning(f"GitHub token validation failed: {e}")
+            logger.warning("GitHub token validation failed", error=str(e))
             raise ValueError("GitHub token validation failed. Please check your token and try again.") from e
 
         principal = user_info["user"]["login"]
@@ -389,16 +400,16 @@ class GitHubTokenAuthProvider(AuthProvider):
             attributes=access_attributes,
         )
 
-    async def close(self):
+    async def close(self) -> None:
         """Clean up any resources."""
         pass
 
-    def get_auth_error_message(self, scope: dict | None = None) -> str:
+    def get_auth_error_message(self, scope: Scope | None = None) -> str:
         """Return GitHub-specific authentication error message."""
         return "Authentication required. Please provide a valid GitHub access token (https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) in the Authorization header (Bearer <token>)"
 
 
-async def _get_github_user_info(access_token: str, github_api_base_url: str) -> dict:
+async def _get_github_user_info(access_token: str, github_api_base_url: str) -> dict[str, Any]:
     """Fetch user info and organizations from GitHub API."""
     headers = {
         "Authorization": f"Bearer {access_token}",
@@ -423,7 +434,7 @@ class KubernetesAuthProvider(AuthProvider):
     /apis/authentication.k8s.io/v1/selfsubjectreviews endpoint to validate tokens and extract user information.
     """
 
-    def __init__(self, config: KubernetesAuthProviderConfig):
+    def __init__(self, config: KubernetesAuthProviderConfig) -> None:
         self.config = config
 
     def _httpx_verify_value(self) -> bool | str:
@@ -439,7 +450,7 @@ class KubernetesAuthProvider(AuthProvider):
             return self.config.tls_cafile.as_posix()
         return True
 
-    async def validate_token(self, token: str, scope: dict | None = None) -> User:
+    async def validate_token(self, token: str, scope: Scope | None = None) -> User:
         """Validate a token using Kubernetes SelfSubjectReview API endpoint."""
         # Build the Kubernetes SelfSubjectReview API endpoint URL
         review_api_url = urljoin(self.config.api_server_url, "/apis/authentication.k8s.io/v1/selfsubjectreviews")
@@ -462,7 +473,9 @@ class KubernetesAuthProvider(AuthProvider):
                 if response.status_code == httpx.codes.UNAUTHORIZED:
                     raise TokenValidationError("Invalid token")
                 if response.status_code != httpx.codes.CREATED:
-                    logger.warning(f"Kubernetes SelfSubjectReview API failed with status code: {response.status_code}")
+                    logger.warning(
+                        "Kubernetes SelfSubjectReview API failed with status code", status_code=response.status_code
+                    )
                     raise TokenValidationError(f"Token validation failed: {response.status_code}")
 
                 review_response = response.json()
@@ -491,12 +504,76 @@ class KubernetesAuthProvider(AuthProvider):
             logger.warning("Kubernetes SelfSubjectReview API request timed out")
             raise ValueError("Token validation timeout") from None
         except Exception as e:
-            logger.warning(f"Error during token validation: {str(e)}")
+            logger.warning("Error during token validation", error=str(e))
             raise ValueError(f"Token validation error: {str(e)}") from e
 
-    async def close(self):
+    async def close(self) -> None:
         """Close any resources."""
         pass
+
+
+class UpstreamHeaderAuthProvider(AuthProvider):
+    """Authentication provider that extracts identity from upstream gateway headers.
+
+    Used when an upstream gateway (Authorino, Istio, or any reverse proxy) handles
+    authentication and injects user identity into request headers. This provider
+    trusts the headers and performs no token validation or outbound calls.
+    """
+
+    def __init__(self, config: UpstreamHeaderAuthConfig) -> None:
+        self.config = config
+
+    @property
+    def requires_http_bearer(self) -> bool:
+        return False
+
+    async def validate_token(self, token: str, scope: Scope | None = None) -> User:
+        if scope is None:
+            raise ValueError("Missing required authentication header: " + self.config.principal_header)
+
+        headers = dict(scope.get("headers", []))
+
+        # HTTP headers are case-insensitive; ASGI stores them as lowercase bytes
+        principal_key = self.config.principal_header.lower().encode()
+        principal_value = headers.get(principal_key)
+
+        if not principal_value:
+            raise ValueError("Missing required authentication header: " + self.config.principal_header)
+
+        principal = principal_value.decode()
+
+        attributes: dict[str, list[str]] | None = None
+        if self.config.attributes_header:
+            attributes_key = self.config.attributes_header.lower().encode()
+            attributes_value = headers.get(attributes_key)
+            if attributes_value:
+                import json
+
+                try:
+                    parsed = json.loads(attributes_value.decode())
+                except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                    raise ValueError("Failed to parse authentication attributes header: invalid JSON") from e
+
+                if not isinstance(parsed, dict):
+                    raise ValueError("Failed to parse authentication attributes header: expected JSON object")
+
+                # Normalize values to list[str] to match the User.attributes type
+                attributes = {}
+                for k, v in parsed.items():
+                    if isinstance(v, list):
+                        attributes[k] = [str(item) for item in v]
+                    elif isinstance(v, str):
+                        attributes[k] = [v]
+                    else:
+                        attributes[k] = [str(v)]
+
+        return User(principal=principal, attributes=attributes)
+
+    async def close(self) -> None:
+        pass
+
+    def get_auth_error_message(self, scope: Scope | None = None) -> str:
+        return f"Authentication required. Upstream gateway must set the {self.config.principal_header} header"
 
 
 def create_auth_provider(config: AuthenticationConfig) -> AuthProvider:
@@ -511,5 +588,7 @@ def create_auth_provider(config: AuthenticationConfig) -> AuthProvider:
         return GitHubTokenAuthProvider(provider_config)
     elif isinstance(provider_config, KubernetesAuthProviderConfig):
         return KubernetesAuthProvider(provider_config)
+    elif isinstance(provider_config, UpstreamHeaderAuthConfig):
+        return UpstreamHeaderAuthProvider(provider_config)
     else:
         raise ValueError(f"Unknown authentication provider config type: {type(provider_config)}")

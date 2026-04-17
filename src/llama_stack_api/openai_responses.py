@@ -367,6 +367,41 @@ class OpenAIResponseMCPApprovalResponse(BaseModel):
     reason: str | None = None
 
 
+@json_schema_type
+class OpenAIResponseOutputMessageReasoningSummary(BaseModel):
+    """A summary of reasoning output from the model."""
+
+    text: str = Field(description="The summary text of the reasoning output.")
+    type: Literal["summary_text"] = Field(
+        default="summary_text", description="The type identifier, always 'summary_text'."
+    )
+
+
+@json_schema_type
+class OpenAIResponseOutputMessageReasoningContent(BaseModel):
+    """Reasoning text from the model."""
+
+    text: str = Field(description="The reasoning text content from the model.")
+    type: Literal["reasoning_text"] = Field(
+        default="reasoning_text", description="The type identifier, always 'reasoning_text'."
+    )
+
+
+@json_schema_type
+class OpenAIResponseOutputMessageReasoningItem(BaseModel):
+    """Reasoning output from the model, representing the model's thinking process."""
+
+    id: str = Field(description="Unique identifier for the reasoning output item.")
+    summary: list[OpenAIResponseOutputMessageReasoningSummary] = Field(description="Summary of the reasoning output.")
+    type: Literal["reasoning"] = Field(default="reasoning", description="The type identifier, always 'reasoning'.")
+    content: list[OpenAIResponseOutputMessageReasoningContent] | None = Field(
+        default=None, description="The reasoning content from the model."
+    )
+    status: Literal["in_progress", "completed", "incomplete"] | None = Field(
+        default=None, description="The status of the reasoning output."
+    )
+
+
 OpenAIResponseOutput = Annotated[
     OpenAIResponseMessage
     | OpenAIResponseOutputMessageWebSearchToolCall
@@ -374,7 +409,8 @@ OpenAIResponseOutput = Annotated[
     | OpenAIResponseOutputMessageFunctionToolCall
     | OpenAIResponseOutputMessageMCPCall
     | OpenAIResponseOutputMessageMCPListTools
-    | OpenAIResponseMCPApprovalRequest,
+    | OpenAIResponseMCPApprovalRequest
+    | OpenAIResponseOutputMessageReasoningItem,
     Field(discriminator="type"),
 ]
 register_schema(OpenAIResponseOutput, name="OpenAIResponseOutput")
@@ -406,9 +442,11 @@ class OpenAIResponseText(BaseModel):
     """Text response configuration for OpenAI responses.
 
     :param format: (Optional) Text format configuration specifying output format requirements
+    :param verbosity: (Optional) Controls response verbosity level
     """
 
     format: OpenAIResponseTextFormat | None = None
+    verbosity: Literal["low", "medium", "high"] | None = None
 
 
 @json_schema_type
@@ -422,6 +460,9 @@ class OpenAIResponseReasoning(BaseModel):
     """
 
     effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = None
+    summary: Literal["auto", "concise", "detailed"] | None = Field(
+        default=None, description="Summary mode for reasoning output. One of 'auto', 'concise', or 'detailed'."
+    )
 
 
 # Must match type Literals of OpenAIResponseInputToolWebSearch below
@@ -753,24 +794,24 @@ class OpenAIResponseObject(BaseModel):
     created_at: int
     completed_at: int | None = None
     error: OpenAIResponseError | None = None
-    frequency_penalty: float | None = None
+    frequency_penalty: float | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
     id: str
     incomplete_details: OpenAIResponseIncompleteDetails | None = None
     model: str
     object: Literal["response"] = "response"
     output: Sequence[OpenAIResponseOutput]
-    parallel_tool_calls: bool | None = True
+    parallel_tool_calls: bool | None = Field(default=True, json_schema_extra=remove_null_from_anyof)
     previous_response_id: str | None = None
     prompt_cache_key: str | None = None
     prompt: OpenAIResponsePrompt | None = None
     status: str
-    temperature: float | None = None
+    temperature: float | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
     # Default to text format to avoid breaking the loading of old responses
     # before the field was added. New responses will have this set always.
     text: OpenAIResponseText = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))
-    top_p: float | None = None
-    top_logprobs: int | None = None
-    tools: Sequence[OpenAIResponseTool] | None = None
+    top_p: float | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
+    top_logprobs: int | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
+    tools: Sequence[OpenAIResponseTool] | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
     tool_choice: OpenAIResponseInputToolChoice | None = None
     truncation: str | None = None
     usage: OpenAIResponseUsage | None = None
@@ -779,9 +820,9 @@ class OpenAIResponseObject(BaseModel):
     reasoning: OpenAIResponseReasoning | None = None
     max_output_tokens: int | None = None
     safety_identifier: str | None = None
-    service_tier: str | None = None
+    service_tier: str | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
     metadata: dict[str, str] | None = None
-    presence_penalty: float | None = None
+    presence_penalty: float | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
     store: bool
 
 
@@ -1487,11 +1528,31 @@ class OpenAIResponseInputFunctionToolCallOutput(BaseModel):
     status: str = Field(default="completed")
 
 
+@json_schema_type
+class OpenAIResponseCompaction(BaseModel):
+    """A compaction item that summarizes prior conversation context.
+
+    :param type: Always "compaction"
+    :param encrypted_content: Compacted summary of prior conversation (plaintext in Llama Stack)
+    :param id: Unique identifier for this compaction item
+    """
+
+    type: Literal["compaction"] = "compaction"
+    encrypted_content: str
+    id: str | None = None
+
+
 OpenAIResponseInput = Annotated[
     # Responses API allows output messages to be passed in as input
+    # OpenAIResponseMessage appears in both OpenAIResponseOutput (discriminated by type="message")
+    # AND as a standalone fallback below. The standalone entry is required because inputs without
+    # an explicit "type" field (e.g. {"role": "user", "content": "..."}) fail the discriminator
+    # check in OpenAIResponseOutput. The left_to_right union mode tries the discriminated union
+    # first, then falls back to matching OpenAIResponseMessage directly.
     OpenAIResponseOutput
     | OpenAIResponseInputFunctionToolCallOutput
     | OpenAIResponseMCPApprovalResponse
+    | OpenAIResponseCompaction
     | OpenAIResponseMessage,
     Field(union_mode="left_to_right"),
 ]
@@ -1508,6 +1569,24 @@ class ListOpenAIResponseInputItem(BaseModel):
 
     data: Sequence[OpenAIResponseInput]
     object: Literal["list"] = "list"
+
+
+@json_schema_type
+class OpenAICompactedResponse(BaseModel):
+    """Response from compacting a conversation.
+
+    :param id: Unique identifier for the compacted response
+    :param created_at: Unix timestamp of when the compaction was created
+    :param object: Object type, always "response.compaction"
+    :param output: Compacted output items (user messages + compaction item)
+    :param usage: Token usage information
+    """
+
+    id: str
+    created_at: int
+    object: Literal["response.compaction"] = "response.compaction"
+    output: Sequence[OpenAIResponseInput]
+    usage: OpenAIResponseUsage
 
 
 @json_schema_type

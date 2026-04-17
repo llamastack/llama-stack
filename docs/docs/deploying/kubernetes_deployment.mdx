@@ -176,7 +176,7 @@ EOF
 - `server.storage.size`: Size of the persistent volume for model and data storage
 - `server.storage.mountPath`: Where to mount the storage in the container
 
-**Note:** For a complete list of supported distributions, see [distributions.json](https://github.com/llamastack/llama-stack-k8s-operator/blob/main/distributions.json) in the operator repository. To use a custom or non-supported distribution, set the `server.distribution.image` field with your container image instead of  `server.distribution.name`.
+**Note:** For a complete list of supported distributions, see [distributions.json](https://github.com/llamastack/llama-stack-k8s-operator/blob/main/distributions.json) in the operator repository. Pre-built container images are available on [Docker Hub](https://hub.docker.com/u/llamastack) (e.g., `llamastack/distribution-starter`, `llamastack/distribution-postgres-demo`, `llamastack/distribution-dell`). To use a custom or non-supported distribution, set the `server.distribution.image` field with your container image instead of `server.distribution.name`.
 
 The operator automatically creates:
 - A Deployment for the Llama Stack server

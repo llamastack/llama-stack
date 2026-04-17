@@ -38,6 +38,50 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
 
     listed_providers: set[str] = set()
 
+    async def _resolve_auto_model(self, provider_id: str, model_type: ModelType) -> str:
+        """Resolve provider_model_id="auto" to an actual model from the provider.
+
+        Queries the provider's list_models() to get truly available models,
+        filters by model_type, and returns the first matching model.
+
+        Args:
+            provider_id: The provider to query for models
+            model_type: The type of model to filter for (llm, embedding, rerank)
+
+        Returns:
+            The provider_model_id of a model that matches the criteria
+
+        Raises:
+            ValueError: If no suitable model is found for the provider
+        """
+        if provider_id not in self.impls_by_provider_id:
+            raise ValueError(f"Provider '{provider_id}' not found in routing table")
+
+        provider = self.impls_by_provider_id[provider_id]
+
+        try:
+            models = await provider.list_models()
+        except Exception as e:
+            raise ValueError(
+                f"Failed to list models from provider '{provider_id}' for auto model resolution: {e}"
+            ) from e
+
+        if not models:
+            raise ValueError(f"Provider '{provider_id}' returned no models for auto resolution")
+
+        # Filter by model_type
+        matching_models = [m for m in models if m.model_type == model_type]
+
+        if not matching_models:
+            raise ValueError(f"No {model_type} models found in provider '{provider_id}' for auto model resolution")
+
+        # Use the first matching model
+        # In the future, we could enhance this to:
+        # - Prefer recently-used models (likely cached/warm)
+        # - Validate availability with a lightweight health check
+        selected_model = matching_models[0]
+        return selected_model.provider_resource_id
+
     async def refresh(self) -> None:
         for provider_id, provider in self.impls_by_provider_id.items():
             refresh = await provider.should_refresh_models()
@@ -49,11 +93,10 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                 models = await provider.list_models()
             except Exception as e:
                 if provider_id not in self.listed_providers:
-                    # Mark provider as listed to prevent repeated refresh attempts
                     self.listed_providers.add(provider_id)
-                    logger.warning(f"Model refresh skipped for provider {provider_id}")
+                    logger.warning("Model refresh skipped", provider_id=provider_id)
                 else:
-                    logger.warning(f"Model refresh failed for provider {provider_id}: {e}")
+                    logger.warning("Model refresh failed", provider_id=provider_id, error=str(e))
                 continue
 
             self.listed_providers.add(provider_id)
@@ -125,15 +168,21 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                         dynamic_models.append(model)
                     else:
                         logger.debug(
-                            f"Access denied to dynamic model '{model.identifier}' for user {user.principal if user else 'anonymous'}"
+                            "Access denied to dynamic model",
+                            model=model.identifier,
+                            user=user.principal if user else "anonymous",
                         )
 
                 logger.debug(
-                    f"Fetched {len(dynamic_models)} accessible models from provider {provider_id} using provider_data"
+                    "Fetched accessible models from provider using provider_data",
+                    count=len(dynamic_models),
+                    provider_id=provider_id,
                 )
 
             except Exception as e:
-                logger.debug(f"Failed to list models from provider {provider_id} with provider_data: {e}")
+                logger.debug(
+                    "Failed to list models from provider with provider_data", provider_id=provider_id, error=str(e)
+                )
                 continue
 
         return dynamic_models
@@ -250,7 +299,30 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         if "embedding_dimension" not in metadata and model_type == ModelType.embedding:
             raise ValueError("Embedding model must have an embedding dimension in its metadata")
 
-        identifier = f"{provider_id}/{provider_model_id}"
+        # Resolve provider_model_id="auto" to an actual model from the provider
+        if provider_model_id == "auto":
+            provider_model_id = await self._resolve_auto_model(provider_id, model_type)
+            logger.info(
+                "Resolved auto model alias",
+                model_id=model_id,
+                provider_id=provider_id,
+                resolved_provider_model_id=provider_model_id,
+            )
+
+        # Check if this is an unprefixed alias (from provider_id="all" expansion)
+        # If so, use model_id directly as identifier without provider prefix
+        is_unprefixed = metadata and metadata.get("_unprefixed_alias", False)
+        if is_unprefixed:
+            identifier = model_id
+            # Remove the internal marker from metadata before storing
+            metadata = {k: v for k, v in metadata.items() if k != "_unprefixed_alias"}
+        else:
+            # Avoid double-prefixing if model_id already contains the provider prefix
+            if model_id.startswith(f"{provider_id}/"):
+                identifier = model_id
+            else:
+                identifier = f"{provider_id}/{model_id}"
+
         model = ModelWithOwner(
             identifier=identifier,
             provider_resource_id=provider_model_id,
@@ -301,18 +373,26 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                 model_ids[model.provider_resource_id] = model.identifier
                 continue
 
-            logger.debug(f"unregistering model {model.identifier}")
+            logger.debug("Unregistering model", model=model.identifier)
             await self.unregister_object(model)
 
         for model in models:
-            if model.provider_resource_id in model_ids:
-                # avoid overwriting a non-provider-registered model entry
-                continue
-
+            # Determine what the identifier will be for this provider-listed model
             if model.identifier == model.provider_resource_id:
                 model.identifier = f"{provider_id}/{model.provider_resource_id}"
 
-            logger.debug(f"registering model {model.identifier} ({model.provider_resource_id})")
+            # Only skip if a user-registered model already has this exact identifier
+            # (Different identifiers with the same provider_resource_id can coexist,
+            # e.g., "claude-haiku-..." and "vllm/Qwen3-0.6B" both pointing to the same underlying model)
+            if model.provider_resource_id in model_ids and model.identifier == model_ids[model.provider_resource_id]:
+                logger.debug(
+                    "Skipping provider-listed model (user-registered alias exists)",
+                    model=model.identifier,
+                    provider_resource_id=model.provider_resource_id,
+                )
+                continue
+
+            logger.debug("Registering model", model=model.identifier, provider_resource_id=model.provider_resource_id)
             await self.register_object(
                 ModelWithOwner(
                     identifier=model.identifier,

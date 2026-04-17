@@ -16,7 +16,7 @@ from typing import Any
 import yaml
 from fastapi.openapi.utils import get_openapi
 
-from . import app, schema_collection, schema_filtering, schema_transforms, state
+from . import app, code_samples, schema_collection, schema_filtering, schema_transforms, state
 
 
 def generate_openapi_spec(output_dir: str) -> dict[str, Any]:
@@ -76,11 +76,19 @@ def generate_openapi_spec(output_dir: str) -> dict[str, Any]:
     # that FastAPI incorrectly added to GET endpoints are removed
     openapi_schema = schema_transforms._remove_request_bodies_from_get_endpoints(openapi_schema)
 
-    # Remove 'type: object' from schemas with properties (OpenAI spec conformance)
+    # Keep 'type: object' on schemas with properties (OpenAI uses it on 766/772),
+    # but strip it from the 6 specific schemas where OpenAI omits it.
     openapi_schema = schema_transforms._remove_type_object_from_openai_schemas(openapi_schema)
 
     # Extract duplicate union types to shared schema references
     openapi_schema = schema_transforms._extract_duplicate_union_types(openapi_schema)
+
+    # Add SDK code samples to API endpoints
+    openapi_schema = code_samples._add_openai_code_samples(openapi_schema)
+    openapi_schema = code_samples._add_anthropic_code_samples(openapi_schema)
+
+    # Add Google GenAI SDK code samples to Interactions API endpoints
+    openapi_schema = code_samples._add_google_code_samples(openapi_schema)
 
     # Split into stable (v1 only), experimental (v1alpha + v1beta), deprecated, and combined (stainless) specs
     # Each spec needs its own deep copy of the full schema to avoid cross-contamination

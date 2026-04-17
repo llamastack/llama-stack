@@ -52,10 +52,12 @@ def get_distribution_template() -> DistributionTemplate:
 
     # Bedrock model must be pre-registered because the recording system cannot
     # replay model-list discovery calls against the Bedrock endpoint in CI.
+    # Gate on AWS_DEFAULT_REGION (required for both bearer-token and SigV4 modes)
+    # rather than AWS_BEARER_TOKEN_BEDROCK so the model registers in OIDC/IRSA CI too.
     bedrock_model = ModelInput(
-        model_id="bedrock/openai.gpt-oss-20b",
-        provider_id="${env.AWS_BEARER_TOKEN_BEDROCK:+bedrock}",
-        provider_model_id="openai.gpt-oss-20b",
+        model_id="bedrock/openai.gpt-oss-20b-1:0",
+        provider_id="${env.AWS_DEFAULT_REGION:+bedrock}",
+        provider_model_id="openai.gpt-oss-20b-1:0",
         model_type=ModelType.llm,
     )
 

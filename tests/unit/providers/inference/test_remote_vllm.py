@@ -5,10 +5,13 @@
 # the root directory of this source tree.
 
 import asyncio
+import ssl
 import time
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
+from pydantic import SecretStr
 
 from llama_stack.core.routers.inference import InferenceRouter
 from llama_stack.core.routing_tables.models import ModelsRoutingTable
@@ -311,3 +314,183 @@ async def test_vllm_chat_completion_extra_body():
         assert "extra_body" in call_kwargs
         assert "chat_template_kwargs" in call_kwargs["extra_body"]
         assert call_kwargs["extra_body"]["chat_template_kwargs"] == {"thinking": True}
+
+
+class TestHealthTLSConfig:
+    """Tests that health() honours TLS/network configuration."""
+
+    async def test_health_uses_shared_ssl_context_by_default(self):
+        """Without network config, health() should pass shared_ssl_context as verify."""
+        config = VLLMInferenceAdapterConfig(base_url="https://vllm.example.com/v1")
+        adapter = VLLMInferenceAdapter(config=config)
+        await adapter.initialize()
+
+        kwargs = adapter._build_httpx_client_kwargs()
+        assert "verify" in kwargs
+        assert isinstance(kwargs["verify"], ssl.SSLContext)
+
+    async def test_health_uses_network_tls_verify_false(self):
+        """With network.tls.verify=False, health() should disable TLS verification."""
+        config = VLLMInferenceAdapterConfig(
+            base_url="https://vllm.example.com/v1",
+            network={"tls": {"verify": False}},
+        )
+        adapter = VLLMInferenceAdapter(config=config)
+        await adapter.initialize()
+
+        kwargs = adapter._build_httpx_client_kwargs()
+        assert kwargs["verify"] is False
+
+    async def test_health_passes_kwargs_to_httpx(self):
+        """health() should pass _build_httpx_client_kwargs() to httpx.AsyncClient."""
+        config = VLLMInferenceAdapterConfig(
+            base_url="https://vllm.example.com/v1",
+            network={"tls": {"verify": False}},
+        )
+        adapter = VLLMInferenceAdapter(config=config)
+        await adapter.initialize()
+
+        with patch("httpx.AsyncClient") as mock_client_class:
+            mock_response = MagicMock()
+            mock_response.raise_for_status.return_value = None
+            mock_client_instance = MagicMock()
+            mock_client_instance.get = AsyncMock(return_value=mock_response)
+            mock_client_class.return_value.__aenter__.return_value = mock_client_instance
+
+            await adapter.health()
+
+            mock_client_class.assert_called_once()
+            call_kwargs = mock_client_class.call_args.kwargs
+            assert call_kwargs.get("verify") is False
+
+    async def test_legacy_tls_verify_migrates_to_network(self):
+        """Legacy tls_verify=False should be migrated to network.tls.verify."""
+        config = VLLMInferenceAdapterConfig(
+            base_url="https://vllm.example.com/v1",
+            tls_verify=False,
+        )
+        adapter = VLLMInferenceAdapter(config=config)
+        await adapter.initialize()
+
+        kwargs = adapter._build_httpx_client_kwargs()
+        assert kwargs["verify"] is False
+
+
+class TestRerankTLSAndAuth:
+    """Tests that rerank() honours TLS and auth configuration."""
+
+    async def test_rerank_passes_tls_config(self):
+        """rerank() should use _build_httpx_client_kwargs() for TLS."""
+        config = VLLMInferenceAdapterConfig(
+            base_url="https://vllm.example.com/v1",
+            network={"tls": {"verify": False}},
+        )
+        adapter = VLLMInferenceAdapter(config=config)
+        await adapter.initialize()
+        adapter.get_request_provider_data = MagicMock(return_value=None)
+
+        with patch("httpx.AsyncClient") as mock_client_class:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "results": [{"index": 0, "relevance_score": 0.9}],
+            }
+            mock_client_instance = MagicMock()
+            mock_client_instance.post = AsyncMock(return_value=mock_response)
+            mock_client_class.return_value.__aenter__.return_value = mock_client_instance
+
+            from llama_stack_api.inference import RerankRequest
+
+            request = RerankRequest(model="rerank-model", query="test", items=["doc1"])
+            await adapter.rerank(request)
+
+            mock_client_class.assert_called_once()
+            call_kwargs = mock_client_class.call_args.kwargs
+            assert call_kwargs.get("verify") is False
+
+    async def test_rerank_sends_auth_header(self):
+        """rerank() should include Authorization header when api_token is configured."""
+        config = VLLMInferenceAdapterConfig(
+            base_url="https://vllm.example.com/v1",
+            api_token="my-secret-token",
+        )
+        adapter = VLLMInferenceAdapter(config=config)
+        await adapter.initialize()
+        adapter.get_request_provider_data = MagicMock(return_value=None)
+
+        with patch("httpx.AsyncClient") as mock_client_class:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "results": [{"index": 0, "relevance_score": 0.9}],
+            }
+            mock_client_instance = MagicMock()
+            mock_client_instance.post = AsyncMock(return_value=mock_response)
+            mock_client_class.return_value.__aenter__.return_value = mock_client_instance
+
+            from llama_stack_api.inference import RerankRequest
+
+            request = RerankRequest(model="rerank-model", query="test", items=["doc1"])
+            await adapter.rerank(request)
+
+            call_args = mock_client_instance.post.call_args
+            headers = call_args.kwargs.get("headers", {})
+            assert headers.get("Authorization") == "Bearer my-secret-token"
+
+    async def test_rerank_no_auth_header_without_token(self):
+        """rerank() should not include Authorization header when no api_token is set."""
+        config = VLLMInferenceAdapterConfig(base_url="https://vllm.example.com/v1")
+        adapter = VLLMInferenceAdapter(config=config)
+        await adapter.initialize()
+        adapter.get_request_provider_data = MagicMock(return_value=None)
+
+        with patch("httpx.AsyncClient") as mock_client_class:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "results": [{"index": 0, "relevance_score": 0.9}],
+            }
+            mock_client_instance = MagicMock()
+            mock_client_instance.post = AsyncMock(return_value=mock_response)
+            mock_client_class.return_value.__aenter__.return_value = mock_client_instance
+
+            from llama_stack_api.inference import RerankRequest
+
+            request = RerankRequest(model="rerank-model", query="test", items=["doc1"])
+            await adapter.rerank(request)
+
+            call_args = mock_client_instance.post.call_args
+            headers = call_args.kwargs.get("headers", {})
+            assert "Authorization" not in headers
+
+    async def test_rerank_uses_provider_data_api_key(self):
+        """rerank() should use API key from x-llamastack-provider-data header over config."""
+        config = VLLMInferenceAdapterConfig(
+            base_url="https://vllm.example.com/v1",
+            api_token="config-token",
+        )
+        adapter = VLLMInferenceAdapter(config=config)
+        await adapter.initialize()
+
+        adapter.get_request_provider_data = MagicMock(
+            return_value=SimpleNamespace(vllm_api_token=SecretStr("provider-data-token"))
+        )
+
+        with patch("httpx.AsyncClient") as mock_client_class:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "results": [{"index": 0, "relevance_score": 0.9}],
+            }
+            mock_client_instance = MagicMock()
+            mock_client_instance.post = AsyncMock(return_value=mock_response)
+            mock_client_class.return_value.__aenter__.return_value = mock_client_instance
+
+            from llama_stack_api.inference import RerankRequest
+
+            request = RerankRequest(model="rerank-model", query="test", items=["doc1"])
+            await adapter.rerank(request)
+
+            call_args = mock_client_instance.post.call_args
+            headers = call_args.kwargs.get("headers", {})
+            assert headers.get("Authorization") == "Bearer provider-data-token"

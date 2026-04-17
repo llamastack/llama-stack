@@ -6,6 +6,7 @@
 
 import time
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from starlette.types import ASGIApp, Receive, Scope, Send
 
@@ -51,12 +52,12 @@ class QuotaMiddleware:
             backend_config = _KVSTORE_BACKENDS.get(self.kv_config.backend)
             if backend_config and backend_config.type == StorageBackendType.KV_SQLITE:
                 logger.warning(
-                    "QuotaMiddleware: Using SQLite backend. Expiry/TTL is not enforced; cleanup is manual. "
-                    f"window_seconds={self.window_seconds}"
+                    "QuotaMiddleware: Using SQLite backend. Expiry/TTL is not enforced; cleanup is manual. window_seconds",
+                    window_seconds=self.window_seconds,
                 )
         return self.kv
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> Any:
         if scope["type"] == "http":
             # pick key & limit based on auth
             auth_id = scope.get("authenticated_client_id")
@@ -98,7 +99,7 @@ class QuotaMiddleware:
 
         return await self.app(scope, receive, send)
 
-    async def _send_error(self, send: Send, status: int, message: str):
+    async def _send_error(self, send: Send, status: int, message: str) -> None:
         await send(
             {
                 "type": "http.response.start",
