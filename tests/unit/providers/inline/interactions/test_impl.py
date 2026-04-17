@@ -517,7 +517,7 @@ class TestPassthroughRequest:
         built_kwargs = {"headers": {"x-custom-header": "enabled"}, "timeout": httpx.Timeout(42.0)}
         build_kwargs_mock = MagicMock(return_value=built_kwargs)
         monkeypatch.setattr(
-            "llama_stack.providers.inline.interactions.impl._build_network_client_kwargs",
+            "llama_stack.providers.inline.interactions.impl.build_network_client_kwargs",
             build_kwargs_mock,
         )
 

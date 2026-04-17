@@ -18,8 +18,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.http_client import (
-    _build_network_client_kwargs,
     _merge_network_config_into_client,
+    build_network_client_kwargs,
 )
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.providers.utils.inference.openai_compat import (
@@ -227,7 +227,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             raise ValueError(message)
 
         extra_params = self.get_extra_client_params()
-        network_kwargs = _build_network_client_kwargs(self.config.network)
+        network_kwargs = build_network_client_kwargs(self.config.network)
 
         # Handle http_client creation/merging:
         # - If get_extra_client_params() provides an http_client (e.g., OCI with custom auth),

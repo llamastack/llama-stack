@@ -30,7 +30,7 @@ def provider_from_model(client_with_models, text_model_id):
 
 def skip_if_reasoning_content_not_provided(client_with_models, text_model_id):
     provider_type = provider_from_model(client_with_models, text_model_id).provider_type
-    if provider_type in ("remote::openai", "remote::azure", "remote::watsonx", "remote::vllm"):
+    if provider_type in ("remote::openai", "remote::azure", "remote::watsonx", "remote::vllm", "remote::bedrock"):
         pytest.skip(f"{provider_type} doesn't return reasoning content.")
 
 

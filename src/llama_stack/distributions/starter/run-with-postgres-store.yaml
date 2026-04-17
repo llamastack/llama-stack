@@ -46,6 +46,8 @@ providers:
     config:
       api_key: ${env.AWS_BEARER_TOKEN_BEDROCK:=}
       region_name: ${env.AWS_DEFAULT_REGION:=us-east-2}
+      aws_role_arn: ${env.AWS_ROLE_ARN:=}
+      aws_web_identity_token_file: ${env.AWS_WEB_IDENTITY_TOKEN_FILE:=}
   - provider_id: ${env.NVIDIA_API_KEY:+nvidia}
     provider_type: remote::nvidia
     config:

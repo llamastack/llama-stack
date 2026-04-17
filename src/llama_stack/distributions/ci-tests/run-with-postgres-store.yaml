@@ -46,6 +46,8 @@ providers:
     config:
       api_key: ${env.AWS_BEARER_TOKEN_BEDROCK:=}
       region_name: ${env.AWS_DEFAULT_REGION:=us-east-2}
+      aws_role_arn: ${env.AWS_ROLE_ARN:=}
+      aws_web_identity_token_file: ${env.AWS_WEB_IDENTITY_TOKEN_FILE:=}
   - provider_id: ${env.NVIDIA_API_KEY:+nvidia}
     provider_type: remote::nvidia
     config:
@@ -291,9 +293,9 @@ registered_resources:
     provider_model_id: meta-llama/llama-3-3-70b-instruct
     model_type: llm
   - metadata: {}
-    model_id: bedrock/openai.gpt-oss-20b
-    provider_id: ${env.AWS_BEARER_TOKEN_BEDROCK:+bedrock}
-    provider_model_id: openai.gpt-oss-20b
+    model_id: bedrock/openai.gpt-oss-20b-1:0
+    provider_id: ${env.AWS_DEFAULT_REGION:+bedrock}
+    provider_model_id: openai.gpt-oss-20b-1:0
     model_type: llm
   shields:
   - shield_id: llama-guard

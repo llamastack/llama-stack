@@ -9,7 +9,8 @@ from .config import BedrockConfig
 async def get_adapter_impl(config: BedrockConfig, _deps):
     from .bedrock import BedrockInferenceAdapter
 
-    assert isinstance(config, BedrockConfig), f"Unexpected config type: {type(config)}"
+    if not isinstance(config, BedrockConfig):
+        raise TypeError(f"Unexpected config type: {type(config)}")
 
     impl = BedrockInferenceAdapter(config=config)
 
