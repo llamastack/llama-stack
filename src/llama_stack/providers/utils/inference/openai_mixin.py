@@ -524,6 +524,19 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             )
             return None
 
+        # If allowed_models is configured, use it directly without calling the API
+        # This prevents crashes when the provider doesn't support /v1/models
+        if self.config.allowed_models is not None:
+            logger.info(
+                f"{self.__class__.__name__}.list_models() using allowed_models configuration "
+                f"({len(self.config.allowed_models)} models) without calling /v1/models API"
+            )
+            for model_id in self.config.allowed_models:
+                model = self.construct_model_from_identifier(model_id)
+                self._model_cache[model_id] = model
+            return list(self._model_cache.values())
+
+        # Otherwise, fetch models from the provider's API
         try:
             iterable = await self.list_provider_model_ids()
         except Exception as e:
@@ -545,9 +558,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         for provider_model_id in provider_models_ids:
             if not isinstance(provider_model_id, str):
                 raise ValueError(f"Model ID {provider_model_id} from list_provider_model_ids() is not a string")
-            if self.config.allowed_models is not None and provider_model_id not in self.config.allowed_models:
-                logger.info("Skipping model not in allowed models list", model=provider_model_id)
-                continue
+            # No filtering here - allowed_models is handled at the start of list_models()
             model = self.construct_model_from_identifier(provider_model_id)
             self._model_cache[provider_model_id] = model
 
