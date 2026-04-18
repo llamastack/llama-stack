@@ -5032,7 +5032,7 @@ crypto = [
 
 [[package]]
 name = "pymilvus"
-version = "2.6.11"
+version = "2.6.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cachetools" },
@@ -5044,9 +5044,9 @@ dependencies = [
     { name = "requests" },
     { name = "setuptools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c9/e6/0adc3b374f5c5d1eebd4f551b455c6865c449b170b17545001b208e2b153/pymilvus-2.6.11.tar.gz", hash = "sha256:a40c10322cde25184a8c3d84993a14dfb67ad2bdcfc5dff7e68b11a79ff8f6d8", size = 1583634, upload-time = "2026-03-27T06:25:46.023Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2c/d7/c5d1381248a33975ccc864a0f980f93270ecc35354de8646c8a16443cccb/pymilvus-2.6.12.tar.gz", hash = "sha256:8323e990dc305e607fef525498eb779e42940a69e0691dde009cd02d48845f7a", size = 1584521, upload-time = "2026-04-09T07:49:11.374Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9c/1c/bccb331d71f824738f80f11e9b8b4da47973c903826355526ae4fa2b762f/pymilvus-2.6.11-py3-none-any.whl", hash = "sha256:a11e1718b15045361c71ca671b959900cb7e2faae863c896f6b7e87bf2e4d10a", size = 315252, upload-time = "2026-03-27T06:25:44.215Z" },
+    { url = "https://files.pythonhosted.org/packages/ce/5d/44b0fa94c91503381e6f12298277f84f8e7b0bb00715ab89fc273c4d681e/pymilvus-2.6.12-py3-none-any.whl", hash = "sha256:69051b8b62712f157b2b50aeb7bde7fd7cdb5940aac0122094eb3cd58bc20f0d", size = 315183, upload-time = "2026-04-09T07:49:09.013Z" },
 ]
 
 [package.optional-dependencies]
