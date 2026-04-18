@@ -474,7 +474,7 @@ class OpenAIVectorStoreMixin(ABC):
             # If either is in metadata, use metadata as source
             embedding_model = metadata.get("embedding_model")
             embedding_dimension = (
-                int(metadata["embedding_dimension"]) if metadata.get("embedding_dimension") else EMBEDDING_DIMENSION
+                int(metadata["embedding_dimension"]) if metadata.get("embedding_dimension") else None
             )
             logger.debug(
                 "Using embedding config from metadata (takes precedence over extra_body): model=, dimension",
@@ -483,7 +483,7 @@ class OpenAIVectorStoreMixin(ABC):
             )
         else:
             embedding_model = extra_body.get("embedding_model")
-            embedding_dimension = extra_body.get("embedding_dimension", EMBEDDING_DIMENSION)
+            embedding_dimension = extra_body.get("embedding_dimension")
             logger.debug(
                 "Using embedding config from extra_body: model=, dimension",
                 embedding_model=embedding_model,
@@ -499,7 +499,10 @@ class OpenAIVectorStoreMixin(ABC):
             raise ValueError("embedding_model is required")
 
         if embedding_dimension is None:
-            raise ValueError("Embedding dimension is required")
+            raise ValueError(
+                "Embedding dimension is required. Please provide 'embedding_dimension' in the request, "
+                "or ensure the request goes through the router which can look it up from model metadata."
+            )
 
         if provider_id is None:
             raise ValueError("Provider ID is required but was not provided")
