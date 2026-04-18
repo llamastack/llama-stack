@@ -473,9 +473,7 @@ class OpenAIVectorStoreMixin(ABC):
         if metadata.get("embedding_model"):
             # If either is in metadata, use metadata as source
             embedding_model = metadata.get("embedding_model")
-            embedding_dimension = (
-                int(metadata["embedding_dimension"]) if metadata.get("embedding_dimension") else None
-            )
+            embedding_dimension = int(metadata["embedding_dimension"]) if metadata.get("embedding_dimension") else None
             logger.debug(
                 "Using embedding config from metadata (takes precedence over extra_body): model=, dimension",
                 embedding_model=embedding_model,
