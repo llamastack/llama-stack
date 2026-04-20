@@ -276,8 +276,8 @@ _REGISTRY_PROVIDERS: set[str] = set(_load_provider_names().keys())
 
 _PROVIDER_NOTES: dict[str, str] = {
     "bedrock": (
-        "AWS Bedrock integration uses the OpenAI-compatible Mantle API, which only "
-        "supports GPT-OSS models (e.g. `openai.gpt-oss-20b`). Native AWS models "
+        "AWS Bedrock integration uses the OpenAI-compatible Chat Completions API, which only "
+        "supports GPT-OSS models (e.g. `openai.gpt-oss-20b-1:0`). Native AWS models "
         "(Amazon Nova, Anthropic Claude, etc.) are not yet supported. "
         "No vision model is available — image tests are skipped."
     ),
