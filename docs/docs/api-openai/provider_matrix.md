@@ -19,12 +19,12 @@ inference provider, based on integration test results.
 
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
-| azure | 114 | 114 | 0 | 82% |
-| bedrock | 33 | 33 | 0 | 24% |
-| ollama | 2 | 2 | 0 | 1% |
-| openai | 133 | 133 | 0 | 96% |
+| azure | 114 | 114 | 0 | 86% |
+| bedrock | 27 | 27 | 0 | 20% |
+| ollama | 2 | 2 | 0 | 2% |
+| openai | 133 | 133 | 0 | 100% |
 | vllm | 3 | 3 | 0 | 2% |
-| watsonx | 56 | 56 | 0 | 40% |
+| watsonx | 56 | 56 | 0 | 42% |
 
 ## Provider Details
 
@@ -33,7 +33,7 @@ Models, endpoints, and versions used during test recordings.
 | Provider | Model(s) | Endpoint | Version Info |
 |----------|----------|----------|--------------|
 | azure | gpt-4o | llama-stack-test.openai.azure.com, lls-test.openai.azure.com | openai sdk: 2.30.0 |
-| bedrock | openai.gpt-oss-20b, openai.gpt-oss-20b-1:0 | bedrock-mantle.us-east-2.api.aws, bedrock-runtime.us-west-2.amazonaws.com | openai sdk: 2.30.0, vllm server: 0.14.0rc2.dev173+g13f6630a9 |
+| bedrock | openai.gpt-oss-20b-1:0 | bedrock-runtime.us-west-2.amazonaws.com | openai sdk: 2.30.0 |
 | ollama | gpt-oss:20b | — | openai sdk: 2.5.0, vllm server: 0.9.2rc2.dev136+g0b382b53a.d20250924 |
 | openai | gpt-4o, o4-mini, text-embedding-3-small | api.openai.com | openai sdk: 2.5.0 |
 | vllm | Qwen/Qwen3-0.6B | — | openai sdk: 2.5.0, vllm server: 0.18.1rc1.dev197+g0e9358c11 |
@@ -167,13 +167,7 @@ Models, endpoints, and versions used during test recordings.
 | --- | --- | --- | --- | --- | --- | --- |
 | reasoning basic streaming | ✅ | ✅ | ⏭️ | ✅ | ✅ | ✅ |
 | reasoning multi turn passthrough | ⏭️ | ✅ | ✅ | ✅ | ✅ | ⏭️ |
-| reasoning no summary without request | ⏭️ | ✅ | ⏭️ | ⏭️ | ⏭️ | ⏭️ |
 | reasoning non streaming | ⏭️ | ✅ | ✅ | ✅ | ✅ | ⏭️ |
-| reasoning summary event ordering | ⏭️ | ✅ | ⏭️ | ⏭️ | ⏭️ | ⏭️ |
-| reasoning summary non streaming | ⏭️ | ✅ | ⏭️ | ⏭️ | ⏭️ | ⏭️ |
-| reasoning summary sequence numbers | ⏭️ | ✅ | ⏭️ | ⏭️ | ⏭️ | ⏭️ |
-| reasoning summary streaming | ⏭️ | ✅ | ⏭️ | ⏭️ | ⏭️ | ⏭️ |
-| reasoning summary usage included | ⏭️ | ✅ | ⏭️ | ⏭️ | ⏭️ | ⏭️ |
 
 ## Responses Access Control
 
