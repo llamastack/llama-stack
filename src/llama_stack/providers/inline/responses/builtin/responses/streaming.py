@@ -78,7 +78,6 @@ from llama_stack_api import (
     OpenAIResponseObjectStreamResponseOutputItemAdded,
     OpenAIResponseObjectStreamResponseOutputItemDone,
     OpenAIResponseObjectStreamResponseOutputTextDelta,
-    OpenAIResponseObjectStreamResponseReasoningSummaryTextDone,
     OpenAIResponseObjectStreamResponseReasoningTextDelta,
     OpenAIResponseObjectStreamResponseReasoningTextDone,
     OpenAIResponseObjectStreamResponseRefusalDelta,
@@ -641,31 +640,18 @@ class StreamingResponseOrchestrator:
                         summary_mode = (
                             self.reasoning.summary if self.reasoning and self.reasoning.summary else "concise"
                         )
-                        summary_text_parts: list[str] = []
                         summary_usage_list: list[OpenAIChatCompletionUsage] = []
-                        async for summary_event in summarize_reasoning(
+                        summary_text = await summarize_reasoning(
                             inference_api=self.inference_api,
                             model=self.ctx.model,
                             reasoning_text=completion_result_data.reasoning_content,
-                            reasoning_item_id=reasoning_item.id,
-                            output_index=reasoning_output_index,
                             summary_mode=summary_mode,
-                            start_sequence_number=self.sequence_number,
                             summary_usage=summary_usage_list,
-                        ):
-                            self.sequence_number = summary_event.sequence_number
-                            yield summary_event
-                            if isinstance(
-                                summary_event,
-                                OpenAIResponseObjectStreamResponseReasoningSummaryTextDone,
-                            ):
-                                summary_text_parts.append(summary_event.text)
+                        )
+                        if summary_text:
+                            reasoning_item.summary = [OpenAIResponseOutputMessageReasoningSummary(text=summary_text)]
                         for usage in summary_usage_list:
                             self._accumulate_usage(usage)
-                        if summary_text_parts:
-                            reasoning_item.summary = [
-                                OpenAIResponseOutputMessageReasoningSummary(text=t) for t in summary_text_parts
-                            ]
 
                     reasoning_item.status = "completed"
                     self.sequence_number += 1

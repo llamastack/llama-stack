@@ -151,7 +151,7 @@ def test_reasoning_multi_turn_passthrough(client_with_models, text_model_id):
 
 @pytest.mark.parametrize("summary_mode", ["concise", "detailed", "auto"])
 def test_reasoning_summary_streaming(client_with_models, text_model_id, summary_mode):
-    """Test that reasoning summary events are emitted when summary is requested in streaming mode."""
+    """Test that reasoning summary is attached to the reasoning item in streaming mode."""
 
     skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
 
@@ -169,41 +169,19 @@ def test_reasoning_summary_streaming(client_with_models, text_model_id, summary_
     validator.assert_basic_event_sequence()
     validator.assert_response_consistency()
 
-    reasoning_text_done = [c for c in chunks if c.type == "response.reasoning_text.done"]
-    assert len(reasoning_text_done) > 0, f"Expected reasoning text events before summary, got types: {event_types}"
-
-    summary_part_added = [c for c in chunks if c.type == "response.reasoning_summary_part.added"]
-    summary_text_delta = [c for c in chunks if c.type == "response.reasoning_summary_text.delta"]
-    summary_text_done = [c for c in chunks if c.type == "response.reasoning_summary_text.done"]
-    summary_part_done = [c for c in chunks if c.type == "response.reasoning_summary_part.done"]
-
-    assert len(summary_part_added) > 0, f"Expected reasoning_summary_part.added events, got types: {event_types}"
-    assert len(summary_text_delta) > 0, f"Expected reasoning_summary_text.delta events, got types: {event_types}"
-    assert len(summary_text_done) > 0, f"Expected reasoning_summary_text.done events, got types: {event_types}"
-    assert len(summary_part_done) > 0, f"Expected reasoning_summary_part.done events, got types: {event_types}"
-
-    # Each part should have matching PartAdded/TextDone/PartDone counts
-    assert len(summary_part_added) == len(summary_part_done), "PartAdded and PartDone counts should match"
-    assert len(summary_text_done) == len(summary_part_done), "TextDone and PartDone counts should match"
-
-    # Each summary part's text_done text should match its part_done text
-    for td, pd in zip(summary_text_done, summary_part_done, strict=False):
-        assert td.text == _get_attr(_get_attr(pd, "part"), "text"), "TextDone text should match PartDone part text"
-        assert len(td.text) > 0, "Summary text should not be empty"
-
-    # Verify reasoning output_item.added/done wrapping
-    reasoning_item_added = [
-        c
-        for c in chunks
-        if c.type == "response.output_item.added" and _get_attr(_get_attr(c, "item"), "type") == "reasoning"
-    ]
     reasoning_item_done = [
         c
         for c in chunks
         if c.type == "response.output_item.done" and _get_attr(_get_attr(c, "item"), "type") == "reasoning"
     ]
-    assert len(reasoning_item_added) > 0, f"Expected output_item.added for reasoning, got types: {event_types}"
     assert len(reasoning_item_done) > 0, f"Expected output_item.done for reasoning, got types: {event_types}"
+
+    item = _get_attr(reasoning_item_done[0], "item")
+    summary = _get_attr(item, "summary")
+    assert summary is not None and len(summary) > 0, "Reasoning item should have a non-empty summary"
+
+    summary_text = _get_attr(summary[0], "text", "")
+    assert len(summary_text) > 0, "Summary text should not be empty"
 
 
 def test_reasoning_summary_non_streaming(client_with_models, text_model_id):
@@ -232,16 +210,7 @@ def test_reasoning_summary_non_streaming(client_with_models, text_model_id):
 
 
 def test_reasoning_summary_event_ordering(client_with_models, text_model_id):
-    """Verify the full OpenAI-compatible reasoning summary event lifecycle:
-
-    response.output_item.added  (reasoning item)
-      response.reasoning_summary_part.added
-      response.reasoning_summary_text.delta * N
-      response.reasoning_summary_text.done
-      response.reasoning_summary_part.done
-      ... (possibly more summary parts)
-    response.output_item.done   (reasoning item)
-    """
+    """Verify that the reasoning item's OutputItemDone carries the summary and comes after OutputItemAdded."""
 
     skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
 
@@ -255,37 +224,15 @@ def test_reasoning_summary_event_ordering(client_with_models, text_model_id):
     chunks = list(stream)
     event_types = [chunk.type for chunk in chunks]
 
-    last_reasoning_done_idx = None
-    first_summary_idx = None
-    for i, t in enumerate(event_types):
-        if t == "response.reasoning_text.done":
-            last_reasoning_done_idx = i
-        if t == "response.reasoning_summary_part.added" and first_summary_idx is None:
-            first_summary_idx = i
-
-    assert last_reasoning_done_idx is not None, "Expected reasoning_text.done events"
-    assert first_summary_idx is not None, f"Expected summary events, got types: {event_types}"
-    assert first_summary_idx > last_reasoning_done_idx, "Summary events should appear after all reasoning text events"
-
-    # Verify OutputItemAdded wraps the summary events
-    output_item_added_indices = [i for i, t in enumerate(event_types) if t == "response.output_item.added"]
-    output_item_done_indices = [i for i, t in enumerate(event_types) if t == "response.output_item.done"]
-
     reasoning_item_added_idx = None
-    for idx in output_item_added_indices:
-        item = chunks[idx]
-        item_type = _get_attr(_get_attr(item, "item"), "type")
-        if item_type == "reasoning":
-            reasoning_item_added_idx = idx
-            break
-
     reasoning_item_done_idx = None
-    for idx in output_item_done_indices:
-        item = chunks[idx]
-        item_type = _get_attr(_get_attr(item, "item"), "type")
+    for i, c in enumerate(chunks):
+        item_type = _get_attr(_get_attr(c, "item"), "type")
         if item_type == "reasoning":
-            reasoning_item_done_idx = idx
-            break
+            if c.type == "response.output_item.added":
+                reasoning_item_added_idx = i
+            elif c.type == "response.output_item.done":
+                reasoning_item_done_idx = i
 
     assert reasoning_item_added_idx is not None, (
         f"Expected output_item.added for reasoning item, got types: {event_types}"
@@ -293,41 +240,17 @@ def test_reasoning_summary_event_ordering(client_with_models, text_model_id):
     assert reasoning_item_done_idx is not None, (
         f"Expected output_item.done for reasoning item, got types: {event_types}"
     )
-
-    assert reasoning_item_added_idx < first_summary_idx, (
-        "output_item.added for reasoning should come before summary events"
+    assert reasoning_item_done_idx > reasoning_item_added_idx, (
+        "output_item.done should come after output_item.added for reasoning"
     )
 
-    last_summary_idx = max(i for i, t in enumerate(event_types) if "reasoning_summary" in t)
-    assert reasoning_item_done_idx > last_summary_idx, (
-        "output_item.done for reasoning should come after all summary events"
-    )
-
-
-def test_reasoning_summary_sequence_numbers(client_with_models, text_model_id):
-    """Test that sequence numbers in summary events are strictly increasing."""
-
-    skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
-
-    stream = client_with_models.responses.create(
-        model=text_model_id,
-        input="What is 2 + 2? Think step by step.",
-        stream=True,
-        reasoning={"effort": "high", "summary": "concise"},
-    )
-
-    chunks = list(stream)
-
-    summary_events = [c for c in chunks if hasattr(c, "type") and "reasoning_summary" in c.type]
-    assert len(summary_events) > 0, "Expected summary streaming events"
-
-    seq_nums = [c.sequence_number for c in summary_events]
-    for i in range(1, len(seq_nums)):
-        assert seq_nums[i] > seq_nums[i - 1], f"Summary sequence numbers must be strictly increasing: {seq_nums}"
+    done_item = _get_attr(chunks[reasoning_item_done_idx], "item")
+    summary = _get_attr(done_item, "summary")
+    assert summary is not None and len(summary) > 0, "OutputItemDone reasoning item should carry the summary"
 
 
 def test_reasoning_no_summary_without_request(client_with_models, text_model_id):
-    """Verify that no summary events are emitted when summary is not requested."""
+    """Verify that no summary is attached when summary is not requested."""
 
     skip_if_reasoning_content_not_provided(client_with_models, text_model_id)
 
@@ -339,10 +262,16 @@ def test_reasoning_no_summary_without_request(client_with_models, text_model_id)
     )
 
     chunks = list(stream)
-    summary_events = [c for c in chunks if hasattr(c, "type") and "reasoning_summary" in c.type]
-    assert len(summary_events) == 0, (
-        f"Expected no summary events when summary not requested, got: {[c.type for c in summary_events]}"
-    )
+    reasoning_item_done = [
+        c
+        for c in chunks
+        if c.type == "response.output_item.done" and _get_attr(_get_attr(c, "item"), "type") == "reasoning"
+    ]
+
+    if reasoning_item_done:
+        item = _get_attr(reasoning_item_done[0], "item")
+        summary = _get_attr(item, "summary")
+        assert summary is None or len(summary) == 0, f"Expected no summary when not requested, got: {summary}"
 
 
 def test_reasoning_summary_usage_included(client_with_models, text_model_id):

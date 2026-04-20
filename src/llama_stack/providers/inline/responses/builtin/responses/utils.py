@@ -33,7 +33,6 @@ from llama_stack_api import (
     OpenAIMessageParam,
     OpenAIResponseAnnotationFileCitation,
     OpenAIResponseCompaction,
-    OpenAIResponseContentPartReasoningSummary,
     OpenAIResponseFormatJSONObject,
     OpenAIResponseFormatJSONSchema,
     OpenAIResponseFormatParam,
@@ -48,11 +47,6 @@ from llama_stack_api import (
     OpenAIResponseMCPApprovalRequest,
     OpenAIResponseMCPApprovalResponse,
     OpenAIResponseMessage,
-    OpenAIResponseObjectStream,
-    OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded,
-    OpenAIResponseObjectStreamResponseReasoningSummaryPartDone,
-    OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta,
-    OpenAIResponseObjectStreamResponseReasoningSummaryTextDone,
     OpenAIResponseOutputMessageContent,
     OpenAIResponseOutputMessageContentOutputText,
     OpenAIResponseOutputMessageFileSearchToolCall,
@@ -673,12 +667,9 @@ async def summarize_reasoning(
     inference_api: Inference,
     model: str,
     reasoning_text: str,
-    reasoning_item_id: str,
-    output_index: int,
     summary_mode: str,
-    start_sequence_number: int,
     summary_usage: list[OpenAIChatCompletionUsage] | None = None,
-) -> AsyncIterator[OpenAIResponseObjectStream]:
+) -> str | None:
     """Make a second inference call to summarize reasoning content."""
     prompt_text = build_summary_prompt(reasoning_text, summary_mode)
 
@@ -706,49 +697,8 @@ async def summarize_reasoning(
     if summary_usage is not None and summary_result.usage:
         summary_usage.append(summary_result.usage)
 
-    full_text = summary_result.choices[0].message.content if summary_result.choices else None
-    if not full_text:
-        return
+    summary_text = summary_result.choices[0].message.content if summary_result.choices else None
+    if not summary_text:
+        return None
 
-    raw_paragraphs = full_text.split("\n\n")
-    paragraphs = [p for p in raw_paragraphs if p.strip()]
-    if not paragraphs:
-        paragraphs = [full_text]
-
-    seq = start_sequence_number
-    for summary_index, paragraph_text in enumerate(paragraphs):
-        seq += 1
-        yield OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded(
-            item_id=reasoning_item_id,
-            output_index=output_index,
-            part=OpenAIResponseContentPartReasoningSummary(text=""),
-            sequence_number=seq,
-            summary_index=summary_index,
-        )
-
-        seq += 1
-        yield OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta(
-            delta=paragraph_text,
-            item_id=reasoning_item_id,
-            output_index=output_index,
-            sequence_number=seq,
-            summary_index=summary_index,
-        )
-
-        seq += 1
-        yield OpenAIResponseObjectStreamResponseReasoningSummaryTextDone(
-            text=paragraph_text,
-            item_id=reasoning_item_id,
-            output_index=output_index,
-            sequence_number=seq,
-            summary_index=summary_index,
-        )
-
-        seq += 1
-        yield OpenAIResponseObjectStreamResponseReasoningSummaryPartDone(
-            item_id=reasoning_item_id,
-            output_index=output_index,
-            part=OpenAIResponseContentPartReasoningSummary(text=paragraph_text),
-            sequence_number=seq,
-            summary_index=summary_index,
-        )
+    return summary_text

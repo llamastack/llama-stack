@@ -31,10 +31,6 @@ from llama_stack_api.inference.models import (
 )
 from llama_stack_api.openai_responses import (
     OpenAIResponseInputToolMCP,
-    OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded,
-    OpenAIResponseObjectStreamResponseReasoningSummaryPartDone,
-    OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta,
-    OpenAIResponseObjectStreamResponseReasoningSummaryTextDone,
     OpenAIResponseReasoning,
 )
 
@@ -480,260 +476,104 @@ def _make_completion(content: str, usage: OpenAIChatCompletionUsage | None = Non
 
 
 class TestSummarizeReasoning:
-    async def test_emits_correct_event_sequence_single_part(self):
-        """Single-paragraph summary: PartAdded -> TextDelta -> TextDone -> PartDone."""
+    async def test_returns_summary_text(self):
         mock_inference = AsyncMock()
         mock_inference.openai_chat_completion.return_value = _make_completion("The answer is 4.")
 
-        events = []
-        async for event in summarize_reasoning(
+        result = await summarize_reasoning(
             inference_api=mock_inference,
             model="test-model",
             reasoning_text="Simple math.",
-            reasoning_item_id="rs_test123",
-            output_index=0,
             summary_mode="concise",
-            start_sequence_number=10,
-        ):
-            events.append(event)
+        )
 
-        assert len(events) == 4
-        assert isinstance(events[0], OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded)
-        assert events[0].summary_index == 0
-        assert events[0].part.text == "", "PartAdded should carry an empty text placeholder"
-        assert isinstance(events[1], OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta)
-        assert isinstance(events[2], OpenAIResponseObjectStreamResponseReasoningSummaryTextDone)
-        assert isinstance(events[3], OpenAIResponseObjectStreamResponseReasoningSummaryPartDone)
+        assert result == "The answer is 4."
 
-    async def test_emits_multiple_summary_parts(self):
-        """Multi-paragraph summary should produce multiple PartAdded/TextDelta/TextDone/PartDone blocks."""
-        mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = _make_completion("First paragraph.\n\nSecond paragraph.")
-
-        events = []
-        async for event in summarize_reasoning(
-            inference_api=mock_inference,
-            model="test-model",
-            reasoning_text="complex reasoning",
-            reasoning_item_id="rs_multi",
-            output_index=0,
-            summary_mode="detailed",
-            start_sequence_number=0,
-        ):
-            events.append(event)
-
-        # Two paragraphs -> 2 * (PartAdded + TextDelta + TextDone + PartDone) = 8 events
-        assert len(events) == 8
-
-        # First part (summary_index=0)
-        assert isinstance(events[0], OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded)
-        assert events[0].summary_index == 0
-        assert isinstance(events[1], OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta)
-        assert events[1].delta == "First paragraph."
-        assert isinstance(events[2], OpenAIResponseObjectStreamResponseReasoningSummaryTextDone)
-        assert events[2].text == "First paragraph."
-        assert isinstance(events[3], OpenAIResponseObjectStreamResponseReasoningSummaryPartDone)
-        assert events[3].part.text == "First paragraph."
-
-        # Second part (summary_index=1)
-        assert isinstance(events[4], OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded)
-        assert events[4].summary_index == 1
-        assert isinstance(events[5], OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta)
-        assert events[5].delta == "Second paragraph."
-        assert isinstance(events[6], OpenAIResponseObjectStreamResponseReasoningSummaryTextDone)
-        assert events[6].text == "Second paragraph."
-        assert isinstance(events[7], OpenAIResponseObjectStreamResponseReasoningSummaryPartDone)
-        assert events[7].part.text == "Second paragraph."
-
-    async def test_accumulates_text_in_single_part(self):
-        """Single-paragraph: text_done and part_done should contain the full summary."""
-        mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = _make_completion("Hello world!")
-
-        events = []
-        async for event in summarize_reasoning(
-            inference_api=mock_inference,
-            model="test-model",
-            reasoning_text="reasoning",
-            reasoning_item_id="rs_abc",
-            output_index=0,
-            summary_mode="concise",
-            start_sequence_number=0,
-        ):
-            events.append(event)
-
-        text_done = [e for e in events if isinstance(e, OpenAIResponseObjectStreamResponseReasoningSummaryTextDone)]
-        assert len(text_done) == 1
-        assert text_done[0].text == "Hello world!"
-
-        part_done = [e for e in events if isinstance(e, OpenAIResponseObjectStreamResponseReasoningSummaryPartDone)]
-        assert len(part_done) == 1
-        assert part_done[0].part.text == "Hello world!"
-
-    async def test_sequence_numbers_increment(self):
-        """Each event should have a strictly increasing sequence_number."""
-        mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = _make_completion("AB")
-
-        events = []
-        async for event in summarize_reasoning(
-            inference_api=mock_inference,
-            model="test-model",
-            reasoning_text="reasoning",
-            reasoning_item_id="rs_seq",
-            output_index=0,
-            summary_mode="concise",
-            start_sequence_number=5,
-        ):
-            events.append(event)
-
-        # Single paragraph: PartAdded, TextDelta, TextDone, PartDone
-        seq_numbers = [e.sequence_number for e in events]
-        assert seq_numbers == [6, 7, 8, 9]
-
-    async def test_sequence_numbers_increment_multi_part(self):
-        """Sequence numbers should be strictly increasing across multiple summary parts."""
-        mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = _make_completion("P1\n\nP2\n\nP3")
-
-        events = []
-        async for event in summarize_reasoning(
-            inference_api=mock_inference,
-            model="test-model",
-            reasoning_text="reasoning",
-            reasoning_item_id="rs_seq_multi",
-            output_index=0,
-            summary_mode="detailed",
-            start_sequence_number=0,
-        ):
-            events.append(event)
-
-        seq_numbers = [e.sequence_number for e in events]
-        for i in range(1, len(seq_numbers)):
-            assert seq_numbers[i] > seq_numbers[i - 1], f"Sequence numbers must be strictly increasing: {seq_numbers}"
-
-    async def test_propagates_item_id_and_output_index(self):
-        """All events should carry the correct item_id and output_index."""
-        mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = _make_completion("summary")
-
-        events = []
-        async for event in summarize_reasoning(
-            inference_api=mock_inference,
-            model="test-model",
-            reasoning_text="reasoning",
-            reasoning_item_id="rs_myid",
-            output_index=3,
-            summary_mode="detailed",
-            start_sequence_number=0,
-        ):
-            events.append(event)
-
-        for event in events:
-            assert event.item_id == "rs_myid"
-            assert event.output_index == 3
-
-    async def test_inference_failure_raises(self):
-        """If the inference call raises, the error should propagate to the caller."""
-        mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.side_effect = RuntimeError("provider down")
-
-        with pytest.raises(RuntimeError, match="provider down"):
-            async for _ in summarize_reasoning(
-                inference_api=mock_inference,
-                model="test-model",
-                reasoning_text="reasoning",
-                reasoning_item_id="rs_fail",
-                output_index=0,
-                summary_mode="concise",
-                start_sequence_number=0,
-            ):
-                pass
-
-    async def test_empty_content_yields_nothing(self):
-        """If the provider returns empty content, no events should be yielded."""
+    async def test_returns_none_for_empty_content(self):
         mock_inference = AsyncMock()
         mock_inference.openai_chat_completion.return_value = _make_completion("")
 
-        events = []
-        async for event in summarize_reasoning(
+        result = await summarize_reasoning(
             inference_api=mock_inference,
             model="test-model",
             reasoning_text="reasoning",
-            reasoning_item_id="rs_empty",
-            output_index=0,
             summary_mode="concise",
-            start_sequence_number=0,
-        ):
-            events.append(event)
+        )
 
-        assert events == []
+        assert result is None
 
-    async def test_unexpected_return_type_raises_error(self):
-        """If the inference API returns an unexpected type, a RuntimeError should be raised."""
-        mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = MagicMock(spec=AsyncIterator)
-
-        with pytest.raises(RuntimeError, match="Expected non-streaming response"):
-            async for _ in summarize_reasoning(
-                inference_api=mock_inference,
-                model="test-model",
-                reasoning_text="reasoning",
-                reasoning_item_id="rs_unexpected",
-                output_index=0,
-                summary_mode="concise",
-                start_sequence_number=0,
-            ):
-                pass
-
-    async def test_usage_collected(self):
-        """Usage data from the completion should be collected in summary_usage list."""
+    async def test_collects_usage(self):
         usage_data = OpenAIChatCompletionUsage(
             prompt_tokens=10,
             completion_tokens=5,
             total_tokens=15,
         )
-
         mock_inference = AsyncMock()
         mock_inference.openai_chat_completion.return_value = _make_completion("summary", usage=usage_data)
 
-        summary_usage: list = []
-        events = []
-        async for event in summarize_reasoning(
+        summary_usage: list[OpenAIChatCompletionUsage] = []
+        result = await summarize_reasoning(
             inference_api=mock_inference,
             model="test-model",
             reasoning_text="reasoning",
-            reasoning_item_id="rs_usage",
-            output_index=0,
             summary_mode="concise",
-            start_sequence_number=0,
             summary_usage=summary_usage,
-        ):
-            events.append(event)
+        )
 
+        assert result == "summary"
         assert len(summary_usage) == 1
         assert summary_usage[0].prompt_tokens == 10
         assert summary_usage[0].completion_tokens == 5
 
-    async def test_whitespace_only_paragraphs_ignored(self):
-        """Paragraphs that are only whitespace should be filtered out."""
+    async def test_preserves_multiline_content(self):
+        full_content = "First paragraph.\n\nSecond paragraph."
         mock_inference = AsyncMock()
-        mock_inference.openai_chat_completion.return_value = _make_completion("Content\n\n  \n\nMore content")
+        mock_inference.openai_chat_completion.return_value = _make_completion(full_content)
 
-        events = []
-        async for event in summarize_reasoning(
+        result = await summarize_reasoning(
             inference_api=mock_inference,
             model="test-model",
-            reasoning_text="reasoning",
-            reasoning_item_id="rs_ws",
-            output_index=0,
-            summary_mode="concise",
-            start_sequence_number=0,
-        ):
-            events.append(event)
+            reasoning_text="complex reasoning",
+            summary_mode="detailed",
+        )
 
-        part_added = [e for e in events if isinstance(e, OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded)]
-        assert len(part_added) == 2
-        text_deltas = [e for e in events if isinstance(e, OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta)]
-        assert text_deltas[0].delta == "Content"
-        assert text_deltas[1].delta == "More content"
+        assert result == full_content
+
+    async def test_inference_failure_raises(self):
+        mock_inference = AsyncMock()
+        mock_inference.openai_chat_completion.side_effect = RuntimeError("provider down")
+
+        with pytest.raises(RuntimeError, match="provider down"):
+            await summarize_reasoning(
+                inference_api=mock_inference,
+                model="test-model",
+                reasoning_text="reasoning",
+                summary_mode="concise",
+            )
+
+    async def test_unexpected_streaming_response_raises(self):
+        mock_inference = AsyncMock()
+        mock_inference.openai_chat_completion.return_value = MagicMock(spec=AsyncIterator)
+
+        with pytest.raises(RuntimeError, match="Expected non-streaming response"):
+            await summarize_reasoning(
+                inference_api=mock_inference,
+                model="test-model",
+                reasoning_text="reasoning",
+                summary_mode="concise",
+            )
+
+    async def test_uses_correct_summary_mode(self):
+        mock_inference = AsyncMock()
+        mock_inference.openai_chat_completion.return_value = _make_completion("summary")
+
+        await summarize_reasoning(
+            inference_api=mock_inference,
+            model="test-model",
+            reasoning_text="some reasoning",
+            summary_mode="detailed",
+        )
+
+        call_args = mock_inference.openai_chat_completion.call_args[0][0]
+        user_msg = call_args.messages[1].content
+        assert "Preserve the key logical steps" in user_msg
