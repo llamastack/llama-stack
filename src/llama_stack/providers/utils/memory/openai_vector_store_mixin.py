@@ -331,14 +331,30 @@ class OpenAIVectorStoreMixin(ABC):
         if expired_count > 0:
             logger.info("Cleaned up expired file batches", expired_count=expired_count)
 
-    async def _get_completed_files_in_batch(self, vector_store_id: str, file_ids: list[str]) -> set[str]:
-        """Determine which files in a batch are actually completed by checking vector store file_ids."""
+    async def _get_processed_files_in_batch(
+        self, vector_store_id: str, file_ids: list[str]
+    ) -> tuple[set[str], set[str]]:
+        """Determine which files in a batch are completed or failed.
+
+        Returns:
+            Tuple of (completed_file_ids, failed_file_ids).
+        """
         if vector_store_id not in self.openai_vector_stores:
-            return set()
+            return set(), set()
 
         store_info = self.openai_vector_stores[vector_store_id]
-        completed_files = set(file_ids) & set(store_info["file_ids"])
-        return completed_files
+        known_file_ids = set(file_ids) & set(store_info["file_ids"])
+
+        completed = set()
+        failed = set()
+        for file_id in known_file_ids:
+            file_info = await self._load_openai_vector_store_file(vector_store_id, file_id)
+            if file_info and file_info.get("status") == "failed":
+                failed.add(file_id)
+            else:
+                completed.add(file_id)
+
+        return completed, failed
 
     async def _analyze_batch_completion_on_resume(self, batch_id: str, batch_info: dict[str, Any]) -> list[str]:
         """Analyze batch completion status and return remaining files to process.
@@ -349,27 +365,29 @@ class OpenAIVectorStoreMixin(ABC):
         vector_store_id = batch_info["vector_store_id"]
         all_file_ids = batch_info["file_ids"]
 
-        # Find files that are actually completed
-        completed_files = await self._get_completed_files_in_batch(vector_store_id, all_file_ids)
-        remaining_files = [file_id for file_id in all_file_ids if file_id not in completed_files]
+        # Find files that are completed or failed
+        completed_files, failed_files = await self._get_processed_files_in_batch(vector_store_id, all_file_ids)
+        processed_files = completed_files | failed_files
+        remaining_files = [file_id for file_id in all_file_ids if file_id not in processed_files]
 
         completed_count = len(completed_files)
+        failed_count = len(failed_files)
         total_count = len(all_file_ids)
         remaining_count = len(remaining_files)
 
         # Update file counts to reflect actual state
         batch_info["file_counts"] = {
             "completed": completed_count,
-            "failed": 0,  # We don't track failed files during resume - they'll be retried
+            "failed": failed_count,
             "in_progress": remaining_count,
             "cancelled": 0,
             "total": total_count,
         }
 
-        # If all files are already completed, mark batch as completed
+        # If all files are processed (completed or failed), mark batch as done
         if remaining_count == 0:
             batch_info["status"] = "completed"
-            logger.info("Batch is already fully completed, updating status", batch_id=batch_id)
+            logger.info("Batch is already fully processed, updating status", batch_id=batch_id)
 
         # Save updated batch info
         await self._save_openai_vector_store_file_batch(batch_id, batch_info)
@@ -1048,7 +1066,7 @@ class OpenAIVectorStoreMixin(ABC):
 
         # Save vector store file to persistent storage AFTER insert_chunks
         # so that chunks include the embeddings that were generated
-        file_info = vector_store_file_object.model_dump(exclude={"last_error"})
+        file_info = vector_store_file_object.model_dump()
         file_info["filename"] = file_response.filename if file_response else ""
 
         dict_chunks = [c.model_dump() for c in embedded_chunks]

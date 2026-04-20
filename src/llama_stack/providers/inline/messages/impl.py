@@ -102,14 +102,14 @@ class BuiltinMessagesImpl(Messages):
         if passthrough_url:
             return await self._passthrough_request(passthrough_url, request)
 
+        # Translation mode: convert Anthropic format to OpenAI format
         openai_params = self._anthropic_to_openai(request)
+        openai_result = await self.inference_api.openai_chat_completion(openai_params)
 
-        result = await self.inference_api.openai_chat_completion(openai_params)
+        if isinstance(openai_result, AsyncIterator):
+            return self._stream_openai_to_anthropic(openai_result, request.model)
 
-        if isinstance(result, AsyncIterator):
-            return self._stream_openai_to_anthropic(result, request.model)
-
-        return self._openai_to_anthropic(result, request.model)
+        return self._openai_to_anthropic(openai_result, request.model)
 
     async def count_message_tokens(
         self,

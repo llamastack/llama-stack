@@ -40,6 +40,78 @@ We evaluated Llama Stack against OpenAI across four benchmark suites covering re
 - **fiqa is the gap** — OpenAI leads by 19% on this financial QA dataset (0.2862 vs 0.2399), likely due to differences in embedding models and chunking strategies for longer financial documents.
 - **End-to-end RAG scores are low across both backends**, reflecting the difficulty of these benchmarks (multi-hop reasoning, document-grounded dialogue) rather than a RAG-specific weakness. Both backends use the same LLM (GPT-4.1) for generation.
 
+### Additional Retrieval Metrics
+
+#### Recall@10
+
+| Dataset | OpenAI | LS vector | LS hybrid |
+|---|---|---|---|
+| nfcorpus | 0.1469 | 0.1482 | **0.1646** |
+| scifact | 0.8067 | **0.8369** | 0.8362 |
+| arguana | 0.6764 | 0.7610 | **0.7781** |
+| fiqa | **0.3117** | 0.2843 | 0.2681 |
+
+#### MAP@10
+
+| Dataset | OpenAI | LS vector | LS hybrid |
+|---|---|---|---|
+| nfcorpus | 0.1208 | 0.1153 | **0.1286** |
+| scifact | 0.6818 | 0.6442 | **0.6697** |
+| arguana | 0.1801 | 0.2542 | **0.2578** |
+| fiqa | **0.2319** | 0.1828 | 0.1593 |
+
+### Additional End-to-End Metrics
+
+#### MultiHOP RAG
+
+Multi-hop reasoning over 609 news articles, 2,556 queries.
+
+| Metric | OpenAI | LS vector | LS hybrid |
+|---|---|---|---|
+| **F1** | 0.0114 | **0.0141** | 0.0141 |
+| Exact Match | 0.0 | 0.0 | 0.0 |
+| ROUGE-L | 0.0116 | **0.0147** | 0.0147 |
+
+#### Doc2Dial
+
+Document-grounded dialogue: 488 documents, 200 conversations, 1,203 total turns.
+
+| Metric | OpenAI | LS vector | LS hybrid |
+|---|---|---|---|
+| **F1** | **0.1337** | 0.0962 | 0.0966 |
+| Exact Match | 0.0 | 0.0 | 0.0 |
+| ROUGE-L | **0.1136** | 0.0790 | 0.0794 |
+
+## Analysis
+
+### Where Llama Stack wins
+
+- **arguana** (+29.6% nDCG@10): Argumentative text benefits from hybrid search — keyword matching catches specific argument patterns that pure semantic search misses.
+- **nfcorpus** (+6.1% nDCG@10): Biomedical domain similarly benefits from hybrid search, where exact term matching (drug names, conditions) complements semantic similarity.
+- **scifact**: Effectively tied (0.7165 vs 0.7137, within 0.4%).
+
+### Where OpenAI wins
+
+- **fiqa** (+19.3% nDCG@10): The largest corpus (57K docs) with financial domain text. OpenAI's proprietary embedding model likely handles financial terminology better than nomic-embed-text-v1.5, which is a general-purpose model.
+- **Doc2Dial** (+39% F1): Precise passage retrieval for dialogue grounding benefits from OpenAI's retrieval system. This is the biggest quality gap.
+
+### Vector vs Hybrid on Llama Stack
+
+| Dataset | Vector nDCG@10 | Hybrid nDCG@10 | Winner |
+|---|---|---|---|
+| nfcorpus | 0.3106 | **0.3350** | Hybrid (+7.9%) |
+| scifact | 0.6943 | **0.7137** | Hybrid (+2.8%) |
+| arguana | 0.3765 | **0.3835** | Hybrid (+1.9%) |
+| fiqa | **0.2399** | 0.2170 | Vector (+10.6%) |
+
+Hybrid search outperforms vector on 3 of 4 BEIR datasets. The exception is fiqa, where keyword search may add noise for financial opinion queries.
+
+### Generation quality observations
+
+- All end-to-end benchmarks show low absolute scores (F1 < 0.15), which is consistent with prior work on these datasets.
+- Exact Match is 0.0 across all backends — the model generates verbose answers while ground truths are often short extractive spans.
+- Since all backends use GPT-4.1, answer quality differences reflect retrieval quality differences, not generation differences.
+
 ## Methodology
 
 ### API Surface Tested
