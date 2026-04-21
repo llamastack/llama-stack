@@ -21,7 +21,6 @@ from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from llama_stack_api.common.errors import OpenAIErrorResponse
 from llama_stack_api.common.responses import Order
 from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
@@ -29,6 +28,7 @@ from llama_stack_api.openai_responses import (
     OpenAICompactedResponse,
     OpenAIDeleteResponseObject,
     OpenAIResponseObject,
+    OpenAIResponseObjectStreamError,
 )
 from llama_stack_api.router_utils import (
     ExceptionTranslatingRoute,
@@ -126,8 +126,13 @@ async def sse_generator(event_gen: AsyncIterator[Any]) -> AsyncIterator[str]:
     This function iterates over an async generator and formats each yielded
     item as a Server-Sent Event.
     """
+    # Track the last sequence_number seen so that if an error occurs mid-stream,
+    # the error event can continue the sequence (last seen + 1).
+    sequence_number = 0
     try:
         async for item in event_gen:
+            if hasattr(item, "sequence_number"):
+                sequence_number = item.sequence_number
             yield create_sse_event(item)
     except asyncio.CancelledError:
         if hasattr(event_gen, "aclose"):
@@ -136,9 +141,15 @@ async def sse_generator(event_gen: AsyncIterator[Any]) -> AsyncIterator[str]:
     except Exception as e:
         logger.exception("Error in SSE generator")
         http_exc = try_translate_to_http_exception(e)
-        status_code = http_exc.status_code if http_exc else 500
+        status_code = str(http_exc.status_code) if http_exc else "server_error"
         detail = http_exc.detail if http_exc else "Internal server error: An unexpected error occurred."
-        yield create_sse_event(OpenAIErrorResponse.from_message(detail, code=str(status_code)).to_dict())
+        yield create_sse_event(
+            OpenAIResponseObjectStreamError(
+                code=status_code,
+                message=detail,
+                sequence_number=sequence_number + 1,
+            )
+        )
 
 
 # Automatically generate dependency functions from Pydantic models

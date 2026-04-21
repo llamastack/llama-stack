@@ -911,6 +911,27 @@ class OpenAIResponseObjectStreamResponseFailed(BaseModel):
 
 
 @json_schema_type
+class OpenAIResponseObjectStreamError(BaseModel):
+    """Standalone error event emitted during streaming when an error occurs.
+
+    This is distinct from response.failed which is a response lifecycle event.
+    The error event signals transport/infrastructure-level errors to the client.
+
+    :param code: The error code (e.g. "server_error", "rate_limit_exceeded")
+    :param message: A human-readable description of the error
+    :param param: The parameter that caused the error, if applicable
+    :param sequence_number: Sequential number for ordering streaming events
+    :param type: Event type identifier, always "error"
+    """
+
+    code: str | None = None
+    message: str
+    param: str | None = None
+    sequence_number: int
+    type: Literal["error"] = "error"
+
+
+@json_schema_type
 class OpenAIResponseObjectStreamResponseOutputItemAdded(BaseModel):
     """Streaming event for when a new output item is added to the response.
 
@@ -1509,7 +1530,8 @@ OpenAIResponseObjectStream = Annotated[
     | OpenAIResponseObjectStreamResponseFileSearchCallCompleted
     | OpenAIResponseObjectStreamResponseIncomplete
     | OpenAIResponseObjectStreamResponseFailed
-    | OpenAIResponseObjectStreamResponseCompleted,
+    | OpenAIResponseObjectStreamResponseCompleted
+    | OpenAIResponseObjectStreamError,
     Field(discriminator="type"),
 ]
 register_schema(OpenAIResponseObjectStream, name="OpenAIResponseObjectStream")

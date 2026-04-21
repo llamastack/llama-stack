@@ -7733,6 +7733,7 @@ components:
     OpenAIResponseObjectStream:
       discriminator:
         mapping:
+          error: '#/components/schemas/OpenAIResponseObjectStreamError'
           response.completed: '#/components/schemas/OpenAIResponseObjectStreamResponseCompleted'
           response.content_part.added: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded'
           response.content_part.done: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone'
@@ -7843,7 +7844,9 @@ components:
         title: OpenAIResponseObjectStreamResponseFailed
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseCompleted'
         title: OpenAIResponseObjectStreamResponseCompleted
-      title: OpenAIResponseObjectStreamResponseCreated | ... (36 variants)
+      - $ref: '#/components/schemas/OpenAIResponseObjectStreamError'
+        title: OpenAIResponseObjectStreamError
+      title: OpenAIResponseObjectStreamResponseCreated | ... (37 variants)
     OpenAIResponseObjectStreamResponseCompleted:
       description: Streaming event indicating a response has been completed.
       properties:
@@ -13458,6 +13461,39 @@ components:
       - $ref: '#/components/schemas/OpenAIResponseContentPartReasoningText'
         title: OpenAIResponseContentPartReasoningText
       title: OpenAIResponseContentPartOutputText | OpenAIResponseContentPartRefusal | OpenAIResponseContentPartReasoningText
+    OpenAIResponseObjectStreamError:
+      description: |-
+        Standalone error event emitted during streaming when an error occurs.
+
+        This is distinct from response.failed which is a response lifecycle event.
+        The error event signals transport/infrastructure-level errors to the client.
+      properties:
+        code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        message:
+          title: Message
+          type: string
+        param:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        sequence_number:
+          title: Sequence Number
+          type: integer
+        type:
+          title: Type
+          type: string
+          enum:
+          - error
+      required:
+      - message
+      - sequence_number
+      title: OpenAIResponseObjectStreamError
+      type: object
     ListModelsResponse:
       description: Response containing a list of model objects.
       properties:
