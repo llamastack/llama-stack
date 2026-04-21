@@ -61,9 +61,9 @@ class StackConfigGenerate(Subcommand):
             "--distribution",
             type=str,
             default=None,
-            help="Distribution package name to filter providers by (e.g. llama-stack-distribution-starter). "
-            "Only providers declared as direct dependencies of this distribution will be included. "
-            "Useful in development environments where all providers are installed.",
+            help="Distribution name (e.g. starter, nvidia). "
+            "Auto-detected when exactly one distribution is installed. "
+            "Required in development environments with multiple distributions.",
         )
 
     def _run_config_generate_command(self, args: argparse.Namespace) -> None:

@@ -7,6 +7,9 @@
 
 # Generate distribution configs in an isolated environment.
 #
+# Creates a temporary venv with only the target distribution installed so that
+# entry-point auto-discovery finds exactly one distribution and its providers.
+#
 # Usage:
 #   ./scripts/distro_generate_config.sh <distro_dir> [--overlay <overlay>] [--output <output>]
 #
@@ -25,4 +28,9 @@ fi
 DISTRO_DIR="$1"
 shift
 
-exec uv run --project "$DISTRO_DIR" llama stack config generate "$@"
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
+uv venv --python 3.12 "$TMPDIR/.venv" --quiet
+uv pip install --python "$TMPDIR/.venv/bin/python" -e "$DISTRO_DIR" --quiet
+"$TMPDIR/.venv/bin/python" -m llama_stack.cli.llama stack config generate "$@"

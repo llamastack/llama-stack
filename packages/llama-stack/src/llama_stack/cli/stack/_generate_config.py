@@ -228,61 +228,34 @@ def _derive_provider_id(spec: ProviderSpec) -> str:
     return spec.provider_type.split("::")[-1]
 
 
-def _discover_distro_name() -> str:
-    """Discover the distribution name from the installed distribution entry point.
+def _discover_distro_name(distribution: str | None = None) -> str:
+    """Determine the distribution name.
 
-    Expects exactly one distribution package in the current environment.
+    If ``distribution`` is provided, uses it directly. Otherwise auto-discovers
+    from installed distribution entry points (requires exactly one).
     """
+    if distribution:
+        return distribution
+
     distros = discover_distribution_packages()
     if len(distros) == 1:
         return distros[0]
     elif len(distros) == 0:
         raise ValueError("Failed to discover distribution: no distribution package found in environment")
     else:
-        raise ValueError(f"Failed to discover distribution: multiple distribution packages found: {', '.join(distros)}")
+        raise ValueError(
+            f"Failed to discover distribution: multiple distribution packages found: {', '.join(sorted(distros))}. "
+            "Use --distribution to specify which distribution to generate config for."
+        )
 
 
-def _get_distribution_provider_packages(distribution_name: str) -> set[str]:
-    """Get the set of provider package names declared as direct dependencies of a distribution.
-
-    This is useful in development environments (e.g. uv workspaces) where all
-    providers are installed transitively through the core package, but we only
-    want to generate configs for the providers the distribution explicitly
-    depends on.
-    """
-    try:
-        dist = importlib.metadata.distribution(distribution_name)
-    except importlib.metadata.PackageNotFoundError:
-        logger.warning("Failed to find distribution package", distribution=distribution_name)
-        return set()
-
-    packages: set[str] = set()
-    for req_str in dist.requires or []:
-        name = req_str.split(";")[0].split("[")[0].split(">")[0].split("<")[0].split("=")[0].split("!")[0].strip()
-        if name.startswith("llama-stack-provider-"):
-            packages.add(name)
-    return packages
-
-
-def _discover_providers_for_distribution(distribution_name: str | None) -> list[ProviderSpec]:
-    """Discover providers, optionally filtered by a distribution's declared dependencies."""
+def _discover_providers() -> list[ProviderSpec]:
+    """Discover all providers registered via entry points."""
     eps = importlib.metadata.entry_points(group="llama_stack.providers")
-
-    allowed_packages: set[str] | None = None
-    if distribution_name:
-        allowed_packages = _get_distribution_provider_packages(distribution_name)
-        if not allowed_packages:
-            logger.warning(
-                "No provider packages found in distribution dependencies",
-                distribution=distribution_name,
-            )
 
     seen_per_api: dict[str, set[str]] = {}
     results: list[ProviderSpec] = []
     for ep in eps:
-        ep_dist_name = ep.dist.name if ep.dist else None
-        if allowed_packages is not None and ep_dist_name not in allowed_packages:
-            continue
         try:
             get_spec = ep.load()
             spec_or_specs = get_spec()
@@ -406,7 +379,7 @@ def _apply_finalizers(config: dict[str, Any], finalizers: FinalizerDirectives) -
 # ---------------------------------------------------------------------------
 
 
-def build_base_config(distro_name: str, distribution_package: str | None = None) -> dict[str, Any]:
+def build_base_config(distro_name: str) -> dict[str, Any]:
     """Build a base config by discovering installed providers via entry points.
 
     Discovers providers registered through Python entry points, generates
@@ -415,11 +388,8 @@ def build_base_config(distro_name: str, distribution_package: str | None = None)
 
     Args:
         distro_name: Name used for the distro_dir path and config metadata.
-        distribution_package: If provided, only include providers that are
-            direct dependencies of this distribution package. Useful in
-            development environments where all providers are installed.
     """
-    providers = _discover_providers_for_distribution(distribution_package)
+    providers = _discover_providers()
 
     if not providers:
         logger.warning("No providers discovered via entry points")
@@ -520,7 +490,7 @@ def load_overlay_chain(overlay_path: Path, _seen: set[Path] | None = None) -> li
 def generate_config(overlay_path: str | None = None, distribution: str | None = None) -> dict[str, Any]:
     """Generate a complete run config from the installed environment and overlays.
 
-    1. Discover the distribution name (from --distribution or entry points)
+    1. Determine the distribution name (from ``--distribution`` or auto-discovery)
     2. Build a complete base config from discovered entry-point providers
     3. Load the overlay chain (recursively resolving ``base`` references)
     4. For each overlay in the chain:
@@ -535,20 +505,12 @@ def generate_config(overlay_path: str | None = None, distribution: str | None = 
 
     Args:
         overlay_path: Optional path to an overlay YAML file.
-        distribution: Optional distribution package name to filter providers by.
-            If provided, only providers that are direct dependencies of this
-            distribution will be included in the base config.
+        distribution: Optional distribution name. Auto-detected when one
+            distribution is installed.
     """
-    if distribution:
-        prefix = "llama-stack-distribution-"
-        if distribution.startswith(prefix):
-            distro_name = distribution[len(prefix) :]
-        else:
-            distro_name = distribution
-    else:
-        distro_name = _discover_distro_name()
+    distro_name = _discover_distro_name(distribution)
 
-    config = build_base_config(distro_name, distribution_package=distribution)
+    config = build_base_config(distro_name)
 
     if overlay_path:
         overlays = load_overlay_chain(Path(overlay_path))
