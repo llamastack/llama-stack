@@ -9,6 +9,7 @@ from typing import Any
 
 from llama_stack.core.datatypes import (
     BuildProvider,
+    ModelInput,
     Provider,
     ProviderSpec,
     QualifiedModel,
@@ -293,9 +294,28 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         ],
     }
 
+    # Claude model aliases for zero-config Claude Code compatibility
+    claude_model_aliases = [
+        ModelInput(
+            model_id="claude-haiku-4-5-20251001",
+            provider_id="all",
+            provider_model_id="auto",
+        ),
+        ModelInput(
+            model_id="claude-sonnet-4-5-20250514",
+            provider_id="all",
+            provider_model_id="auto",
+        ),
+        ModelInput(
+            model_id="claude-opus-4-6-20260314",
+            provider_id="all",
+            provider_model_id="auto",
+        ),
+    ]
+
     base_run_settings = RunConfigSettings(
         provider_overrides=default_overrides,
-        default_models=[],
+        default_models=claude_model_aliases,
         default_shields=default_shields,
         default_connectors=[],
         vector_stores_config=VectorStoresConfig(

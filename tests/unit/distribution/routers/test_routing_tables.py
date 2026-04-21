@@ -324,24 +324,24 @@ async def test_models_alias_registration_and_lookup(cached_disk_dist_registry):
     await table.initialize()
 
     # Register model with alias (model_id different from provider_model_id)
-    # NOTE: Aliases are not supported anymore, so this is a no-op
+    # The identifier uses model_id, while provider_resource_id stores the actual provider model
     await table.register_model(
         model_id="my-alias", provider_model_id="actual-provider-model", provider_id="test_provider"
     )
 
-    # Verify the model was registered with alias as identifier (not namespaced)
+    # Verify the model was registered with model_id as identifier
     models = await table.list_models()
     assert len(models.data) == 1
     model = models.data[0]
-    assert model.identifier == "test_provider/actual-provider-model"
+    assert model.identifier == "test_provider/my-alias"
     assert model.provider_resource_id == "actual-provider-model"
 
-    # Test lookup by alias fails
+    # Test lookup by unprefixed alias fails
     with pytest.raises(ModelNotFoundError, match="Model 'my-alias' not found"):
         await table.get_model("my-alias")
 
-    retrieved_model = await table.get_model("test_provider/actual-provider-model")
-    assert retrieved_model.identifier == "test_provider/actual-provider-model"
+    retrieved_model = await table.get_model("test_provider/my-alias")
+    assert retrieved_model.identifier == "test_provider/my-alias"
     assert retrieved_model.provider_resource_id == "actual-provider-model"
 
 
@@ -473,7 +473,7 @@ async def test_models_source_interaction_preserves_default(cached_disk_dist_regi
     assert len(models.data) == 1
     user_model = models.data[0]
     assert user_model.source == RegistryEntrySource.via_register_api
-    assert user_model.identifier == "test_provider/provider-model-1"
+    assert user_model.identifier == "test_provider/my-custom-alias"
     assert user_model.provider_resource_id == "provider-model-1"
 
     # Now simulate provider refresh
@@ -495,21 +495,31 @@ async def test_models_source_interaction_preserves_default(cached_disk_dist_regi
     ]
     await table.update_registered_models("test_provider", provider_models)
 
-    # Verify user model with alias is preserved, but provider added new model
+    # Verify user model with alias is preserved, provider-listed model is also registered,
+    # and provider added new model (3 total: user alias + 2 provider models)
     models = await table.list_models()
-    assert len(models.data) == 2
+    assert len(models.data) == 3
 
-    # Find the user model and provider model
-    user_model = next((m for m in models.data if m.identifier == "test_provider/provider-model-1"), None)
-    provider_model = next((m for m in models.data if m.identifier == "test_provider/different-model"), None)
+    # Find the user alias, provider-listed model, and different model
+    user_alias = next((m for m in models.data if m.identifier == "test_provider/my-custom-alias"), None)
+    provider_listed = next((m for m in models.data if m.identifier == "test_provider/provider-model-1"), None)
+    different_model = next((m for m in models.data if m.identifier == "test_provider/different-model"), None)
 
-    assert user_model is not None
-    assert user_model.source == RegistryEntrySource.via_register_api
-    assert user_model.provider_resource_id == "provider-model-1"
+    # User-registered alias should be preserved
+    assert user_alias is not None
+    assert user_alias.source == RegistryEntrySource.via_register_api
+    assert user_alias.provider_resource_id == "provider-model-1"
 
-    assert provider_model is not None
-    assert provider_model.source == RegistryEntrySource.listed_from_provider
-    assert provider_model.provider_resource_id == "different-model"
+    # Provider-listed model with same provider_resource_id should also exist
+    # (allows both alias and canonical name to coexist)
+    assert provider_listed is not None
+    assert provider_listed.source == RegistryEntrySource.listed_from_provider
+    assert provider_listed.provider_resource_id == "provider-model-1"
+
+    # Different provider model should be added
+    assert different_model is not None
+    assert different_model.source == RegistryEntrySource.listed_from_provider
+    assert different_model.provider_resource_id == "different-model"
 
     # Cleanup
     await table.shutdown()

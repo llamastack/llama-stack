@@ -25,17 +25,6 @@ def available_providers() -> list[ProviderSpec]:
     return [
         InlineProviderSpec(
             api=Api.vector_io,
-            provider_type="inline::builtin",
-            pip_packages=["faiss-cpu"] + DEFAULT_VECTOR_IO_DEPS,
-            module="llama_stack.providers.inline.vector_io.faiss",
-            config_class="llama_stack.providers.inline.vector_io.faiss.FaissVectorIOConfig",
-            deprecation_warning="Please use the `inline::faiss` provider instead.",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
-            description="Meta's reference implementation of a vector database.",
-        ),
-        InlineProviderSpec(
-            api=Api.vector_io,
             provider_type="inline::faiss",
             pip_packages=["faiss-cpu"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.inline.vector_io.faiss",
@@ -292,19 +281,6 @@ pip install sqlite-vec
 See [sqlite-vec's GitHub repo](https://github.com/asg017/sqlite-vec/tree/main) for more details about sqlite-vec in general.
 
 [^1]: Cormack, G. V., Clarke, C. L., & Buettcher, S. (2009). [Reciprocal rank fusion outperforms condorcet and individual rank learning methods](https://dl.acm.org/doi/10.1145/1571941.1572114). In Proceedings of the 32nd international ACM SIGIR conference on Research and development in information retrieval (pp. 758-759).
-""",
-        ),
-        InlineProviderSpec(
-            api=Api.vector_io,
-            provider_type="inline::sqlite_vec",
-            pip_packages=["sqlite-vec"] + DEFAULT_VECTOR_IO_DEPS,
-            module="llama_stack.providers.inline.vector_io.sqlite_vec",
-            config_class="llama_stack.providers.inline.vector_io.sqlite_vec.SQLiteVectorIOConfig",
-            deprecation_warning="Please use the `inline::sqlite-vec` provider (notice the hyphen instead of underscore) instead.",
-            api_dependencies=[Api.inference],
-            optional_api_dependencies=[Api.files, Api.models, Api.file_processors],
-            description="""
-Please refer to the sqlite-vec provider documentation.
 """,
         ),
         RemoteProviderSpec(
