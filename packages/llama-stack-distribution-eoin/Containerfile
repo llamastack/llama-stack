@@ -1,0 +1,10 @@
+FROM python:3.12-slim
+
+RUN pip install --no-cache uv
+
+COPY . /workspace
+
+RUN uv pip install --no-cache --system \
+    -e /workspace/packages/llama-stack-distribution-eoin
+
+ENTRYPOINT ["llama", "stack", "run", "eoin"]

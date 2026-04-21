@@ -1,0 +1,26 @@
+[project]
+name = "llama-stack-distribution-eoin"
+dynamic = ["version"]
+description = "Minimal Llama Stack distribution with OpenAI inference provider"
+requires-python = ">=3.12"
+dependencies = [
+    "llama-stack",
+    "llama-stack-provider-inference-openai",
+]
+
+[project.entry-points."llama_stack.distributions"]
+eoin = "llama_stack_distribution_eoin:CONFIGS_DIR"
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.7.2.dev0"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+llama_stack_distribution_eoin = ["configs/*.yaml"]
