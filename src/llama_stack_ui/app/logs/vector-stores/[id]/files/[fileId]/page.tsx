@@ -221,7 +221,7 @@ export default function FileDetailPage() {
             <div className="text-destructive text-sm">
               Error loading content summary: {errorContents.message}
             </div>
-          ) : contents && contents.content.length > 0 ? (
+          ) : contents?.content && contents.content.length > 0 ? (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
