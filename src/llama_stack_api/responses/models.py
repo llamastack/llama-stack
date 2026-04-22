@@ -170,6 +170,7 @@ class CreateResponseRequest(BaseModel):
     guardrails: list[ResponseGuardrail] | None = Field(
         default=None,
         description="List of guardrails to apply during response generation.",
+        json_schema_extra={"x-extra-body-field": True},
     )
     max_tool_calls: int | None = Field(
         default=None,
