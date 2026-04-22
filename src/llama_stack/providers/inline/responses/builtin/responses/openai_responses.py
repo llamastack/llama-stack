@@ -1385,6 +1385,7 @@ class OpenAIResponsesImpl:
                 # Fall back to o200k_base for non-OpenAI models (e.g. Vertex AI, Bedrock).
                 # Token counting here is an estimate for compaction thresholds, so an
                 # approximate encoding is acceptable.
+                logger.exception("Failed to get encoding for model, falling back to o200k_base", model=model_name)
                 encoding = tiktoken.get_encoding("o200k_base")
 
         if isinstance(input, str):
