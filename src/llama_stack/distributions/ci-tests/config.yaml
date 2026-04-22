@@ -103,13 +103,13 @@ providers:
       api_key: ${env.WATSONX_API_KEY:=}
       project_id: ${env.WATSONX_PROJECT_ID:=}
   vector_io:
-  - provider_id: faiss
+  - provider_id: ${env.ENABLE_FAISS:+faiss}
     provider_type: inline::faiss
     config:
       persistence:
         namespace: vector_io::faiss
         backend: kv_default
-  - provider_id: sqlite-vec
+  - provider_id: ${env.ENABLE_SQLITE_VEC:+sqlite-vec}
     provider_type: inline::sqlite-vec
     config:
       db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ci-tests}/sqlite_vec.db
