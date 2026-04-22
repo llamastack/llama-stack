@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import json
+import os
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -16,6 +17,7 @@ from openai import AsyncOpenAI, NotFoundError
 from llama_stack.testing.api_recorder import (
     APIRecordingMode,
     ResponseStorage,
+    _find_repo_root,
     api_recording,
     normalize_inference_request,
 )
@@ -526,3 +528,92 @@ class TestExceptionRecordingReplay:
                     )
 
                 assert str(exc_info.value) == "Legacy formatted error"
+
+
+class TestRecordingDirResolution:
+    """Test that _get_test_dir() correctly resolves the recording directory.
+
+    Covers the fix for LLAMA_STACK_TEST_RECORDING_DIR being silently ignored
+    when a __test_id is present, and handling of non-pytest test IDs.
+    """
+
+    def test_explicit_recording_dir_respected_with_pytest_test_id(self, temp_storage_dir):
+        """When LLAMA_STACK_TEST_RECORDING_DIR is explicitly set, base_dir should be
+        used even when a pytest-style test_id is active."""
+        from llama_stack.core.testing_context import reset_test_context, set_test_context
+
+        storage = ResponseStorage(temp_storage_dir, explicit_recording_dir=True)
+        token = set_test_context("tests/integration/foo/test_bar.py::test_baz")
+        try:
+            result = storage._get_test_dir()
+            assert result == temp_storage_dir / "recordings"
+        finally:
+            reset_test_context(token)
+
+    def test_pytest_test_id_derives_path_with_relative_base_dir(self):
+        """Default behavior: pytest-style test_id derives path from test file location."""
+        from llama_stack.core.testing_context import reset_test_context, set_test_context
+
+        storage = ResponseStorage(Path("tests/integration/common"))
+        token = set_test_context("tests/integration/inference/test_basic.py::test_foo")
+        try:
+            result = storage._get_test_dir()
+            assert result == Path("tests/integration/inference/recordings")
+        finally:
+            reset_test_context(token)
+
+    def test_explicit_dir_store_and_find(self, temp_storage_dir):
+        """End-to-end: store and find a recording with explicit_recording_dir + test_id."""
+        from llama_stack.core.testing_context import reset_test_context, set_test_context
+
+        storage = ResponseStorage(temp_storage_dir, explicit_recording_dir=True)
+        token = set_test_context("bff/testdata/llamastack/test.py::record")
+        try:
+            request_hash = "test_explicit_dir_hash"
+            request_data = {
+                "method": "POST",
+                "url": "http://localhost/v1/chat/completions",
+                "endpoint": "/v1/chat/completions",
+                "model": "test-model",
+            }
+            response_data = {"body": {"content": "hello"}, "is_streaming": False}
+
+            storage.store_recording(request_hash, request_data, response_data)
+
+            recording_file = temp_storage_dir / "recordings" / f"{request_hash}.json"
+            assert recording_file.exists(), f"Recording should be in {recording_file}"
+
+            retrieved = storage.find_recording(request_hash)
+            assert retrieved is not None
+            assert retrieved["response"]["body"]["content"] == "hello"
+        finally:
+            reset_test_context(token)
+
+    def test_setup_api_recording_sets_explicit_flag(self, temp_storage_dir):
+        """setup_api_recording() must set explicit_recording_dir=True when the env var is present."""
+        import llama_stack.testing.api_recorder as recorder
+
+        env = {
+            "LLAMA_STACK_TEST_RECORDING_DIR": str(temp_storage_dir),
+            "LLAMA_STACK_TEST_INFERENCE_MODE": "record",
+        }
+        with patch.dict(os.environ, env, clear=False):
+            ctx = recorder.setup_api_recording()
+            assert ctx is not None
+            with ctx:
+                assert recorder._current_storage is not None
+                assert recorder._current_storage.explicit_recording_dir is True
+
+
+class TestFindRepoRoot:
+    """Test the _find_repo_root() helper that replaced the brittle parent.parent.parent heuristic."""
+
+    def test_walks_up_to_find_marker(self):
+        """Should walk up from a nested directory to find the repo root marker."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "pyproject.toml").touch()
+            nested = root / "a" / "b" / "c"
+            nested.mkdir(parents=True)
+
+            assert _find_repo_root(nested) == root.resolve()
