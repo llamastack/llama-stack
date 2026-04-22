@@ -244,7 +244,7 @@ INFERENCE_MODEL = os.environ.get("INFERENCE_MODEL")
 if INFERENCE_MODEL is None:
     raise ValueError("The environment variable 'INFERENCE_MODEL' is not set.")
 
-# Initialize the clien
+# Initialize the client
 client = LlamaStackClient(base_url="http://localhost:8321")
 
 # Create a chat completion request

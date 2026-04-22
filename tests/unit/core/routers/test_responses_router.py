@@ -6,7 +6,9 @@
 
 from unittest.mock import AsyncMock
 
+import httpx
 from fastapi import FastAPI
+from openai import AsyncOpenAI
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 from starlette.testclient import TestClient
@@ -20,6 +22,7 @@ from llama_stack_api.openai_responses import (
     ListOpenAIResponseObject,
     OpenAIDeleteResponseObject,
     OpenAIResponseObject,
+    OpenAIResponseObjectStreamResponseOutputTextDelta,
 )
 from llama_stack_api.responses.models import (
     CreateResponseRequest,
@@ -28,6 +31,20 @@ from llama_stack_api.responses.models import (
     ListResponsesRequest,
     RetrieveResponseRequest,
 )
+
+
+async def _collect_stream_events(app: FastAPI, model: str) -> list[object]:
+    transport = httpx.ASGITransport(app=app)
+    client = AsyncOpenAI(
+        base_url="http://test/v1",
+        api_key="test",
+        http_client=httpx.AsyncClient(transport=transport, base_url="http://test"),
+    )
+    try:
+        stream = await client.responses.create(input="hi", model=model, stream=True)
+        return [event async for event in stream]
+    finally:
+        await client.close()
 
 
 def test_openapi_create_response_advertises_json_and_sse_200():
@@ -240,8 +257,71 @@ async def test_sse_stream_reports_value_error_as_http_exception():
         break
 
     assert first_event is not None
-    assert '"code": "400"' in first_event
-    assert '"message": "not found"' in first_event
+    assert '"type":"error"' in first_event
+    assert '"code":"400"' in first_event
+    assert '"message":"not found"' in first_event
+
+
+async def test_openai_client_stream_reports_error_before_first_event():
+    app = FastAPI()
+    impl = AsyncMock(spec=Responses)
+
+    async def _error_before_stream():
+        raise ValueError("Model not found")
+        yield  # make this an async generator  # noqa: E303
+
+    async def _create_response(request: CreateResponseRequest):
+        assert request.model == "stack-accepted-model"
+        return _error_before_stream()
+
+    impl.create_openai_response.side_effect = _create_response
+
+    router = build_fastapi_router(Api.responses, impl)
+    assert router is not None
+    app.include_router(router)
+
+    events = await _collect_stream_events(app, "stack-accepted-model")
+    assert len(events) == 1
+    error_event = events[0]
+    assert error_event.type == "error"
+    assert error_event.code == "400"
+    assert error_event.message == "Model not found"
+    assert error_event.sequence_number == 1
+
+
+async def test_openai_client_stream_reports_error_midstream():
+    app = FastAPI()
+    impl = AsyncMock(spec=Responses)
+
+    async def _error_midstream():
+        yield OpenAIResponseObjectStreamResponseOutputTextDelta(
+            content_index=0,
+            delta="hello",
+            item_id="item_123",
+            output_index=0,
+            sequence_number=7,
+        )
+        raise ValueError("Model not found")
+
+    async def _create_response(request: CreateResponseRequest):
+        assert request.model == "stack-accepted-model"
+        return _error_midstream()
+
+    impl.create_openai_response.side_effect = _create_response
+
+    router = build_fastapi_router(Api.responses, impl)
+    assert router is not None
+    app.include_router(router)
+
+    events = await _collect_stream_events(app, "stack-accepted-model")
+    assert len(events) == 2
+    assert events[0].type == "response.output_text.delta"
+    assert events[0].delta == "hello"
+    assert events[0].sequence_number == 7
+    assert events[1].type == "error"
+    assert events[1].code == "400"
+    assert events[1].message == "Model not found"
+    assert events[1].sequence_number == 8
 
 
 async def test_get_response_returns_response_object():
