@@ -13,6 +13,10 @@ from .models import (
     AnthropicCreateMessageRequest,
     AnthropicMessageResponse,
     AnthropicStreamEvent,
+    CreateMessageBatchRequest,
+    ListMessageBatchesResponse,
+    MessageBatch,
+    MessageBatchIndividualResponse,
 )
 
 
@@ -29,3 +33,30 @@ class Messages(Protocol):
         self,
         request: AnthropicCountTokensRequest,
     ) -> AnthropicCountTokensResponse: ...
+
+    async def create_message_batch(
+        self,
+        request: CreateMessageBatchRequest,
+    ) -> MessageBatch: ...
+
+    async def retrieve_message_batch(
+        self,
+        batch_id: str,
+    ) -> MessageBatch: ...
+
+    async def list_message_batches(
+        self,
+        limit: int = 20,
+        before_id: str | None = None,
+        after_id: str | None = None,
+    ) -> ListMessageBatchesResponse: ...
+
+    async def cancel_message_batch(
+        self,
+        batch_id: str,
+    ) -> MessageBatch: ...
+
+    async def retrieve_message_batch_results(
+        self,
+        batch_id: str,
+    ) -> AsyncIterator[MessageBatchIndividualResponse]: ...

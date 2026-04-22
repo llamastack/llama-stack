@@ -7,6 +7,7 @@
 from typing import Any
 
 from llama_stack.core.datatypes import Api
+from llama_stack.core.storage.kvstore import kvstore_impl
 
 from .config import MessagesConfig
 
@@ -17,6 +18,7 @@ async def get_provider_impl(
 ):
     from .impl import BuiltinMessagesImpl
 
-    impl = BuiltinMessagesImpl(config, deps[Api.inference])
+    kvstore = await kvstore_impl(config.kvstore)
+    impl = BuiltinMessagesImpl(config, deps[Api.inference], kvstore)
     await impl.initialize()
     return impl
