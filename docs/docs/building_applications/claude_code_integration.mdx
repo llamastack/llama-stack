@@ -55,14 +55,14 @@ claude "Add documentation and tests"
 
 ## How It Works
 
-Claude Code sends requests to the Anthropic Messages API (`/v1/messages`). Llama Stack implements this API with full compatibility, translating between formats as needed:
+Claude Code sends requests to the Anthropic Messages API (`/v1/messages`). Llama Stack implements this API, translating between formats as needed:
 
 ```
-Claude Code → /v1/messages → Llama Stack → Provider
-                                         ↓
-                                    (translate if needed)
-                                         ↓
-                                    OpenAI, vLLM, etc.
+Claude Code → Llama Stack /v1/messages → Provider
+                          ↓
+                     (translate if needed)
+                          ↓
+                     OpenAI, vLLM, etc.
 ```
 
 **What gets translated:**
@@ -74,54 +74,35 @@ Claude Code → /v1/messages → Llama Stack → Provider
 **Native passthrough** (no translation needed):
 - Ollama with `/v1/messages` support
 - vLLM with Anthropic format support
-- Bedrock (Anthropic models)
 
 ## Model Configuration
 
-### Default Behavior
+### Specifying Models
 
-Claude Code sends requests using Anthropic model names (e.g., `claude-haiku-4-5-20251001`). By default, these models don't exist in llama-stack's registry, so you need to specify which model to use:
-
-```bash
-# Option 1: Use environment variable (recommended for quick testing)
-export ANTHROPIC_DEFAULT_HAIKU_MODEL="openai/gpt-4o-mini"
-export ANTHROPIC_DEFAULT_SONNET_MODEL="openai/gpt-4o"
-export ANTHROPIC_DEFAULT_OPUS_MODEL="openai/o1"
-
-# Then use Claude Code normally
-claude "Hello world"
-```
+Always use the `--model` flag to specify which Llama Stack model to use:
 
 ```bash
-# Option 2: Specify model directly in Claude Code
-claude --model "vllm/Qwen/Qwen3-8B" "Hello world"
+# Use any provider model registered in Llama Stack
+claude --model "openai/gpt-4o-mini" "Hello world"
+claude --model "vllm/Qwen/Qwen3-8B" "Write code"
+claude --model "ollama/llama3.3:70b" "Explain algorithms"
 ```
 
-### Advanced: Model Aliasing (Future)
+### Automatic Model Aliasing
 
-:::info Coming Soon
-Automatic model aliasing is under review in [PR #5471](https://github.com/llamastack/llama-stack/pull/5471). This will enable zero-config Claude Code compatibility by automatically registering Claude model names to your available providers.
-:::
-
-Once model aliasing lands, you'll be able to use Claude Code without any environment variables or model overrides:
+The starter distribution automatically registers Claude model name aliases across all providers. This handles Claude Code's internal requests seamlessly:
 
 ```yaml
-# Automatically in config.yaml
+# Pre-configured in starter config.yaml
 registered_resources:
   models:
   - model_id: claude-haiku-4-5-20251001
-    provider_id: "all"  # Uses first active provider
-    provider_model_id: "auto"  # Auto-selects best model
+    provider_id: "all"  # Registers alias across ALL providers
+    provider_model_id: "auto"  # Auto-maps to appropriate model
     model_type: llm
 ```
 
-Then Claude Code works immediately:
-
-```bash
-export ANTHROPIC_BASE_URL="http://localhost:8321"
-claude "Hello world"
-# Automatically routes to your first active provider
-```
+When Claude Code sends internal requests using Claude model names, these aliases automatically route to your specified model. You never need to reference the Claude model names directly—just use `--model` with your actual Llama Stack models.
 
 ## Supported Features
 
@@ -138,11 +119,10 @@ Different providers have different strengths when used with Claude Code:
 
 | Provider | Native Messages API | Thinking Support | Prompt Caching | Notes |
 |----------|-------------------|------------------|----------------|-------|
-| **Anthropic (Bedrock)** | ✅ | ✅ | ✅ | Native Anthropic models, full feature parity |
 | **OpenAI** | ❌ (translated) | ⚠️ (via reasoning) | ❌ | Works well, no translation overhead for responses |
 | **vLLM** | ✅ | ❌ | ❌ | Serves Messages API natively with compatible models |
 | **Ollama** | ✅ | ❌ | ❌ | Serves Messages API natively with compatible models |
-| **Fireworks, Groq, Together** | ❌ (translated) | ❌ | ❌ | Works via OpenAI translation |
+| **Bedrock, Fireworks, Groq, Together** | ❌ (translated) | ❌ | ❌ | Works via OpenAI translation |
 
 ## Configuration Examples
 
