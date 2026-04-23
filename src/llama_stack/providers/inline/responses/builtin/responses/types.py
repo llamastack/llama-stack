@@ -72,7 +72,7 @@ class ChatCompletionResult:
     """Result of processing streaming chat completion chunks."""
 
     response_id: str
-    content: list[str]
+    content: list[str | None]
     tool_calls: dict[int, OpenAIChatCompletionToolCall]
     created: int
     model: str
@@ -87,7 +87,7 @@ class ChatCompletionResult:
     @property
     def content_text(self) -> str:
         """Get joined content as string."""
-        return "".join(self.content)
+        return "".join(content for content in self.content if content is not None)
 
     @property
     def has_tool_calls(self) -> bool:
