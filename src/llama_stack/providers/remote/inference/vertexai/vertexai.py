@@ -145,6 +145,7 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
     config: VertexAIConfig
     _default_client: Client | None = PrivateAttr(default=None)
     _http_options: genai_types.HttpOptions | None = PrivateAttr(default=None)
+    _http_options_initialized: bool = PrivateAttr(default=False)
     _model_cache: dict[str, Model] = PrivateAttr(default_factory=dict)
     embedding_model_metadata: dict[str, dict[str, int]] = {
         "publishers/google/models/text-embedding-004": {"embedding_dimension": 768, "context_length": 2048},
@@ -162,31 +163,48 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
         if client is not None:
             await client.aclose()
 
+    def _ensure_http_options(self) -> None:
+        """Lazily initialize HTTP options in the current event loop.
+
+        This defers httpx.AsyncClient creation from initialize() to first use,
+        avoiding event loop mismatch when the server creates providers in a
+        temporary event loop during startup.
+        """
+        if self._http_options_initialized:
+            return
+
+        self._http_options = _build_http_options(self.config.network)
+        self._http_options_initialized = True
+
     async def initialize(self) -> None:
+        """Initialize the provider without creating httpx clients.
+
+        HTTP options (including httpx.AsyncClient) are created lazily on first
+        use to avoid event loop mismatch issues when initialization happens in
+        a temporary event loop during server startup.
+
+        We don't create the default client here because that would trigger
+        _ensure_http_options() and create httpx.AsyncClient in the wrong event loop.
+        The client will be created on first use via _get_client().
+        """
         try:
-            await self._close_managed_httpx_client()
-            self._http_options = _build_http_options(self.config.network)
-            access_token = self.config.auth_credential.get_secret_value() if self.config.auth_credential else None
-            self._default_client = self._create_client(
-                project=self.config.project,
-                location=self.config.location,
-                access_token=access_token,
-            )
+            # Don't create the client here - it will be created lazily on first use
+            # This avoids calling _ensure_http_options() in the temporary startup event loop
             logger.info(
-                "VertexAI client initialized for project=%s location=%s",
+                "VertexAI provider initialized for project=%s location=%s (client will be created on first use)",
                 self.config.project,
                 self.config.location,
             )
         except Exception:
             logger.warning(
-                "Failed to initialize default VertexAI client. Requests will require explicit credentials.",
+                "Failed to initialize VertexAI provider configuration.",
                 exc_info=True,
             )
-            self._default_client = None
 
     async def shutdown(self) -> None:
         await self._close_managed_httpx_client()
         self._http_options = None
+        self._http_options_initialized = False
         self._default_client = None
 
     async def register_model(self, model: Model) -> Model:
@@ -201,7 +219,12 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
         pass
 
     def _create_adc_client(self, project: str, location: str) -> Client:
-        """Create a client using Application Default Credentials."""
+        """Create a client using Application Default Credentials.
+
+        Ensures HTTP options are initialized in the current event loop before
+        creating the client.
+        """
+        self._ensure_http_options()
         kwargs: dict[str, Any] = dict(vertexai=True, project=project, location=location)
         if self._http_options is not None:
             kwargs["http_options"] = self._http_options
@@ -215,7 +238,11 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
         auth failures after expiry.  ADC clients are not cached either because
         network configuration is instance-specific and not hashable for
         use as an lru_cache key.
+
+        Ensures HTTP options are initialized in the current event loop before
+        creating the client.
         """
+        self._ensure_http_options()
         if access_token:
             credentials = Credentials(token=access_token)
             kwargs: dict[str, Any] = dict(vertexai=True, project=project, location=location, credentials=credentials)
@@ -287,11 +314,30 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
                 access_token = self.config.auth_credential.get_secret_value() if self.config.auth_credential else None
                 return self._create_client(project=project, location=location, access_token=access_token)
 
+        # Lazily create the default client on first use
         if self._default_client is None:
-            raise ValueError(
-                "Pass Vertex AI access token in the header X-LlamaStack-Provider-Data"
-                ' as { "vertex_access_token": <your access token> }'
-            )
+            access_token = self.config.auth_credential.get_secret_value() if self.config.auth_credential else None
+            try:
+                self._default_client = self._create_client(
+                    project=self.config.project,
+                    location=self.config.location,
+                    access_token=access_token,
+                )
+                logger.info(
+                    "Created default VertexAI client on first use",
+                    project=self.config.project,
+                    location=self.config.location,
+                )
+            except Exception:
+                logger.error(
+                    "Failed to create default VertexAI client. Pass credentials via X-LlamaStack-Provider-Data header.",
+                    exc_info=True,
+                )
+                raise ValueError(
+                    "Failed to create default Vertex AI client. "
+                    "Pass Vertex AI access token in the header X-LlamaStack-Provider-Data "
+                    'as { "vertex_access_token": <your access token> }'
+                ) from None
         return self._default_client
 
     async def _get_provider_model_id(self, model: str) -> str:

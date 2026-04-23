@@ -9,17 +9,21 @@ import base64
 import mimetypes
 import re
 import uuid
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
 
+from llama_stack.log import get_logger
 from llama_stack.providers.inline.responses.builtin.responses.types import AssistantMessageWithReasoning
 from llama_stack_api import (
     Files,
+    Inference,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartParam,
     OpenAIChatCompletionContentPartTextParam,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
+    OpenAIChatCompletionUsage,
     OpenAIChoice,
     OpenAIDeveloperMessageParam,
     OpenAIFile,
@@ -51,6 +55,7 @@ from llama_stack_api import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseOutputMessageReasoningItem,
     OpenAIResponseOutputMessageWebSearchToolCall,
+    OpenAIResponseReasoning,
     OpenAIResponseText,
     OpenAISystemMessageParam,
     OpenAIToolMessageParam,
@@ -632,3 +637,68 @@ def convert_mcp_tool_choice(
         ]
         return matching_tools
     return []
+
+
+logger = get_logger("llama_stack.providers.inline.responses.builtin.responses.utils", category="agents::builtin")
+
+
+def should_summarize_reasoning(reasoning: OpenAIResponseReasoning | None) -> bool:
+    """Check whether reasoning summaries were requested."""
+    return bool(reasoning and reasoning.summary)
+
+
+def build_summary_prompt(reasoning_text: str, summary_mode: str) -> str:
+    """Build the prompt for the reasoning summarization inference call."""
+    if summary_mode == "detailed":
+        return (
+            "Summarize the following chain-of-thought reasoning. "
+            "Preserve the key logical steps, decisions, and conclusions. "
+            "Be thorough but remove redundancy.\n\n"
+            f"Reasoning:\n{reasoning_text}"
+        )
+    return (
+        "Summarize the following chain-of-thought reasoning in one or two sentences. "
+        "Focus only on the final conclusion and the most important reasoning step.\n\n"
+        f"Reasoning:\n{reasoning_text}"
+    )
+
+
+async def summarize_reasoning(
+    inference_api: Inference,
+    model: str,
+    reasoning_text: str,
+    summary_mode: str,
+    summary_usage: list[OpenAIChatCompletionUsage] | None = None,
+) -> str | None:
+    """Make a second inference call to summarize reasoning content."""
+    prompt_text = build_summary_prompt(reasoning_text, summary_mode)
+
+    summary_params = OpenAIChatCompletionRequestWithExtraBody(
+        model=model,
+        messages=[
+            OpenAISystemMessageParam(
+                content="You are a helpful assistant that summarizes reasoning traces.",
+            ),
+            OpenAIUserMessageParam(content=prompt_text),
+        ],
+        stream=False,
+        temperature=0.3,
+    )
+
+    try:
+        summary_result = await inference_api.openai_chat_completion(summary_params)
+    except Exception:
+        logger.exception("Failed to generate reasoning summary")
+        raise
+
+    if isinstance(summary_result, AsyncIterator):
+        raise RuntimeError("Expected non-streaming response from summary call")
+
+    if summary_usage is not None and summary_result.usage:
+        summary_usage.append(summary_result.usage)
+
+    summary_text = summary_result.choices[0].message.content if summary_result.choices else None
+    if not summary_text:
+        return None
+
+    return summary_text

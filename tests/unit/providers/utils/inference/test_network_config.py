@@ -12,10 +12,12 @@ import httpx
 import pytest
 
 from llama_stack.providers.utils.inference.http_client import (
-    _build_network_client_kwargs,
     _build_proxy_mounts,
     _build_ssl_context,
     build_http_client,
+)
+from llama_stack.providers.utils.inference.http_client import (
+    build_network_client_kwargs as _build_network_client_kwargs,
 )
 from llama_stack.providers.utils.inference.model_registry import (
     NetworkConfig,

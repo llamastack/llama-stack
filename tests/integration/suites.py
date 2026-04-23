@@ -116,12 +116,12 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
     "bedrock": Setup(
         name="bedrock",
         description=(
-            "AWS Bedrock via OpenAI-compatible Mantle API (OpenAI GPT-OSS; "
+            "AWS Bedrock via OpenAI-compatible API (OpenAI GPT-OSS; "
             "see AWS Chat Completions docs). No default vision model — GPT-OSS is text-only; "
             "tests that require vision_model_id skip unless you pass --vision-model."
         ),
         defaults={
-            "text_model": "bedrock/openai.gpt-oss-20b",
+            "text_model": "bedrock/openai.gpt-oss-20b-1:0",
             "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
             "embedding_dimension": 768,
         },
@@ -297,6 +297,16 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         name="messages",
         roots=["tests/integration/messages"],
         default_setup="ollama-reasoning",
+    ),
+    # Exercises the /v1/messages translation path: Anthropic request format is
+    # translated to OpenAI Chat Completions, dispatched to OpenAI, and the response
+    # is translated back to Anthropic format. OpenAI is not in _NATIVE_MESSAGES_MODULES,
+    # so this setup guarantees the translation codepath in providers/inline/messages/impl.py
+    # is covered end-to-end (rather than the native passthrough used by the ollama suite).
+    "messages-openai": Suite(
+        name="messages-openai",
+        roots=["tests/integration/messages"],
+        default_setup="gpt",
     ),
     "interactions": Suite(
         name="interactions",

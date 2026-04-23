@@ -43,7 +43,7 @@ def mock_distro_dir(tmp_path):
     distro_dir.mkdir(parents=True, exist_ok=True)
 
     # Create some built-in distributions
-    for distro_name in ["starter", "nvidia", "dell"]:
+    for distro_name in ["starter", "nvidia"]:
         distro_path = distro_dir / distro_name
         distro_path.mkdir()
         (distro_path / "config.yaml").write_text("# config")
@@ -87,7 +87,6 @@ class TestStackList:
                 # Check specific distributions we created
                 assert "starter" in distributions
                 assert "nvidia" in distributions
-                assert "dell" in distributions
 
     def test_custom_distribution_overrides_builtin(self, list_stacks_command, mock_distro_dir, mock_distribs_base_dir):
         """Test that custom distributions override built-in ones with the same name."""

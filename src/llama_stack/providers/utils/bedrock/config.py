@@ -8,6 +8,9 @@ import os
 
 from pydantic import Field, SecretStr
 
+# 1 hour — matches AWS's default role expiration and minimum recommended TTL
+DEFAULT_SESSION_TTL = 3600
+
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 
 
@@ -26,6 +29,18 @@ class BedrockBaseConfig(RemoteInferenceProviderConfig):
     aws_session_token: SecretStr | None = Field(
         default_factory=lambda: SecretStr(val) if (val := os.getenv("AWS_SESSION_TOKEN")) else None,
         description="The AWS session token to use. Default use environment variable: AWS_SESSION_TOKEN",
+    )
+    aws_role_arn: str | None = Field(
+        default_factory=lambda: os.getenv("AWS_ROLE_ARN"),
+        description="The AWS role ARN to assume. Default use environment variable: AWS_ROLE_ARN",
+    )
+    aws_web_identity_token_file: str | None = Field(
+        default_factory=lambda: os.getenv("AWS_WEB_IDENTITY_TOKEN_FILE"),
+        description="The path to the web identity token file. Default use environment variable: AWS_WEB_IDENTITY_TOKEN_FILE",
+    )
+    aws_role_session_name: str | None = Field(
+        default_factory=lambda: os.getenv("AWS_ROLE_SESSION_NAME"),
+        description="The session name to use when assuming a role. Default use environment variable: AWS_ROLE_SESSION_NAME",
     )
     region_name: str | None = Field(
         default_factory=lambda: os.getenv("AWS_DEFAULT_REGION"),
@@ -57,7 +72,7 @@ class BedrockBaseConfig(RemoteInferenceProviderConfig):
         "The default is 60 seconds.",
     )
     session_ttl: int | None = Field(
-        default_factory=lambda: int(os.getenv("AWS_SESSION_TTL", "3600")),
+        default_factory=lambda: int(os.getenv("AWS_SESSION_TTL", str(DEFAULT_SESSION_TTL))),
         description="The time in seconds till a session expires. The default is 3600 seconds (1 hour).",
     )
 
