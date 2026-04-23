@@ -37,6 +37,7 @@ class SentenceTransformerEmbeddingMixin:
     """Mixin providing OpenAI-compatible embeddings via sentence-transformers models."""
 
     model_store: ModelStore
+    config: object  # Config object with optional trust_remote_code attribute
 
     async def openai_embeddings(
         self,

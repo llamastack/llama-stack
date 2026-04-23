@@ -6,4 +6,6 @@
 
 from llama_stack.models.llama.sku_list import all_registered_models
 
-ALL_HUGGINGFACE_REPOS_TO_MODEL_DESCRIPTOR = {m.huggingface_repo: m.descriptor() for m in all_registered_models()}
+ALL_HUGGINGFACE_REPOS_TO_MODEL_DESCRIPTOR = {
+    m.huggingface_repo: m.descriptor() for m in all_registered_models() if m.huggingface_repo is not None
+}
