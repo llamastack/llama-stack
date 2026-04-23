@@ -209,6 +209,13 @@ class ConnectorToolNotFoundError(ResourceNotFoundError):
         )
 
 
+class AgentNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced agent"""
+
+    def __init__(self, agent_id: str) -> None:
+        super().__init__(agent_id, resource_type="Agent", client_command="agents.list")
+
+
 class OpenAIFileObjectNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced file"""
 

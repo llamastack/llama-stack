@@ -107,6 +107,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     :cvar prompts: Prompt versions and management
     :cvar connectors: External connector management (e.g., MCP servers)
     :cvar messages: Anthropic Messages API compatibility layer
+    :cvar agents: Anthropic Managed Agents API (v1alpha)
     :cvar interactions: Google Interactions API compatibility layer
     :cvar inspect: Built-in system inspection and introspection
     """
@@ -129,6 +130,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     conversations = "conversations"
     connectors = "connectors"
     messages = "messages"
+    agents = "agents"
     interactions = "interactions"
 
     # built-in API

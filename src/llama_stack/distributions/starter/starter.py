@@ -155,6 +155,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         ],
         "interactions": [BuildProvider(provider_type="inline::builtin")],
         "messages": [BuildProvider(provider_type="inline::builtin")],
+        "agents": [BuildProvider(provider_type="inline::builtin")],
         "responses": [BuildProvider(provider_type="inline::builtin")],
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
