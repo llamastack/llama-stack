@@ -1,0 +1,24 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_streaming_web_search[client_with_models-txt=openai/gpt-4o-web_search_2025_08_26_type]",
+  "request": {
+    "test_id": "tests/integration/responses/test_tool_responses.py::test_response_streaming_web_search[client_with_models-txt=openai/gpt-4o-web_search_2025_08_26_type]",
+    "provider": "tavily",
+    "tool_name": "web_search",
+    "kwargs": {
+      "query": "latest version of Python"
+    }
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.tools.ToolInvocationResult",
+      "__data__": {
+        "content": "{\"query\": \"latest version of Python\", \"top_k\": [{\"url\": \"https://www.liquidweb.com/blog/latest-python-version/\", \"title\": \"The latest Python version: Python 3.14 - Liquid Web\", \"content\": \"The latest major version, Python 3.14 was officially released on October 7, 2025. Let's explore the key features of Python's current version, how to download\", \"score\": 0.8991304, \"raw_content\": null}, {\"url\": \"https://www.python.org/\", \"title\": \"Welcome to Python.org\", \"content\": \"Download. Python source code and installers are available for download for all versions! Latest: Python 3.14.3. Docs.\", \"score\": 0.8088086, \"raw_content\": null}, {\"url\": \"https://www.python.org/doc/versions/\", \"title\": \"Python documentation by version\", \"content\": \"Python 3.11.15, released on 3 March 2026 \\u00b7 Python 3.11.14, released on 9 October 2025 \\u00b7 Python 3.11.13, released on 3 June 2025 \\u00b7 Python 3.11.12, released on 8\", \"score\": 0.7978881, \"raw_content\": null}, {\"url\": \"https://devguide.python.org/versions/\", \"title\": \"Status of Python versions - Python Developer's Guide\", \"content\": \"The main branch is currently the future Python 3.15, and is the only branch that accepts new features. The latest release for each Python version can be found\", \"score\": 0.79099923, \"raw_content\": null}, {\"url\": \"https://www.python.org/downloads/\", \"title\": \"Download Python - Python.org\", \"content\": \"Active Python releases \\u00b7 3.16 planned Download 2027-10-06 2032-10 PEP 826 \\u00b7 3.15 pre-release Download 2026-10-01 (planned) 2031-10 PEP 790 \\u00b7 3.14 bugfix Download\", \"score\": 0.6530611, \"raw_content\": null}]}",
+        "error_message": null,
+        "error_code": null,
+        "metadata": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
