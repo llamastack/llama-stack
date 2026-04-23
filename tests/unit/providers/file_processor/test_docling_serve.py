@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import asyncio
 import io
 import uuid
 from types import SimpleNamespace
@@ -284,6 +285,66 @@ class TestDoclingServeFileProcessor:
         sent_files = mock_post.call_args.kwargs["files"]["files"]
         assert sent_files[2] == "application/octet-stream"
 
+    # -- scheduler integration --
+
+    async def test_scheduler_limits_concurrency(self, config: DoclingServeFileProcessorConfig, files_api: AsyncMock):
+        config.max_concurrency = 1
+        processor = DoclingServeFileProcessor(config, files_api=files_api)
+
+        hold = asyncio.Event()
+        call_count = 0
+
+        async def slow_post(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            await hold.wait()
+            return _make_httpx_response(CONVERT_RESPONSE)
+
+        request = ProcessFileRequest()
+        uploads = [UploadFile(file=io.BytesIO(b"data"), filename=f"f{i}.pdf") for i in range(3)]
+
+        with patch("httpx.AsyncClient.post", side_effect=slow_post):
+            tasks = [asyncio.create_task(processor.process_file(request, file=u)) for u in uploads]
+            await asyncio.sleep(0.05)
+
+            assert processor._scheduler.active == 1
+            assert processor._scheduler.queued == 2
+
+            hold.set()
+            results = await asyncio.gather(*tasks)
+
+        assert len(results) == 3
+        assert all(len(r.chunks) == 1 for r in results)
+
+    async def test_scheduler_queue_full_rejects(self, config: DoclingServeFileProcessorConfig, files_api: AsyncMock):
+        config.max_concurrency = 1
+        config.max_queue_size = 1
+        processor = DoclingServeFileProcessor(config, files_api=files_api)
+
+        hold = asyncio.Event()
+
+        async def slow_post(*args, **kwargs):
+            await hold.wait()
+            return _make_httpx_response(CONVERT_RESPONSE)
+
+        request = ProcessFileRequest()
+        uploads = [UploadFile(file=io.BytesIO(b"data"), filename=f"f{i}.pdf") for i in range(3)]
+
+        with patch("httpx.AsyncClient.post", side_effect=slow_post):
+            task1 = asyncio.create_task(processor.process_file(request, file=uploads[0]))
+            await asyncio.sleep(0.02)
+            task2 = asyncio.create_task(processor.process_file(request, file=uploads[1]))
+            await asyncio.sleep(0.02)
+
+            from ogx.providers.utils.async_request_scheduler import QueueFullError
+
+            with pytest.raises(QueueFullError):
+                await processor.process_file(request, file=uploads[2])
+
+            hold.set()
+            await task1
+            await task2
+
 
 class TestDoclingServeFileProcessorConfig:
     def test_default_values(self):
@@ -291,8 +352,18 @@ class TestDoclingServeFileProcessorConfig:
         assert config.base_url == "http://localhost:5001/v1"
         assert config.api_key is None
         assert config.default_chunk_size_tokens >= 100
+        assert config.max_concurrency == 2
+        assert config.max_queue_size == 0
 
     def test_sample_run_config(self):
         sample = DoclingServeFileProcessorConfig.sample_run_config()
         assert "base_url" in sample
         assert "api_key" in sample
+        assert "max_concurrency" in sample
+
+    def test_concurrency_validation(self):
+        with pytest.raises(ValueError):
+            DoclingServeFileProcessorConfig(max_concurrency=0)
+
+        with pytest.raises(ValueError):
+            DoclingServeFileProcessorConfig(max_concurrency=100)
