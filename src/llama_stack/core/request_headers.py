@@ -23,6 +23,23 @@ log = get_logger(name=__name__, category="core")
 
 # Context variable for request provider data and auth attributes
 PROVIDER_DATA_VAR: contextvars.ContextVar[dict[str, Any] | None] = contextvars.ContextVar("provider_data", default=None)
+RESERVED_PROVIDER_DATA_KEYS = frozenset({"__authenticated_user"})
+
+
+def _sanitize_provider_data(provider_data: dict[str, Any] | None) -> dict[str, Any]:
+    """Drop caller-controlled keys that overlap with server-owned request context."""
+    if not provider_data:
+        return {}
+
+    sanitized = dict(provider_data)
+    removed_keys = sorted(k for k in RESERVED_PROVIDER_DATA_KEYS if k in sanitized)
+    for key in removed_keys:
+        sanitized.pop(key, None)
+
+    if removed_keys:
+        log.warning("Ignoring reserved provider data keys", removed_keys=removed_keys)
+
+    return sanitized
 
 
 class RequestProviderDataContext(AbstractContextManager[None]):
@@ -32,7 +49,7 @@ class RequestProviderDataContext(AbstractContextManager[None]):
         if provider_data is not None and not isinstance(provider_data, dict):
             log.error("Provider data must be a JSON object")
             provider_data = None
-        self.provider_data = provider_data or {}
+        self.provider_data = _sanitize_provider_data(provider_data)
         if user:
             self.provider_data["__authenticated_user"] = user
 
@@ -118,7 +135,15 @@ def get_authenticated_user() -> User | None:
     provider_data = PROVIDER_DATA_VAR.get()
     if not provider_data:
         return None
-    return provider_data.get("__authenticated_user")
+
+    user = provider_data.get("__authenticated_user")
+    if user is None:
+        return None
+    if isinstance(user, User):
+        return user
+
+    log.warning("Ignoring invalid authenticated user from provider data context", user_type=type(user).__name__)
+    return None
 
 
 def user_from_scope(scope: Scope) -> User | None:
