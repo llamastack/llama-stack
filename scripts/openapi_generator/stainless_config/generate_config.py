@@ -43,19 +43,19 @@ SECURITY_SCHEMES = {"BearerAuth": {"type": "http", "scheme": "bearer"}}
 TARGETS = {
     "node": {
         "package_name": "ogx-client",
-        "production_repo": "ogx/ogx-client-typescript",
+        "production_repo": "ogx-ai/ogx-client-typescript",
         "publish": {"npm": False},
     },
     "python": {
         "package_name": "ogx_client",
-        "production_repo": "ogx/ogx-client-python",
+        "production_repo": "ogx-ai/ogx-client-python",
         "options": {"use_uv": True},
         "publish": {"pypi": True},
         "project_name": "ogx_client",
     },
     "go": {
         "package_name": "ogx-client",
-        "production_repo": "ogx/ogx-client-go",
+        "production_repo": "ogx-ai/ogx-client-go",
         "options": {"enable_v2": True, "back_compat_use_shared_package": False},
     },
 }
