@@ -191,6 +191,8 @@ jobs:
             suite: base
           - setup: gpt
             suite: responses
+          - setup: gpt
+            suite: messages-openai
           - setup: azure
             suite: responses
           - setup: bedrock
@@ -239,7 +241,7 @@ jobs:
       # a trusted commit, not from PR checkout. This is critical for security.
       - name: Setup test environment
         if: steps.should_run.outputs.run == 'true'
-        uses: llamastack/llama-stack/.github/actions/setup-test-environment@e92196d200bca6fc220af5996142c42528df0c56
+        uses: llamastack/llama-stack/.github/actions/setup-test-environment@2e08be040be2cd15b528d23e39b58b286e02d379
         with:
           python-version: "3.12"
           client-version: "latest"
@@ -249,7 +251,7 @@ jobs:
 
       - name: Run and record tests
         if: steps.should_run.outputs.run == 'true'
-        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@e92196d200bca6fc220af5996142c42528df0c56
+        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@2e08be040be2cd15b528d23e39b58b286e02d379
         env:
           OPENAI_API_KEY: ${{ matrix.provider.setup == 'gpt' && secrets.OPENAI_API_KEY || '' }}
           AZURE_API_KEY: ${{ matrix.provider.setup == 'azure' && secrets.AZURE_API_KEY || '' }}
@@ -294,7 +296,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Update PR comment
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PROVIDERS_TO_RUN: ${{ needs.compute-pr-info.outputs.providers_to_run }}
           RECORD_STATUS: ${{ needs.record-providers.result }}

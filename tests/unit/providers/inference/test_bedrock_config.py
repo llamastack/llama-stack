@@ -35,5 +35,17 @@ def test_bedrock_config_sample():
     sample = BedrockConfig.sample_run_config()
     assert "api_key" in sample
     assert "region_name" in sample
+    assert "aws_role_arn" in sample
+    assert "aws_web_identity_token_file" in sample
     assert sample["api_key"] == "${env.AWS_BEARER_TOKEN_BEDROCK:=}"
     assert sample["region_name"] == "${env.AWS_DEFAULT_REGION:=us-east-2}"
+    assert sample["aws_role_arn"] == "${env.AWS_ROLE_ARN:=}"
+    assert sample["aws_web_identity_token_file"] == "${env.AWS_WEB_IDENTITY_TOKEN_FILE:=}"
+
+
+def test_bedrock_config_sts_fields(monkeypatch):
+    monkeypatch.setenv("AWS_ROLE_ARN", "arn:aws:iam::123:role/test")
+    monkeypatch.setenv("AWS_WEB_IDENTITY_TOKEN_FILE", "/tmp/token")
+    config = BedrockConfig()
+    assert config.aws_role_arn == "arn:aws:iam::123:role/test"
+    assert config.aws_web_identity_token_file == "/tmp/token"

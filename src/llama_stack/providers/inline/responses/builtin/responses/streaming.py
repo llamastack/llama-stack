@@ -37,6 +37,7 @@ from llama_stack_api import (
     OpenAIChatCompletionToolChoiceAllowedTools,
     OpenAIChatCompletionToolChoiceCustomTool,
     OpenAIChatCompletionToolChoiceFunctionTool,
+    OpenAIChatCompletionUsage,
     OpenAIChatCompletionWithReasoning,
     OpenAIChoice,
     OpenAIChoiceLogprobs,
@@ -89,6 +90,7 @@ from llama_stack_api import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseOutputMessageReasoningContent,
     OpenAIResponseOutputMessageReasoningItem,
+    OpenAIResponseOutputMessageReasoningSummary,
     OpenAIResponseOutputMessageWebSearchToolCall,
     OpenAIResponsePrompt,
     OpenAIResponseReasoning,
@@ -116,6 +118,8 @@ from .utils import (
     convert_mcp_tool_choice,
     is_function_tool_call,
     run_guardrails,
+    should_summarize_reasoning,
+    summarize_reasoning,
 )
 
 logger = get_logger(name=__name__, category="agents::builtin")
@@ -619,9 +623,44 @@ class StreamingResponseOrchestrator:
                         content=[
                             OpenAIResponseOutputMessageReasoningContent(text=completion_result_data.reasoning_content)
                         ],
-                        status="completed",
+                        status="in_progress",
                     )
+                    reasoning_output_index = len(output_messages)
                     output_messages.append(reasoning_item)
+
+                    self.sequence_number += 1
+                    yield OpenAIResponseObjectStreamResponseOutputItemAdded(
+                        response_id=self.response_id,
+                        item=reasoning_item,
+                        output_index=reasoning_output_index,
+                        sequence_number=self.sequence_number,
+                    )
+
+                    if should_summarize_reasoning(self.reasoning):
+                        summary_mode = (
+                            self.reasoning.summary if self.reasoning and self.reasoning.summary else "concise"
+                        )
+                        summary_usage_list: list[OpenAIChatCompletionUsage] = []
+                        summary_text = await summarize_reasoning(
+                            inference_api=self.inference_api,
+                            model=self.ctx.model,
+                            reasoning_text=completion_result_data.reasoning_content,
+                            summary_mode=summary_mode,
+                            summary_usage=summary_usage_list,
+                        )
+                        if summary_text:
+                            reasoning_item.summary = [OpenAIResponseOutputMessageReasoningSummary(text=summary_text)]
+                        for usage in summary_usage_list:
+                            self._accumulate_usage(usage)
+
+                    reasoning_item.status = "completed"
+                    self.sequence_number += 1
+                    yield OpenAIResponseObjectStreamResponseOutputItemDone(
+                        response_id=self.response_id,
+                        item=reasoning_item,
+                        output_index=reasoning_output_index,
+                        sequence_number=self.sequence_number,
+                    )
 
                 for choice in current_response.choices:
                     has_tool_calls = choice.message.tool_calls and self.ctx.response_tools
@@ -807,43 +846,43 @@ class StreamingResponseOrchestrator:
         """Accumulate usage from a streaming chunk into the response usage format."""
         if not chunk.usage:
             return
+        self._accumulate_usage(chunk.usage)
 
-        self.accumulated_builtin_output_tokens += chunk.usage.completion_tokens
+    def _accumulate_usage(self, usage: OpenAIChatCompletionUsage) -> None:
+        """Accumulate chat completion usage into the response usage format."""
+        self.accumulated_builtin_output_tokens += usage.completion_tokens
 
         if self.accumulated_usage is None:
             # Convert from chat completion format to response format
             self.accumulated_usage = OpenAIResponseUsage(
-                input_tokens=chunk.usage.prompt_tokens,
-                output_tokens=chunk.usage.completion_tokens,
-                total_tokens=chunk.usage.total_tokens,
+                input_tokens=usage.prompt_tokens,
+                output_tokens=usage.completion_tokens,
+                total_tokens=usage.total_tokens,
                 input_tokens_details=OpenAIResponseUsageInputTokensDetails(
-                    cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens
-                    if chunk.usage.prompt_tokens_details and chunk.usage.prompt_tokens_details.cached_tokens is not None
+                    cached_tokens=usage.prompt_tokens_details.cached_tokens
+                    if usage.prompt_tokens_details and usage.prompt_tokens_details.cached_tokens is not None
                     else 0
                 ),
                 output_tokens_details=OpenAIResponseUsageOutputTokensDetails(
-                    reasoning_tokens=chunk.usage.completion_tokens_details.reasoning_tokens
-                    if chunk.usage.completion_tokens_details
-                    and chunk.usage.completion_tokens_details.reasoning_tokens is not None
+                    reasoning_tokens=usage.completion_tokens_details.reasoning_tokens
+                    if usage.completion_tokens_details and usage.completion_tokens_details.reasoning_tokens is not None
                     else 0
                 ),
             )
         else:
             # Accumulate across multiple inference calls
             self.accumulated_usage = OpenAIResponseUsage(
-                input_tokens=self.accumulated_usage.input_tokens + chunk.usage.prompt_tokens,
-                output_tokens=self.accumulated_usage.output_tokens + chunk.usage.completion_tokens,
-                total_tokens=self.accumulated_usage.total_tokens + chunk.usage.total_tokens,
-                # Use latest non-null details
+                input_tokens=self.accumulated_usage.input_tokens + usage.prompt_tokens,
+                output_tokens=self.accumulated_usage.output_tokens + usage.completion_tokens,
+                total_tokens=self.accumulated_usage.total_tokens + usage.total_tokens,
                 input_tokens_details=OpenAIResponseUsageInputTokensDetails(
-                    cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens
-                    if chunk.usage.prompt_tokens_details and chunk.usage.prompt_tokens_details.cached_tokens is not None
+                    cached_tokens=usage.prompt_tokens_details.cached_tokens
+                    if usage.prompt_tokens_details and usage.prompt_tokens_details.cached_tokens is not None
                     else self.accumulated_usage.input_tokens_details.cached_tokens
                 ),
                 output_tokens_details=OpenAIResponseUsageOutputTokensDetails(
-                    reasoning_tokens=chunk.usage.completion_tokens_details.reasoning_tokens
-                    if chunk.usage.completion_tokens_details
-                    and chunk.usage.completion_tokens_details.reasoning_tokens is not None
+                    reasoning_tokens=usage.completion_tokens_details.reasoning_tokens
+                    if usage.completion_tokens_details and usage.completion_tokens_details.reasoning_tokens is not None
                     else self.accumulated_usage.output_tokens_details.reasoning_tokens
                 ),
             )

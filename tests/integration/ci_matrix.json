@@ -13,6 +13,7 @@
     {"suite": "vllm-reasoning", "setup": "vllm"},
     {"suite": "ollama-reasoning", "setup": "ollama-reasoning"},
     {"suite": "messages", "setup": "ollama-reasoning"},
+    {"suite": "messages-openai", "setup": "gpt"},
     {"suite": "interactions", "setup": "gemini"}
   ],
   "stainless": [

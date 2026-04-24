@@ -111,8 +111,8 @@ async def test_embedding_config_consistency_check_passes(vector_io_adapter):
     assert vector_store["metadata"]["embedding_dimension"] == "768"
 
 
-async def test_embedding_config_defaults_when_missing(vector_io_adapter):
-    """Test that embedding dimension defaults to 768 when not provided."""
+async def test_embedding_config_dimension_required(vector_io_adapter):
+    """Test that embedding dimension is required when not provided."""
 
     # Set provider_id attribute for the adapter
     vector_io_adapter.__provider_id__ = "test_provider"
@@ -126,12 +126,9 @@ async def test_embedding_config_defaults_when_missing(vector_io_adapter):
         },
     )
 
-    result = await vector_io_adapter.openai_create_vector_store(params)
-
-    # Should default to 768 dimensions
-    vector_store = vector_io_adapter.openai_vector_stores[result.id]
-    assert vector_store["metadata"]["embedding_model"] == "model-without-dimension"
-    assert vector_store["metadata"]["embedding_dimension"] == "768"
+    # Should raise ValueError because embedding_dimension is not provided
+    with pytest.raises(ValueError, match="Embedding dimension is required"):
+        await vector_io_adapter.openai_create_vector_store(params)
 
 
 async def test_embedding_config_required_model_missing(vector_io_adapter):

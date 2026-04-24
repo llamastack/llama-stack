@@ -7,7 +7,7 @@
 import contextvars
 import json
 from contextlib import AbstractContextManager
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from starlette.types import Scope
 
@@ -15,6 +15,9 @@ from llama_stack.core.datatypes import User
 from llama_stack.log import get_logger
 
 from .utils.dynamic import instantiate_class_type
+
+if TYPE_CHECKING:
+    from llama_stack_api import ProviderSpec
 
 log = get_logger(name=__name__, category="core")
 
@@ -26,6 +29,9 @@ class RequestProviderDataContext(AbstractContextManager[None]):
     """Context manager for request provider data"""
 
     def __init__(self, provider_data: dict[str, Any] | None = None, user: User | None = None) -> None:
+        if provider_data is not None and not isinstance(provider_data, dict):
+            log.error("Provider data must be a JSON object")
+            provider_data = None
         self.provider_data = provider_data or {}
         if user:
             self.provider_data["__authenticated_user"] = user
@@ -44,6 +50,8 @@ class RequestProviderDataContext(AbstractContextManager[None]):
 
 class NeedsRequestProviderData:
     """Mixin for providers that require per-request provider data from request headers."""
+
+    __provider_spec__: "ProviderSpec"
 
     def get_request_provider_data(self) -> Any:
         spec = self.__provider_spec__  # type: ignore[attr-defined]
@@ -84,10 +92,19 @@ def parse_request_provider_data(headers: dict[str, str]) -> dict[str, Any] | Non
         return None
 
     try:
-        return json.loads(val)  # type: ignore[no-any-return]
+        parsed = json.loads(val)
     except json.JSONDecodeError:
         log.error("Provider data not encoded as a JSON object!")
         return None
+
+    if parsed is None:
+        return None
+
+    if not isinstance(parsed, dict):
+        log.error("Provider data must be encoded as a JSON object")
+        return None
+
+    return cast(dict[str, Any], parsed)
 
 
 def request_provider_data_context(headers: dict[str, str], user: User | None = None) -> AbstractContextManager[None]:

@@ -211,7 +211,7 @@ Key features:
 
 ### Distributions
 
-A distribution is a pre-built configuration that bundles specific providers for a target environment. Think of it like Kubernetes distributions (AKS, EKS, GKE): the core API stays the same, but each distribution wires different backends. `src/llama_stack/distributions/` contains these configurations (e.g., `starter`, `dell`, `nvidia`). Each distribution directory has:
+A distribution is a pre-built configuration that bundles specific providers for a target environment. Think of it like Kubernetes distributions (AKS, EKS, GKE): the core API stays the same, but each distribution wires different backends. `src/llama_stack/distributions/` contains these configurations (e.g., `starter`, `nvidia`). Each distribution directory has:
 
 - `config.yaml` -- the run config
 - Templates and codegen support via `template.py`
