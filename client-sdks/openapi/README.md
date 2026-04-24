@@ -70,6 +70,48 @@ merge_stainless_config.py  ->  build_hierarchy.py  ->  openapi-generator  ->  pa
 - `sdks/python/` - Generated Python SDK
 - `.openapi-generator/` - Generator metadata
 
+## Publishing to PyPI
+
+The SDK can be published to PyPI using the GitHub Actions workflow at `.github/workflows/publish-openapi-sdk.yml`.
+
+### Manual Publishing (via GitHub UI)
+
+1. Go to Actions → "Publish OpenAPI SDK to PyPI"
+2. Click "Run workflow"
+3. Select options:
+   - **publish_to**: `testpypi` (for testing) or `pypi` (production)
+   - **dry_run**: `true` to build only without publishing
+
+### Automatic Publishing (via Git Tags)
+
+Push a tag matching `openapi-sdk-v*` to trigger automatic publishing to TestPyPI:
+
+```bash
+git tag openapi-sdk-v0.5.0
+git push origin openapi-sdk-v0.5.0
+```
+
+### Required Secrets
+
+Configure these GitHub secrets for the repository:
+
+- `TEST_PYPI_API_TOKEN` - TestPyPI API token
+- `PYPI_API_TOKEN` - Production PyPI API token
+
+### Testing the Published Package
+
+After publishing to TestPyPI:
+
+```bash
+pip install --index-url https://test.pypi.org/simple/ llama-stack-open-client
+```
+
+After publishing to PyPI:
+
+```bash
+pip install llama-stack-open-client
+```
+
 ## Files
 
 - `Makefile` - Build orchestration
