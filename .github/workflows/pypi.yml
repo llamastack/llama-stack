@@ -652,7 +652,7 @@ jobs:
           fi
 
           if [ -d "dist-client-python" ] && ls dist-client-python/*.whl 1>/dev/null 2>&1; then
-            python -c "import ogx_client; print(f'ogx_client imported successfully from {ogx_client.__file__}')"
+            python -c "import llama_stack_client; print(f'ogx_client imported successfully from {ogx_client.__file__}')"
           fi
 
       - name: Verify TypeScript package
@@ -670,7 +670,7 @@ jobs:
             echo "TypeScript package installed successfully"
 
             # Verify the package is importable
-            node -e "const pkg = require('ogx-client'); console.log('ogx-client package loaded successfully');" || echo "Package may use ES modules, skipping require test"
+            node -e "const pkg = require('llama-stack-client'); console.log('ogx-client package loaded successfully');" || echo "Package may use ES modules, skipping require test"
           fi
 
   # Publish packages to PyPI/npm
