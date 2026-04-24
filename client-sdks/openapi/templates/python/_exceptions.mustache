@@ -24,11 +24,11 @@ __all__ = [
 ]
 
 
-class OGXClientError(Exception):
+class LlamaStackClientError(Exception):
     pass
 
 
-class APIError(OGXClientError):
+class APIError(LlamaStackClientError):
     message: str
     request: httpx.Request
 

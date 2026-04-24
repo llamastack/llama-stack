@@ -10,7 +10,7 @@ from importlib.metadata import version
 import click
 import yaml
 
-from ... import OGXClient
+from ... import LlamaStackClient
 
 
 def _get_version():
@@ -77,7 +77,7 @@ def ogx_client(ctx, endpoint: str, api_key: str, config: str | None):
             "Authorization": f"Bearer {api_key}",
         }
 
-    client = OGXClient(
+    client = LlamaStackClient(
         base_url=endpoint,
         provider_data={
             "fireworks_api_key": os.environ.get("FIREWORKS_API_KEY", ""),

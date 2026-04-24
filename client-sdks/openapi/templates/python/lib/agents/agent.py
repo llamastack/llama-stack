@@ -297,7 +297,7 @@ class AsyncAgent:
         """Construct an async Agent backed by the responses + conversations APIs.
 
         Args:
-            client: An async OpenAI-compatible client (e.g., openai.AsyncOpenAI() or AsyncOGXClient).
+            client: An async OpenAI-compatible client (e.g., openai.AsyncOpenAI() or AsyncLlamaStackClient).
                     The client must support the responses and conversations APIs.
         """
         self.client = client

@@ -1,6 +1,6 @@
 import Foundation
 
-import OGXClient
+import LlamaStackClient
 
 func encodeHeader(role: String) -> String {
   return "<|start_header_id|>\(role)<|end_header_id|>\n\n"

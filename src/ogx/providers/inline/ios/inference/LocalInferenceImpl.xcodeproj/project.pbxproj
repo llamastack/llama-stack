@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		5CADC71A2CA471CC007662D2 /* OGXClient in Frameworks */ = {isa = PBXBuildFile; productRef = 5CADC7192CA471CC007662D2 /* OGXClient */; };
-		5CAF3DD82CA485740029CD2B /* OGXClient in Frameworks */ = {isa = PBXBuildFile; productRef = 5CAF3DD72CA485740029CD2B /* OGXClient */; };
+		5CADC71A2CA471CC007662D2 /* LlamaStackClient in Frameworks */ = {isa = PBXBuildFile; productRef = 5CADC7192CA471CC007662D2 /* LlamaStackClient */; };
+		5CAF3DD82CA485740029CD2B /* LlamaStackClient in Frameworks */ = {isa = PBXBuildFile; productRef = 5CAF3DD72CA485740029CD2B /* LlamaStackClient */; };
 		5CCBC60C2CA1F04A00E958D0 /* LocalInference.h in Headers */ = {isa = PBXBuildFile; fileRef = 5CCBC60B2CA1F04A00E958D0 /* LocalInference.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5CCBC6752CA1F45800E958D0 /* executorch_debug in Frameworks */ = {isa = PBXBuildFile; productRef = 5CCBC6742CA1F45800E958D0 /* executorch_debug */; };
 		5CCBC6862CA1F64A00E958D0 /* LLaMARunner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5CCBC6802CA1F63F00E958D0 /* LLaMARunner.framework */; platformFilter = ios; };
@@ -80,8 +80,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5CADC71A2CA471CC007662D2 /* OGXClient in Frameworks */,
-				5CAF3DD82CA485740029CD2B /* OGXClient in Frameworks */,
+				5CADC71A2CA471CC007662D2 /* LlamaStackClient in Frameworks */,
+				5CAF3DD82CA485740029CD2B /* LlamaStackClient in Frameworks */,
 				5CCBC6932CA1F7D000E958D0 /* Stencil in Frameworks */,
 				5CCBC6862CA1F64A00E958D0 /* LLaMARunner.framework in Frameworks */,
 				5CCBC6752CA1F45800E958D0 /* executorch_debug in Frameworks */,
@@ -171,8 +171,8 @@
 			packageProductDependencies = (
 				5CCBC6742CA1F45800E958D0 /* executorch_debug */,
 				5CCBC6922CA1F7D000E958D0 /* Stencil */,
-				5CADC7192CA471CC007662D2 /* OGXClient */,
-				5CAF3DD72CA485740029CD2B /* OGXClient */,
+				5CADC7192CA471CC007662D2 /* LlamaStackClient */,
+				5CAF3DD72CA485740029CD2B /* LlamaStackClient */,
 			);
 			productName = LocalInferenceProvider;
 			productReference = 5CCBC6082CA1F04A00E958D0 /* LocalInferenceImpl.framework */;
@@ -525,14 +525,14 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		5CADC7192CA471CC007662D2 /* OGXClient */ = {
+		5CADC7192CA471CC007662D2 /* LlamaStackClient */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = OGXClient;
+			productName = LlamaStackClient;
 		};
-		5CAF3DD72CA485740029CD2B /* OGXClient */ = {
+		5CAF3DD72CA485740029CD2B /* LlamaStackClient */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5CAF3DD62CA485740029CD2B /* XCRemoteSwiftPackageReference "ogx-client-swift" */;
-			productName = OGXClient;
+			productName = LlamaStackClient;
 		};
 		5CCBC6742CA1F45800E958D0 /* executorch_debug */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -1,6 +1,6 @@
 import Foundation
 
-import OGXClient
+import LlamaStackClient
 
 func convertToNativeSwiftType(_ value: Any) -> Any {
     switch value {

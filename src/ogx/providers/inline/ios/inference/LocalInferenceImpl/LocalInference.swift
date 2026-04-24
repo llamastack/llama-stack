@@ -1,7 +1,7 @@
 import Foundation
 
 import LLaMARunner
-import OGXClient
+import LlamaStackClient
 
 class RunnerHolder: ObservableObject {
   var runner: Runner?
