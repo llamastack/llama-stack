@@ -37,7 +37,7 @@ def test_image_chat_completion_non_streaming(client_with_models, vision_model_id
             {
                 "type": "image_url",
                 "image_url": {
-                    "url": "https://raw.githubusercontent.com/meta-llama/ogx/main/tests/integration/inference/dog.png"
+                    "url": "https://raw.githubusercontent.com/ogx-ai/ogx/main/tests/integration/inference/dog.png"
                 },
             },
             {
@@ -164,7 +164,7 @@ def test_image_chat_completion_streaming(client_with_models, vision_model_id):
             {
                 "type": "image_url",
                 "image_url": {
-                    "url": "https://raw.githubusercontent.com/meta-llama/ogx/main/tests/integration/inference/dog.png"
+                    "url": "https://raw.githubusercontent.com/ogx-ai/ogx/main/tests/integration/inference/dog.png"
                 },
             },
             {
