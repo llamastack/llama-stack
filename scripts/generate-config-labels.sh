@@ -49,7 +49,7 @@ for yaml_file in "$DISTRO_DIR"/*.yaml; do
 
     # Output label flag (one per line for safe array construction)
     echo "--label"
-    echo "com.llamastack.config.${filename}=${encoded}"
+    echo "com.ogx.config.${filename}=${encoded}"
 
     # Build config list
     if [ -z "$CONFIG_LIST" ]; then
@@ -64,13 +64,13 @@ done
 
 # Output metadata labels (one per line)
 echo "--label"
-echo "com.llamastack.distribution.name=${DISTRO_NAME}"
+echo "com.ogx.distribution.name=${DISTRO_NAME}"
 echo "--label"
-echo "com.llamastack.distribution.version=${VERSION}"
+echo "com.ogx.distribution.version=${VERSION}"
 echo "--label"
-echo "com.llamastack.distribution.default-config=${DEFAULT_CONFIG}"
+echo "com.ogx.distribution.default-config=${DEFAULT_CONFIG}"
 echo "--label"
-echo "com.llamastack.distribution.configs=${CONFIG_LIST}"
+echo "com.ogx.distribution.configs=${CONFIG_LIST}"
 
 # Output OCI standard labels (one per line)
 echo "--label"
