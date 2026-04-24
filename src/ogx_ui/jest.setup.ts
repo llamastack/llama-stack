@@ -1,5 +1,5 @@
-// Import ogx-client shims for Node environment
-import "ogx-client/shims/node";
+// Import llama-stack-client shims for Node environment
+import "llama-stack-client/shims/node";
 
 // Add any other global test setup here
 import "@testing-library/jest-dom";

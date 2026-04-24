@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ShieldCheck, ShieldAlert, ChevronDown, ChevronUp } from "lucide-react";
-import type { Model } from "ogx-client/resources/models";
+import type { Model } from "llama-stack-client/resources/models";
 
 type ModelWithMetadata = Model & {
   id: string;

@@ -5,7 +5,7 @@ import {
   UsePaginationOptions,
   ListChatCompletionsResponse,
 } from "@/lib/types";
-import { ListChatCompletionsParams } from "@/lib/ogx-client";
+import { ListChatCompletionsParams } from "@/lib/llama-stack-client";
 import { LogsTable, LogTableRow } from "@/components/logs/logs-table";
 import {
   extractTextFromContentPart,

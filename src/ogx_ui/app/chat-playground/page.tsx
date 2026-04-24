@@ -17,8 +17,8 @@ import { Chat } from "@/components/chat-playground/chat";
 import { type Message } from "@/components/chat-playground/chat-message";
 import { VectorDBCreator } from "@/components/chat-playground/vector-db-creator";
 import { useAuthClient } from "@/hooks/use-auth-client";
-import type { Model } from "ogx-client/resources/models";
-import type { TurnCreateParams } from "ogx-client/resources/agents/turn";
+import type { Model } from "llama-stack-client/resources/models";
+import type { TurnCreateParams } from "llama-stack-client/resources/agents/turn";
 
 // Extended Model type to include properties from API response
 type ModelWithMetadata = Model & {

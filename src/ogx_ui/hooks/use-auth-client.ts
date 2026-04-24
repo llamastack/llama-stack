@@ -1,6 +1,6 @@
 import { useSession } from "next-auth/react";
 import { useMemo } from "react";
-import OGXClient from "ogx-client";
+import OGXClient from "llama-stack-client";
 
 export function useAuthClient() {
   const { data: session } = useSession();

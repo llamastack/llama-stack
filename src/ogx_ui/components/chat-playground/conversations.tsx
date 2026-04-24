@@ -18,7 +18,7 @@ import { cleanMessageContent } from "@/lib/message-content-utils";
 import type {
   Session,
   SessionCreateParams,
-} from "ogx-client/resources/agents";
+} from "llama-stack-client/resources/agents";
 
 export interface ChatSession {
   id: string;

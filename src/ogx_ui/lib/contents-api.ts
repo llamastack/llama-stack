@@ -1,5 +1,5 @@
-import type { FileContentResponse } from "ogx-client/resources/vector-stores/files";
-import type { OGXClient } from "ogx-client";
+import type { FileContentResponse } from "llama-stack-client/resources/vector-stores/files";
+import type { OGXClient } from "llama-stack-client";
 
 export type VectorStoreContent = FileContentResponse.Content;
 export type VectorStoreContentsResponse = FileContentResponse;

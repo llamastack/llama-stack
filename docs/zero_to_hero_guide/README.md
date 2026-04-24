@@ -295,7 +295,7 @@ This command initializes the model to interact with your local OGX instance.
 
 **Explore Client SDKs**: Utilize our client SDKs for various languages to integrate OGX into your applications:
 
-- [Python SDK](https://github.com/ogx-ai/ogx-client-python)
+- [Python SDK](https://github.com/meta-llama/llama-stack-client-python)
 - [Node SDK](https://github.com/ogx-ai/ogx-client-node)
 - [Swift SDK](https://github.com/ogx-ai/ogx-client-swift)
 - [Kotlin SDK](https://github.com/ogx-ai/ogx-client-kotlin)
