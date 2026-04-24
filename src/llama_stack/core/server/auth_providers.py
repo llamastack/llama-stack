@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import json
 import ssl
 from abc import ABC, abstractmethod
 from typing import Any
@@ -547,8 +548,6 @@ class UpstreamHeaderAuthProvider(AuthProvider):
             attributes_key = self.config.attributes_header.lower().encode()
             attributes_value = headers.get(attributes_key)
             if attributes_value:
-                import json
-
                 try:
                     parsed = json.loads(attributes_value.decode())
                 except (json.JSONDecodeError, UnicodeDecodeError) as e:
@@ -566,6 +565,30 @@ class UpstreamHeaderAuthProvider(AuthProvider):
                         attributes[k] = [v]
                     else:
                         attributes[k] = [str(v)]
+
+        if self.config.attribute_headers:
+            if attributes is None:
+                attributes = {}
+            for header_name, attr_category in self.config.attribute_headers.items():
+                header_key = header_name.lower().encode()
+                header_value = headers.get(header_key)
+                if header_value:
+                    decoded = header_value.decode()
+                    try:
+                        parsed = json.loads(decoded)
+                        if isinstance(parsed, list):
+                            values = [str(item) for item in parsed]
+                        elif isinstance(parsed, str):
+                            values = [parsed]
+                        else:
+                            values = [str(parsed)]
+                    except (json.JSONDecodeError, UnicodeDecodeError):
+                        values = [decoded]
+
+                    if attr_category in attributes:
+                        attributes[attr_category].extend(values)
+                    else:
+                        attributes[attr_category] = values
 
         return User(principal=principal, attributes=attributes)
 

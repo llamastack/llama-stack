@@ -317,9 +317,9 @@ class ServerStoresConfig(BaseModel):
         default=None,
         description="Responses store configuration (uses SQL backend)",
     )
-    prompts: KVStoreReference | None = Field(
-        default=KVStoreReference(backend="kv_default", namespace="prompts"),
-        description="Prompts store configuration (uses KV backend)",
+    prompts: SqlStoreReference | None = Field(
+        default=SqlStoreReference(backend="sql_default", table_name="prompts"),
+        description="Prompts store configuration (uses SQL backend)",
     )
     connectors: KVStoreReference | None = Field(
         default=KVStoreReference(backend="kv_default", namespace="connectors"),
