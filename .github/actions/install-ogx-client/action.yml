@@ -58,8 +58,8 @@ runs:
 
           # Check if matching branch exists in client repo
           if ! git ls-remote --exit-code --heads https://github.com/meta-llama/llama-stack-client-python.git "$BRANCH" > /dev/null 2>&1; then
-            echo "::error::Branch $BRANCH not found in ogx-client-python repository"
-            echo "::error::Please create the matching release branch in ogx-client-python before testing"
+            echo "::error::Branch $BRANCH not found in llama-stack-client-python repository"
+            echo "::error::Please create the matching release branch in llama-stack-client-python before testing"
             exit 1
           fi
 

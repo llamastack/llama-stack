@@ -174,7 +174,7 @@ class SqliteSqlStoreConfig(SqlAlchemySqlStoreConfig):
 
     type: Literal[StorageBackendType.SQL_SQLITE] = StorageBackendType.SQL_SQLITE
     db_path: str = Field(
-        description="Database path, e.g. ~/.llama/distributions/ollama/sqlstore.db",
+        description="Database path, e.g. ~/.ogx/distributions/ollama/sqlstore.db",
     )
 
     @property

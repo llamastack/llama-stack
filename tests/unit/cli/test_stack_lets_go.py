@@ -10,7 +10,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-"""Unit tests for `llama stack letsgo` CLI command."""
+"""Unit tests for `ogx letsgo` CLI command."""
 
 import argparse
 from unittest.mock import MagicMock, patch

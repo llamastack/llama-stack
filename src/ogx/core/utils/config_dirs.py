@@ -7,7 +7,7 @@
 import os
 from pathlib import Path
 
-OGX_CONFIG_DIR = Path(os.getenv("OGX_CONFIG_DIR", os.path.expanduser("~/.llama/")))
+OGX_CONFIG_DIR = Path(os.getenv("OGX_CONFIG_DIR", os.path.expanduser("~/.ogx/")))
 
 DISTRIBS_BASE_DIR = OGX_CONFIG_DIR / "distributions"
 

@@ -167,8 +167,8 @@ echo "Test Subdirs: $TEST_SUBDIRS"
 echo "Test Pattern: $TEST_PATTERN"
 echo ""
 
-echo "Checking llama packages"
-uv pip list | grep llama
+echo "Checking ogx packages"
+uv pip list | grep ogx
 
 # Set environment variables
 export OGX_CLIENT_TIMEOUT=300
@@ -240,11 +240,11 @@ export OGX_TEST_SETUP="$TEST_SETUP"
 ROOT_DIR="$THIS_DIR/.."
 cd $ROOT_DIR
 
-# check if "llama" and "pytest" are available. this script does not use `uv run` given
+# check if "ogx" and "pytest" are available. this script does not use `uv run` given
 # it can be used in a pre-release environment where we have not been able to tell
 # uv about pre-release dependencies properly (yet).
-if [[ "$COLLECT_ONLY" == false ]] && ! command -v llama &>/dev/null; then
-    echo "llama could not be found, ensure ogx is installed"
+if [[ "$COLLECT_ONLY" == false ]] && ! command -v ogx &>/dev/null; then
+    echo "ogx could not be found, ensure ogx is installed"
     exit 1
 fi
 

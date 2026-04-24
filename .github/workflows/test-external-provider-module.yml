@@ -24,9 +24,9 @@ jobs:
 
       - name: Configure external API and provider
         run: |
-          mkdir -p ~/.llama/apis.d ~/.llama/providers.d
-          cp tests/external/weather.yaml ~/.llama/apis.d/
-          cp tests/external/kaze.yaml ~/.llama/providers.d/
+          mkdir -p ~/.ogx/apis.d ~/.ogx/providers.d
+          cp tests/external/weather.yaml ~/.ogx/apis.d/
+          cp tests/external/kaze.yaml ~/.ogx/providers.d/
 
       - name: Start OGX server in background
         env:

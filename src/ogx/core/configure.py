@@ -192,11 +192,11 @@ def upgrade_from_routing_table(
             "backends": {
                 "kv_default": {
                     "type": "kv_sqlite",
-                    "db_path": "~/.llama/kvstore.db",
+                    "db_path": "~/.ogx/kvstore.db",
                 },
                 "sql_default": {
                     "type": "sql_sqlite",
-                    "db_path": "~/.llama/sql_store.db",
+                    "db_path": "~/.ogx/sql_store.db",
                 },
             },
             "stores": {

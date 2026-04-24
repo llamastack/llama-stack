@@ -195,7 +195,7 @@ jobs:
         run: |
           uv pip list
           uv pip show ogx
-          command -v llama
+          command -v ogx
           ogx list-apis
           ogx list-providers inference
           ogx list-deps starter

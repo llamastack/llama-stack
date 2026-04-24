@@ -73,9 +73,9 @@ jobs:
         run: |
           docker run -d \
             --name pgvector \
-            -e POSTGRES_USER=llamastack \
-            -e POSTGRES_PASSWORD=llamastack \
-            -e POSTGRES_DB=llamastack \
+            -e POSTGRES_USER=ogx \
+            -e POSTGRES_PASSWORD=ogx \
+            -e POSTGRES_DB=ogx \
             -p 5432:5432 \
             pgvector/pgvector:pg17
 
@@ -84,7 +84,7 @@ jobs:
         run: |
           echo "Waiting for Postgres to be ready..."
           for _ in {1..30}; do
-            if docker exec pgvector pg_isready -U llamastack > /dev/null 2>&1; then
+            if docker exec pgvector pg_isready -U ogx > /dev/null 2>&1; then
               echo "Postgres is ready!"
               break
             fi
@@ -95,7 +95,7 @@ jobs:
       - name: Enable pgvector extension
         if: matrix.vector-io-provider == 'remote::pgvector'
         run: |
-          PGPASSWORD=llamastack psql -h localhost -U llamastack -d llamastack \
+          PGPASSWORD=ogx psql -h localhost -U ogx -d ogx \
             -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
       - name: Setup Qdrant
@@ -201,9 +201,9 @@ jobs:
           ENABLE_PGVECTOR: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'true' || '' }}
           PGVECTOR_HOST: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'localhost' || '' }}
           PGVECTOR_PORT: ${{ matrix.vector-io-provider == 'remote::pgvector' && '5432' || '' }}
-          PGVECTOR_DB: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'llamastack' || '' }}
-          PGVECTOR_USER: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'llamastack' || '' }}
-          PGVECTOR_PASSWORD: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'llamastack' || '' }}
+          PGVECTOR_DB: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'ogx' || '' }}
+          PGVECTOR_USER: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'ogx' || '' }}
+          PGVECTOR_PASSWORD: ${{ matrix.vector-io-provider == 'remote::pgvector' && 'ogx' || '' }}
           ENABLE_QDRANT: ${{ matrix.vector-io-provider == 'remote::qdrant' && 'true' || '' }}
           QDRANT_URL: ${{ matrix.vector-io-provider == 'remote::qdrant' && 'http://localhost:6333' || '' }}
           ENABLE_WEAVIATE: ${{ matrix.vector-io-provider == 'remote::weaviate' && 'true' || '' }}

@@ -49,5 +49,5 @@ runs:
           uv pip install ${{ steps.client-config.outputs.install-source }}
         fi
 
-        echo "Installed llama packages"
-        uv pip list | grep llama
+        echo "Installed ogx packages"
+        uv pip list | grep ogx

@@ -34,13 +34,13 @@ jobs:
 
       - name: Create API configuration
         run: |
-          mkdir -p /home/runner/.llama/apis.d
-          cp tests/external/weather.yaml /home/runner/.llama/apis.d/weather.yaml
+          mkdir -p /home/runner/.ogx/apis.d
+          cp tests/external/weather.yaml /home/runner/.ogx/apis.d/weather.yaml
 
       - name: Create provider configuration
         run: |
-          mkdir -p /home/runner/.llama/providers.d/remote/weather
-          cp tests/external/kaze.yaml /home/runner/.llama/providers.d/remote/weather/kaze.yaml
+          mkdir -p /home/runner/.ogx/providers.d/remote/weather
+          cp tests/external/kaze.yaml /home/runner/.ogx/providers.d/remote/weather/kaze.yaml
 
       - name: Print distro dependencies
         run: |
