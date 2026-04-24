@@ -241,7 +241,7 @@ jobs:
       # a trusted commit, not from PR checkout. This is critical for security.
       - name: Setup test environment
         if: steps.should_run.outputs.run == 'true'
-        uses: ogx-ai/llama-stack/.github/actions/setup-test-environment@09948bbe6f0968ce4d3995bd8cea91d22a929290
+        uses: ogx-ai/llama-stack/.github/actions/setup-test-environment@68c0994a790e4f029007f3cce12a744d69a7d435
         with:
           python-version: "3.12"
           client-version: "latest"
@@ -251,7 +251,7 @@ jobs:
 
       - name: Run and record tests
         if: steps.should_run.outputs.run == 'true'
-        uses: ogx-ai/llama-stack/.github/actions/run-and-record-tests@09948bbe6f0968ce4d3995bd8cea91d22a929290
+        uses: ogx-ai/llama-stack/.github/actions/run-and-record-tests@68c0994a790e4f029007f3cce12a744d69a7d435
         env:
           OPENAI_API_KEY: ${{ matrix.provider.setup == 'gpt' && secrets.OPENAI_API_KEY || '' }}
           AZURE_API_KEY: ${{ matrix.provider.setup == 'azure' && secrets.AZURE_API_KEY || '' }}
