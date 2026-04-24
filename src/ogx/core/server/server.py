@@ -241,11 +241,35 @@ class ProviderDataMiddleware:
         return await self.app(scope, receive, send)
 
 
+def validate_auth_security(config: StackConfig) -> None:
+    """Validate auth provider TLS settings against the server's security mode.
+
+    Raises SystemExit in production mode if any auth provider has verify_tls=False.
+    Logs a warning in development mode.
+    """
+    if not config.server.auth:
+        return
+    provider_config = config.server.auth.provider_config
+    if not provider_config or not hasattr(provider_config, "verify_tls") or provider_config.verify_tls:
+        return
+
+    if config.server.security_mode == SecurityMode.PRODUCTION:
+        raise SystemExit(
+            "FATAL: Production security mode forbids verify_tls=False in auth provider config. "
+            "TLS verification must be enabled for production deployments."
+        )
+    logger.warning(
+        "TLS verification is disabled in auth provider config (verify_tls=False). "
+        "This is insecure and should only be used for local development or testing."
+    )
+
+
 def create_app() -> StackApp:
     """Create and configure the FastAPI application.
 
     This factory function reads configuration from environment variables:
     - OGX_CONFIG: Path to config file (required)
+    - OGX_SECURITY_MODE: Override security_mode before validation (optional, set by --insecure/--security-mode)
 
     Returns:
         Configured StackApp instance.
@@ -273,6 +297,11 @@ def create_app() -> StackApp:
         logger = get_logger(name=__name__, category="core::server", config=logger_config)
 
         config = replace_env_vars(config_contents)
+
+        security_mode_override = os.getenv("OGX_SECURITY_MODE")
+        if security_mode_override and isinstance(config, dict):
+            config.setdefault("server", {})["security_mode"] = security_mode_override
+
         config = StackConfig(**cast_distro_name_to_string(config))
 
     _log_run_config(run_config=config)
@@ -297,20 +326,7 @@ def create_app() -> StackApp:
     impls = app.stack.impls
     assert impls is not None
 
-    # Enforce or warn about verify_tls=False in auth config based on security mode
-    if config.server.auth:
-        provider_config = config.server.auth.provider_config
-        if provider_config and hasattr(provider_config, "verify_tls") and not provider_config.verify_tls:
-            if config.server.security_mode == SecurityMode.PRODUCTION:
-                raise SystemExit(
-                    "FATAL: Production security mode forbids verify_tls=False in auth provider config. "
-                    "TLS verification must be enabled for production deployments."
-                )
-            else:
-                logger.warning(
-                    "TLS verification is disabled in auth provider config (verify_tls=False). "
-                    "This is insecure and should only be used for local development or testing."
-                )
+    validate_auth_security(config)
 
     if config.server.auth:
         # Add route authorization middleware if route_policy is configured

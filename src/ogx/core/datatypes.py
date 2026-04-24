@@ -832,6 +832,10 @@ class ServerConfig(BaseModel):
                 self.tls_config = ServerTLSConfig(ciphers=FIPS_APPROVED_CIPHERS)
             elif self.tls_config.ciphers is None:
                 self.tls_config.ciphers = FIPS_APPROVED_CIPHERS
+            elif not self.tls_config.ciphers:
+                raise ValueError("At least one cipher suite must be specified in production mode.")
+            elif invalid := set(self.tls_config.ciphers) - set(FIPS_APPROVED_CIPHERS):
+                raise ValueError(f"Production mode requires FIPS-approved ciphers. Invalid: {sorted(invalid)}")
         return self
 
 

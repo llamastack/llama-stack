@@ -4,6 +4,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from unittest.mock import patch
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -88,6 +90,57 @@ class TestSecurityModeValidation:
         config = ServerConfig()
         assert config.security_mode == SecurityMode.DEVELOPMENT
 
+    def test_production_mode_rejects_non_fips_ciphers(self):
+        """Production mode should reject cipher suites not in the FIPS-approved list."""
+        with pytest.raises(ValueError, match="FIPS-approved ciphers"):
+            ServerConfig(
+                security_mode=SecurityMode.PRODUCTION,
+                tls_certfile="/path/to/cert.pem",
+                tls_keyfile="/path/to/key.pem",
+                tls_config=ServerTLSConfig(ciphers=["RC4-SHA"]),
+            )
+
+    def test_production_mode_rejects_mixed_ciphers(self):
+        """Production mode should reject a list containing any non-FIPS cipher."""
+        with pytest.raises(ValueError, match="RC4-SHA"):
+            ServerConfig(
+                security_mode=SecurityMode.PRODUCTION,
+                tls_certfile="/path/to/cert.pem",
+                tls_keyfile="/path/to/key.pem",
+                tls_config=ServerTLSConfig(ciphers=["ECDHE-RSA-AES256-GCM-SHA384", "RC4-SHA"]),
+            )
+
+    def test_production_mode_allows_fips_subset(self):
+        """Production mode should accept a subset of FIPS-approved ciphers."""
+        subset = ["ECDHE-RSA-AES128-GCM-SHA256", "ECDHE-RSA-AES256-GCM-SHA384"]
+        config = ServerConfig(
+            security_mode=SecurityMode.PRODUCTION,
+            tls_certfile="/path/to/cert.pem",
+            tls_keyfile="/path/to/key.pem",
+            tls_config=ServerTLSConfig(ciphers=subset),
+        )
+        assert config.tls_config.ciphers == subset
+
+    def test_production_mode_rejects_empty_ciphers(self):
+        """Production mode should reject an empty cipher list."""
+        with pytest.raises(ValueError, match="At least one cipher suite"):
+            ServerConfig(
+                security_mode=SecurityMode.PRODUCTION,
+                tls_certfile="/path/to/cert.pem",
+                tls_keyfile="/path/to/key.pem",
+                tls_config=ServerTLSConfig(ciphers=[]),
+            )
+
+    def test_development_mode_allows_any_ciphers(self):
+        """Development mode should not enforce FIPS cipher restrictions."""
+        config = ServerConfig(
+            security_mode=SecurityMode.DEVELOPMENT,
+            tls_certfile="/path/to/cert.pem",
+            tls_keyfile="/path/to/key.pem",
+            tls_config=ServerTLSConfig(ciphers=["RC4-SHA"]),
+        )
+        assert config.tls_config.ciphers == ["RC4-SHA"]
+
 
 class TestInsecureFlagOverride:
     def test_insecure_overrides_production_in_raw_config(self):
@@ -115,29 +168,74 @@ class TestInsecureFlagOverride:
         with pytest.raises(ValueError, match="Production security mode requires TLS"):
             StackConfig(**raw_config)
 
+    def test_env_var_override_rescues_production_config(self):
+        """OGX_SECURITY_MODE env var should override production mode before validation."""
+        raw_config = {
+            "version": 2,
+            "distro_name": "test",
+            "providers": {},
+            "server": {"security_mode": "production"},
+        }
+        # Simulate what create_app() does: apply env var override before StackConfig construction
+        raw_config["server"]["security_mode"] = "development"
+        config = StackConfig(**raw_config)
+        assert config.server.security_mode == SecurityMode.DEVELOPMENT
+
 
 class TestProductionVerifyTlsFalse:
-    def test_production_mode_rejects_verify_tls_false(self):
-        """Production mode should reject auth configs with verify_tls=False at server startup."""
+    def _make_config_with_verify_tls(self, security_mode, verify_tls):
+        """Build a StackConfig with auth provider verify_tls setting."""
         from ogx.core.datatypes import (
             AuthenticationConfig,
             OAuth2IntrospectionConfig,
             OAuth2TokenAuthConfig,
         )
 
-        auth_config = AuthenticationConfig(
+        server_kwargs = {"security_mode": security_mode}
+        if security_mode == "production":
+            server_kwargs["tls_certfile"] = "/path/to/cert.pem"
+            server_kwargs["tls_keyfile"] = "/path/to/key.pem"
+
+        server_kwargs["auth"] = AuthenticationConfig(
             provider_config=OAuth2TokenAuthConfig(
                 introspection=OAuth2IntrospectionConfig(
                     url="https://auth.example.com/introspect",
                     client_id="client",
                     client_secret="secret",
                 ),
-                verify_tls=False,
+                verify_tls=verify_tls,
             ),
         )
-        # The check happens in server.py create_app, not in the model validator.
-        # Here we verify the config can be created (the server will reject it at startup).
-        assert auth_config.provider_config.verify_tls is False
+        return StackConfig(
+            version=2,
+            distro_name="test",
+            providers={},
+            server=server_kwargs,
+        )
+
+    def test_production_mode_rejects_verify_tls_false(self):
+        """Production mode should raise SystemExit when verify_tls=False."""
+        from ogx.core.server.server import validate_auth_security
+
+        config = self._make_config_with_verify_tls("production", verify_tls=False)
+        with pytest.raises(SystemExit, match="verify_tls=False"):
+            validate_auth_security(config)
+
+    def test_development_mode_warns_verify_tls_false(self):
+        """Development mode should warn but not crash when verify_tls=False."""
+        from ogx.core.server.server import validate_auth_security
+
+        config = self._make_config_with_verify_tls("development", verify_tls=False)
+        with patch("ogx.core.server.server.logger") as mock_logger:
+            validate_auth_security(config)
+            mock_logger.warning.assert_called_once()
+
+    def test_verify_tls_true_passes_in_production(self):
+        """Production mode with verify_tls=True should pass without error."""
+        from ogx.core.server.server import validate_auth_security
+
+        config = self._make_config_with_verify_tls("production", verify_tls=True)
+        validate_auth_security(config)
 
 
 class TestHSTSMiddleware:

@@ -171,6 +171,13 @@ class StackRun(Subcommand):
         # Set the config file in environment so create_app can find it
         os.environ["OGX_CONFIG"] = str(config_file)
 
+        # Propagate CLI security mode override so create_app() workers apply it
+        # before StackConfig validation (which rejects production mode without certs).
+        if args.insecure:
+            os.environ["OGX_SECURITY_MODE"] = "development"
+        elif args.security_mode:
+            os.environ["OGX_SECURITY_MODE"] = args.security_mode
+
         # Let create_app() handle logging setup instead of passing config to uvicorn
         uvicorn_config = {
             "factory": True,
