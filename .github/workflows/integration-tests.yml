@@ -185,6 +185,8 @@ jobs:
           WATSONX_API_KEY: replay-mode-dummy-key
           WATSONX_BASE_URL: https://us-south.ml.cloud.ibm.com
           WATSONX_PROJECT_ID: replay-mode-dummy-project
+          VERTEX_AI_PROJECT: ${{ matrix.config.setup == 'vertexai' && 'replay-mode-dummy-project' || '' }}
+          VERTEX_AI_LOCATION: ${{ matrix.config.setup == 'vertexai' && 'global' || '' }}
           AWS_BEARER_TOKEN_BEDROCK: replay-mode-dummy-key
           AWS_DEFAULT_REGION: us-west-2
           GEMINI_API_KEY: replay-mode-dummy-key
