@@ -171,13 +171,13 @@ jobs:
       - name: Setup TypeScript client
         if: ${{ matrix.client == 'server' }}
         id: setup-ts-client
-        uses: ogx-ai/llama-stack/.github/actions/setup-typescript-client@09948bbe6f0968ce4d3995bd8cea91d22a929290
+        uses: ogx-ai/llama-stack/.github/actions/setup-typescript-client@fb32709e3b29816b52085c92820531e4e6d94be8
         with:
           client-version: ${{ matrix.client-version }}
 
       - name: Run tests
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
-        uses: ogx-ai/llama-stack/.github/actions/run-and-record-tests@09948bbe6f0968ce4d3995bd8cea91d22a929290
+        uses: ogx-ai/llama-stack/.github/actions/run-and-record-tests@fb32709e3b29816b52085c92820531e4e6d94be8
         env:
           OPENAI_API_KEY: dummy
           AZURE_API_KEY: replay-mode-dummy-key
