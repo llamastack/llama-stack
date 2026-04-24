@@ -652,7 +652,7 @@ jobs:
           fi
 
           if [ -d "dist-client-python" ] && ls dist-client-python/*.whl 1>/dev/null 2>&1; then
-            python -c "import llama_stack_client; print(f'ogx_client imported successfully from {ogx_client.__file__}')"
+            python -c "import llama_stack_client; print(f'ogx_client imported successfully from {llama_stack_client.__file__}')"
           fi
 
       - name: Verify TypeScript package
