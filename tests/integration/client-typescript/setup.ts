@@ -9,7 +9,7 @@
  * This file mimics pytest's fixture system by providing shared test configuration.
  */
 
-import OGXClient from 'ogx-client';
+import OGXClient from 'llama-stack-client';
 
 /**
  * Load test configuration from the Python setup system.
