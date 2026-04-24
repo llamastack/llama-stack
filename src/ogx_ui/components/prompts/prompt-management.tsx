@@ -39,9 +39,7 @@ export function PromptManagement() {
           error?.message?.includes("not implemented") ||
           error?.message?.includes("not supported")
         ) {
-          setError(
-            "Prompts API is not yet implemented on this OGX server."
-          );
+          setError("Prompts API is not yet implemented on this OGX server.");
         } else {
           setError(
             `Failed to load prompts: ${error?.message || "Unknown error"}`

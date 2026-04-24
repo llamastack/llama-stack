@@ -57,18 +57,18 @@ runs:
           echo "Detected release branch: $BRANCH"
 
           # Check if matching branch exists in client repo
-          if ! git ls-remote --exit-code --heads https://github.com/meta-llama/llama-stack-client-python.git "$BRANCH" > /dev/null 2>&1; then
-            echo "::error::Branch $BRANCH not found in llama-stack-client-python repository"
-            echo "::error::Please create the matching release branch in llama-stack-client-python before testing"
+          if ! git ls-remote --exit-code --heads https://github.com/ogx-ai/ogx-client-python.git "$BRANCH" > /dev/null 2>&1; then
+            echo "::error::Branch $BRANCH not found in ogx-client-python repository"
+            echo "::error::Please create the matching release branch in ogx-client-python before testing"
             exit 1
           fi
 
           echo "install-after-sync=true" >> $GITHUB_OUTPUT
-          echo "install-source=git+https://github.com/meta-llama/llama-stack-client-python.git@$BRANCH" >> $GITHUB_OUTPUT
+          echo "install-source=git+https://github.com/ogx-ai/ogx-client-python.git@$BRANCH" >> $GITHUB_OUTPUT
         elif [ "${{ inputs.client-version }}" = "latest" ]; then
           # Install from main git after sync
           echo "install-after-sync=true" >> $GITHUB_OUTPUT
-          echo "install-source=git+https://github.com/meta-llama/llama-stack-client-python.git@main" >> $GITHUB_OUTPUT
+          echo "install-source=git+https://github.com/ogx-ai/ogx-client-python.git@main" >> $GITHUB_OUTPUT
         elif [ "${{ inputs.client-version }}" = "published" ]; then
           # Use published version from PyPI (installed by sync)
           echo "install-after-sync=false" >> $GITHUB_OUTPUT

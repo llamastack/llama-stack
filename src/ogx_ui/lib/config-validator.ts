@@ -9,8 +9,7 @@ export function validateServerConfig() {
     // Check optional configurations
     const optionalConfigs = {
       NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:8322",
-      OGX_BACKEND_URL:
-        process.env.OGX_BACKEND_URL || "http://localhost:8321",
+      OGX_BACKEND_URL: process.env.OGX_BACKEND_URL || "http://localhost:8321",
       OGX_UI_PORT: process.env.OGX_UI_PORT || "8322",
       GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
       GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
