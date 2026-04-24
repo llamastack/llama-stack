@@ -186,7 +186,7 @@ jobs:
 
       - name: Build OGX
         run: |
-          uv run --no-sync ogx list-deps ci-tests | xargs -L1 uv pip install
+          uv run --no-sync ogx stack list-deps ci-tests | xargs -L1 uv pip install
 
       - name: Check Storage and Memory Available Before Tests
         if: ${{ always() }}

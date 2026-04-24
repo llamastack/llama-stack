@@ -635,9 +635,9 @@ jobs:
           uv pip list
           uv pip show ogx
           command -v ogx
-          ogx list-apis
-          ogx list-providers inference
-          ogx list-deps starter
+          ogx stack list-apis
+          ogx stack list-providers inference
+          ogx stack list-deps starter
 
       - name: Verify packages are importable
         run: |
