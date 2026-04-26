@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-# Telemetry Setup Script for Llama Stack
+# Telemetry Setup Script for OGX
 # This script sets up Jaeger, OpenTelemetry Collector, Prometheus, and Grafana using Podman
 # For whoever is interested in testing the telemetry stack, you can run this script to set up the stack.
 #    export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
@@ -71,7 +71,7 @@ if [[ -z "$CONTAINER_RUNTIME" ]]; then
   fi
 fi
 
-echo "🚀 Setting up telemetry stack for Llama Stack using $CONTAINER_RUNTIME..."
+echo "🚀 Setting up telemetry stack for OGX using $CONTAINER_RUNTIME..."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -175,12 +175,12 @@ $CONTAINER_RUNTIME run -d --name grafana \
   -e GF_USERS_ALLOW_SIGN_UP=false \
   -v "$SCRIPT_DIR/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:Z" \
   -v "$SCRIPT_DIR/grafana-dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:Z" \
-  -v "$SCRIPT_DIR/llama-stack-dashboard.json:/etc/grafana/provisioning/dashboards/llama-stack-dashboard.json:Z" \
-  -v "$SCRIPT_DIR/llama-stack-tool-runtime-metrics.json:/etc/grafana/provisioning/dashboards/llama-stack-tool-runtime-metrics.json:Z" \
-  -v "$SCRIPT_DIR/llama-stack-vector-io-metrics.json:/etc/grafana/provisioning/dashboards/llama-stack-vector-io-metrics.json:Z" \
-  -v "$SCRIPT_DIR/llama-stack-request-metrics.json:/etc/grafana/provisioning/dashboards/llama-stack-request-metrics.json:Z" \
-  -v "$SCRIPT_DIR/llama-stack-responses-metrics.json:/etc/grafana/provisioning/dashboards/llama-stack-responses-metrics.json:Z" \
-  -v "$SCRIPT_DIR/llama-stack-inference-metrics.json:/etc/grafana/provisioning/dashboards/llama-stack-inference-metrics.json:Z" \
+  -v "$SCRIPT_DIR/ogx-dashboard.json:/etc/grafana/provisioning/dashboards/ogx-dashboard.json:Z" \
+  -v "$SCRIPT_DIR/ogx-tool-runtime-metrics.json:/etc/grafana/provisioning/dashboards/ogx-tool-runtime-metrics.json:Z" \
+  -v "$SCRIPT_DIR/ogx-vector-io-metrics.json:/etc/grafana/provisioning/dashboards/ogx-vector-io-metrics.json:Z" \
+  -v "$SCRIPT_DIR/ogx-request-metrics.json:/etc/grafana/provisioning/dashboards/ogx-request-metrics.json:Z" \
+  -v "$SCRIPT_DIR/ogx-responses-metrics.json:/etc/grafana/provisioning/dashboards/ogx-responses-metrics.json:Z" \
+  -v "$SCRIPT_DIR/ogx-inference-metrics.json:/etc/grafana/provisioning/dashboards/ogx-inference-metrics.json:Z" \
   docker.io/grafana/grafana:11.0.0
 
 # Wait for services to start
@@ -201,14 +201,14 @@ echo "   Prometheus:       http://localhost:9090"
 echo "   Grafana:          http://localhost:3000 (admin/admin)"
 echo "   OTEL Collector:   http://localhost:4318 (OTLP endpoint)"
 echo ""
-echo "🔧 Environment variables for Llama Stack:"
+echo "🔧 Environment variables for OGX:"
 echo "   export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318"
 echo "   export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf"
 echo "   export OTEL_SERVICE_NAME=my-llama-app"
 echo ""
 echo "📊 Next steps:"
 echo "   1. Set the environment variables above"
-echo "   2. Start your Llama Stack application"
+echo "   2. Start your OGX application"
 echo "   3. Make some inference calls to generate metrics"
 echo "   4. Check Jaeger for traces: http://localhost:16686"
 echo "   5. Check Prometheus for metrics: http://localhost:9090"

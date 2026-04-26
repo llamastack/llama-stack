@@ -1,5 +1,5 @@
 /**
- * Modern theme for Llama Stack documentation.
+ * Modern theme for OGX documentation.
  * Uses Inter font, purple/teal accent palette, and dark mode as default.
  */
 
@@ -8,6 +8,10 @@
 
 /* ========== LIGHT MODE ========== */
 :root {
+  /* Search icon - clean Lucide style */
+  --ifm-navbar-search-input-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2368717b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>');
+  --ifm-navbar-search-input-placeholder-color: #68717b;
+
   /* Primary - teal/navy derived from logo */
   --ifm-color-primary: #0d7377;
   --ifm-color-primary-dark: #0b6165;
@@ -72,6 +76,7 @@
 
 /* ========== DARK MODE ========== */
 [data-theme='dark'] {
+  --ifm-navbar-search-input-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%239ca3af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>');
   --ifm-color-primary: #2dbdc2;
   --ifm-color-primary-dark: #1aafb4;
   --ifm-color-primary-darker: #12979b;
@@ -167,6 +172,12 @@ h3 {
 
 [data-theme='dark'] .navbar {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Search input font */
+.navbar__search-input {
+  font-family: var(--ifm-font-family-base);
+  font-size: 0.875rem;
 }
 
 /* Logo styling */
@@ -439,6 +450,32 @@ h3 {
 /* Database - Vector IO */
 .theme-doc-sidebar-container .menu__list .menu__list .menu__list-item:nth-child(17) > .menu__list-item-collapsible > .menu__link::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230d7377' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cellipse cx='12' cy='5' rx='9' ry='3'/%3E%3Cpath d='M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5'/%3E%3Cpath d='M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3'/%3E%3C/svg%3E");
+}
+
+/* API sidebar icons (top-level categories beyond position 10) */
+/* ClipboardCheck - Safety (position 11) */
+.theme-doc-sidebar-container .menu__list > .menu__list-item:nth-child(11) > .menu__list-item-collapsible > .menu__link::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230d7377' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='2' width='8' height='4' rx='1' ry='1'/%3E%3Cpath d='M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2'/%3E%3Cpath d='M9 14l2 2 4-4'/%3E%3C/svg%3E");
+}
+
+/* Shield - Shields (position 12) */
+.theme-doc-sidebar-container .menu__list > .menu__list-item:nth-child(12) > .menu__list-item-collapsible > .menu__link::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230d7377' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3C/svg%3E");
+}
+
+/* Wrench - Tools (position 13) */
+.theme-doc-sidebar-container .menu__list > .menu__list-item:nth-child(13) > .menu__list-item-collapsible > .menu__link::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230d7377' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");
+}
+
+/* Database - VectorIO (position 14) */
+.theme-doc-sidebar-container .menu__list > .menu__list-item:nth-child(14) > .menu__list-item-collapsible > .menu__link::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230d7377' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cellipse cx='12' cy='5' rx='9' ry='3'/%3E%3Cpath d='M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5'/%3E%3Cpath d='M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3'/%3E%3C/svg%3E");
+}
+
+/* ArrowLeftRight - Responses (position 15) */
+.theme-doc-sidebar-container .menu__list > .menu__list-item:nth-child(15) > .menu__list-item-collapsible > .menu__link::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230d7377' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 7H3'/%3E%3Cpath d='M18 4l3 3-3 3'/%3E%3Cpath d='M3 17h18'/%3E%3Cpath d='M6 14l-3 3 3 3'/%3E%3C/svg%3E");
 }
 
 /* Dark mode: lighter icon stroke */

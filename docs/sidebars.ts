@@ -42,7 +42,7 @@ const sidebars: SidebarsConfig = {
             'concepts/apis/api_providers',
             {
               type: 'category',
-              label: 'OpenAI Compatibility',
+              label: 'OpenAI',
               collapsed: false,
               link: { type: 'doc', id: 'api-openai/index' },
               items: [
@@ -57,6 +57,7 @@ const sidebars: SidebarsConfig = {
               collapsed: false,
               link: { type: 'doc', id: 'api-anthropic-messages/index' },
               items: [
+                'api-openai/anthropic_messages',
                 'api-anthropic-messages/conformance',
               ],
             },
@@ -98,8 +99,8 @@ const sidebars: SidebarsConfig = {
         'distributions/customizing_run_yaml',
         'distributions/importing_as_library',
         'distributions/configuration',
-        'distributions/starting_llama_stack_server',
-        'distributions/llama_stack_ui',
+        'distributions/starting_ogx_server',
+        'distributions/ogx_ui',
         {
           type: 'category',
           label: 'Self-Hosted Distributions',
@@ -302,6 +303,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'building_applications/index',
         'building_applications/rag',
+        'building_applications/rag_benchmarks',
         'building_applications/agent',
         'building_applications/agent_execution_loop',
         'building_applications/responses_vs_agents',
@@ -342,8 +344,8 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'references/index',
-        'references/llama_cli_reference/index',
-        'references/llama_stack_client_cli_reference',
+        'references/ogx_cli_reference/index',
+        'references/ogx_client_cli_reference',
         'references/python_sdk_reference/index',
       ],
     },
@@ -353,6 +355,7 @@ const sidebars: SidebarsConfig = {
   stableApiSidebar: require('./docs/api/sidebar.ts').default,
   experimentalApiSidebar: require('./docs/api-experimental/sidebar.ts').default,
   deprecatedApiSidebar: require('./docs/api-deprecated/sidebar.ts').default,
+
 };
 
 export default sidebars;

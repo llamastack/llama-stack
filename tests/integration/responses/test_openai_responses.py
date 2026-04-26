@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -992,7 +992,7 @@ class TestOpenAIResponses:
     def test_openai_response_streaming_includes_usage(self, openai_client, text_model_id):
         """Test that streaming response includes usage information.
 
-        Llama Stack always sets include_usage=True in the underlying chat completion
+        OGX always sets include_usage=True in the underlying chat completion
         stream_options, so usage should always be present in the completed response.
         """
         stream = openai_client.responses.create(

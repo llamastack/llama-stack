@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -13,8 +13,8 @@ import llama_stack_client
 import openai
 import pytest
 
-from llama_stack.core.datatypes import AuthenticationRequiredError
-from llama_stack.core.library_client import LlamaStackAsLibraryClient
+from ogx.core.datatypes import AuthenticationRequiredError
+from ogx.core.library_client import OGXAsLibraryClient
 from tests.common.mcp import dependency_tools, make_mcp_server
 
 from .fixtures.test_cases import (
@@ -250,13 +250,11 @@ def test_response_non_streaming_mcp_tool(responses_client, text_model_id, case, 
 
         exc_type = (
             AuthenticationRequiredError
-            if isinstance(responses_client, LlamaStackAsLibraryClient)
+            if isinstance(responses_client, OGXAsLibraryClient)
             else (httpx.HTTPStatusError, openai.AuthenticationError, llama_stack_client.AuthenticationError)
         )
         # Suppress expected auth error logs only for the failing auth attempt
-        with caplog.at_level(
-            logging.CRITICAL, logger="llama_stack.providers.inline.responses.builtin.responses.streaming"
-        ):
+        with caplog.at_level(logging.CRITICAL, logger="ogx.providers.inline.responses.builtin.responses.streaming"):
             with pytest.raises(exc_type):
                 responses_client.responses.create(
                     model=text_model_id,

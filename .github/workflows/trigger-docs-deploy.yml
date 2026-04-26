@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Trigger docs site build and deploy
         run: |
-          gh api repos/llamastack/llamastack.github.io/dispatches \
+          gh api repos/ogx-ai/ogx-ai.github.io/dispatches \
             -f event_type=docs-update \
             -f 'client_payload[sha]=${{ github.sha }}' \
             -f 'client_payload[ref]=${{ github.ref }}'

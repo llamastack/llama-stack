@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -14,12 +14,12 @@
 """Test plan script for the Google Interactions API front-end.
 
 This script validates the Interactions API endpoint against a running
-Llama Stack server using the official Google GenAI SDK, proving that
-ADK/Gemini ecosystem clients can call Llama Stack natively.
+OGX server using the official Google GenAI SDK, proving that
+ADK/Gemini ecosystem clients can call OGX natively.
 
 Usage:
-    # Start a Llama Stack server first:
-    OLLAMA_URL=http://localhost:11434/v1 uv run --extra starter llama stack run starter --port 8321
+    # Start a OGX server first:
+    OLLAMA_URL=http://localhost:11434/v1 uv run --extra starter ogx run starter --port 8321
 
     # Then run this script:
     uv run python scripts/test_interactions_api.py --base-url http://localhost:8321 --model ollama/llama3.2:3b
@@ -36,7 +36,7 @@ from google.genai import types
 
 
 def _create_client(base_url: str) -> genai.Client:
-    """Create a Google GenAI client pointed at the Llama Stack server."""
+    """Create a Google GenAI client pointed at the OGX server."""
     return genai.Client(
         api_key="no-key-required",
         http_options=types.HttpOptions(
@@ -194,7 +194,7 @@ def main():
     parser.add_argument(
         "--base-url",
         default="http://localhost:8321",
-        help="Base URL of the Llama Stack server (default: http://localhost:8321)",
+        help="Base URL of the OGX server (default: http://localhost:8321)",
     )
     parser.add_argument(
         "--model",

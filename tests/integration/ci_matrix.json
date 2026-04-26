@@ -12,7 +12,9 @@
     {"suite": "base-vllm-subset", "setup": "vllm"},
     {"suite": "vllm-reasoning", "setup": "vllm"},
     {"suite": "ollama-reasoning", "setup": "ollama-reasoning"},
-    {"suite": "messages", "setup": "ollama-reasoning"}
+    {"suite": "messages", "setup": "ollama-reasoning"},
+    {"suite": "messages-openai", "setup": "gpt"},
+    {"suite": "interactions", "setup": "gemini"}
   ],
   "stainless": [
     {"suite": "base", "setup": "ollama", "inference_mode": "record-if-missing"}

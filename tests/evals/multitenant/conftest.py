@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -8,7 +8,7 @@
 Shared fixtures for multitenant security and retrieval evaluations.
 
 This module provides controlled test corpora, synthetic embeddings, and
-vector store fixtures for evaluating cross-tenant isolation in Llama Stack.
+vector store fixtures for evaluating cross-tenant isolation in OGX.
 
 Embedding design:
     Each topic (revenue, hiring, compliance, strategy, confidential) gets an
@@ -21,11 +21,11 @@ Embedding design:
 import numpy as np
 import pytest
 
-from llama_stack.apis.vector_io import Chunk, ChunkMetadata
-from llama_stack.core.access_control.access_control import default_policy
-from llama_stack.core.access_control.datatypes import AccessRule, Action, Scope
-from llama_stack.core.datatypes import User
-from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import SQLiteVecIndex
+from ogx.apis.vector_io import Chunk, ChunkMetadata
+from ogx.core.access_control.access_control import default_policy
+from ogx.core.access_control.datatypes import AccessRule, Action, Scope
+from ogx.core.datatypes import User
+from ogx.providers.inline.vector_io.sqlite_vec.sqlite_vec import SQLiteVecIndex
 
 EMBEDDING_DIMENSION = 128
 NUM_TOPICS = 5
@@ -312,7 +312,7 @@ async def tenant_b_vector_index(tmp_path):
 
 @pytest.fixture
 def default_abac_policy():
-    """The default ABAC policy used by Llama Stack."""
+    """The default ABAC policy used by OGX."""
     return default_policy()
 
 
