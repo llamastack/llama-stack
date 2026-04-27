@@ -1283,7 +1283,7 @@ def _get_test_context_with_fallback() -> str | None:
         return ctx
 
     try:
-        from llama_stack.core.request_headers import PROVIDER_DATA_VAR
+        from ogx.core.request_headers import PROVIDER_DATA_VAR
 
         provider_data = PROVIDER_DATA_VAR.get()
         if provider_data and "__test_id" in provider_data:
@@ -1320,7 +1320,7 @@ async def _patched_genai_method(original_method, self, endpoint, *args, **kwargs
         return await _genai_record_replay(original_method, self, endpoint, mode, storage, *args, **kwargs)
     finally:
         if context_token:
-            from llama_stack.core.testing_context import reset_test_context
+            from ogx.core.testing_context import reset_test_context
 
             reset_test_context(context_token)
 
