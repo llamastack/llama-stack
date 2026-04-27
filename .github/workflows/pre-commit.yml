@@ -67,10 +67,14 @@ jobs:
           key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
 
       # Install oasdiff: https://github.com/oasdiff/oasdiff, a tool for detecting breaking changes in OpenAPI specs.
+      # Pin the version to avoid CI/local drift in generated coverage files.
       - name: Install oasdiff
+        env:
+          OASDIFF_VERSION: "1.15.0"
         run: |
           for i in 1 2 3; do
-            curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh && break
+            curl -fsSL "https://github.com/oasdiff/oasdiff/releases/download/v${OASDIFF_VERSION}/oasdiff_${OASDIFF_VERSION}_linux_amd64.tar.gz" \
+              | tar xz -C /usr/local/bin oasdiff && break
             echo "Attempt $i failed, retrying in 10s..."
             sleep 10
           done
