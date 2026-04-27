@@ -755,7 +755,7 @@ class RegisteredResources(BaseModel):
         return self
 
 
-from ogx.core.server_tls import FIPS_APPROVED_CIPHERS, SecurityMode, ServerTLSConfig  # noqa: E402
+from ogx.core.server_tls import FIPS_APPROVED_CIPHERS, ServerTLSConfig  # noqa: E402
 
 
 class ServerConfig(BaseModel):
@@ -806,13 +806,13 @@ class ServerConfig(BaseModel):
         description="Interval in seconds between registry refreshes for syncing model information from providers",
         gt=0,
     )
-    security_mode: SecurityMode = Field(
-        default=SecurityMode.DEVELOPMENT,
-        description="Security mode: 'development' (allows HTTP, warnings only) or 'production' (requires TLS with FIPS-approved ciphers)",
+    insecure: bool = Field(
+        default=False,
+        description="Disable TLS enforcement. Only for local development — do not use in production.",
     )
     tls_config: ServerTLSConfig | None = Field(
         default=None,
-        description="TLS configuration (cipher suites). Auto-populated with FIPS defaults in production mode.",
+        description="TLS configuration (cipher suites). Auto-populated with FIPS-approved defaults.",
     )
     hsts_max_age: int = Field(
         default=31536000,
@@ -821,21 +821,19 @@ class ServerConfig(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_security_mode(self) -> "ServerConfig":
-        if self.security_mode == SecurityMode.PRODUCTION:
-            if not self.tls_certfile or not self.tls_keyfile:
-                raise ValueError(
-                    "Production security mode requires TLS: set 'tls_certfile' and 'tls_keyfile' in server config, "
-                    "or use '--insecure' / security_mode='development' to run without TLS."
-                )
-            if self.tls_config is None:
-                self.tls_config = ServerTLSConfig(ciphers=FIPS_APPROVED_CIPHERS)
-            elif self.tls_config.ciphers is None:
-                self.tls_config.ciphers = FIPS_APPROVED_CIPHERS
-            elif not self.tls_config.ciphers:
-                raise ValueError("At least one cipher suite must be specified in production mode.")
-            elif invalid := set(self.tls_config.ciphers) - set(FIPS_APPROVED_CIPHERS):
-                raise ValueError(f"Production mode requires FIPS-approved ciphers. Invalid: {sorted(invalid)}")
+    def validate_tls(self) -> "ServerConfig":
+        if self.insecure:
+            return self
+        if not self.tls_certfile or not self.tls_keyfile:
+            raise ValueError("TLS required: set tls_certfile/tls_keyfile or pass '--insecure' to disable.")
+        if self.tls_config is None:
+            self.tls_config = ServerTLSConfig(ciphers=FIPS_APPROVED_CIPHERS)
+        elif self.tls_config.ciphers is None:
+            self.tls_config.ciphers = FIPS_APPROVED_CIPHERS
+        elif not self.tls_config.ciphers:
+            raise ValueError("At least one cipher suite must be specified.")
+        elif invalid := set(self.tls_config.ciphers) - set(FIPS_APPROVED_CIPHERS):
+            raise ValueError(f"FIPS-approved ciphers required. Invalid: {sorted(invalid)}")
         return self
 
 

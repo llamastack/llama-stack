@@ -4,17 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from enum import StrEnum
-
 from pydantic import BaseModel, Field
-
-
-class SecurityMode(StrEnum):
-    """Server security mode controlling TLS enforcement."""
-
-    DEVELOPMENT = "development"
-    PRODUCTION = "production"
-
 
 FIPS_APPROVED_CIPHERS = [
     "ECDHE-ECDSA-AES128-GCM-SHA256",

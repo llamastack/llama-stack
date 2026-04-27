@@ -29,7 +29,6 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from ogx.core.access_control.access_control import AccessDeniedError
 from ogx.core.datatypes import (
     AuthenticationRequiredError,
-    SecurityMode,
     StackConfig,
     process_cors_config,
 )
@@ -242,10 +241,9 @@ class ProviderDataMiddleware:
 
 
 def validate_auth_security(config: StackConfig) -> None:
-    """Validate auth provider TLS settings against the server's security mode.
+    """Validate auth provider TLS settings.
 
-    Raises SystemExit in production mode if any auth provider has verify_tls=False.
-    Logs a warning in development mode.
+    Raises SystemExit if verify_tls=False unless insecure mode is enabled.
     """
     if not config.server.auth:
         return
@@ -253,14 +251,14 @@ def validate_auth_security(config: StackConfig) -> None:
     if not provider_config or not hasattr(provider_config, "verify_tls") or provider_config.verify_tls:
         return
 
-    if config.server.security_mode == SecurityMode.PRODUCTION:
-        raise SystemExit(
-            "FATAL: Production security mode forbids verify_tls=False in auth provider config. "
-            "TLS verification must be enabled for production deployments."
+    if config.server.insecure:
+        logger.warning(
+            "TLS verification is disabled in auth provider config (verify_tls=False). "
+            "This is insecure and should only be used for local development or testing."
         )
-    logger.warning(
-        "TLS verification is disabled in auth provider config (verify_tls=False). "
-        "This is insecure and should only be used for local development or testing."
+        return
+    raise SystemExit(
+        "FATAL: verify_tls=False in auth provider config. TLS verification is required. Use '--insecure' to override."
     )
 
 
@@ -269,7 +267,6 @@ def create_app() -> StackApp:
 
     This factory function reads configuration from environment variables:
     - OGX_CONFIG: Path to config file (required)
-    - OGX_SECURITY_MODE: Override security_mode before validation (optional, set by --insecure/--security-mode)
 
     Returns:
         Configured StackApp instance.
@@ -297,11 +294,6 @@ def create_app() -> StackApp:
         logger = get_logger(name=__name__, category="core::server", config=logger_config)
 
         config = replace_env_vars(config_contents)
-
-        security_mode_override = os.getenv("OGX_SECURITY_MODE")
-        if security_mode_override and isinstance(config, dict):
-            config.setdefault("server", {})["security_mode"] = security_mode_override
-
         config = StackConfig(**cast_distro_name_to_string(config))
 
     _log_run_config(run_config=config)

@@ -12,187 +12,163 @@ from fastapi.testclient import TestClient
 
 from ogx.core.datatypes import (
     FIPS_APPROVED_CIPHERS,
-    SecurityMode,
     ServerConfig,
     ServerTLSConfig,
     StackConfig,
 )
 
 
-class TestSecurityModeValidation:
-    def test_development_mode_no_certs_allowed(self):
-        """Development mode should work without TLS certificates."""
-        config = ServerConfig(security_mode=SecurityMode.DEVELOPMENT)
-        assert config.security_mode == SecurityMode.DEVELOPMENT
-        assert config.tls_certfile is None
-        assert config.tls_keyfile is None
+class TestTLSValidation:
+    """TLS is required by default. The insecure flag opts out."""
 
-    def test_production_mode_requires_certs(self):
-        """Production mode should raise ValueError without TLS certificates."""
-        with pytest.raises(ValueError, match="Production security mode requires TLS"):
-            ServerConfig(security_mode=SecurityMode.PRODUCTION)
+    def test_default_requires_tls_certs(self):
+        """Default config without TLS certs should be rejected."""
+        with pytest.raises(ValueError, match="TLS required"):
+            ServerConfig()
 
-    def test_production_mode_requires_both_certs(self):
-        """Production mode should require both cert and key."""
-        with pytest.raises(ValueError, match="Production security mode requires TLS"):
-            ServerConfig(
-                security_mode=SecurityMode.PRODUCTION,
-                tls_certfile="/path/to/cert.pem",
-            )
-
-    def test_production_mode_with_certs(self):
-        """Production mode should succeed with both cert and key."""
+    def test_certs_provided_passes(self):
+        """Providing both cert and key should pass validation."""
         config = ServerConfig(
-            security_mode=SecurityMode.PRODUCTION,
             tls_certfile="/path/to/cert.pem",
             tls_keyfile="/path/to/key.pem",
         )
-        assert config.security_mode == SecurityMode.PRODUCTION
+        assert config.tls_certfile == "/path/to/cert.pem"
 
-    def test_production_mode_auto_populates_fips_ciphers(self):
-        """Production mode should auto-populate FIPS-approved cipher suites."""
+    def test_partial_certs_rejected(self):
+        """Providing only one of cert/key should be rejected."""
+        with pytest.raises(ValueError, match="TLS required"):
+            ServerConfig(tls_certfile="/path/to/cert.pem")
+
+    def test_insecure_allows_no_certs(self):
+        """insecure=True should allow running without TLS certificates."""
+        config = ServerConfig(insecure=True)
+        assert config.insecure is True
+        assert config.tls_certfile is None
+
+    def test_auto_populates_fips_ciphers(self):
+        """Should auto-populate FIPS-approved cipher suites when TLS is configured."""
         config = ServerConfig(
-            security_mode=SecurityMode.PRODUCTION,
             tls_certfile="/path/to/cert.pem",
             tls_keyfile="/path/to/key.pem",
         )
         assert config.tls_config is not None
         assert config.tls_config.ciphers == FIPS_APPROVED_CIPHERS
 
-    def test_production_mode_auto_populates_ciphers_when_tls_config_has_none(self):
-        """Production mode should fill in ciphers when tls_config exists but ciphers is None."""
+    def test_auto_populates_ciphers_when_tls_config_has_none(self):
+        """Should fill in ciphers when tls_config exists but ciphers is None."""
         config = ServerConfig(
-            security_mode=SecurityMode.PRODUCTION,
             tls_certfile="/path/to/cert.pem",
             tls_keyfile="/path/to/key.pem",
             tls_config=ServerTLSConfig(),
         )
         assert config.tls_config.ciphers == FIPS_APPROVED_CIPHERS
 
-    def test_production_mode_preserves_custom_ciphers(self):
-        """Production mode should not overwrite explicitly set ciphers."""
+    def test_preserves_valid_custom_ciphers(self):
+        """Should not overwrite explicitly set FIPS-approved ciphers."""
         custom_ciphers = ["ECDHE-RSA-AES256-GCM-SHA384"]
         config = ServerConfig(
-            security_mode=SecurityMode.PRODUCTION,
             tls_certfile="/path/to/cert.pem",
             tls_keyfile="/path/to/key.pem",
             tls_config=ServerTLSConfig(ciphers=custom_ciphers),
         )
         assert config.tls_config.ciphers == custom_ciphers
 
-    def test_development_mode_does_not_auto_populate_tls_config(self):
-        """Development mode should not auto-create tls_config."""
-        config = ServerConfig(security_mode=SecurityMode.DEVELOPMENT)
-        assert config.tls_config is None
-
-    def test_default_security_mode_is_development(self):
-        """Default security mode should be development."""
-        config = ServerConfig()
-        assert config.security_mode == SecurityMode.DEVELOPMENT
-
-    def test_production_mode_rejects_non_fips_ciphers(self):
-        """Production mode should reject cipher suites not in the FIPS-approved list."""
+    def test_rejects_non_fips_ciphers(self):
+        """Should reject cipher suites not in the FIPS-approved list."""
         with pytest.raises(ValueError, match="FIPS-approved ciphers"):
             ServerConfig(
-                security_mode=SecurityMode.PRODUCTION,
                 tls_certfile="/path/to/cert.pem",
                 tls_keyfile="/path/to/key.pem",
                 tls_config=ServerTLSConfig(ciphers=["RC4-SHA"]),
             )
 
-    def test_production_mode_rejects_mixed_ciphers(self):
-        """Production mode should reject a list containing any non-FIPS cipher."""
+    def test_rejects_mixed_ciphers(self):
+        """Should reject a list containing any non-FIPS cipher."""
         with pytest.raises(ValueError, match="RC4-SHA"):
             ServerConfig(
-                security_mode=SecurityMode.PRODUCTION,
                 tls_certfile="/path/to/cert.pem",
                 tls_keyfile="/path/to/key.pem",
                 tls_config=ServerTLSConfig(ciphers=["ECDHE-RSA-AES256-GCM-SHA384", "RC4-SHA"]),
             )
 
-    def test_production_mode_allows_fips_subset(self):
-        """Production mode should accept a subset of FIPS-approved ciphers."""
+    def test_allows_fips_subset(self):
+        """Should accept a subset of FIPS-approved ciphers."""
         subset = ["ECDHE-RSA-AES128-GCM-SHA256", "ECDHE-RSA-AES256-GCM-SHA384"]
         config = ServerConfig(
-            security_mode=SecurityMode.PRODUCTION,
             tls_certfile="/path/to/cert.pem",
             tls_keyfile="/path/to/key.pem",
             tls_config=ServerTLSConfig(ciphers=subset),
         )
         assert config.tls_config.ciphers == subset
 
-    def test_production_mode_rejects_empty_ciphers(self):
-        """Production mode should reject an empty cipher list."""
+    def test_rejects_empty_ciphers(self):
+        """Should reject an empty cipher list."""
         with pytest.raises(ValueError, match="At least one cipher suite"):
             ServerConfig(
-                security_mode=SecurityMode.PRODUCTION,
                 tls_certfile="/path/to/cert.pem",
                 tls_keyfile="/path/to/key.pem",
                 tls_config=ServerTLSConfig(ciphers=[]),
             )
 
-    def test_development_mode_allows_any_ciphers(self):
-        """Development mode should not enforce FIPS cipher restrictions."""
+    def test_insecure_skips_cipher_validation(self):
+        """insecure=True should skip FIPS cipher validation."""
         config = ServerConfig(
-            security_mode=SecurityMode.DEVELOPMENT,
+            insecure=True,
             tls_certfile="/path/to/cert.pem",
             tls_keyfile="/path/to/key.pem",
             tls_config=ServerTLSConfig(ciphers=["RC4-SHA"]),
         )
         assert config.tls_config.ciphers == ["RC4-SHA"]
 
+    def test_insecure_does_not_auto_populate_tls_config(self):
+        """insecure=True should not auto-create tls_config."""
+        config = ServerConfig(insecure=True)
+        assert config.tls_config is None
+
+    def test_insecure_default_is_false(self):
+        """insecure should default to False."""
+        config = ServerConfig(
+            tls_certfile="/path/to/cert.pem",
+            tls_keyfile="/path/to/key.pem",
+        )
+        assert config.insecure is False
+
 
 class TestInsecureFlagOverride:
-    def test_insecure_overrides_production_in_raw_config(self):
-        """--insecure should override production mode in YAML before validation."""
+    def test_insecure_in_raw_config_bypasses_tls_requirement(self):
+        """insecure=True in raw config dict should bypass TLS requirement."""
         raw_config = {
             "version": 2,
             "distro_name": "test",
             "providers": {},
-            "server": {"security_mode": "production"},
+            "server": {"insecure": True},
         }
-        # Simulate CLI override applied to raw dict before StackConfig construction
-        raw_config["server"]["security_mode"] = "development"
-
         config = StackConfig(**raw_config)
-        assert config.server.security_mode == SecurityMode.DEVELOPMENT
+        assert config.server.insecure is True
 
-    def test_production_mode_fails_without_insecure(self):
-        """Without --insecure, production mode without certs should fail at construction."""
+    def test_default_config_without_certs_fails(self):
+        """Default config without TLS certs should fail at construction."""
         raw_config = {
             "version": 2,
             "distro_name": "test",
             "providers": {},
-            "server": {"security_mode": "production"},
         }
-        with pytest.raises(ValueError, match="Production security mode requires TLS"):
+        with pytest.raises(ValueError, match="TLS required"):
             StackConfig(**raw_config)
 
-    def test_env_var_override_rescues_production_config(self):
-        """OGX_SECURITY_MODE env var should override production mode before validation."""
-        raw_config = {
-            "version": 2,
-            "distro_name": "test",
-            "providers": {},
-            "server": {"security_mode": "production"},
-        }
-        # Simulate what create_app() does: apply env var override before StackConfig construction
-        raw_config["server"]["security_mode"] = "development"
-        config = StackConfig(**raw_config)
-        assert config.server.security_mode == SecurityMode.DEVELOPMENT
 
+class TestVerifyTlsFalse:
+    """validate_auth_security should block verify_tls=False unless insecure."""
 
-class TestProductionVerifyTlsFalse:
-    def _make_config_with_verify_tls(self, security_mode, verify_tls):
-        """Build a StackConfig with auth provider verify_tls setting."""
+    def _make_config(self, insecure, verify_tls):
         from ogx.core.datatypes import (
             AuthenticationConfig,
             OAuth2IntrospectionConfig,
             OAuth2TokenAuthConfig,
         )
 
-        server_kwargs = {"security_mode": security_mode}
-        if security_mode == "production":
+        server_kwargs = {"insecure": insecure}
+        if not insecure:
             server_kwargs["tls_certfile"] = "/path/to/cert.pem"
             server_kwargs["tls_keyfile"] = "/path/to/key.pem"
 
@@ -213,28 +189,28 @@ class TestProductionVerifyTlsFalse:
             server=server_kwargs,
         )
 
-    def test_production_mode_rejects_verify_tls_false(self):
-        """Production mode should raise SystemExit when verify_tls=False."""
+    def test_rejects_verify_tls_false(self):
+        """Should raise SystemExit when verify_tls=False and not insecure."""
         from ogx.core.server.server import validate_auth_security
 
-        config = self._make_config_with_verify_tls("production", verify_tls=False)
+        config = self._make_config(insecure=False, verify_tls=False)
         with pytest.raises(SystemExit, match="verify_tls=False"):
             validate_auth_security(config)
 
-    def test_development_mode_warns_verify_tls_false(self):
-        """Development mode should warn but not crash when verify_tls=False."""
+    def test_insecure_warns_verify_tls_false(self):
+        """insecure mode should warn but not crash when verify_tls=False."""
         from ogx.core.server.server import validate_auth_security
 
-        config = self._make_config_with_verify_tls("development", verify_tls=False)
+        config = self._make_config(insecure=True, verify_tls=False)
         with patch("ogx.core.server.server.logger") as mock_logger:
             validate_auth_security(config)
             mock_logger.warning.assert_called_once()
 
-    def test_verify_tls_true_passes_in_production(self):
-        """Production mode with verify_tls=True should pass without error."""
+    def test_verify_tls_true_passes(self):
+        """verify_tls=True should pass without error."""
         from ogx.core.server.server import validate_auth_security
 
-        config = self._make_config_with_verify_tls("production", verify_tls=True)
+        config = self._make_config(insecure=False, verify_tls=True)
         validate_auth_security(config)
 
 
@@ -289,18 +265,24 @@ class TestHSTSMiddleware:
 
     def test_hsts_max_age_config_default(self):
         """ServerConfig hsts_max_age should default to 1 year."""
-        config = ServerConfig()
+        config = ServerConfig(
+            tls_certfile="/path/to/cert.pem",
+            tls_keyfile="/path/to/key.pem",
+        )
         assert config.hsts_max_age == 31536000
 
     def test_hsts_max_age_config_zero_disables(self):
         """hsts_max_age=0 should be valid (used to disable HSTS)."""
-        config = ServerConfig(hsts_max_age=0)
+        config = ServerConfig(
+            insecure=True,
+            hsts_max_age=0,
+        )
         assert config.hsts_max_age == 0
 
     def test_hsts_max_age_config_rejects_negative(self):
         """hsts_max_age must not be negative."""
         with pytest.raises(ValueError):
-            ServerConfig(hsts_max_age=-1)
+            ServerConfig(insecure=True, hsts_max_age=-1)
 
 
 class TestFIPSCipherConstants:

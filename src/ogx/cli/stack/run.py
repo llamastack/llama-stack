@@ -67,17 +67,10 @@ class StackRun(Subcommand):
             help="Run a stack with only a list of providers. This list is formatted like: api1=provider1,api1=provider2,api2=provider3. Where there can be multiple providers per API.",
         )
         self.parser.add_argument(
-            "--security-mode",
-            type=str,
-            choices=["development", "production"],
-            default=None,
-            help="Override the security mode from config. 'production' requires TLS certificates.",
-        )
-        self.parser.add_argument(
             "--insecure",
             action="store_true",
             default=False,
-            help="Force development security mode (allows HTTP without TLS). Overrides --security-mode and config.",
+            help="Allow running without TLS certificates. Disables FIPS enforcement. For local development only.",
         )
 
     def _run_stack_run_cmd(self, args: argparse.Namespace) -> None:
@@ -139,22 +132,26 @@ class StackRun(Subcommand):
         if not config_file:
             self.parser.error("Config file is required")
 
+        import tempfile
+
         config_file = resolve_config_or_distro(str(config_file))
         with open(config_file) as fp:
             config_contents = yaml.safe_load(fp)
             config_contents = cast_distro_name_to_string(replace_env_vars(config_contents))
 
-            # Apply CLI security mode overrides BEFORE model validation,
-            # so --insecure can downgrade production mode without triggering the validator.
-            if args.insecure or args.security_mode:
+            if args.insecure:
                 if "server" not in config_contents:
                     config_contents["server"] = {}
-                if args.insecure:
-                    config_contents["server"]["security_mode"] = "development"
-                elif args.security_mode:
-                    config_contents["server"]["security_mode"] = args.security_mode
+                config_contents["server"]["insecure"] = True
 
             config = StackConfig(**config_contents)
+
+        # Write resolved config (with CLI overrides) to a temp file so
+        # create_app() workers read the final config directly from disk.
+        resolved_config = config.model_dump(mode="json")
+        resolved_file = Path(tempfile.mktemp(suffix=".yaml", prefix="ogx-run-"))
+        with open(resolved_file, "w") as f:
+            yaml.dump(resolved_config, f, default_flow_style=False, sort_keys=False)
 
         port = args.port or config.server.port
         workers = config.server.workers
@@ -168,15 +165,7 @@ class StackRun(Subcommand):
         elif workers and workers > 1:
             host = "::"
 
-        # Set the config file in environment so create_app can find it
-        os.environ["OGX_CONFIG"] = str(config_file)
-
-        # Propagate CLI security mode override so create_app() workers apply it
-        # before StackConfig validation (which rejects production mode without certs).
-        if args.insecure:
-            os.environ["OGX_SECURITY_MODE"] = "development"
-        elif args.security_mode:
-            os.environ["OGX_SECURITY_MODE"] = args.security_mode
+        os.environ["OGX_CONFIG"] = str(resolved_file)
 
         # Let create_app() handle logging setup instead of passing config to uvicorn
         uvicorn_config = {
