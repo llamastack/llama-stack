@@ -127,7 +127,7 @@ repos:
         entry: ./scripts/check-api-conformance.sh
         language: golang
         additional_dependencies:
-          - github.com/oasdiff/oasdiff@latest
+          - github.com/oasdiff/oasdiff@v1.15.0
         pass_filenames: false
         require_serial: true
         files: ^docs/static/(ogx-spec|stable-ogx-spec|experimental-ogx-spec|deprecated-ogx-spec)\.yaml$
