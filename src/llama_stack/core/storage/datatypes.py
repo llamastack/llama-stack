@@ -321,9 +321,9 @@ class ServerStoresConfig(BaseModel):
         default=SqlStoreReference(backend="sql_default", table_name="prompts"),
         description="Prompts store configuration (uses SQL backend)",
     )
-    connectors: KVStoreReference | None = Field(
-        default=KVStoreReference(backend="kv_default", namespace="connectors"),
-        description="Connectors store configuration (uses KV backend)",
+    connectors: SqlStoreReference | None = Field(
+        default=SqlStoreReference(backend="sql_default", table_name="connectors"),
+        description="Connectors store configuration (uses SQL backend)",
     )
 
 
