@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 import pytest
-from llama_stack_client import LlamaStackClient
+from ogx_client import LlamaStackClient
 
 from .helpers import skip_if_provider_is_vertexai
 
