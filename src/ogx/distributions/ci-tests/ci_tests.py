@@ -50,6 +50,15 @@ def get_distribution_template() -> DistributionTemplate:
         model_type=ModelType.llm,
     )
 
+    # Vertex AI model must be pre-registered because the recording system cannot
+    # replay model-list discovery calls against the Vertex AI endpoint in CI.
+    vertexai_model = ModelInput(
+        model_id="vertexai/publishers/google/models/gemini-2.0-flash",
+        provider_id="${env.VERTEX_AI_PROJECT:+vertexai}",
+        provider_model_id="publishers/google/models/gemini-2.0-flash",
+        model_type=ModelType.llm,
+    )
+
     # Bedrock model must be pre-registered because the recording system cannot
     # replay model-list discovery calls against the Bedrock endpoint in CI.
     # Gate on AWS_DEFAULT_REGION (required for both bearer-token and SigV4 modes)
@@ -102,9 +111,10 @@ def get_distribution_template() -> DistributionTemplate:
             run_config.default_models = []
         run_config.default_models.append(azure_model)
         run_config.default_models.append(watsonx_model)
+        run_config.default_models.append(vertexai_model)
         run_config.default_models.append(bedrock_model)
 
-        # Add WatsonX inference provider
+        # Add WatsonX inference provider (vertexai is already in starter distribution)
         run_config.provider_overrides["inference"].append(watsonx_provider)
 
         # Replace sentence-transformers provider with one that has trust_remote_code=True
