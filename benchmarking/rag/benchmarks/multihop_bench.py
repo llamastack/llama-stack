@@ -8,7 +8,6 @@
 
 from __future__ import annotations
 
-import json
 import logging  # allow-direct-logging
 
 from datasets import load_dataset
@@ -85,6 +84,8 @@ class MultiHOPBenchmark(BenchmarkRunner):
 
         logger.info(f"Evaluating {len(queries)} multi-hop queries...")
 
+        per_query = self._load_per_query_results()
+
         results = rag_query_batch(
             client=self.client,
             model=self.model,
@@ -95,18 +96,24 @@ class MultiHOPBenchmark(BenchmarkRunner):
             search_mode=self.search_mode,
             use_batch_api=self.use_batch_api,
             batch_id=self.batch_id,
+            extra_body=self.extra_body,
+            checkpoint_path=str(self.output_dir / "query_checkpoint.json"),
         )
 
-        # Extract predictions
-        predictions = {qid: r["answer"] for qid, r in results.items()}
-        filtered_gt = {qid: self.ground_truths[qid] for qid in queries}
+        for qid, r in results.items():
+            per_query[qid] = {
+                "prediction": r["answer"],
+                "ground_truth": self.ground_truths[qid],
+            }
 
-        # Answer metrics
-        metrics = answer_metrics(predictions, filtered_gt)
+        self._save_per_query_results(per_query)
+
+        all_predictions = {qid: r["prediction"] for qid, r in per_query.items()}
+        all_ground_truths = {qid: r["ground_truth"] for qid, r in per_query.items()}
+        metrics = answer_metrics(all_predictions, all_ground_truths)
 
         # Retrieval metrics against evidence docs
         if self.evidence_docs:
-            # Build qrels from evidence doc titles -> corpus doc IDs
             title_to_id = {}
             for doc_id, doc in self.corpus.items():
                 title_to_id[doc.get("title", "")] = doc_id
@@ -119,21 +126,12 @@ class MultiHOPBenchmark(BenchmarkRunner):
                     if did:
                         qrels[qid][did] = 1
 
-            retrieved = {qid: results[qid]["retrieved_docs"] for qid in queries}
+            retrieved = {qid: results[qid]["retrieved_docs"] for qid in queries if qid in results}
             ret_metrics = retrieval_metrics(qrels, retrieved, k_values=[5, 10, 20])
             metrics.update(ret_metrics)
 
         metrics["dataset"] = "multihop"
         metrics["num_corpus_docs"] = len(self.corpus)
         metrics["search_mode"] = self.search_mode or "default"
-
-        # Save per-query results
-        per_query_path = self.output_dir / "per_query_results.json"
-        per_query_path.write_text(
-            json.dumps(
-                {qid: {"prediction": predictions[qid], "ground_truth": filtered_gt[qid]} for qid in queries},
-                indent=2,
-            )
-        )
 
         return metrics
