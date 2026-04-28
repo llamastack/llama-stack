@@ -192,6 +192,10 @@ class StackRun(Subcommand):
             logger.info(
                 "HTTPS enabled with certificates", keyfile=keyfile, certfile=certfile, cafile=config.server.tls_cafile
             )
+        elif not config.server.insecure:
+            raise SystemExit(
+                "TLS required: set tls_certfile/tls_keyfile in server config or pass '--insecure' to disable."
+            )
         else:
             logger.warning(
                 "TLS is not enabled — server will transmit data in cleartext. "

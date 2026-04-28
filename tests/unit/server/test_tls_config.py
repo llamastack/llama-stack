@@ -19,12 +19,13 @@ from ogx.core.datatypes import (
 
 
 class TestTLSValidation:
-    """TLS is required by default. The insecure flag opts out."""
+    """FIPS cipher validation at model level; TLS cert enforcement at server startup."""
 
-    def test_default_requires_tls_certs(self):
-        """Default config without TLS certs should be rejected."""
-        with pytest.raises(ValueError, match="TLS required"):
-            ServerConfig()
+    def test_default_config_valid(self):
+        """Default config without TLS certs should parse without error."""
+        config = ServerConfig()
+        assert config.tls_certfile is None
+        assert config.tls_keyfile is None
 
     def test_certs_provided_passes(self):
         """Providing both cert and key should pass validation."""
@@ -34,10 +35,10 @@ class TestTLSValidation:
         )
         assert config.tls_certfile == "/path/to/cert.pem"
 
-    def test_partial_certs_rejected(self):
-        """Providing only one of cert/key should be rejected."""
-        with pytest.raises(ValueError, match="TLS required"):
-            ServerConfig(tls_certfile="/path/to/cert.pem")
+    def test_partial_certs_no_cipher_population(self):
+        """Providing only cert (no key) should not auto-populate ciphers."""
+        config = ServerConfig(tls_certfile="/path/to/cert.pem")
+        assert config.tls_config is None
 
     def test_insecure_allows_no_certs(self):
         """insecure=True should allow running without TLS certificates."""
@@ -135,8 +136,8 @@ class TestTLSValidation:
 
 
 class TestInsecureFlagOverride:
-    def test_insecure_in_raw_config_bypasses_tls_requirement(self):
-        """insecure=True in raw config dict should bypass TLS requirement."""
+    def test_insecure_in_raw_config(self):
+        """insecure=True in raw config dict should set the flag."""
         raw_config = {
             "version": 2,
             "distro_name": "test",
@@ -146,15 +147,16 @@ class TestInsecureFlagOverride:
         config = StackConfig(**raw_config)
         assert config.server.insecure is True
 
-    def test_default_config_without_certs_fails(self):
-        """Default config without TLS certs should fail at construction."""
+    def test_default_config_without_certs_parses(self):
+        """Config without TLS certs should parse (enforcement is at server startup)."""
         raw_config = {
             "version": 2,
             "distro_name": "test",
             "providers": {},
         }
-        with pytest.raises(ValueError, match="TLS required"):
-            StackConfig(**raw_config)
+        config = StackConfig(**raw_config)
+        assert config.server.insecure is False
+        assert config.server.tls_certfile is None
 
 
 class TestVerifyTlsFalse:

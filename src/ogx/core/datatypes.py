@@ -824,16 +824,15 @@ class ServerConfig(BaseModel):
     def validate_tls(self) -> "ServerConfig":
         if self.insecure:
             return self
-        if not self.tls_certfile or not self.tls_keyfile:
-            raise ValueError("TLS required: set tls_certfile/tls_keyfile or pass '--insecure' to disable.")
-        if self.tls_config is None:
-            self.tls_config = ServerTLSConfig(ciphers=FIPS_APPROVED_CIPHERS)
-        elif self.tls_config.ciphers is None:
-            self.tls_config.ciphers = FIPS_APPROVED_CIPHERS
-        elif not self.tls_config.ciphers:
-            raise ValueError("At least one cipher suite must be specified.")
-        elif invalid := set(self.tls_config.ciphers) - set(FIPS_APPROVED_CIPHERS):
-            raise ValueError(f"FIPS-approved ciphers required. Invalid: {sorted(invalid)}")
+        if self.tls_certfile and self.tls_keyfile:
+            if self.tls_config is None:
+                self.tls_config = ServerTLSConfig(ciphers=FIPS_APPROVED_CIPHERS)
+            elif self.tls_config.ciphers is None:
+                self.tls_config.ciphers = FIPS_APPROVED_CIPHERS
+            elif not self.tls_config.ciphers:
+                raise ValueError("At least one cipher suite must be specified.")
+            elif invalid := set(self.tls_config.ciphers) - set(FIPS_APPROVED_CIPHERS):
+                raise ValueError(f"FIPS-approved ciphers required. Invalid: {sorted(invalid)}")
         return self
 
 
