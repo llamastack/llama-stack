@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import argparse
+import atexit
 import os
 import ssl
 import subprocess
@@ -149,8 +150,10 @@ class StackRun(Subcommand):
         # Write resolved config (with CLI overrides) to a temp file so
         # create_app() workers read the final config directly from disk.
         resolved_config = config.model_dump(mode="json")
-        resolved_file = Path(tempfile.mktemp(suffix=".yaml", prefix="ogx-run-"))
-        with open(resolved_file, "w") as f:
+        fd, resolved_path = tempfile.mkstemp(suffix=".yaml", prefix="ogx-run-")
+        resolved_file = Path(resolved_path)
+        atexit.register(lambda p=resolved_file: p.unlink(missing_ok=True))
+        with os.fdopen(fd, "w") as f:
             yaml.dump(resolved_config, f, default_flow_style=False, sort_keys=False)
 
         port = args.port or config.server.port
