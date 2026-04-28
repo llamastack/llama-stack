@@ -88,12 +88,15 @@ All three hit the same underlying inference providers. The same OGX server can s
 ```python
 # All three work against the same OGX server, same model
 from openai import OpenAI
+
 openai_client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
 
 from anthropic import Anthropic
+
 anthropic_client = Anthropic(base_url="http://localhost:8321/v1", api_key="fake")
 
 from google import genai
+
 google_client = genai.Client(api_version="v1alpha", api_key="fake")
 ```
 
