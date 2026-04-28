@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -7,15 +7,15 @@
 
 import pytest
 
-from llama_stack.core.access_control.access_control import default_policy
-from llama_stack.core.storage.datatypes import SqliteSqlStoreConfig, SqlStoreReference
-from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
-from llama_stack.providers.inline.files.localfs import (
+from ogx.core.access_control.access_control import default_policy
+from ogx.core.storage.datatypes import SqliteSqlStoreConfig, SqlStoreReference
+from ogx.core.storage.sqlstore.sqlstore import register_sqlstore_backends
+from ogx.providers.inline.files.localfs import (
     LocalfsFilesImpl,
     LocalfsFilesImplConfig,
 )
-from llama_stack_api import OpenAIFilePurpose, Order, ResourceNotFoundError
-from llama_stack_api.files.models import (
+from ogx_api import OpenAIFilePurpose, Order, ResourceNotFoundError
+from ogx_api.files.models import (
     DeleteFileRequest,
     ListFilesRequest,
     OpenAIFileObject,
@@ -379,8 +379,8 @@ class TestOpenAIFilesAPI:
         """Test that /files/{file_id}/content response schema is type: string (not $ref to Response)."""
         from unittest.mock import AsyncMock
 
-        from llama_stack_api.files.api import Files
-        from llama_stack_api.files.fastapi_routes import create_router
+        from ogx_api.files.api import Files
+        from ogx_api.files.fastapi_routes import create_router
 
         mock_impl = AsyncMock(spec=Files)
         router = create_router(mock_impl)
@@ -406,8 +406,46 @@ class TestOpenAIFilesAPI:
             expires_at=None,
             filename="test.txt",
             purpose=OpenAIFilePurpose.ASSISTANTS,
+            status="processed",
+            status_details="",
         )
         assert file_obj.expires_at is None
+
+    async def test_status_field_present(self):
+        """Test that status and status_details are present on OpenAIFileObject."""
+        file_obj = OpenAIFileObject(
+            id="file-abc123",
+            bytes=100,
+            created_at=1234567890,
+            filename="test.txt",
+            purpose=OpenAIFilePurpose.ASSISTANTS,
+            status="processed",
+            status_details="",
+        )
+        assert file_obj.status == "processed"
+        assert file_obj.status_details == ""
+
+    async def test_status_can_be_set(self):
+        """Test that status and status_details can be explicitly set."""
+        file_obj = OpenAIFileObject(
+            id="file-abc123",
+            bytes=100,
+            created_at=1234567890,
+            filename="test.txt",
+            purpose=OpenAIFilePurpose.ASSISTANTS,
+            status="error",
+            status_details="File validation failed",
+        )
+        assert file_obj.status == "error"
+        assert file_obj.status_details == "File validation failed"
+
+    async def test_uploaded_file_has_status(self, files_provider, sample_text_file):
+        """Test that uploaded files include status in their response."""
+        result = await files_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_text_file
+        )
+        assert result.status == "processed"
+        assert result.status_details == ""
 
     async def test_after_pagination_works(self, files_provider, sample_text_file):
         """Test that 'after' pagination works correctly."""

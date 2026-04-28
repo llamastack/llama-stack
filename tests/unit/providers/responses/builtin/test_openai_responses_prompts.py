@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -7,7 +7,7 @@
 
 import pytest
 
-from llama_stack_api import (
+from ogx_api import (
     GetPromptRequest,
     InvalidParameterError,
     OpenAIChatCompletionContentPartImageParam,
@@ -16,10 +16,10 @@ from llama_stack_api import (
     OpenAISystemMessageParam,
     Prompt,
 )
-from llama_stack_api.inference import (
+from ogx_api.inference import (
     OpenAIUserMessageParam,
 )
-from llama_stack_api.openai_responses import (
+from ogx_api.openai_responses import (
     OpenAIResponseInputMessageContentFile,
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
@@ -240,6 +240,8 @@ async def test_prepend_prompt_with_image_variable(openai_responses_impl, mock_pr
         expires_at=1234567890,
         filename="product.jpg",
         purpose="assistants",
+        status="processed",
+        status_details="",
     )
 
     openai_response_prompt = OpenAIResponsePrompt(
@@ -304,6 +306,8 @@ async def test_prepend_prompt_with_file_variable(openai_responses_impl, mock_pro
         expires_at=1234567890,
         filename="contract.pdf",
         purpose="assistants",
+        status="processed",
+        status_details="",
     )
 
     openai_response_prompt = OpenAIResponsePrompt(
@@ -382,6 +386,8 @@ async def test_prepend_prompt_with_mixed_variables(openai_responses_impl, mock_p
                 expires_at=1234567890,
                 filename="photo.jpg",
                 purpose="assistants",
+                status="processed",
+                status_details="",
             )
         elif file_id == "file-doc-456":
             return OpenAIFileObject(
@@ -392,6 +398,8 @@ async def test_prepend_prompt_with_mixed_variables(openai_responses_impl, mock_p
                 expires_at=1234567890,
                 filename="doc.pdf",
                 purpose="assistants",
+                status="processed",
+                status_details="",
             )
 
     mock_files_api.openai_retrieve_file.side_effect = mock_retrieve_file

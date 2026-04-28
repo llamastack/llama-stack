@@ -1,7 +1,7 @@
 {
   "openai_spec": "docs/static/openai-spec-2.3.0.yml",
   "openresponses_spec": "docs/static/openresponses-spec.json",
-  "llama_spec": "docs/static/llama-stack-spec.yaml",
+  "llama_spec": "docs/static/ogx-spec.yaml",
   "summary": {
     "endpoints": {
       "implemented": 29,
@@ -127,10 +127,10 @@
       ]
     },
     "conformance": {
-      "score": 91.4,
-      "issues": 186,
-      "missing_properties": 110,
-      "total_problems": 296,
+      "score": 91.7,
+      "issues": 184,
+      "missing_properties": 101,
+      "total_problems": 285,
       "total_properties": 3441
     }
   },
@@ -1214,9 +1214,9 @@
       ]
     },
     "Files": {
-      "score": 66.7,
+      "score": 76.2,
       "issues": 8,
-      "missing_properties": 6,
+      "missing_properties": 2,
       "total_properties": 42,
       "endpoints": [
         {
@@ -1248,9 +1248,7 @@
               "method": "POST",
               "missing_properties": [
                 "POST.requestBody.content.multipart/form-data.properties.expires_after.properties.anchor",
-                "POST.requestBody.content.multipart/form-data.properties.expires_after.properties.seconds",
-                "POST.responses.200.content.application/json.properties.status",
-                "POST.responses.200.content.application/json.properties.status_details"
+                "POST.requestBody.content.multipart/form-data.properties.expires_after.properties.seconds"
               ],
               "conformance_issues": [
                 {
@@ -1281,7 +1279,7 @@
                   ]
                 }
               ],
-              "missing_count": 4,
+              "missing_count": 2,
               "issues_count": 4
             }
           ]
@@ -1298,10 +1296,7 @@
             },
             {
               "method": "GET",
-              "missing_properties": [
-                "GET.responses.200.content.application/json.properties.status",
-                "GET.responses.200.content.application/json.properties.status_details"
-              ],
+              "missing_properties": [],
               "conformance_issues": [
                 {
                   "property": "GET.responses.200.content.application/json.properties.expires_at",
@@ -1318,7 +1313,7 @@
                   ]
                 }
               ],
-              "missing_count": 2,
+              "missing_count": 0,
               "issues_count": 2
             }
           ]
@@ -1338,9 +1333,9 @@
       ]
     },
     "Models": {
-      "score": 66.7,
-      "issues": 0,
-      "missing_properties": 5,
+      "score": 93.3,
+      "issues": 1,
+      "missing_properties": 0,
       "total_properties": 15,
       "endpoints": [
         {
@@ -1348,11 +1343,9 @@
           "operations": [
             {
               "method": "GET",
-              "missing_properties": [
-                "GET.responses.200.content.application/json.properties.object"
-              ],
+              "missing_properties": [],
               "conformance_issues": [],
-              "missing_count": 1,
+              "missing_count": 0,
               "issues_count": 0
             }
           ]
@@ -1362,15 +1355,17 @@
           "operations": [
             {
               "method": "GET",
-              "missing_properties": [
-                "GET.responses.200.content.application/json.properties.created",
-                "GET.responses.200.content.application/json.properties.id",
-                "GET.responses.200.content.application/json.properties.object",
-                "GET.responses.200.content.application/json.properties.owned_by"
+              "missing_properties": [],
+              "conformance_issues": [
+                {
+                  "property": "GET.responses.200.content.application/json.properties.owned_by",
+                  "details": [
+                    "Default changed: None -> ogx"
+                  ]
+                }
               ],
-              "conformance_issues": [],
-              "missing_count": 4,
-              "issues_count": 0
+              "missing_count": 0,
+              "issues_count": 1
             }
           ]
         }
@@ -1600,7 +1595,8 @@
                 {
                   "property": "POST.responses.200.content.application/json.properties.text",
                   "details": [
-                    "Type added: ['object']"
+                    "Type added: ['object']",
+                    "Default changed: None -> {'format': {'type': 'text'}}"
                   ]
                 },
                 {
@@ -1671,8 +1667,8 @@
       ]
     },
     "Vector stores": {
-      "score": 81.9,
-      "issues": 44,
+      "score": 82.9,
+      "issues": 41,
       "missing_properties": 12,
       "total_properties": 310,
       "endpoints": [
@@ -1888,16 +1884,10 @@
                     "Nullable added (OpenAI non-nullable)",
                     "Union variants added: 2"
                   ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.object",
-                  "details": [
-                    "Enum values removed: ['vector_store.files_batch']"
-                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 3
+              "issues_count": 2
             }
           ]
         },
@@ -1907,16 +1897,9 @@
             {
               "method": "GET",
               "missing_properties": [],
-              "conformance_issues": [
-                {
-                  "property": "GET.responses.200.content.application/json.properties.object",
-                  "details": [
-                    "Enum values removed: ['vector_store.files_batch']"
-                  ]
-                }
-              ],
+              "conformance_issues": [],
               "missing_count": 0,
-              "issues_count": 1
+              "issues_count": 0
             }
           ]
         },
@@ -1926,16 +1909,9 @@
             {
               "method": "POST",
               "missing_properties": [],
-              "conformance_issues": [
-                {
-                  "property": "POST.responses.200.content.application/json.properties.object",
-                  "details": [
-                    "Enum values removed: ['vector_store.files_batch']"
-                  ]
-                }
-              ],
+              "conformance_issues": [],
               "missing_count": 0,
-              "issues_count": 1
+              "issues_count": 0
             }
           ]
         },

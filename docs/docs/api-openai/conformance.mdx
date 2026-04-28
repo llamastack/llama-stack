@@ -1,13 +1,13 @@
 ---
 title: OpenAI API Conformance
-description: Detailed conformance status of Llama Stack against the OpenAI API specification
-sidebar_label: API Conformance
+description: Detailed conformance status of OGX against the OpenAI API specification
+sidebar_label: Conformance
 sidebar_position: 2
 ---
 
 # OpenAI API Conformance Report
 
-This page provides a detailed breakdown of Llama Stack's conformance to the OpenAI API specification.
+This page provides a detailed breakdown of OGX's conformance to the OpenAI API specification.
 The conformance score increases as schema issues are fixed and missing properties are implemented.
 
 :::info Auto-generated
@@ -18,12 +18,12 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 91.4% |
+| **Overall Conformance Score** | 91.7% |
 | **Endpoints Implemented** | 29/146 |
 | **Total Properties Checked** | 3441 |
-| **Schema/Type Issues** | 186 |
-| **Missing Properties** | 110 |
-| **Total Issues to Fix** | 296 |
+| **Schema/Type Issues** | 184 |
+| **Missing Properties** | 101 |
+| **Total Issues to Fix** | 285 |
 
 ## Integration Test Coverage
 
@@ -47,17 +47,17 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Moderations | 17.0% | 53 | 5 | 39 |
 | Batch | 39.9% | 168 | 60 | 41 |
 | Completions | 58.7% | 46 | 17 | 2 |
-| Files | 66.7% | 42 | 8 | 6 |
-| Models | 66.7% | 15 | 0 | 5 |
+| Files | 76.2% | 42 | 8 | 2 |
 | Embeddings | 78.6% | 14 | 3 | 0 |
-| Vector stores | 81.9% | 310 | 44 | 12 |
+| Vector stores | 82.9% | 310 | 41 | 12 |
 | Responses | 88.9% | 225 | 25 | 0 |
+| Models | 93.3% | 15 | 1 | 0 |
 | Chat | 98.5% | 403 | 5 | 1 |
 | Conversations | 98.9% | 2165 | 19 | 4 |
 
 ## Missing Endpoints
 
-The following OpenAI API endpoints are not yet implemented in Llama Stack:
+The following OpenAI API endpoints are not yet implemented in OGX:
 
 ### /assistants
 
@@ -506,7 +506,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Files
 
-**Score:** 66.7% · **Issues:** 8 · **Missing:** 6
+**Score:** 76.2% · **Issues:** 8 · **Missing:** 2
 
 #### `/files`
 
@@ -525,12 +525,10 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **POST**
 
 <details>
-<summary>Missing Properties (4)</summary>
+<summary>Missing Properties (2)</summary>
 
 - `requestBody.content.multipart/form-data.properties.expires_after.properties.anchor`
 - `requestBody.content.multipart/form-data.properties.expires_after.properties.seconds`
-- `responses.200.content.application/json.properties.status`
-- `responses.200.content.application/json.properties.status_details`
 
 </details>
 
@@ -551,49 +549,12 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **GET**
 
 <details>
-<summary>Missing Properties (2)</summary>
-
-- `responses.200.content.application/json.properties.status`
-- `responses.200.content.application/json.properties.status_details`
-
-</details>
-
-<details>
 <summary>Schema Issues (2)</summary>
 
 | Property | Issues |
 |----------|--------|
 | `responses.200.content.application/json.properties.expires_at` | Type removed: ['integer']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.application/json.properties.purpose` | Enum values removed: ['assistants_output', 'batch_output', 'fine-tune', 'fine-tune-results', 'vision', 'user_data'] |
-
-</details>
-
-### Models
-
-**Score:** 66.7% · **Issues:** 0 · **Missing:** 5
-
-#### `/models`
-
-**GET**
-
-<details>
-<summary>Missing Properties (1)</summary>
-
-- `responses.200.content.application/json.properties.object`
-
-</details>
-
-#### `/models/{model}`
-
-**GET**
-
-<details>
-<summary>Missing Properties (4)</summary>
-
-- `responses.200.content.application/json.properties.created`
-- `responses.200.content.application/json.properties.id`
-- `responses.200.content.application/json.properties.object`
-- `responses.200.content.application/json.properties.owned_by`
 
 </details>
 
@@ -618,7 +579,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Vector stores
 
-**Score:** 81.9% · **Issues:** 44 · **Missing:** 12
+**Score:** 82.9% · **Issues:** 41 · **Missing:** 12
 
 #### `/vector_stores`
 
@@ -722,39 +683,12 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **POST**
 
 <details>
-<summary>Schema Issues (3)</summary>
+<summary>Schema Issues (2)</summary>
 
 | Property | Issues |
 |----------|--------|
 | `requestBody.content.application/json.properties.chunking_strategy` | Type removed: ['object']; Union variants added: 2 |
 | `requestBody.content.application/json.properties.files` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.object` | Enum values removed: ['vector_store.files_batch'] |
-
-</details>
-
-#### `/vector_stores/{vector_store_id}/file_batches/{batch_id}`
-
-**GET**
-
-<details>
-<summary>Schema Issues (1)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.object` | Enum values removed: ['vector_store.files_batch'] |
-
-</details>
-
-#### `/vector_stores/{vector_store_id}/file_batches/{batch_id}/cancel`
-
-**POST**
-
-<details>
-<summary>Schema Issues (1)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.object` | Enum values removed: ['vector_store.files_batch'] |
 
 </details>
 
@@ -884,7 +818,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `responses.200.content.application/json.properties.output.items` | Union variants added: 8; Union variants removed: 4 | Yes |
 | `responses.200.content.application/json.properties.parallel_tool_calls` | Default changed: None -&gt; True | Yes |
 | `responses.200.content.application/json.properties.reasoning` | Union variants added: 1; Union variants removed: 1 | Yes |
-| `responses.200.content.application/json.properties.text` | Type added: ['object'] | No |
+| `responses.200.content.application/json.properties.text` | Type added: ['object']; Default changed: None -&gt; \{'format': \{'type': 'text'\}\} | No |
 | `responses.200.content.application/json.properties.tool_choice` | Union variants added: 3 | Yes |
 | `responses.200.content.application/json.properties.tools.items` | Union variants added: 4; Union variants removed: 1 | Yes |
 | `responses.200.content.application/json.properties.truncation` | Union variants added: 2 | Yes |
@@ -904,6 +838,23 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `requestBody.content.application/json.properties.input` | Union variants added: 2; Union variants removed: 1 | Yes |
 | `requestBody.content.application/json.properties.model` | Type added: ['string']; Union variants removed: 3 | Yes |
 | `responses.200.content.application/json.properties.output.items` | Union variants added: 4 | Yes |
+
+</details>
+
+### Models
+
+**Score:** 93.3% · **Issues:** 1 · **Missing:** 0
+
+#### `/models/{model}`
+
+**GET**
+
+<details>
+<summary>Schema Issues (1)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `responses.200.content.application/json.properties.owned_by` | Default changed: None -&gt; ogx |
 
 </details>
 
@@ -1086,7 +1037,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 To improve conformance scores:
 
-1. **Fix Schema Issues**: Update Pydantic models in `src/llama_stack_api/` to match OpenAI's schema
+1. **Fix Schema Issues**: Update Pydantic models in `src/ogx_api/` to match OpenAI's schema
 2. **Add Missing Properties**: Implement missing fields in response models
 3. **Add Missing Endpoints**: Implement endpoints listed in the Missing Endpoints section
 
