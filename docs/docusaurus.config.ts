@@ -85,6 +85,7 @@ const config: Config = {
           blogSidebarCount: 'ALL',
           showReadingTime: true,
           postsPerPage: 10,
+          exclude: ['**/building-agentic-flows/**'],
           readingTime: ({content, frontMatter, defaultReadingTime}) =>
             defaultReadingTime({content, options: {wordsPerMinute: 300}}),
           feedOptions: {
