@@ -15,6 +15,8 @@ In this post, we'll walk through two approaches for exporting OGX traces into ML
 
 By the end, you'll understand when to use each approach and how to set them up.
 
+<!--truncate-->
+
 ## MLflow Tracing: A Quick Overview
 
 MLflow is an open-source platform for managing the ML lifecycle. Starting with version 2.14, MLflow introduced **GenAI tracing** — a first-class feature for capturing LLM interactions including:
