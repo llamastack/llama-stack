@@ -11,7 +11,7 @@ OGX implements an OpenAI-compatible API surface for RAG — Files, Vector Stores
 
 ## Summary of Results
 
-We evaluated OGX against OpenAI across four benchmark suites covering retrieval accuracy, end-to-end answer quality, and multi-turn conversational RAG. OGX was tested in two search modes: **vector** (pure semantic search) and **hybrid** (semantic + keyword search with reranking).
+We evaluated OGX against OpenAI across four benchmark suites covering retrieval accuracy, end-to-end answer quality, and multi-turn conversational RAG. OGX was tested in two search modes: **vector** (pure semantic search) and **hybrid** (semantic + keyword search with reranking). We also tested with an open-source generation model (Gemma 4 31B-IT via vLLM) to validate OGX's model-swappable architecture.
 
 ### Retrieval Quality (BEIR)
 
@@ -26,19 +26,20 @@ We evaluated OGX against OpenAI across four benchmark suites covering retrieval 
 
 ### End-to-End RAG Quality
 
-| Benchmark | Type | OpenAI (F1) | OGX vector (F1) | OGX hybrid (F1) |
-|---|---|---|---|---|
-| MultiHOP RAG | Multi-hop reasoning | 0.0114 | 0.0141 | **0.0141** |
-| Doc2Dial | Document-grounded dialogue | **0.1337** | 0.0962 | 0.0966 |
+| Benchmark | Type | OpenAI (F1) | OGX vector (F1) | OGX hybrid (F1) | OGX hybrid + Gemma 31B (F1) |
+|---|---|---|---|---|---|
+| MultiHOP RAG | Multi-hop reasoning | 0.0114 | 0.0141 | **0.0141** | — |
+| Doc2Dial | Document-grounded dialogue | **0.1337** | 0.0962 | 0.0966 | 0.0634 |
 
-*Metric: Token-level F1 (SQuAD-style). Higher is better. All end-to-end benchmarks used GPT-4.1 as the generation model.*
+*Metric: Token-level F1 (SQuAD-style). Higher is better. OpenAI and OGX vector/hybrid used GPT-4.1 for generation. The Gemma 31B column uses google/gemma-4-31B-it served via vLLM.*
 
 ### Key Takeaways
 
 - **Hybrid search matches or beats OpenAI on 3 of 4 BEIR datasets** (nfcorpus, scifact, arguana), demonstrating that OGX's combination of semantic search, keyword search, and reranking is competitive with OpenAI's proprietary retrieval.
 - **OGX outperforms OpenAI on arguana by 29%** (0.3835 vs 0.2960), a dataset that benefits from keyword matching on argumentative text.
 - **fiqa is the gap** — OpenAI leads by 19% on this financial QA dataset (0.2862 vs 0.2399), likely due to differences in embedding models and chunking strategies for longer financial documents.
-- **End-to-end RAG scores are low across both backends**, reflecting the difficulty of these benchmarks (multi-hop reasoning, document-grounded dialogue) rather than a RAG-specific weakness. Both backends use the same LLM (GPT-4.1) for generation.
+- **End-to-end RAG scores are low across all backends**, reflecting the difficulty of these benchmarks (multi-hop reasoning, document-grounded dialogue) rather than a RAG-specific weakness.
+- **Open-source models plug in without code changes.** Gemma 4 31B-IT, served via vLLM, produced coherent answers with zero empty responses across all 1,203 Doc2Dial queries. Lower F1 reflects response verbosity (~2,500 chars avg vs ~95 char ground truths), not retrieval failure — the same retrieval pipeline powers all OGX runs.
 
 ### Additional Retrieval Metrics
 
@@ -76,11 +77,13 @@ Multi-hop reasoning over 609 news articles, 2,556 queries.
 
 Document-grounded dialogue: 488 documents, 200 conversations, 1,203 total turns.
 
-| Metric | OpenAI | LS vector | LS hybrid |
-|---|---|---|---|
-| **F1** | **0.1337** | 0.0962 | 0.0966 |
-| Exact Match | 0.0 | 0.0 | 0.0 |
-| ROUGE-L | **0.1136** | 0.0790 | 0.0794 |
+| Metric | OpenAI | LS vector | LS hybrid | LS hybrid + Gemma 31B |
+|---|---|---|---|---|
+| **F1** | **0.1337** | 0.0962 | 0.0966 | 0.0634 |
+| Exact Match | 0.0 | 0.0 | 0.0 | 0.0 |
+| ROUGE-L | **0.1136** | 0.0790 | 0.0794 | 0.0513 |
+
+> Gemma 31B's lower F1/ROUGE-L scores are driven by response verbosity (~2,500 chars avg vs ~95 char ground truths), not retrieval failure. The model produced zero empty responses across all 1,203 queries.
 
 ## Analysis
 
@@ -106,11 +109,15 @@ Document-grounded dialogue: 488 documents, 200 conversations, 1,203 total turns.
 
 Hybrid search outperforms vector on 3 of 4 BEIR datasets. The exception is fiqa, where keyword search may add noise for financial opinion queries.
 
+### Open-source model (Gemma 31B)
+
+Gemma 4 31B-IT was served via vLLM and connected to OGX as a `remote::openai` inference provider, using the same retrieval pipeline as the GPT-4.1 runs. The model produced coherent, relevant answers with zero empty responses across all 1,203 Doc2Dial queries. Lower F1/ROUGE-L scores vs GPT-4.1 are driven by response verbosity, not retrieval failure — the same retrieval pipeline powers all OGX runs regardless of generation model. This demonstrates OGX's model-swappable architecture: open-source models can be plugged in without any code changes.
+
 ### Generation quality observations
 
 - All end-to-end benchmarks show low absolute scores (F1 < 0.15), which is consistent with prior work on these datasets.
 - Exact Match is 0.0 across all backends — the model generates verbose answers while ground truths are often short extractive spans.
-- Since all backends use GPT-4.1, answer quality differences reflect retrieval quality differences, not generation differences.
+- For GPT-4.1 runs, answer quality differences reflect retrieval quality differences, not generation differences. For the Gemma run, the generation model's verbosity is an additional factor.
 
 ## Methodology
 
@@ -135,7 +142,7 @@ The same benchmark code runs against both OpenAI and OGX — the only difference
 | **Chunk size** | 512 tokens |
 | **Chunk overlap** | 128 tokens |
 | **Hybrid search** | RRF fusion (impact factor 60.0) with reranker |
-| **Generation model** | GPT-4.1 (via `remote::openai` provider) |
+| **Generation model** | GPT-4.1 (via `remote::openai` provider), google/gemma-4-31B-it (via vLLM) |
 
 ### Benchmarks
 

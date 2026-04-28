@@ -252,6 +252,8 @@ def generate_docs(
                         details = details.replace("|", "\\|")
                         # Escape < and > for MDX compatibility (prevents JSX parse errors)
                         details = details.replace("<", "&lt;").replace(">", "&gt;")
+                        # Escape curly braces for MDX (prevents acorn parse errors)
+                        details = details.replace("{", "\\{").replace("}", "\\}")
                         if show_tested:
                             prop_name = _extract_property_name(issue["property"])
                             is_tested = prop_name in tested_properties if prop_name else False
