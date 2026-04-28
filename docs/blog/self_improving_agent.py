@@ -22,7 +22,7 @@ import sqlite3
 import time
 from typing import Annotated, get_args, get_origin
 
-from llama_stack_client import LlamaStackClient
+from ogx_client import LlamaStackClient
 
 
 # ---------------------------------------------------------------------------

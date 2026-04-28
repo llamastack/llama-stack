@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack_client import Agent, AgentEventLogger, LlamaStackClient
+from ogx_client import Agent, AgentEventLogger, LlamaStackClient
 
 vector_store_id = "my_demo_vector_db"
 client = LlamaStackClient(base_url="http://localhost:8321")

@@ -235,7 +235,7 @@ In `test_ogx.py`, write the following code:
 
 ```python
 import os
-from llama_stack_client import LlamaStackClient
+from ogx_client import LlamaStackClient
 
 # Get the model ID from the environment variable
 INFERENCE_MODEL = os.environ.get("INFERENCE_MODEL")
@@ -295,7 +295,7 @@ This command initializes the model to interact with your local OGX instance.
 
 **Explore Client SDKs**: Utilize our client SDKs for various languages to integrate OGX into your applications:
 
-- [Python SDK](https://github.com/meta-llama/llama-stack-client-python)
+- [Python SDK](https://github.com/ogx-ai/ogx-client-python)
 - [Node SDK](https://github.com/ogx-ai/ogx-client-node)
 - [Swift SDK](https://github.com/ogx-ai/ogx-client-swift)
 - [Kotlin SDK](https://github.com/ogx-ai/ogx-client-kotlin)

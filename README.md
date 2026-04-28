@@ -77,7 +77,7 @@ See the [Quick Start guide](https://ogx-ai.github.io/docs/getting_started/quicks
 
 |  Language |  SDK | Package |
 | :----: | :----: | :----: |
-| Python |  [ogx-client-python](https://github.com/meta-llama/llama-stack-client-python) | [![PyPI version](https://img.shields.io/pypi/v/ogx_client.svg)](https://pypi.org/project/ogx_client/) |
+| Python |  [ogx-client-python](https://github.com/ogx-ai/ogx-client-python) | [![PyPI version](https://img.shields.io/pypi/v/ogx-client.svg)](https://pypi.org/project/ogx-client/) |
 | TypeScript   | [ogx-client-typescript](https://github.com/ogx-ai/ogx-client-typescript) | [![NPM version](https://img.shields.io/npm/v/ogx-client.svg)](https://npmjs.org/package/ogx-client) |
 
 ## Community

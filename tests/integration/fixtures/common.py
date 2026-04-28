@@ -22,7 +22,7 @@ setup_logging()
 import pytest
 import requests
 import yaml
-from llama_stack_client import LlamaStackClient
+from ogx_client import LlamaStackClient
 from openai import OpenAI
 
 from ogx.core.datatypes import QualifiedModel, RerankerModel, VectorStoresConfig

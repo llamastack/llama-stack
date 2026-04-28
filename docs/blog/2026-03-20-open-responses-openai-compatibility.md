@@ -102,7 +102,7 @@ response = client.responses.create(
 OGX extends OpenAI compatibility with full programmatic prompt management. With OpenAI, prompts are created through their admin portal and referenced by ID in the Responses API. OGX provides the same referencing pattern, plus a complete CRUD API for creating and managing prompts programmatically:
 
 ```python
-from llama_stack_client import LlamaStackClient
+from ogx_client import LlamaStackClient
 
 ls_client = LlamaStackClient()
 
@@ -252,7 +252,7 @@ llm = ChatOpenAI(
 ### **Native OGX Client**
 
 ```python
-from llama_stack_client import LlamaStackClient
+from ogx_client import LlamaStackClient
 
 # Access the full OGX API surface
 client = LlamaStackClient(base_url="http://your-ogx")
