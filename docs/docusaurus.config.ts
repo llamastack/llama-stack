@@ -224,6 +224,10 @@ const config: Config = {
           title: 'Resources',
           items: [
             {
+              label: 'Brand',
+              to: '/brand',
+            },
+            {
               label: 'GitHub',
               href: 'https://github.com/ogx-ai/ogx',
             },
