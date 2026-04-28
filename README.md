@@ -5,14 +5,14 @@
   <a href="https://pypi.org/project/ogx/"><img src="https://img.shields.io/pypi/dm/ogx" alt="PyPI Downloads"></a>
   <a href="https://hub.docker.com/u/ogx"><img src="https://img.shields.io/docker/pulls/ogx/distribution-starter?logo=docker" alt="Docker Hub Pulls"></a>
   <a href="https://github.com/ogx-ai/ogx/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/ogx.svg" alt="License"></a>
-  <a href="https://join.slack.com/t/ogx-ai/shared_invite/zt-3uyw5bxj9-tSEwsNZncgkGEKbd4dXIpw"><img src="https://img.shields.io/slack/1257833999603335178?color=6A7EC2&logo=slack&logoColor=ffffff" alt="Slack"></a>
+  <a href="https://discord.gg/ZAFjsrcw"><img src="https://img.shields.io/discord/1257833999603335178?color=5865F2&logo=discord&logoColor=ffffff" alt="Discord"></a>
   <a href="https://github.com/ogx-ai/ogx/actions/workflows/unit-tests.yml?query=branch%3Amain"><img src="https://github.com/ogx-ai/ogx/actions/workflows/unit-tests.yml/badge.svg?branch=main" alt="Unit Tests"></a>
   <a href="https://github.com/ogx-ai/ogx/actions/workflows/integration-tests.yml?query=branch%3Amain"><img src="https://github.com/ogx-ai/ogx/actions/workflows/integration-tests.yml/badge.svg?branch=main" alt="Integration Tests"></a>
   <a href="https://ogx-ai.github.io/docs/api-openai/conformance"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmeta-llama%2Fogx%2Fmain%2Fdocs%2Fstatic%2Fopenai-coverage.json&query=%24.summary.conformance.score&suffix=%25&label=OpenResponses%20Conformance&color=brightgreen" alt="OpenResponses Conformance"></a>
   <a href="https://deepwiki.com/ogx/ogx"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
-[**Quick Start**](https://ogx-ai.github.io/docs/getting_started/quickstart) | [**Documentation**](https://ogx-ai.github.io/docs) | [**OpenAI API Compatibility**](https://ogx-ai.github.io/docs/api-openai) | [**Slack**](https://join.slack.com/t/ogx-ai/shared_invite/zt-3uyw5bxj9-tSEwsNZncgkGEKbd4dXIpw)
+[**Quick Start**](https://ogx-ai.github.io/docs/getting_started/quickstart) | [**Documentation**](https://ogx-ai.github.io/docs) | [**OpenAI API Compatibility**](https://ogx-ai.github.io/docs/api-openai) | [**Discord**](https://discord.gg/ZAFjsrcw)
 
 **Open-source agentic API server for building AI applications. OpenAI-compatible. Any model, any infrastructure.**
 
@@ -82,7 +82,7 @@ See the [Quick Start guide](https://ogx-ai.github.io/docs/getting_started/quicks
 
 ## Community
 
-We hold regular community calls every Thursday at 09:00 AM PST — see the [Community Event on Slack](https://join.slack.com/t/ogx-ai/shared_invite/zt-3uyw5bxj9-tSEwsNZncgkGEKbd4dXIpw) for details.
+We hold regular community calls every Thursday at 09:00 AM PST — see the [Community Event on Discord](https://discord.gg/ZAFjsrcw) for details.
 
 [![Star History Chart](https://api.star-history.com/svg?repos=ogx/ogx&type=Date)](https://www.star-history.com/#ogx/ogx&Date)
 

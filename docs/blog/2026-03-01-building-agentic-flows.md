@@ -332,4 +332,4 @@ To learn more:
 - [Conversations API documentation](/docs/api-openai/conformance#conversations)
 - [OpenAI API compatibility](/docs/api-openai)
 - [Vector Stores documentation](/docs/building_applications/rag)
-- [Join our Slack](https://join.slack.com/t/ogx-ai)
+- [Join our Discord](https://discord.gg/ZAFjsrcw)

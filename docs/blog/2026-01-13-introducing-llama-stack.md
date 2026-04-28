@@ -103,7 +103,7 @@ See the [OGX Office Hours Content Calendar](https://docs.google.com/document/d/1
 We'd love to have you join our growing community:
 
 - [Star us on GitHub](https://github.com/ogx-ai/ogx)
-- [Join our Slack](https://join.slack.com/t/ogx-ai)
+- [Join our Discord](https://discord.gg/ZAFjsrcw)
 - [Read the Documentation](/docs)
 - [Report Issues](https://github.com/ogx-ai/ogx/issues)
 

@@ -207,7 +207,7 @@ const config: Config = {
           items: [
             {
               label: 'Discord',
-              href: 'https://join.slack.com/t/ogx-ai',
+              href: 'https://discord.gg/ZAFjsrcw',
             },
             {
               label: 'Issues',
