@@ -12,7 +12,7 @@ We recently shipped built-in observability for OGX, powered by [OpenTelemetry](h
 
 This post explains the architecture behind it, walks through a hands-on tutorial, and shows what you can actually see once it's running.
 
-{/*truncate*/}
+<!--truncate-->
 
 ## Why Observability Matters for LLM Applications
 
