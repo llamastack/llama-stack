@@ -13,7 +13,7 @@ from typing import Any
 
 import httpx
 from openai import AsyncOpenAI, DefaultAsyncHttpxClient
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 from ogx.core.request_headers import NeedsRequestProviderData
 from ogx.log import get_logger
@@ -372,7 +372,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         provider_model_id = await self._get_provider_model_id(params.model)
         self._validate_model_allowed(provider_model_id)
 
-        messages = params.messages
+        # Some callers replace validated messages with JSON-shaped records after model construction.
+        messages = TypeAdapter(list[OpenAIMessageParam]).validate_python(params.messages)
 
         if self.download_images:
 
