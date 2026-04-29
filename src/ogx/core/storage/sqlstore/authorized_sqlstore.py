@@ -10,7 +10,12 @@ from typing import Any, Literal
 
 _VALID_JSON_PATH_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
-from ogx.core.access_control.access_control import AccessDeniedError, default_policy, is_action_allowed
+from ogx.core.access_control.access_control import (
+    ALLOWED_ATTRIBUTE_KEYS,
+    AccessDeniedError,
+    default_policy,
+    is_action_allowed,
+)
 from ogx.core.access_control.conditions import ProtectedResource
 from ogx.core.access_control.datatypes import AccessRule, Action, Scope
 from ogx.core.datatypes import User
@@ -37,7 +42,7 @@ SQL_OPTIMIZED_POLICY = [
         permit=Scope(actions=list(Action)),
         when=["user in owners " + name],
     )
-    for name in ["roles", "teams", "projects", "namespaces"]
+    for name in ALLOWED_ATTRIBUTE_KEYS
 ] + [
     AccessRule(
         permit=Scope(actions=list(Action)),
@@ -383,8 +388,8 @@ class AuthorizedSqlStore:
 
             if current_user.attributes:
                 for attr_key, user_values in current_user.attributes.items():
-                    if not _VALID_JSON_PATH_RE.match(attr_key):
-                        logger.warning("Skipping attribute with invalid key", attr_key=attr_key)
+                    if attr_key not in ALLOWED_ATTRIBUTE_KEYS:
+                        logger.warning("Skipping unrecognized attribute key", attr_key=attr_key)
                         continue
                     if user_values:
                         value_conditions = []
