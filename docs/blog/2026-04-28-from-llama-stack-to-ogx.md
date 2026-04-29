@@ -1,7 +1,7 @@
 ---
 slug: from-llama-stack-to-ogx
 title: "From Llama Stack to OGX: A New Name, A Sharper Mission"
-authors: [leseb, ogx-team]
+authors: [ogx-team]
 tags: [announcement, ogx, rename, agentic, multi-sdk]
 date: 2026-04-28
 ---
