@@ -10,9 +10,11 @@ from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 import pytest
 
 from ogx.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
+from ogx.providers.utils.inference.openai_compat import prepare_openai_completion_params
 from ogx_api import (
     Model,
     ModelType,
+    OpenAIAssistantMessageParam,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIUserMessageParam,
 )
@@ -196,7 +198,7 @@ class TestOpenAIMixinImagePreprocessing:
             assert content[1]["image_url"]["url"] == "data:image/jpeg;base64,ZmFrZV9pbWFnZV9kYXRh"
 
     async def test_openai_chat_completion_with_dict_messages_does_not_require_content_attr(self, mixin):
-        """Test that dict-shaped messages from reasoning providers are handled safely."""
+        """Test that dict-shaped messages are revalidated before preprocessing."""
         mixin.download_images = True
 
         mock_client = MagicMock()
@@ -207,27 +209,45 @@ class TestOpenAIMixinImagePreprocessing:
             with patch("ogx.providers.utils.inference.openai_mixin.localize_image_content") as mock_localize:
                 mock_localize.return_value = (b"fake_image_data", "jpeg")
 
-                params = OpenAIChatCompletionRequestWithExtraBody(
-                    model="test-model",
-                    messages=[OpenAIUserMessageParam(role="user", content="hello")],
-                )
-                params.messages = cast(
-                    Any,
-                    [
-                        {"role": "assistant", "content": "Previous answer", "reasoning": "Step 1"},
-                        {
-                            "role": "user",
-                            "content": [
-                                {"type": "text", "text": "What's in this image?"},
-                                {"type": "image_url", "image_url": {"url": "http://example.com/image.jpg"}},
-                            ],
-                        },
-                    ],
-                )
+                captured_messages = None
 
-                await mixin.openai_chat_completion(params)
+                async def _capture_prepare_params(**kwargs):
+                    nonlocal captured_messages
+                    captured_messages = kwargs["messages"]
+                    return await prepare_openai_completion_params(**kwargs)
+
+                with patch(
+                    "ogx.providers.utils.inference.openai_mixin.prepare_openai_completion_params",
+                    new=AsyncMock(side_effect=_capture_prepare_params),
+                ):
+                    params = OpenAIChatCompletionRequestWithExtraBody(
+                        model="test-model",
+                        messages=[OpenAIUserMessageParam(role="user", content="hello")],
+                    )
+                    params.messages = cast(
+                        Any,
+                        [
+                            {"role": "assistant", "content": "Previous answer", "reasoning": "Step 1"},
+                            {
+                                "role": "user",
+                                "content": [
+                                    {"type": "text", "text": "What's in this image?"},
+                                    {"type": "image_url", "image_url": {"url": "http://example.com/image.jpg"}},
+                                ],
+                            },
+                        ],
+                    )
+
+                    await mixin.openai_chat_completion(params)
 
             mock_localize.assert_called_once_with("http://example.com/image.jpg")
+
+            assert captured_messages is not None
+            assert isinstance(captured_messages[0], OpenAIAssistantMessageParam)
+            assert captured_messages[0].model_dump()["reasoning"] == "Step 1"
+            assert captured_messages[0].content == "Previous answer"
+            assert isinstance(captured_messages[1], OpenAIUserMessageParam)
+            assert captured_messages[1].content[1].image_url.url == "data:image/jpeg;base64,ZmFrZV9pbWFnZV9kYXRh"
 
             mock_client.chat.completions.create.assert_called_once()
             call_args = mock_client.chat.completions.create.call_args

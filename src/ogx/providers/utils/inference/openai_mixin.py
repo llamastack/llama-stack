@@ -13,7 +13,7 @@ from typing import Any
 
 import httpx
 from openai import AsyncOpenAI, DefaultAsyncHttpxClient
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 from ogx.core.request_headers import NeedsRequestProviderData
 from ogx.log import get_logger
@@ -372,44 +372,22 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         provider_model_id = await self._get_provider_model_id(params.model)
         self._validate_model_allowed(provider_model_id)
 
-        messages: list[Any] = params.messages
+        # Some callers replace validated messages with JSON-shaped records after model construction.
+        messages = TypeAdapter(list[OpenAIMessageParam]).validate_python(params.messages)
 
         if self.download_images:
 
-            def _get_field_value(obj: Any, field: str) -> Any:
-                if isinstance(obj, dict):
-                    return obj.get(field)
-                return getattr(obj, field, None)
-
-            def _set_field_value(obj: Any, field: str, value: Any) -> None:
-                if isinstance(obj, dict):
-                    obj[field] = value
-                else:
-                    setattr(obj, field, value)
-
-            async def _localize_image_url(
-                m: OpenAIMessageParam | dict[str, Any],
-            ) -> OpenAIMessageParam | dict[str, Any]:
-                content = _get_field_value(m, "content")
-                if isinstance(content, list):
-                    for c in content:
-                        if _get_field_value(c, "type") != "image_url":
-                            continue
-
-                        image_url = _get_field_value(c, "image_url")
-                        image_url_value = _get_field_value(image_url, "url")
-                        if image_url and image_url_value and "http" in image_url_value:
-                            localize_result = await localize_image_content(image_url_value)
+            async def _localize_image_url(m: OpenAIMessageParam) -> OpenAIMessageParam:
+                if isinstance(m.content, list):
+                    for c in m.content:
+                        if c.type == "image_url" and c.image_url and c.image_url.url and "http" in c.image_url.url:
+                            localize_result = await localize_image_content(c.image_url.url)
                             if localize_result is None:
                                 raise ValueError(
-                                    f"Failed to localize image content from {image_url_value[:42]}{'...' if len(image_url_value) > 42 else ''}"
+                                    f"Failed to localize image content from {c.image_url.url[:42]}{'...' if len(c.image_url.url) > 42 else ''}"
                                 )
                             content, format = localize_result
-                            _set_field_value(
-                                image_url,
-                                "url",
-                                f"data:image/{format};base64,{base64.b64encode(content).decode('utf-8')}",
-                            )
+                            c.image_url.url = f"data:image/{format};base64,{base64.b64encode(content).decode('utf-8')}"
                 # else it's a string and we don't need to modify it
                 return m
 
