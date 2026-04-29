@@ -153,7 +153,7 @@ const config: Config = {
           position: 'right',
           dropdownActiveClassDisabled: true,
           dropdownItemsAfter: [
-            { to: '/versions.html', label: 'All versions' },
+            { to: '/versions', label: 'All versions' },
           ],
         },
       ],
