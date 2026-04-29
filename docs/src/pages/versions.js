@@ -41,8 +41,7 @@ function VersionsPage() {
     fetchData();
   }, []);
 
-  const latest = releases[0];
-  const previous = releases.slice(1);
+  const allReleases = releases;
 
   return (
     <Layout title="All Versions" description="All versions of OGX documentation">
@@ -60,44 +59,42 @@ function VersionsPage() {
           </p>
         )}
 
-        {latest && (
+        <div
+          style={{
+            background: 'var(--ifm-color-primary-lightest)',
+            border: '1px solid var(--ifm-color-primary-light)',
+            borderRadius: 8,
+            padding: '16px 20px',
+            marginBottom: 32,
+          }}
+        >
           <div
             style={{
-              background: 'var(--ifm-color-primary-lightest)',
-              border: '1px solid var(--ifm-color-primary-light)',
-              borderRadius: 8,
-              padding: '16px 20px',
-              marginBottom: 32,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--ifm-color-primary)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              marginBottom: 4,
             }}
           >
-            <div
-              style={{
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: 'var(--ifm-color-primary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: 4,
-              }}
-            >
-              Latest
-            </div>
-            <Link to="/" style={{fontSize: '1.1rem', fontWeight: 600}}>
-              Current documentation
-            </Link>
-            <span
-              style={{
-                marginLeft: 12,
-                fontSize: '0.85rem',
-                color: 'var(--ifm-color-secondary-darkest)',
-              }}
-            >
-              {latest.tag_name}
-            </span>
+            Next
           </div>
-        )}
+          <Link to="/" style={{fontSize: '1.1rem', fontWeight: 600}}>
+            Current documentation
+          </Link>
+          <span
+            style={{
+              marginLeft: 12,
+              fontSize: '0.85rem',
+              color: 'var(--ifm-color-secondary-darkest)',
+            }}
+          >
+            unreleased
+          </span>
+        </div>
 
-        {previous.length > 0 && (
+        {allReleases.length > 0 && (
           <>
             <h2
               style={{
@@ -106,10 +103,10 @@ function VersionsPage() {
                 marginBottom: 12,
               }}
             >
-              Previous versions
+              Releases
             </h2>
             <ul style={{listStyle: 'none', padding: 0, margin: 0}}>
-              {previous.map((release) => {
+              {allReleases.map((release) => {
                 const docsUrl = archivedVersions[release.tag_name];
                 return (
                   <li
