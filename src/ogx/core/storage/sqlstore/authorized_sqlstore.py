@@ -8,6 +8,8 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import Any, Literal
 
+_VALID_JSON_PATH_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
 from ogx.core.access_control.access_control import AccessDeniedError, default_policy, is_action_allowed
 from ogx.core.access_control.conditions import ProtectedResource
 from ogx.core.access_control.datatypes import AccessRule, Action, Scope
@@ -313,6 +315,11 @@ class AuthorizedSqlStore:
         else:
             return self._build_conservative_where_clause()
 
+    @staticmethod
+    def _validate_json_path(path: str) -> None:
+        if not _VALID_JSON_PATH_RE.match(path):
+            raise ValueError(f"Invalid attribute key for JSON path: {path!r}")
+
     def _json_extract(self, column: str, path: str) -> str:
         """Extract JSON value (keeping JSON type).
 
@@ -323,6 +330,7 @@ class AuthorizedSqlStore:
         Returns:
             SQL expression to extract JSON value
         """
+        self._validate_json_path(path)
         if self.database_type == StorageBackendType.SQL_POSTGRES.value:
             return f"{column}->'{path}'"
         elif self.database_type == StorageBackendType.SQL_SQLITE.value:
@@ -340,6 +348,7 @@ class AuthorizedSqlStore:
         Returns:
             SQL expression to extract JSON value as text
         """
+        self._validate_json_path(path)
         if self.database_type == StorageBackendType.SQL_POSTGRES.value:
             return f"{column}->>'{path}'"
         elif self.database_type == StorageBackendType.SQL_SQLITE.value:
@@ -374,11 +383,13 @@ class AuthorizedSqlStore:
 
             if current_user.attributes:
                 for attr_key, user_values in current_user.attributes.items():
+                    if not _VALID_JSON_PATH_RE.match(attr_key):
+                        logger.warning("Skipping attribute with invalid key", attr_key=attr_key)
+                        continue
                     if user_values:
                         value_conditions = []
-                        safe_key = re.sub(r"[^a-zA-Z0-9_]", "_", attr_key)
                         for j, value in enumerate(user_values):
-                            param_name = f"attr_{safe_key}_{j}"
+                            param_name = f"attr_{attr_key}_{j}"
                             json_text = self._json_extract_text("access_attributes", attr_key)
                             value_conditions.append(f"({json_text} LIKE :{param_name})")
                             params[param_name] = f'%"{value}"%'
