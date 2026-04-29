@@ -68,7 +68,7 @@ echo "=== Installing openresponses dependencies ==="
 
 # ── ogx provider dependencies ─────────────────────────────────────────
 echo "=== Installing ci-tests distro dependencies ==="
-ogx stack list-deps ci-tests --format uv | sh
+ogx list-deps ci-tests --format uv | sh
 
 # ── Start server ───────────────────────────────────────────────────────────────
 echo "=== Starting ogx server (record-if-missing) ==="
@@ -77,7 +77,7 @@ mkdir -p "$(dirname "$LOG_FILE")"
 OGX_TEST_INFERENCE_MODE=record-if-missing \
 OGX_TEST_RECORDING_DIR="$RECORDING_DIR" \
 OGX_LOG_WIDTH=200 \
-nohup ogx stack run ci-tests --port "$PORT" \
+nohup ogx run ci-tests --port "$PORT" \
     > "$LOG_FILE" 2>&1 &
 SERVER_PID=$!
 echo "Server PID: $SERVER_PID"

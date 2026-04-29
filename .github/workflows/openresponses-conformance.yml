@@ -81,13 +81,13 @@ jobs:
           python-version: '3.12'
 
       - name: Install ci-tests distro provider dependencies
-        run: uv run ogx stack list-deps ci-tests --format uv | sh
+        run: uv run ogx list-deps ci-tests --format uv | sh
 
       - name: Start OGX server
         run: |
           mkdir -p /tmp/ogx-conformance
           export OGX_LOG_WIDTH=200
-          nohup uv run ogx stack run ci-tests --port "$OGX_PORT" \
+          nohup uv run ogx run ci-tests --port "$OGX_PORT" \
             > /tmp/ogx-conformance/server.log 2>&1 &
           echo "Server PID: $!"
 

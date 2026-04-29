@@ -118,7 +118,7 @@ runs:
         echo "Building OGX"
 
         OGX_DIR=. \
-          uv run --no-sync ogx stack list-deps ci-tests | xargs -L1 uv pip install
+          uv run --no-sync ogx list-deps ci-tests | xargs -L1 uv pip install
 
     - name: Configure git for commits
       shell: bash

@@ -44,14 +44,14 @@ jobs:
 
       - name: Print distro dependencies
         run: |
-          uv run --no-sync ogx stack list-deps tests/external/config.yaml
+          uv run --no-sync ogx list-deps tests/external/config.yaml
 
       - name: Build distro from config file
         run: |
           uv venv ci-test
           source ci-test/bin/activate
           uv pip install -e .
-          OGX_LOGGING=all=CRITICAL ogx stack list-deps tests/external/config.yaml | xargs -L1 uv pip install
+          OGX_LOGGING=all=CRITICAL ogx list-deps tests/external/config.yaml | xargs -L1 uv pip install
 
       - name: Start OGX server in background
         if: matrix.image-type == 'venv'
@@ -62,7 +62,7 @@ jobs:
           # Use the virtual environment created by the build step (name comes from build config)
           source ci-test/bin/activate
           uv pip list
-          nohup ogx stack run tests/external/config.yaml > server.log 2>&1 &
+          nohup ogx run tests/external/config.yaml > server.log 2>&1 &
 
       - name: Wait for OGX server to be ready
         run: |

@@ -78,7 +78,7 @@ jobs:
       - name: Install distribution into venv
         if: matrix.image-type == 'venv'
         run: |
-          uv run ogx stack list-deps ${{ matrix.distro }} | xargs -L1 uv pip install
+          uv run ogx list-deps ${{ matrix.distro }} | xargs -L1 uv pip install
 
       - name: Build container image
         if: matrix.image-type == 'container'
@@ -140,7 +140,7 @@ jobs:
       - name: Build a single provider
         run: |
           uv pip install -e .
-          uv run --no-sync ogx stack list-deps --providers inference=remote::ollama | xargs -L1 uv pip install
+          uv run --no-sync ogx list-deps --providers inference=remote::ollama | xargs -L1 uv pip install
   build-custom-container-distribution:
     runs-on: ubuntu-latest
     steps:

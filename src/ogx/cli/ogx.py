@@ -5,13 +5,20 @@
 # the root directory of this source tree.
 
 import argparse
+from importlib.metadata import version
 
 from ogx.log import setup_logging
 
 # Initialize logging early before any loggers get created
 setup_logging()
 
-from .stack import StackParser  # type: ignore[attr-defined]
+from .stack.lets_go import StackLetsGo
+from .stack.list_apis import StackListApis
+from .stack.list_deps import StackListDeps
+from .stack.list_providers import StackListProviders
+from .stack.list_stacks import StackListBuilds
+from .stack.remove import StackRemove
+from .stack.run import StackRun
 from .stack.utils import print_subcommand_description
 
 
@@ -26,13 +33,25 @@ class OGXCLIParser:
             formatter_class=argparse.RawTextHelpFormatter,
         )
 
+        self.parser.add_argument(
+            "--version",
+            action="version",
+            version=f"{version('ogx')}",
+        )
+
         # Default command is to print help
         self.parser.set_defaults(func=lambda args: self.parser.print_help())
 
         subparsers = self.parser.add_subparsers(title="subcommands")
 
         # Add sub-commands
-        StackParser.create(subparsers)
+        StackListDeps.create(subparsers)
+        StackListApis.create(subparsers)
+        StackListProviders.create(subparsers)
+        StackRun.create(subparsers)
+        StackLetsGo.create(subparsers)
+        StackRemove.create(subparsers)
+        StackListBuilds.create(subparsers)
 
         print_subcommand_description(self.parser, subparsers)
 

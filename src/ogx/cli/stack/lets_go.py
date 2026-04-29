@@ -139,7 +139,7 @@ class StackLetsGo(Subcommand):
         # Reuse StackRun's uvicorn startup
         try:
             stack_run = StackRun(argparse.ArgumentParser().add_subparsers())
-            # Build args similar to stack run
+            # Build args similar to ogx run
             stack_args = argparse.Namespace()
             stack_args.port = args.port
             stack_args.enable_ui = args.enable_ui

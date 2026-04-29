@@ -16,15 +16,15 @@ Llama Stack can act as a backend for [Claude Code](https://claude.com/claude-cod
 ```bash
 # With any provider (examples)
 export OPENAI_API_KEY="your-key-here"
-llama stack run starter
+ogx run starter
 
 # Or with vLLM
 export VLLM_URL="http://localhost:8000/v1"
-llama stack run starter
+ogx run starter
 
 # Or with Ollama
 export OLLAMA_URL="http://localhost:11434/v1"
-llama stack run starter
+ogx run starter
 ```
 
 ### 2. Configure Claude Code
@@ -134,7 +134,7 @@ export ANTHROPIC_BASE_URL="http://localhost:8321"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL="openai/gpt-4o-mini"
 export ANTHROPIC_DEFAULT_SONNET_MODEL="openai/gpt-4o"
 
-llama stack run starter
+ogx run starter
 claude "Implement a binary search tree"
 ```
 
@@ -149,7 +149,7 @@ export VLLM_URL="http://localhost:8000/v1"
 export ANTHROPIC_BASE_URL="http://localhost:8321"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL="vllm/Qwen/Qwen3-8B"
 
-llama stack run starter
+ogx run starter
 claude "Write a Fibonacci function"
 ```
 
@@ -167,7 +167,7 @@ export OLLAMA_URL="http://localhost:11434/v1"
 export ANTHROPIC_BASE_URL="http://localhost:8321"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL="ollama/llama3.3:70b"
 
-llama stack run starter
+ogx run starter
 claude "Explain quicksort"
 ```
 
@@ -265,7 +265,7 @@ If you want more control over how Claude model names map to your providers, you 
 
 ```bash
 # Start llama stack
-llama stack run starter
+ogx run starter
 
 # Register models via API (after startup)
 curl http://localhost:8321/v1/models \
