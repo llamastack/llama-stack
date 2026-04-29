@@ -457,6 +457,50 @@ async def test_update_race_does_not_modify_newly_inserted_unauthorized_rows(mock
 
 
 @patch("ogx.core.storage.sqlstore.authorized_sqlstore.get_authenticated_user")
+async def test_invalid_attribute_keys_are_rejected(mock_get_authenticated_user):
+    """Test that attribute keys containing non-alphanumeric characters are skipped during SQL filtering."""
+    with TemporaryDirectory() as tmp_dir:
+        base_sqlstore = SqlAlchemySqlStoreImpl(SqliteSqlStoreConfig(db_path=tmp_dir + "/test_invalid_keys.db"))
+        sqlstore = AuthorizedSqlStore(base_sqlstore, default_policy())
+
+        await sqlstore.create_table(
+            table="docs",
+            schema={"id": ColumnType.STRING, "title": ColumnType.STRING},
+        )
+
+        victim = User("victim", {"roles": ["admin"]})
+        mock_get_authenticated_user.return_value = victim
+        await sqlstore.insert("docs", {"id": "doc1", "title": "Secret Document"})
+
+        # Simulate an attacker whose attributes contain a malicious key
+        attacker = User("attacker", {"') OR 1=1--": ["anything"]})
+        mock_get_authenticated_user.return_value = attacker
+
+        result = await sqlstore.fetch_all("docs")
+        assert len(result.data) == 0, "Attacker with invalid attribute key must not see other users' documents"
+
+
+@patch("ogx.core.storage.sqlstore.authorized_sqlstore.get_authenticated_user")
+async def test_json_extract_text_rejects_malicious_path(mock_get_authenticated_user):
+    """Test that _json_extract_text raises ValueError for paths with special characters."""
+    with TemporaryDirectory() as tmp_dir:
+        base_sqlstore = SqlAlchemySqlStoreImpl(SqliteSqlStoreConfig(db_path=tmp_dir + "/test_json_path.db"))
+        sqlstore = AuthorizedSqlStore(base_sqlstore, default_policy())
+
+        with pytest.raises(ValueError, match="Invalid attribute key"):
+            sqlstore._json_extract_text("access_attributes", "') OR 1=1--")
+
+        with pytest.raises(ValueError, match="Invalid attribute key"):
+            sqlstore._json_extract("access_attributes", "roles'; DROP TABLE docs;--")
+
+        # Valid keys should work fine
+        sqlstore._json_extract_text("access_attributes", "roles")
+        sqlstore._json_extract_text("access_attributes", "teams")
+        sqlstore._json_extract("access_attributes", "projects")
+        sqlstore._json_extract("access_attributes", "namespaces")
+
+
+@patch("ogx.core.storage.sqlstore.authorized_sqlstore.get_authenticated_user")
 async def test_delete_race_does_not_remove_newly_inserted_unauthorized_rows(mock_get_authenticated_user):
     """Test that DELETE ACL filtering also protects rows inserted after pre-check."""
     with TemporaryDirectory() as tmp_dir:
