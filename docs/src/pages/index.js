@@ -445,7 +445,7 @@ function Hero() {
           <div className={styles.heroText}>
             <h1 className={styles.title}>
               Not a gateway.<br />
-              The full stack.
+              An agentic server.
             </h1>
             <p className={styles.subtitle}>
               Inference, vector stores, file storage, safety, tool calling,
