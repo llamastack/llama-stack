@@ -10,7 +10,7 @@ We're excited to share that OGX has achieved **100% compliance with the Open Res
 
 With comprehensive support for Files, Vector Stores, Search, Conversations, Prompts, Chat Completions, the full Responses API, plus powerful extensions like MCP tool integration, Tool Calling, and Connectors, OGX offers something unique in the AI infrastructure landscape: a SaaS-like experience that runs entirely on your terms.
 
-{/*truncate*/}
+<!--truncate-->
 
 ## Recognition by the Open Responses Community
 
