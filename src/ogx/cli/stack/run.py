@@ -18,7 +18,7 @@ from termcolor import cprint
 from ogx.cli.subcommand import Subcommand
 from ogx.core.datatypes import StackConfig
 from ogx.core.stack import cast_distro_name_to_string, replace_env_vars, run_config_from_dynamic_config_spec
-from ogx.core.utils.config_dirs import DISTRIBS_BASE_DIR
+from ogx.core.utils.config_dirs import DISTRIBS_BASE_DIR, UI_LOGS_DIR
 from ogx.core.utils.config_resolution import resolve_config_or_distro
 from ogx.log import get_logger
 
@@ -34,7 +34,7 @@ class StackRun(Subcommand):
         super().__init__()
         self.parser = subparsers.add_parser(
             "run",
-            prog="ogx run",
+            prog="ogx stack run",
             description="""Start the server for a OGX Distribution. You should have already built (or downloaded) and configured the distribution.""",
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         )
@@ -207,7 +207,7 @@ class StackRun(Subcommand):
             return
 
         ui_dir = REPO_ROOT / "ogx_ui"
-        logs_dir = Path("~/.llama/ui/logs").expanduser()
+        logs_dir = UI_LOGS_DIR
         try:
             # Create logs directory if it doesn't exist
             logs_dir.mkdir(parents=True, exist_ok=True)
