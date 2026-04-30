@@ -82,8 +82,7 @@ class PyPDFFileProcessor:
                 status_code=422,
                 detail=(
                     f"File type '{mime_type or 'unknown'}' is not supported by the pypdf file processor. "
-                    "Supported types: PDF and text files. For DOCX, PPTX, XLSX, and HTML support, "
-                    "use the 'inline::docling' or 'remote::docling-serve' file processor."
+                    "Supported types: PDF and text files (txt, csv, md, etc.)."
                 ),
             )
 
