@@ -23,15 +23,15 @@ from ogx.providers.inline.responses.builtin.responses.utils import (
 from ogx_api import ToolDef
 from ogx_api.inference.models import (
     OpenAIAssistantMessageParam,
+    OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionChunkWithReasoning,
-    OpenAIChatCompletion,
     OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChatCompletionUsage,
-    OpenAIChoiceDelta,
     OpenAIChoice,
+    OpenAIChoiceDelta,
     OpenAIChunkChoice,
 )
 from ogx_api.openai_responses import (
@@ -584,7 +584,6 @@ class TestSummarizeReasoning:
         assert "Preserve the key logical steps" in user_msg
 
 
-@pytest.mark.asyncio
 async def test_guardrailed_reasoning_streams_before_completion(mock_inference_api, mock_context, mock_safety_api):
     """Guardrail batching should not buffer reasoning-only deltas until stream completion."""
     mock_context.model = "test-model"
