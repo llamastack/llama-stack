@@ -168,7 +168,7 @@ INFERENCE_MODEL=meta-llama/Llama-3.1-8B-Instruct
 ogx list-deps nvidia | xargs -L1 uv pip install
 NVIDIA_API_KEY=$NVIDIA_API_KEY \
 INFERENCE_MODEL=$INFERENCE_MODEL \
-ogx run ./config.yaml \
+ogx stack run ./config.yaml \
   --port 8321
 ```
 

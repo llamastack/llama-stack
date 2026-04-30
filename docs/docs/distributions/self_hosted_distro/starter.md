@@ -157,7 +157,7 @@ See [Starting a OGX Server](../starting_ogx_server) for all the ways to run (uv,
 Quick start:
 
 ```bash
-uvx --from 'ogx[starter]' ogx run starter
+uvx --from 'ogx[starter]' ogx stack run starter
 ```
 
 Or run the pre-built container image from [Docker Hub](https://hub.docker.com/r/ogx/distribution-starter):
@@ -175,7 +175,7 @@ docker run -it \
 By default, the starter distribution uses SQLite. For production, use PostgreSQL:
 
 ```bash
-uvx --from 'ogx[starter]' ogx run starter::run-with-postgres-store.yaml
+uvx --from 'ogx[starter]' ogx stack run starter::run-with-postgres-store.yaml
 ```
 
 A pre-built container image with PostgreSQL storage is also available as [`ogx/distribution-postgres-demo`](https://hub.docker.com/r/ogx/distribution-postgres-demo).

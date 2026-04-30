@@ -14,6 +14,7 @@ requests are forwarded directly without translation.
 
 from __future__ import annotations
 
+import json
 import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
@@ -21,6 +22,7 @@ from datetime import UTC, datetime
 from typing import Any, TypedDict
 
 import httpx
+from fastapi.responses import JSONResponse
 
 from ogx.core.access_control.access_control import is_action_allowed
 from ogx.core.access_control.conditions import User as AccessControlUser
@@ -40,18 +42,25 @@ from ogx_api.interactions.models import (
     ContentDeltaEvent,
     ContentStartEvent,
     ContentStopEvent,
+    GoogleContentItem,
     GoogleCreateInteractionRequest,
+    GoogleFunctionCallContent,
+    GoogleFunctionCallOutput,
+    GoogleFunctionResponseContent,
     GoogleGenerationConfig,
     GoogleInputTurn,
     GoogleInteractionResponse,
-    GoogleOutput,
+    GoogleOutputItem,
     GoogleStreamEvent,
+    GoogleTextContent,
     GoogleTextOutput,
-    GoogleThoughtOutput,
+    GoogleTool,
     GoogleUsage,
     InteractionCompleteEvent,
     InteractionStartEvent,
     _ContentRef,
+    _FunctionCallContentRef,
+    _FunctionCallDelta,
     _InteractionCompleteRef,
     _InteractionRef,
     _TextDelta,
@@ -128,7 +137,7 @@ class BuiltinInteractionsImpl(Interactions):
     async def create_interaction(
         self,
         request: GoogleCreateInteractionRequest,
-    ) -> GoogleInteractionResponse | AsyncIterator[GoogleStreamEvent] | AsyncIterator[str]:
+    ) -> GoogleInteractionResponse | AsyncIterator[GoogleStreamEvent] | AsyncIterator[str] | JSONResponse:
         passthrough = await self._get_passthrough_info(request.model)
         if passthrough:
             return await self._passthrough_request(passthrough, request)
@@ -238,14 +247,20 @@ class BuiltinInteractionsImpl(Interactions):
         self,
         passthrough: _PassthroughInfo,
         request: GoogleCreateInteractionRequest,
-    ) -> GoogleInteractionResponse | _RawSSEStream:
+    ) -> GoogleInteractionResponse | _RawSSEStream | JSONResponse:
         """Forward the request directly to the provider's /interactions endpoint."""
         base_url = passthrough["base_url"]
         provider_model = passthrough["provider_resource_id"]
 
         url = f"{base_url}/interactions"
-        body = request.model_dump(exclude_none=True)
+        body = request.model_dump(exclude_none=True, by_alias=True)
         body["model"] = provider_model
+
+        # Transform tools from function_declarations format to Interactions API format.
+        # generateContent uses: [{"function_declarations": [{name, ...}]}]
+        # Interactions API uses: [{"type": "function", "function": {name, ...}}]
+        if "tools" in body and body["tools"]:
+            body["tools"] = self._transform_tools_for_interactions_api(body["tools"])
 
         client_kwargs = self._build_passthrough_client_kwargs(passthrough)
 
@@ -254,8 +269,37 @@ class BuiltinInteractionsImpl(Interactions):
 
         async with httpx.AsyncClient(**client_kwargs) as client:
             resp = await client.post(url, json=body)
-            resp.raise_for_status()
-            return GoogleInteractionResponse(**resp.json())
+            if resp.status_code >= 400:
+                logger.error(
+                    "Passthrough request failed",
+                    status_code=resp.status_code,
+                    response_body=resp.text[:500],
+                    url=url,
+                )
+                return JSONResponse(content=resp.json(), status_code=resp.status_code)
+            # Forward the raw JSON to preserve all provider-specific fields
+            return JSONResponse(content=resp.json(), status_code=resp.status_code)
+
+    @staticmethod
+    def _transform_tools_for_interactions_api(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Transform tools from function_declarations format to Interactions API format.
+
+        The generateContent API uses: [{"function_declarations": [{name, ...}]}]
+        The Interactions API uses: [{"type": "function", "name": ..., "description": ..., ...}]
+        Each function_declaration becomes a separate flat tool entry.
+        """
+        result: list[dict[str, Any]] = []
+        for tool in tools:
+            declarations = tool.get("function_declarations")
+            if declarations:
+                for decl in declarations:
+                    entry = {"type": "function"}
+                    entry.update(decl)
+                    result.append(entry)
+            else:
+                # Already in Interactions API format or unknown — pass through
+                result.append(tool)
+        return result
 
     def _passthrough_stream(
         self,
@@ -299,6 +343,8 @@ class BuiltinInteractionsImpl(Interactions):
         if gen_config.top_k is not None:
             extra_body["top_k"] = gen_config.top_k
 
+        tools = self._convert_tools_to_openai(request.tools) if request.tools else None
+
         params = OpenAIChatCompletionRequestWithExtraBody(
             model=request.model,
             messages=messages,  # type: ignore[arg-type]
@@ -306,9 +352,26 @@ class BuiltinInteractionsImpl(Interactions):
             temperature=gen_config.temperature,
             top_p=gen_config.top_p,
             stream=request.stream or False,
+            tools=tools,  # type: ignore[arg-type]
             **(extra_body or {}),
         )
         return params
+
+    def _convert_tools_to_openai(self, tools: list[GoogleTool]) -> list[dict[str, Any]]:
+        openai_tools: list[dict[str, Any]] = []
+        for tool in tools:
+            for decl in tool.function_declarations:
+                openai_tool: dict[str, Any] = {
+                    "type": "function",
+                    "function": {
+                        "name": decl.name,
+                        "description": decl.description or "",
+                    },
+                }
+                if decl.parameters:
+                    openai_tool["function"]["parameters"] = decl.parameters
+                openai_tools.append(openai_tool)
+        return openai_tools
 
     def _convert_input_to_openai(
         self,
@@ -324,17 +387,94 @@ class BuiltinInteractionsImpl(Interactions):
             openai_messages.append({"role": "user", "content": input_data})
         else:
             for turn in input_data:
-                role = "assistant" if turn.role == "model" else turn.role
-                # Extract text from content items
-                text = "\n".join(item.text for item in turn.content)
-                openai_messages.append({"role": role, "content": text})
+                openai_messages.extend(self._convert_turn_to_openai(turn))
 
         return openai_messages
+
+    def _convert_turn_to_openai(self, turn: GoogleInputTurn) -> list[dict[str, Any]]:
+        role = "assistant" if turn.role == "model" else turn.role
+
+        # Handle string content (SDK may send content as a plain string)
+        if isinstance(turn.content, str):
+            return [{"role": role, "content": turn.content}]
+
+        # Check for function_call or function_response content
+        has_function_calls = any(isinstance(item, GoogleFunctionCallContent) for item in turn.content)
+        has_function_responses = any(isinstance(item, GoogleFunctionResponseContent) for item in turn.content)
+
+        if has_function_calls and role == "assistant":
+            return [self._convert_model_turn_with_function_calls(turn.content)]
+
+        if has_function_responses:
+            return self._convert_turn_with_function_responses(turn.content)
+
+        # Text-only turn
+        text_parts = [item.text for item in turn.content if isinstance(item, GoogleTextContent)]
+        text = "\n".join(text_parts)
+        return [{"role": role, "content": text}]
+
+    def _convert_model_turn_with_function_calls(
+        self,
+        content: list[GoogleContentItem],
+    ) -> dict[str, Any]:
+        msg: dict[str, Any] = {"role": "assistant"}
+        text_parts: list[str] = []
+        tool_calls: list[dict[str, Any]] = []
+
+        for item in content:
+            if isinstance(item, GoogleTextContent):
+                text_parts.append(item.text)
+            elif isinstance(item, GoogleFunctionCallContent):
+                tool_calls.append(
+                    {
+                        "id": item.id or f"call_{uuid.uuid4().hex[:24]}",
+                        "type": "function",
+                        "function": {
+                            "name": item.name,
+                            "arguments": json.dumps(item.args),
+                        },
+                    }
+                )
+
+        if text_parts:
+            msg["content"] = "\n".join(text_parts)
+        if tool_calls:
+            msg["tool_calls"] = tool_calls
+
+        return msg
+
+    def _convert_turn_with_function_responses(
+        self,
+        content: list[GoogleContentItem],
+    ) -> list[dict[str, Any]]:
+        messages: list[dict[str, Any]] = []
+        text_parts: list[str] = []
+
+        for item in content:
+            if isinstance(item, GoogleTextContent):
+                text_parts.append(item.text)
+            elif isinstance(item, GoogleFunctionResponseContent):
+                # Flush any accumulated text as a user message
+                if text_parts:
+                    messages.append({"role": "user", "content": "\n".join(text_parts)})
+                    text_parts = []
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": item.call_id or item.id or "",
+                        "content": json.dumps(item.response),
+                    }
+                )
+
+        if text_parts:
+            messages.append({"role": "user", "content": "\n".join(text_parts)})
+
+        return messages
 
     # -- Response translation --
 
     def _openai_to_google(self, response: OpenAIChatCompletion, request_model: str) -> GoogleInteractionResponse:
-        outputs: list[GoogleTextOutput | GoogleThoughtOutput | GoogleOutput] = []
+        outputs: list[GoogleOutputItem] = []
 
         if response.choices:
             choice = response.choices[0]
@@ -342,6 +482,22 @@ class BuiltinInteractionsImpl(Interactions):
 
             if message and message.content:
                 outputs.append(GoogleTextOutput(text=message.content))
+
+            if message and message.tool_calls:
+                for tc in message.tool_calls:
+                    if not hasattr(tc, "function") or tc.function is None:
+                        continue
+                    try:
+                        args = json.loads(tc.function.arguments) if tc.function.arguments else {}
+                    except json.JSONDecodeError:
+                        args = {}
+                    outputs.append(
+                        GoogleFunctionCallOutput(
+                            id=tc.id or f"call_{uuid.uuid4().hex[:24]}",
+                            name=tc.function.name or "",
+                            args=args,
+                        )
+                    )
 
         usage = GoogleUsage()
         if response.usage:
@@ -382,7 +538,10 @@ class BuiltinInteractionsImpl(Interactions):
             ),
         )
 
-        content_started = False
+        content_block_index = 0
+        text_block_started = False
+        tool_call_blocks: dict[int, bool] = {}  # tc_index -> started
+        tool_call_index_to_block_index: dict[int, int] = {}
         output_tokens = 0
         input_tokens = 0
 
@@ -398,22 +557,56 @@ class BuiltinInteractionsImpl(Interactions):
             delta = choice.delta
 
             if delta and delta.content:
-                if not content_started:
-                    yield ContentStartEvent(index=0, content=_ContentRef())
-                    content_started = True
+                if not text_block_started:
+                    yield ContentStartEvent(index=content_block_index, content=_ContentRef())
+                    text_block_started = True
 
                 yield ContentDeltaEvent(
-                    index=0,
+                    index=content_block_index,
                     delta=_TextDelta(text=delta.content),
                 )
+
+            if delta and delta.tool_calls:
+                for tc_delta in delta.tool_calls:
+                    tc_idx = tc_delta.index if tc_delta.index is not None else 0
+
+                    if tc_idx not in tool_call_blocks:
+                        # Close text block if open
+                        if text_block_started:
+                            yield ContentStopEvent(index=content_block_index)
+                            content_block_index += 1
+                            text_block_started = False
+
+                        # Start new function_call block
+                        tool_call_blocks[tc_idx] = True
+                        tool_call_index_to_block_index[tc_idx] = content_block_index
+
+                        yield ContentStartEvent(
+                            index=content_block_index,
+                            content=_FunctionCallContentRef(
+                                id=tc_delta.id or f"call_{uuid.uuid4().hex[:24]}",
+                                name=tc_delta.function.name if tc_delta.function and tc_delta.function.name else None,
+                            ),
+                        )
+                        content_block_index += 1
+
+                    if tc_delta.function and tc_delta.function.arguments:
+                        block_idx = tool_call_index_to_block_index[tc_idx]
+                        yield ContentDeltaEvent(
+                            index=block_idx,
+                            delta=_FunctionCallDelta(args=tc_delta.function.arguments),
+                        )
 
             if chunk.usage:
                 input_tokens = chunk.usage.prompt_tokens or 0
                 output_tokens = chunk.usage.completion_tokens or 0
 
-        # Close content block if opened
-        if content_started:
-            yield ContentStopEvent(index=0)
+        # Close any open blocks
+        if text_block_started:
+            yield ContentStopEvent(index=content_block_index)
+
+        for _tc_idx, block_idx in tool_call_index_to_block_index.items():
+            yield ContentStopEvent(index=block_idx)
 
         # Final event
         now = _now_iso()
