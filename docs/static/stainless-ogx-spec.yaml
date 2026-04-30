@@ -1714,7 +1714,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateResponseRequest'
           application/x-www-form-urlencoded: {}
-        x-llama-stack-extra-body-params:
+        x-ogx-extra-body-params:
           guardrails:
             anyOf:
             - items:
