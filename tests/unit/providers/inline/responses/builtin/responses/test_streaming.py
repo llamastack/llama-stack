@@ -23,15 +23,15 @@ from ogx.providers.inline.responses.builtin.responses.utils import (
 from ogx_api import ToolDef
 from ogx_api.inference.models import (
     OpenAIAssistantMessageParam,
+    OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionChunkWithReasoning,
-    OpenAIChatCompletion,
     OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChatCompletionUsage,
-    OpenAIChoiceDelta,
     OpenAIChoice,
+    OpenAIChoiceDelta,
     OpenAIChunkChoice,
 )
 from ogx_api.openai_responses import (
