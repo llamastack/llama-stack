@@ -285,7 +285,7 @@ src/
       registry/             # Provider spec declarations
       utils/                # Shared provider utilities
     distributions/          # Pre-built distribution configs
-    cli/                    # CLI commands (ogx run, build, etc.)
+    cli/                    # CLI commands (ogx stack run, build, etc.)
     testing/                # Test infrastructure (api_recorder)
 tests/
   unit/                     # Fast, isolated tests

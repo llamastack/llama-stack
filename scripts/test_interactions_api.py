@@ -24,8 +24,8 @@ Llama Stack server using the official Google GenAI SDK, proving that
 ADK/Gemini ecosystem clients can call Llama Stack natively.
 
 Usage:
-    # Start a Llama Stack server first:
-    OLLAMA_URL=http://localhost:11434/v1 uv run --extra starter llama stack run starter --port 8321
+    # Start a OGX server first:
+    OLLAMA_URL=http://localhost:11434/v1 uv run --extra starter ogx stack run starter --port 8321
 
     # Then run this script:
     uv run python scripts/test_interactions_api.py --base-url http://localhost:8321 --model ollama/llama3.2:3b

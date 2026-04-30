@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 """
-Unit tests for `ogx run` CLI command.
+Unit tests for `ogx stack run` CLI command.
 
 Categories:
   - Arguments: --providers flag is registered and parsed correctly
