@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -151,7 +151,7 @@ def _add_error_responses(openapi_schema: dict[str, Any]) -> dict[str, Any]:
         openapi_schema["components"]["responses"] = {}
 
     try:
-        from llama_stack_api.datatypes import Error
+        from ogx_api.datatypes import Error
 
         schema_collection._ensure_components_schemas(openapi_schema)
         if "Error" not in openapi_schema["components"]["schemas"]:
@@ -523,7 +523,7 @@ def _clean_schema_descriptions(openapi_schema: dict[str, Any]) -> dict[str, Any]
 
 
 def _promote_model_extra_body_fields(openapi_schema: dict[str, Any]) -> dict[str, Any]:
-    """Strip fields marked x-extra-body-field from schemas and add to x-llama-stack-extra-body-params."""
+    """Strip fields marked x-extra-body-field from schemas and add to x-ogx-extra-body-params."""
     schemas = openapi_schema.get("components", {}).get("schemas", {})
     schema_extra: dict[str, dict[str, Any]] = {}
     for name, defn in schemas.items():
@@ -550,13 +550,13 @@ def _promote_model_extra_body_fields(openapi_schema: dict[str, Any]) -> dict[str
             if isinstance(ref, dict) and "$ref" in ref:
                 ref_name = ref["$ref"].split("/")[-1]
                 if ref_name in schema_extra:
-                    rb["x-llama-stack-extra-body-params"] = schema_extra[ref_name]
+                    rb["x-ogx-extra-body-params"] = schema_extra[ref_name]
     return openapi_schema
 
 
 def _add_extra_body_params_extension(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     """
-    Add x-llama-stack-extra-body-params extension to requestBody for endpoints with ExtraBodyField parameters.
+    Add x-ogx-extra-body-params extension to requestBody for endpoints with ExtraBodyField parameters.
     """
     if "paths" not in openapi_schema:
         return openapi_schema
@@ -640,8 +640,8 @@ def _add_extra_body_params_extension(openapi_schema: dict[str, Any]) -> dict[str
 
             if extra_params_schema:
                 # Add the extension to requestBody
-                if "x-llama-stack-extra-body-params" not in request_body:
-                    request_body["x-llama-stack-extra-body-params"] = extra_params_schema
+                if "x-ogx-extra-body-params" not in request_body:
+                    request_body["x-ogx-extra-body-params"] = extra_params_schema
 
     return openapi_schema
 

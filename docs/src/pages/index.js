@@ -114,6 +114,29 @@ const message = await client.messages.create({
       },
     ],
   },
+  google: {
+    label: 'Google GenAI',
+    endpoint: '/v1alpha/interactions',
+    languages: [
+      {
+        lang: 'Python',
+        code: `from google import genai
+from google.genai import types
+
+client = genai.Client(
+    api_key="fake",
+    http_options=types.HttpOptions(
+        base_url="http://localhost:8321",
+        api_version="v1alpha",
+    ),
+)
+interaction = client.interactions.create(
+    model="llama-3.3-70b",
+    input="Summarize this repository",
+)`,
+      },
+    ],
+  },
 };
 
 const API_SURFACE = [
@@ -123,6 +146,7 @@ const API_SURFACE = [
     { label: 'Embeddings', path: '/v1/embeddings' },
     { label: 'Models', path: '/v1/models' },
     { label: 'Messages', path: '/v1/messages', note: 'Anthropic' },
+    { label: 'Interactions', path: '/v1alpha/interactions', note: 'Google' },
   ]},
   { category: 'Data', endpoints: [
     { label: 'Vector Stores', path: '/v1/vector_stores' },
@@ -257,7 +281,7 @@ function CodeCopyButton({text}) {
 
 function CodeBlock() {
   const [activeSdk, setActiveSdk] = useState('openai');
-  const [langIndex, setLangIndex] = useState({openai: 0, anthropic: 0});
+  const [langIndex, setLangIndex] = useState({openai: 0, anthropic: 0, google: 0});
   const {colorMode} = useColorMode();
   const sdk = SDK_EXAMPLES[activeSdk];
   const activeIdx = langIndex[activeSdk];
@@ -436,7 +460,7 @@ function Hero() {
               <Link className={styles.secondaryBtn} to="/docs/api-openai">
                 API docs
               </Link>
-              <a className={styles.githubBtn} href="https://github.com/llamastack/llama-stack" target="_blank" rel="noopener noreferrer">
+              <a className={styles.githubBtn} href="https://github.com/ogx-ai/ogx" target="_blank" rel="noopener noreferrer">
                 GitHub
               </a>
             </div>
@@ -457,7 +481,7 @@ function ApiSurface() {
         <div className={styles.apiHeader}>
           <h2>Everything your AI app needs. One server.</h2>
           <p>
-            More than inference routing. Llama Stack composes inference, storage,
+            More than inference routing. OGX composes inference, storage,
             safety, and orchestration into a single process. Your agent can search
             a vector store, call a tool, check safety, and stream the response.
             No glue code. No sidecar services.
@@ -498,7 +522,7 @@ function ServerNotLibrary() {
             <h2>A server, not a library</h2>
             <p>
               SDK abstractions couple your app to a specific language, release
-              cycle, and import path. Llama Stack is an HTTP server. Your app
+              cycle, and import path. OGX is an HTTP server. Your app
               talks to a standard API.
             </p>
             <p>
@@ -514,7 +538,7 @@ function ServerNotLibrary() {
               <span className={styles.comparisonNote}>coupled</span>
             </div>
             <div className={styles.comparisonRow}>
-              <span className={styles.comparisonLabel}>Llama Stack</span>
+              <span className={styles.comparisonLabel}>OGX</span>
               <code className={styles.comparisonCode}>POST /v1/responses</code>
               <span className={styles.comparisonGood}>any language</span>
             </div>
@@ -559,7 +583,7 @@ function Architecture() {
           not in your application code.
         </p>
         <div className={styles.archImg}>
-          <img src="/img/architecture-animated.svg" alt="Llama Stack Architecture" loading="lazy" />
+          <img src="/img/architecture-animated.svg" alt="OGX Architecture" loading="lazy" />
         </div>
       </div>
     </Section>
@@ -578,10 +602,10 @@ function Bottom() {
             </p>
           </div>
           <div className={styles.bottomLinks}>
-            <a href="https://github.com/llamastack/llama-stack" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/ogx-ai/ogx" target="_blank" rel="noopener noreferrer">
               GitHub
             </a>
-            <a href="https://discord.gg/llama-stack" target="_blank" rel="noopener noreferrer">
+            <a href="https://discord.gg/ZAFjsrcw" target="_blank" rel="noopener noreferrer">
               Discord
             </a>
             <Link to="/docs/">
@@ -599,7 +623,7 @@ function Bottom() {
 
 export default function Home() {
   return (
-    <Layout title="The Open-Source AI Application Server" description="Inference, vector stores, safety, tools, and agentic orchestration. One server, OpenAI-compatible, pluggable providers.">
+    <Layout title="The Open-Source AI Application Server" description="Inference, vector stores, safety, tools, and agentic orchestration. One server, OpenAI + Anthropic + Google compatible, pluggable providers.">
       <main>
         <Hero />
         <ApiSurface />
