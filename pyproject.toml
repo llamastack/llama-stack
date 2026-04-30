@@ -123,6 +123,7 @@ starter = [
     "weaviate-client>=4.16.5",
     "torch",
     "sentence-transformers",
+    "boto3",
 ]
 
 [dependency-groups]
@@ -141,6 +142,8 @@ dev = [
     "pre-commit>=4.4.0",
     "ruamel.yaml",                   # needed for openapi generator
     "openapi-spec-validator>=0.7.2",
+    "ollama",
+    "llama-stack-client>=0.7.1",
 ]
 # Type checking dependencies - includes type stubs and optional runtime dependencies
 # needed for complete mypy coverage across all optional features
