@@ -34,7 +34,7 @@ def migrate_legacy_config_dir() -> None:
     if OGX_CONFIG_DIR.exists():
         warnings.warn(
             f"Legacy config directory {_LEGACY_CONFIG_DIR} found alongside {OGX_CONFIG_DIR}. "
-            f"Please remove {_LEGACY_CONFIG_DIR} — it is no longer used.",
+            f"Please remove legacy directory {_LEGACY_CONFIG_DIR} — it is no longer used.",
             DeprecationWarning,
             stacklevel=2,
         )
