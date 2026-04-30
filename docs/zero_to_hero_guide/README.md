@@ -95,7 +95,7 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
 2. **Start the distribution**:
 
    ```bash
-   ogx run starter
+   ogx stack run starter
    ```
 
 3. **Set the ENV variables by exporting them to the terminal**:
@@ -114,7 +114,7 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
    INFERENCE_MODEL=$INFERENCE_MODEL \
    SAFETY_MODEL=$SAFETY_MODEL \
    OLLAMA_URL=$OLLAMA_URL \
-   uv run --with ogx ogx run starter \
+   uv run --with ogx ogx stack run starter \
       --port $OGX_PORT
    ```
 
