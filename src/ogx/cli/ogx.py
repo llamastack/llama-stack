@@ -12,6 +12,7 @@ from ogx.log import setup_logging
 # Initialize logging early before any loggers get created
 setup_logging()
 
+from .launch import LaunchParser  # type: ignore[attr-defined]
 from .stack import StackParser  # type: ignore[attr-defined]
 from .stack.utils import print_subcommand_description
 
@@ -34,6 +35,7 @@ class OGXCLIParser:
 
         # Add sub-commands
         StackParser.create(subparsers)
+        LaunchParser.create(subparsers)
 
         print_subcommand_description(self.parser, subparsers)
 
