@@ -1245,12 +1245,9 @@ class StreamingResponseOrchestrator:
                                     response_tool_call.function.arguments or ""
                                 ) + tool_call.function.arguments
 
-            # Batched output safety validation. Check when enough chars accumulated,
-            # on the last chunk, or when only reasoning events are buffered (no text yet).
+            # Batched output safety validation. If we have only buffered reasoning events and
+            # no assistant text yet, flush per chunk so reasoning can stream in real time.
             guardrail_check_due = chars_since_last_check >= _GUARDRAIL_BATCH_CHARS
-            stream_finishing = any(c.finish_reason for c in chunk.choices)
-            if stream_finishing and pending_guardrail_events:
-                guardrail_check_due = True
             if pending_guardrail_events and not any(chat_response_content):
                 guardrail_check_due = True
 
@@ -1272,6 +1269,25 @@ class StreamingResponseOrchestrator:
                     yield event
                 pending_guardrail_events.clear()
                 chars_since_last_check = 0
+
+        # Final guardrail check on remaining buffered content
+        if self.guardrail_ids and pending_guardrail_events:
+            accumulated_text = "".join(chat_response_content)
+            violation_message = await run_guardrails(
+                self.safety_api,
+                accumulated_text,
+                self.guardrail_ids,
+                model_ids=self._guardrail_model_ids,
+            )
+            if violation_message:
+                logger.info("Output guardrail violation", violation_message=violation_message)
+                pending_guardrail_events.clear()
+                yield await self._create_refusal_response(violation_message)
+                self.violation_detected = True
+                return
+            for event in pending_guardrail_events:
+                yield event
+            pending_guardrail_events.clear()
 
         # Emit arguments.done events for completed tool calls (differentiate between MCP and function calls)
         for tool_call_index in sorted(chat_response_tool_calls.keys()):
