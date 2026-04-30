@@ -9,9 +9,15 @@ date: 2026-05-05
 [OpenCode](https://opencode.ai/) is an open source AI coding agent that helps you write code in your terminal, IDE, or desktop. It is a popular open source alternative
 for tools like Claude Code and Codex.
 
-In this blog I am going to share how to start running OpenCode with OGX as a provider, using OpenCode's [custom provider](https://opencode.ai/docs/providers/#custom-provider) feature.
+OpenCode has a concept of [providers](https://opencode.ai/docs/providers/) that is similar to OGX's inference providers - they are a local or cloud-based model inference endpoint that expose an LLM for OpenCode to utilize. This is similar but does differ from [OGX providers](https://ogx-ai.github.io/docs/providers) which are inclusive of inference but also include providers for vector stores, safety backends, tool runtimes, etc.
 
-> **Note:** Both OpenCode and OGX have concepts of "providers" so you may see that terminology used here referring to one or the other. [OpenCode providers](https://opencode.ai/docs/providers/) are similar to OGX's inference providers - they are a local or cloud-based model inference endpoint that expose an LLM for OpenCode to utilize. [OGX providers](https://ogx-ai.github.io/docs/providers) are inclusive of inference but also include providers for vector stores, safety backends, tool runtimes, etc.
+OGX as a OpenCode provider has some strong advantages over providers that offer only inference:
+
+- Unified API for tools + RAG + storage
+- Multiple providers behind one endpoint
+- Built-in orchestration layer
+
+In this blog I am going to share how to start running OpenCode with OGX as a provider, using OpenCode's [custom provider](https://opencode.ai/docs/providers/#custom-provider) feature.
 
 The blog assumes you already have an OGX server up and running - see our [Getting Started guide](https://ogx-ai.github.io/docs/getting_started/quickstart) to learn more.
 
