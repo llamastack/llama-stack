@@ -9,11 +9,11 @@ date: 2026-05-05
 [OpenCode](https://opencode.ai/) is an open source AI coding agent that helps you write code in your terminal, IDE, or desktop. It is a popular open source alternative
 for tools like Claude Code and Codex.
 
-In this blog I am going to share how to start running OpenCode with OGX as a [provider](https://opencode.ai/docs/providers/), using OpenCode's [custom provider](https://opencode.ai/docs/providers/#custom-provider) feature.
+In this blog I am going to share how to start running OpenCode with OGX as a provider, using OpenCode's [custom provider](https://opencode.ai/docs/providers/#custom-provider) feature.
 
-> **Note:** Both OpenCode and OGX have concepts of "providers" so you may see that terminology used here referring to one or the other. Ensure you are familiar with the differences before reading on.
+> **Note:** Both OpenCode and OGX have concepts of "providers" so you may see that terminology used here referring to one or the other. [OpenCode providers](https://opencode.ai/docs/providers/) are similar to OGX's inference providers - they are a local or cloud-based model inference endpoint that expose an LLM for OpenCode to utilize. [OGX providers](https://ogx-ai.github.io/docs/providers) are inclusive of inference but also include providers for vector stores, safety backends, tool runtimes, etc.
 
-The blog assumes you already have an OGX server up and running - see our [Getting Started guide](https://ogx-ai.github.io/docs/getting_started/) to learn more.
+The blog assumes you already have an OGX server up and running - see our [Getting Started guide](https://ogx-ai.github.io/docs/getting_started/quickstart) to learn more.
 
 ## Download OpenCode
 
@@ -23,12 +23,6 @@ Downloading OpenCode is simple and can be done in various ways. You can see a fu
 curl -fsSL https://opencode.ai/install | bash
 ```
 
-Once the download has completed, you should be able to run `opencode` in your terminal to bring up the TUI (Terminal User Interface).
-
-![OpenCode Home](./images/opencode-home.png)
-
-Now it's time to configure OGX as a provider.
-
 ## Configure OGX as a provider for OpenCode
 
 As mentioned before, this blog assumes an OGX server is already running at `localhost:8321` - in this case, we are also making the following assumptions:
@@ -37,7 +31,9 @@ As mentioned before, this blog assumes an OGX server is already running at `loca
 - The `remote::watsonx` provider is enabled, with the `gpt-oss-120b` model available
 - No authentication has been added
 
-Given those assumptions, we can now configure OpenCode to use our OGX server via a custom provider.
+You can verify what models your OGX server has available with `curl http://localhost:8321/v1/models`
+
+We can now configure OpenCode to use our OGX server via a custom provider.
 
 Create a file `~/.config/opencode/opencode.json` with the following content:
 
@@ -64,9 +60,13 @@ Create a file `~/.config/opencode/opencode.json` with the following content:
 }
 ```
 
-Once the file is created, restart OpenCode and run `/connect` in the TUI. If you search `OGX` the provider should come up with our two models listed.
+Once the file is created, start OpenCode - it should look something like this:
 
-![OpenCode Home](./images/opencode-models.png)
+![OpenCode Home](./images/opencode-home.png)
+
+Run `/connect` in the TUI. If you search `OGX` the provider should come up with our two models listed.
+
+![OpenCode Models](./images/opencode-models.png)
 
 Select `gpt-oss-120b` and hit enter. If you are prompted for an API key, you can just put `None` since we haven't configured one in this case.
 
