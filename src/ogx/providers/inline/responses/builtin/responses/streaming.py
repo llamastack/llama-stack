@@ -562,9 +562,8 @@ class StreamingResponseOrchestrator:
                         )
                     except (NotImplementedError, AttributeError) as exc:
                         raise ValueError(
-                            f"Failed to process request: the selected model does not support reasoning. "
-                            f"Remove the 'reasoning' parameter from your request or choose a model that supports it. "
-                            f"({exc})"
+                            "Failed to process request: the selected model does not support reasoning. "
+                            "Remove the 'reasoning' parameter from your request or choose a model that supports it."
                         ) from exc
                 else:
                     completion_result = await self.inference_api.openai_chat_completion(params)
