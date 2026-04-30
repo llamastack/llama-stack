@@ -85,6 +85,7 @@ const config: Config = {
           blogSidebarCount: 'ALL',
           showReadingTime: true,
           postsPerPage: 10,
+          exclude: ['**/building-agentic-flows/**'],
           readingTime: ({content, frontMatter, defaultReadingTime}) =>
             defaultReadingTime({content, options: {wordsPerMinute: 300}}),
           feedOptions: {
@@ -152,7 +153,7 @@ const config: Config = {
           position: 'right',
           dropdownActiveClassDisabled: true,
           dropdownItemsAfter: [
-            { to: '/versions.html', label: 'All versions' },
+            { to: '/versions', label: 'All versions' },
           ],
         },
       ],
@@ -207,7 +208,7 @@ const config: Config = {
           items: [
             {
               label: 'Discord',
-              href: 'https://join.slack.com/t/ogx-ai',
+              href: 'https://discord.gg/ZAFjsrcw',
             },
             {
               label: 'Issues',
@@ -222,6 +223,10 @@ const config: Config = {
         {
           title: 'Resources',
           items: [
+            {
+              label: 'Brand',
+              to: '/brand',
+            },
             {
               label: 'GitHub',
               href: 'https://github.com/ogx-ai/ogx',

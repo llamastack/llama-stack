@@ -605,7 +605,7 @@ function Bottom() {
             <a href="https://github.com/ogx-ai/ogx" target="_blank" rel="noopener noreferrer">
               GitHub
             </a>
-            <a href="https://join.slack.com/t/ogx-ai" target="_blank" rel="noopener noreferrer">
+            <a href="https://discord.gg/ZAFjsrcw" target="_blank" rel="noopener noreferrer">
               Discord
             </a>
             <Link to="/docs/">

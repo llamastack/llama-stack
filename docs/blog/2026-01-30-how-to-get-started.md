@@ -8,7 +8,9 @@ date: 2026-01-30
 
 There is no shortage of GenAI hosted services like OpenAI, Gemini, and Bedrock.
 
-<!--truncate--> Often, these services require tailoring your GenAI application directly to them, requiring developers to consider things that have nothing to do with their applications. OGX is an open source project aiming to standardize and offer a set of APIs for AI applications that stay the same, regardless of the backend services being provided via those APIs.
+<!--truncate-->
+
+Often, these services require tailoring your GenAI application directly to them, requiring developers to consider things that have nothing to do with their applications. OGX is an open source project aiming to standardize and offer a set of APIs for AI applications that stay the same, regardless of the backend services being provided via those APIs.
 
 OGX’s APIs allow for a variety of use cases from running inference with Ollama on your laptop to a self-managed GPU system running inference with vLLM to a pure SaaS-based solution like Vertex. The standardized set of APIs each have providers that follow the same REST API implementation. An admin of the stack can specify which provider they want for each API and expose the REST API to users who get the same frontend experience regardless of the provider. This can allow you to run a single API surface layer using whatever Inference, Vector IO, or other solutions you may want while keeping your GenAI applications simple.
 
@@ -52,7 +54,7 @@ If you already have Ollama installed as a service, you can simply pull the model
 ```bash
 ollama pull gpt-oss:20b
 uv run --with ogx ogx list-deps --providers inference=remote::ollama --format uv | sh
-uv run --with ogx ogx run --providers inference=remote::ollama
+uv run --with ogx ogx stack run --providers inference=remote::ollama
 
 ```
 
@@ -62,7 +64,7 @@ If you don't have Ollama running as a service, you can start it manually:
 ollama serve > /dev/null 2>&1 &
 ollama run gpt-oss:20b --keepalive 60m # you can exit this once the model is running due to --keepalive
 uv run --with ogx ogx --providers inference=remote::ollama --format uv | sh
-uv run --with ogx ogx run --providers inference=remote::ollama
+uv run --with ogx ogx stack run --providers inference=remote::ollama
 
 ```
 
@@ -75,7 +77,7 @@ ollama serve > /dev/null 2>&1 &
 ollama run gpt-oss:20b --keepalive 60m # you can exit this once the model is running due to --keepalive
 uv run --with ogx ogx list-deps starter --format uv | sh
 export OLLAMA_URL=http://localhost:11434/v1
-uv run --with ogx ogx run starter
+uv run --with ogx ogx stack run starter
 
 ```
 

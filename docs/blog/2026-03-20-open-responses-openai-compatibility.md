@@ -10,7 +10,7 @@ We're excited to share that OGX has achieved **100% compliance with the Open Res
 
 With comprehensive support for Files, Vector Stores, Search, Conversations, Prompts, Chat Completions, the full Responses API, plus powerful extensions like MCP tool integration, Tool Calling, and Connectors, OGX offers something unique in the AI infrastructure landscape: a SaaS-like experience that runs entirely on your terms.
 
-{/*truncate*/}
+<!--truncate-->
 
 ## Recognition by the Open Responses Community
 
@@ -200,7 +200,7 @@ ollama run gpt-oss:20b
 
 # Launch OGX with the starter distribution
 
-OLLAMA_URL=http://localhost:11434/v1 uv run ogx run starter
+OLLAMA_URL=http://localhost:11434/v1 uv run ogx stack run starter
 ```
 
 ```python

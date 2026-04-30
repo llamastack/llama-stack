@@ -27,7 +27,7 @@ This directory contains configuration files and a setup script to deploy a full 
 | **Jaeger** | Distributed tracing UI | 16686 |
 | **Prometheus** | Metrics storage and querying | 9090 |
 | **Grafana** | Dashboards and visualization | 3000 |
-| **MLflow** | Trace ingest via OTLP `/v1/traces` (container in this stack) | 5000 |
+| **MLflow** | Trace ingest via OTLP `/v1/traces` (container in this stack) | 5001 |
 
 ## Pre-requisites
 
@@ -69,9 +69,9 @@ This will:
 
 > **MLflow traces**
 >
-> - MLflow is now started as a container in this stack (`mlflow:5000`), OTLP endpoint `/v1/traces`.
-> - Collector exporter `otlphttp/mlflow` points to `http://mlflow:5000/v1/traces`, header `x-mlflow-experiment-id: "1"`. If you need auth, set `MLFLOW_OTEL_HEADERS` (e.g., `Authorization=Bearer <token>`) before running the setup script.
-> - If you prefer an external MLflow, override `MLFLOW_OTEL_ENDPOINT` before running the script (e.g., `http://host.docker.internal:5000`).
+> - MLflow is now started as a container in this stack (`mlflow:5001`), OTLP endpoint `/v1/traces`.
+> - Collector exporter `otlphttp/mlflow` points to `http://mlflow:5001/v1/traces`, header `x-mlflow-experiment-id: "1"`. If you need auth, set `MLFLOW_OTEL_HEADERS` (e.g., `Authorization=Bearer <token>`) before running the setup script.
+> - If you prefer an external MLflow, override `MLFLOW_OTEL_ENDPOINT` before running the script (e.g., `http://host.docker.internal:5001`).
 
 ### Install OpenTelemetry instrumentation For OGX Server and Client
 
@@ -87,7 +87,7 @@ export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 export OTEL_SERVICE_NAME=ogx-server
 
-uv run opentelemetry-instrument ogx run starter
+uv run opentelemetry-instrument ogx stack run starter
 ```
 
 > **Note:** The `opentelemetry-instrument` wrapper automatically instruments the application and sends traces/metrics to the OTel Collector.
@@ -131,7 +131,7 @@ Open the following UIs in your browser:
 
 | Service | URL | Credentials |
 |---|---|---|
-| **Mlflow** (traces) | [http://localhost:5000](http://localhost:5000) | N/A |
+| **Mlflow** (traces) | [http://localhost:5001](http://localhost:5001) | N/A |
 | **Jaeger** (traces) | [http://localhost:16686](http://localhost:16686) | N/A |
 | **Prometheus** (metrics) | [http://localhost:9090](http://localhost:9090) | N/A |
 | **Grafana** (dashboards) | [http://localhost:3000](http://localhost:3000) | admin / admin |

@@ -34,7 +34,7 @@ class StackRun(Subcommand):
         super().__init__()
         self.parser = subparsers.add_parser(
             "run",
-            prog="ogx run",
+            prog="ogx stack run",
             description="""Start the server for a OGX Distribution. You should have already built (or downloaded) and configured the distribution.""",
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         )

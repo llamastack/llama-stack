@@ -118,15 +118,15 @@ $CONTAINER_RUNTIME run -d --name jaeger \
 echo "📒 Starting MLflow..."
 $CONTAINER_RUNTIME run -d --name mlflow \
   --network llama-telemetry \
-  -p 5000:5000 \
+  -p 5001:5001 \
   -v "$MLFLOW_BACKEND_STORE:/mlflow/mlflow.db" \
   -v "$MLFLOW_ARTIFACT_ROOT:/mlflow/artifacts" \
   ghcr.io/mlflow/mlflow:latest \
   mlflow server \
     --backend-store-uri sqlite:////mlflow/mlflow.db \
     --default-artifact-root /mlflow/artifacts \
-    --host 0.0.0.0 --port 5000 \
-    --allowed-hosts localhost,localhost:5000,127.0.0.1,127.0.0.1:5000,host.docker.internal,host.docker.internal:5000
+    --host 0.0.0.0 --port 5001 \
+    --allowed-hosts localhost,localhost:5001,127.0.0.1,127.0.0.1:5001,host.docker.internal,host.docker.internal:5001
 
 # Add host aliases so the Collector can reach host services (e.g., MLflow)
 ADD_HOST_OPT=""
@@ -195,7 +195,7 @@ echo ""
 echo "✅ Telemetry stack is ready!"
 echo ""
 echo "🌐 Service URLs:"
-echo "   MLflow:           http://localhost:5000"
+echo "   MLflow:           http://localhost:5001"
 echo "   Jaeger UI:        http://localhost:16686"
 echo "   Prometheus:       http://localhost:9090"
 echo "   Grafana:          http://localhost:3000 (admin/admin)"
@@ -215,7 +215,7 @@ echo "   5. Check Prometheus for metrics: http://localhost:9090"
 echo "   6. Set up Grafana dashboards: http://localhost:3000"
 echo ""
 echo "🔍 To test the setup, run:"
-echo "   curl -X POST http://localhost:5000/v1/inference/chat/completions \\"
+echo "   curl -X POST http://localhost:5001/v1/inference/chat/completions \\"
 echo "     -H 'Content-Type: application/json' \\"
 echo "     -d '{\"model_id\": \"your-model\", \"messages\": [{\"role\": \"user\", \"content\": \"Hello\"}]}'"
 echo ""

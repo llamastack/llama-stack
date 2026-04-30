@@ -38,7 +38,7 @@ _id_counters: dict[str, dict[str, int]] = {}
 # Test context uses ContextVar since it changes per-test and needs async isolation
 from openai.types.completion_choice import CompletionChoice
 
-from ogx.core.testing_context import get_test_context, is_debug_mode
+from ogx.core.testing_context import get_test_context, is_debug_mode, set_test_context
 
 # update the "finish_reason" field, since its type definition is wrong (no None is accepted)
 CompletionChoice.model_fields["finish_reason"].annotation = cast(
@@ -451,7 +451,7 @@ class ResponseStorage:
         For test at "tests/integration/inference/test_foo.py::test_bar",
         returns "tests/integration/inference/recordings/".
         """
-        test_id = get_test_context()
+        test_id = _get_test_context_with_fallback()
         if test_id:
             # Extract the directory path from the test nodeid
             # e.g., "tests/integration/inference/test_basic.py::test_foo[params]"
@@ -526,20 +526,21 @@ class ResponseStorage:
             logger.info("[RECORDING DEBUG] Storing recording:")
             logger.info(f"  Request hash: {request_hash}")
             logger.info(f"  File: {response_path}")
-            logger.info(f"  Test ID: {get_test_context()}")
+            logger.info(f"  Test ID: {_get_test_context_with_fallback()}")
             logger.info(f"  Endpoint: {endpoint}")
 
         # Save response to JSON file with metadata
         with open(response_path, "w") as f:
             json.dump(
                 {
-                    "test_id": get_test_context(),
+                    "test_id": _get_test_context_with_fallback(),
                     "request": request,
                     "response": serialized_response,
                     "id_normalization_mapping": {},
                 },
                 f,
                 indent=2,
+                default=str,
             )
             f.write("\n")
             f.flush()
@@ -1270,8 +1271,179 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
         raise AssertionError(f"Invalid mode: {mode}")
 
 
+def _get_test_context_with_fallback() -> str | None:
+    """Get test context, falling back to provider data header.
+
+    In server mode, ContextVars may not propagate through all async boundaries
+    (e.g., google-genai SDK may create internal async tasks). We fall back to
+    the provider data header (set by middleware).
+    """
+    ctx = get_test_context()
+    if ctx:
+        return ctx
+
+    try:
+        from ogx.core.request_headers import PROVIDER_DATA_VAR
+
+        provider_data = PROVIDER_DATA_VAR.get()
+        if provider_data and "__test_id" in provider_data:
+            return provider_data["__test_id"]
+    except (LookupError, ImportError):
+        pass
+
+    return None
+
+
+async def _patched_genai_method(original_method, self, endpoint, *args, **kwargs):
+    """Patched version of google-genai async methods for recording/replay."""
+    global _current_mode, _current_storage
+
+    mode = _current_mode
+    storage = _current_storage
+
+    if is_debug_mode():
+        logger.info("[RECORDING DEBUG] Entering genai method:")
+        logger.info(f"  Mode: {mode}")
+        logger.info(f"  Endpoint: {endpoint}")
+        logger.info(f"  Test context: {_get_test_context_with_fallback()}")
+
+    if mode == APIRecordingMode.LIVE or storage is None:
+        return await original_method(self, *args, **kwargs)
+
+    # Ensure test context is set for recording path resolution
+    test_id = _get_test_context_with_fallback()
+    context_token = None
+    if test_id and not get_test_context():
+        context_token = set_test_context(test_id)
+
+    try:
+        return await _genai_record_replay(original_method, self, endpoint, mode, storage, *args, **kwargs)
+    finally:
+        if context_token:
+            from ogx.core.testing_context import reset_test_context
+
+            reset_test_context(context_token)
+
+
+async def _genai_record_replay(original_method, self, endpoint, mode, storage, *args, **kwargs):
+    """Core record/replay logic for google-genai methods."""
+    from google.genai import types as genai_types
+
+    # Serialize request parameters
+    model = kwargs.get("model", "")
+    body = {}
+    for k, v in kwargs.items():
+        if hasattr(v, "model_dump"):
+            body[k] = v.model_dump(mode="json", exclude_none=True)
+        elif isinstance(v, list):
+            serialized = []
+            for item in v:
+                if hasattr(item, "model_dump"):
+                    serialized.append(item.model_dump(mode="json", exclude_none=True))
+                else:
+                    serialized.append(str(item) if not isinstance(item, dict | str | int | float | bool) else item)
+            body[k] = serialized
+        elif isinstance(v, dict | str | int | float | bool | type(None)):
+            body[k] = v
+        else:
+            body[k] = str(v)
+
+    url = f"vertexai://{endpoint}"
+    method = "POST"
+    request_hash = normalize_inference_request(method, url, {}, body)
+
+    # Try replay
+    if mode in (APIRecordingMode.REPLAY, APIRecordingMode.RECORD_IF_MISSING):
+        recording = storage.find_recording(request_hash)
+        if recording:
+            response_data = recording["response"]
+            if response_data.get("is_exception", False):
+                exc_data = response_data.get("exception_data")
+                if exc_data:
+                    raise deserialize_exception(exc_data)
+                raise Exception(response_data.get("exception_message", "Unknown error"))
+
+            response_body = response_data["body"]
+            if response_data.get("is_streaming", False):
+                response_type = genai_types.GenerateContentResponse
+
+                async def replay_genai_stream():
+                    for chunk_data in response_body:
+                        yield response_type.model_validate(chunk_data)
+
+                return replay_genai_stream()
+            else:
+                if endpoint == "/embed_content":
+                    return genai_types.EmbedContentResponse.model_validate(response_body)
+                return genai_types.GenerateContentResponse.model_validate(response_body)
+        elif mode == APIRecordingMode.REPLAY:
+            raise RuntimeError(
+                f"Recording not found for genai request hash: {request_hash}\n"
+                f"Model: {model} | Endpoint: {endpoint}\n"
+                f"\n"
+                f"Run './scripts/integration-tests.sh --inference-mode record-if-missing' with required API keys."
+            )
+
+    # Record
+    if mode in (APIRecordingMode.RECORD, APIRecordingMode.RECORD_IF_MISSING):
+        request_data = {
+            "method": method,
+            "url": url,
+            "headers": {},
+            "body": body,
+            "endpoint": endpoint,
+            "model": model,
+            "provider_metadata": {"provider": "vertexai"},
+        }
+
+        is_streaming = endpoint == "/generate_content_stream"
+
+        try:
+            response = await original_method(self, *args, **kwargs)
+        except Exception as exc:
+            response_data = {
+                "body": None,
+                "is_streaming": is_streaming,
+                "is_exception": True,
+                "exception_data": serialize_exception(exc),
+                "exception_message": str(exc),
+            }
+            storage.store_recording(request_hash, request_data, response_data)
+            raise
+
+        if is_streaming:
+            # For streaming, yield chunks as they arrive and save recording afterward.
+            # We wrap the original stream to collect chunks transparently.
+            original_response = response
+
+            async def recording_genai_stream():
+                chunks = []
+                try:
+                    async for chunk in original_response:
+                        chunks.append(chunk)
+                        yield chunk
+                finally:
+                    if chunks:
+                        rec_data = {
+                            "body": [c.model_dump(mode="json", exclude_none=True) for c in chunks],
+                            "is_streaming": True,
+                        }
+                        storage.store_recording(request_hash, request_data, rec_data)
+
+            return recording_genai_stream()
+        else:
+            response_data = {
+                "body": response.model_dump(mode="json", exclude_none=True),
+                "is_streaming": False,
+            }
+            storage.store_recording(request_hash, request_data, response_data)
+            return response
+
+    raise AssertionError(f"Invalid mode: {mode}")
+
+
 def patch_inference_clients():
-    """Install monkey patches for OpenAI client methods, Ollama AsyncClient methods, tool runtime methods, and aiohttp for rerank."""
+    """Install monkey patches for OpenAI client methods, Ollama AsyncClient methods, google-genai methods, tool runtime methods, and aiohttp for rerank."""
     global _original_methods
 
     import aiohttp
@@ -1305,6 +1477,16 @@ def patch_inference_clients():
         "httpx_async_post": httpx.AsyncClient.post,
         "httpx_async_stream": httpx.AsyncClient.stream,
     }
+
+    # Google genai patching (optional - only if google-genai is installed)
+    try:
+        from google.genai import models as genai_models
+
+        _original_methods["genai_generate_content"] = genai_models.AsyncModels.generate_content
+        _original_methods["genai_generate_content_stream"] = genai_models.AsyncModels.generate_content_stream
+        _original_methods["genai_embed_content"] = genai_models.AsyncModels.embed_content
+    except ImportError:
+        pass
 
     # Create patched methods for OpenAI client
     async def patched_chat_completions_create(self, *args, **kwargs):
@@ -1420,6 +1602,33 @@ def patch_inference_clients():
     httpx.AsyncClient.post = patched_httpx_async_post
     httpx.AsyncClient.stream = patched_httpx_async_stream
 
+    # Apply google-genai patches (if available)
+    if "genai_generate_content" in _original_methods:
+        from google.genai import models as genai_models
+
+        async def patched_genai_generate_content(self, *args, **kwargs):
+            return await _patched_genai_method(
+                _original_methods["genai_generate_content"], self, "/generate_content", *args, **kwargs
+            )
+
+        async def patched_genai_generate_content_stream(self, *args, **kwargs):
+            return await _patched_genai_method(
+                _original_methods["genai_generate_content_stream"],
+                self,
+                "/generate_content_stream",
+                *args,
+                **kwargs,
+            )
+
+        async def patched_genai_embed_content(self, *args, **kwargs):
+            return await _patched_genai_method(
+                _original_methods["genai_embed_content"], self, "/embed_content", *args, **kwargs
+            )
+
+        genai_models.AsyncModels.generate_content = patched_genai_generate_content
+        genai_models.AsyncModels.generate_content_stream = patched_genai_generate_content_stream
+        genai_models.AsyncModels.embed_content = patched_genai_embed_content
+
 
 def unpatch_inference_clients():
     """Remove monkey patches and restore original OpenAI, Ollama client, tool runtime, and aiohttp methods."""
@@ -1468,6 +1677,14 @@ def unpatch_inference_clients():
     # Restore httpx methods
     httpx.AsyncClient.post = _original_methods["httpx_async_post"]
     httpx.AsyncClient.stream = _original_methods["httpx_async_stream"]
+
+    # Restore google-genai methods (if they were patched)
+    if "genai_generate_content" in _original_methods:
+        from google.genai import models as genai_models
+
+        genai_models.AsyncModels.generate_content = _original_methods["genai_generate_content"]
+        genai_models.AsyncModels.generate_content_stream = _original_methods["genai_generate_content_stream"]
+        genai_models.AsyncModels.embed_content = _original_methods["genai_embed_content"]
 
     _original_methods.clear()
 

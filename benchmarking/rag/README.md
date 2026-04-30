@@ -79,6 +79,26 @@ python compare_results.py --format csv # CSV output
 python compare_results.py --format json --output results.json
 ```
 
+## Running with Open-Source Models via vLLM
+
+The benchmark suite supports any OpenAI-compatible inference backend. To use a
+self-hosted model via vLLM:
+
+1. Register vLLM as a `remote::openai` provider in `config.yaml`
+2. Point `--model` at the registered model ID
+3. For reasoning models that require `enable_thinking=False`, pass `--disable-thinking`
+
+```bash
+python run_benchmark.py --benchmark doc2dial \
+  --base-url http://localhost:8321/v1 \
+  --model vllm/google/gemma-4-31B-it \
+  --search-mode hybrid \
+  --disable-thinking
+```
+
+See `results/REPORT.md` for benchmark results comparing OpenAI SaaS, OGX with
+GPT-4.1, and OGX with Gemma 4 31B-IT.
+
 ## CLI Options
 
 ```text
@@ -93,6 +113,7 @@ Options:
   --max-queries     Limit number of queries (useful for testing)
   --max-conversations  Limit conversations for QReCC/Doc2Dial
   --resume          Resume from checkpoint
+  --disable-thinking  Disable thinking for reasoning models (vLLM)
   --output-dir      Custom output directory
   --data-dir        Custom data directory
   --verbose         Enable debug logging
