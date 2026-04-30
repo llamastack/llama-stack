@@ -53,7 +53,7 @@ preserves semantic boundaries. It supports PDF, DOCX, PPTX, HTML, and images.
 Start OGX with the Docling file processor using the `--providers` flag:
 
 ```bash
-OLLAMA_URL=http://localhost:11434/v1 ogx run \\
+OLLAMA_URL=http://localhost:11434/v1 ogx stack run \\
   --providers "file_processors=inline::docling,files=inline::localfs,vector_io=inline::faiss,inference=inline::sentence-transformers,inference=remote::ollama" \\
   --port 8321
 ```
@@ -114,7 +114,7 @@ docker run -p 5001:5001 quay.io/docling-project/docling-serve
 Then start OGX with the remote Docling Serve provider:
 
 ```bash
-DOCLING_SERVE_URL=http://localhost:5001/v1 ogx run \\
+DOCLING_SERVE_URL=http://localhost:5001/v1 ogx stack run \\
   --providers "file_processors=remote::docling-serve,files=inline::localfs,vector_io=inline::faiss,inference=inline::sentence-transformers,inference=remote::ollama" \\
   --port 8321
 ```
