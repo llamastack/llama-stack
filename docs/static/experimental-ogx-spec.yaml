@@ -7303,6 +7303,13 @@ components:
           - type: 'null'
           description: Generation parameters.
           title: GoogleGenerationConfig
+        tools:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/GoogleTool'
+            type: array
+          - type: 'null'
+          description: Tools (function declarations) available to the model.
         stream:
           anyOf:
           - type: boolean
@@ -7323,6 +7330,121 @@ components:
       - input
       title: GoogleCreateInteractionRequest
       description: Request body for POST /v1alpha/interactions.
+    GoogleFunctionCallContent:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - function_call
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Unique identifier for this function call.
+        name:
+          type: string
+          title: Name
+          description: Name of the function to call.
+        arguments:
+          additionalProperties: true
+          type: object
+          title: Arguments
+          description: Arguments for the function call.
+      additionalProperties: true
+      type: object
+      required:
+      - name
+      title: GoogleFunctionCallContent
+      description: A function call content item (model requesting a tool invocation).
+    GoogleFunctionCallOutput:
+      properties:
+        type:
+          type: string
+          title: Type
+          enum:
+          - function_call
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Unique identifier for this function call.
+        name:
+          type: string
+          title: Name
+          description: Name of the function to call.
+        arguments:
+          additionalProperties: true
+          type: object
+          title: Arguments
+          description: Arguments for the function call.
+      additionalProperties: true
+      type: object
+      required:
+      - name
+      title: GoogleFunctionCallOutput
+      description: A function call output item (model requesting a tool invocation).
+    GoogleFunctionDeclaration:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: The name of the function.
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Description of the function.
+        parameters:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: JSON Schema for the function's input parameters.
+      additionalProperties: true
+      type: object
+      required:
+      - name
+      title: GoogleFunctionDeclaration
+      description: A function declaration for tool calling.
+    GoogleFunctionResponseContent:
+      properties:
+        type:
+          type: string
+          enum:
+          - function_response
+          - function_result
+          title: Type
+          default: function_result
+        call_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: ID of the function call this responds to.
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Deprecated alias for call_id.
+        name:
+          type: string
+          title: Name
+          description: Name of the function that was called.
+        result:
+          additionalProperties: true
+          type: object
+          title: Result
+          description: The function's return value.
+      additionalProperties: true
+      type: object
+      required:
+      - name
+      title: GoogleFunctionResponseContent
+      description: |-
+        A function response/result content item (user providing tool results).
+
+        Accepts both 'function_response' (generateContent API) and 'function_result'
+        (Interactions API) type values, and both 'response' and 'result' field names.
     GoogleGenerationConfig:
       properties:
         temperature:
@@ -7363,11 +7485,21 @@ components:
           - model
           title: Role
         content:
-          items:
-            $ref: '#/components/schemas/GoogleTextContent'
-          type: array
-          title: Content
-          description: Content items for this turn.
+          anyOf:
+          - type: string
+          - items:
+              anyOf:
+              - $ref: '#/components/schemas/GoogleTextContent'
+                title: GoogleTextContent
+              - $ref: '#/components/schemas/GoogleFunctionCallContent'
+                title: GoogleFunctionCallContent
+              - $ref: '#/components/schemas/GoogleFunctionResponseContent'
+                title: GoogleFunctionResponseContent
+              title: GoogleTextContent | GoogleFunctionCallContent | GoogleFunctionResponseContent
+            type: array
+            title: list[GoogleTextContent | GoogleFunctionCallContent | GoogleFunctionResponseContent]
+          title: string | list[GoogleTextContent | GoogleFunctionCallContent | GoogleFunctionResponseContent]
+          description: Content items for this turn. Can be a plain string or a list of content items.
       type: object
       required:
       - role
@@ -7401,14 +7533,20 @@ components:
           description: Model used for generation.
         outputs:
           items:
-            anyOf:
+            oneOf:
             - $ref: '#/components/schemas/GoogleTextOutput'
               title: GoogleTextOutput
+            - $ref: '#/components/schemas/GoogleFunctionCallOutput'
+              title: GoogleFunctionCallOutput
             - $ref: '#/components/schemas/GoogleThoughtOutput'
               title: GoogleThoughtOutput
-            - $ref: '#/components/schemas/GoogleOutput'
-              title: GoogleOutput
-            title: GoogleTextOutput | GoogleThoughtOutput | GoogleOutput
+            discriminator:
+              propertyName: type
+              mapping:
+                function_call: '#/components/schemas/GoogleFunctionCallOutput'
+                text: '#/components/schemas/GoogleTextOutput'
+                thought: '#/components/schemas/GoogleThoughtOutput'
+            title: GoogleTextOutput | GoogleFunctionCallOutput | GoogleThoughtOutput
           type: array
           title: Outputs
           description: Response output items.
@@ -7431,25 +7569,6 @@ components:
       - outputs
       title: GoogleInteractionResponse
       description: Response from POST /v1alpha/interactions (non-streaming).
-    GoogleOutput:
-      properties:
-        type:
-          type: string
-          title: Type
-        text:
-          anyOf:
-          - type: string
-          - type: 'null'
-        signature:
-          anyOf:
-          - type: string
-          - type: 'null'
-      additionalProperties: true
-      type: object
-      required:
-      - type
-      title: GoogleOutput
-      description: Fallback output item for forward compatibility with new Google output types.
     GoogleTextContent:
       properties:
         type:
@@ -7491,9 +7610,30 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          description: Signature for the thought block.
+      additionalProperties: true
       type: object
       title: GoogleThoughtOutput
-      description: A thought output item emitted by Gemini.
+      description: A thought/reasoning output item (model's internal reasoning).
+    GoogleTool:
+      properties:
+        type:
+          type: string
+          title: Type
+          description: Tool type.
+          default: function
+        function_declarations:
+          items:
+            $ref: '#/components/schemas/GoogleFunctionDeclaration'
+          type: array
+          title: Function Declarations
+          description: List of function declarations.
+      additionalProperties: true
+      type: object
+      required:
+      - function_declarations
+      title: GoogleTool
+      description: A tool containing function declarations.
     GoogleUsage:
       properties:
         total_input_tokens:
@@ -7508,6 +7648,7 @@ components:
           type: integer
           title: Total Tokens
           default: 0
+      additionalProperties: true
       type: object
       title: GoogleUsage
       description: Token usage statistics.
