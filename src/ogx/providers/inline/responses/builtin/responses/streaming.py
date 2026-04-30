@@ -1046,6 +1046,47 @@ class StreamingResponseOrchestrator:
             sequence_number=self.sequence_number,
         )
 
+    @staticmethod
+    def _convert_cc_messages_to_responses_input(messages: list[OpenAIMessageParam]) -> list[dict[str, Any]]:
+        """Convert Chat Completions message history to Responses API input format.
+
+        The tool-calling loop builds next_turn_messages in CC format
+        (role=assistant with tool_calls, role=tool with tool_call_id).
+        The Responses API expects type=function_call and
+        type=function_call_output items instead.
+        """
+        converted: list[dict[str, Any]] = []
+        for msg in messages:
+            dumped = msg.model_dump(exclude_none=True)
+            role = dumped.get("role")
+            if role == "assistant" and dumped.get("tool_calls"):
+                if dumped.get("content"):
+                    converted.append({"role": "assistant", "content": dumped["content"]})
+                for tc in dumped["tool_calls"]:
+                    fn = tc.get("function", {})
+                    converted.append(
+                        {
+                            "type": "function_call",
+                            "call_id": tc.get("id", ""),
+                            "name": fn.get("name", ""),
+                            "arguments": fn.get("arguments", "{}"),
+                        }
+                    )
+            elif role == "tool":
+                content = dumped.get("content", "")
+                if isinstance(content, list):
+                    content = " ".join(p.get("text", "") for p in content if isinstance(p, dict))
+                converted.append(
+                    {
+                        "type": "function_call_output",
+                        "call_id": dumped.get("tool_call_id", ""),
+                        "output": content,
+                    }
+                )
+            else:
+                converted.append(dumped)
+        return converted
+
     async def _native_response_inference(
         self,
         messages: list[OpenAIMessageParam],
@@ -1059,7 +1100,7 @@ class StreamingResponseOrchestrator:
 
         Only called when self.use_native_responses is True.
         """
-        converted_input: list[dict[str, Any]] = [msg.model_dump(exclude_none=True) for msg in messages]
+        converted_input = self._convert_cc_messages_to_responses_input(messages)
 
         native_request = CreateResponseRequest(
             model=self.ctx.model,
@@ -1118,7 +1159,10 @@ class StreamingResponseOrchestrator:
         _lifecycle_types = (
             OpenAIResponseObjectStreamResponseCreated,
             OpenAIResponseObjectStreamResponseInProgress,
+        )
+        _terminal_types = (
             OpenAIResponseObjectStreamResponseCompleted,
+            OpenAIResponseObjectStreamResponseIncomplete,
         )
         _reasoning_types = (
             OpenAIResponseObjectStreamResponseReasoningTextDelta,
@@ -1151,18 +1195,21 @@ class StreamingResponseOrchestrator:
                     )
                     tool_call_item_ids[tool_call_idx] = item_id or f"fc_{uuid.uuid4().hex[:24]}"
                     tool_call_idx += 1
-                chunk_events.append(event)
-            elif isinstance(event, OpenAIResponseObjectStreamResponseCompleted):
+                else:
+                    chunk_events.append(event)
+            elif isinstance(event, _terminal_types):
                 if hasattr(event, "response") and event.response:
                     resp = event.response
                     if hasattr(resp, "model"):
                         model = resp.model
                     if hasattr(resp, "service_tier"):
                         service_tier = resp.service_tier
-                    if hasattr(resp, "status") and resp.status == "incomplete":
-                        finish_reason = "length"
                     if hasattr(resp, "usage") and resp.usage is not None:
                         self._accumulate_native_usage(resp.usage)
+                if isinstance(event, OpenAIResponseObjectStreamResponseIncomplete) or (
+                    hasattr(resp, "status") and resp.status == "incomplete"
+                ):
+                    finish_reason = "length"
             elif isinstance(event, _lifecycle_types + _reasoning_types):
                 pass
             else:
