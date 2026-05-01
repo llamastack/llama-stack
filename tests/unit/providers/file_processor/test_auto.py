@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 import io
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi import HTTPException, UploadFile
@@ -19,6 +19,21 @@ from ogx_api.file_processors import ProcessFileRequest
 def auto_processor():
     config = AutoFileProcessorConfig()
     files_api = MagicMock()
+    return AutoFileProcessor(config, files_api)
+
+
+@pytest.fixture
+def auto_processor_with_files_api():
+    config = AutoFileProcessorConfig()
+    files_api = MagicMock()
+    file_info = MagicMock()
+    file_info.filename = "document.txt"
+    files_api.openai_retrieve_file = AsyncMock(return_value=file_info)
+
+    content_response = MagicMock()
+    content_response.body = b"Hello from file storage."
+    files_api.openai_retrieve_file_content = AsyncMock(return_value=content_response)
+
     return AutoFileProcessor(config, files_api)
 
 
@@ -119,3 +134,11 @@ async def test_error_message_includes_mime_type(auto_processor):
         await auto_processor.process_file(request, file=file)
 
     assert "application/vnd.openxmlformats" in exc_info.value.detail
+
+
+async def test_routes_file_id_using_resolved_filename(auto_processor_with_files_api):
+    request = ProcessFileRequest(file_id="file-123456")
+
+    result = await auto_processor_with_files_api.process_file(request)
+    assert result is not None
+    assert len(result.chunks) >= 1

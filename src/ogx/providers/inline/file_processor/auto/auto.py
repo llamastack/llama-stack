@@ -12,6 +12,7 @@ from ogx.log import get_logger
 from ogx.providers.inline.file_processor.pypdf.config import PyPDFFileProcessorConfig
 from ogx.providers.inline.file_processor.pypdf.pypdf import PyPDFFileProcessor
 from ogx_api.file_processors import ProcessFileRequest, ProcessFileResponse
+from ogx_api.files import RetrieveFileRequest
 
 from .config import AutoFileProcessorConfig
 
@@ -44,7 +45,7 @@ class AutoFileProcessor:
         request: ProcessFileRequest,
         file: UploadFile | None = None,
     ) -> ProcessFileResponse:
-        filename = self._resolve_filename(request, file)
+        filename = await self._resolve_filename(request, file)
         mime_type, _ = mimetypes.guess_type(filename)
         mime_category = mime_type.split("/")[0] if (mime_type and "/" in mime_type) else None
 
@@ -63,14 +64,15 @@ class AutoFileProcessor:
             ),
         )
 
-    @staticmethod
-    def _resolve_filename(request: ProcessFileRequest, file: UploadFile | None) -> str:
+    async def _resolve_filename(self, request: ProcessFileRequest, file: UploadFile | None) -> str:
         if file is not None:
             name: str | None = file.filename
             if name is not None:
                 return name
         if request.file_id is not None:
-            return request.file_id
+            file_info = await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=request.file_id))
+            resolved: str = file_info.filename
+            return resolved
         return "unknown"
 
     async def shutdown(self) -> None:
