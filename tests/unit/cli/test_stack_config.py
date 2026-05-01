@@ -247,7 +247,7 @@ def test_generate_run_config_from_providers():
     assert "storage" in config_dict
     stores = config_dict["storage"]["stores"]
     assert "prompts" in stores
-    assert stores["prompts"]["namespace"] == "prompts"
+    assert stores["prompts"]["table_name"] == "prompts"
 
     # Verify config can be parsed back
     parsed = parse_and_maybe_upgrade_config(config_dict)
