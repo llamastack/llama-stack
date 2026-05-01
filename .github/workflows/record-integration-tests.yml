@@ -19,8 +19,8 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'tests/integration/**'
-      - 'src/llama_stack/**'
-      - '!src/llama_stack_ui/**'
+      - 'src/ogx/**'
+      - '!src/ogx_ui/**'
   workflow_dispatch:
     inputs:
       pr_number:
@@ -191,6 +191,8 @@ jobs:
             suite: base
           - setup: gpt
             suite: responses
+          - setup: gpt
+            suite: messages-openai
           - setup: azure
             suite: responses
           - setup: bedrock
@@ -239,7 +241,7 @@ jobs:
       # a trusted commit, not from PR checkout. This is critical for security.
       - name: Setup test environment
         if: steps.should_run.outputs.run == 'true'
-        uses: llamastack/llama-stack/.github/actions/setup-test-environment@e92196d200bca6fc220af5996142c42528df0c56
+        uses: ogx-ai/llama-stack/.github/actions/setup-test-environment@68c0994a790e4f029007f3cce12a744d69a7d435
         with:
           python-version: "3.12"
           client-version: "latest"
@@ -249,7 +251,7 @@ jobs:
 
       - name: Run and record tests
         if: steps.should_run.outputs.run == 'true'
-        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@e92196d200bca6fc220af5996142c42528df0c56
+        uses: ogx-ai/llama-stack/.github/actions/run-and-record-tests@68c0994a790e4f029007f3cce12a744d69a7d435
         env:
           OPENAI_API_KEY: ${{ matrix.provider.setup == 'gpt' && secrets.OPENAI_API_KEY || '' }}
           AZURE_API_KEY: ${{ matrix.provider.setup == 'azure' && secrets.AZURE_API_KEY || '' }}
@@ -257,12 +259,13 @@ jobs:
           WATSONX_API_KEY: ${{ matrix.provider.setup == 'watsonx' && secrets.WATSONX_API_KEY || '' }}
           WATSONX_BASE_URL: ${{ matrix.provider.setup == 'watsonx' && secrets.WATSONX_BASE_URL || '' }}
           WATSONX_PROJECT_ID: ${{ matrix.provider.setup == 'watsonx' && secrets.WATSONX_PROJECT_ID || '' }}
-          TAVILY_SEARCH_API_KEY: ${{ contains(fromJSON('["gpt","azure"]'), matrix.provider.setup) && secrets.TAVILY_SEARCH_API_KEY || '' }}
-          AWS_BEARER_TOKEN_BEDROCK: ${{ matrix.provider.setup == 'bedrock' && secrets.AWS_BEARER_TOKEN_BEDROCK || '' }}
-          AWS_DEFAULT_REGION: ${{ matrix.provider.setup == 'bedrock' && 'us-west-2' || '' }}
           VERTEX_AI_PROJECT: ${{ matrix.provider.setup == 'vertexai' && secrets.VERTEX_AI_PROJECT || '' }}
           VERTEX_AI_LOCATION: ${{ matrix.provider.setup == 'vertexai' && 'global' || '' }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ matrix.provider.setup == 'vertexai' && secrets.GOOGLE_APPLICATION_CREDENTIALS || '' }}
           GEMINI_API_KEY: ${{ matrix.provider.setup == 'gemini' && secrets.GEMINI_API_KEY || '' }}
+          TAVILY_SEARCH_API_KEY: ${{ contains(fromJSON('["gpt","azure","vertexai"]'), matrix.provider.setup) && secrets.TAVILY_SEARCH_API_KEY || '' }}
+          AWS_BEARER_TOKEN_BEDROCK: ${{ matrix.provider.setup == 'bedrock' && secrets.AWS_BEARER_TOKEN_BEDROCK || '' }}
+          AWS_DEFAULT_REGION: ${{ matrix.provider.setup == 'bedrock' && 'us-west-2' || '' }}
         with:
           stack-config: 'server:ci-tests'
           setup: ${{ matrix.provider.setup }}

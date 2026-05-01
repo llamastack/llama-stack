@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -13,12 +13,12 @@ from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 import pytest
 from pydantic import SecretStr
 
-from llama_stack.core.datatypes import User
-from llama_stack.core.routers.inference import InferenceRouter
-from llama_stack.core.routing_tables.models import ModelsRoutingTable
-from llama_stack.providers.remote.inference.vllm.config import VLLMInferenceAdapterConfig
-from llama_stack.providers.remote.inference.vllm.vllm import VLLMInferenceAdapter
-from llama_stack_api import (
+from ogx.core.datatypes import User
+from ogx.core.routers.inference import InferenceRouter
+from ogx.core.routing_tables.models import ModelsRoutingTable
+from ogx.providers.remote.inference.vllm.config import VLLMInferenceAdapterConfig
+from ogx.providers.remote.inference.vllm.vllm import VLLMInferenceAdapter
+from ogx_api import (
     HealthStatus,
     Model,
     OpenAIChatCompletion,
@@ -400,7 +400,7 @@ class TestRerankTLSAndAuth:
             mock_client_instance.post = AsyncMock(return_value=mock_response)
             mock_client_class.return_value.__aenter__.return_value = mock_client_instance
 
-            from llama_stack_api.inference import RerankRequest
+            from ogx_api.inference import RerankRequest
 
             request = RerankRequest(model="rerank-model", query="test", items=["doc1"])
             await adapter.rerank(request)
@@ -429,7 +429,7 @@ class TestRerankTLSAndAuth:
             mock_client_instance.post = AsyncMock(return_value=mock_response)
             mock_client_class.return_value.__aenter__.return_value = mock_client_instance
 
-            from llama_stack_api.inference import RerankRequest
+            from ogx_api.inference import RerankRequest
 
             request = RerankRequest(model="rerank-model", query="test", items=["doc1"])
             await adapter.rerank(request)
@@ -455,7 +455,7 @@ class TestRerankTLSAndAuth:
             mock_client_instance.post = AsyncMock(return_value=mock_response)
             mock_client_class.return_value.__aenter__.return_value = mock_client_instance
 
-            from llama_stack_api.inference import RerankRequest
+            from ogx_api.inference import RerankRequest
 
             request = RerankRequest(model="rerank-model", query="test", items=["doc1"])
             await adapter.rerank(request)
@@ -465,7 +465,7 @@ class TestRerankTLSAndAuth:
             assert "Authorization" not in headers
 
     async def test_rerank_uses_provider_data_api_key(self):
-        """rerank() should use API key from x-llamastack-provider-data header over config."""
+        """rerank() should use API key from x-ogx-provider-data header over config."""
         config = VLLMInferenceAdapterConfig(
             base_url="https://vllm.example.com/v1",
             api_token="config-token",
@@ -487,7 +487,7 @@ class TestRerankTLSAndAuth:
             mock_client_instance.post = AsyncMock(return_value=mock_response)
             mock_client_class.return_value.__aenter__.return_value = mock_client_instance
 
-            from llama_stack_api.inference import RerankRequest
+            from ogx_api.inference import RerankRequest
 
             request = RerankRequest(model="rerank-model", query="test", items=["doc1"])
             await adapter.rerank(request)
@@ -512,7 +512,7 @@ class TestFairnessHeaderPropagation:
         )
         adapter = VLLMInferenceAdapter(config=config)
         with patch(
-            "llama_stack.providers.remote.inference.vllm.vllm.get_authenticated_user",
+            "ogx.providers.remote.inference.vllm.vllm.get_authenticated_user",
             return_value=None,
         ):
             assert adapter._get_extra_request_headers() is None
@@ -525,7 +525,7 @@ class TestFairnessHeaderPropagation:
         adapter = VLLMInferenceAdapter(config=config)
         user = User(principal="alice", attributes={"teams": ["team-a"]})
         with patch(
-            "llama_stack.providers.remote.inference.vllm.vllm.get_authenticated_user",
+            "ogx.providers.remote.inference.vllm.vllm.get_authenticated_user",
             return_value=user,
         ):
             assert adapter._get_extra_request_headers() is None
@@ -541,7 +541,7 @@ class TestFairnessHeaderPropagation:
             attributes={"namespaces": ["premium-sub"], "teams": ["team-a"]},
         )
         with patch(
-            "llama_stack.providers.remote.inference.vllm.vllm.get_authenticated_user",
+            "ogx.providers.remote.inference.vllm.vllm.get_authenticated_user",
             return_value=user,
         ):
             headers = adapter._get_extra_request_headers()
@@ -558,7 +558,7 @@ class TestFairnessHeaderPropagation:
             attributes={"namespaces": ["primary-sub", "secondary-sub"]},
         )
         with patch(
-            "llama_stack.providers.remote.inference.vllm.vllm.get_authenticated_user",
+            "ogx.providers.remote.inference.vllm.vllm.get_authenticated_user",
             return_value=user,
         ):
             headers = adapter._get_extra_request_headers()
@@ -574,7 +574,7 @@ class TestFairnessHeaderPropagation:
 
         with (
             patch(
-                "llama_stack.providers.remote.inference.vllm.vllm.get_authenticated_user",
+                "ogx.providers.remote.inference.vllm.vllm.get_authenticated_user",
                 return_value=user,
             ),
             patch.object(VLLMInferenceAdapter, "client", new_callable=PropertyMock) as mock_client_prop,

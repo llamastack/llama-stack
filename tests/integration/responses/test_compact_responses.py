@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -6,6 +6,8 @@
 
 import pytest
 from llama_stack_client import LlamaStackClient
+
+from .helpers import skip_if_provider_is_vertexai
 
 
 @pytest.fixture(autouse=True)
@@ -248,6 +250,14 @@ class TestContextManagement:
     def _skip_non_openai_client(self, responses_client):
         if isinstance(responses_client, LlamaStackClient):
             pytest.skip("Context management tests require OpenAI client")
+
+    @pytest.fixture(autouse=True)
+    def _skip_vertexai(self, client_with_models, text_model_id):
+        skip_if_provider_is_vertexai(
+            client_with_models,
+            text_model_id,
+            reason="tiktoken does not support vertexai model names for token counting",
+        )
 
     def test_context_management_auto_compacts_large_input(self, responses_client, text_model_id):
         """When input exceeds compact_threshold, context should be auto-compacted."""

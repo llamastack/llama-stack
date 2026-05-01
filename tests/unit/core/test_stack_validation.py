@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from llama_stack.core.datatypes import (
+from ogx.core.datatypes import (
     QualifiedModel,
     RerankerModel,
     RewriteQueryParams,
@@ -19,9 +19,9 @@ from llama_stack.core.datatypes import (
     StackConfig,
     VectorStoresConfig,
 )
-from llama_stack.core.stack import register_connectors, validate_safety_config, validate_vector_stores_config
-from llama_stack.core.storage.datatypes import ServerStoresConfig, StorageConfig
-from llama_stack_api import (
+from ogx.core.stack import register_connectors, validate_safety_config, validate_vector_stores_config
+from ogx.core.storage.datatypes import ServerStoresConfig, StorageConfig
+from ogx_api import (
     Api,
     Connector,
     ConnectorInput,

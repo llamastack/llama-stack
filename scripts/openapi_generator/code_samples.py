@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -67,7 +67,7 @@ client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
 
 response = client.embeddings.create(
     model="all-MiniLM-L6-v2",
-    input="Llama Stack is awesome",
+    input="OGX is awesome",
 )
 print(response.data[0].embedding[:5])
 """,
@@ -393,7 +393,7 @@ client = OpenAI(base_url="http://localhost:8321/v1", api_key="fake")
 
 results = client.vector_stores.search(
     vector_store_id="vs_abc123",
-    query="What is Llama Stack?",
+    query="What is OGX?",
 )
 for result in results:
     print(result)
@@ -440,7 +440,7 @@ message = client.messages.create(
     model="llama-3.3-70b",
     max_tokens=1024,
     messages=[
-        {"role": "user", "content": "What is Llama Stack?"}
+        {"role": "user", "content": "What is OGX?"}
     ],
 )
 
@@ -460,7 +460,7 @@ const client = new Anthropic({
 const message = await client.messages.create({
   model: "llama-3.3-70b",
   max_tokens: 1024,
-  messages: [{ role: "user", content: "What is Llama Stack?" }],
+  messages: [{ role: "user", content: "What is OGX?" }],
 });
 
 console.log(message.content[0].text);""",

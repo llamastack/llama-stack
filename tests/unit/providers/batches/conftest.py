@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -12,11 +12,11 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from llama_stack.core.storage.datatypes import SqliteSqlStoreConfig, SqlStoreReference
-from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
-from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends, sqlstore_impl
-from llama_stack.providers.inline.batches.reference.batches import ReferenceBatchesImpl
-from llama_stack.providers.inline.batches.reference.config import ReferenceBatchesImplConfig
+from ogx.core.storage.datatypes import SqliteSqlStoreConfig, SqlStoreReference
+from ogx.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
+from ogx.core.storage.sqlstore.sqlstore import register_sqlstore_backends, sqlstore_impl
+from ogx.providers.inline.batches.reference.batches import ReferenceBatchesImpl
+from ogx.providers.inline.batches.reference.config import ReferenceBatchesImplConfig
 
 
 @pytest.fixture
