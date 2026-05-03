@@ -26,7 +26,7 @@ Agents are configured using the `AgentConfig` class, which includes:
 - **Safety Shields**: Guardrails to ensure responsible AI behavior
 
 ```python
-from llama_stack_client import Agent
+from ogx_client import Agent
 
 # Create the agent
 agent = Agent(
@@ -58,7 +58,7 @@ Each interaction with an agent is called a "turn" and consists of:
 <TabItem value="streaming" label="Streaming Response">
 
 ```python
-from llama_stack_client import AgentEventLogger
+from ogx_client import AgentEventLogger
 
 # Create a turn with streaming response
 turn_response = agent.create_turn(

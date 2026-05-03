@@ -2654,32 +2654,6 @@ wheels = [
 ]
 
 [[package]]
-name = "llama-stack-client"
-version = "0.7.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "anyio" },
-    { name = "click" },
-    { name = "distro" },
-    { name = "fire" },
-    { name = "httpx" },
-    { name = "pandas" },
-    { name = "prompt-toolkit" },
-    { name = "pyaml" },
-    { name = "pydantic" },
-    { name = "requests" },
-    { name = "rich" },
-    { name = "sniffio" },
-    { name = "termcolor" },
-    { name = "tqdm" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d7/3d/c4a268a4b60feb6f7e6da3fad2504aa157a52384529766560f8f3cfca43f/llama_stack_client-0.7.2.tar.gz", hash = "sha256:0e3458800af6a18fd8fc5e0760ed626931a416f6c1fdf24aeba4001e6fca9aec", size = 372953, upload-time = "2026-04-08T14:19:32.02Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/78/a8/cc7fa209471abcaac51139b3e6655c3b18ea718f0afa7cfa6ad974dd9eab/llama_stack_client-0.7.2-py3-none-any.whl", hash = "sha256:8b86156f2522c241ae46280e59287b7716c3cdaf016b6477630eb64bd8cbf150", size = 375337, upload-time = "2026-04-08T14:19:30.444Z" },
-]
-
-[[package]]
 name = "lm-format-enforcer"
 version = "0.11.3"
 source = { registry = "https://pypi.org/simple" }
@@ -3466,7 +3440,7 @@ dependencies = [
 
 [package.optional-dependencies]
 client = [
-    { name = "llama-stack-client" },
+    { name = "ogx-client" },
 ]
 starter = [
     { name = "aiohttp" },
@@ -3608,10 +3582,10 @@ type-checking = [
     { name = "langchain-core" },
     { name = "langchain-openai" },
     { name = "langgraph" },
-    { name = "llama-stack-client" },
     { name = "lm-format-enforcer" },
     { name = "mcp" },
     { name = "nest-asyncio" },
+    { name = "ogx-client" },
     { name = "ollama" },
     { name = "pandas" },
     { name = "pandas-stubs" },
@@ -3685,7 +3659,6 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "jsonschema" },
     { name = "langdetect", marker = "extra == 'starter'" },
-    { name = "llama-stack-client", marker = "extra == 'client'", specifier = ">=0.7.1" },
     { name = "matplotlib", marker = "extra == 'starter'" },
     { name = "mcp", specifier = ">=1.23.0" },
     { name = "mcp", marker = "extra == 'starter'", specifier = ">=1.23.0" },
@@ -3694,6 +3667,7 @@ requires-dist = [
     { name = "numpy", marker = "extra == 'starter'" },
     { name = "oci", specifier = ">=2.165.0" },
     { name = "ogx-api", editable = "src/ogx_api" },
+    { name = "ogx-client", marker = "extra == 'client'", specifier = ">=0.7.3" },
     { name = "ollama", marker = "extra == 'starter'" },
     { name = "openai", specifier = ">=2.30.0" },
     { name = "opentelemetry-distro", specifier = ">=0.60b1" },
@@ -3826,10 +3800,10 @@ type-checking = [
     { name = "langchain-core" },
     { name = "langchain-openai" },
     { name = "langgraph" },
-    { name = "llama-stack-client", specifier = ">=0.7.1" },
     { name = "lm-format-enforcer" },
     { name = "mcp", specifier = ">=1.23.0" },
     { name = "nest-asyncio" },
+    { name = "ogx-client", specifier = ">=0.7.3" },
     { name = "ollama" },
     { name = "pandas" },
     { name = "pandas-stubs" },
@@ -3890,6 +3864,32 @@ requires-dist = [
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.30.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
     { name = "pydantic", specifier = ">=2.11.9" },
+]
+
+[[package]]
+name = "ogx-client"
+version = "0.7.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "click" },
+    { name = "distro" },
+    { name = "fire" },
+    { name = "httpx" },
+    { name = "pandas" },
+    { name = "prompt-toolkit" },
+    { name = "pyaml" },
+    { name = "pydantic" },
+    { name = "requests" },
+    { name = "rich" },
+    { name = "sniffio" },
+    { name = "termcolor" },
+    { name = "tqdm" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ea/14/de328d875a8fe536fbb784cd2bb71d3e2811b69319cf2aab9aa151f5b5ab/ogx_client-0.7.3.tar.gz", hash = "sha256:f9e9fe66608166a658df63642955706e7c12892b3ee0dd21cbb889d7396c6621", size = 436495, upload-time = "2026-05-01T19:01:31.218Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/71/1d/767a470740cc71f7f405ad93b2f259c26a75ebf62f93236c2d8198a07366/ogx_client-0.7.3-py3-none-any.whl", hash = "sha256:29c4bcb70ffeedbc27d2f833c6a2ca5c0ae91b30f8d7024dddba8b94f5deec13", size = 311473, upload-time = "2026-05-01T19:01:29.339Z" },
 ]
 
 [[package]]
