@@ -3663,7 +3663,7 @@ requires-dist = [
     { name = "numpy", marker = "extra == 'starter'" },
     { name = "oci", specifier = ">=2.165.0" },
     { name = "ogx-api", editable = "src/ogx_api" },
-    { name = "ogx-client", marker = "extra == 'client'", specifier = ">=0.7.3" },
+    { name = "ogx-client", marker = "extra == 'client'", specifier = "==0.8.0" },
     { name = "ollama", marker = "extra == 'starter'" },
     { name = "openai", specifier = ">=2.30.0" },
     { name = "opentelemetry-distro", specifier = ">=0.60b1" },
@@ -3797,7 +3797,7 @@ type-checking = [
     { name = "lm-format-enforcer" },
     { name = "mcp", specifier = ">=1.23.0" },
     { name = "nest-asyncio" },
-    { name = "ogx-client", specifier = ">=0.7.3" },
+    { name = "ogx-client", specifier = "==0.8.0" },
     { name = "ollama" },
     { name = "pandas" },
     { name = "pandas-stubs" },
@@ -3862,7 +3862,7 @@ requires-dist = [
 
 [[package]]
 name = "ogx-client"
-version = "0.7.3"
+version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -3881,9 +3881,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ea/14/de328d875a8fe536fbb784cd2bb71d3e2811b69319cf2aab9aa151f5b5ab/ogx_client-0.7.3.tar.gz", hash = "sha256:f9e9fe66608166a658df63642955706e7c12892b3ee0dd21cbb889d7396c6621", size = 436495, upload-time = "2026-05-01T19:01:31.218Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/07/24c3dfd2441902c6c6fd3bcb8e91f93b81df8a30b7aea5fa4faece240637/ogx_client-0.8.0.tar.gz", hash = "sha256:f6bc08112a1f0fd78660771e74e783511e6108609f4c72c57541a5ccae26f1f0", size = 436487, upload-time = "2026-05-01T20:03:38.854Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/71/1d/767a470740cc71f7f405ad93b2f259c26a75ebf62f93236c2d8198a07366/ogx_client-0.7.3-py3-none-any.whl", hash = "sha256:29c4bcb70ffeedbc27d2f833c6a2ca5c0ae91b30f8d7024dddba8b94f5deec13", size = 311473, upload-time = "2026-05-01T19:01:29.339Z" },
+    { url = "https://files.pythonhosted.org/packages/50/9c/2350f0aac4400dc3f556ed68b348496ec48972f5f406e6f847d4074f8e88/ogx_client-0.8.0-py3-none-any.whl", hash = "sha256:7265cd2ff23e148eb2818e7063d13b68e83cb73796b640d158525e758972a80d", size = 311475, upload-time = "2026-05-01T20:03:36.989Z" },
 ]
 
 [[package]]
