@@ -8,7 +8,6 @@ import re
 from typing import Any
 
 import httpx
-from aiohttp import hdrs
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from ogx.core.access_control.conditions import User as ProtocolUser
@@ -102,7 +101,7 @@ class AuthenticationMiddleware:
         if scope["type"] == "http":
             # Find the route and check if authentication is required
             path = scope.get("path", "")
-            method = scope.get("method", hdrs.METH_GET)
+            method = scope.get("method", "GET")
 
             if not hasattr(self, "route_impls"):
                 self.route_impls = initialize_route_impls(self.impls)
