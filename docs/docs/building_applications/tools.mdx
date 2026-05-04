@@ -204,12 +204,12 @@ export TAVILY_SEARCH_API_KEY="your key"
 <TabItem value="implementation" label="Implementation">
 
 ```python
-from llama_stack_client.lib.agents.agent import Agent
-from llama_stack_client.types.agent_create_params import AgentConfig
-from llama_stack_client.lib.agents.event_logger import EventLogger
-from llama_stack_client import LlamaStackClient
+from ogx_client.lib.agents.agent import Agent
+from ogx_client.types.agent_create_params import AgentConfig
+from ogx_client.lib.agents.event_logger import EventLogger
+from ogx_client import OgxClient
 
-client = LlamaStackClient(
+client = OgxClient(
     base_url=f"http://localhost:8321",
     provider_data={
         "tavily_search_api_key": "your_TAVILY_SEARCH_API_KEY"
@@ -252,7 +252,7 @@ for log in EventLogger().log(response):
     ```
     or from the client side:
     ```python
-    client = LlamaStackClient(
+    client = OgxClient(
         base_url="http://localhost:8321",
         provider_data={"wolfram_alpha_api_key": wolfram_api_key},
     )

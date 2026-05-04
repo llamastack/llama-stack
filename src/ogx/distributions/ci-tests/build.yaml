@@ -31,7 +31,7 @@ distribution_spec:
     files:
     - provider_type: inline::localfs
     file_processors:
-    - provider_type: inline::pypdf
+    - provider_type: inline::auto
     safety:
     - provider_type: inline::llama-guard
     - provider_type: inline::code-scanner
