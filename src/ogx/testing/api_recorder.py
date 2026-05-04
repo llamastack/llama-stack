@@ -277,18 +277,18 @@ def patch_httpx_for_test_id():
     We use the _prepare_request hook that Stainless clients provide for mutating
     requests after construction but before sending.
     """
-    from llama_stack_client import LlamaStackClient
+    from ogx_client import OgxClient
 
-    if "llama_stack_client_prepare_request" in _original_methods:
+    if "ogx_client_prepare_request" in _original_methods:
         return
 
-    _original_methods["llama_stack_client_prepare_request"] = LlamaStackClient._prepare_request
+    _original_methods["ogx_client_prepare_request"] = OgxClient._prepare_request
     _original_methods["openai_prepare_request"] = OpenAI._prepare_request
 
     def patched_prepare_request(self, request):
         # Call original first (it's a sync method that returns None)
         # Determine which original to call based on client type
-        _original_methods["llama_stack_client_prepare_request"](self, request)
+        _original_methods["ogx_client_prepare_request"](self, request)
         _original_methods["openai_prepare_request"](self, request)
 
         # Only inject test ID in server mode
@@ -313,20 +313,20 @@ def patch_httpx_for_test_id():
 
         return None
 
-    LlamaStackClient._prepare_request = patched_prepare_request
+    OgxClient._prepare_request = patched_prepare_request
     OpenAI._prepare_request = patched_prepare_request
 
 
 # currently, unpatch is never called
 def unpatch_httpx_for_test_id():
     """Remove client _prepare_request patches for test ID injection."""
-    if "llama_stack_client_prepare_request" not in _original_methods:
+    if "ogx_client_prepare_request" not in _original_methods:
         return
 
-    from llama_stack_client import LlamaStackClient
+    from ogx_client import OgxClient
 
-    LlamaStackClient._prepare_request = _original_methods["llama_stack_client_prepare_request"]
-    del _original_methods["llama_stack_client_prepare_request"]
+    OgxClient._prepare_request = _original_methods["ogx_client_prepare_request"]
+    del _original_methods["ogx_client_prepare_request"]
     OpenAI._prepare_request = _original_methods["openai_prepare_request"]
     del _original_methods["openai_prepare_request"]
 

@@ -162,9 +162,9 @@ files:
 ### Python Client
 
 ```python
-from ogx import LlamaStackClient
+from ogx import OgxClient
 
-client = LlamaStackClient("http://localhost:8000")
+client = OgxClient("http://localhost:8000")
 
 # Create vector store
 vector_store = client.vector_stores.create(name="documents")

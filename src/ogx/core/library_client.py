@@ -24,18 +24,16 @@ from fastapi import Response as FastAPIResponse
 from ogx.core.utils.type_inspection import is_body_param, is_unwrapped_body_param
 
 try:
-    from llama_stack_client import (
+    from ogx_client import (
         NOT_GIVEN,
         APIResponse,
         AsyncAPIResponse,
-        AsyncLlamaStackClient,
+        AsyncOgxClient,
         AsyncStream,
-        LlamaStackClient,
+        OgxClient,
     )
 except ImportError as e:
-    raise ImportError(
-        "llama-stack-client is not installed. Please install it with `uv pip install ogx[client]`."
-    ) from e
+    raise ImportError("ogx-client is not installed. Please install it with `uv pip install ogx[client]`.") from e
 
 from pydantic import BaseModel, TypeAdapter
 from rich.console import Console
@@ -157,7 +155,7 @@ class LibraryClientHttpxResponse:
         self.headers = response.headers
 
 
-class OGXAsLibraryClient(LlamaStackClient):
+class OGXAsLibraryClient(OgxClient):
     """Synchronous client that runs a OGX distribution in-process as a library."""
 
     def __init__(
@@ -258,7 +256,7 @@ class OGXAsLibraryClient(LlamaStackClient):
             return result
 
 
-class AsyncOGXAsLibraryClient(AsyncLlamaStackClient):
+class AsyncOGXAsLibraryClient(AsyncOgxClient):
     """Async client that runs a OGX distribution in-process as a library."""
 
     def __init__(
@@ -580,7 +578,7 @@ class AsyncOGXAsLibraryClient(AsyncLlamaStackClient):
             ),
         )
 
-        # we use asynchronous impl always internally and channel all requests to AsyncLlamaStackClient
+        # we use asynchronous impl always internally and channel all requests to AsyncOgxClient
         # however, the top-level caller may be a SyncAPIClient -- so its stream_cls might be a Stream (SyncStream)
         # so we need to convert it to AsyncStream
         # mypy can't track runtime variables inside the [...] of a generic, so ignore that check
