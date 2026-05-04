@@ -178,6 +178,38 @@ def test_bad_token_still_returns_401(oauth2_client, suppress_auth_errors):
         assert "Invalid JWT token" in response.json()["error"]["message"]
 
 
+def test_jwks_missing_kid_still_returns_401(oauth2_client, suppress_auth_errors):
+    import jwt
+
+    token_with_unknown_kid = jwt.encode(
+        {"sub": "my-user", "groups": ["group1", "group2"], "scope": "foo bar", "aud": "ogx"},
+        key="foobarbaz",
+        algorithm="HS256",
+        headers={"kid": "unknown-kid"},
+    )
+
+    with patch("urllib.request.urlopen") as mock_urlopen:
+        mock_response = Mock()
+        mock_response.read.return_value = json.dumps(
+            {
+                "keys": [
+                    {
+                        "kid": "1234567890",
+                        "kty": "oct",
+                        "alg": "HS256",
+                        "use": "sig",
+                        "k": base64.b64encode(b"foobarbaz").decode(),
+                    }
+                ]
+            }
+        ).encode()
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+
+        response = oauth2_client.get("/test", headers={"Authorization": f"Bearer {token_with_unknown_kid}"})
+        assert response.status_code == 401
+        assert "Invalid JWT token" in response.json()["error"]["message"]
+
+
 # --- OAuth2 introspection provider: 503 tests ---
 
 

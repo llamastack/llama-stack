@@ -11,7 +11,7 @@ from urllib.parse import parse_qs, urljoin, urlparse
 
 import httpx
 import jwt
-from jwt.exceptions import PyJWKClientError
+from jwt.exceptions import PyJWKClientConnectionError
 from pydantic import BaseModel, Field
 from starlette.types import Scope
 
@@ -202,7 +202,7 @@ class OAuth2TokenAuthProvider(AuthProvider):
                 issuer=self.config.issuer,
                 options={"verify_exp": True, "verify_aud": True, "verify_iss": True},
             )
-        except (PyJWKClientError, ConnectionError, TimeoutError, OSError) as exc:
+        except (PyJWKClientConnectionError, ConnectionError, TimeoutError, OSError) as exc:
             logger.warning("Failed to reach JWKS endpoint", error=str(exc))
             raise AuthServiceUnavailableError("Authentication service unavailable") from exc
         except Exception as exc:
