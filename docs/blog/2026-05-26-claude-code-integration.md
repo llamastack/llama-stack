@@ -16,9 +16,7 @@ This post walks through the setup, explains how the translation works under the 
 
 Claude Code talks to the Anthropic Messages API (`/v1/messages`). OGX implements that API. When Claude Code sends a request, OGX receives it, translates the format if needed, and forwards it to whatever inference provider you've configured — OpenAI, vLLM, Ollama, Fireworks, Groq, Bedrock, or any of the other [supported providers](https://ogx-ai.github.io/docs/providers).
 
-```text
-Claude Code → OGX /v1/messages → Provider (OpenAI, vLLM, Ollama, ...)
-```
+![Claude Code integration flow](/img/claude-code-flow.svg)
 
 The translation layer handles message format conversion, tool call transformations, and streaming event reformatting. For providers that already support the Messages API natively (Ollama and vLLM with compatible models), OGX passes requests through directly — no translation overhead.
 
