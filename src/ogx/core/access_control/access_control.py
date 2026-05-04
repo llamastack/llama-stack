@@ -12,6 +12,7 @@ from ogx.log import get_logger
 
 from .conditions import (
     Condition,
+    ConditionEvaluation,
     ProtectedResource,
     parse_conditions,
 )
@@ -88,26 +89,42 @@ def as_list(obj: Any) -> list[Any]:
     return [obj]
 
 
+def evaluate_conditions(
+    conditions: list[Condition],
+    resource: ProtectedResource,
+    user: User,
+) -> ConditionEvaluation:
+    """Evaluate a list of conditions using AND semantics.
+
+    Args:
+        conditions: List of conditions to evaluate.
+        resource: The protected resource being accessed.
+        user: The user attempting access.
+
+    Returns:
+        MATCH when all conditions match, NO_MATCH when any condition explicitly does not
+        match, and INDETERMINATE when there is no explicit mismatch but at least one
+        condition cannot be evaluated due to missing data.
+    """
+    has_indeterminate = False
+    for condition in conditions:
+        evaluation = condition.evaluate(resource, user)
+        if evaluation is ConditionEvaluation.NO_MATCH:
+            return ConditionEvaluation.NO_MATCH
+        if evaluation is ConditionEvaluation.INDETERMINATE:
+            has_indeterminate = True
+    if has_indeterminate:
+        return ConditionEvaluation.INDETERMINATE
+    return ConditionEvaluation.MATCH
+
+
 def matches_conditions(
     conditions: list[Condition],
     resource: ProtectedResource,
     user: User,
 ) -> bool:
-    """Check if all conditions in a list are satisfied for the given resource and user.
-
-    Args:
-        conditions: List of conditions that must all match.
-        resource: The protected resource being accessed.
-        user: The user attempting access.
-
-    Returns:
-        True if all conditions match, False if any condition fails.
-    """
-    for condition in conditions:
-        # must match all conditions
-        if not condition.matches(resource, user):
-            return False
-    return True
+    """Check if all conditions in a list are satisfied for the given resource and user."""
+    return evaluate_conditions(conditions, resource, user) is ConditionEvaluation.MATCH
 
 
 def default_policy() -> list[AccessRule]:
@@ -169,12 +186,14 @@ def is_action_allowed(
         for index, rule in enumerate(policy):  # noqa: B007
             if rule.forbid and matches_scope(rule.forbid, action, qualified_resource_id, user.principal):
                 if rule.when:
-                    if matches_conditions(parse_conditions(as_list(rule.when)), resource, user):
+                    when_result = evaluate_conditions(parse_conditions(as_list(rule.when)), resource, user)
+                    if when_result is ConditionEvaluation.MATCH:
                         decision = False
                         reason = rule.description or ""
                         break
                 elif rule.unless:
-                    if not matches_conditions(parse_conditions(as_list(rule.unless)), resource, user):
+                    unless_result = evaluate_conditions(parse_conditions(as_list(rule.unless)), resource, user)
+                    if unless_result is not ConditionEvaluation.MATCH:
                         decision = False
                         reason = rule.description or ""
                         break
@@ -184,12 +203,14 @@ def is_action_allowed(
                     break
             elif rule.permit and matches_scope(rule.permit, action, qualified_resource_id, user.principal):
                 if rule.when:
-                    if matches_conditions(parse_conditions(as_list(rule.when)), resource, user):
+                    when_result = evaluate_conditions(parse_conditions(as_list(rule.when)), resource, user)
+                    if when_result is ConditionEvaluation.MATCH:
                         decision = True
                         reason = rule.description or ""
                         break
                 elif rule.unless:
-                    if not matches_conditions(parse_conditions(as_list(rule.unless)), resource, user):
+                    unless_result = evaluate_conditions(parse_conditions(as_list(rule.unless)), resource, user)
+                    if unless_result is ConditionEvaluation.NO_MATCH:
                         decision = True
                         reason = rule.description or ""
                         break

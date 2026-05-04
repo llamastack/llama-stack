@@ -4,7 +4,12 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from enum import StrEnum
 from typing import Protocol
+
+from ogx.log import get_logger
+
+logger = get_logger(name=__name__, category="core::access_control")
 
 
 class User(Protocol):
@@ -25,7 +30,21 @@ class ProtectedResource(Protocol):
 class Condition(Protocol):
     """Protocol for access control conditions that evaluate resource-user relationships."""
 
+    def evaluate(self, resource: ProtectedResource, user: User) -> "ConditionEvaluation": ...
+
     def matches(self, resource: ProtectedResource, user: User) -> bool: ...
+
+
+class ConditionEvaluation(StrEnum):
+    """Tri-state result for evaluating access control conditions."""
+
+    MATCH = "match"
+    NO_MATCH = "no_match"
+    INDETERMINATE = "indeterminate"
+
+
+def _to_evaluation(matched: bool) -> ConditionEvaluation:
+    return ConditionEvaluation.MATCH if matched else ConditionEvaluation.NO_MATCH
 
 
 class UserInOwnersList:
@@ -45,17 +64,20 @@ class UserInOwnersList:
         else:
             return None
 
-    def matches(self, resource: ProtectedResource, user: User) -> bool:
+    def evaluate(self, resource: ProtectedResource, user: User) -> ConditionEvaluation:
         defined = self.owners_values(resource)
         if not defined:
-            return False
+            return ConditionEvaluation.NO_MATCH
         if not user.attributes or self.name not in user.attributes or not user.attributes[self.name]:
-            return False
+            return ConditionEvaluation.NO_MATCH
         user_values = user.attributes[self.name]
         for value in defined:
             if value in user_values:
-                return True
-        return False
+                return ConditionEvaluation.MATCH
+        return ConditionEvaluation.NO_MATCH
+
+    def matches(self, resource: ProtectedResource, user: User) -> bool:
+        return self.evaluate(resource, user) is ConditionEvaluation.MATCH
 
     def __repr__(self) -> str:
         return f"user in owners {self.name}"
@@ -67,8 +89,24 @@ class UserNotInOwnersList(UserInOwnersList):
     def __init__(self, name: str):
         super().__init__(name)
 
+    def evaluate(self, resource: ProtectedResource, user: User) -> ConditionEvaluation:
+        if self.owners_values(resource) is None:
+            logger.warning(
+                "Negation condition denied access due to missing owner data",
+                condition=repr(self),
+            )
+            return ConditionEvaluation.INDETERMINATE
+        if not user.attributes or self.name not in user.attributes or not user.attributes[self.name]:
+            logger.warning(
+                "Negation condition denied access due to missing user attributes",
+                condition=repr(self),
+                attribute=self.name,
+            )
+            return ConditionEvaluation.INDETERMINATE
+        return _to_evaluation(super().evaluate(resource, user) is ConditionEvaluation.NO_MATCH)
+
     def matches(self, resource: ProtectedResource, user: User) -> bool:
-        return not super().matches(resource, user)
+        return self.evaluate(resource, user) is ConditionEvaluation.MATCH
 
     def __repr__(self) -> str:
         return f"user not in owners {self.name}"
@@ -81,11 +119,14 @@ class UserWithValueInList:
         self.name = name
         self.value = value
 
-    def matches(self, resource: ProtectedResource, user: User) -> bool:
+    def evaluate(self, resource: ProtectedResource, user: User) -> ConditionEvaluation:
         if user.attributes and self.name in user.attributes:
-            return self.value in user.attributes[self.name]
-        print(f"User does not have {self.value} in {self.name}")
-        return False
+            return _to_evaluation(self.value in user.attributes[self.name])
+        logger.debug("User does not have attribute", value=self.value, attribute=self.name)
+        return ConditionEvaluation.NO_MATCH
+
+    def matches(self, resource: ProtectedResource, user: User) -> bool:
+        return self.evaluate(resource, user) is ConditionEvaluation.MATCH
 
     def __repr__(self) -> str:
         return f"user with {self.value} in {self.name}"
@@ -97,8 +138,18 @@ class UserWithValueNotInList(UserWithValueInList):
     def __init__(self, name: str, value: str):
         super().__init__(name, value)
 
+    def evaluate(self, resource: ProtectedResource, user: User) -> ConditionEvaluation:
+        if not user.attributes or self.name not in user.attributes:
+            logger.warning(
+                "Negation condition denied access due to missing user attributes",
+                condition=repr(self),
+                attribute=self.name,
+            )
+            return ConditionEvaluation.INDETERMINATE
+        return _to_evaluation(self.value not in user.attributes[self.name])
+
     def matches(self, resource: ProtectedResource, user: User) -> bool:
-        return not super().matches(resource, user)
+        return self.evaluate(resource, user) is ConditionEvaluation.MATCH
 
     def __repr__(self) -> str:
         return f"user with {self.value} not in {self.name}"
@@ -107,8 +158,11 @@ class UserWithValueNotInList(UserWithValueInList):
 class UserIsOwner:
     """Condition that checks if the user is the owner of the resource."""
 
+    def evaluate(self, resource: ProtectedResource, user: User) -> ConditionEvaluation:
+        return _to_evaluation(resource.owner.principal == user.principal if resource.owner else False)
+
     def matches(self, resource: ProtectedResource, user: User) -> bool:
-        return resource.owner.principal == user.principal if resource.owner else False
+        return self.evaluate(resource, user) is ConditionEvaluation.MATCH
 
     def __repr__(self) -> str:
         return "user is owner"
@@ -117,8 +171,17 @@ class UserIsOwner:
 class UserIsNotOwner:
     """Condition that checks if the user is NOT the owner of the resource."""
 
+    def evaluate(self, resource: ProtectedResource, user: User) -> ConditionEvaluation:
+        if not resource.owner:
+            logger.warning(
+                "Negation condition denied access due to missing resource owner",
+                condition=repr(self),
+            )
+            return ConditionEvaluation.INDETERMINATE
+        return _to_evaluation(resource.owner.principal != user.principal)
+
     def matches(self, resource: ProtectedResource, user: User) -> bool:
-        return not resource.owner or resource.owner.principal != user.principal
+        return self.evaluate(resource, user) is ConditionEvaluation.MATCH
 
     def __repr__(self) -> str:
         return "user is not owner"
@@ -127,8 +190,11 @@ class UserIsNotOwner:
 class ResourceIsUnowned:
     """Condition that checks if the resource has no owner."""
 
+    def evaluate(self, resource: ProtectedResource, user: User) -> ConditionEvaluation:
+        return _to_evaluation(not resource.owner)
+
     def matches(self, resource: ProtectedResource, user: User) -> bool:
-        return not resource.owner
+        return self.evaluate(resource, user) is ConditionEvaluation.MATCH
 
     def __repr__(self) -> str:
         return "resource is unowned"
