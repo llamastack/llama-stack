@@ -19,7 +19,7 @@ ADK/Gemini ecosystem clients can call OGX natively.
 
 Usage:
     # Start a OGX server first:
-    OLLAMA_URL=http://localhost:11434/v1 uv run --extra starter ogx run starter --port 8321
+    OLLAMA_URL=http://localhost:11434/v1 uv run --extra starter ogx stack run starter --port 8321
 
     # Then run this script:
     uv run python scripts/test_interactions_api.py --base-url http://localhost:8321 --model ollama/llama3.2:3b
@@ -134,9 +134,109 @@ def run_non_streaming_generation_config(client: genai.Client, model: str) -> Non
     print("  PASSED")
 
 
+def run_tool_calling(client: genai.Client, model: str) -> None:
+    """Test 5: Tool calling - function declaration, function_call output, function_response input."""
+    print("Test 5: Tool calling round-trip...")
+
+    # Step 1: Send request with tools, expect a function_call output
+    interaction = client.interactions.create(
+        model=model,
+        input="What is the weather in New York City? Use the get_weather tool.",
+        tools=[
+            {
+                "function_declarations": [
+                    {
+                        "name": "get_weather",
+                        "description": "Get the current weather for a location.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "location": {"type": "string", "description": "The city name."},
+                            },
+                            "required": ["location"],
+                        },
+                    }
+                ]
+            }
+        ],
+    )
+
+    assert interaction.status == "completed"
+    assert len(interaction.outputs) > 0
+
+    # The model should have produced a function_call output
+    function_calls = [o for o in interaction.outputs if o.type == "function_call"]
+    print(f"  Outputs: {[o.type for o in interaction.outputs]}")
+
+    if not function_calls:
+        # Some models may just answer directly without calling the tool
+        print("  Note: Model did not call the tool (answered directly). Skipping round-trip.")
+        print("  PASSED (partial - no function_call)")
+        return
+
+    fc = function_calls[0]
+    print(f"  Function call: {fc.name}({fc.args})")
+    assert fc.name == "get_weather", f"Expected function name 'get_weather', got: {fc.name}"
+
+    # Step 2: Send the function result back and get a final text response
+    interaction2 = client.interactions.create(
+        model=model,
+        input=[
+            {"role": "user", "content": [{"type": "text", "text": "What is the weather in New York City?"}]},
+            {
+                "role": "model",
+                "content": [
+                    {
+                        "type": "function_call",
+                        "id": fc.id,
+                        "name": fc.name,
+                        "args": fc.args,
+                    }
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "function_result",
+                        "id": fc.id,
+                        "name": fc.name,
+                        "result": {"temperature": 72, "condition": "Sunny"},
+                    }
+                ],
+            },
+        ],
+        tools=[
+            {
+                "function_declarations": [
+                    {
+                        "name": "get_weather",
+                        "description": "Get the current weather for a location.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "location": {"type": "string", "description": "The city name."},
+                            },
+                            "required": ["location"],
+                        },
+                    }
+                ]
+            }
+        ],
+    )
+
+    assert interaction2.status == "completed"
+    assert len(interaction2.outputs) > 0
+
+    text_outputs = [o for o in interaction2.outputs if o.type == "text"]
+    assert len(text_outputs) > 0, "Expected a text response after providing function result"
+    print(f"  Final response: {text_outputs[0].text[:100]}")
+    print("  PASSED")
+
+
 def run_streaming_basic(client: genai.Client, model: str) -> None:
-    """Test 5: Streaming interaction with SSE events."""
-    print("Test 5: Streaming basic interaction...")
+    """Test 6: Streaming interaction with SSE events."""
+    print("Test 6: Streaming basic interaction...")
 
     stream = client.interactions.create(
         model=model,
@@ -215,6 +315,7 @@ def main():
         run_non_streaming_system_instruction,
         run_non_streaming_multi_turn,
         run_non_streaming_generation_config,
+        run_tool_calling,
         run_streaming_basic,
     ]
 

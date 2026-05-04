@@ -95,7 +95,7 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
 2. **Start the distribution**:
 
    ```bash
-   ogx run starter
+   ogx stack run starter
    ```
 
 3. **Set the ENV variables by exporting them to the terminal**:
@@ -114,7 +114,7 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
    INFERENCE_MODEL=$INFERENCE_MODEL \
    SAFETY_MODEL=$SAFETY_MODEL \
    OLLAMA_URL=$OLLAMA_URL \
-   uv run --with ogx ogx run starter \
+   uv run --with ogx ogx stack run starter \
       --port $OGX_PORT
    ```
 
@@ -235,7 +235,7 @@ In `test_ogx.py`, write the following code:
 
 ```python
 import os
-from llama_stack_client import LlamaStackClient
+from ogx_client import OgxClient
 
 # Get the model ID from the environment variable
 INFERENCE_MODEL = os.environ.get("INFERENCE_MODEL")
@@ -245,7 +245,7 @@ if INFERENCE_MODEL is None:
     raise ValueError("The environment variable 'INFERENCE_MODEL' is not set.")
 
 # Initialize the client
-client = LlamaStackClient(base_url="http://localhost:8321")
+client = OgxClient(base_url="http://localhost:8321")
 
 # Create a chat completion request
 response = client.chat.completions.create(
@@ -295,7 +295,7 @@ This command initializes the model to interact with your local OGX instance.
 
 **Explore Client SDKs**: Utilize our client SDKs for various languages to integrate OGX into your applications:
 
-- [Python SDK](https://github.com/meta-llama/llama-stack-client-python)
+- [Python SDK](https://github.com/ogx-ai/ogx-client-python)
 - [Node SDK](https://github.com/ogx-ai/ogx-client-node)
 - [Swift SDK](https://github.com/ogx-ai/ogx-client-swift)
 - [Kotlin SDK](https://github.com/ogx-ai/ogx-client-kotlin)

@@ -88,10 +88,10 @@ Here's an example that demonstrates monitoring the agent's execution:
 <TabItem value="streaming" label="Streaming Execution">
 
 ```python
-from llama_stack_client import LlamaStackClient, Agent, AgentEventLogger
+from ogx_client import OgxClient, Agent, AgentEventLogger
 
 # Replace host and port
-client = LlamaStackClient(base_url=f"http://{HOST}:{PORT}")
+client = OgxClient(base_url=f"http://{HOST}:{PORT}")
 
 agent = Agent(
     client,

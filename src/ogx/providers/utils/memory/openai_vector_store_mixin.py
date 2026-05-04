@@ -15,7 +15,7 @@ from collections.abc import AsyncIterator
 from enum import StrEnum
 from typing import Annotated, Any
 
-from fastapi import Body
+from fastapi import Body, HTTPException
 
 from ogx.core.datatypes import VectorStoresConfig
 from ogx.core.id_generation import generate_object_id
@@ -1057,8 +1057,21 @@ class OpenAIVectorStoreMixin(ABC):
                     )
                 )
                 vector_store_file_object.status = "completed"
+        except HTTPException as e:
+            logger.warning(
+                "Failed to attach file to vector store",
+                file_id=file_id,
+                vector_store_id=vector_store_id,
+                status_code=e.status_code,
+                detail=e.detail,
+            )
+            vector_store_file_object.status = "failed"
+            vector_store_file_object.last_error = VectorStoreFileLastError(
+                code="unsupported_file" if e.status_code == 422 else "server_error",
+                message=e.detail if isinstance(e.detail, str) else str(e.detail),
+            )
         except Exception as e:
-            logger.exception("Error attaching file to vector store")
+            logger.exception("Failed to attach file to vector store")
             vector_store_file_object.status = "failed"
             vector_store_file_object.last_error = VectorStoreFileLastError(
                 code="server_error",
