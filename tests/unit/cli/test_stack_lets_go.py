@@ -274,14 +274,14 @@ class TestRunCommand:
             with pytest.raises(SystemExit):
                 lets_go._run_stack_lets_go_cmd(args)
 
-    @patch("ogx.cli.stack.lets_go.StackRun")
+    @patch("ogx.cli.stack.lets_go._uvicorn_run")
     @patch("ogx.cli.stack.lets_go.get_provider_dependencies", return_value=([], [], []))
     @patch("ogx.cli.stack.lets_go.run_config_from_dynamic_config_spec")
     def test_providers_override_skips_autodetect(
         self,
         mock_build_config: MagicMock,
         mock_get_deps: MagicMock,
-        mock_stack_run_cls: MagicMock,
+        mock_uvicorn_run: MagicMock,
         lets_go: StackLetsGo,
     ):
         args = lets_go.parser.parse_args(["--providers-override", "inference=remote::ollama"])
@@ -295,14 +295,14 @@ class TestRunCommand:
                     lets_go._run_stack_lets_go_cmd(args)
         mock_detect.assert_not_called()
 
-    @patch("ogx.cli.stack.lets_go.StackRun")
+    @patch("ogx.cli.stack.lets_go._uvicorn_run")
     @patch("ogx.cli.stack.lets_go.get_provider_dependencies", return_value=([], [], []))
     @patch("ogx.cli.stack.lets_go.run_config_from_dynamic_config_spec")
     def test_run_command_uses_autodetected_providers(
         self,
         mock_build_config: MagicMock,
         mock_get_deps: MagicMock,
-        mock_stack_run_cls: MagicMock,
+        mock_uvicorn_run: MagicMock,
         lets_go: StackLetsGo,
     ):
         args = lets_go.parser.parse_args([])
@@ -318,7 +318,7 @@ class TestRunCommand:
         mock_build_config.assert_called_once()
         assert mock_build_config.call_args.kwargs["dynamic_config_spec"] == "inference=remote::ollama"
 
-    @patch("ogx.cli.stack.lets_go.StackRun")
+    @patch("ogx.cli.stack.lets_go._uvicorn_run")
     @patch("ogx.cli.stack.lets_go.subprocess.run")
     @patch("ogx.cli.stack.lets_go.get_provider_dependencies", return_value=(["httpx", "faiss-cpu"], [], []))
     @patch("ogx.cli.stack.lets_go.run_config_from_dynamic_config_spec")
@@ -327,7 +327,7 @@ class TestRunCommand:
         mock_build_config: MagicMock,
         mock_get_deps: MagicMock,
         mock_subprocess: MagicMock,
-        mock_stack_run_cls: MagicMock,
+        mock_uvicorn_run: MagicMock,
         lets_go: StackLetsGo,
     ):
         args = lets_go.parser.parse_args([])
@@ -346,7 +346,7 @@ class TestRunCommand:
         assert "httpx" in call_args
         assert "faiss-cpu" in call_args
 
-    @patch("ogx.cli.stack.lets_go.StackRun")
+    @patch("ogx.cli.stack.lets_go._uvicorn_run")
     @patch("ogx.cli.stack.lets_go.subprocess.run")
     @patch("ogx.cli.stack.lets_go.get_provider_dependencies", return_value=(["httpx"], [], []))
     @patch("ogx.cli.stack.lets_go.run_config_from_dynamic_config_spec")
@@ -355,7 +355,7 @@ class TestRunCommand:
         mock_build_config: MagicMock,
         mock_get_deps: MagicMock,
         mock_subprocess: MagicMock,
-        mock_stack_run_cls: MagicMock,
+        mock_uvicorn_run: MagicMock,
         lets_go: StackLetsGo,
     ):
         args = lets_go.parser.parse_args(["--skip-install-deps"])

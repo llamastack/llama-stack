@@ -280,7 +280,7 @@ def test_providers_flag_generates_config_with_api_keys():
     )
 
     # Mock _uvicorn_run to prevent starting a server
-    with patch.object(stack_run, "_uvicorn_run"):
+    with patch("ogx.cli.stack.run._uvicorn_run"):
         stack_run._run_stack_run_cmd(args)
 
     # Read the generated config file

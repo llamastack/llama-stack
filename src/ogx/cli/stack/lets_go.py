@@ -19,7 +19,7 @@ import httpx
 import yaml
 from termcolor import cprint
 
-from ogx.cli.stack.run import StackRun
+from ogx.cli.stack.run import _start_ui_development_server, _uvicorn_run
 from ogx.cli.subcommand import Subcommand
 from ogx.core.build import get_provider_dependencies
 from ogx.core.stack import run_config_from_dynamic_config_spec
@@ -96,8 +96,7 @@ class StackLetsGo(Subcommand):
         # If user asked to start the UI, attempt to start it (best-effort)
         if args.enable_ui:
             try:
-                stack_run = StackRun(argparse.ArgumentParser().add_subparsers())
-                stack_run._start_ui_development_server(args.port)
+                _start_ui_development_server(args.port)
             except Exception:
                 # UI is best-effort; do not fail the whole command
                 logger.warning("Failed to start UI development server", exc_info=True)
@@ -136,15 +135,12 @@ class StackLetsGo(Subcommand):
         with open(config_file, "w") as f:
             yaml.dump(config_dict, f, default_flow_style=False, sort_keys=False)
 
-        # Reuse StackRun's uvicorn startup
         try:
-            stack_run = StackRun(argparse.ArgumentParser().add_subparsers())
-            # Build args similar to stack run
             stack_args = argparse.Namespace()
             stack_args.port = args.port
             stack_args.enable_ui = args.enable_ui
             stack_args.providers = None
-            stack_run._uvicorn_run(config_file, stack_args)
+            _uvicorn_run(config_file, stack_args, self.parser)
         except Exception:
             logger.exception("Failed to start the stack server")
             raise
