@@ -143,6 +143,15 @@ dev = [
     "pre-commit>=4.4.0",
     "ruamel.yaml",                   # needed for openapi generator
     "openapi-spec-validator>=0.7.2",
+    "ollama",
+    "ogx-client>=0.8.0",
+    "chardet",
+    "pypdf>=6.7.2",
+    "together",
+    "boto3",
+    "anthropic",
+    "torch>=2.6.0",
+    "markitdown[all]",
 ]
 # Type checking dependencies - includes type stubs and optional runtime dependencies
 # needed for complete mypy coverage across all optional features
