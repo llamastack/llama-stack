@@ -212,13 +212,13 @@ def _autodetect_providers() -> str:
         "files=inline::localfs",
         "vector_io=inline::faiss",
         "tool_runtime=inline::file-search",
-        "file_processors=inline::pypdf",
+        "file_processors=inline::auto",
         "responses=inline::builtin",
     ]
     cprint("  ✓ inline::localfs (built-in)", color="green")
     cprint("  ✓ inline::faiss (built-in)", color="green")
     cprint("  ✓ inline::file-search (built-in)", color="green")
-    cprint("  ✓ inline::pypdf (built-in)", color="green")
+    cprint("  ✓ inline::auto (built-in)", color="green")
     cprint("  ✓ inline::builtin responses (built-in)", color="green")
 
     if passed:
