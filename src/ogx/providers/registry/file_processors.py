@@ -21,6 +21,19 @@ def available_providers() -> list[ProviderSpec]:
     return [
         InlineProviderSpec(
             api=Api.file_processors,
+            provider_type="inline::auto",
+            pip_packages=["pypdf>=6.7.2"],
+            module="ogx.providers.inline.file_processor.auto",
+            config_class="ogx.providers.inline.file_processor.auto.AutoFileProcessorConfig",
+            api_dependencies=[Api.files],
+            description=(
+                "Composite file processor that automatically dispatches to the appropriate backend "
+                "based on file MIME type. Routes PDF and text files to PyPDF. Unsupported formats "
+                "are rejected with a clear error listing the supported types."
+            ),
+        ),
+        InlineProviderSpec(
+            api=Api.file_processors,
             provider_type="inline::pypdf",
             pip_packages=["pypdf>=6.7.2"],
             module="ogx.providers.inline.file_processor.pypdf",
