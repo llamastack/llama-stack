@@ -12,7 +12,7 @@ That sentence sounds simple, but it represents a fundamental shift in how enterp
 
 OGX exists to break that coupling. It's a server that speaks every major agentic protocol natively, translating them to any model running on any infrastructure. No vendor lock-in. No SDK rewrites.
 
-{/*truncate*/}
+<!--truncate-->
 
 ## The problem: protocol fragmentation
 
@@ -44,20 +44,31 @@ from anthropic import Anthropic
 anthropic_client = Anthropic(base_url="http://ogx-server:8321/v1", api_key="key")
 
 from google import genai
-google_client = genai.Client(api_version="v1alpha", api_key="key")
+from google.genai import types
+google_client = genai.Client(
+    api_key="key",
+    http_options=types.HttpOptions(
+        base_url="http://ogx-server:8321",
+        api_version="v1alpha",
+    ),
+)
 ```
 
 Three SDKs. One server. Same model. No translation code in your application.
 
 ## More than a proxy
 
-OGX isn't just routing requests to different backends. That would be a reverse proxy, and those already exist. What makes OGX different is that it runs the full **server-side agentic loop** — inference, tool calling, RAG, MCP integration, conversation state management — behind each of those API surfaces.
+OGX isn't just routing requests to different backends. That would be a reverse proxy, and those already exist. What makes OGX different is that it runs a **server-side agentic loop** — inference, tool calling, RAG, MCP integration, conversation state management — on supported API surfaces, with feature parity continuing to expand across protocols.
 
 When a client sends a request through the Responses API with `file_search` and MCP tools attached, the server handles the entire orchestration: searching vector stores, calling MCP servers, chaining tool results back into the model, and synthesizing a final answer. Your client gets a response. It doesn't manage a loop.
 
 This is the difference between a proxy and an application server. A proxy translates formats. OGX translates formats *and* runs the agentic logic that makes those formats useful.
 
 ```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://ogx-server:8321/v1", api_key="key")
+
 response = client.responses.create(
     model="llama-3.3-70b",
     input="Summarize the Q1 compliance updates and check if any affect our deployment timeline.",
