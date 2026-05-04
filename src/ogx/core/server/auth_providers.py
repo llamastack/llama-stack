@@ -422,8 +422,17 @@ async def _get_github_user_info(access_token: str, github_api_base_url: str) -> 
         user_response.raise_for_status()
         user_data = user_response.json()
 
+        organizations: list[str] = []
+        try:
+            orgs_response = await client.get(f"{github_api_base_url}/user/orgs", headers=headers, timeout=10.0)
+            orgs_response.raise_for_status()
+            organizations = [org["login"] for org in orgs_response.json()]
+        except Exception:
+            logger.warning("Failed to fetch GitHub organization memberships, proceeding without org data")
+
         return {
             "user": user_data,
+            "organizations": organizations,
         }
 
 

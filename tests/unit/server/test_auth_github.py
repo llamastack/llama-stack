@@ -117,10 +117,11 @@ def test_authenticated_endpoint_with_valid_github_token(mock_client_class, githu
     assert response.status_code == 200
     assert response.json()["message"] == "Authentication successful"
 
-    # Verify the GitHub API was called correctly
-    assert mock_client.get.call_count == 1
+    # Verify both /user and /user/orgs endpoints were called
+    assert mock_client.get.call_count == 2
     calls = mock_client.get.call_args_list
     assert calls[0][0][0] == "https://api.github.com/user"
+    assert calls[1][0][0] == "https://api.github.com/user/orgs"
 
     # Check authorization header was passed
     assert calls[0][1]["headers"]["Authorization"] == "Bearer github_token_123"
@@ -190,10 +191,110 @@ def test_github_enterprise_support(mock_client_class):
     response = client.get("/test", headers={"Authorization": "Bearer enterprise_token"})
     assert response.status_code == 200
 
-    # Verify the correct GitHub Enterprise URLs were called
-    assert mock_client.get.call_count == 1
+    # Verify both /user and /user/orgs endpoints were called with enterprise URL
+    assert mock_client.get.call_count == 2
     calls = mock_client.get.call_args_list
     assert calls[0][0][0] == "https://github.enterprise.com/api/v3/user"
+    assert calls[1][0][0] == "https://github.enterprise.com/api/v3/user/orgs"
+
+
+@patch("ogx.core.server.auth_providers.httpx.AsyncClient")
+def test_github_token_extracts_org_attributes(mock_client_class):
+    """Test that organization memberships are extracted into user attributes"""
+    from ogx.core.server.auth_providers import GitHubTokenAuthProvider
+
+    config = GitHubTokenAuthConfig(
+        type=AuthProviderType.GITHUB_TOKEN,
+        github_api_base_url="https://api.github.com",
+        claims_mapping={
+            "login": "roles",
+            "organizations": "teams",
+        },
+    )
+    provider = GitHubTokenAuthProvider(config)
+
+    mock_client = AsyncMock()
+    mock_client_class.return_value.__aenter__.return_value = mock_client
+    mock_client.get.side_effect = [
+        MockResponse(200, {"login": "testuser", "id": 12345}),
+        MockResponse(200, [{"login": "org-a"}, {"login": "org-b"}]),
+    ]
+
+    import asyncio
+
+    user = asyncio.get_event_loop().run_until_complete(provider.validate_token("token123"))
+    assert user.principal == "testuser"
+    assert user.attributes is not None
+    assert "teams" in user.attributes
+    assert "org-a" in user.attributes["teams"]
+    assert "org-b" in user.attributes["teams"]
+
+
+@patch("ogx.core.server.auth_providers.httpx.AsyncClient")
+def test_github_token_handles_org_fetch_failure(mock_client_class, caplog):
+    """Test that authentication succeeds even if fetching orgs fails"""
+    from ogx.core.server.auth_providers import GitHubTokenAuthProvider
+
+    config = GitHubTokenAuthConfig(
+        type=AuthProviderType.GITHUB_TOKEN,
+        github_api_base_url="https://api.github.com",
+        claims_mapping={
+            "login": "roles",
+            "organizations": "teams",
+        },
+    )
+    provider = GitHubTokenAuthProvider(config)
+
+    mock_client = AsyncMock()
+    mock_client_class.return_value.__aenter__.return_value = mock_client
+
+    mock_request = httpx.Request("GET", "https://api.github.com/user/orgs")
+    mock_client.get.side_effect = [
+        MockResponse(200, {"login": "testuser", "id": 12345}),
+        httpx.HTTPStatusError("403 Forbidden", request=mock_request, response=MockResponse(403, {})),
+    ]
+
+    import asyncio
+
+    user = asyncio.get_event_loop().run_until_complete(provider.validate_token("token123"))
+    assert user.principal == "testuser"
+    assert user.attributes is not None
+    assert user.attributes.get("teams", []) == []
+
+
+@patch("ogx.core.server.auth_providers.httpx.AsyncClient")
+def test_github_token_multiple_orgs(mock_client_class):
+    """Test with user who belongs to multiple organizations"""
+    from ogx.core.server.auth_providers import GitHubTokenAuthProvider
+
+    config = GitHubTokenAuthConfig(
+        type=AuthProviderType.GITHUB_TOKEN,
+        github_api_base_url="https://api.github.com",
+        claims_mapping={
+            "login": "roles",
+            "organizations": "teams",
+        },
+    )
+    provider = GitHubTokenAuthProvider(config)
+
+    mock_client = AsyncMock()
+    mock_client_class.return_value.__aenter__.return_value = mock_client
+    mock_client.get.side_effect = [
+        MockResponse(200, {"login": "multiorguser", "id": 99999}),
+        MockResponse(
+            200,
+            [{"login": "org-1"}, {"login": "org-2"}, {"login": "org-3"}, {"login": "org-4"}],
+        ),
+    ]
+
+    import asyncio
+
+    user = asyncio.get_event_loop().run_until_complete(provider.validate_token("token123"))
+    assert user.principal == "multiorguser"
+    assert user.attributes is not None
+    assert "teams" in user.attributes
+    assert len(user.attributes["teams"]) == 4
+    assert set(user.attributes["teams"]) == {"org-1", "org-2", "org-3", "org-4"}
 
 
 def test_github_token_auth_error_message_format(github_token_client):
