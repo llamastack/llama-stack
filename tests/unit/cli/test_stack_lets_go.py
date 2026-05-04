@@ -189,7 +189,7 @@ class TestProbeEndpoint:
             _probe_endpoint("https://api.openai.com/v1", "models", True, "OPENAI_API_KEY")
         headers = mock_get.call_args.kwargs["headers"]
         assert headers["Authorization"] == "Bearer sk-secret"
-        assert headers["x-api-key"] == "sk-secret"
+        assert "x-api-key" not in headers
 
 
 class TestAutodetect:
@@ -223,14 +223,19 @@ class TestAutodetect:
         assert "inference=remote::anthropic" in parts
         assert "files=inline::localfs" in parts
         assert "responses=inline::builtin" in parts
-        assert len(parts) == 11  # 6 probed + 5 inline
+        assert len(parts) == 13  # 8 probed + 5 inline
 
     @patch("ogx.cli.stack.lets_go._probe_endpoint")
     def test_autodetect_only_ollama(self, mock_probe: MagicMock):
         from ogx.cli.stack.lets_go import _autodetect_providers
 
         def side_effect(
-            base_url: str, probe_path: str, requires_key: bool, key_env: object, extra_headers: object = None
+            base_url: str,
+            probe_path: str,
+            requires_key: bool,
+            key_env: object,
+            extra_headers: object = None,
+            api_key_header: object = None,
         ) -> _ProbeStatus:
             if "11434" in base_url:
                 return _ProbeStatus.OK
@@ -251,7 +256,12 @@ class TestAutodetect:
         captured: list[str] = []
 
         def side_effect(
-            base_url: str, probe_path: str, requires_key: bool, key_env: object, extra_headers: object = None
+            base_url: str,
+            probe_path: str,
+            requires_key: bool,
+            key_env: object,
+            extra_headers: object = None,
+            api_key_header: object = None,
         ) -> _ProbeStatus:
             captured.append(base_url)
             return _ProbeStatus.UNREACHABLE
@@ -269,7 +279,12 @@ class TestAutodetect:
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
 
         def side_effect(
-            base_url: str, probe_path: str, requires_key: bool, key_env: object, extra_headers: object = None
+            base_url: str,
+            probe_path: str,
+            requires_key: bool,
+            key_env: object,
+            extra_headers: object = None,
+            api_key_header: object = None,
         ) -> _ProbeStatus:
             if "11434" in base_url or "openai.com" in base_url:
                 return _ProbeStatus.OK
