@@ -22,7 +22,7 @@ setup_logging()
 import pytest
 import requests
 import yaml
-from llama_stack_client import LlamaStackClient
+from ogx_client import OgxClient
 from openai import OpenAI
 
 from ogx.core.datatypes import QualifiedModel, RerankerModel, VectorStoresConfig
@@ -171,7 +171,7 @@ def client_with_models(
     providers = [p for p in client.providers.list() if p.api == "inference"]
     assert len(providers) > 0, "No inference providers found"
 
-    model_ids = {m.id for m in client.models.list()}
+    model_ids = {m.id for m in client.models.list().data}
 
     if text_model_id and text_model_id not in model_ids:
         raise ValueError(f"text_model_id {text_model_id} not found")
@@ -307,7 +307,7 @@ def instantiate_ogx_client(session):
         else:
             print(f"Port {port} is already in use, assuming server is already running...")
 
-        return LlamaStackClient(
+        return OgxClient(
             base_url=base_url,
             provider_data=get_provider_data(),
             timeout=int(os.environ.get("OGX_CLIENT_TIMEOUT", "30")),
@@ -317,7 +317,7 @@ def instantiate_ogx_client(session):
     try:
         parsed_url = urlparse(config)
         if parsed_url.scheme and parsed_url.netloc:
-            return LlamaStackClient(
+            return OgxClient(
                 base_url=config,
                 provider_data=get_provider_data(),
             )

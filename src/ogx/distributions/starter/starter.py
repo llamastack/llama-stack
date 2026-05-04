@@ -22,7 +22,7 @@ from ogx.core.storage.kvstore.config import PostgresKVStoreConfig
 from ogx.core.storage.sqlstore.sqlstore import PostgresSqlStoreConfig
 from ogx.core.utils.dynamic import instantiate_class_type
 from ogx.distributions.template import DistributionTemplate, RunConfigSettings
-from ogx.providers.inline.file_processor.pypdf.config import PyPDFFileProcessorConfig
+from ogx.providers.inline.file_processor.auto.config import AutoFileProcessorConfig
 from ogx.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from ogx.providers.inline.inference.sentence_transformers import (
     SentenceTransformersInferenceConfig,
@@ -148,7 +148,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="remote::infinispan"),
         ],
         "files": [BuildProvider(provider_type="inline::localfs")],
-        "file_processors": [BuildProvider(provider_type="inline::pypdf")],
+        "file_processors": [BuildProvider(provider_type="inline::auto")],
         "safety": [
             BuildProvider(provider_type="remote::passthrough"),
         ],
@@ -165,7 +165,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::reference"),
         ],
     }
-    files_config = LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}")
+    files_config = LocalfsFilesImplConfig.sample_run_config(f"~/.ogx/distributions/{name}")
     files_provider = Provider(
         provider_id="builtin-files",
         provider_type="inline::localfs",
@@ -190,23 +190,23 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             Provider(
                 provider_id="faiss",
                 provider_type="inline::faiss",
-                config=FaissVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+                config=FaissVectorIOConfig.sample_run_config(f"~/.ogx/distributions/{name}"),
             ),
             Provider(
                 provider_id="sqlite-vec",
                 provider_type="inline::sqlite-vec",
-                config=SQLiteVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+                config=SQLiteVectorIOConfig.sample_run_config(f"~/.ogx/distributions/{name}"),
             ),
             Provider(
                 provider_id="${env.MILVUS_URL:+milvus}",
                 provider_type="inline::milvus",
-                config=MilvusVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+                config=MilvusVectorIOConfig.sample_run_config(f"~/.ogx/distributions/{name}"),
             ),
             Provider(
                 provider_id="${env.CHROMADB_URL:+chromadb}",
                 provider_type="remote::chromadb",
                 config=ChromaVectorIOConfig.sample_run_config(
-                    f"~/.llama/distributions/{name}/",
+                    f"~/.ogx/distributions/{name}/",
                     url="${env.CHROMADB_URL:=}",
                 ),
             ),
@@ -214,7 +214,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 provider_id="${env.PGVECTOR_DB:+pgvector}",
                 provider_type="remote::pgvector",
                 config=PGVectorVectorIOConfig.sample_run_config(
-                    f"~/.llama/distributions/{name}",
+                    f"~/.ogx/distributions/{name}",
                     db="${env.PGVECTOR_DB:=}",
                     user="${env.PGVECTOR_USER:=}",
                     password="${env.PGVECTOR_PASSWORD:=}",
@@ -224,7 +224,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 provider_id="${env.QDRANT_URL:+qdrant}",
                 provider_type="remote::qdrant",
                 config=QdrantVectorIOConfig.sample_run_config(
-                    f"~/.llama/distributions/{name}",
+                    f"~/.ogx/distributions/{name}",
                     url="${env.QDRANT_URL:=}",
                 ),
             ),
@@ -232,7 +232,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 provider_id="${env.WEAVIATE_CLUSTER_URL:+weaviate}",
                 provider_type="remote::weaviate",
                 config=WeaviateVectorIOConfig.sample_run_config(
-                    f"~/.llama/distributions/{name}",
+                    f"~/.ogx/distributions/{name}",
                     cluster_url="${env.WEAVIATE_CLUSTER_URL:=}",
                 ),
             ),
@@ -240,7 +240,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 provider_id="${env.ELASTICSEARCH_URL:+elasticsearch}",
                 provider_type="remote::elasticsearch",
                 config=ElasticsearchVectorIOConfig.sample_run_config(
-                    f"~/.llama/distributions/{name}",
+                    f"~/.ogx/distributions/{name}",
                     elasticsearch_url="${env.ELASTICSEARCH_URL:=localhost:9200}",
                     elasticsearch_api_key="${env.ELASTICSEARCH_API_KEY:=}",
                 ),
@@ -248,27 +248,27 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             Provider(
                 provider_id="${env.INFINISPAN_URL:+infinispan}",
                 provider_type="remote::infinispan",
-                config=InfinispanVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+                config=InfinispanVectorIOConfig.sample_run_config(f"~/.ogx/distributions/{name}"),
             ),
         ],
         "files": [files_provider],
         "file_processors": [
             Provider(
-                provider_id="pypdf",
-                provider_type="inline::pypdf",
-                config=PyPDFFileProcessorConfig.sample_run_config(),
+                provider_id="auto",
+                provider_type="inline::auto",
+                config=AutoFileProcessorConfig.sample_run_config(),
             ),
         ],
         "tool_runtime": [
             Provider(
                 provider_id="brave-search",
                 provider_type="remote::brave-search",
-                config=BraveSearchToolConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+                config=BraveSearchToolConfig.sample_run_config(f"~/.ogx/distributions/{name}"),
             ),
             Provider(
                 provider_id="tavily-search",
                 provider_type="remote::tavily-search",
-                config=TavilySearchToolConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+                config=TavilySearchToolConfig.sample_run_config(f"~/.ogx/distributions/{name}"),
             ),
             Provider(
                 provider_id="file-search",
