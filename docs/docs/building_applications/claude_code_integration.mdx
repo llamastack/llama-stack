@@ -77,20 +77,20 @@ Claude Code → Llama Stack /v1/messages → Provider
 
 ## Model Configuration
 
-### Specifying Models
+### How Routing Works
 
-Always use the `--model` flag to specify which Llama Stack model to use:
+Claude Code always sends requests using Claude model names internally (e.g., `claude-sonnet-4-5`, `claude-haiku-4-5-20251001`). You cannot override this with `--model` — Claude Code validates model names client-side and rejects anything that isn't a recognized Claude model.
+
+Instead, OGX's model aliasing maps those Claude model names to your backend models. You control the mapping with environment variables:
 
 ```bash
-# Use any provider model registered in Llama Stack
-claude --model "openai/gpt-4o-mini" "Hello world"
-claude --model "vllm/Qwen/Qwen3-8B" "Write code"
-claude --model "ollama/llama3.3:70b" "Explain algorithms"
+# Map Claude model tiers to your backend models
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="openai/gpt-4o-mini"   # Fast/cheap tier
+export ANTHROPIC_DEFAULT_SONNET_MODEL="openai/gpt-4o"       # Balanced tier
+export ANTHROPIC_DEFAULT_OPUS_MODEL="openai/o1"              # Most capable tier
 ```
 
-### Automatic Model Aliasing
-
-The starter distribution automatically registers Claude model name aliases across all providers. This handles Claude Code's internal requests seamlessly:
+When Claude Code sends a request for `claude-haiku-4-5-20251001`, OGX routes it to the model specified by `ANTHROPIC_DEFAULT_HAIKU_MODEL`. The starter distribution automatically registers these aliases across all providers:
 
 ```yaml
 # Pre-configured in starter config.yaml
@@ -101,8 +101,6 @@ registered_resources:
     provider_model_id: "auto"  # Auto-maps to appropriate model
     model_type: llm
 ```
-
-When Claude Code sends internal requests using Claude model names, these aliases automatically route to your specified model. You never need to reference the Claude model names directly—just use `--model` with your actual Llama Stack models.
 
 ## Supported Features
 
@@ -187,7 +185,7 @@ export ANTHROPIC_DEFAULT_OPUS_MODEL="openai/o1"
 
 # Claude Code will route based on which model name it sends
 claude "Quick task"  # Uses haiku → vLLM
-claude --model claude-sonnet-4-5 "Complex task"  # Uses sonnet → OpenAI GPT-4o
+claude "Complex task"  # Uses sonnet → OpenAI GPT-4o (Claude Code picks the tier internally)
 ```
 
 ## Troubleshooting
@@ -196,12 +194,11 @@ claude --model claude-sonnet-4-5 "Complex task"  # Uses sonnet → OpenAI GPT-4o
 
 **Symptom**: `404 Model 'claude-haiku-4-5-20251001' not found`
 
-**Solution**: Set the appropriate environment variable:
+**Solution**: Set the appropriate environment variable to map the Claude model name to your backend model:
 
 ```bash
 export ANTHROPIC_DEFAULT_HAIKU_MODEL="your-provider/your-model"
-# Or explicitly pass --model to claude command
-claude --model "openai/gpt-4o-mini" "your prompt"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="your-provider/your-model"
 ```
 
 ### "API key not valid" errors when using local providers
@@ -212,6 +209,21 @@ claude --model "openai/gpt-4o-mini" "your prompt"
 
 ```bash
 export ANTHROPIC_API_KEY="fake"
+```
+
+### Claude Code ignores `ANTHROPIC_BASE_URL`
+
+**Symptom**: Claude Code connects directly to Anthropic (or Vertex AI / Bedrock) instead of your OGX server.
+
+**Explanation**: If `CLAUDE_CODE_USE_VERTEX=1`, `CLAUDE_CODE_USE_BEDROCK=1`, or related Vertex/Bedrock environment variables are set, Claude Code bypasses `ANTHROPIC_BASE_URL` entirely.
+
+**Solution**: Unset these variables before starting Claude Code:
+
+```bash
+unset CLAUDE_CODE_USE_VERTEX
+unset ANTHROPIC_VERTEX_PROJECT_ID
+unset CLAUDE_CODE_USE_BEDROCK
+unset ANTHROPIC_BEDROCK_SESSION_TOKEN
 ```
 
 ### Slow responses with cloud providers
