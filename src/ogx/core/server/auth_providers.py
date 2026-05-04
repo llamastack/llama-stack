@@ -221,10 +221,14 @@ class OAuth2TokenAuthProvider(AuthProvider):
         if self.config.introspection is None:
             raise ValueError("Introspection is not configured")
 
-        # ssl_ctxt can be None, bool, str, or SSLContext - httpx accepts all
-        ssl_ctxt: ssl.SSLContext | bool = False  # Default to no verification if no cafile
-        if self.config.tls_cafile:
+        ssl_ctxt: ssl.SSLContext | bool
+        if not self.config.verify_tls:
+            logger.warning("TLS verification is disabled for token introspection")
+            ssl_ctxt = False
+        elif self.config.tls_cafile:
             ssl_ctxt = ssl.create_default_context(cafile=self.config.tls_cafile.as_posix())
+        else:
+            ssl_ctxt = True
 
         # Build post kwargs conditionally based on auth method
         post_kwargs: dict[str, Any] = {
