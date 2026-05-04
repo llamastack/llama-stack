@@ -29,10 +29,7 @@ OGX acts as a proxy that Codex already knows how to talk to. No patches to Codex
 
 The architecture is straightforward:
 
-```text
-Codex CLI  -->  OGX Server  -->  LLM Provider
-(Responses API)   (translates)     (OpenAI, Ollama, vLLM, Bedrock, etc.)
-```
+![Codex CLI to OGX to LLM Provider flow](./images/codex-cli-flow.svg)
 
 Codex sends Responses API requests to OGX. OGX routes them to whatever inference provider you've configured, translating formats where needed. Codex doesn't know or care what's behind OGX.
 
