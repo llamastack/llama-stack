@@ -16,7 +16,7 @@ This post walks through the setup, explains how the translation works under the 
 
 Claude Code talks to the Anthropic Messages API (`/v1/messages`). OGX implements that API. When Claude Code sends a request, OGX receives it, translates the format if needed, and forwards it to whatever inference provider you've configured — OpenAI, vLLM, Ollama, Fireworks, Groq, Bedrock, or any of the other [supported providers](https://ogx-ai.github.io/docs/providers).
 
-```
+```text
 Claude Code → OGX /v1/messages → Provider (OpenAI, vLLM, Ollama, ...)
 ```
 
@@ -219,6 +219,7 @@ response = agent.send("Write a function to parse CSV files")
 ## Troubleshooting
 
 **Claude Code ignores `ANTHROPIC_BASE_URL`** — If you see errors about your "vertex deployment" or "bedrock", Claude Code is using a cloud provider and bypassing the base URL entirely. Unset the relevant variables:
+
 ```bash
 unset CLAUDE_CODE_USE_VERTEX
 unset ANTHROPIC_VERTEX_PROJECT_ID
@@ -227,11 +228,13 @@ unset CLAUDE_CODE_USE_BEDROCK
 ```
 
 **"Model not found" errors** — Set the model mapping environment variable so OGX knows which backend model to use for each Claude model tier:
+
 ```bash
 export ANTHROPIC_DEFAULT_HAIKU_MODEL="your-provider/your-model"
 ```
 
 **Authentication errors with local providers** — Set a dummy API key:
+
 ```bash
 export ANTHROPIC_API_KEY="fake"
 ```
