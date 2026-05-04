@@ -125,14 +125,14 @@
       <rect width="291" height="32" rx="4" fill="var(--block-bg)" stroke="var(--block-stroke)" stroke-width="0.5"/>
       <text x="10" y="14" fill="var(--block-title)" font-size="8.5" font-weight="600">Format conversion</text>
       <line x1="10" y1="19" x2="281" y2="19" stroke="var(--block-stroke)" stroke-width="0.5"/>
-      <text x="10" y="28" fill="var(--block-text)" font-size="7.5">Anthropic format  &rarr;  OpenAI format  (or native passthrough)</text>
+      <text x="10" y="28" fill="var(--block-text)" font-size="7.5">Anthropic format  &#x2192;  OpenAI format  (or native passthrough)</text>
     </g>
 
     <!-- Model aliasing -->
     <text x="240" y="208" fill="var(--section-label)" font-size="9" font-weight="700" letter-spacing="0.5">MODEL ALIASING</text>
     <g transform="translate(237, 214)">
       <rect width="291" height="28" rx="4" fill="var(--block-bg)" stroke="var(--block-stroke)" stroke-width="0.5"/>
-      <text x="10" y="18" fill="var(--block-text)" font-size="7.5">claude-haiku &rarr; vllm/Qwen3    claude-sonnet &rarr; openai/gpt-4o</text>
+      <text x="10" y="18" fill="var(--block-text)" font-size="7.5">claude-haiku &#x2192; vllm/Qwen3    claude-sonnet &#x2192; openai/gpt-4o</text>
     </g>
   </g>
 
