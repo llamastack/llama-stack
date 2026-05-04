@@ -8,7 +8,7 @@ import time
 from io import BytesIO
 
 import pytest
-from llama_stack_client import BadRequestError
+from ogx_client import BadRequestError
 from openai import BadRequestError as OpenAIBadRequestError
 from openai import OpenAI
 
