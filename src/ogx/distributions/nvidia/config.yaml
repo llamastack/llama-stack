@@ -4,7 +4,6 @@ apis:
 - files
 - inference
 - responses
-- safety
 - tool_runtime
 - vector_io
 providers:
@@ -21,12 +20,6 @@ providers:
       persistence:
         namespace: vector_io::faiss
         backend: kv_default
-  safety:
-  - provider_id: nvidia-safety
-    provider_type: remote::passthrough
-    config:
-      base_url: ${env.PASSTHROUGH_SAFETY_URL}
-      api_key: ${env.PASSTHROUGH_SAFETY_API_KEY:=}
   responses:
   - provider_id: builtin
     provider_type: inline::builtin
@@ -83,9 +76,6 @@ registered_resources:
     model_id: ${env.INFERENCE_MODEL}
     provider_id: nvidia
     model_type: llm
-  shields:
-  - shield_id: ${env.SAFETY_MODEL}
-    provider_id: nvidia-safety
   vector_dbs: []
 server:
   port: 8321

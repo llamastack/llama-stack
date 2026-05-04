@@ -63,8 +63,6 @@ from ogx_api import (
     ResponseGuardrailSpec,
     RetrieveFileContentRequest,
     RetrieveFileRequest,
-    RunModerationRequest,
-    Safety,
 )
 
 
@@ -548,61 +546,48 @@ def is_function_tool_call(
     return False
 
 
-async def resolve_guardrail_model_ids(safety_api: Safety, guardrail_ids: list[str]) -> list[str]:
-    """Resolve guardrail identifiers to concrete shield model IDs.
-
-    Call once and pass the result to run_guardrails() to avoid repeated lookups.
-    """
-    # TODO: list_shields not in Safety interface but available at runtime via API routing
-    shields_list = await safety_api.routing_table.list_shields()  # type: ignore[attr-defined]
-    model_ids = []
-    for guardrail_id in guardrail_ids:
-        matching_shields = [shield for shield in shields_list.data if shield.identifier == guardrail_id]
-        if matching_shields:
-            model_ids.append(matching_shields[0].provider_resource_id)
-        else:
-            raise ValueError(f"No shield found with identifier '{guardrail_id}'")
-    return model_ids
-
-
 async def run_guardrails(
-    safety_api: Safety | None,
+    moderation_endpoint: str | None,
     messages: str,
     guardrail_ids: list[str],
-    model_ids: list[str] | None = None,
 ) -> str | None:
-    """Run guardrails against messages and return violation message if blocked."""
-    if not messages:
+    """Run guardrails against messages by calling an external moderation endpoint.
+
+    Args:
+        moderation_endpoint: URL of an OpenAI-compatible moderations endpoint.
+        messages: The text content to check.
+        guardrail_ids: Model IDs to pass to the moderation endpoint.
+
+    Returns:
+        A violation message string if content was flagged, otherwise None.
+    """
+    if not messages or not moderation_endpoint:
         return None
 
-    if safety_api is None:
-        return None
+    import httpx
 
-    if model_ids is None:
-        model_ids = await resolve_guardrail_model_ids(safety_api, guardrail_ids)
+    async with httpx.AsyncClient(timeout=httpx.Timeout(30.0)) as client:
+        tasks = [
+            client.post(moderation_endpoint, json={"input": messages, "model": model_id}) for model_id in guardrail_ids
+        ]
+        responses = await asyncio.gather(*tasks, return_exceptions=True)
 
-    guardrail_tasks = [
-        safety_api.run_moderation(RunModerationRequest(input=messages, model=model_id)) for model_id in model_ids
-    ]
-    responses = await asyncio.gather(*guardrail_tasks)
+    for resp in responses:
+        if isinstance(resp, BaseException):
+            continue
+        response: httpx.Response = resp
+        if response.status_code != 200:
+            continue
+        data = response.json()
+        for result in data.get("results", []):
+            if result.get("flagged", False):
+                categories = result.get("categories", {})
+                flagged_cats = [c for c, f in categories.items() if f]
+                msg = "Content blocked by safety guardrails"
+                if flagged_cats:
+                    msg += f" (flagged for: {', '.join(flagged_cats)})"
+                return msg
 
-    for response in responses:
-        for result in response.results:
-            if result.flagged:
-                message = result.user_message or "Content blocked by safety guardrails"
-                flagged_categories = (
-                    [cat for cat, flagged in result.categories.items() if flagged] if result.categories else []
-                )
-                violation_type = result.metadata.get("violation_type", []) if result.metadata else []
-
-                if flagged_categories:
-                    message += f" (flagged for: {', '.join(flagged_categories)})"
-                if violation_type:
-                    message += f" (violation type: {', '.join(violation_type)})"
-
-                return message
-
-    # No violations found
     return None
 
 

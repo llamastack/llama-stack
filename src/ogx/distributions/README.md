@@ -26,7 +26,7 @@ Example from `starter/config.yaml`:
 ```yaml
 version: 2
 distro_name: starter
-apis: [inference, agents, safety, vector_io, ...]
+apis: [inference, responses, vector_io, ...]
 providers:
   inference:
     - provider_id: ollama

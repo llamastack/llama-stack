@@ -147,7 +147,6 @@ ALL_RESOURCES = {
             "interleaved_content_item": "InterleavedContentItem",
             "interleaved_content": "InterleavedContent",
             "param_type": "ParamType",
-            "safety_violation": "SafetyViolation",
             "sampling_params": "SamplingParams",
             "system_message": "SystemMessage",
             "health_info": "HealthInfo",
@@ -366,17 +365,6 @@ ALL_RESOURCES = {
     },
     "routes": {
         "methods": {"list": {"paginated": False, "endpoint": "get /v1/inspect/routes"}},
-    },
-    "moderations": {
-        "models": {"create_response": "ModerationObject"},
-        "methods": {"create": "post /v1/moderations"},
-    },
-    "shields": {
-        "models": {"shield": "Shield", "list_shields_response": "ListShieldsResponse"},
-        "methods": {
-            "retrieve": "get /v1/shields/{identifier}",
-            "list": {"paginated": False, "endpoint": "get /v1/shields"},
-        },
     },
     "files": {
         "models": {

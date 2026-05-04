@@ -102,7 +102,6 @@ from ogx_api import (
     ResponseItemInclude,
     ResponseStreamOptions,
     ResponseTruncation,
-    Safety,
     ToolDef,
     WebSearchToolTypes,
 )
@@ -117,7 +116,6 @@ from .utils import (
     convert_chat_choice_to_response_message,
     convert_mcp_tool_choice,
     is_function_tool_call,
-    resolve_guardrail_model_ids,
     run_guardrails,
     should_summarize_reasoning,
     summarize_reasoning,
@@ -234,7 +232,7 @@ class StreamingResponseOrchestrator:
         max_infer_iters: int,
         tool_executor,  # Will be the tool execution logic from the main class
         instructions: str | None,
-        safety_api: Safety | None,
+        moderation_endpoint: str | None,
         guardrail_ids: list[str] | None = None,
         connectors_api: Connectors | None = None,
         prompt: OpenAIResponsePrompt | None = None,
@@ -261,7 +259,7 @@ class StreamingResponseOrchestrator:
         self.text = text
         self.max_infer_iters = max_infer_iters
         self.tool_executor = tool_executor
-        self.safety_api = safety_api
+        self.moderation_endpoint = moderation_endpoint
         self.connectors_api = connectors_api
         self.guardrail_ids = guardrail_ids or []
         self.prompt = prompt
@@ -307,7 +305,6 @@ class StreamingResponseOrchestrator:
         self.accumulated_usage: OpenAIResponseUsage | None = None
         # Track if we've sent a refusal response
         self.violation_detected = False
-        self._guardrail_model_ids: list[str] = []
         # Track total calls made to built-in tools
         self.accumulated_builtin_tool_calls = 0
         # Track total output tokens generated across inference calls
@@ -415,14 +412,11 @@ class StreamingResponseOrchestrator:
 
         # Input safety validation - check messages before processing
         if self.guardrail_ids:
-            if self.safety_api is not None:
-                self._guardrail_model_ids = await resolve_guardrail_model_ids(self.safety_api, self.guardrail_ids)
             combined_text = interleaved_content_as_str([msg.content for msg in self.ctx.messages])
             input_violation_message = await run_guardrails(
-                self.safety_api,
+                self.moderation_endpoint,
                 combined_text,
                 self.guardrail_ids,
-                model_ids=self._guardrail_model_ids,
             )
             if input_violation_message:
                 logger.info("Input guardrail violation", input_violation_message=input_violation_message)
@@ -1253,10 +1247,9 @@ class StreamingResponseOrchestrator:
             if self.guardrail_ids and guardrail_check_due:
                 accumulated_text = "".join(chat_response_content)
                 violation_message = await run_guardrails(
-                    self.safety_api,
+                    self.moderation_endpoint,
                     accumulated_text,
                     self.guardrail_ids,
-                    model_ids=self._guardrail_model_ids,
                 )
                 if violation_message:
                     logger.info("Output guardrail violation", violation_message=violation_message)
@@ -1273,10 +1266,9 @@ class StreamingResponseOrchestrator:
         if self.guardrail_ids and pending_guardrail_events:
             accumulated_text = "".join(chat_response_content)
             violation_message = await run_guardrails(
-                self.safety_api,
+                self.moderation_endpoint,
                 accumulated_text,
                 self.guardrail_ids,
-                model_ids=self._guardrail_model_ids,
             )
             if violation_message:
                 logger.info("Output guardrail violation", violation_message=violation_message)

@@ -72,7 +72,6 @@ from ogx_api import (
     ResponseItemInclude,
     ResponseStreamOptions,
     ResponseTruncation,
-    Safety,
     ServiceNotEnabledError,
     ToolGroups,
     ToolRuntime,
@@ -122,7 +121,7 @@ class OpenAIResponsesImpl:
         tool_runtime_api: ToolRuntime,
         responses_store: ResponsesStore,
         vector_io_api: VectorIO,  # VectorIO
-        safety_api: Safety | None,
+        moderation_endpoint: str | None,
         conversations_api: Conversations,
         prompts_api: Prompts,
         files_api: Files,
@@ -135,7 +134,7 @@ class OpenAIResponsesImpl:
         self.tool_runtime_api = tool_runtime_api
         self.responses_store = responses_store
         self.vector_io_api = vector_io_api
-        self.safety_api = safety_api
+        self.moderation_endpoint = moderation_endpoint
         self.conversations_api = conversations_api
         self.tool_executor = ToolExecutor(
             tool_groups_api=tool_groups_api,
@@ -680,11 +679,11 @@ class OpenAIResponsesImpl:
 
         guardrail_ids = extract_guardrail_ids(guardrails) if guardrails else []
 
-        # Validate that Safety API is available if guardrails are requested
-        if guardrail_ids and self.safety_api is None:
+        # Validate that moderation_endpoint is configured if guardrails are requested
+        if guardrail_ids and not self.moderation_endpoint:
             raise ServiceNotEnabledError(
-                "Safety API",
-                provider_specific_message="Ensure the Safety API is enabled in your stack, otherwise remove the 'guardrails' parameter from your request.",
+                "moderation_endpoint",
+                provider_specific_message="Set the 'moderation_endpoint' field on the responses provider config to enable guardrails, otherwise remove the 'guardrails' parameter from your request.",
             )
 
         if conversation is not None:
@@ -1150,7 +1149,7 @@ class OpenAIResponsesImpl:
                 max_infer_iters=max_infer_iters,
                 parallel_tool_calls=parallel_tool_calls,
                 tool_executor=request_tool_executor,
-                safety_api=self.safety_api,
+                moderation_endpoint=self.moderation_endpoint,
                 connectors_api=self.connectors_api,
                 guardrail_ids=guardrail_ids,
                 instructions=instructions,

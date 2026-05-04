@@ -4,7 +4,6 @@ apis:
 - files
 - inference
 - responses
-- safety
 - tool_runtime
 - vector_io
 providers:
@@ -24,12 +23,6 @@ providers:
       persistence:
         namespace: vector_io::faiss
         backend: kv_default
-  safety:
-  - provider_id: passthrough
-    provider_type: remote::passthrough
-    config:
-      base_url: ${env.PASSTHROUGH_SAFETY_URL}
-      api_key: ${env.PASSTHROUGH_SAFETY_API_KEY:=}
   responses:
   - provider_id: builtin
     provider_type: inline::builtin
@@ -94,7 +87,6 @@ storage:
       backend: kv_default
 registered_resources:
   models: []
-  shields: []
   vector_dbs: []
 server:
   port: 8321

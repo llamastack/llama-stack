@@ -202,12 +202,10 @@ class TestResponsesAPIErrors:
         assert "error" in body
         assert "message" in body["error"]
 
-    def test_guardrails_without_safety_api_raises_service_unavailable(self, openai_client, ogx_client, text_model_id):
-        """Guardrails without Safety API configured returns 503."""
-        safety_providers = [p for p in ogx_client.providers.list() if p.api == "safety"]
-        if safety_providers:
-            pytest.skip("Server has Safety API enabled")
-
+    def test_guardrails_without_moderation_endpoint_raises_service_unavailable(
+        self, openai_client, ogx_client, text_model_id
+    ):
+        """Guardrails without moderation_endpoint configured returns 503."""
         with pytest.raises(APIStatusError) as exc_info:
             openai_client.responses.create(
                 model=text_model_id,
@@ -215,7 +213,7 @@ class TestResponsesAPIErrors:
                 extra_body={"guardrails": ["test-shield"]},
             )
         assert exc_info.value.status_code == 503
-        assert "safety" in str(exc_info.value).lower()
+        assert "moderation_endpoint" in str(exc_info.value).lower()
 
 
 class TestConversationsAPIErrors:

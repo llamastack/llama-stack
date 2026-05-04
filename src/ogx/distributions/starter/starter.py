@@ -14,8 +14,6 @@ from ogx.core.datatypes import (
     ProviderSpec,
     QualifiedModel,
     RerankerModel,
-    SafetyConfig,
-    ShieldInput,
     VectorStoresConfig,
 )
 from ogx.core.storage.kvstore.config import PostgresKVStoreConfig
@@ -149,9 +147,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         ],
         "files": [BuildProvider(provider_type="inline::localfs")],
         "file_processors": [BuildProvider(provider_type="inline::auto")],
-        "safety": [
-            BuildProvider(provider_type="remote::passthrough"),
-        ],
         "interactions": [BuildProvider(provider_type="inline::builtin")],
         "messages": [BuildProvider(provider_type="inline::builtin")],
         "responses": [BuildProvider(provider_type="inline::builtin")],
@@ -181,7 +176,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         provider_type="inline::transformers",
         config=TransformersInferenceConfig.sample_run_config(),
     )
-    default_shields: list[ShieldInput] = []
     postgres_sql_config = PostgresSqlStoreConfig.sample_run_config()
     postgres_kv_config = PostgresKVStoreConfig.sample_run_config()
     default_overrides = {
@@ -303,7 +297,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
     base_run_settings = RunConfigSettings(
         provider_overrides=default_overrides,
         default_models=claude_model_aliases,
-        default_shields=default_shields,
         default_connectors=[],
         vector_stores_config=VectorStoresConfig(
             default_provider_id="faiss",
@@ -316,7 +309,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 model_id="Qwen/Qwen3-Reranker-0.6B",
             ),
         ),
-        safety_config=SafetyConfig(),
     )
 
     postgres_run_settings = base_run_settings.model_copy(
