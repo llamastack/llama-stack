@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import os
 import time
 import uuid
 from collections.abc import AsyncIterator
@@ -131,7 +130,7 @@ tracer = trace.get_tracer(__name__)
 # Anything else is either a registered function tool (client-side) or a hallucinated name.
 _SERVER_SIDE_BUILTIN_TOOL_NAMES = frozenset({"web_search", "knowledge_search", "file_search"})
 
-_GUARDRAIL_BATCH_CHARS = int(os.environ.get("GUARDRAIL_BATCH_CHARS", "200"))
+_GUARDRAIL_BATCH_CHARS = 200
 
 # Maps OpenAI Chat Completions error codes to Responses API error codes
 _RESPONSES_API_ERROR_CODES = {
