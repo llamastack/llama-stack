@@ -66,7 +66,11 @@ class OpenAIInferenceAdapter(OpenAIMixin):
             return _MODEL_MAX_OUTPUT_TOKENS[model]
 
         # Try prefix matching for dated snapshot variants (e.g. gpt-4o-2024-08-06)
-        for base_model, limit in _MODEL_MAX_OUTPUT_TOKENS.items():
+        for base_model, limit in sorted(
+            _MODEL_MAX_OUTPUT_TOKENS.items(),
+            key=lambda item: len(item[0]),
+            reverse=True,
+        ):
             if model.startswith(f"{base_model}-"):
                 return limit
 
@@ -106,9 +110,19 @@ class OpenAIInferenceAdapter(OpenAIMixin):
         params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         max_output_tokens = self._get_max_output_tokens(params.model)
-        if max_output_tokens is not None and params.max_tokens is not None and params.max_tokens > max_output_tokens:
-            params = params.model_copy()
-            params.max_tokens = max_output_tokens
+        if max_output_tokens is not None:
+            updated_params = params
+            if params.max_tokens is not None and params.max_tokens > max_output_tokens:
+                updated_params = updated_params.model_copy()
+                updated_params.max_tokens = max_output_tokens
+            if (
+                params.max_completion_tokens is not None
+                and params.max_completion_tokens > max_output_tokens
+            ):
+                if updated_params is params:
+                    updated_params = updated_params.model_copy()
+                updated_params.max_completion_tokens = max_output_tokens
+            params = updated_params
 
         return await super().openai_chat_completion(params)
 

@@ -185,6 +185,46 @@ class TestOpenAIMaxTokensClamping:
             call_kwargs = mock_client.chat.completions.create.call_args.kwargs
             assert call_kwargs["max_tokens"] == 16384
 
+    async def test_clamps_max_completion_tokens_when_request_exceeds_model_limit(self, mock_openai_response):
+        adapter = _make_adapter()
+
+        with patch.object(OpenAIInferenceAdapter, "client", new_callable=PropertyMock) as mock_client_prop:
+            mock_client = MagicMock()
+            mock_client.chat.completions.create = AsyncMock(return_value=mock_openai_response)
+            mock_client_prop.return_value = mock_client
+
+            params = OpenAIChatCompletionRequestWithExtraBody(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": "hi"}],
+                stream=False,
+                max_completion_tokens=32000,
+            )
+            await adapter.openai_chat_completion(params)
+
+            call_kwargs = mock_client.chat.completions.create.call_args.kwargs
+            assert call_kwargs["max_completion_tokens"] == 16384
+
+    async def test_clamps_both_max_token_fields_when_both_exceed_model_limit(self, mock_openai_response):
+        adapter = _make_adapter()
+
+        with patch.object(OpenAIInferenceAdapter, "client", new_callable=PropertyMock) as mock_client_prop:
+            mock_client = MagicMock()
+            mock_client.chat.completions.create = AsyncMock(return_value=mock_openai_response)
+            mock_client_prop.return_value = mock_client
+
+            params = OpenAIChatCompletionRequestWithExtraBody(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": "hi"}],
+                stream=False,
+                max_tokens=32000,
+                max_completion_tokens=32000,
+            )
+            await adapter.openai_chat_completion(params)
+
+            call_kwargs = mock_client.chat.completions.create.call_args.kwargs
+            assert call_kwargs["max_tokens"] == 16384
+            assert call_kwargs["max_completion_tokens"] == 16384
+
 
 class TestOpenAIModelMetadata:
     def test_construct_model_includes_max_output_tokens(self):
@@ -227,3 +267,7 @@ class TestOpenAIMaxOutputTokensWarning:
         adapter = _make_adapter()
         for model_id, expected_limit in _MODEL_MAX_OUTPUT_TOKENS.items():
             assert adapter._get_max_output_tokens(model_id) == expected_limit
+
+    def test_prefix_matching_prefers_more_specific_model(self):
+        adapter = _make_adapter()
+        assert adapter._get_max_output_tokens("o1-mini-2024-09-12") == 65536
