@@ -115,10 +115,7 @@ class OpenAIInferenceAdapter(OpenAIMixin):
             if params.max_tokens is not None and params.max_tokens > max_output_tokens:
                 updated_params = updated_params.model_copy()
                 updated_params.max_tokens = max_output_tokens
-            if (
-                params.max_completion_tokens is not None
-                and params.max_completion_tokens > max_output_tokens
-            ):
+            if params.max_completion_tokens is not None and params.max_completion_tokens > max_output_tokens:
                 if updated_params is params:
                     updated_params = updated_params.model_copy()
                 updated_params.max_completion_tokens = max_output_tokens
