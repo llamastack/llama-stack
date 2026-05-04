@@ -371,10 +371,6 @@ ALL_RESOURCES = {
         "models": {"create_response": "ModerationObject"},
         "methods": {"create": "post /v1/moderations"},
     },
-    "safety": {
-        "models": {"run_shield_response": "RunShieldResponse"},
-        "methods": {"run_shield": "post /v1/safety/run-shield"},
-    },
     "shields": {
         "models": {"shield": "Shield", "list_shields_response": "ListShieldsResponse"},
         "methods": {

@@ -188,12 +188,11 @@ providers:
   - provider_id: pypdf
     provider_type: inline::pypdf
   safety:
-  - provider_id: llama-guard
-    provider_type: inline::llama-guard
+  - provider_id: passthrough
+    provider_type: remote::passthrough
     config:
-      excluded_categories: []
-  - provider_id: code-scanner
-    provider_type: inline::code-scanner
+      base_url: ${env.PASSTHROUGH_SAFETY_URL}
+      api_key: ${env.PASSTHROUGH_SAFETY_API_KEY:=}
   interactions:
   - provider_id: builtin
     provider_type: inline::builtin
@@ -278,13 +277,7 @@ registered_resources:
     provider_id: all
     provider_model_id: auto
     model_type: llm
-  shields:
-  - shield_id: llama-guard
-    provider_id: ${env.SAFETY_MODEL:+llama-guard}
-    provider_shield_id: ${env.SAFETY_MODEL:=}
-  - shield_id: code-scanner
-    provider_id: ${env.CODE_SCANNER_MODEL:+code-scanner}
-    provider_shield_id: ${env.CODE_SCANNER_MODEL:=}
+  shields: []
   vector_dbs: []
 server:
   port: 8321
@@ -347,6 +340,5 @@ vector_stores:
     default_timeout_seconds: 120
     default_max_concurrency: 3
     max_document_tokens: 100000
-safety:
-  default_shield_id: llama-guard
+safety: {}
 connectors: []

@@ -6,16 +6,7 @@
 
 from pydantic import BaseModel, Field
 
-from ogx_api.inference import OpenAIMessageParam
 from ogx_api.schema_utils import json_schema_type
-
-
-@json_schema_type
-class RunShieldRequest(BaseModel):
-    """Request model for running a safety shield."""
-
-    shield_id: str = Field(..., description="The identifier of the shield to run", min_length=1)
-    messages: list[OpenAIMessageParam] = Field(..., description="The messages to run the shield on")
 
 
 @json_schema_type
@@ -33,6 +24,5 @@ class RunModerationRequest(BaseModel):
 
 
 __all__ = [
-    "RunShieldRequest",
     "RunModerationRequest",
 ]

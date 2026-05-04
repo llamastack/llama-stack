@@ -12,8 +12,8 @@ from ogx_api.router_utils import standard_responses
 from ogx_api.version import OGX_API_V1
 
 from .api import Safety
-from .datatypes import ModerationObject, RunShieldResponse
-from .models import RunModerationRequest, RunShieldRequest
+from .datatypes import ModerationObject
+from .models import RunModerationRequest
 
 
 def create_router(impl: Safety) -> APIRouter:
@@ -23,20 +23,6 @@ def create_router(impl: Safety) -> APIRouter:
         tags=["Safety"],
         responses=standard_responses,
     )
-
-    @router.post(
-        "/safety/run-shield",
-        response_model=RunShieldResponse,
-        summary="Run Shield",
-        description="Run a safety shield on messages to check for policy violations.",
-        responses={
-            200: {"description": "The shield response indicating any violations detected."},
-        },
-    )
-    async def run_shield(
-        request: Annotated[RunShieldRequest, Body(...)],
-    ) -> RunShieldResponse:
-        return await impl.run_shield(request)
 
     @router.post(
         "/moderations",

@@ -109,7 +109,7 @@ def get_distribution_template() -> DistributionTemplate:
             BuildProvider(provider_type="remote::chromadb"),
             BuildProvider(provider_type="remote::pgvector"),
         ],
-        "safety": [BuildProvider(provider_type="inline::llama-guard")],
+        "safety": [BuildProvider(provider_type="remote::passthrough")],
         "responses": [BuildProvider(provider_type="inline::builtin")],
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),

@@ -22,11 +22,11 @@ providers:
         namespace: vector_io::faiss
         backend: kv_default
   safety:
-  - provider_id: nvidia
-    provider_type: remote::nvidia
+  - provider_id: nvidia-safety
+    provider_type: remote::passthrough
     config:
-      guardrails_service_url: ${env.GUARDRAILS_SERVICE_URL:=http://localhost:7331}
-      config_id: ${env.NVIDIA_GUARDRAILS_CONFIG_ID:=self-check}
+      base_url: ${env.PASSTHROUGH_SAFETY_URL}
+      api_key: ${env.PASSTHROUGH_SAFETY_API_KEY:=}
   responses:
   - provider_id: builtin
     provider_type: inline::builtin
@@ -78,8 +78,14 @@ storage:
       namespace: connectors
       backend: kv_default
 registered_resources:
-  models: []
-  shields: []
+  models:
+  - metadata: {}
+    model_id: ${env.INFERENCE_MODEL}
+    provider_id: nvidia
+    model_type: llm
+  shields:
+  - shield_id: ${env.SAFETY_MODEL}
+    provider_id: nvidia-safety
   vector_dbs: []
 server:
   port: 8321

@@ -1925,38 +1925,6 @@ paths:
           input_items = client.responses.input_items.list("resp_abc123")
           for item in input_items:
               print(item)
-  /v1/safety/run-shield:
-    post:
-      responses:
-        '200':
-          description: The shield response indicating any violations detected.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RunShieldResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Safety
-      summary: Run Shield
-      description: Run a safety shield on messages to check for policy violations.
-      operationId: run_shield_v1_safety_run_shield_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RunShieldRequest'
-        required: true
   /v1/shields:
     get:
       responses:
@@ -8389,57 +8357,8 @@ components:
       - data
       title: ListOpenAIResponseInputItem
       description: List container for OpenAI response input items.
-    RunShieldRequest:
-      properties:
-        shield_id:
-          type: string
-          minLength: 1
-          title: Shield Id
-          description: The identifier of the shield to run
-        messages:
-          items:
-            oneOf:
-            - $ref: '#/components/schemas/OpenAIUserMessageParam-Input'
-              title: OpenAIUserMessageParam-Input
-            - $ref: '#/components/schemas/OpenAISystemMessageParam'
-              title: OpenAISystemMessageParam
-            - $ref: '#/components/schemas/OpenAIAssistantMessageParam-Input'
-              title: OpenAIAssistantMessageParam-Input
-            - $ref: '#/components/schemas/OpenAIToolMessageParam'
-              title: OpenAIToolMessageParam
-            - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
-              title: OpenAIDeveloperMessageParam
-            discriminator:
-              propertyName: role
-              mapping:
-                assistant: '#/components/schemas/OpenAIAssistantMessageParam-Input'
-                developer: '#/components/schemas/OpenAIDeveloperMessageParam'
-                system: '#/components/schemas/OpenAISystemMessageParam'
-                tool: '#/components/schemas/OpenAIToolMessageParam'
-                user: '#/components/schemas/OpenAIUserMessageParam-Input'
-            title: OpenAIUserMessageParam-Input | ... (5 variants)
-          type: array
-          title: Messages
-          description: The messages to run the shield on
-      type: object
-      required:
-      - shield_id
-      - messages
-      title: RunShieldRequest
-      description: Request model for running a safety shield.
-    RunShieldResponse:
-      properties:
-        violation:
-          anyOf:
-          - $ref: '#/components/schemas/SafetyViolation'
-            title: SafetyViolation
-          - type: 'null'
-          description: Safety violation detected by the shield, if any
-          title: SafetyViolation
-      type: object
-      title: RunShieldResponse
-      description: Response from running a safety shield.
     SafetyViolation:
+      description: Details of a safety violation detected by content moderation.
       properties:
         violation_level:
           $ref: '#/components/schemas/ViolationLevel'
@@ -8449,24 +8368,24 @@ components:
           - type: string
           - type: 'null'
           description: Message to convey to the user about the violation
+          nullable: true
         metadata:
           additionalProperties: true
-          type: object
-          title: Metadata
           description: Additional metadata including specific violation codes
-      type: object
+          title: Metadata
+          type: object
       required:
       - violation_level
       title: SafetyViolation
-      description: Details of a safety violation detected by content moderation.
+      type: object
     ViolationLevel:
-      type: string
+      description: Severity level of a safety violation.
       enum:
       - info
       - warn
       - error
       title: ViolationLevel
-      description: Severity level of a safety violation.
+      type: string
     ArrayType:
       description: Parameter type for array values.
       properties:
@@ -14309,6 +14228,19 @@ components:
       required:
       - prompt_id
       title: DeletePromptRequest
+      type: object
+    RunShieldResponse:
+      description: Response from running a safety shield.
+      properties:
+        violation:
+          anyOf:
+          - $ref: '#/components/schemas/SafetyViolation'
+            title: SafetyViolation
+          - type: 'null'
+          description: Safety violation detected by the shield, if any
+          nullable: true
+          title: SafetyViolation
+      title: RunShieldResponse
       type: object
     OpenAIResponseMessageOutputUnion:
       anyOf:

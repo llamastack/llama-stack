@@ -6,23 +6,19 @@
 
 from typing import Protocol, runtime_checkable
 
-from ogx_api.safety.datatypes import ModerationObject, RunShieldResponse, ShieldStore
+from ogx_api.safety.datatypes import ModerationObject, ShieldStore
 
-from .models import RunModerationRequest, RunShieldRequest
+from .models import RunModerationRequest
 
 
 @runtime_checkable
 class Safety(Protocol):
-    """Safety API for content moderation and safety shields.
+    """Safety API for content moderation.
 
-    OpenAI-compatible Moderations API with additional shield capabilities.
+    OpenAI-compatible Moderations API.
     """
 
     shield_store: ShieldStore
-
-    async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse:
-        """Run a safety shield on messages."""
-        ...
 
     async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
         """Classify if inputs are potentially harmful."""

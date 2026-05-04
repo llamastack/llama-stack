@@ -6,7 +6,7 @@
 
 """Safety API protocol and models.
 
-This module contains the Safety protocol definition for content moderation and safety shields.
+This module contains the Safety protocol definition for content moderation.
 Pydantic models are defined in ogx_api.safety.models.
 The FastAPI router is defined in ogx_api.safety.fastapi_routes.
 """
@@ -21,7 +21,7 @@ from .datatypes import (
     ShieldStore,
     ViolationLevel,
 )
-from .models import RunModerationRequest, RunShieldRequest
+from .models import RunModerationRequest
 
 __all__ = [
     "Safety",
@@ -31,7 +31,6 @@ __all__ = [
     "ViolationLevel",
     "SafetyViolation",
     "RunShieldResponse",
-    "RunShieldRequest",
     "RunModerationRequest",
     "fastapi_routes",
 ]

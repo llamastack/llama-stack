@@ -150,8 +150,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         "files": [BuildProvider(provider_type="inline::localfs")],
         "file_processors": [BuildProvider(provider_type="inline::pypdf")],
         "safety": [
-            BuildProvider(provider_type="inline::llama-guard"),
-            BuildProvider(provider_type="inline::code-scanner"),
+            BuildProvider(provider_type="remote::passthrough"),
         ],
         "interactions": [BuildProvider(provider_type="inline::builtin")],
         "messages": [BuildProvider(provider_type="inline::builtin")],
@@ -182,19 +181,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         provider_type="inline::transformers",
         config=TransformersInferenceConfig.sample_run_config(),
     )
-    default_shields = [
-        # if the
-        ShieldInput(
-            shield_id="llama-guard",
-            provider_id="${env.SAFETY_MODEL:+llama-guard}",
-            provider_shield_id="${env.SAFETY_MODEL:=}",
-        ),
-        ShieldInput(
-            shield_id="code-scanner",
-            provider_id="${env.CODE_SCANNER_MODEL:+code-scanner}",
-            provider_shield_id="${env.CODE_SCANNER_MODEL:=}",
-        ),
-    ]
+    default_shields: list[ShieldInput] = []
     postgres_sql_config = PostgresSqlStoreConfig.sample_run_config()
     postgres_kv_config = PostgresKVStoreConfig.sample_run_config()
     default_overrides = {
@@ -329,9 +316,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 model_id="Qwen/Qwen3-Reranker-0.6B",
             ),
         ),
-        safety_config=SafetyConfig(
-            default_shield_id="llama-guard",
-        ),
+        safety_config=SafetyConfig(),
     )
 
     postgres_run_settings = base_run_settings.model_copy(

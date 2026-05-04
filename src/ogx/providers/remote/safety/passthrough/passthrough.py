@@ -14,17 +14,12 @@ from ogx.core.request_headers import NeedsRequestProviderData
 from ogx.log import get_logger
 from ogx.providers.utils.forward_headers import build_forwarded_headers
 from ogx_api import (
-    GetShieldRequest,
     ModerationObject,
     ModerationObjectResults,
     RunModerationRequest,
-    RunShieldRequest,
-    RunShieldResponse,
     Safety,
-    SafetyViolation,
     Shield,
     ShieldsProtocolPrivate,
-    ViolationLevel,
 )
 
 from .config import PassthroughSafetyConfig
@@ -37,7 +32,7 @@ class PassthroughSafetyAdapter(
     ShieldsProtocolPrivate,
     NeedsRequestProviderData,
 ):
-    """Forwards safety calls to a downstream service via /v1/moderations."""
+    """Forwards moderation calls to a downstream service via /v1/moderations."""
 
     shield_store: Any  # injected by framework after initialization
 
@@ -49,7 +44,6 @@ class PassthroughSafetyAdapter(
         pass
 
     async def shutdown(self) -> None:
-        # shield so cancellation doesn't leak the connection
         await asyncio.shield(self._client.aclose())
 
     async def register_shield(self, shield: Shield) -> None:
@@ -71,7 +65,6 @@ class PassthroughSafetyAdapter(
         return None
 
     def _build_forward_headers(self) -> dict[str, str]:
-        """Build outbound headers from provider data using the forward_headers mapping."""
         provider_data = self.get_request_provider_data()
         forwarded = build_forwarded_headers(provider_data, self.config.forward_headers)
         if self.config.forward_headers and not forwarded:
@@ -82,12 +75,6 @@ class PassthroughSafetyAdapter(
         return forwarded
 
     def _build_request_headers(self) -> dict[str, str]:
-        """Combine auth + forwarded headers for the downstream request.
-
-        Forwarded headers go first; static api_key overwrites Authorization if set.
-        build_forwarded_headers() normalizes header names case-insensitively so
-        there are no duplicate Authorization variants in the forwarded dict.
-        """
         headers: dict[str, str] = {"Content-Type": "application/json"}
         headers.update(self._build_forward_headers())
         api_key = self._get_api_key()
@@ -95,45 +82,8 @@ class PassthroughSafetyAdapter(
             headers["Authorization"] = f"Bearer {api_key}"
         return headers
 
-    async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse:
-        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=request.shield_id))
-        if not shield:
-            raise ValueError(f"Shield {request.shield_id} not found")
-
-        # convert messages to a single string for the moderation payload
-        texts: list[str] = []
-        for msg in request.messages:
-            content = msg.get("content", "") if isinstance(msg, dict) else getattr(msg, "content", "")
-            if isinstance(content, str):
-                texts.append(content)
-            elif isinstance(content, list):
-                # content parts - extract text parts
-                for part in content:
-                    if isinstance(part, dict) and part.get("type") == "text":
-                        texts.append(part.get("text", ""))
-                    elif isinstance(part, str):
-                        texts.append(part)
-
-        if not texts:
-            return RunShieldResponse(violation=None)
-
-        moderation_input = texts if len(texts) != 1 else texts[0]
-
-        payload = {
-            "input": moderation_input,
-            "model": shield.provider_resource_id or request.shield_id,
-        }
-
-        base_url = str(self.config.base_url).rstrip("/")
-        url = f"{base_url}/moderations"
-
-        headers = self._build_request_headers()
-
-        data = await self._post_moderation(url, payload, headers)
-        return self._parse_moderation_response(data)
-
     async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
-        """Forward directly to downstream /v1/moderations instead of going through run_shield."""
+        """Forward directly to downstream /v1/moderations."""
         inputs = request.input if isinstance(request.input, list) else [request.input]
 
         payload: dict[str, str | list[str]] = {"input": request.input}
@@ -147,7 +97,6 @@ class PassthroughSafetyAdapter(
 
         data = await self._post_moderation(url, payload, headers)
 
-        # parse downstream response into our ModerationObject
         results_data = data.get("results")
         if not isinstance(results_data, list):
             raise RuntimeError("Downstream safety service returned malformed response (missing or invalid 'results')")
@@ -208,31 +157,3 @@ class PassthroughSafetyAdapter(
             raise RuntimeError("Downstream safety service returned invalid response (expected JSON object)")
 
         return raw
-
-    def _parse_moderation_response(self, data: dict[str, Any]) -> RunShieldResponse:
-        """Convert a /v1/moderations JSON response into RunShieldResponse."""
-        results = data.get("results")
-        if not isinstance(results, list):
-            raise RuntimeError("Downstream safety service returned malformed response (missing or invalid 'results')")
-        if not results:
-            raise RuntimeError("Downstream safety service returned empty results")
-
-        for result in results:
-            if not isinstance(result, dict):
-                raise RuntimeError("Downstream safety service returned malformed result entry (expected object)")
-            if not result.get("flagged", False):
-                continue
-
-            categories = result.get("categories") or {}
-            flagged_categories = [cat for cat, flagged in categories.items() if flagged]
-            violation_type = flagged_categories[0] if flagged_categories else "unsafe"
-
-            return RunShieldResponse(
-                violation=SafetyViolation(
-                    violation_level=ViolationLevel.ERROR,
-                    user_message="Content was flagged by the safety service.",
-                    metadata={"violation_type": violation_type},
-                )
-            )
-
-        return RunShieldResponse(violation=None)

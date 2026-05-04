@@ -25,10 +25,11 @@ providers:
         namespace: vector_io::faiss
         backend: kv_default
   safety:
-  - provider_id: llama-guard
-    provider_type: inline::llama-guard
+  - provider_id: passthrough
+    provider_type: remote::passthrough
     config:
-      excluded_categories: []
+      base_url: ${env.PASSTHROUGH_SAFETY_URL}
+      api_key: ${env.PASSTHROUGH_SAFETY_API_KEY:=}
   responses:
   - provider_id: builtin
     provider_type: inline::builtin

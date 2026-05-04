@@ -4,29 +4,21 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from opentelemetry import trace
-
 from ogx.core.datatypes import SafetyConfig
 from ogx.log import get_logger
-from ogx.telemetry.helpers import safety_request_span_attributes, safety_span_name
 from ogx_api import (
     ModerationObject,
-    RegisterShieldRequest,
     RoutingTable,
     RunModerationRequest,
-    RunShieldRequest,
-    RunShieldResponse,
     Safety,
     Shield,
-    UnregisterShieldRequest,
 )
 
 logger = get_logger(name=__name__, category="core::routers")
-tracer = trace.get_tracer(__name__)
 
 
 class SafetyRouter(Safety):
-    """Router that delegates safety operations to the appropriate provider via a routing table."""
+    """Router that delegates moderation operations to the appropriate provider via a routing table."""
 
     def __init__(
         self,
@@ -38,28 +30,10 @@ class SafetyRouter(Safety):
         self.safety_config = safety_config
 
     async def initialize(self) -> None:
-        logger.debug("SafetyRouter.initialize")
         pass
 
     async def shutdown(self) -> None:
-        logger.debug("SafetyRouter.shutdown")
         pass
-
-    async def register_shield(self, request: RegisterShieldRequest) -> Shield:
-        logger.debug("SafetyRouter.register_shield", shield_id=request.shield_id)
-        return await self.routing_table.register_shield(request)
-
-    async def unregister_shield(self, identifier: str) -> None:
-        logger.debug("SafetyRouter.unregister_shield", identifier=identifier)
-        return await self.routing_table.unregister_shield(UnregisterShieldRequest(identifier=identifier))
-
-    async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse:
-        with tracer.start_as_current_span(name=safety_span_name(request.shield_id)):
-            logger.debug("SafetyRouter.run_shield", shield_id=request.shield_id)
-            provider = await self.routing_table.get_provider_impl(request.shield_id)
-            response = await provider.run_shield(request)
-            safety_request_span_attributes(request.shield_id, request.messages, response)
-        return response
 
     async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
         list_shields_response = await self.routing_table.list_shields()
