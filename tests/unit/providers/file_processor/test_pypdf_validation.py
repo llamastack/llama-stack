@@ -22,7 +22,6 @@ def pypdf_processor():
 
 
 async def test_rejects_docx_with_422(pypdf_processor):
-    """PyPDF should reject DOCX files instead of silently falling back to text extraction."""
     docx_bytes = b"PK\x03\x04fake_docx_content"
     file = UploadFile(filename="test.docx", file=io.BytesIO(docx_bytes))
 
@@ -34,7 +33,6 @@ async def test_rejects_docx_with_422(pypdf_processor):
 
 
 async def test_rejects_pptx_with_422(pypdf_processor):
-    """PyPDF should reject PPTX files."""
     pptx_bytes = b"PK\x03\x04fake_pptx_content"
     file = UploadFile(filename="presentation.pptx", file=io.BytesIO(pptx_bytes))
 
@@ -46,7 +44,6 @@ async def test_rejects_pptx_with_422(pypdf_processor):
 
 
 async def test_rejects_xlsx_with_422(pypdf_processor):
-    """PyPDF should reject XLSX files."""
     xlsx_bytes = b"PK\x03\x04fake_xlsx_content"
     file = UploadFile(filename="data.xlsx", file=io.BytesIO(xlsx_bytes))
 
@@ -58,7 +55,6 @@ async def test_rejects_xlsx_with_422(pypdf_processor):
 
 
 async def test_allows_pdf(pypdf_processor):
-    """PyPDF should still accept PDF files."""
     pdf_bytes = b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\nxref\n0 3\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \ntrailer\n<< /Size 3 /Root 1 0 R >>\nstartxref\n115\n%%EOF"
     file = UploadFile(filename="test.pdf", file=io.BytesIO(pdf_bytes))
 
@@ -67,7 +63,6 @@ async def test_allows_pdf(pypdf_processor):
 
 
 async def test_allows_text_files(pypdf_processor):
-    """PyPDF should still accept text files."""
     text_bytes = b"Hello, this is plain text content for testing."
     file = UploadFile(filename="readme.txt", file=io.BytesIO(text_bytes))
 
@@ -77,7 +72,6 @@ async def test_allows_text_files(pypdf_processor):
 
 
 async def test_allows_csv_files(pypdf_processor):
-    """PyPDF should accept CSV files (text category)."""
     csv_bytes = b"name,age\nAlice,30\nBob,25"
     file = UploadFile(filename="data.csv", file=io.BytesIO(csv_bytes))
 
@@ -87,7 +81,6 @@ async def test_allows_csv_files(pypdf_processor):
 
 
 async def test_allows_markdown_files(pypdf_processor):
-    """PyPDF should accept Markdown files (text category)."""
     md_bytes = b"# Hello\n\nThis is markdown."
     file = UploadFile(filename="README.md", file=io.BytesIO(md_bytes))
 

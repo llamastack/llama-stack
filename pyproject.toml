@@ -69,7 +69,7 @@ dependencies = [
 
 [project.optional-dependencies]
 client = [
-    "llama-stack-client>=0.7.1", # Optional for library-only usage
+    "ogx-client>=0.7.3", # Optional for library-only usage
 ]
 starter = [
     "aiohttp",
@@ -176,7 +176,7 @@ type_checking = [
     "langchain-openai",
     "langchain-core",
     "langgraph",
-    "llama-stack-client>=0.7.1",
+    "ogx-client>=0.7.3",
 ]
 # These are the dependencies required for running unit tests.
 unit = [
