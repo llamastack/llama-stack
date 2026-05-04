@@ -105,6 +105,7 @@ starter = [
     "psycopg2-binary",
     "pymilvus[milvus-lite]>=2.4.10",
     "pymongo",
+    "markitdown[all]",
     "pypdf>=6.7.2",
     "pythainlp",
     "qdrant-client",
@@ -123,6 +124,7 @@ starter = [
     "weaviate-client>=4.16.5",
     "torch",
     "sentence-transformers",
+    "boto3",
 ]
 
 [dependency-groups]
@@ -148,6 +150,7 @@ type_checking = [
     "types-requests",
     "types-setuptools",
     "types-jsonschema",
+    "markitdown[all]",
     "pypdf>=6.7.2",
     "pandas-stubs",
     "types-psutil",
@@ -187,6 +190,7 @@ unit = [
     "aiosqlite",
     "aiohttp",
     "psycopg2-binary>=2.9.0",
+    "markitdown[all]",
     "pypdf>=6.7.2",
     "mcp>=1.23.0",
     "chardet",
