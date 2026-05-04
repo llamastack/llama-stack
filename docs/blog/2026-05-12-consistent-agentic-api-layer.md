@@ -38,13 +38,16 @@ All three share the same underlying inference providers. A single OGX deployment
 
 ```python
 from openai import OpenAI
+
 openai_client = OpenAI(base_url="http://ogx-server:8321/v1", api_key="key")
 
 from anthropic import Anthropic
+
 anthropic_client = Anthropic(base_url="http://ogx-server:8321/v1", api_key="key")
 
 from google import genai
 from google.genai import types
+
 google_client = genai.Client(
     api_key="key",
     http_options=types.HttpOptions(
