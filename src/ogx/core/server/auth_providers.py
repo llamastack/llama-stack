@@ -424,16 +424,58 @@ async def _get_github_user_info(access_token: str, github_api_base_url: str) -> 
 
         organizations: list[str] = []
         try:
-            orgs_response = await client.get(f"{github_api_base_url}/user/orgs", headers=headers, timeout=10.0)
-            orgs_response.raise_for_status()
-            organizations = [org["login"] for org in orgs_response.json()]
-        except Exception:
-            logger.warning("Failed to fetch GitHub organization memberships, proceeding without org data")
+            organizations = await _fetch_github_organizations(client, github_api_base_url, headers)
+        except (httpx.HTTPError, TypeError, ValueError) as e:
+            logger.warning(
+                "Failed to fetch GitHub organization memberships, proceeding without org data",
+                error=str(e),
+            )
 
         return {
             "user": user_data,
             "organizations": organizations,
         }
+
+
+async def _fetch_github_organizations(
+    client: httpx.AsyncClient, github_api_base_url: str, headers: dict[str, str]
+) -> list[str]:
+    """Fetch all organization logins for a GitHub user, handling pagination."""
+    per_page = 100
+    page = 1
+    organizations: list[str] = []
+
+    while True:
+        try:
+            orgs_response = await client.get(
+                f"{github_api_base_url}/user/orgs",
+                headers=headers,
+                params={"per_page": per_page, "page": page},
+                timeout=10.0,
+            )
+            orgs_response.raise_for_status()
+            orgs_payload = orgs_response.json()
+            if not isinstance(orgs_payload, list):
+                raise ValueError("Failed to parse GitHub organization memberships: expected list response")
+        except (httpx.HTTPError, TypeError, ValueError) as e:
+            if organizations:
+                logger.warning(
+                    "Failed to fetch additional GitHub organization memberships, using partial org data",
+                    page=page,
+                    error=str(e),
+                )
+                break
+            raise
+
+        organizations.extend(
+            org["login"] for org in orgs_payload if isinstance(org, dict) and isinstance(org.get("login"), str)
+        )
+        if len(orgs_payload) < per_page:
+            break
+        page += 1
+
+    # Keep a stable order while removing duplicates in case API pages overlap.
+    return list(dict.fromkeys(organizations))
 
 
 class KubernetesAuthProvider(AuthProvider):
