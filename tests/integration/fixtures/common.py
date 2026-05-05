@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import inspect
+import json
 import os
 import shlex
 import signal
@@ -147,6 +148,13 @@ def get_provider_data():
         if os.environ.get(key):
             provider_data[value] = os.environ[key]
     return provider_data
+
+
+def get_provider_data_headers() -> dict[str, str]:
+    provider_data = get_provider_data()
+    if not provider_data:
+        return {}
+    return {"X-OGX-Provider-Data": json.dumps(provider_data)}
 
 
 @pytest.fixture(scope="session")
@@ -309,7 +317,7 @@ def instantiate_ogx_client(session):
 
         return OgxClient(
             base_url=base_url,
-            provider_data=get_provider_data(),
+            default_headers=get_provider_data_headers(),
             timeout=int(os.environ.get("OGX_CLIENT_TIMEOUT", "30")),
         )
 
@@ -319,7 +327,7 @@ def instantiate_ogx_client(session):
         if parsed_url.scheme and parsed_url.netloc:
             return OgxClient(
                 base_url=config,
-                provider_data=get_provider_data(),
+                default_headers=get_provider_data_headers(),
             )
     except Exception:
         # If URL parsing fails, treat as non-URL config
