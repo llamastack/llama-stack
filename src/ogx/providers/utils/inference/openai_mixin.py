@@ -517,6 +517,20 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         self._model_cache = {}
 
+        # Short-circuit: if allowed_models is explicitly configured, use it directly.
+        # This avoids calling /v1/models on providers that do not support that endpoint
+        # (e.g. OpenAI-compatible proxies for Gemini), where the call would crash startup.
+        if self.config.allowed_models:
+            logger.info(
+                "allowed_models configured - using static list, skipping /v1/models",
+                provider=self.__class__.__name__,
+                count=len(self.config.allowed_models),
+            )
+            for provider_model_id in self.config.allowed_models:
+                model = self.construct_model_from_identifier(provider_model_id)
+                self._model_cache[provider_model_id] = model
+            return list(self._model_cache.values())
+
         api_key = self._get_api_key_from_config_or_provider_data()
         if not api_key:
             logger.debug(
@@ -545,9 +559,6 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         for provider_model_id in provider_models_ids:
             if not isinstance(provider_model_id, str):
                 raise ValueError(f"Model ID {provider_model_id} from list_provider_model_ids() is not a string")
-            if self.config.allowed_models is not None and provider_model_id not in self.config.allowed_models:
-                logger.info("Skipping model not in allowed models list", model=provider_model_id)
-                continue
             model = self.construct_model_from_identifier(provider_model_id)
             self._model_cache[provider_model_id] = model
 
