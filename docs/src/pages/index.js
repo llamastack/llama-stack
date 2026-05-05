@@ -465,9 +465,9 @@ function CliShowcase() {
           <p>
             Configure OGX with any provider — Ollama, vLLM, Bedrock, Azure, or
             your own. Then point{' '}
-            <Link to="/docs/building_applications/claude_code_integration">Claude Code</Link>,{' '}
-            <Link to="/docs/building_applications/codex_cli_integration">Codex</Link>, or{' '}
-            <Link to="/blog/opencode-blog">OpenCode</Link>{' '}
+            <a href="https://ogx-ai.github.io/docs/building_applications/claude_code_integration">Claude Code</a>,{' '}
+            <a href="https://ogx-ai.github.io/docs/building_applications/codex_cli_integration">Codex</a>, or{' '}
+            <a href="https://ogx-ai.github.io/blog/opencode-blog">OpenCode</a>{' '}
             at it. Same workflow, any model.
           </p>
         </div>
