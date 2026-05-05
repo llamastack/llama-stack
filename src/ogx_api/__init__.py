@@ -186,6 +186,8 @@ from .files import (
 )
 from .inference import (
     Bf16QuantizationConfig,
+    ChatCompletionMessage,
+    ChatCompletionMessageList,
     ChatCompletionResponseEventType,
     CompletionRequest,
     EmbeddingsResponse,
@@ -198,6 +200,7 @@ from .inference import (
     InferenceProvider,
     Int4QuantizationConfig,
     JsonSchemaResponseFormat,
+    ListChatCompletionMessagesRequest,
     ListChatCompletionsRequest,
     ListOpenAIChatCompletionResponse,
     LogProbConfig,
@@ -570,6 +573,8 @@ __all__ = [
     "Bf16QuantizationConfig",
     "CallableT",
     "ChatCompletionInputType",
+    "ChatCompletionMessage",
+    "ChatCompletionMessageList",
     "ChatCompletionResponseEventType",
     "Chunk",
     "ChunkForDeletion",
@@ -672,6 +677,7 @@ __all__ = [
     "ListFilesRequest",
     "ListModelsResponse",
     "GetChatCompletionRequest",
+    "ListChatCompletionMessagesRequest",
     "ListChatCompletionsRequest",
     "ListOpenAIChatCompletionResponse",
     "ListOpenAIFileResponse",
