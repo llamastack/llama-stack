@@ -983,7 +983,7 @@
 
 .cliTerminalBody {
   padding: 1rem 1.25rem;
-  min-height: 280px;
+  min-height: 340px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.78rem;
   line-height: 1.7;
@@ -1034,6 +1034,23 @@
 
 [data-theme='dark'] .cliLineResultCont {
   color: oklch(0.65 0.01 250);
+}
+
+.cliLineBrand {
+  color: oklch(0.3 0.02 240);
+  font-weight: 700;
+}
+
+[data-theme='dark'] .cliLineBrand {
+  color: oklch(0.88 0.02 240);
+}
+
+.cliLineBrandDim {
+  color: oklch(0.55 0.01 240);
+}
+
+[data-theme='dark'] .cliLineBrandDim {
+  color: oklch(0.45 0.01 250);
 }
 
 .cliLineBlank {

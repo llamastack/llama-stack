@@ -183,9 +183,13 @@ const CLI_DEMOS = {
     command: 'claude',
     envVar: 'ANTHROPIC_BASE_URL',
     lines: [
-      { type: 'command', text: 'export ANTHROPIC_BASE_URL=http://localhost:8321/v1', delay: 0 },
-      { type: 'command', text: 'claude', delay: 400 },
-      { type: 'blank', text: '', delay: 200 },
+      { type: 'command', text: '$ export ANTHROPIC_BASE_URL=http://localhost:8321/v1', delay: 0 },
+      { type: 'command', text: '$ claude', delay: 400 },
+      { type: 'blank', text: '', delay: 100 },
+      { type: 'brand', text: ' ▐▛███▜▌   Claude Code', delay: 0 },
+      { type: 'brand', text: '▝▜█████▛▝   model: llama-3.3-70b via OGX', delay: 0 },
+      { type: 'brand-dim', text: '  ▘▘ ▝▝', delay: 0 },
+      { type: 'blank', text: '', delay: 300 },
       { type: 'prompt', text: '> Refactor the auth middleware to use JWT validation', delay: 300 },
       { type: 'blank', text: '', delay: 200 },
       { type: 'status', text: '⏵ Reading src/middleware/auth.js', delay: 300 },
@@ -204,9 +208,12 @@ const CLI_DEMOS = {
     command: 'codex',
     envVar: 'OPENAI_BASE_URL',
     lines: [
-      { type: 'command', text: 'export OPENAI_BASE_URL=http://localhost:8321/v1', delay: 0 },
-      { type: 'command', text: 'codex', delay: 400 },
-      { type: 'blank', text: '', delay: 200 },
+      { type: 'command', text: '$ export OPENAI_BASE_URL=http://localhost:8321/v1', delay: 0 },
+      { type: 'command', text: '$ codex', delay: 400 },
+      { type: 'blank', text: '', delay: 100 },
+      { type: 'brand', text: 'OpenAI Codex', delay: 0 },
+      { type: 'brand-dim', text: 'model: llama-3.3-70b via OGX', delay: 0 },
+      { type: 'blank', text: '', delay: 300 },
       { type: 'prompt', text: '> Add rate limiting to the API endpoints', delay: 300 },
       { type: 'blank', text: '', delay: 200 },
       { type: 'status', text: '⏵ Reading src/routes/api.js', delay: 300 },
@@ -506,6 +513,8 @@ function TerminalWindow({demo, anim}) {
             result: styles.cliLineResult,
             'result-cont': styles.cliLineResultCont,
             blank: styles.cliLineBlank,
+            brand: styles.cliLineBrand,
+            'brand-dim': styles.cliLineBrandDim,
           }[meta.type] || '';
           if (meta.type === 'blank') return <div key={i} className={styles.cliLineBlank} />;
           return (
