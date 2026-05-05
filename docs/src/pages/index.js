@@ -200,7 +200,10 @@ const CLI_DEMOS = {
     command: 'codex',
     envVar: 'OPENAI_BASE_URL',
     lines: [
-      { type: 'command', text: '$ export OPENAI_BASE_URL=http://localhost:8321/v1', delay: 0 },
+      { type: 'command', text: '$ cat ~/.codex/config.toml', delay: 0 },
+      { type: 'brand-dim', text: '[model_providers.ogx]', delay: 0 },
+      { type: 'brand-dim', text: 'base_url = "http://localhost:8321/v1"', delay: 0 },
+      { type: 'blank', text: '', delay: 200 },
       { type: 'command', text: '$ codex', delay: 400 },
       { type: 'blank', text: '', delay: 100 },
       { type: 'brand-box', text: '>_ OpenAI Codex\n\nmodel: llama-3.3-70b via OGX', delay: 0 },
