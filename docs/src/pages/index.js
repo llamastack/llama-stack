@@ -386,6 +386,175 @@ function CodeBlock() {
   );
 }
 
+function useTerminalAnimation(lines, shouldStart) {
+  const [visibleLines, setVisibleLines] = useState([]);
+  const [typingLine, setTypingLine] = useState(null);
+  const [done, setDone] = useState(false);
+  const animRef = useRef(null);
+
+  useEffect(() => {
+    if (!shouldStart) return;
+    let cancelled = false;
+
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.matches) {
+      setVisibleLines(lines.map(l => l.text));
+      setTypingLine(null);
+      setDone(true);
+      return;
+    }
+
+    async function animate() {
+      const shown = [];
+      for (let i = 0; i < lines.length; i++) {
+        if (cancelled) return;
+        const line = lines[i];
+
+        if (line.type === 'blank') {
+          shown.push('');
+          setVisibleLines([...shown]);
+          await sleep(line.delay);
+          continue;
+        }
+
+        if (line.type === 'command' || line.type === 'prompt') {
+          let partial = '';
+          for (let c = 0; c < line.text.length; c++) {
+            if (cancelled) return;
+            partial += line.text[c];
+            setTypingLine(partial);
+            await sleep(30 + Math.random() * 20);
+          }
+          setTypingLine(null);
+          shown.push(line.text);
+          setVisibleLines([...shown]);
+          await sleep(line.delay);
+        } else {
+          await sleep(line.delay);
+          if (cancelled) return;
+          shown.push(line.text);
+          setVisibleLines([...shown]);
+        }
+      }
+      setDone(true);
+    }
+
+    animate();
+    return () => { cancelled = true; };
+  }, [shouldStart, lines]);
+
+  return { visibleLines, typingLine, done };
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+function CliShowcase() {
+  const [activeBackend, setActiveBackend] = useState('Ollama');
+  const [started, setStarted] = useState(false);
+  const [animKey, setAnimKey] = useState(0);
+  const sectionRef = useRef(null);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.matches) { setStarted(true); return; }
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setStarted(true); observer.disconnect(); } },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const handleBackendChange = (backend) => {
+    setActiveBackend(backend);
+    setAnimKey(k => k + 1);
+    setStarted(true);
+  };
+
+  const claudeAnim = useTerminalAnimation(
+    CLI_DEMOS.claude.lines,
+    started,
+  );
+  const codexAnim = useTerminalAnimation(
+    CLI_DEMOS.codex.lines,
+    claudeAnim.done,
+  );
+
+  return (
+    <section className={styles.cliSection} ref={sectionRef}>
+      <div className="container">
+        <div className={styles.cliHeader}>
+          <h2>Your tools. Any model.</h2>
+          <p>Point Claude Code or Codex at OGX. Pick any backend. Ship.</p>
+        </div>
+        <div className={styles.cliBackendPills}>
+          {BACKENDS.map(b => (
+            <button
+              key={b}
+              className={clsx(styles.cliBackendPill, activeBackend === b && styles.cliBackendPillActive)}
+              onClick={() => handleBackendChange(b)}
+            >
+              {b}
+            </button>
+          ))}
+        </div>
+        <div className={styles.cliTerminals} key={animKey}>
+          <TerminalWindow
+            demo={CLI_DEMOS.claude}
+            backend={activeBackend}
+            anim={claudeAnim}
+          />
+          <TerminalWindow
+            demo={CLI_DEMOS.codex}
+            backend={activeBackend}
+            anim={codexAnim}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TerminalWindow({demo, backend, anim}) {
+  return (
+    <div className={clsx(styles.cliTerminal, styles.cliTerminalFadeIn)}>
+      <div className={styles.cliTerminalBar}>
+        <span className={styles.cliTerminalFlow}>
+          {demo.command} → OGX → {backend}
+        </span>
+      </div>
+      <div className={styles.cliTerminalBody}>
+        {anim.visibleLines.map((line, i) => {
+          const meta = demo.lines[i];
+          if (!meta) return null;
+          const cls = {
+            command: styles.cliLineCommand,
+            prompt: styles.cliLinePrompt,
+            status: styles.cliLineStatus,
+            result: styles.cliLineResult,
+            'result-cont': styles.cliLineResultCont,
+            blank: styles.cliLineBlank,
+          }[meta.type] || '';
+          if (meta.type === 'blank') return <div key={i} className={styles.cliLineBlank} />;
+          return (
+            <div key={i} className={clsx(styles.cliLine, cls)}>{line}</div>
+          );
+        })}
+        {anim.typingLine !== null && (
+          <div className={clsx(styles.cliLine, styles.cliLineCommand)}>
+            {anim.typingLine}
+            <span className={styles.cliCursor} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function useConstellation(canvasId) {
   useEffect(() => {
     const canvas = document.getElementById(canvasId);
@@ -717,6 +886,7 @@ export default function Home() {
       <main>
         <AnnouncementBanner />
         <Hero />
+        <CliShowcase />
         <ApiSurface />
         <ServerNotLibrary />
         <Providers />
