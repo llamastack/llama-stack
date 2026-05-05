@@ -5,12 +5,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the terms described in the LICENSE file in
-# the root directory of this source tree.
-
 # /// script
 # dependencies = [
 #   "google-genai",
@@ -20,8 +14,8 @@
 """Test plan script for the Google Interactions API front-end.
 
 This script validates the Interactions API endpoint against a running
-Llama Stack server using the official Google GenAI SDK, proving that
-ADK/Gemini ecosystem clients can call Llama Stack natively.
+OGX server using the official Google GenAI SDK, proving that
+ADK/Gemini ecosystem clients can call OGX natively.
 
 Usage:
     # Start a OGX server first:
@@ -42,7 +36,7 @@ from google.genai import types
 
 
 def _create_client(base_url: str) -> genai.Client:
-    """Create a Google GenAI client pointed at the Llama Stack server."""
+    """Create a Google GenAI client pointed at the OGX server."""
     return genai.Client(
         api_key="no-key-required",
         http_options=types.HttpOptions(
@@ -227,7 +221,7 @@ def main():
     parser.add_argument(
         "--base-url",
         default="http://localhost:8321",
-        help="Base URL of the Llama Stack server (default: http://localhost:8321)",
+        help="Base URL of the OGX server (default: http://localhost:8321)",
     )
     parser.add_argument(
         "--model",
