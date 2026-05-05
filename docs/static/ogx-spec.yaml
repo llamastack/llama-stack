@@ -1670,14 +1670,10 @@ paths:
         x-ogx-extra-body-params:
           guardrails:
             anyOf:
-            - items:
-                anyOf:
-                - type: string
-                - $ref: '#/components/schemas/ResponseGuardrailSpec'
-              type: array
+            - type: boolean
             - type: 'null'
             title: Guardrails
-            description: List of guardrails to apply during response generation.
+            description: Enable content moderation via the configured moderation_endpoint.
       x-codeSamples:
       - lang: Python
         label: OpenAI
@@ -6735,17 +6731,6 @@ components:
       - output_tokens_details
       title: OpenAIResponseUsage
       description: Usage information for OpenAI response.
-    ResponseGuardrailSpec:
-      properties:
-        type:
-          type: string
-          title: Type
-      additionalProperties: false
-      type: object
-      required:
-      - type
-      title: ResponseGuardrailSpec
-      description: Specification for a guardrail to apply during response generation.
     OpenAIResponseInputTool:
       discriminator:
         mapping:

@@ -68,7 +68,6 @@ from ogx_api import (
     OpenAIUserMessageParam,
     Order,
     Prompts,
-    ResponseGuardrailSpec,
     ResponseItemInclude,
     ResponseStreamOptions,
     ResponseTruncation,
@@ -86,7 +85,6 @@ from .utils import (
     convert_response_content_to_chat_content,
     convert_response_input_to_chat_messages,
     convert_response_text_to_chat_response_format,
-    extract_guardrail_ids,
 )
 
 logger = get_logger(name=__name__, category="openai_responses")
@@ -633,7 +631,7 @@ class OpenAIResponsesImpl:
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[ResponseItemInclude] | None = None,
         max_infer_iters: int | None = 10,
-        guardrails: list[str | ResponseGuardrailSpec] | None = None,
+        guardrails: bool | None = None,
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
@@ -677,10 +675,9 @@ class OpenAIResponsesImpl:
                                 "Authorization credentials must be passed via the 'authorization' parameter, not 'headers'.",
                             )
 
-        guardrail_ids = extract_guardrail_ids(guardrails) if guardrails else []
+        enable_guardrails = bool(guardrails)
 
-        # Validate that moderation_endpoint is configured if guardrails are requested
-        if guardrail_ids and not self.moderation_endpoint:
+        if enable_guardrails and not self.moderation_endpoint:
             raise ServiceNotEnabledError(
                 "moderation_endpoint",
                 provider_specific_message="Set the 'moderation_endpoint' field on the responses provider config to enable guardrails, otherwise remove the 'guardrails' parameter from your request.",
@@ -721,7 +718,7 @@ class OpenAIResponsesImpl:
                 tools=tools,
                 include=include,
                 max_infer_iters=max_infer_iters,
-                guardrail_ids=guardrail_ids,
+                enable_guardrails=enable_guardrails,
                 parallel_tool_calls=parallel_tool_calls,
                 max_tool_calls=max_tool_calls,
                 reasoning=reasoning,
@@ -751,7 +748,7 @@ class OpenAIResponsesImpl:
             tools=tools,
             tool_choice=tool_choice,
             max_infer_iters=max_infer_iters,
-            guardrail_ids=guardrail_ids,
+            enable_guardrails=enable_guardrails,
             parallel_tool_calls=parallel_tool_calls,
             max_tool_calls=max_tool_calls,
             reasoning=reasoning,
@@ -837,7 +834,7 @@ class OpenAIResponsesImpl:
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[ResponseItemInclude] | None = None,
         max_infer_iters: int | None = 10,
-        guardrail_ids: list[str] | None = None,
+        enable_guardrails: bool = False,
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
@@ -915,7 +912,7 @@ class OpenAIResponsesImpl:
                         tools=tools,
                         include=include,
                         max_infer_iters=max_infer_iters,
-                        guardrail_ids=guardrail_ids,
+                        enable_guardrails=enable_guardrails,
                         parallel_tool_calls=parallel_tool_calls,
                         max_tool_calls=max_tool_calls,
                         reasoning=reasoning,
@@ -954,7 +951,7 @@ class OpenAIResponsesImpl:
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[ResponseItemInclude] | None = None,
         max_infer_iters: int | None = 10,
-        guardrail_ids: list[str] | None = None,
+        enable_guardrails: bool = False,
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
@@ -993,7 +990,7 @@ class OpenAIResponsesImpl:
             tools=tools,
             tool_choice=tool_choice,
             max_infer_iters=max_infer_iters,
-            guardrail_ids=guardrail_ids,
+            enable_guardrails=enable_guardrails,
             parallel_tool_calls=parallel_tool_calls,
             max_tool_calls=max_tool_calls,
             reasoning=reasoning,
@@ -1065,7 +1062,7 @@ class OpenAIResponsesImpl:
         tools: list[OpenAIResponseInputTool] | None = None,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
         max_infer_iters: int | None = 10,
-        guardrail_ids: list[str] | None = None,
+        enable_guardrails: bool = False,
         parallel_tool_calls: bool | None = True,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
@@ -1151,7 +1148,7 @@ class OpenAIResponsesImpl:
                 tool_executor=request_tool_executor,
                 moderation_endpoint=self.moderation_endpoint,
                 connectors_api=self.connectors_api,
-                guardrail_ids=guardrail_ids,
+                enable_guardrails=enable_guardrails,
                 instructions=instructions,
                 max_tool_calls=max_tool_calls,
                 reasoning=reasoning,

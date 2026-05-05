@@ -268,42 +268,21 @@
 
     <line x1="517" y1="256" x2="747" y2="256" stroke="var(--col-divider)" stroke-width="0.5"/>
 
-    <!-- Safety -->
-    <text x="520" y="274" fill="var(--section-label)" font-size="9" font-weight="700" letter-spacing="0.5">SAFETY (7)</text>
-    <g transform="translate(517, 282)">
-      <rect width="112" height="22" rx="3" fill="var(--item-bg)"/>
-      <text x="8" y="15" fill="var(--item-text)" font-size="8.5">Llama Guard</text>
-    </g>
-    <g transform="translate(635, 282)">
-      <rect width="112" height="22" rx="3" fill="var(--item-bg)"/>
-      <text x="8" y="15" fill="var(--item-text)" font-size="8.5">Prompt Guard</text>
-    </g>
-    <g transform="translate(517, 308)">
-      <rect width="112" height="22" rx="3" fill="var(--item-bg)"/>
-      <text x="8" y="15" fill="var(--item-text)" font-size="8.5">Code Scanner</text>
-    </g>
-    <g transform="translate(635, 308)">
-      <rect width="112" height="22" rx="3" fill="var(--item-bg)"/>
-      <text x="8" y="15" fill="var(--item-text)" font-size="8.5">Bedrock Safety</text>
-    </g>
-
-    <line x1="517" y1="340" x2="747" y2="340" stroke="var(--col-divider)" stroke-width="0.5"/>
-
     <!-- Tools & Files -->
-    <text x="520" y="358" fill="var(--section-label)" font-size="9" font-weight="700" letter-spacing="0.5">TOOLS &amp; FILES</text>
-    <g transform="translate(517, 366)">
+    <text x="520" y="274" fill="var(--section-label)" font-size="9" font-weight="700" letter-spacing="0.5">TOOLS &amp; FILES</text>
+    <g transform="translate(517, 282)">
       <rect width="112" height="22" rx="3" fill="var(--item-bg)"/>
       <text x="8" y="15" fill="var(--item-text)" font-size="8.5">MCP Servers</text>
     </g>
-    <g transform="translate(635, 366)">
+    <g transform="translate(635, 282)">
       <rect width="112" height="22" rx="3" fill="var(--item-bg)"/>
       <text x="8" y="15" fill="var(--item-text)" font-size="8.5">Web Search</text>
     </g>
-    <g transform="translate(517, 392)">
+    <g transform="translate(517, 308)">
       <rect width="112" height="22" rx="3" fill="var(--item-bg)"/>
       <text x="8" y="15" fill="var(--item-text)" font-size="8.5">Local FS / S3</text>
     </g>
-    <g transform="translate(635, 392)">
+    <g transform="translate(635, 308)">
       <rect width="112" height="22" rx="3" fill="var(--item-bg)"/>
       <text x="8" y="15" fill="var(--item-text)" font-size="8.5">PDF / Docling</text>
     </g>
