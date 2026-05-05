@@ -3756,11 +3756,18 @@ codegen = [
     { name = "rich" },
 ]
 dev = [
+    { name = "anthropic" },
     { name = "black" },
+    { name = "boto3" },
+    { name = "chardet" },
+    { name = "markitdown", extra = ["all"] },
     { name = "mypy" },
     { name = "nbval" },
+    { name = "ogx-client" },
+    { name = "ollama" },
     { name = "openapi-spec-validator" },
     { name = "pre-commit" },
+    { name = "pypdf" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -3770,6 +3777,9 @@ dev = [
     { name = "pytest-timeout" },
     { name = "ruamel-yaml" },
     { name = "ruff" },
+    { name = "together" },
+    { name = "torch", version = "2.8.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.8.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
 ]
 docs = [
     { name = "linkify" },
@@ -3976,11 +3986,18 @@ codegen = [
     { name = "rich" },
 ]
 dev = [
+    { name = "anthropic" },
     { name = "black" },
+    { name = "boto3" },
+    { name = "chardet" },
+    { name = "markitdown", extras = ["all"] },
     { name = "mypy" },
     { name = "nbval" },
+    { name = "ogx-client", specifier = ">=0.8.0" },
+    { name = "ollama" },
     { name = "openapi-spec-validator", specifier = ">=0.7.2" },
     { name = "pre-commit", specifier = ">=4.4.0" },
+    { name = "pypdf", specifier = ">=6.7.2" },
     { name = "pytest", specifier = ">=8.4" },
     { name = "pytest-asyncio", specifier = ">=1.0" },
     { name = "pytest-cov" },
@@ -3990,6 +4007,8 @@ dev = [
     { name = "pytest-timeout" },
     { name = "ruamel-yaml" },
     { name = "ruff" },
+    { name = "together" },
+    { name = "torch", specifier = ">=2.6.0", index = "https://download.pytorch.org/whl/cpu" },
 ]
 docs = [
     { name = "linkify" },
