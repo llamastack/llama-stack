@@ -177,6 +177,53 @@ const PROVIDERS = [
   { name: 'Weaviate', href: '/docs/providers/vector_io/remote_weaviate' },
 ];
 
+const BACKENDS = ['Ollama', 'vLLM', 'Bedrock', 'Azure'];
+
+const CLI_DEMOS = {
+  claude: {
+    label: 'Claude Code',
+    command: 'claude',
+    envVar: 'ANTHROPIC_BASE_URL',
+    lines: [
+      { type: 'command', text: 'export ANTHROPIC_BASE_URL=http://localhost:8321/v1', delay: 0 },
+      { type: 'command', text: 'claude', delay: 400 },
+      { type: 'blank', text: '', delay: 200 },
+      { type: 'prompt', text: '> Refactor the auth middleware to use JWT validation', delay: 300 },
+      { type: 'blank', text: '', delay: 200 },
+      { type: 'status', text: '⏵ Reading src/middleware/auth.js', delay: 300 },
+      { type: 'status', text: '⏵ Reading src/utils/token.js', delay: 300 },
+      { type: 'status', text: '⏵ Writing src/middleware/auth.js', delay: 300 },
+      { type: 'status', text: '⏵ Writing src/utils/token.js', delay: 300 },
+      { type: 'status', text: '⏵ Writing tests/auth.test.js', delay: 300 },
+      { type: 'blank', text: '', delay: 200 },
+      { type: 'result', text: '✓ Refactored auth middleware to use JWT validation.', delay: 0 },
+      { type: 'result-cont', text: '  Changed 3 files, added token expiry checks', delay: 0 },
+      { type: 'result-cont', text: '  and refresh handling.', delay: 0 },
+    ],
+  },
+  codex: {
+    label: 'Codex',
+    command: 'codex',
+    envVar: 'OPENAI_BASE_URL',
+    lines: [
+      { type: 'command', text: 'export OPENAI_BASE_URL=http://localhost:8321/v1', delay: 0 },
+      { type: 'command', text: 'codex', delay: 400 },
+      { type: 'blank', text: '', delay: 200 },
+      { type: 'prompt', text: '> Add rate limiting to the API endpoints', delay: 300 },
+      { type: 'blank', text: '', delay: 200 },
+      { type: 'status', text: '⏵ Reading src/routes/api.js', delay: 300 },
+      { type: 'status', text: '⏵ Reading src/config/limits.js', delay: 300 },
+      { type: 'status', text: '⏵ Writing src/middleware/rateLimit.js', delay: 300 },
+      { type: 'status', text: '⏵ Writing src/routes/api.js', delay: 300 },
+      { type: 'status', text: '⏵ Writing tests/rateLimit.test.js', delay: 300 },
+      { type: 'blank', text: '', delay: 200 },
+      { type: 'result', text: '✓ Added sliding-window rate limiter.', delay: 0 },
+      { type: 'result-cont', text: '  Created middleware, applied to all API routes,', delay: 0 },
+      { type: 'result-cont', text: '  added tests.', delay: 0 },
+    ],
+  },
+};
+
 /* Custom Tidal theme for the landing page code block */
 const tidalDark = {
   plain: { color: '#bcc5d0', backgroundColor: 'transparent' },
