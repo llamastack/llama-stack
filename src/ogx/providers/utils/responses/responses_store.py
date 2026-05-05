@@ -24,6 +24,7 @@ from ogx_api import (
     OpenAIResponseOutputMessageContent,
     OpenAIResponseOutputMessageContentOutputText,
     OpenAIResponseOutputMessageFileSearchToolCall,
+    OpenAIResponseOutputMessageReasoningItem,
     Order,
     ResponseInputItemNotFoundError,
     ResponseItemInclude,
@@ -74,12 +75,18 @@ def _apply_include_filter(
 ) -> list[OpenAIResponseInput]:
     include_values = {str(value) for value in include or []}
     include_file_search_results = ResponseItemInclude.file_search_call_results.value in include_values
+    include_reasoning_content = ResponseItemInclude.reasoning_encrypted_content.value in include_values
     filtered_items: list[OpenAIResponseInput] = []
 
     for item in items:
         if isinstance(item, OpenAIResponseOutputMessageFileSearchToolCall):
             if item.results is not None and not include_file_search_results:
                 filtered_items.append(item.model_copy(update={"results": None}))
+            else:
+                filtered_items.append(item)
+        elif isinstance(item, OpenAIResponseOutputMessageReasoningItem):
+            if item.content is not None and not include_reasoning_content:
+                filtered_items.append(item.model_copy(update={"content": None}))
             else:
                 filtered_items.append(item)
         elif isinstance(item, OpenAIResponseMessage):

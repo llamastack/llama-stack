@@ -24,6 +24,7 @@ from ogx_api import (
     OpenAIResponseOutputMessageFileSearchToolCall,
     OpenAIResponseOutputMessageFileSearchToolCallResults,
     OpenAIResponseOutputMessageFunctionToolCall,
+    OpenAIResponseOutputMessageReasoningContent,
     OpenAIResponseOutputMessageReasoningItem,
     OpenAIResponseOutputMessageReasoningSummary,
     OpenAITokenLogProb,
@@ -136,6 +137,7 @@ def create_test_include_filter_items() -> list[OpenAIResponseInput]:
         OpenAIResponseOutputMessageReasoningItem(
             id="reasoning-1",
             summary=[OpenAIResponseOutputMessageReasoningSummary(text="Reasoning summary")],
+            content=[OpenAIResponseOutputMessageReasoningContent(text="Reasoning content")],
             status="completed",
         ),
     ]
@@ -157,6 +159,11 @@ def get_output_text_content(item: OpenAIResponseInput) -> OpenAIResponseOutputMe
 
 def get_file_search_call(item: OpenAIResponseInput) -> OpenAIResponseOutputMessageFileSearchToolCall:
     assert isinstance(item, OpenAIResponseOutputMessageFileSearchToolCall)
+    return item
+
+
+def get_reasoning_item(item: OpenAIResponseInput) -> OpenAIResponseOutputMessageReasoningItem:
+    assert isinstance(item, OpenAIResponseOutputMessageReasoningItem)
     return item
 
 
@@ -454,12 +461,13 @@ def test_apply_include_filter_no_include_hides_gated_fields_without_mutating_sou
     assert get_output_text_content(filtered_items[1]).logprobs is None
     assert get_file_search_call(filtered_items[2]).results is None
     assert filtered_items[3] == items[3]
-    assert filtered_items[4] == items[4]
+    assert get_reasoning_item(filtered_items[4]).content is None
 
     # Ensure the source items still retain the stored data.
     assert get_image_content(items[0]).image_url == "https://example.com/image.jpg"
     assert get_output_text_content(items[1]).logprobs is not None
     assert get_file_search_call(items[2]).results is not None
+    assert get_reasoning_item(items[4]).content is not None
 
 
 def test_apply_include_filter_preserves_requested_fields():
@@ -471,12 +479,14 @@ def test_apply_include_filter_preserves_requested_fields():
             ResponseItemInclude.message_input_image_image_url,
             ResponseItemInclude.message_output_text_logprobs,
             ResponseItemInclude.file_search_call_results,
+            ResponseItemInclude.reasoning_encrypted_content,
         ],
     )
 
     assert get_image_content(filtered_items[0]).image_url == "https://example.com/image.jpg"
     assert get_output_text_content(filtered_items[1]).logprobs is not None
     assert get_file_search_call(filtered_items[2]).results is not None
+    assert get_reasoning_item(filtered_items[4]).content is not None
 
 
 def test_apply_include_filter_noop_values_leave_gated_fields_hidden():
@@ -486,7 +496,6 @@ def test_apply_include_filter_noop_values_leave_gated_fields_hidden():
         items,
         [
             ResponseItemInclude.web_search_call_action_sources,
-            ResponseItemInclude.reasoning_encrypted_content,
             ResponseItemInclude.code_interpreter_call_outputs,
             ResponseItemInclude.computer_call_output_output_image_url,
         ],
@@ -495,6 +504,7 @@ def test_apply_include_filter_noop_values_leave_gated_fields_hidden():
     assert get_image_content(filtered_items[0]).image_url is None
     assert get_output_text_content(filtered_items[1]).logprobs is None
     assert get_file_search_call(filtered_items[2]).results is None
+    assert get_reasoning_item(filtered_items[4]).content is None
 
 
 def test_apply_include_filter_string_message_content_is_unchanged():
@@ -582,6 +592,12 @@ async def test_responses_store_input_items_include_filtering():
             create_test_input_image_message("image-1"),
             create_test_output_text_message("output-1"),
             create_test_file_search_call("file-search-1"),
+            OpenAIResponseOutputMessageReasoningItem(
+                id="reasoning-1",
+                summary=[OpenAIResponseOutputMessageReasoningSummary(text="Reasoning summary")],
+                content=[OpenAIResponseOutputMessageReasoningContent(text="Reasoning content")],
+                status="completed",
+            ),
         ]
         messages = create_test_messages("Image input")
         await store.store_response_object(response, input_list, messages)
@@ -593,15 +609,47 @@ async def test_responses_store_input_items_include_filtering():
             include=[ResponseItemInclude.message_input_image_image_url],
         )
 
-        assert len(result.data) == 3
+        assert len(result.data) == 4
         assert get_image_content(result.data[0]).image_url == "https://example.com/image.jpg"
         assert get_output_text_content(result.data[1]).logprobs is None
         assert get_file_search_call(result.data[2]).results is None
+        assert get_reasoning_item(result.data[3]).content is None
 
         stored_response = await store.get_response_object("test-resp-include")
         assert get_image_content(stored_response.input[0]).image_url == "https://example.com/image.jpg"
         assert get_output_text_content(stored_response.input[1]).logprobs is not None
         assert get_file_search_call(stored_response.input[2]).results is not None
+        assert get_reasoning_item(stored_response.input[3]).content is not None
+
+
+async def test_responses_store_input_items_reasoning_include_preserves_content():
+    with TemporaryDirectory() as tmp_dir:
+        db_path = tmp_dir + "/test.db"
+        store = build_store(db_path)
+        await store.initialize()
+
+        response = create_test_response_object("test-resp-reasoning-include", int(time.time()))
+        input_list = [
+            OpenAIResponseOutputMessageReasoningItem(
+                id="reasoning-1",
+                summary=[OpenAIResponseOutputMessageReasoningSummary(text="Reasoning summary")],
+                content=[OpenAIResponseOutputMessageReasoningContent(text="Reasoning content")],
+                status="completed",
+            )
+        ]
+        messages = create_test_messages("Reasoning input")
+        await store.store_response_object(response, input_list, messages)
+        await store.flush()
+
+        result = await store.list_response_input_items(
+            "test-resp-reasoning-include",
+            order=Order.asc,
+            include=[ResponseItemInclude.reasoning_encrypted_content],
+        )
+
+        assert len(result.data) == 1
+        assert get_reasoning_item(result.data[0]).content is not None
+        assert get_reasoning_item(result.data[0]).content[0].text == "Reasoning content"
 
 
 async def test_responses_store_safety_identifier():

@@ -375,15 +375,14 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
     stack_config=$(echo "$STACK_CONFIG" | sed 's/^server://')
     nohup ogx stack run $stack_config >server.log 2>&1 &
 
-    SERVER_START_TIMEOUT_SECONDS="${OGX_SERVER_START_TIMEOUT_SECONDS:-60}"
     echo "Waiting for OGX Server to start on port $OGX_PORT..."
-    for i in $(seq 1 "$SERVER_START_TIMEOUT_SECONDS"); do
+    for i in {1..30}; do
         if curl -s http://localhost:$OGX_PORT/v1/health 2>/dev/null | grep -q "OK"; then
             echo "✅ OGX Server started successfully"
             break
         fi
-        if [[ $i -eq "$SERVER_START_TIMEOUT_SECONDS" ]]; then
-            echo "Failed to start OGX Server within ${SERVER_START_TIMEOUT_SECONDS} seconds"
+        if [[ $i -eq 30 ]]; then
+            echo "❌ OGX Server failed to start"
             echo "Server logs:"
             cat server.log
             exit 1
