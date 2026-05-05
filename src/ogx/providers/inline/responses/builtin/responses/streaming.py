@@ -1581,7 +1581,7 @@ class StreamingResponseOrchestrator:
         for input_tool in tools:
             if input_tool.type == "function":
                 self.ctx.chat_tools.append(
-                    ChatCompletionToolParam(type="function", function=input_tool.model_dump(exclude_none=True))  # type: ignore[typeddict-item,arg-type]  # Dict compatible with FunctionDefinition
+                    ChatCompletionToolParam(type="function", function={k: v for k, v in input_tool.model_dump(exclude_none=True).items() if k != "type"})  # type: ignore[typeddict-item,arg-type]  # Dict compatible with FunctionDefinition; exclude "type" which belongs on the outer ChatCompletionToolParam, not inside function
                 )
             elif input_tool.type in WebSearchToolTypes:
                 tool_name = "web_search"
