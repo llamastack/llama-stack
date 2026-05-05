@@ -1036,12 +1036,17 @@
   color: oklch(0.65 0.01 250);
 }
 
+.cliLineBrand,
+.cliLineBrandDim {
+  line-height: 1;
+  word-break: normal;
+  white-space: pre;
+  letter-spacing: -0.02em;
+}
+
 .cliLineBrand {
   color: oklch(0.3 0.02 240);
   font-weight: 700;
-  line-height: 1.15;
-  word-break: normal;
-  white-space: pre;
 }
 
 [data-theme='dark'] .cliLineBrand {
@@ -1050,9 +1055,6 @@
 
 .cliLineBrandDim {
   color: oklch(0.55 0.01 240);
-  line-height: 1.15;
-  word-break: normal;
-  white-space: pre;
 }
 
 [data-theme='dark'] .cliLineBrandDim {
