@@ -548,7 +548,11 @@ async def run_guardrails(
     moderation_endpoint: str | None,
     messages: str,
 ) -> str | None:
-    """Run content moderation by calling an external OpenAI-compatible moderation endpoint."""
+    """Run content moderation by calling an external OpenAI-compatible moderation endpoint.
+
+    The endpoint must conform to the OpenAI Moderations API response format:
+    {"id": "...", "model": "...", "results": [{"flagged": bool, "categories": {...}, ...}]}
+    """
     if not messages or not moderation_endpoint:
         return None
 
@@ -562,7 +566,20 @@ async def run_guardrails(
             logger.warning("Failed to call moderation endpoint", endpoint=moderation_endpoint)
             return None
 
-    for result in resp.json().get("results", []):
+    data = resp.json()
+    results = data.get("results")
+    if not isinstance(results, list):
+        logger.warning(
+            "Moderation endpoint returned unexpected format (expected OpenAI-compatible "
+            "response with 'results' array, see https://platform.openai.com/docs/api-reference/moderations)",
+            endpoint=moderation_endpoint,
+            response_keys=list(data.keys()) if isinstance(data, dict) else type(data).__name__,
+        )
+        return None
+
+    for result in results:
+        if not isinstance(result, dict):
+            continue
         if result.get("flagged", False):
             categories = result.get("categories", {})
             flagged_cats = [c for c, f in categories.items() if f]

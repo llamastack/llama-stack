@@ -80,7 +80,9 @@ class BuiltinResponsesImplConfig(BaseModel):
 
     moderation_endpoint: str | None = Field(
         default=None,
-        description="URL of an OpenAI-compatible /v1/moderations endpoint for guardrails.",
+        description="URL of an OpenAI-compatible /v1/moderations endpoint for guardrails. "
+        'The endpoint must accept POST {"input": "text"} and return '
+        '{"results": [{"flagged": bool, "categories": {...}}]}.',
     )
 
     @classmethod
