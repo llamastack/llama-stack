@@ -18,22 +18,22 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 93.0% |
+| **Overall Conformance Score** | 92.9% |
 | **Endpoints Implemented** | 29/146 |
 | **Total Properties Checked** | 3434 |
 | **Schema/Type Issues** | 179 |
-| **Missing Properties** | 62 |
-| **Total Issues to Fix** | 241 |
+| **Missing Properties** | 64 |
+| **Total Issues to Fix** | 243 |
 
 ## Integration Test Coverage
 
-Overall Test Coverage Score: 43.8%
+Overall Test Coverage Score: 42.9%
 
 | Category | Covered | Total | Score |
 |----------|---------|-------|-------|
 | CRUD Operations | 5 | 7 | 71.4% |
 | Conversations | 5 | 9 | 55.6% |
-| Request Parameters | 21 | 25 | 84.0% |
+| Request Parameters | 20 | 25 | 80.0% |
 | Streaming Events | 16 | 53 | 30.2% |
 | Structured Output | 0 | 2 | 0.0% |
 | Tools | 2 | 16 | 12.5% |
@@ -49,7 +49,7 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Files | 76.2% | 42 | 8 | 2 |
 | Embeddings | 78.6% | 14 | 3 | 0 |
 | Vector stores | 82.9% | 310 | 41 | 12 |
-| Responses | 88.9% | 225 | 25 | 0 |
+| Responses | 88.0% | 225 | 25 | 2 |
 | Models | 93.3% | 15 | 1 | 0 |
 | Chat | 98.7% | 449 | 5 | 1 |
 | Conversations | 98.9% | 2165 | 19 | 4 |
@@ -723,11 +723,19 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Responses
 
-**Score:** 88.9% · **Issues:** 25 · **Missing:** 0
+**Score:** 88.0% · **Issues:** 25 · **Missing:** 2
 
 #### `/responses`
 
 **POST**
+
+<details>
+<summary>Missing Properties (2)</summary>
+
+- `requestBody.content.application/json.properties.safety_identifier`
+- `responses.200.content.application/json.properties.safety_identifier`
+
+</details>
 
 <details>
 <summary>Schema Issues (22)</summary>

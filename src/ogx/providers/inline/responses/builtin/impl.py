@@ -158,7 +158,6 @@ class BuiltinResponsesImpl(Responses):
             max_tool_calls=request.max_tool_calls,
             max_output_tokens=request.max_output_tokens,
             reasoning=request.reasoning,
-            safety_identifier=request.safety_identifier,
             service_tier=request.service_tier,
             metadata=request.metadata,
             background=request.background,

@@ -241,7 +241,6 @@ class StreamingResponseOrchestrator:
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
         max_output_tokens: int | None = None,
-        safety_identifier: str | None = None,
         service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
@@ -273,7 +272,6 @@ class StreamingResponseOrchestrator:
         self.reasoning = reasoning
         # An upper bound for the number of tokens that can be generated for a response
         self.max_output_tokens = max_output_tokens
-        self.safety_identifier = safety_identifier
         # Convert ServiceTier enum to string for internal storage
         # This allows us to update it with the actual tier returned by the provider
         self.service_tier = service_tier.value if service_tier is not None else None
@@ -330,7 +328,6 @@ class StreamingResponseOrchestrator:
             tool_choice=self.ctx.tool_choice or OpenAIResponseInputToolChoiceMode.auto,
             truncation=self.truncation or "disabled",
             max_output_tokens=self.max_output_tokens,
-            safety_identifier=self.safety_identifier,
             service_tier=self.service_tier or "default",
             metadata=self.metadata,
             presence_penalty=self.presence_penalty if self.presence_penalty is not None else 0.0,
@@ -386,7 +383,6 @@ class StreamingResponseOrchestrator:
             max_tool_calls=self.max_tool_calls,
             reasoning=self.reasoning,
             max_output_tokens=self.max_output_tokens,
-            safety_identifier=self.safety_identifier,
             service_tier=self.service_tier or "default",
             metadata=self.metadata,
             truncation=self.truncation or "disabled",
@@ -543,7 +539,6 @@ class StreamingResponseOrchestrator:
                     logprobs=logprobs,
                     parallel_tool_calls=effective_parallel_tool_calls,
                     reasoning_effort=self.reasoning.effort if self.reasoning else None,
-                    safety_identifier=self.safety_identifier,
                     service_tier=ServiceTier(self.service_tier) if self.service_tier else None,
                     max_completion_tokens=remaining_output_tokens,
                     prompt_cache_key=self.prompt_cache_key,

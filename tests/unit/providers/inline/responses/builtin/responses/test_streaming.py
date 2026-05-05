@@ -594,7 +594,7 @@ async def test_guardrailed_reasoning_streams_before_completion(
         tool_executor=MagicMock(),
         instructions=None,
         moderation_endpoint=mock_moderation_endpoint,
-        guardrail_ids=["llama-guard"],
+        enable_guardrails=True,
     )
 
     gate = asyncio.Event()

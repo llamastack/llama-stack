@@ -4651,12 +4651,6 @@ components:
           - type: string
           - type: 'null'
           description: The user to use.
-        safety_identifier:
-          anyOf:
-          - type: string
-            maxLength: 64
-          - type: 'null'
-          description: A stable identifier used for safety monitoring and abuse detection.
         service_tier:
           anyOf:
           - $ref: '#/components/schemas/ServiceTier'
@@ -6987,10 +6981,6 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
-        safety_identifier:
-          anyOf:
-          - type: string
-          - type: 'null'
         service_tier:
           type: string
           title: Service Tier
@@ -7411,10 +7401,6 @@ components:
         max_output_tokens:
           anyOf:
           - type: integer
-          - type: 'null'
-        safety_identifier:
-          anyOf:
-          - type: string
           - type: 'null'
         service_tier:
           type: string
@@ -11127,12 +11113,6 @@ components:
           - type: 'null'
           description: Configuration for reasoning effort in responses.
           title: OpenAIResponseReasoning
-        safety_identifier:
-          anyOf:
-          - type: string
-            maxLength: 64
-          - type: 'null'
-          description: A stable identifier used for safety monitoring and abuse detection.
         service_tier:
           anyOf:
           - $ref: '#/components/schemas/ServiceTier'
