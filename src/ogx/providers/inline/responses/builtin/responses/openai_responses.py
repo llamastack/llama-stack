@@ -680,7 +680,7 @@ class OpenAIResponsesImpl:
         if enable_guardrails and not self.moderation_endpoint:
             raise ServiceNotEnabledError(
                 "moderation_endpoint",
-                provider_specific_message="Set the 'moderation_endpoint' field on the responses provider config to enable guardrails, otherwise remove the 'guardrails' parameter from your request.",
+                provider_specific_message="Guardrails require a moderation endpoint to be configured on the server. Contact your platform administrator to set 'moderation_endpoint' on the responses provider, or remove the 'guardrails' parameter from your request.",
             )
 
         if conversation is not None:
