@@ -940,58 +940,6 @@
   color: oklch(0.6 0.01 240);
 }
 
-.cliBackendPills {
-  display: flex;
-  justify-content: center;
-  gap: 2px;
-  margin-bottom: 2rem;
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: 4px;
-  padding: 2px;
-  width: fit-content;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-[data-theme='dark'] .cliBackendPills {
-  background: oklch(0.08 0.01 250);
-}
-
-.cliBackendPill {
-  padding: 0.35rem 0.85rem;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: oklch(0.45 0.01 240);
-  background: none;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: all 0.1s;
-}
-
-[data-theme='dark'] .cliBackendPill {
-  color: oklch(0.55 0.01 250);
-}
-
-.cliBackendPill:hover {
-  color: oklch(0.3 0.01 240);
-}
-
-[data-theme='dark'] .cliBackendPill:hover {
-  color: oklch(0.75 0.01 250);
-}
-
-.cliBackendPillActive {
-  color: oklch(0.2 0.01 240);
-  background: rgba(0, 0, 0, 0.06);
-}
-
-[data-theme='dark'] .cliBackendPillActive {
-  color: oklch(0.92 0.005 250);
-  background: oklch(0.2 0.015 250);
-}
-
 .cliTerminals {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1405,10 +1353,5 @@
     padding: 0.75rem 1rem;
     min-height: 240px;
     font-size: 0.7rem;
-  }
-
-  .cliBackendPill {
-    padding: 0.3rem 0.6rem;
-    font-size: 0.68rem;
   }
 }

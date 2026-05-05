@@ -177,8 +177,6 @@ const PROVIDERS = [
   { name: 'Weaviate', href: '/docs/providers/vector_io/remote_weaviate' },
 ];
 
-const BACKENDS = ['Ollama', 'vLLM', 'Bedrock', 'Azure'];
-
 const CLI_DEMOS = {
   claude: {
     label: 'Claude Code',
@@ -386,18 +384,13 @@ function CodeBlock() {
   );
 }
 
-function useTerminalAnimation(lines, shouldStart, resetKey) {
+function useTerminalAnimation(lines, shouldStart) {
   const [visibleLines, setVisibleLines] = useState([]);
   const [typingLine, setTypingLine] = useState(null);
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    if (!shouldStart) {
-      setVisibleLines([]);
-      setTypingLine(null);
-      setDone(false);
-      return;
-    }
+    if (!shouldStart) return;
     let cancelled = false;
 
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -445,7 +438,7 @@ function useTerminalAnimation(lines, shouldStart, resetKey) {
 
     animate();
     return () => { cancelled = true; };
-  }, [shouldStart, lines, resetKey]);
+  }, [shouldStart, lines]);
 
   return { visibleLines, typingLine, done };
 }
@@ -455,9 +448,7 @@ function sleep(ms) {
 }
 
 function CliShowcase() {
-  const [activeBackend, setActiveBackend] = useState('Ollama');
   const [started, setStarted] = useState(false);
-  const [animKey, setAnimKey] = useState(0);
   const sectionRef = useRef(null);
 
   useEffect(() => {
@@ -473,64 +464,35 @@ function CliShowcase() {
     return () => observer.disconnect();
   }, []);
 
-  const handleBackendChange = (backend) => {
-    setActiveBackend(backend);
-    setAnimKey(k => k + 1);
-    setStarted(true);
-  };
-
-  const claudeAnim = useTerminalAnimation(
-    CLI_DEMOS.claude.lines,
-    started,
-    animKey,
-  );
-  const codexAnim = useTerminalAnimation(
-    CLI_DEMOS.codex.lines,
-    claudeAnim.done,
-    animKey,
-  );
+  const claudeAnim = useTerminalAnimation(CLI_DEMOS.claude.lines, started);
+  const codexAnim = useTerminalAnimation(CLI_DEMOS.codex.lines, claudeAnim.done);
 
   return (
     <section className={styles.cliSection} ref={sectionRef}>
       <div className="container">
         <div className={styles.cliHeader}>
           <h2>Your tools. Any model.</h2>
-          <p>Point Claude Code or Codex at OGX. Pick any backend. Ship.</p>
-        </div>
-        <div className={styles.cliBackendPills}>
-          {BACKENDS.map(b => (
-            <button
-              key={b}
-              className={clsx(styles.cliBackendPill, activeBackend === b && styles.cliBackendPillActive)}
-              onClick={() => handleBackendChange(b)}
-            >
-              {b}
-            </button>
-          ))}
+          <p>
+            Configure OGX with any provider — Ollama, vLLM, Bedrock, Azure, or
+            your own. Then point Claude Code or Codex at it. Same workflow,
+            any model.
+          </p>
         </div>
         <div className={styles.cliTerminals}>
-          <TerminalWindow
-            demo={CLI_DEMOS.claude}
-            backend={activeBackend}
-            anim={claudeAnim}
-          />
-          <TerminalWindow
-            demo={CLI_DEMOS.codex}
-            backend={activeBackend}
-            anim={codexAnim}
-          />
+          <TerminalWindow demo={CLI_DEMOS.claude} anim={claudeAnim} />
+          <TerminalWindow demo={CLI_DEMOS.codex} anim={codexAnim} />
         </div>
       </div>
     </section>
   );
 }
 
-function TerminalWindow({demo, backend, anim}) {
+function TerminalWindow({demo, anim}) {
   return (
     <div className={clsx(styles.cliTerminal, styles.cliTerminalFadeIn)}>
       <div className={styles.cliTerminalBar}>
         <span className={styles.cliTerminalFlow}>
-          {demo.command} → OGX → {backend}
+          {demo.label} → OGX
         </span>
       </div>
       <div className={styles.cliTerminalBody}>
