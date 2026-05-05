@@ -211,11 +211,7 @@ const CLI_DEMOS = {
       { type: 'command', text: '$ export OPENAI_BASE_URL=http://localhost:8321/v1', delay: 0 },
       { type: 'command', text: '$ codex', delay: 400 },
       { type: 'blank', text: '', delay: 100 },
-      { type: 'brand', text: '╭────────────────────────────────╮', delay: 0 },
-      { type: 'brand', text: '│ >_ OpenAI Codex                │', delay: 0 },
-      { type: 'brand', text: '│                                │', delay: 0 },
-      { type: 'brand', text: '│ model: llama-3.3-70b via OGX   │', delay: 0 },
-      { type: 'brand', text: '╰────────────────────────────────╯', delay: 0 },
+      { type: 'brand-box', text: '>_ OpenAI Codex\n\nmodel: llama-3.3-70b via OGX', delay: 0 },
       { type: 'blank', text: '', delay: 300 },
       { type: 'prompt', text: '> Add rate limiting to the API endpoints', delay: 300 },
       { type: 'blank', text: '', delay: 200 },
@@ -518,8 +514,18 @@ function TerminalWindow({demo, anim}) {
             blank: styles.cliLineBlank,
             brand: styles.cliLineBrand,
             'brand-dim': styles.cliLineBrandDim,
+            'brand-box': styles.cliLineBrandBox,
           }[meta.type] || '';
           if (meta.type === 'blank') return <div key={i} className={styles.cliLineBlank} />;
+          if (meta.type === 'brand-box') {
+            return (
+              <div key={i} className={styles.cliLineBrandBox}>
+                {line.split('\n').map((l, j) => (
+                  <div key={j}>{l || ' '}</div>
+                ))}
+              </div>
+            );
+          }
           return (
             <div key={i} className={clsx(styles.cliLine, cls)}>{line}</div>
           );

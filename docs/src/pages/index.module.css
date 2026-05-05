@@ -1059,6 +1059,22 @@
   color: oklch(0.45 0.01 250);
 }
 
+.cliLineBrandBox {
+  border: 1px solid oklch(0.7 0.01 240);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin: 0.15rem 0;
+  color: oklch(0.3 0.02 240);
+  font-weight: 700;
+  line-height: 1.4;
+  width: fit-content;
+}
+
+[data-theme='dark'] .cliLineBrandBox {
+  border-color: oklch(0.35 0.01 250);
+  color: oklch(0.88 0.02 240);
+}
+
 .cliLineBlank {
   height: 0.5em;
 }
