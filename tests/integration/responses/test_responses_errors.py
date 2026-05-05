@@ -210,7 +210,7 @@ class TestResponsesAPIErrors:
             openai_client.responses.create(
                 model=text_model_id,
                 input="Hello",
-                extra_body={"guardrails": ["test-shield"]},
+                extra_body={"guardrails": True},
             )
         assert exc_info.value.status_code == 503
         assert "moderation_endpoint" in str(exc_info.value).lower()

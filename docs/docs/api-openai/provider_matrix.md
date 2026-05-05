@@ -127,9 +127,6 @@ Models, endpoints, and versions used during test recordings.
 | with prompt cache key | ✅ | — | — | ✅ | ✅ | — | ✅ |
 | with prompt cache key and previous response | ✅ | — | — | ✅ | ✅ | — | ✅ |
 | with prompt cache key streaming | ✅ | — | — | ✅ | ✅ | — | ✅ |
-| with safety identifier | ✅ | — | — | ✅ | ✅ | — | ✅ |
-| with safety identifier and previous response | ✅ | — | — | ✅ | ✅ | — | ✅ |
-| with safety identifier streaming | ✅ | — | — | ✅ | ✅ | — | ✅ |
 | with service tier | ⏭️ | — | — | ✅ | ⏭️ | — | ⏭️ |
 | with service tier and previous response | ⏭️ | — | — | ✅ | ⏭️ | — | ⏭️ |
 | with service tier auto | ⏭️ | — | — | ✅ | ⏭️ | — | ⏭️ |

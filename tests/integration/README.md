@@ -36,7 +36,6 @@ Model parameters can be influenced by the following options:
 - `--text-model`: comma-separated list of text models.
 - `--vision-model`: comma-separated list of vision models.
 - `--embedding-model`: comma-separated list of embedding models.
-- `--safety-shield`: comma-separated list of guardrail identifiers (fixture name: `shield_id`).
 - `--judge-model`: comma-separated list of judge models.
 - `--embedding-dimension`: output dimensionality of the embedding model to use for testing. Default: 768
 
