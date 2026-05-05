@@ -287,6 +287,9 @@ class ConversationServiceImpl(Conversations):
 
         actual_limit = request.limit or 20
 
+        # Determine has_more BEFORE slicing: if more records exist than the
+        # requested limit there are additional pages the caller has not seen.
+        has_more = len(records) > actual_limit
         records = records[:actual_limit]
         items = [record["item_data"] for record in records]
 
@@ -300,7 +303,7 @@ class ConversationServiceImpl(Conversations):
             data=response_items,
             first_id=first_id,
             last_id=last_id,
-            has_more=False,
+            has_more=has_more,
         )
 
     async def openai_delete_conversation_item(self, request: DeleteItemRequest) -> ConversationItemDeletedResource:
