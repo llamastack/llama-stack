@@ -225,6 +225,12 @@ resources:
           retrieve:
             type: http
             endpoint: get /v1/chat/completions/{completion_id}
+        subresources:
+          messages:
+            methods:
+              list:
+                type: http
+                endpoint: get /v1/chat/completions/{completion_id}/messages
   vector_io:
     models:
       queryChunksResponse: QueryChunksResponse
