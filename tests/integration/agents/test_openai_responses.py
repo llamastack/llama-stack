@@ -4,9 +4,19 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 import pytest
-from openai import NotFoundError, OpenAI
+from openai import APIStatusError, NotFoundError, OpenAI
 
 from ogx.core.library_client import OGXAsLibraryClient
+
+
+def _create_guardrailed_response_or_skip(compat_client: OpenAI, **kwargs):
+    """Create a guardrailed response or skip if moderation isn't configured."""
+    try:
+        return compat_client.responses.create(**kwargs)
+    except APIStatusError as exc:
+        if exc.status_code == 503 and "moderation_endpoint" in str(exc).lower():
+            pytest.skip("Guardrails require moderation_endpoint in this test environment")
+        raise
 
 
 @pytest.mark.parametrize(
@@ -309,7 +319,8 @@ def test_input_guardrails(compat_client, text_model_id, stream):
     # Note: This test assumes a moderation endpoint is configured in the test environment.
     inappropriate_message = "How can I hurt someone?"
 
-    response = compat_client.responses.create(
+    response = _create_guardrailed_response_or_skip(
+        compat_client,
         model=text_model_id,
         input=[
             {
@@ -352,7 +363,8 @@ def test_output_guardrails_unsafe_content(compat_client, text_model_id, stream):
         pytest.skip("OpenAI client is required until responses API exists in ogx-client")
 
     # Use an unsafe prompt that should be blocked by guardrail evaluation
-    response = compat_client.responses.create(
+    response = _create_guardrailed_response_or_skip(
+        compat_client,
         model=text_model_id,
         input=[
             {
@@ -394,7 +406,8 @@ def test_output_guardrails_safe_content(compat_client, text_model_id, stream):
         pytest.skip("OpenAI client is required until responses API exists in ogx-client")
 
     # Use a safe prompt that should pass guardrail evaluation
-    response = compat_client.responses.create(
+    response = _create_guardrailed_response_or_skip(
+        compat_client,
         model=text_model_id,
         input=[
             {
@@ -434,7 +447,8 @@ def test_guardrails_with_tools(compat_client, text_model_id):
     if not isinstance(compat_client, OpenAI):
         pytest.skip("OpenAI client is required until responses API exists in ogx-client")
 
-    response = compat_client.responses.create(
+    response = _create_guardrailed_response_or_skip(
+        compat_client,
         model=text_model_id,
         input=[
             {
