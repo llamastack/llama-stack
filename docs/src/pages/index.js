@@ -386,14 +386,18 @@ function CodeBlock() {
   );
 }
 
-function useTerminalAnimation(lines, shouldStart) {
+function useTerminalAnimation(lines, shouldStart, resetKey) {
   const [visibleLines, setVisibleLines] = useState([]);
   const [typingLine, setTypingLine] = useState(null);
   const [done, setDone] = useState(false);
-  const animRef = useRef(null);
 
   useEffect(() => {
-    if (!shouldStart) return;
+    if (!shouldStart) {
+      setVisibleLines([]);
+      setTypingLine(null);
+      setDone(false);
+      return;
+    }
     let cancelled = false;
 
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -441,7 +445,7 @@ function useTerminalAnimation(lines, shouldStart) {
 
     animate();
     return () => { cancelled = true; };
-  }, [shouldStart, lines]);
+  }, [shouldStart, lines, resetKey]);
 
   return { visibleLines, typingLine, done };
 }
@@ -478,10 +482,12 @@ function CliShowcase() {
   const claudeAnim = useTerminalAnimation(
     CLI_DEMOS.claude.lines,
     started,
+    animKey,
   );
   const codexAnim = useTerminalAnimation(
     CLI_DEMOS.codex.lines,
     claudeAnim.done,
+    animKey,
   );
 
   return (
@@ -502,7 +508,7 @@ function CliShowcase() {
             </button>
           ))}
         </div>
-        <div className={styles.cliTerminals} key={animKey}>
+        <div className={styles.cliTerminals}>
           <TerminalWindow
             demo={CLI_DEMOS.claude}
             backend={activeBackend}
