@@ -70,6 +70,35 @@ class TestOpenAIMixinCustomListProviderModelIds:
         assert len(result) == 1
         assert result[0].identifier == "model-1"
 
+    async def test_allowed_models_skips_provider_call(self, config):
+        """When allowed_models is set, list_provider_model_ids() must NOT be called.
+
+        Providers that do not support /v1/models (e.g. OpenAI-compatible Gemini proxies)
+        crash on startup if list_provider_model_ids() is called. The short-circuit fix
+        ensures those providers work when allowed_models is configured (issue #5573).
+        """
+        mixin = CustomListProviderModelIdsImplementation(
+            config=config, custom_model_ids=[]  # would return nothing if called
+        )
+        mixin.config.allowed_models = ["gemini-2.5-pro", "gemini-2.0-flash"]
+        # Verify that list_provider_model_ids is never called.
+        call_count = 0
+
+        original = mixin.list_provider_model_ids
+
+        async def spy(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            return await original(*args, **kwargs)
+
+        mixin.list_provider_model_ids = spy  # type: ignore[method-assign]
+
+        result = await mixin.list_models()
+
+        assert call_count == 0, "list_provider_model_ids() must not be called when allowed_models is set"
+        assert result is not None
+        assert {m.identifier for m in result} == {"gemini-2.5-pro", "gemini-2.0-flash"}
+
     async def test_with_empty_list(self, config):
         """Test that custom list_provider_model_ids() handles empty list correctly"""
         mixin = CustomListProviderModelIdsImplementation(config=config, custom_model_ids=[])
