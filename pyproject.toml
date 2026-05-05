@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-fallback_version = "0.7.2.dev0"
+fallback_version = "0.8.1.dev0"
 
 [tool.uv]
 required-version = ">=0.7.0"
@@ -69,7 +69,7 @@ dependencies = [
 
 [project.optional-dependencies]
 client = [
-    "llama-stack-client>=0.7.1", # Optional for library-only usage
+    "ogx-client>=0.8.0", # Optional for library-only usage
 ]
 starter = [
     "aiohttp",
@@ -105,6 +105,7 @@ starter = [
     "psycopg2-binary",
     "pymilvus[milvus-lite]>=2.4.10",
     "pymongo",
+    "markitdown[all]",
     "pypdf>=6.7.2",
     "pythainlp",
     "qdrant-client",
@@ -123,6 +124,7 @@ starter = [
     "weaviate-client>=4.16.5",
     "torch",
     "sentence-transformers",
+    "boto3",
 ]
 
 [dependency-groups]
@@ -141,6 +143,15 @@ dev = [
     "pre-commit>=4.4.0",
     "ruamel.yaml",                   # needed for openapi generator
     "openapi-spec-validator>=0.7.2",
+    "ollama",
+    "ogx-client>=0.8.0",
+    "chardet",
+    "pypdf>=6.7.2",
+    "together",
+    "boto3",
+    "anthropic",
+    "torch>=2.6.0",
+    "markitdown[all]",
 ]
 # Type checking dependencies - includes type stubs and optional runtime dependencies
 # needed for complete mypy coverage across all optional features
@@ -148,6 +159,7 @@ type_checking = [
     "types-requests",
     "types-setuptools",
     "types-jsonschema",
+    "markitdown[all]",
     "pypdf>=6.7.2",
     "pandas-stubs",
     "types-psutil",
@@ -176,7 +188,7 @@ type_checking = [
     "langchain-openai",
     "langchain-core",
     "langgraph",
-    "llama-stack-client>=0.7.1",
+    "ogx-client>=0.8.0",
 ]
 # These are the dependencies required for running unit tests.
 unit = [
@@ -187,6 +199,7 @@ unit = [
     "aiosqlite",
     "aiohttp",
     "psycopg2-binary>=2.9.0",
+    "markitdown[all]",
     "pypdf>=6.7.2",
     "mcp>=1.23.0",
     "chardet",

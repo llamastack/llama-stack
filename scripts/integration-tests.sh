@@ -280,11 +280,11 @@ run_client_ts_tests() {
     if [[ -d "$TS_CLIENT_PATH" ]]; then
         # It's a directory path - use local checkout
         if [[ ! -f "$TS_CLIENT_PATH/package.json" ]]; then
-            echo "Error: $TS_CLIENT_PATH exists but doesn't look like llama-stack-client-typescript (no package.json)"
+            echo "Error: $TS_CLIENT_PATH exists but doesn't look like ogx-client-typescript (no package.json)"
             popd >/dev/null
             return 1
         fi
-        echo "Using local llama-stack-client-typescript from: $TS_CLIENT_PATH"
+        echo "Using local ogx-client-typescript from: $TS_CLIENT_PATH"
 
         # Build the TypeScript client first
         echo "Building TypeScript client..."
@@ -301,26 +301,26 @@ run_client_ts_tests() {
         fi
 
         # Then install the client from local directory
-        echo "Installing llama-stack-client from: $TS_CLIENT_PATH"
+        echo "Installing ogx-client from: $TS_CLIENT_PATH"
         npm install "$TS_CLIENT_PATH" --silent
     else
         # It's an npm version specifier - install from npm
-        echo "Installing llama-stack-client@${TS_CLIENT_PATH} from npm"
+        echo "Installing ogx-client@${TS_CLIENT_PATH} from npm"
         if [[ "${CI:-}" == "true" || "${CI:-}" == "1" ]]; then
             npm ci --silent
-            npm install "llama-stack-client@${TS_CLIENT_PATH}" --silent
+            npm install "ogx-client@${TS_CLIENT_PATH}" --silent
         else
-            npm install "llama-stack-client@${TS_CLIENT_PATH}" --silent
+            npm install "ogx-client@${TS_CLIENT_PATH}" --silent
         fi
     fi
 
     # Verify installation
-    echo "Verifying llama-stack-client installation..."
-    if npm list llama-stack-client 2>/dev/null | grep -q llama-stack-client; then
-        echo "✅ llama-stack-client successfully installed"
-        npm list llama-stack-client
+    echo "Verifying ogx-client installation..."
+    if npm list ogx-client 2>/dev/null | grep -q ogx-client; then
+        echo "✅ ogx-client successfully installed"
+        npm list ogx-client
     else
-        echo "❌ llama-stack-client not found in node_modules"
+        echo "❌ ogx-client not found in node_modules"
         echo "Installed packages:"
         npm list --depth=0
         popd >/dev/null

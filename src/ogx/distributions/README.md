@@ -48,7 +48,7 @@ Distribution configs use `${env.VAR:=default}` syntax for environment-driven con
 Run a distribution with:
 
 ```bash
-ogx run starter
+ogx stack run starter
 # or
-ogx run --config path/to/config.yaml
+ogx stack run --config path/to/config.yaml
 ```
