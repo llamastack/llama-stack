@@ -19,7 +19,6 @@ core/
   distribution.py      # Provider registry loading, API enumeration
   stack.py             # Stack class: initialization, resource registration, lifecycle
   datatypes.py         # Core data types (StackConfig, Provider, RoutableObject, etc.)
-  library_client.py    # In-process client (no server needed)
   build.py             # Build config handling for container images
   configure.py         # Interactive configuration wizard
 ```

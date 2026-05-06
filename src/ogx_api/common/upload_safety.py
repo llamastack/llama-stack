@@ -48,14 +48,14 @@ async def read_upload_with_size_limit(
         FileTooLargeError: If the file exceeds *max_upload_bytes*.
     """
     # Fast path: reject based on declared size when available.
-    # Use getattr because not all file-like objects have .size (e.g. LibraryClientUploadFile).
+    # Use getattr because not all file-like objects have .size.
     declared_size = getattr(file, "size", None)
     if declared_size is not None and declared_size > max_upload_bytes:
         raise FileTooLargeError(file_size=declared_size, max_size=max_upload_bytes)
 
     # Read in bounded chunks to avoid buffering unbounded data.
-    # Some file-like objects (e.g. LibraryClientUploadFile) don't accept a size
-    # argument to read(), so fall back to a single read() if chunked read fails.
+    # Some file-like objects don't accept a size argument to read(), so fall
+    # back to a single read() if chunked read fails.
     chunks: list[bytes] = []
     total_bytes = 0
 

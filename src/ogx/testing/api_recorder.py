@@ -271,8 +271,7 @@ def patch_httpx_for_test_id():
     """Patch client _prepare_request methods to inject test ID into provider data header.
 
     This is needed for server mode where the test ID must be transported from
-    client to server via HTTP headers. In library_client mode, this patch is a no-op
-    since everything runs in the same process.
+    client to server via HTTP headers.
 
     We use the _prepare_request hook that Stainless clients provide for mutating
     requests after construction but before sending.
@@ -292,7 +291,7 @@ def patch_httpx_for_test_id():
         _original_methods["openai_prepare_request"](self, request)
 
         # Only inject test ID in server mode
-        stack_config_type = os.environ.get("OGX_TEST_STACK_CONFIG_TYPE", "library_client")
+        stack_config_type = os.environ.get("OGX_TEST_STACK_CONFIG_TYPE", "server")
         test_id = get_test_context()
 
         if stack_config_type == "server" and test_id:
@@ -1189,7 +1188,7 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
                 logger.error(f"  Endpoint: {endpoint}")
                 logger.error(f"  Model: {body.get('model', 'unknown')}")
                 logger.error(f"  Test context: {get_test_context()}")
-                logger.error(f"  Stack config type: {os.environ.get('OGX_TEST_STACK_CONFIG_TYPE', 'library_client')}")
+                logger.error(f"  Stack config type: {os.environ.get('OGX_TEST_STACK_CONFIG_TYPE', 'server')}")
             raise RuntimeError(
                 f"Recording not found for request hash: {request_hash}\n"
                 f"Model: {body.get('model', 'unknown')} | Request: {method} {url}\n"
