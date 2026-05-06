@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import json
+import re
 import ssl
 from abc import ABC, abstractmethod
 from typing import Any
@@ -100,8 +101,10 @@ def get_attributes_from_claims(claims: dict[str, Any], mapping: dict[str, str]) 
     for claim_key, attribute_key in mapping.items():
         # First try dot notation for nested traversal (e.g., "resource_access.ogx.roles")
         # Then fall back to literal key with dots (e.g., "my.dotted.key")
+        # Backslash-escaped dots (\.) are treated as literal dots in the key name,
+        # e.g., "kubernetes\.io.serviceaccount.name" traverses claims["kubernetes.io"]["serviceaccount"]["name"]
         claim: object = claims
-        keys = claim_key.split(".")
+        keys = [part.replace("\\.", ".") for part in re.split(r"(?<!\\)\.", claim_key)]
         for key in keys:
             if isinstance(claim, dict) and key in claim:
                 claim = claim[key]
