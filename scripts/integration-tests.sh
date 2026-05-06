@@ -203,12 +203,12 @@ if [[ "$COLLECT_ONLY" == false ]]; then
         export OGX_TEST_STACK_CONFIG_TYPE="server"
         echo "Setting stack config type: server"
     else
-        export OGX_TEST_STACK_CONFIG_TYPE="library_client"
-        echo "Setting stack config type: library_client"
+        export OGX_TEST_STACK_CONFIG_TYPE="server"
+        echo "Setting stack config type: server"
     fi
 
     # Set MCP host for in-process MCP server tests
-    # - For library client and server mode: localhost (both on same host)
+    # - For server mode: localhost (on same host)
     # - For docker mode on Linux: localhost (container uses host network, shares network namespace)
     # - For docker mode on macOS/Windows: host.docker.internal (container uses bridge network)
     if [[ "$STACK_CONFIG" == docker:* ]]; then
@@ -223,7 +223,7 @@ if [[ "$COLLECT_ONLY" == false ]]; then
         fi
     else
         export OGX_TEST_MCP_HOST="localhost"
-        echo "Setting MCP host: localhost (library/server mode)"
+        echo "Setting MCP host: localhost (server mode)"
     fi
 fi
 
