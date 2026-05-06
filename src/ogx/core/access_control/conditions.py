@@ -68,7 +68,15 @@ class UserNotInOwnersList(UserInOwnersList):
         super().__init__(name)
 
     def matches(self, resource: ProtectedResource, user: User) -> bool:
-        return not super().matches(resource, user)
+        # Fail-closed: if owner attribute list is missing or user attributes are missing,
+        # deny access rather than granting it via a vacuous negation.
+        defined = self.owners_values(resource)
+        if not defined:
+            return False
+        if not user.attributes or self.name not in user.attributes or not user.attributes[self.name]:
+            return False
+        user_values = user.attributes[self.name]
+        return not any(value in user_values for value in defined)
 
     def __repr__(self) -> str:
         return f"user not in owners {self.name}"
@@ -98,7 +106,11 @@ class UserWithValueNotInList(UserWithValueInList):
         super().__init__(name, value)
 
     def matches(self, resource: ProtectedResource, user: User) -> bool:
-        return not super().matches(resource, user)
+        # Fail-closed: if user attribute data is missing, deny rather than granting
+        # access through a vacuous negation.
+        if not user.attributes or self.name not in user.attributes:
+            return False
+        return self.value not in user.attributes[self.name]
 
     def __repr__(self) -> str:
         return f"user with {self.value} not in {self.name}"
@@ -118,7 +130,12 @@ class UserIsNotOwner:
     """Condition that checks if the user is NOT the owner of the resource."""
 
     def matches(self, resource: ProtectedResource, user: User) -> bool:
-        return not resource.owner or resource.owner.principal != user.principal
+        # Fail-closed: if ownership data is absent, deny rather than granting access
+        # through a vacuous negation. Use ResourceIsUnowned to explicitly match
+        # resources with no owner.
+        if not resource.owner:
+            return False
+        return resource.owner.principal != user.principal
 
     def __repr__(self) -> str:
         return "user is not owner"
