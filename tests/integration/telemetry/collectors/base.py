@@ -84,7 +84,7 @@ class SpanStub:
         return (self.attributes.get("__class__"), self.attributes.get("__method__"))
 
     def get_location(self) -> str | None:
-        """Get the location (library_client, server) for root spans."""
+        """Get the location for root spans."""
         if self.attributes is None:
             return None
         return self.attributes.get("__location__")

@@ -18,7 +18,7 @@ from tests.integration.telemetry.collectors import InMemoryTelemetryManager, Otl
 # TODO: Fix this to work with Automatic Instrumentation
 @pytest.fixture(scope="session")
 def telemetry_test_collector():
-    stack_mode = os.environ.get("OGX_TEST_STACK_CONFIG_TYPE", "library_client")
+    stack_mode = os.environ.get("OGX_TEST_STACK_CONFIG_TYPE", "server")
 
     if stack_mode == "server":
         # In server mode, the collector must be started and the server is already running.

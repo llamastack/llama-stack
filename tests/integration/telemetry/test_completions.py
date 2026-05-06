@@ -95,7 +95,7 @@ def test_telemetry_format_completeness(mock_otlp_collector, ogx_client, text_mod
 
         # Root span is created manually by tracing middleware, not by @trace_protocol decorator
         if span.is_root_span():
-            assert span.get_location() in ["library_client", "server"]
+            assert span.get_location() == "server"
             continue
 
         assert span.is_autotraced()
