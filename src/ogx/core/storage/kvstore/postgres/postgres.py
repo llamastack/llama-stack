@@ -24,23 +24,7 @@ class PostgresKVStoreImpl(KVStore):
         self._table_created = False
 
     async def initialize(self) -> None:
-        try:
-            conn = await asyncpg.connect(
-                host=self.config.host,
-                port=int(self.config.port),
-                database=self.config.db,
-                user=self.config.user,
-                password=self.config.password,
-                ssl=self._build_ssl(),
-            )
-            await conn.close()
-        except Exception:
-            log.warning(
-                "Could not verify PostgreSQL connectivity during initialization, will retry on first use",
-                host=self.config.host,
-                port=self.config.port,
-                db=self.config.db,
-            )
+        pass
 
     def _build_ssl(self) -> object:
         if self.config.ssl_mode == "verify-full" and self.config.ca_cert_path:
