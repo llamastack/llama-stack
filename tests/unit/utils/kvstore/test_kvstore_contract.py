@@ -11,15 +11,14 @@ without external services (InmemoryKVStoreImpl, SqliteKVStoreImpl).
 Every backend must produce identical results for these tests.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from ogx.core.storage.datatypes import SqliteKVStoreConfig
 from ogx.core.storage.kvstore.kvstore import InmemoryKVStoreImpl
 from ogx.core.storage.kvstore.sqlite.sqlite import SqliteKVStoreImpl
 from ogx_api.internal.kvstore import KVStore
-
-from ogx.core.storage.datatypes import SqliteKVStoreConfig
 
 
 @pytest.fixture
@@ -138,13 +137,13 @@ async def test_range_single_key(store: KVStore):
 
 
 async def test_expired_key_not_returned_by_get(store: KVStore):
-    past = datetime.now(tz=timezone.utc) - timedelta(seconds=1)
+    past = datetime.now(tz=UTC) - timedelta(seconds=1)
     await store.set("k1", "v1", expiration=past)
     assert await store.get("k1") is None
 
 
 async def test_non_expired_key_returned_by_get(store: KVStore):
-    future = datetime.now(tz=timezone.utc) + timedelta(hours=1)
+    future = datetime.now(tz=UTC) + timedelta(hours=1)
     await store.set("k1", "v1", expiration=future)
     assert await store.get("k1") == "v1"
 
@@ -155,8 +154,8 @@ async def test_no_expiration_never_expires(store: KVStore):
 
 
 async def test_expired_keys_excluded_from_values_in_range(store: KVStore):
-    past = datetime.now(tz=timezone.utc) - timedelta(seconds=1)
-    future = datetime.now(tz=timezone.utc) + timedelta(hours=1)
+    past = datetime.now(tz=UTC) - timedelta(seconds=1)
+    future = datetime.now(tz=UTC) + timedelta(hours=1)
 
     await store.set("a", "va", expiration=past)
     await store.set("b", "vb", expiration=future)
@@ -167,8 +166,8 @@ async def test_expired_keys_excluded_from_values_in_range(store: KVStore):
 
 
 async def test_expired_keys_excluded_from_keys_in_range(store: KVStore):
-    past = datetime.now(tz=timezone.utc) - timedelta(seconds=1)
-    future = datetime.now(tz=timezone.utc) + timedelta(hours=1)
+    past = datetime.now(tz=UTC) - timedelta(seconds=1)
+    future = datetime.now(tz=UTC) + timedelta(hours=1)
 
     await store.set("a", "va", expiration=past)
     await store.set("b", "vb", expiration=future)

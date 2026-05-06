@@ -11,7 +11,6 @@ use mocked psycopg2 to verify SQL query correctness, namespace prefixing,
 expiration filtering, and error handling.
 """
 
-from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
