@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import asyncio
 from datetime import datetime
 
 import asyncpg  # type: ignore[import-untyped]
@@ -22,6 +23,7 @@ class PostgresKVStoreImpl(KVStore):
     def __init__(self, config: PostgresKVStoreConfig):
         self.config = config
         self._pool: asyncpg.Pool | None = None
+        self._pool_lock: asyncio.Lock | None = None
 
     async def initialize(self) -> None:
         pass
@@ -41,7 +43,15 @@ class PostgresKVStoreImpl(KVStore):
         This fixes event loop mismatch issues when Stack is initialized in a different
         event loop (e.g., ThreadPoolExecutor) than request handling (uvicorn's loop).
         """
-        if self._pool is None:
+        if self._pool is not None:
+            return self._pool
+
+        if self._pool_lock is None:
+            self._pool_lock = asyncio.Lock()
+
+        async with self._pool_lock:
+            if self._pool is not None:
+                return self._pool
             try:
                 self._pool = await asyncpg.create_pool(
                     host=self.config.host,
