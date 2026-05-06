@@ -12,7 +12,6 @@ from ogx_client import BadRequestError
 from openai import BadRequestError as OpenAIBadRequestError
 from openai import OpenAI
 
-from ogx.core.library_client import OGXAsLibraryClient
 from ogx.log import get_logger
 from ogx_api import ChunkMetadata, EmbeddedChunk, ExpiresAfter
 
@@ -4501,10 +4500,7 @@ def test_openai_vector_store_list_files_invalid_vector_store(
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
     compat_client = compat_client_with_empty_stores
-    if isinstance(compat_client, OGXAsLibraryClient):
-        errors = ValueError
-    else:
-        errors = (BadRequestError, OpenAIBadRequestError)
+    errors = (BadRequestError, OpenAIBadRequestError)
 
     with pytest.raises(errors):
         compat_client.vector_stores.files.list(vector_store_id="abc123")
@@ -5182,10 +5178,7 @@ def test_openai_vector_store_file_batch_error_handling(
     assert batch.file_counts.failed >= 0  # Implementation may vary
 
     # Test retrieving non-existent batch (returns BadRequestError)
-    if isinstance(compat_client, OGXAsLibraryClient):
-        batch_errors = ValueError
-    else:
-        batch_errors = (BadRequestError, OpenAIBadRequestError)
+    batch_errors = (BadRequestError, OpenAIBadRequestError)
 
     with pytest.raises(batch_errors):  # Should raise an error for non-existent batch
         compat_client.vector_stores.file_batches.retrieve(
@@ -5194,10 +5187,7 @@ def test_openai_vector_store_file_batch_error_handling(
         )
 
     # Test operations on non-existent vector store (returns BadRequestError)
-    if isinstance(compat_client, OGXAsLibraryClient):
-        vector_store_errors = ValueError
-    else:
-        vector_store_errors = (BadRequestError, OpenAIBadRequestError)
+    vector_store_errors = (BadRequestError, OpenAIBadRequestError)
 
     with pytest.raises(vector_store_errors):  # Should raise an error for non-existent vector store
         compat_client.vector_stores.file_batches.create(

@@ -14,8 +14,6 @@ from ogx_client.types.shared.interleaved_content import (
     TextContentItem,
 )
 
-from ogx.core.library_client import OGXAsLibraryClient
-
 # Test data
 DUMMY_STRING = "string_1"
 DUMMY_STRING2 = "string_2"
@@ -125,7 +123,7 @@ def test_rerank_image(client_with_models, rerank_model_id, query, items, inferen
     skip_if_provider_doesnt_support_rerank(inference_provider_type)
 
     if rerank_model_id not in PROVIDERS_SUPPORTING_MEDIA:
-        error_type = ValueError if isinstance(client_with_models, OGXAsLibraryClient) else OGXBadRequestError
+        error_type = OGXBadRequestError
         with pytest.raises(error_type):
             client_with_models.alpha.inference.rerank(model=rerank_model_id, query=query, items=items)
     else:

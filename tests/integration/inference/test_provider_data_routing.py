@@ -16,7 +16,6 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from ogx.core.library_client import OGXAsLibraryClient
 from ogx_api import (
     Api,
     OpenAIChatCompletion,
@@ -40,9 +39,6 @@ def test_unregistered_model_routing_with_provider_data(client_with_models):
     Without the fix, this would raise ModelNotFoundError immediately.
     With the fix, the routing succeeds and the request reaches the provider.
     """
-    if not isinstance(client_with_models, OGXAsLibraryClient):
-        pytest.skip("Test requires library client for provider-level patching")
-
     client = client_with_models
 
     # Use a model format that follows provider_id/model_id convention
