@@ -24,43 +24,48 @@ class PostgresKVStoreImpl(KVStore):
         self._pool: asyncpg.Pool | None = None
 
     async def initialize(self) -> None:
-        try:
-            ssl: object = None
-            if self.config.ssl_mode == "verify-full" and self.config.ca_cert_path:
-                import ssl as _ssl
+        pass
 
-                ssl = _ssl.create_default_context(cafile=self.config.ca_cert_path)
-            elif self.config.ssl_mode and self.config.ssl_mode != "disable":
-                ssl = self.config.ssl_mode
+    def _build_ssl(self) -> object:
+        if self.config.ssl_mode == "verify-full" and self.config.ca_cert_path:
+            import ssl as _ssl
 
-            self._pool = await asyncpg.create_pool(
-                host=self.config.host,
-                port=int(self.config.port),
-                database=self.config.db,
-                user=self.config.user,
-                password=self.config.password,
-                ssl=ssl,
-                min_size=1,
-                max_size=10,
-            )
+            return _ssl.create_default_context(cafile=self.config.ca_cert_path)
+        if self.config.ssl_mode and self.config.ssl_mode != "disable":
+            return self.config.ssl_mode
+        return None
 
-            async with self._pool.acquire() as conn:
-                await conn.execute(
-                    f"""
-                    CREATE TABLE IF NOT EXISTS {self.config.table_name} (
-                        key TEXT PRIMARY KEY,
-                        value TEXT,
-                        expiration TIMESTAMP
-                    )
-                    """
-                )
-        except Exception as e:
-            log.exception("Could not connect to PostgreSQL database server")
-            raise RuntimeError("Could not connect to PostgreSQL database server") from e
+    async def _ensure_pool(self) -> asyncpg.Pool:
+        """Lazy initialization: create pool on first use in the current event loop.
 
-    def _pool_or_raise(self) -> asyncpg.Pool:
+        This fixes event loop mismatch issues when Stack is initialized in a different
+        event loop (e.g., ThreadPoolExecutor) than request handling (uvicorn's loop).
+        """
         if self._pool is None:
-            raise RuntimeError("Postgres client not initialized")
+            try:
+                self._pool = await asyncpg.create_pool(
+                    host=self.config.host,
+                    port=int(self.config.port),
+                    database=self.config.db,
+                    user=self.config.user,
+                    password=self.config.password,
+                    ssl=self._build_ssl(),
+                    min_size=1,
+                    max_size=10,
+                )
+                async with self._pool.acquire() as conn:
+                    await conn.execute(
+                        f"""
+                        CREATE TABLE IF NOT EXISTS {self.config.table_name} (
+                            key TEXT PRIMARY KEY,
+                            value TEXT,
+                            expiration TIMESTAMP
+                        )
+                        """
+                    )
+            except Exception as e:
+                log.exception("Could not connect to PostgreSQL database server")
+                raise RuntimeError("Could not connect to PostgreSQL database server") from e
         return self._pool
 
     def _namespaced_key(self, key: str) -> str:
@@ -75,7 +80,7 @@ class PostgresKVStoreImpl(KVStore):
 
     async def set(self, key: str, value: str, expiration: datetime | None = None) -> None:
         key = self._namespaced_key(key)
-        pool = self._pool_or_raise()
+        pool = await self._ensure_pool()
         async with pool.acquire() as conn:
             await conn.execute(
                 f"""
@@ -91,7 +96,7 @@ class PostgresKVStoreImpl(KVStore):
 
     async def get(self, key: str) -> str | None:
         key = self._namespaced_key(key)
-        pool = self._pool_or_raise()
+        pool = await self._ensure_pool()
         async with pool.acquire() as conn:
             row = await conn.fetchrow(
                 f"""
@@ -105,7 +110,7 @@ class PostgresKVStoreImpl(KVStore):
 
     async def delete(self, key: str) -> None:
         key = self._namespaced_key(key)
-        pool = self._pool_or_raise()
+        pool = await self._ensure_pool()
         async with pool.acquire() as conn:
             await conn.execute(
                 f"DELETE FROM {self.config.table_name} WHERE key = $1",
@@ -116,7 +121,7 @@ class PostgresKVStoreImpl(KVStore):
         start_key = self._namespaced_key(start_key)
         end_key = self._namespaced_key(end_key)
 
-        pool = self._pool_or_raise()
+        pool = await self._ensure_pool()
         async with pool.acquire() as conn:
             rows = await conn.fetch(
                 f"""
@@ -134,7 +139,7 @@ class PostgresKVStoreImpl(KVStore):
         start_key = self._namespaced_key(start_key)
         end_key = self._namespaced_key(end_key)
 
-        pool = self._pool_or_raise()
+        pool = await self._ensure_pool()
         async with pool.acquire() as conn:
             rows = await conn.fetch(
                 f"""

@@ -204,17 +204,8 @@ async def test_get_returns_none_when_not_found():
 # -- Error handling ------------------------------------------------------------
 
 
-async def test_pool_or_raise_when_uninitialized():
-    from ogx.core.storage.kvstore.postgres.postgres import PostgresKVStoreImpl
-
-    config = _make_config()
-    store = PostgresKVStoreImpl(config)
-
-    with pytest.raises(RuntimeError, match="not initialized"):
-        await store.get("k1")
-
-
-async def test_initialize_wraps_connection_error():
+async def test_ensure_pool_wraps_connection_error():
+    """_ensure_pool() wraps connection errors in RuntimeError on first use."""
     from ogx.core.storage.kvstore.postgres.postgres import PostgresKVStoreImpl
 
     config = _make_config()
@@ -223,7 +214,7 @@ async def test_initialize_wraps_connection_error():
     with patch("ogx.core.storage.kvstore.postgres.postgres.asyncpg") as mock_asyncpg:
         mock_asyncpg.create_pool = AsyncMock(side_effect=Exception("connection refused"))
         with pytest.raises(RuntimeError, match="Could not connect"):
-            await store.initialize()
+            await store.get("k1")
 
 
 # -- Shutdown ------------------------------------------------------------------
