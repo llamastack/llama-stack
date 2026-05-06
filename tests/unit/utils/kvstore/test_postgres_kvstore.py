@@ -11,7 +11,7 @@ use mocked asyncpg to verify SQL query correctness, namespace prefixing,
 expiration filtering, and error handling.
 """
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -31,14 +31,14 @@ def _make_config(namespace: str | None = None, table_name: str = "test_kvstore")
 
 
 def _make_store_with_mock_conn(config: PostgresKVStoreConfig):
-    """Create a PostgresKVStoreImpl with a mocked asyncpg connection, bypassing initialize()."""
+    """Create a PostgresKVStoreImpl with a mocked _connect() that returns a mock connection."""
     from ogx.core.storage.kvstore.postgres.postgres import PostgresKVStoreImpl
 
     store = PostgresKVStoreImpl(config)
+    store._table_created = True
     mock_conn = AsyncMock()
-    mock_conn.is_closed = MagicMock(return_value=False)
     mock_conn.close = AsyncMock()
-    store._conn = mock_conn
+    store._connect = AsyncMock(return_value=mock_conn)
     return store, mock_conn
 
 
@@ -202,8 +202,8 @@ async def test_get_returns_none_when_not_found():
 # -- Error handling ------------------------------------------------------------
 
 
-async def test_ensure_conn_wraps_connection_error():
-    """_ensure_conn() wraps connection errors in RuntimeError on first use."""
+async def test_connect_wraps_connection_error():
+    """_connect() wraps connection errors in RuntimeError."""
     from ogx.core.storage.kvstore.postgres.postgres import PostgresKVStoreImpl
 
     config = _make_config()
@@ -215,23 +215,17 @@ async def test_ensure_conn_wraps_connection_error():
             await store.get("k1")
 
 
-# -- Shutdown ------------------------------------------------------------------
+# -- Connection lifecycle ------------------------------------------------------
 
 
-async def test_shutdown_closes_connection():
+async def test_each_operation_closes_connection():
+    """Each operation opens and closes its own connection."""
     store, conn = _make_store_with_mock_conn(_make_config())
+    conn.fetchrow.return_value = None
 
-    await store.shutdown()
+    await store.get("k1")
 
     conn.close.assert_called_once()
-    assert store._conn is None
-
-
-async def test_shutdown_idempotent():
-    store, _ = _make_store_with_mock_conn(_make_config())
-
-    await store.shutdown()
-    await store.shutdown()
 
 
 # -- Config validation ---------------------------------------------------------

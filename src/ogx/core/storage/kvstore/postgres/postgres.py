@@ -21,7 +21,7 @@ class PostgresKVStoreImpl(KVStore):
 
     def __init__(self, config: PostgresKVStoreConfig):
         self.config = config
-        self._conn: asyncpg.Connection | None = None
+        self._table_created = False
 
     async def initialize(self) -> None:
         pass
@@ -35,16 +35,9 @@ class PostgresKVStoreImpl(KVStore):
             return self.config.ssl_mode
         return None
 
-    async def _ensure_conn(self) -> asyncpg.Connection:
-        """Lazy initialization: create connection on first use in the current event loop.
-
-        Uses a single persistent connection instead of a pool to match the original
-        psycopg2 design and avoid pool-related segfaults in asyncpg's C extension.
-        """
-        if self._conn is not None and not self._conn.is_closed():
-            return self._conn
+    async def _connect(self) -> asyncpg.Connection:
         try:
-            self._conn = await asyncpg.connect(
+            conn = await asyncpg.connect(
                 host=self.config.host,
                 port=int(self.config.port),
                 database=self.config.db,
@@ -52,7 +45,12 @@ class PostgresKVStoreImpl(KVStore):
                 password=self.config.password,
                 ssl=self._build_ssl(),
             )
-            await self._conn.execute(
+        except Exception as e:
+            log.exception("Could not connect to PostgreSQL database server")
+            raise RuntimeError("Could not connect to PostgreSQL database server") from e
+
+        if not self._table_created:
+            await conn.execute(
                 f"""
                 CREATE TABLE IF NOT EXISTS {self.config.table_name} (
                     key TEXT PRIMARY KEY,
@@ -61,10 +59,8 @@ class PostgresKVStoreImpl(KVStore):
                 )
                 """
             )
-        except Exception as e:
-            log.exception("Could not connect to PostgreSQL database server")
-            raise RuntimeError("Could not connect to PostgreSQL database server") from e
-        return self._conn
+            self._table_created = True
+        return conn
 
     def _namespaced_key(self, key: str) -> str:
         if not self.config.namespace:
@@ -78,75 +74,88 @@ class PostgresKVStoreImpl(KVStore):
 
     async def set(self, key: str, value: str, expiration: datetime | None = None) -> None:
         key = self._namespaced_key(key)
-        conn = await self._ensure_conn()
-        await conn.execute(
-            f"""
-            INSERT INTO {self.config.table_name} (key, value, expiration)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (key) DO UPDATE
-            SET value = EXCLUDED.value, expiration = EXCLUDED.expiration
-            """,
-            key,
-            value,
-            expiration,
-        )
+        conn = await self._connect()
+        try:
+            await conn.execute(
+                f"""
+                INSERT INTO {self.config.table_name} (key, value, expiration)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (key) DO UPDATE
+                SET value = EXCLUDED.value, expiration = EXCLUDED.expiration
+                """,
+                key,
+                value,
+                expiration,
+            )
+        finally:
+            await conn.close()
 
     async def get(self, key: str) -> str | None:
         key = self._namespaced_key(key)
-        conn = await self._ensure_conn()
-        row = await conn.fetchrow(
-            f"""
-            SELECT value FROM {self.config.table_name}
-            WHERE key = $1
-            AND (expiration IS NULL OR expiration > NOW())
-            """,
-            key,
-        )
-        return row["value"] if row else None
+        conn = await self._connect()
+        try:
+            row = await conn.fetchrow(
+                f"""
+                SELECT value FROM {self.config.table_name}
+                WHERE key = $1
+                AND (expiration IS NULL OR expiration > NOW())
+                """,
+                key,
+            )
+            return row["value"] if row else None
+        finally:
+            await conn.close()
 
     async def delete(self, key: str) -> None:
         key = self._namespaced_key(key)
-        conn = await self._ensure_conn()
-        await conn.execute(
-            f"DELETE FROM {self.config.table_name} WHERE key = $1",
-            key,
-        )
+        conn = await self._connect()
+        try:
+            await conn.execute(
+                f"DELETE FROM {self.config.table_name} WHERE key = $1",
+                key,
+            )
+        finally:
+            await conn.close()
 
     async def values_in_range(self, start_key: str, end_key: str) -> list[str]:
         start_key = self._namespaced_key(start_key)
         end_key = self._namespaced_key(end_key)
 
-        conn = await self._ensure_conn()
-        rows = await conn.fetch(
-            f"""
-            SELECT value FROM {self.config.table_name}
-            WHERE key >= $1 AND key < $2
-            AND (expiration IS NULL OR expiration > NOW())
-            ORDER BY key
-            """,
-            start_key,
-            end_key,
-        )
-        return [row["value"] for row in rows]
+        conn = await self._connect()
+        try:
+            rows = await conn.fetch(
+                f"""
+                SELECT value FROM {self.config.table_name}
+                WHERE key >= $1 AND key < $2
+                AND (expiration IS NULL OR expiration > NOW())
+                ORDER BY key
+                """,
+                start_key,
+                end_key,
+            )
+            return [row["value"] for row in rows]
+        finally:
+            await conn.close()
 
     async def keys_in_range(self, start_key: str, end_key: str) -> list[str]:
         start_key = self._namespaced_key(start_key)
         end_key = self._namespaced_key(end_key)
 
-        conn = await self._ensure_conn()
-        rows = await conn.fetch(
-            f"""
-            SELECT key FROM {self.config.table_name}
-            WHERE key >= $1 AND key < $2
-            AND (expiration IS NULL OR expiration > NOW())
-            ORDER BY key
-            """,
-            start_key,
-            end_key,
-        )
-        return [self._strip_namespace(row["key"]) for row in rows]
+        conn = await self._connect()
+        try:
+            rows = await conn.fetch(
+                f"""
+                SELECT key FROM {self.config.table_name}
+                WHERE key >= $1 AND key < $2
+                AND (expiration IS NULL OR expiration > NOW())
+                ORDER BY key
+                """,
+                start_key,
+                end_key,
+            )
+            return [self._strip_namespace(row["key"]) for row in rows]
+        finally:
+            await conn.close()
 
     async def shutdown(self) -> None:
-        if self._conn and not self._conn.is_closed():
-            await self._conn.close()
-            self._conn = None
+        pass
