@@ -33,10 +33,10 @@ import os
 os.environ["NVIDIA_API_KEY"] = "your-api-key"
 os.environ["NVIDIA_GUARDRAILS_URL"] = "http://guardrails.test"
 
-from ogx.core.library_client import OGXAsLibraryClient
+# After starting the server with `ogx stack run nvidia`:
+from ogx_client import OgxClient
 
-client = OGXAsLibraryClient("nvidia")
-client.initialize()
+client = OgxClient(base_url="http://localhost:8321")
 ```
 
 #### Create a safety shield

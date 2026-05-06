@@ -97,7 +97,6 @@ const sidebars: SidebarsConfig = {
         'distributions/list_of_distributions',
         'distributions/building_distro',
         'distributions/customizing_run_yaml',
-        'distributions/importing_as_library',
         'distributions/configuration',
         'distributions/starting_ogx_server',
         'distributions/ogx_ui',

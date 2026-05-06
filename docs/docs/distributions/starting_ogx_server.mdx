@@ -48,20 +48,6 @@ Other pre-built images are available on [Docker Hub](https://hub.docker.com/u/ll
 See [Building Custom Distributions](./building_distro) to create your own image.
 
 </TabItem>
-<TabItem value="library" label="As a Library">
-
-Use OGX directly in your Python process without running a server:
-
-```python
-from ogx.core.library_client import OGXAsLibraryClient
-
-client = OGXAsLibraryClient("starter")
-client.initialize()
-```
-
-See [Using OGX as a Library](importing_as_library) for details.
-
-</TabItem>
 <TabItem value="kubernetes" label="Kubernetes">
 
 Deploy the container image to a Kubernetes cluster. See the [Kubernetes Deployment Guide](../deploying/kubernetes_deployment).

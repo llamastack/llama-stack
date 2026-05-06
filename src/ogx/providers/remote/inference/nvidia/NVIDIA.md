@@ -35,10 +35,10 @@ os.environ["NVIDIA_API_KEY"] = (
 )
 os.environ["NVIDIA_BASE_URL"] = "http://nim.test"  # NIM URL
 
-from ogx.core.library_client import OGXAsLibraryClient
+# After starting the server with `ogx stack run nvidia`:
+from openai import OpenAI
 
-client = OGXAsLibraryClient("nvidia")
-client.initialize()
+client = OpenAI(base_url="http://localhost:8321/v1", api_key="empty")
 ```
 
 ### Create Chat Completion
