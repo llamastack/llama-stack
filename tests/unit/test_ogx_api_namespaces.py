@@ -41,18 +41,14 @@ def test_provider_symbols_resolve_to_same_object_at_top_level() -> None:
     """Provider SDK symbols must remain importable from `ogx_api` directly."""
     for name in provider.__all__:
         assert hasattr(ogx_api, name), f"{name} not exported from ogx_api top level"
-        assert getattr(ogx_api, name) is getattr(provider, name), (
-            f"{name} differs between ogx_api and ogx_api.provider"
-        )
+        assert getattr(ogx_api, name) is getattr(provider, name), f"{name} differs between ogx_api and ogx_api.provider"
 
 
 def test_types_symbols_resolve_to_same_object_at_top_level() -> None:
     """API datatype symbols must remain importable from `ogx_api` directly."""
     for name in types.__all__:
         assert hasattr(ogx_api, name), f"{name} not exported from ogx_api top level"
-        assert getattr(ogx_api, name) is getattr(types, name), (
-            f"{name} differs between ogx_api and ogx_api.types"
-        )
+        assert getattr(ogx_api, name) is getattr(types, name), f"{name} differs between ogx_api and ogx_api.types"
 
 
 def test_provider_surface_contains_core_symbols() -> None:
