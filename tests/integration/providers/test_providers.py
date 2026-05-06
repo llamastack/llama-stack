@@ -6,11 +6,9 @@
 
 from ogx_client import OgxClient
 
-from ogx.core.library_client import OGXAsLibraryClient
-
 
 class TestProviders:
-    def test_providers(self, ogx_client: OGXAsLibraryClient | OgxClient):
+    def test_providers(self, ogx_client: OgxClient):
         provider_list = ogx_client.providers.list()
         assert provider_list is not None
         assert len(provider_list) > 0

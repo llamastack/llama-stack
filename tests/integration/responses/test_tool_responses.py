@@ -13,8 +13,6 @@ import ogx_client
 import openai
 import pytest
 
-from ogx.core.datatypes import AuthenticationRequiredError
-from ogx.core.library_client import OGXAsLibraryClient
 from tests.common.mcp import dependency_tools, make_mcp_server
 
 from .fixtures.test_cases import (
@@ -264,11 +262,7 @@ def test_response_non_streaming_mcp_tool(responses_client, client_with_models, t
     with make_mcp_server(required_auth_token="test-token") as mcp_server_info:
         tools = setup_mcp_tools(case.tools, mcp_server_info)
 
-        exc_type = (
-            AuthenticationRequiredError
-            if isinstance(responses_client, OGXAsLibraryClient)
-            else (httpx.HTTPStatusError, openai.AuthenticationError, ogx_client.AuthenticationError)
-        )
+        exc_type = (httpx.HTTPStatusError, openai.AuthenticationError, ogx_client.AuthenticationError)
         # Suppress expected auth error logs only for the failing auth attempt
         with caplog.at_level(logging.CRITICAL, logger="ogx.providers.inline.responses.builtin.responses.streaming"):
             with pytest.raises(exc_type):
