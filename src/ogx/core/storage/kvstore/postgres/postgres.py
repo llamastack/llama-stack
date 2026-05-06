@@ -6,7 +6,7 @@
 
 from datetime import datetime
 
-import asyncpg
+import asyncpg  # type: ignore[import-untyped]
 
 from ogx.log import get_logger
 from ogx_api.internal.kvstore import KVStore
