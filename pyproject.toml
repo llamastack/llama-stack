@@ -346,9 +346,9 @@ convention = "google"
 # TODO: Fix in follow up PRs
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["DTZ", "D101", "S104", "S105", "S106", "S108", "S110", "S310", "S311", "S603", "S607", "S608"] # Ignore datetime, docstring, and security false positives for tests
-"benchmarking/**/*.py" = ["D101"] # Ignore docstring rules for benchmarking scripts
-"client-sdks/**/*.py" = ["D101"] # Ignore docstring rules for client SDKs
-"scripts/**/*.py" = ["D101"] # Ignore docstring rules for scripts
+"benchmarking/**/*.py" = ["D101", "S104", "S110", "S311"] # Ignore docstring and security rules for benchmarking scripts
+"client-sdks/**/*.py" = ["D101", "S110", "S112", "S113"] # Ignore docstring and security rules for client SDKs
+"scripts/**/*.py" = ["D101", "S110", "S112", "S603", "S607"] # Ignore docstring and security rules for scripts
 "src/ogx/providers/inline/scoring/basic/utils/ifeval_support.py" = [
     "RUF001",
 ]
