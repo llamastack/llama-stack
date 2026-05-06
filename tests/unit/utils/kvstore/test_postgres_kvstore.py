@@ -232,3 +232,89 @@ async def test_namespace_prefix_applied_in_delete(mock_pg):
 
     params = cursor.execute.call_args[0][1]
     assert params == ("ns:mykey",)
+
+
+# -- 8. keys_in_range strips namespace from returned keys --
+
+
+async def test_keys_in_range_strips_namespace_from_results(mock_pg):
+    """keys_in_range returns un-namespaced keys so callers can pass them to get()."""
+    store, cursor = await _init_store(mock_pg, namespace="ns")
+    cursor.fetchall.return_value = [("ns:key1",), ("ns:key2",)]
+
+    keys = await store.keys_in_range("a", "z")
+
+    assert keys == ["key1", "key2"]
+
+
+# -- 9. Error handling --
+
+
+async def test_cursor_or_raise_when_uninitialized():
+    config = _make_config()
+    store = PostgresKVStoreImpl(config)
+
+    with pytest.raises(RuntimeError, match="not initialized"):
+        await store.get("k1")
+
+
+async def test_initialize_wraps_connection_error():
+    config = _make_config()
+    store = PostgresKVStoreImpl(config)
+
+    with patch("ogx.core.storage.kvstore.postgres.postgres.psycopg2") as mock_psycopg2:
+        mock_psycopg2.connect.side_effect = Exception("connection refused")
+        with pytest.raises(RuntimeError, match="Could not connect"):
+            await store.initialize()
+
+
+# -- 10. Shutdown --
+
+
+async def test_shutdown_closes_cursor_and_connection(mock_pg):
+    store, cursor = await _init_store(mock_pg)
+    _, mock_conn, _ = mock_pg
+
+    await store.shutdown()
+
+    cursor.close.assert_called_once()
+    mock_conn.close.assert_called_once()
+    assert store._cursor is None
+    assert store._conn is None
+
+
+async def test_shutdown_idempotent(mock_pg):
+    store, _ = await _init_store(mock_pg)
+
+    await store.shutdown()
+    await store.shutdown()
+
+
+# -- 11. Config validation --
+# NOTE: PostgresKVStoreConfig.validate_table_name is currently broken because
+# @classmethod is stacked before @field_validator, making Pydantic ignore it.
+# These tests document the DESIRED behavior; they are marked xfail until the
+# validator stacking is fixed (swap to @field_validator / @classmethod order).
+
+
+@pytest.mark.xfail(reason="table_name validator broken: @classmethod before @field_validator")
+def test_table_name_rejects_sql_injection():
+    with pytest.raises(ValueError, match="Invalid table name"):
+        _make_config(table_name="users; DROP TABLE")
+
+
+@pytest.mark.xfail(reason="table_name validator broken: @classmethod before @field_validator")
+def test_table_name_rejects_empty():
+    with pytest.raises(ValueError, match="Invalid table name"):
+        _make_config(table_name="")
+
+
+def test_table_name_accepts_valid():
+    config = _make_config(table_name="ogx_kvstore_v2")
+    assert config.table_name == "ogx_kvstore_v2"
+
+
+@pytest.mark.xfail(reason="table_name validator broken: @classmethod before @field_validator")
+def test_table_name_rejects_too_long():
+    with pytest.raises(ValueError, match="less than 63"):
+        _make_config(table_name="a" * 64)

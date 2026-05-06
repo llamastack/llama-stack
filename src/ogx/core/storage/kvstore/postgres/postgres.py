@@ -64,6 +64,11 @@ class PostgresKVStoreImpl(KVStore):
             return key
         return f"{self.config.namespace}:{key}"
 
+    def _strip_namespace(self, key: str) -> str:
+        if self.config.namespace and key.startswith(f"{self.config.namespace}:"):
+            return key[len(self.config.namespace) + 1 :]
+        return key
+
     async def set(self, key: str, value: str, expiration: datetime | None = None) -> None:
         key = self._namespaced_key(key)
         cursor = self._cursor_or_raise()
@@ -129,7 +134,7 @@ class PostgresKVStoreImpl(KVStore):
             """,
             (start_key, end_key),
         )
-        return [row[0] for row in cursor.fetchall()]
+        return [self._strip_namespace(row[0]) for row in cursor.fetchall()]
 
     async def shutdown(self) -> None:
         if self._cursor:
