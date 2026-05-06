@@ -24,7 +24,23 @@ class PostgresKVStoreImpl(KVStore):
         self._table_created = False
 
     async def initialize(self) -> None:
-        pass
+        try:
+            conn = await asyncpg.connect(
+                host=self.config.host,
+                port=int(self.config.port),
+                database=self.config.db,
+                user=self.config.user,
+                password=self.config.password,
+                ssl=self._build_ssl(),
+            )
+            await conn.close()
+        except Exception:
+            log.warning(
+                "Could not verify PostgreSQL connectivity during initialization, will retry on first use",
+                host=self.config.host,
+                port=self.config.port,
+                db=self.config.db,
+            )
 
     def _build_ssl(self) -> object:
         if self.config.ssl_mode == "verify-full" and self.config.ca_cert_path:
@@ -50,16 +66,20 @@ class PostgresKVStoreImpl(KVStore):
             raise RuntimeError("Could not connect to PostgreSQL database server") from e
 
         if not self._table_created:
-            await conn.execute(
-                f"""
-                CREATE TABLE IF NOT EXISTS {self.config.table_name} (
-                    key TEXT PRIMARY KEY,
-                    value TEXT,
-                    expiration TIMESTAMP
+            try:
+                await conn.execute(
+                    f"""
+                    CREATE TABLE IF NOT EXISTS {self.config.table_name} (
+                        key TEXT PRIMARY KEY,
+                        value TEXT,
+                        expiration TIMESTAMP
+                    )
+                    """
                 )
-                """
-            )
-            self._table_created = True
+                self._table_created = True
+            except Exception:
+                await conn.close()
+                raise
         return conn
 
     def _namespaced_key(self, key: str) -> str:
