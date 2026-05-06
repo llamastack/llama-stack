@@ -12,7 +12,12 @@ from ogx.log import setup_logging
 # Initialize logging early before any loggers get created
 setup_logging()
 
+<<<<<<< opencode-cli
 from .launch import LaunchParser  # type: ignore[attr-defined]
+=======
+from .letsgo import LetsGo
+from .run import Run
+>>>>>>> main
 from .stack import StackParser  # type: ignore[attr-defined]
 from .stack.utils import print_subcommand_description
 
@@ -34,6 +39,8 @@ class OGXCLIParser:
         subparsers = self.parser.add_subparsers(title="subcommands")
 
         # Add sub-commands
+        LetsGo.create(subparsers)
+        Run.create(subparsers)
         StackParser.create(subparsers)
         LaunchParser.create(subparsers)
 
