@@ -131,7 +131,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        client: [library, server]
+        client: ${{ github.event_name == 'pull_request' && fromJSON('["server"]') || fromJSON('["library", "server"]') }}
         # Use Python 3.13 only on nightly schedule (daily latest client test), otherwise use 3.12
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
         node-version: [22]
@@ -150,7 +150,7 @@ jobs:
       # called from pull_request_target workflows.
       - name: Setup test environment
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
-        uses: ogx-ai/llama-stack/.github/actions/setup-test-environment@68c0994a790e4f029007f3cce12a744d69a7d435
+        uses: ogx-ai/ogx/.github/actions/setup-test-environment@68c0994a790e4f029007f3cce12a744d69a7d435
         with:
           python-version: ${{ matrix.python-version }}
           client-version: ${{ matrix.client-version }}
@@ -171,13 +171,13 @@ jobs:
       - name: Setup TypeScript client
         if: ${{ matrix.client == 'server' }}
         id: setup-ts-client
-        uses: ogx-ai/llama-stack/.github/actions/setup-typescript-client@fb32709e3b29816b52085c92820531e4e6d94be8
+        uses: ogx-ai/ogx/.github/actions/setup-typescript-client@fb32709e3b29816b52085c92820531e4e6d94be8
         with:
           client-version: ${{ matrix.client-version }}
 
       - name: Run tests
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
-        uses: ogx-ai/llama-stack/.github/actions/run-and-record-tests@fb32709e3b29816b52085c92820531e4e6d94be8
+        uses: ogx-ai/ogx/.github/actions/run-and-record-tests@fb32709e3b29816b52085c92820531e4e6d94be8
         env:
           OPENAI_API_KEY: dummy
           AZURE_API_KEY: replay-mode-dummy-key
