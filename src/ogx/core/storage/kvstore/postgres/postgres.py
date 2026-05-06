@@ -121,7 +121,12 @@ class PostgresKVStoreImpl(KVStore):
 
         cursor = self._cursor_or_raise()
         cursor.execute(
-            f"SELECT key FROM {self.config.table_name} WHERE key >= %s AND key < %s",
+            f"""
+            SELECT key FROM {self.config.table_name}
+            WHERE key >= %s AND key < %s
+            AND (expiration IS NULL OR expiration > NOW())
+            ORDER BY key
+            """,
             (start_key, end_key),
         )
         return [row[0] for row in cursor.fetchall()]

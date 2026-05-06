@@ -459,7 +459,8 @@ def test_oauth2_with_jwks_token_expected(
     oauth2_client, jwt_token_valid, mock_jwks_urlopen_with_auth_required, suppress_auth_errors
 ):
     response = oauth2_client.get("/test", headers={"Authorization": f"Bearer {jwt_token_valid}"})
-    assert response.status_code == 401
+    assert response.status_code == 503
+    assert "Authentication service unavailable" in response.json()["error"]["message"]
 
 
 def test_oauth2_with_jwks_token_configured(oauth2_client_with_jwks_token, jwt_token_valid, mock_jwks_urlopen):
