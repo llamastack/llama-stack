@@ -30,25 +30,23 @@ def _make_config(namespace: str | None = None, table_name: str = "test_kvstore")
     )
 
 
-def _make_store_with_mock_pool(config: PostgresKVStoreConfig):
-    """Create a PostgresKVStoreImpl with a mocked asyncpg pool, bypassing initialize()."""
+def _make_store_with_mock_conn(config: PostgresKVStoreConfig):
+    """Create a PostgresKVStoreImpl with a mocked asyncpg connection, bypassing initialize()."""
     from ogx.core.storage.kvstore.postgres.postgres import PostgresKVStoreImpl
 
     store = PostgresKVStoreImpl(config)
     mock_conn = AsyncMock()
-    mock_pool = MagicMock()
-    mock_pool.acquire.return_value.__aenter__ = AsyncMock(return_value=mock_conn)
-    mock_pool.acquire.return_value.__aexit__ = AsyncMock(return_value=False)
-    mock_pool.close = AsyncMock()
-    store._pool = mock_pool
-    return store, mock_conn, mock_pool
+    mock_conn.is_closed = MagicMock(return_value=False)
+    mock_conn.close = AsyncMock()
+    store._conn = mock_conn
+    return store, mock_conn
 
 
 # -- Namespace prefixing -------------------------------------------------------
 
 
 async def test_set_applies_namespace():
-    store, conn, _ = _make_store_with_mock_pool(_make_config(namespace="quota"))
+    store, conn = _make_store_with_mock_conn(_make_config(namespace="quota"))
     await store.set("user:123", "5", expiration=None)
 
     conn.execute.assert_called_once()
@@ -57,7 +55,7 @@ async def test_set_applies_namespace():
 
 
 async def test_get_applies_namespace():
-    store, conn, _ = _make_store_with_mock_pool(_make_config(namespace="quota"))
+    store, conn = _make_store_with_mock_conn(_make_config(namespace="quota"))
     conn.fetchrow.return_value = None
 
     await store.get("user:123")
@@ -67,7 +65,7 @@ async def test_get_applies_namespace():
 
 
 async def test_delete_applies_namespace():
-    store, conn, _ = _make_store_with_mock_pool(_make_config(namespace="myns"))
+    store, conn = _make_store_with_mock_conn(_make_config(namespace="myns"))
 
     await store.delete("k1")
 
@@ -76,7 +74,7 @@ async def test_delete_applies_namespace():
 
 
 async def test_no_namespace_passes_key_through():
-    store, conn, _ = _make_store_with_mock_pool(_make_config(namespace=None))
+    store, conn = _make_store_with_mock_conn(_make_config(namespace=None))
     conn.fetchrow.return_value = None
 
     await store.get("raw_key")
@@ -90,7 +88,7 @@ async def test_no_namespace_passes_key_through():
 
 async def test_get_filters_expired_keys():
     """get() SQL includes expiration > NOW() filter."""
-    store, conn, _ = _make_store_with_mock_pool(_make_config())
+    store, conn = _make_store_with_mock_conn(_make_config())
     conn.fetchrow.return_value = None
 
     await store.get("k1")
@@ -101,7 +99,7 @@ async def test_get_filters_expired_keys():
 
 async def test_set_uses_upsert():
     """set() SQL uses INSERT ... ON CONFLICT DO UPDATE."""
-    store, conn, _ = _make_store_with_mock_pool(_make_config())
+    store, conn = _make_store_with_mock_conn(_make_config())
     await store.set("k1", "v1")
 
     sql = conn.execute.call_args[0][0]
@@ -111,7 +109,7 @@ async def test_set_uses_upsert():
 
 async def test_values_in_range_uses_half_open_interval():
     """values_in_range SQL uses >= start AND < end."""
-    store, conn, _ = _make_store_with_mock_pool(_make_config())
+    store, conn = _make_store_with_mock_conn(_make_config())
     conn.fetch.return_value = []
 
     await store.values_in_range("a", "c")
@@ -122,7 +120,7 @@ async def test_values_in_range_uses_half_open_interval():
 
 
 async def test_values_in_range_filters_expired():
-    store, conn, _ = _make_store_with_mock_pool(_make_config())
+    store, conn = _make_store_with_mock_conn(_make_config())
     conn.fetch.return_value = []
 
     await store.values_in_range("a", "z")
@@ -133,7 +131,7 @@ async def test_values_in_range_filters_expired():
 
 async def test_keys_in_range_uses_half_open_interval():
     """keys_in_range SQL uses >= start AND < end."""
-    store, conn, _ = _make_store_with_mock_pool(_make_config())
+    store, conn = _make_store_with_mock_conn(_make_config())
     conn.fetch.return_value = []
 
     await store.keys_in_range("a", "c")
@@ -144,7 +142,7 @@ async def test_keys_in_range_uses_half_open_interval():
 
 async def test_keys_in_range_filters_expired():
     """keys_in_range must also filter expired keys (bug fix verification)."""
-    store, conn, _ = _make_store_with_mock_pool(_make_config())
+    store, conn = _make_store_with_mock_conn(_make_config())
     conn.fetch.return_value = []
 
     await store.keys_in_range("a", "z")
@@ -154,7 +152,7 @@ async def test_keys_in_range_filters_expired():
 
 
 async def test_range_queries_apply_namespace():
-    store, conn, _ = _make_store_with_mock_pool(_make_config(namespace="ns"))
+    store, conn = _make_store_with_mock_conn(_make_config(namespace="ns"))
     conn.fetch.return_value = []
 
     await store.values_in_range("a", "z")
@@ -166,7 +164,7 @@ async def test_range_queries_apply_namespace():
 
 async def test_keys_in_range_strips_namespace_from_results():
     """keys_in_range returns un-namespaced keys so callers can pass them to get()."""
-    store, conn, _ = _make_store_with_mock_pool(_make_config(namespace="ns"))
+    store, conn = _make_store_with_mock_conn(_make_config(namespace="ns"))
     conn.fetch.return_value = [{"key": "ns:key1"}, {"key": "ns:key2"}]
 
     keys = await store.keys_in_range("a", "z")
@@ -175,7 +173,7 @@ async def test_keys_in_range_strips_namespace_from_results():
 
 
 async def test_values_in_range_returns_values():
-    store, conn, _ = _make_store_with_mock_pool(_make_config())
+    store, conn = _make_store_with_mock_conn(_make_config())
     conn.fetch.return_value = [{"value": "v1"}, {"value": "v2"}]
 
     values = await store.values_in_range("a", "z")
@@ -184,7 +182,7 @@ async def test_values_in_range_returns_values():
 
 
 async def test_get_returns_value_when_found():
-    store, conn, _ = _make_store_with_mock_pool(_make_config())
+    store, conn = _make_store_with_mock_conn(_make_config())
     conn.fetchrow.return_value = {"value": "hello"}
 
     result = await store.get("k1")
@@ -193,7 +191,7 @@ async def test_get_returns_value_when_found():
 
 
 async def test_get_returns_none_when_not_found():
-    store, conn, _ = _make_store_with_mock_pool(_make_config())
+    store, conn = _make_store_with_mock_conn(_make_config())
     conn.fetchrow.return_value = None
 
     result = await store.get("missing")
@@ -204,15 +202,15 @@ async def test_get_returns_none_when_not_found():
 # -- Error handling ------------------------------------------------------------
 
 
-async def test_ensure_pool_wraps_connection_error():
-    """_ensure_pool() wraps connection errors in RuntimeError on first use."""
+async def test_ensure_conn_wraps_connection_error():
+    """_ensure_conn() wraps connection errors in RuntimeError on first use."""
     from ogx.core.storage.kvstore.postgres.postgres import PostgresKVStoreImpl
 
     config = _make_config()
     store = PostgresKVStoreImpl(config)
 
     with patch("ogx.core.storage.kvstore.postgres.postgres.asyncpg") as mock_asyncpg:
-        mock_asyncpg.create_pool = AsyncMock(side_effect=Exception("connection refused"))
+        mock_asyncpg.connect = AsyncMock(side_effect=Exception("connection refused"))
         with pytest.raises(RuntimeError, match="Could not connect"):
             await store.get("k1")
 
@@ -220,17 +218,17 @@ async def test_ensure_pool_wraps_connection_error():
 # -- Shutdown ------------------------------------------------------------------
 
 
-async def test_shutdown_closes_pool():
-    store, _, pool = _make_store_with_mock_pool(_make_config())
+async def test_shutdown_closes_connection():
+    store, conn = _make_store_with_mock_conn(_make_config())
 
     await store.shutdown()
 
-    pool.close.assert_called_once()
-    assert store._pool is None
+    conn.close.assert_called_once()
+    assert store._conn is None
 
 
 async def test_shutdown_idempotent():
-    store, _, _ = _make_store_with_mock_pool(_make_config())
+    store, _ = _make_store_with_mock_conn(_make_config())
 
     await store.shutdown()
     await store.shutdown()
