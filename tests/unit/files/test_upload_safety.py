@@ -39,7 +39,7 @@ class _NoSizeUploadFile:
 
 
 class _UnchunkedUploadFile:
-    """File-like object whose read() takes no args, like LibraryClientUploadFile.
+    """File-like object whose read() takes no args.
 
     Backed by BytesIO so repeated calls hit EOF. Passing a size argument
     raises TypeError, exercising the fallback path.
