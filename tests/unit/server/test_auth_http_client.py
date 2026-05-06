@@ -5,7 +5,6 @@
 # the root directory of this source tree.
 
 import httpx
-import pytest
 
 from ogx.core.datatypes import (
     CustomAuthConfig,
@@ -31,7 +30,6 @@ class TestCustomAuthProviderClient:
         client_ref = provider._client
         assert provider._client is client_ref
 
-    @pytest.mark.asyncio
     async def test_close_shuts_down_client(self):
         config = CustomAuthConfig(endpoint="http://auth.example.com/validate")
         provider = CustomAuthProvider(config)
