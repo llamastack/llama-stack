@@ -930,10 +930,8 @@ can be instantiated multiple times (with different configs) if necessary.
             for name, cfg in backend_map.items()
             if cfg.type
             in {
-                StorageBackendType.KV_REDIS,
                 StorageBackendType.KV_SQLITE,
                 StorageBackendType.KV_POSTGRES,
-                StorageBackendType.KV_MONGODB,
             }
         }
         sql_backends = {

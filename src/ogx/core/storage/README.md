@@ -11,9 +11,7 @@ storage/
     config.py          # KVStore config classes
     kvstore.py         # KVStore factory and base implementation
     sqlite/            # SQLite KV backend (aiosqlite)
-    redis/             # Redis KV backend
     postgres/          # PostgreSQL KV backend
-    mongodb/           # MongoDB KV backend
   sqlstore/            # SQL store backends (SQLAlchemy-based)
     __init__.py
     sqlstore.py        # SqlStore factory and config
@@ -27,7 +25,7 @@ storage/
 
 The `KVStore` interface provides simple key-value operations (`get`, `set`, `delete`, `keys`). Values are strings (typically JSON-serialized). Keys can be namespaced.
 
-Backends: SQLite (default), Redis, PostgreSQL, MongoDB.
+Backends: SQLite (default), PostgreSQL.
 
 Used by: distribution registry, quota middleware, provider state persistence.
 

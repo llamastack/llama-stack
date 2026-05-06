@@ -18,9 +18,7 @@ from typing import cast
 
 from ogx.core.storage.datatypes import (
     KVStoreReference,
-    MongoDBKVStoreConfig,
     PostgresKVStoreConfig,
-    RedisKVStoreConfig,
     SqliteKVStoreConfig,
     StorageBackendConfig,
 )
@@ -37,7 +35,7 @@ def kvstore_dependencies() -> list[str]:
     This function returns the union of all dependencies for cases where the specific
     kvstore type is not known at declaration time (e.g., provider registries).
     """
-    return ["aiosqlite", "psycopg2-binary", "redis", "pymongo"]
+    return ["aiosqlite", "psycopg2-binary"]
 
 
 class InmemoryKVStoreImpl(KVStore):
@@ -121,11 +119,7 @@ async def kvstore_impl(reference: KVStoreReference) -> KVStore:
         config.namespace = reference.namespace
 
         impl: KVStore
-        if isinstance(config, RedisKVStoreConfig):
-            from .redis import RedisKVStoreImpl  # type: ignore[attr-defined]
-
-            impl = RedisKVStoreImpl(config)
-        elif isinstance(config, SqliteKVStoreConfig):
+        if isinstance(config, SqliteKVStoreConfig):
             from .sqlite import SqliteKVStoreImpl  # type: ignore[attr-defined]
 
             impl = SqliteKVStoreImpl(config)
@@ -133,10 +127,6 @@ async def kvstore_impl(reference: KVStoreReference) -> KVStore:
             from .postgres import PostgresKVStoreImpl  # type: ignore[attr-defined]
 
             impl = PostgresKVStoreImpl(config)
-        elif isinstance(config, MongoDBKVStoreConfig):
-            from .mongodb import MongoDBKVStoreImpl
-
-            impl = MongoDBKVStoreImpl(config)
         else:
             raise ValueError(f"Unknown kvstore type {config.type}")
 

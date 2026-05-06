@@ -19,10 +19,8 @@ from ogx.core.utils.config_dirs import DISTRIBS_BASE_DIR
 class StorageBackendType(StrEnum):
     """Supported storage backend types for key-value and SQL stores."""
 
-    KV_REDIS = "kv_redis"
     KV_SQLITE = "kv_sqlite"
     KV_POSTGRES = "kv_postgres"
-    KV_MONGODB = "kv_mongodb"
     SQL_SQLITE = "sql_sqlite"
     SQL_POSTGRES = "sql_postgres"
 
@@ -34,30 +32,6 @@ class CommonConfig(BaseModel):
         default=None,
         description="All keys will be prefixed with this namespace",
     )
-
-
-class RedisKVStoreConfig(CommonConfig):
-    """Configuration for the Redis key-value store backend."""
-
-    type: Literal[StorageBackendType.KV_REDIS] = StorageBackendType.KV_REDIS
-    host: str = "localhost"
-    port: int = 6379
-
-    @property
-    def url(self) -> str:
-        return f"redis://{self.host}:{self.port}"
-
-    @classmethod
-    def pip_packages(cls) -> list[str]:
-        return ["redis"]
-
-    @classmethod
-    def sample_run_config(cls) -> dict[str, str]:
-        return {
-            "type": StorageBackendType.KV_REDIS.value,
-            "host": "${env.REDIS_HOST:=localhost}",
-            "port": "${env.REDIS_PORT:=6379}",
-        }
 
 
 class SqliteKVStoreConfig(CommonConfig):
@@ -124,34 +98,6 @@ class PostgresKVStoreConfig(CommonConfig):
     @classmethod
     def pip_packages(cls) -> list[str]:
         return ["psycopg2-binary"]
-
-
-class MongoDBKVStoreConfig(CommonConfig):
-    """Configuration for the MongoDB key-value store backend."""
-
-    type: Literal[StorageBackendType.KV_MONGODB] = StorageBackendType.KV_MONGODB
-    host: str = "localhost"
-    port: int = 27017
-    db: str = "ogx"
-    user: str | None = None
-    password: str | None = None
-    collection_name: str = "ogx_kvstore"
-
-    @classmethod
-    def pip_packages(cls) -> list[str]:
-        return ["pymongo"]
-
-    @classmethod
-    def sample_run_config(cls, collection_name: str = "ogx_kvstore") -> dict[str, str]:
-        return {
-            "type": StorageBackendType.KV_MONGODB.value,
-            "host": "${env.MONGODB_HOST:=localhost}",
-            "port": "${env.MONGODB_PORT:=5432}",
-            "db": "${env.MONGODB_DB}",
-            "user": "${env.MONGODB_USER}",
-            "password": "${env.MONGODB_PASSWORD}",
-            "collection_name": "${env.MONGODB_COLLECTION_NAME:=" + collection_name + "}",
-        }
 
 
 class SqlAlchemySqlStoreConfig(BaseModel):
@@ -257,12 +203,7 @@ class KVStoreReference(BaseModel):
 
 
 StorageBackendConfig = Annotated[
-    RedisKVStoreConfig
-    | SqliteKVStoreConfig
-    | PostgresKVStoreConfig
-    | MongoDBKVStoreConfig
-    | SqliteSqlStoreConfig
-    | PostgresSqlStoreConfig,
+    SqliteKVStoreConfig | PostgresKVStoreConfig | SqliteSqlStoreConfig | PostgresSqlStoreConfig,
     Field(discriminator="type"),
 ]
 

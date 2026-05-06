@@ -153,9 +153,7 @@ storage:
 | Backend   | Config Class             | Use Case               |
 |-----------|--------------------------|------------------------|
 | SQLite    | `SqliteKVStoreConfig`    | Default, single-node   |
-| Redis     | `RedisKVStoreConfig`     | Multi-node, caching    |
 | PostgreSQL| `PostgresKVStoreConfig`  | Production deployments |
-| MongoDB   | `MongoDBKVStoreConfig`   | Document-oriented      |
 
 Used by: distribution registry, quota tracking, provider state.
 
