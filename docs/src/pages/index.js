@@ -177,6 +177,44 @@ const PROVIDERS = [
   { name: 'Weaviate', href: '/docs/providers/vector_io/remote_weaviate' },
 ];
 
+const CLI_DEMOS = {
+  claude: {
+    label: 'Claude Code',
+    command: 'claude',
+    envVar: 'ANTHROPIC_BASE_URL',
+    lines: [
+      { type: 'command', text: '$ export ANTHROPIC_BASE_URL=http://localhost:8321/v1', delay: 0 },
+      { type: 'command', text: '$ claude', delay: 400 },
+      { type: 'blank', text: '', delay: 100 },
+      { type: 'brand', text: ' ▐▛███▜▌   Claude Code', delay: 0 },
+      { type: 'brand-dim', text: '▝▜█████▛▘  llama-3.3-70b via OGX', delay: 0 },
+      { type: 'brand-dim', text: '  ▘▘ ▝▝    ~/my-project', delay: 0 },
+      { type: 'blank', text: '', delay: 300 },
+      { type: 'prompt', text: '> hey big dawg', delay: 300 },
+      { type: 'blank', text: '', delay: 400 },
+      { type: 'result', text: 'Hello from OGX!', delay: 0 },
+    ],
+  },
+  codex: {
+    label: 'Codex',
+    command: 'codex',
+    envVar: 'OPENAI_BASE_URL',
+    lines: [
+      { type: 'command', text: '$ cat ~/.codex/config.toml', delay: 0 },
+      { type: 'brand-dim', text: '[model_providers.ogx]', delay: 0 },
+      { type: 'brand-dim', text: 'base_url = "http://localhost:8321/v1"', delay: 0 },
+      { type: 'blank', text: '', delay: 200 },
+      { type: 'command', text: '$ codex', delay: 400 },
+      { type: 'blank', text: '', delay: 100 },
+      { type: 'brand-box', text: '>_ OpenAI Codex\n\nmodel: llama-3.3-70b via OGX', delay: 0 },
+      { type: 'blank', text: '', delay: 300 },
+      { type: 'prompt', text: '> hey big dawg', delay: 300 },
+      { type: 'blank', text: '', delay: 400 },
+      { type: 'result', text: 'Hello from OGX!', delay: 0 },
+    ],
+  },
+};
+
 /* Custom Tidal theme for the landing page code block */
 const tidalDark = {
   plain: { color: '#bcc5d0', backgroundColor: 'transparent' },
@@ -334,6 +372,160 @@ function CodeBlock() {
             </pre>
           )}
         </Highlight>
+      </div>
+    </div>
+  );
+}
+
+function useTerminalAnimation(lines, shouldStart) {
+  const [visibleLines, setVisibleLines] = useState([]);
+  const [typingLine, setTypingLine] = useState(null);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    if (!shouldStart) return;
+    let cancelled = false;
+
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.matches) {
+      setVisibleLines(lines.map(l => l.text));
+      setTypingLine(null);
+      setDone(true);
+      return;
+    }
+
+    async function animate() {
+      const shown = [];
+      for (let i = 0; i < lines.length; i++) {
+        if (cancelled) return;
+        const line = lines[i];
+
+        if (line.type === 'blank') {
+          shown.push('');
+          setVisibleLines([...shown]);
+          await sleep(line.delay);
+          continue;
+        }
+
+        if (line.type === 'command' || line.type === 'prompt') {
+          let partial = '';
+          for (let c = 0; c < line.text.length; c++) {
+            if (cancelled) return;
+            partial += line.text[c];
+            setTypingLine(partial);
+            await sleep(30 + Math.random() * 20);
+          }
+          setTypingLine(null);
+          shown.push(line.text);
+          setVisibleLines([...shown]);
+          await sleep(line.delay);
+        } else {
+          await sleep(line.delay);
+          if (cancelled) return;
+          shown.push(line.text);
+          setVisibleLines([...shown]);
+        }
+      }
+      setDone(true);
+    }
+
+    animate();
+    return () => { cancelled = true; };
+  }, [shouldStart, lines]);
+
+  return { visibleLines, typingLine, done };
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+function CliShowcase() {
+  const [started, setStarted] = useState(false);
+  const sectionRef = useRef(null);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.matches) { setStarted(true); return; }
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setStarted(true); observer.disconnect(); } },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const claudeAnim = useTerminalAnimation(CLI_DEMOS.claude.lines, started);
+  const codexAnim = useTerminalAnimation(CLI_DEMOS.codex.lines, claudeAnim.done);
+
+  return (
+    <section className={styles.cliSection} ref={sectionRef}>
+      <div className="container">
+        <div className={styles.cliHeader}>
+          <h2>Your tools. Any model.</h2>
+          <p>
+            Configure OGX with any provider — Ollama, vLLM, Bedrock, Azure, or
+            your own. Then point{' '}
+            <a href="https://ogx-ai.github.io/docs/building_applications/claude_code_integration">Claude Code</a>,{' '}
+            <a href="https://ogx-ai.github.io/docs/building_applications/codex_cli_integration">Codex</a>, or{' '}
+            <a href="https://ogx-ai.github.io/blog/opencode-blog">OpenCode</a>{' '}
+            at it. Same workflow, any model.
+          </p>
+        </div>
+        <div className={styles.cliTerminals}>
+          <TerminalWindow demo={CLI_DEMOS.claude} anim={claudeAnim} />
+          <TerminalWindow demo={CLI_DEMOS.codex} anim={codexAnim} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TerminalWindow({demo, anim}) {
+  return (
+    <div className={clsx(styles.cliTerminal, styles.cliTerminalFadeIn)}>
+      <div className={styles.cliTerminalBar}>
+        <span className={styles.cliTerminalFlow}>
+          {demo.label} → OGX
+        </span>
+      </div>
+      <div className={styles.cliTerminalBody}>
+        {anim.visibleLines.map((line, i) => {
+          const meta = demo.lines[i];
+          if (!meta) return null;
+          const cls = {
+            command: styles.cliLineCommand,
+            prompt: styles.cliLinePrompt,
+            status: styles.cliLineStatus,
+            result: styles.cliLineResult,
+            'result-cont': styles.cliLineResultCont,
+            blank: styles.cliLineBlank,
+            brand: styles.cliLineBrand,
+            'brand-dim': styles.cliLineBrandDim,
+            'brand-box': styles.cliLineBrandBox,
+          }[meta.type] || '';
+          if (meta.type === 'blank') return <div key={i} className={styles.cliLineBlank} />;
+          if (meta.type === 'brand-box') {
+            return (
+              <div key={i} className={styles.cliLineBrandBox}>
+                {line.split('\n').map((l, j) => (
+                  <div key={j}>{l || ' '}</div>
+                ))}
+              </div>
+            );
+          }
+          return (
+            <div key={i} className={clsx(styles.cliLine, cls)}>{line}</div>
+          );
+        })}
+        {anim.typingLine !== null && (
+          <div className={clsx(styles.cliLine, styles.cliLineCommand)}>
+            {anim.typingLine}
+            <span className={styles.cliCursor} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -670,6 +862,7 @@ export default function Home() {
       <main>
         <AnnouncementBanner />
         <Hero />
+        <CliShowcase />
         <ApiSurface />
         <ServerNotLibrary />
         <Providers />

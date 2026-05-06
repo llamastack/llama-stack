@@ -618,7 +618,7 @@ def convert_mcp_tool_choice(
     return []
 
 
-logger = get_logger("llama_stack.providers.inline.responses.builtin.responses.utils", category="agents::builtin")
+logger = get_logger("ogx.providers.inline.responses.builtin.responses.utils", category="agents::builtin")
 
 
 def should_summarize_reasoning(reasoning: OpenAIResponseReasoning | None) -> bool:
