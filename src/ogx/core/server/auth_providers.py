@@ -11,6 +11,7 @@ from urllib.parse import parse_qs, urljoin, urlparse
 
 import httpx
 import jwt
+from jwt.exceptions import PyJWKClientConnectionError
 from pydantic import BaseModel, Field
 from starlette.types import Scope
 
@@ -24,7 +25,7 @@ from ogx.core.datatypes import (
     User,
 )
 from ogx.log import get_logger
-from ogx_api import TokenValidationError
+from ogx_api import AuthServiceUnavailableError, TokenValidationError
 
 logger = get_logger(name=__name__, category="core::auth")
 
@@ -201,6 +202,9 @@ class OAuth2TokenAuthProvider(AuthProvider):
                 issuer=self.config.issuer,
                 options={"verify_exp": True, "verify_aud": True, "verify_iss": True},
             )
+        except (PyJWKClientConnectionError, ConnectionError, TimeoutError, OSError) as exc:
+            logger.warning("Failed to reach JWKS endpoint", error=str(exc))
+            raise AuthServiceUnavailableError("Authentication service unavailable") from exc
         except Exception as exc:
             raise ValueError("Invalid JWT token") from exc
 
@@ -263,11 +267,10 @@ class OAuth2TokenAuthProvider(AuthProvider):
                     principal=principal,
                     attributes=access_attributes,
                 )
-        except httpx.TimeoutException:
-            logger.exception("Token introspection request timed out")
-            raise
+        except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as exc:
+            logger.warning("Failed to reach token introspection endpoint", error=str(exc))
+            raise AuthServiceUnavailableError("Authentication service unavailable") from exc
         except ValueError:
-            # Re-raise ValueError exceptions to preserve their message
             raise
         except Exception as e:
             logger.exception("Error during token introspection")
@@ -342,11 +345,10 @@ class CustomAuthProvider(AuthProvider):
                     logger.exception("Error parsing authentication response")
                     raise ValueError("Invalid authentication response format") from e
 
-        except httpx.TimeoutException:
-            logger.exception("Authentication request timed out")
-            raise
+        except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as exc:
+            logger.warning("Failed to reach custom auth endpoint", error=str(exc))
+            raise AuthServiceUnavailableError("Authentication service unavailable") from exc
         except ValueError:
-            # Re-raise ValueError exceptions to preserve their message
             raise
         except Exception as e:
             logger.exception("Error during authentication")
@@ -555,9 +557,11 @@ class KubernetesAuthProvider(AuthProvider):
                     attributes=user_attributes,
                 )
 
-        except httpx.TimeoutException:
-            logger.warning("Kubernetes SelfSubjectReview API request timed out")
-            raise ValueError("Token validation timeout") from None
+        except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as exc:
+            logger.warning("Failed to reach Kubernetes API server", error=str(exc))
+            raise AuthServiceUnavailableError("Authentication service unavailable") from exc
+        except TokenValidationError:
+            raise
         except Exception as e:
             logger.warning("Error during token validation", error=str(e))
             raise ValueError(f"Token validation error: {str(e)}") from e
