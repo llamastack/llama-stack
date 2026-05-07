@@ -718,7 +718,7 @@ def add_internal_implementations(impls: dict[Api, Any], config: StackConfig, pol
     impls[Api.admin] = admin_impl
 
     prompts_impl = PromptServiceImpl(
-        PromptServiceConfig(config=config),
+        PromptServiceConfig(config=config, policy=policy),
         deps=impls,
     )
     impls[Api.prompts] = prompts_impl
@@ -990,7 +990,7 @@ def run_config_from_dynamic_config_spec(
                 metadata=KVStoreReference(backend="kv_default", namespace="registry"),
                 inference=InferenceStoreReference(backend="sql_default", table_name="inference_store"),
                 conversations=SqlStoreReference(backend="sql_default", table_name="openai_conversations"),
-                prompts=KVStoreReference(backend="kv_default", namespace="prompts"),
+                prompts=SqlStoreReference(backend="sql_default", table_name="prompts"),
                 connectors=KVStoreReference(backend="kv_default", namespace="connectors"),
             ),
         ),

@@ -268,9 +268,9 @@ class RunConfigSettings(BaseModel):
                 backend="sql_default",
                 table_name="openai_conversations",
             ).model_dump(exclude_none=True),
-            "prompts": KVStoreReference(
-                backend="kv_default",
-                namespace="prompts",
+            "prompts": SqlStoreReference(
+                backend="sql_default",
+                table_name="prompts",
             ).model_dump(exclude_none=True),
             "connectors": KVStoreReference(
                 backend="kv_default",
