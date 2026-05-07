@@ -153,7 +153,7 @@ const API_SURFACE = [
     { label: 'Files', path: '/v1/files' },
     { label: 'Batches', path: '/v1/batches' },
   ]},
-  { category: 'Safety & Tools', endpoints: [
+  { category: 'Moderation & Tools', endpoints: [
     { label: 'Moderations', path: '/v1/moderations' },
     { label: 'Tools', path: '/v1/tools' },
     { label: 'Connectors', path: '/v1/connectors' },
@@ -683,7 +683,7 @@ function Hero() {
               The full stack.
             </h1>
             <p className={styles.subtitle}>
-              Inference, vector stores, file storage, safety, tool calling,
+              Inference, vector stores, file storage, moderation, tool calling,
               and agentic orchestration in a single OpenAI-compatible server.
               Pluggable providers, any language, deploy anywhere.
             </p>
@@ -717,8 +717,8 @@ function ApiSurface() {
           <h2>Everything your AI app needs. One server.</h2>
           <p>
             More than inference routing. OGX composes inference, storage,
-            safety, and orchestration into a single process. Your agent can search
-            a vector store, call a tool, check safety, and stream the response.
+            moderation, and orchestration into a single process. Your agent can search
+            a vector store, call a tool, apply moderation checks, and stream the response.
             No glue code. No sidecar services.
           </p>
         </div>
@@ -788,7 +788,7 @@ function Providers() {
   return (
     <Section className={styles.providerSection}>
       <div className="container">
-        <h2>23 inference providers. 13 vector stores. 7 safety backends.</h2>
+        <h2>23 inference providers. 13 vector stores. 6 tool runtime backends.</h2>
         <p className={styles.providerDesc}>
           Develop locally with Ollama. Deploy to production with vLLM.
           Wrap Bedrock or Vertex without lock-in. Same API surface, different backend.
@@ -814,7 +814,7 @@ function Architecture() {
         <p className={styles.archDesc}>
           Your application talks to one server. That server routes
           to pluggable providers for inference, vector storage, files,
-          safety, and tools. The composition happens at the server level,
+          moderation, and tools. The composition happens at the server level,
           not in your application code.
         </p>
         <div className={styles.archImg}>
@@ -858,7 +858,7 @@ function Bottom() {
 
 export default function Home() {
   return (
-    <Layout title="The Open-Source AI Application Server" description="Inference, vector stores, safety, tools, and agentic orchestration. One server, OpenAI + Anthropic + Google compatible, pluggable providers.">
+    <Layout title="The Open-Source AI Application Server" description="Inference, vector stores, moderation, tools, and agentic orchestration. One server, OpenAI + Anthropic + Google compatible, pluggable providers.">
       <main>
         <AnnouncementBanner />
         <Hero />
