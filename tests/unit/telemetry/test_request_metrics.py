@@ -23,7 +23,6 @@ def sample_route_to_api():
         "POST:/v1/chat/completions": RouteInfo("inference", "openai_chat_completion"),
         "GET:/v1/chat/completions": RouteInfo("inference", "list_chat_completions"),
         "GET:/v1/chat/completions/{completion_id}/messages": RouteInfo("inference", "list_chat_completion_messages"),
-        "POST:/v1/completions": RouteInfo("inference", "openai_completion"),
         "POST:/v1/embeddings": RouteInfo("inference", "openai_embeddings"),
         "GET:/v1/models": RouteInfo("models", "openai_list_models"),
         "POST:/v1/models": RouteInfo("models", "register_model"),

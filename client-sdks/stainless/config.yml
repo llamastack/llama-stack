@@ -231,13 +231,6 @@ resources:
               list:
                 type: http
                 endpoint: get /v1/chat/completions/{completion_id}/messages
-  completions:
-    methods:
-      create:
-        type: http
-        streaming:
-          param_discriminator: stream
-        endpoint: post /v1/completions
   vector_io:
     models:
       queryChunksResponse: QueryChunksResponse
