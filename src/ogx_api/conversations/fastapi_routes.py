@@ -29,7 +29,6 @@ from .models import (
     Conversation,
     ConversationDeletedResource,
     ConversationItem,
-    ConversationItemDeletedResource,
     ConversationItemInclude,
     ConversationItemList,
     CreateConversationRequest,
@@ -168,15 +167,15 @@ def create_router(impl: Conversations) -> APIRouter:
 
     @router.delete(
         "/conversations/{conversation_id}/items/{item_id}",
-        response_model=ConversationItemDeletedResource,
+        response_model=Conversation,
         summary="Delete an item.",
         description="Delete a conversation item.",
-        responses={200: {"description": "The deleted item resource."}},
+        responses={200: {"description": "The parent conversation object."}},
     )
     async def delete_item(
         conversation_id: Annotated[str, Path(description="The conversation identifier.")],
         item_id: Annotated[str, Path(description="The item identifier.")],
-    ) -> ConversationItemDeletedResource:
+    ) -> Conversation:
         request = DeleteItemRequest(conversation_id=conversation_id, item_id=item_id)
         return await impl.openai_delete_conversation_item(request)
 

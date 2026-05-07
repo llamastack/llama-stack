@@ -42,6 +42,7 @@ from ogx_api.conversations import (
     AddItemsRequest,
     CreateConversationRequest,
     DeleteConversationRequest,
+    DeleteItemRequest,
     GetConversationRequest,
     ListItemsRequest,
     RetrieveItemRequest,
@@ -293,3 +294,32 @@ def test_conversation_item_list_first_last_id_required():
     assert "last_id" in schema.get("required", [])
     assert schema["properties"]["first_id"]["type"] == "string"
     assert schema["properties"]["last_id"]["type"] == "string"
+
+
+async def test_delete_item_returns_parent_conversation(service):
+    """Deleting an item returns the parent Conversation object per OpenAI spec."""
+    conversation = await service.create_conversation(CreateConversationRequest())
+
+    items = [
+        OpenAIResponseMessage(
+            type="message",
+            role="user",
+            content=[OpenAIResponseInputMessageContentText(type="input_text", text="Hello")],
+            id="msg_todelete",
+            status="completed",
+        )
+    ]
+    await service.add_items(conversation.id, AddItemsRequest(items=items))
+
+    result = await service.openai_delete_conversation_item(
+        DeleteItemRequest(conversation_id=conversation.id, item_id="msg_todelete")
+    )
+
+    assert isinstance(result, Conversation)
+    assert result.id == conversation.id
+    assert result.object == "conversation"
+    assert result.created_at == conversation.created_at
+
+    # Verify the item was actually deleted
+    with pytest.raises(ConversationItemNotFoundError):
+        await service.retrieve(RetrieveItemRequest(conversation_id=conversation.id, item_id="msg_todelete"))

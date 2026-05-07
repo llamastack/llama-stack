@@ -28,7 +28,6 @@ from ogx_api.conversations import (
     Conversation,
     ConversationDeletedResource,
     ConversationItem,
-    ConversationItemDeletedResource,
     ConversationItemList,
     Conversations,
     CreateConversationRequest,
@@ -303,13 +302,12 @@ class ConversationServiceImpl(Conversations):
             has_more=False,
         )
 
-    async def openai_delete_conversation_item(self, request: DeleteItemRequest) -> ConversationItemDeletedResource:
-        """Delete a conversation item."""
+    async def openai_delete_conversation_item(self, request: DeleteItemRequest) -> Conversation:
+        """Delete a conversation item and return the parent conversation."""
         if not request.item_id:
             raise InvalidParameterError("item_id", request.item_id, "Must be a non-empty string.")
 
-        # _get_validated_conversation validates ID format and checks existence
-        _ = await self._get_validated_conversation(request.conversation_id)
+        conversation = await self._get_validated_conversation(request.conversation_id)
 
         record = await self.sql_store.fetch_one(
             table="conversation_items", where={"id": request.item_id, "conversation_id": request.conversation_id}
@@ -323,7 +321,7 @@ class ConversationServiceImpl(Conversations):
         )
 
         logger.debug("Deleted item from conversation", item_id=request.item_id, conversation_id=request.conversation_id)
-        return ConversationItemDeletedResource(id=request.item_id)
+        return conversation
 
     async def shutdown(self) -> None:
         pass
