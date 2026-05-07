@@ -75,7 +75,7 @@ they require application state.
 Consider a `POST /v1/responses` call that references a model, attached
 files, a vector store for retrieval, and a previous conversation:
 
-```
+```http
 POST /v1/responses
 Authorization: Bearer <token>
 
@@ -276,18 +276,21 @@ class User(BaseModel):
 2. Then apply ABAC: owner OR matching attributes (intra-tenant sharing)
 
 **SQL-backed storage:**
+
 - Add `tenant_id` column to every tenant-scoped table
 - `AuthorizedSqlStore` applies `WHERE tenant_id = ?` before ABAC filters
 - On PostgreSQL, add Row-Level Security (RLS) as defense-in-depth after
   the app-level filter is in place
 
 **KV-backed storage:**
+
 - Add a `TenantScopedKVStore` wrapper that prefixes keys with tenant_id
 - Applies to: vector store metadata/chunks/file batches
   (`OpenAIVectorStoreMixin`), agent state persistence, and any KV surface
   not yet migrated to SQL
 
 **File storage:**
+
 - Partition physical/object storage paths by tenant, not just metadata
 
 #### Global catalog vs tenant state
@@ -310,6 +313,7 @@ not be cached globally, as that leaks resource existence across tenants.
 All of the following currently use global keys or lack tenant scoping:
 
 **SQL-backed (via `AuthorizedSqlStore`):**
+
 - Conversations (`openai_conversations` table)
 - Conversation messages (`conversation_messages` table)
 - Response objects and response items
@@ -319,6 +323,7 @@ All of the following currently use global keys or lack tenant scoping:
 - Batches (after migration from KV to SQL)
 
 **KV-backed:**
+
 - Distribution registry (`DistributionRegistry` in `registry.py`)
 - Vector store metadata, file metadata, chunks, file batches
   (`OpenAIVectorStoreMixin` keyspaces)
@@ -364,6 +369,7 @@ Enable PostgreSQL RLS as defense-in-depth. Add tenant-scoped audit
 logging. Remove the `disabled` tenancy mode for new deployments.
 
 **Backfill rules:**
+
 - Existing rows with empty `owner_principal` are currently treated as
   public. When tenant isolation is enabled, untagged rows must not be
   accessible to any tenant (default deny).
