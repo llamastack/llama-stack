@@ -95,7 +95,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     # including usage in every streaming chunk instead of only the final empty-choices chunk.
     # Set to True to strip usage from all intermediate chunks and emit a single compliant
     # final usage chunk, preventing callers from overcounting tokens.
-    fix_streaming_usage: bool = False
+    coalesce_streaming_usage: bool = False
 
     # Allow subclasses to control whether the provider supports tokenized embeddings input
     # Set to True for providers that support pre-tokenized input (list[int] and list[list[int]])
@@ -310,7 +310,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     async def _postprocess_chunk(self, resp: Any, stream: bool | None) -> Any:
         if stream:
             new_id = f"cltsd-{uuid.uuid4()}" if self.overwrite_completion_id else None
-            fix_usage = self.fix_streaming_usage
+            fix_usage = self.coalesce_streaming_usage
 
             async def _gen():
                 last_usage = None

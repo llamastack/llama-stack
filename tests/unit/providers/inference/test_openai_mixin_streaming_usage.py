@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-"""Tests for OpenAIMixin.fix_streaming_usage behavior.
+"""Tests for OpenAIMixin.coalesce_streaming_usage behavior.
 
 Some OpenAI-compatible providers (notably Gemini's endpoint) violate the OpenAI
 spec by including usage in every streaming chunk rather than only in the final
@@ -12,8 +12,8 @@ empty-choices chunk. This causes callers that accumulate usage across chunks to
 overcount tokens.
 
 Categories:
-  - Default behavior: fix_streaming_usage=False passes chunks through unchanged
-  - Fixed behavior: fix_streaming_usage=True strips usage from content chunks,
+  - Default behavior: coalesce_streaming_usage=False passes chunks through unchanged
+  - Fixed behavior: coalesce_streaming_usage=True strips usage from content chunks,
     emits a single compliant final usage chunk
   - Edge cases: no usage in any chunk, first/last chunk handling
 
@@ -23,7 +23,7 @@ Specific tests:
   - test_fix_emits_final_usage_chunk: a single usage-only chunk is appended after content
   - test_fix_no_usage_no_extra_chunk: no extra chunk emitted when no chunk carries usage
   - test_fix_preserves_last_usage: the final chunk carries the last seen usage, not the first
-  - test_gemini_adapter_has_flag_set: GeminiInferenceAdapter.fix_streaming_usage is True
+  - test_gemini_adapter_has_flag_set: GeminiInferenceAdapter.coalesce_streaming_usage is True
 """
 
 from collections.abc import AsyncIterator
@@ -71,10 +71,10 @@ async def _collect(gen: AsyncIterator[Any]) -> list[Any]:
 
 
 class TestDefaultBehavior:
-    """fix_streaming_usage=False — chunks pass through unchanged."""
+    """coalesce_streaming_usage=False — chunks pass through unchanged."""
 
     async def test_default_does_not_strip_usage(self):
-        """When fix_streaming_usage is False, chunks with usage are yielded as-is."""
+        """When coalesce_streaming_usage is False, chunks with usage are yielded as-is."""
         from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
         usage = CompletionUsage(prompt_tokens=10, completion_tokens=5, total_tokens=15)
@@ -90,14 +90,14 @@ class TestDefaultBehavior:
         # Instantiate a minimal stub that inherits _postprocess_chunk
         class _Stub(OpenAIMixin):
             config: Any = None
-            fix_streaming_usage: bool = False
+            coalesce_streaming_usage: bool = False
             overwrite_completion_id: bool = False
 
             def get_base_url(self):
                 return "https://example.com"
 
         stub = _Stub.model_construct()
-        stub.fix_streaming_usage = False
+        stub.coalesce_streaming_usage = False
         stub.overwrite_completion_id = False
 
         result = await stub._postprocess_chunk(_fake_stream(), stream=True)
@@ -110,26 +110,26 @@ class TestDefaultBehavior:
 
 
 class TestFixStreamingUsage:
-    """fix_streaming_usage=True — strips usage from content chunks, appends final usage chunk."""
+    """coalesce_streaming_usage=True — strips usage from content chunks, appends final usage chunk."""
 
     def _make_stub(self) -> Any:
         from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
         class _Stub(OpenAIMixin):
             config: Any = None
-            fix_streaming_usage: bool = True
+            coalesce_streaming_usage: bool = True
             overwrite_completion_id: bool = False
 
             def get_base_url(self):
                 return "https://example.com"
 
         stub = _Stub.model_construct()
-        stub.fix_streaming_usage = True
+        stub.coalesce_streaming_usage = True
         stub.overwrite_completion_id = False
         return stub
 
     async def test_fix_strips_usage_from_content_chunks(self):
-        """Content chunks have usage=None when fix_streaming_usage is True."""
+        """Content chunks have usage=None when coalesce_streaming_usage is True."""
         usage = CompletionUsage(prompt_tokens=10, completion_tokens=5, total_tokens=15)
         chunks = [
             _make_content_chunk("hello", usage=usage),
@@ -301,11 +301,11 @@ class TestFixStreamingUsage:
 
 
 class TestGeminiAdapterFlag:
-    def test_gemini_adapter_has_fix_streaming_usage_enabled(self):
-        """GeminiInferenceAdapter must have fix_streaming_usage=True."""
+    def test_gemini_adapter_has_coalesce_streaming_usage_enabled(self):
+        """GeminiInferenceAdapter must have coalesce_streaming_usage=True."""
         from llama_stack.providers.remote.inference.gemini.gemini import GeminiInferenceAdapter
 
         # Pydantic intercepts class-attribute access on model fields, so read the
         # default from model_fields instead.
-        default = GeminiInferenceAdapter.model_fields["fix_streaming_usage"].default
+        default = GeminiInferenceAdapter.model_fields["coalesce_streaming_usage"].default
         assert default is True
