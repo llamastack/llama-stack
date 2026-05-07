@@ -314,6 +314,7 @@ const sidebars: SidebarsConfig = {
         'building_applications/playground',
         'building_applications/claude_code_integration',
         'building_applications/codex_cli_integration',
+        'building_applications/opencode_integration',
       ],
     },
     {
