@@ -62,6 +62,7 @@ async def service():
                 metadata=None,
                 inference=None,
                 prompts=None,
+                connectors=None,
             ),
         )
         register_sqlstore_backends({"sql_test": storage.backends["sql_test"]})
@@ -219,6 +220,7 @@ async def test_policy_configuration():
                 metadata=None,
                 inference=None,
                 prompts=None,
+                connectors=None,
             ),
         )
         register_sqlstore_backends({"sql_test": storage.backends["sql_test"]})
