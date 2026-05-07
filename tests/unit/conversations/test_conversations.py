@@ -323,3 +323,173 @@ async def test_delete_item_returns_parent_conversation(service):
     # Verify the item was actually deleted
     with pytest.raises(ConversationItemNotFoundError):
         await service.retrieve(RetrieveItemRequest(conversation_id=conversation.id, item_id="msg_todelete"))
+
+
+async def test_list_items_has_more_with_limit(service):
+    """has_more should be True when more items exist beyond the limit."""
+    conversation = await service.create_conversation(CreateConversationRequest())
+
+    for i in range(5):
+        items = [
+            OpenAIResponseMessage(
+                type="message",
+                role="user",
+                content=[OpenAIResponseInputMessageContentText(type="input_text", text=f"Message {i}")],
+                id=f"msg_{'0' * 44}{i:04d}",
+                status="completed",
+            )
+        ]
+        await service.add_items(conversation.id, AddItemsRequest(items=items))
+
+    result = await service.list_items(
+        ListItemsRequest(conversation_id=conversation.id, limit=3)
+    )
+
+    assert len(result.data) == 3
+    assert result.has_more is True
+    assert result.first_id != ""
+    assert result.last_id != ""
+
+
+async def test_list_items_has_more_false_when_all_fit(service):
+    """has_more should be False when all items fit within the limit."""
+    conversation = await service.create_conversation(CreateConversationRequest())
+
+    items = [
+        OpenAIResponseMessage(
+            type="message",
+            role="user",
+            content=[OpenAIResponseInputMessageContentText(type="input_text", text="Only one")],
+            id="msg_" + "a" * 48,
+            status="completed",
+        )
+    ]
+    await service.add_items(conversation.id, AddItemsRequest(items=items))
+
+    result = await service.list_items(
+        ListItemsRequest(conversation_id=conversation.id, limit=20)
+    )
+
+    assert len(result.data) == 1
+    assert result.has_more is False
+
+
+async def test_list_items_after_cursor(service):
+    """after parameter should return items after the given cursor."""
+    conversation = await service.create_conversation(CreateConversationRequest())
+
+    for i in range(5):
+        items = [
+            OpenAIResponseMessage(
+                type="message",
+                role="user",
+                content=[OpenAIResponseInputMessageContentText(type="input_text", text=f"Message {i}")],
+                id=f"msg_{'0' * 44}{i:04d}",
+                status="completed",
+            )
+        ]
+        await service.add_items(conversation.id, AddItemsRequest(items=items))
+
+    # List all items first (desc order = newest first)
+    all_items = await service.list_items(
+        ListItemsRequest(conversation_id=conversation.id, limit=100)
+    )
+    assert len(all_items.data) == 5
+
+    # Use the second item as cursor — should get items after it (older items in desc)
+    cursor_id = all_items.data[1].id
+    result = await service.list_items(
+        ListItemsRequest(conversation_id=conversation.id, after=cursor_id, limit=100)
+    )
+
+    assert len(result.data) == 3
+    for item in result.data:
+        assert item.id != cursor_id
+
+
+async def test_list_items_after_cursor_with_asc_order(service):
+    """after parameter with asc order should return items after the cursor in ascending order."""
+    conversation = await service.create_conversation(CreateConversationRequest())
+
+    for i in range(5):
+        items = [
+            OpenAIResponseMessage(
+                type="message",
+                role="user",
+                content=[OpenAIResponseInputMessageContentText(type="input_text", text=f"Message {i}")],
+                id=f"msg_{'0' * 44}{i:04d}",
+                status="completed",
+            )
+        ]
+        await service.add_items(conversation.id, AddItemsRequest(items=items))
+
+    # List all in asc order (oldest first)
+    all_items = await service.list_items(
+        ListItemsRequest(conversation_id=conversation.id, order="asc", limit=100)
+    )
+    assert len(all_items.data) == 5
+
+    # Use the second item as cursor — should get items after it (newer items in asc)
+    cursor_id = all_items.data[1].id
+    result = await service.list_items(
+        ListItemsRequest(conversation_id=conversation.id, after=cursor_id, order="asc", limit=100)
+    )
+
+    assert len(result.data) == 3
+
+
+async def test_list_items_after_cursor_with_has_more(service):
+    """after cursor combined with limit should correctly compute has_more."""
+    conversation = await service.create_conversation(CreateConversationRequest())
+
+    for i in range(10):
+        items = [
+            OpenAIResponseMessage(
+                type="message",
+                role="user",
+                content=[OpenAIResponseInputMessageContentText(type="input_text", text=f"Message {i}")],
+                id=f"msg_{'0' * 44}{i:04d}",
+                status="completed",
+            )
+        ]
+        await service.add_items(conversation.id, AddItemsRequest(items=items))
+
+    # Get all items in desc order
+    all_items = await service.list_items(
+        ListItemsRequest(conversation_id=conversation.id, limit=100)
+    )
+    assert len(all_items.data) == 10
+
+    # Cursor at item 3 (4th from top in desc), limit=3
+    # Items after cursor: 6 remaining, limit 3, so has_more=True
+    cursor_id = all_items.data[3].id
+    result = await service.list_items(
+        ListItemsRequest(conversation_id=conversation.id, after=cursor_id, limit=3)
+    )
+
+    assert len(result.data) == 3
+    assert result.has_more is True
+
+
+async def test_list_items_after_invalid_cursor_raises_error(service):
+    """after parameter with nonexistent item ID should raise an error."""
+    conversation = await service.create_conversation(CreateConversationRequest())
+
+    with pytest.raises(ConversationItemNotFoundError):
+        await service.list_items(
+            ListItemsRequest(conversation_id=conversation.id, after="msg_nonexistent")
+        )
+
+
+async def test_list_items_empty_conversation(service):
+    """Listing items on empty conversation returns valid ConversationItemList with empty strings."""
+    conversation = await service.create_conversation(CreateConversationRequest())
+
+    result = await service.list_items(
+        ListItemsRequest(conversation_id=conversation.id)
+    )
+
+    assert len(result.data) == 0
+    assert result.has_more is False
+    assert result.first_id == ""
+    assert result.last_id == ""
