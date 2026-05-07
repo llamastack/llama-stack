@@ -5561,13 +5561,12 @@ components:
           enum:
           - function_call_output
         id:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Id
         status:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Status
+          default: completed
       type: object
       required:
       - call_id
@@ -5778,15 +5777,12 @@ components:
           enum:
           - message
         id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
+          title: Id
+          type: string
         status:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
+          default: completed
+          title: Status
+          type: string
       required:
       - content
       - role
@@ -5895,13 +5891,12 @@ components:
           enum:
           - function_call
         id:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Id
         status:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Status
+          default: in_progress
       type: object
       required:
       - call_id
@@ -12696,13 +12691,12 @@ components:
           enum:
           - message
         id:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Id
         status:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Status
+          default: completed
       type: object
       required:
       - content
@@ -12771,13 +12765,12 @@ components:
           enum:
           - message
         id:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Id
         status:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Status
+          default: completed
       type: object
       required:
       - content
