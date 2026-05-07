@@ -385,6 +385,22 @@ def test_permit_unless():
     assert not is_action_allowed(policy, "read", model, User("user-2", {"namespaces": ["foo"]}))
 
 
+def test_permit_unless_user_not_in_owners_with_missing_owner_denies():
+    config = """
+    - permit:
+        actions: [read]
+      unless: user not in owners namespaces
+    """
+    policy = TypeAdapter(list[AccessRule]).validate_python(yaml.safe_load(config))
+    model = ModelWithOwner(
+        identifier="mymodel",
+        provider_id="myprovider",
+        model_type=ModelType.llm,
+        owner=None,
+    )
+    assert not is_action_allowed(policy, "read", model, User("user-1", {"namespaces": ["foo"]}))
+
+
 def test_forbid_when():
     config = """
     - forbid:
@@ -501,6 +517,22 @@ def test_is_not_owner():
     assert is_action_allowed(policy, "read", model, User("user-2", {"roles": ["admin"]}))
     assert not is_action_allowed(policy, "read", model, User("user-3", {"namespaces": ["foo"]}))
     assert not is_action_allowed(policy, "read", model, User("user-4", None))
+
+
+def test_is_not_owner_with_unowned_resource_denies():
+    config = """
+    - permit:
+        actions: [read]
+      unless: user is not owner
+    """
+    policy = TypeAdapter(list[AccessRule]).validate_python(yaml.safe_load(config))
+    model = ModelWithOwner(
+        identifier="mymodel",
+        provider_id="myprovider",
+        model_type=ModelType.llm,
+        owner=None,
+    )
+    assert not is_action_allowed(policy, "read", model, User("user-1", {"roles": ["basic"]}))
 
 
 def test_invalid_rule_permit_and_forbid_both_specified():
