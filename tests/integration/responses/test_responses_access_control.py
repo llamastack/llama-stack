@@ -208,9 +208,7 @@ class TestResponsesAccessControl:
             except Exception:
                 pass
 
-    def test_user_cannot_access_other_users_response_input_items(
-        self, alice_client, bob_client, text_model_id
-    ):
+    def test_user_cannot_access_other_users_response_input_items(self, alice_client, bob_client, text_model_id):
         """Test that one user cannot access input items from another user's response."""
         # Alice creates a stored response with input
         alice_response = self._create_stored_response(alice_client, text_model_id, "Hello from Alice")
