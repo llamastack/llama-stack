@@ -540,9 +540,12 @@ def test_openai_chat_completion_non_streaming_with_file(openai_client, client_wi
     assert_text_contains(response.choices[0].message.content, "hello world")
 
 
+_REASONING_MODEL_PATTERNS = ("gpt-oss", "deepseek-r1")
+
+
 def skip_if_model_doesnt_support_reasoning(model_id):
     """Skip if the model is not known to emit reasoning/thinking tokens."""
-    if "gpt-oss" not in model_id.lower():
+    if not any(p in model_id.lower() for p in _REASONING_MODEL_PATTERNS):
         pytest.skip(f"Model {model_id} doesn't emit reasoning tokens; skipping reasoning passthrough test.")
 
 

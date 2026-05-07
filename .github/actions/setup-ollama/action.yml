@@ -5,6 +5,10 @@ inputs:
     description: 'Test suite to use: base, responses, vision, etc.'
     required: false
     default: ''
+  setup:
+    description: 'Setup name (ollama, ollama-vision, ollama-reasoning, etc.)'
+    required: false
+    default: 'ollama'
 runs:
   using: "composite"
   steps:
@@ -21,3 +25,11 @@ runs:
         docker run -d --name ollama -p 11434:11434 docker.io/ogx/$image
         echo "Verifying Ollama status..."
         timeout 30 bash -c 'while ! curl -s -L http://127.0.0.1:11434; do sleep 1 && echo "."; done'
+
+    - name: Pull reasoning model
+      if: ${{ inputs.setup == 'ollama-reasoning' }}
+      shell: bash
+      run: |
+        echo "Pulling deepseek-r1:1.5b for ollama-reasoning setup..."
+        docker exec ollama ollama pull deepseek-r1:1.5b
+        echo "Reasoning model pulled successfully"
