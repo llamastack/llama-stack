@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/ogx-ai-ogx-badge.png)](https://mseep.ai/app/ogx-ai-ogx)
+
 <h1 align="center">OGX</h1>
 
 <p align="center">
