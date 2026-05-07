@@ -126,10 +126,10 @@
       ]
     },
     "conformance": {
-      "score": 92.1,
-      "issues": 176,
+      "score": 92.0,
+      "issues": 180,
       "missing_properties": 98,
-      "total_problems": 274,
+      "total_problems": 278,
       "total_properties": 3487
     }
   },
@@ -955,8 +955,8 @@
       ]
     },
     "Conversations": {
-      "score": 99.4,
-      "issues": 11,
+      "score": 99.3,
+      "issues": 15,
       "missing_properties": 1,
       "total_properties": 2165,
       "endpoints": [
@@ -1060,10 +1060,26 @@
                     "Union variants added: 11",
                     "Union variants removed: 25"
                   ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.first_id",
+                  "details": [
+                    "Type removed: ['string']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.last_id",
+                  "details": [
+                    "Type removed: ['string']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
                 }
               ],
               "missing_count": 0,
-              "issues_count": 1
+              "issues_count": 3
             },
             {
               "method": "POST",
@@ -1084,10 +1100,26 @@
                     "Union variants added: 11",
                     "Union variants removed: 25"
                   ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.first_id",
+                  "details": [
+                    "Type removed: ['string']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.last_id",
+                  "details": [
+                    "Type removed: ['string']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
                 }
               ],
               "missing_count": 1,
-              "issues_count": 2
+              "issues_count": 4
             }
           ]
         },

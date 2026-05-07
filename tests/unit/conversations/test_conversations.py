@@ -288,12 +288,16 @@ def test_conversation_item_list_object_literal():
 
 
 def test_conversation_item_list_first_last_id_required():
-    """first_id and last_id must be required (non-optional) strings."""
+    """first_id and last_id must be required and nullable strings."""
     schema = ConversationItemList.model_json_schema()
     assert "first_id" in schema.get("required", [])
     assert "last_id" in schema.get("required", [])
-    assert schema["properties"]["first_id"]["type"] == "string"
-    assert schema["properties"]["last_id"]["type"] == "string"
+    first_id_schema = schema["properties"]["first_id"]
+    last_id_schema = schema["properties"]["last_id"]
+    for field_schema in (first_id_schema, last_id_schema):
+        types = field_schema.get("anyOf", [])
+        type_names = {t.get("type") for t in types}
+        assert {"string", "null"} == type_names
 
 
 async def test_delete_item_returns_parent_conversation(service):
@@ -341,9 +345,7 @@ async def test_list_items_has_more_with_limit(service):
         ]
         await service.add_items(conversation.id, AddItemsRequest(items=items))
 
-    result = await service.list_items(
-        ListItemsRequest(conversation_id=conversation.id, limit=3)
-    )
+    result = await service.list_items(ListItemsRequest(conversation_id=conversation.id, limit=3))
 
     assert len(result.data) == 3
     assert result.has_more is True
@@ -366,9 +368,7 @@ async def test_list_items_has_more_false_when_all_fit(service):
     ]
     await service.add_items(conversation.id, AddItemsRequest(items=items))
 
-    result = await service.list_items(
-        ListItemsRequest(conversation_id=conversation.id, limit=20)
-    )
+    result = await service.list_items(ListItemsRequest(conversation_id=conversation.id, limit=20))
 
     assert len(result.data) == 1
     assert result.has_more is False
@@ -391,16 +391,12 @@ async def test_list_items_after_cursor(service):
         await service.add_items(conversation.id, AddItemsRequest(items=items))
 
     # List all items first (desc order = newest first)
-    all_items = await service.list_items(
-        ListItemsRequest(conversation_id=conversation.id, limit=100)
-    )
+    all_items = await service.list_items(ListItemsRequest(conversation_id=conversation.id, limit=100))
     assert len(all_items.data) == 5
 
     # Use the second item as cursor — should get items after it (older items in desc)
     cursor_id = all_items.data[1].id
-    result = await service.list_items(
-        ListItemsRequest(conversation_id=conversation.id, after=cursor_id, limit=100)
-    )
+    result = await service.list_items(ListItemsRequest(conversation_id=conversation.id, after=cursor_id, limit=100))
 
     assert len(result.data) == 3
     for item in result.data:
@@ -424,9 +420,7 @@ async def test_list_items_after_cursor_with_asc_order(service):
         await service.add_items(conversation.id, AddItemsRequest(items=items))
 
     # List all in asc order (oldest first)
-    all_items = await service.list_items(
-        ListItemsRequest(conversation_id=conversation.id, order="asc", limit=100)
-    )
+    all_items = await service.list_items(ListItemsRequest(conversation_id=conversation.id, order="asc", limit=100))
     assert len(all_items.data) == 5
 
     # Use the second item as cursor — should get items after it (newer items in asc)
@@ -455,17 +449,13 @@ async def test_list_items_after_cursor_with_has_more(service):
         await service.add_items(conversation.id, AddItemsRequest(items=items))
 
     # Get all items in desc order
-    all_items = await service.list_items(
-        ListItemsRequest(conversation_id=conversation.id, limit=100)
-    )
+    all_items = await service.list_items(ListItemsRequest(conversation_id=conversation.id, limit=100))
     assert len(all_items.data) == 10
 
     # Cursor at item 3 (4th from top in desc), limit=3
     # Items after cursor: 6 remaining, limit 3, so has_more=True
     cursor_id = all_items.data[3].id
-    result = await service.list_items(
-        ListItemsRequest(conversation_id=conversation.id, after=cursor_id, limit=3)
-    )
+    result = await service.list_items(ListItemsRequest(conversation_id=conversation.id, after=cursor_id, limit=3))
 
     assert len(result.data) == 3
     assert result.has_more is True
@@ -476,18 +466,14 @@ async def test_list_items_after_invalid_cursor_raises_error(service):
     conversation = await service.create_conversation(CreateConversationRequest())
 
     with pytest.raises(ConversationItemNotFoundError):
-        await service.list_items(
-            ListItemsRequest(conversation_id=conversation.id, after="msg_nonexistent")
-        )
+        await service.list_items(ListItemsRequest(conversation_id=conversation.id, after="msg_nonexistent"))
 
 
 async def test_list_items_empty_conversation(service):
     """Listing items on empty conversation returns valid ConversationItemList with empty strings."""
     conversation = await service.create_conversation(CreateConversationRequest())
 
-    result = await service.list_items(
-        ListItemsRequest(conversation_id=conversation.id)
-    )
+    result = await service.list_items(ListItemsRequest(conversation_id=conversation.id))
 
     assert len(result.data) == 0
     assert result.has_more is False

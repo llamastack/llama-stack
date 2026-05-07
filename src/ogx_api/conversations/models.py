@@ -90,9 +90,7 @@ class ConversationDeletedResource(BaseModel):
     """Response for deleted conversation."""
 
     id: str = Field(..., description="The deleted conversation identifier")
-    object: Literal["conversation.deleted"] = Field(
-        default="conversation.deleted", description="Object type"
-    )
+    object: Literal["conversation.deleted"] = Field(default="conversation.deleted", description="Object type")
     deleted: bool = Field(default=True, description="Whether the object was deleted")
 
 
@@ -132,8 +130,8 @@ class ConversationItemList(BaseModel):
 
     object: Literal["list"] = Field(default="list", description="The type of object returned, must be list.")
     data: list[ConversationItem] = Field(..., description="List of conversation items")
-    first_id: str = Field(..., description="The ID of the first item in the list.")
-    last_id: str = Field(..., description="The ID of the last item in the list.")
+    first_id: str | None = Field(..., description="The ID of the first item in the list.")
+    last_id: str | None = Field(..., description="The ID of the last item in the list.")
     has_more: bool = Field(..., description="Whether there are more items available.")
 
 

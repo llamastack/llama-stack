@@ -18,12 +18,12 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 92.1% |
+| **Overall Conformance Score** | 92.0% |
 | **Endpoints Implemented** | 30/146 |
 | **Total Properties Checked** | 3487 |
-| **Schema/Type Issues** | 176 |
+| **Schema/Type Issues** | 180 |
 | **Missing Properties** | 98 |
-| **Total Issues to Fix** | 274 |
+| **Total Issues to Fix** | 278 |
 
 ## Integration Test Coverage
 
@@ -53,7 +53,7 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Responses | 88.9% | 225 | 25 | 0 |
 | Models | 93.3% | 15 | 1 | 0 |
 | Chat | 98.7% | 449 | 5 | 1 |
-| Conversations | 99.4% | 2165 | 11 | 1 |
+| Conversations | 99.3% | 2165 | 15 | 1 |
 
 ## Missing Endpoints
 
@@ -906,7 +906,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Conversations
 
-**Score:** 99.4% · **Issues:** 11 · **Missing:** 1
+**Score:** 99.3% · **Issues:** 15 · **Missing:** 1
 
 #### `/conversations`
 
@@ -964,11 +964,13 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **GET**
 
 <details>
-<summary>Schema Issues (1)</summary>
+<summary>Schema Issues (3)</summary>
 
 | Property | Issues | Tested |
 |----------|--------|--------|
 | `responses.200.content.application/json.properties.data.items` | Union variants added: 11; Union variants removed: 25 | No |
+| `responses.200.content.application/json.properties.first_id` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 | No |
+| `responses.200.content.application/json.properties.last_id` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 | No |
 
 </details>
 
@@ -982,12 +984,14 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 </details>
 
 <details>
-<summary>Schema Issues (2)</summary>
+<summary>Schema Issues (4)</summary>
 
 | Property | Issues | Tested |
 |----------|--------|--------|
 | `requestBody.content.application/json.properties.items.items` | Union variants added: 11; Union variants removed: 3 | No |
 | `responses.200.content.application/json.properties.data.items` | Union variants added: 11; Union variants removed: 25 | No |
+| `responses.200.content.application/json.properties.first_id` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 | No |
+| `responses.200.content.application/json.properties.last_id` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 | No |
 
 </details>
 
