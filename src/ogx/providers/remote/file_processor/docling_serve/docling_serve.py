@@ -13,6 +13,7 @@ import httpx
 from fastapi import UploadFile
 
 from ogx.log import get_logger
+from ogx.providers.utils.async_request_scheduler import AsyncRequestScheduler
 from ogx.providers.utils.vector_io.vector_utils import generate_chunk_id
 from ogx_api.file_processors import ProcessFileRequest, ProcessFileResponse
 from ogx_api.files import Files, RetrieveFileContentRequest, RetrieveFileRequest
@@ -37,6 +38,10 @@ class DoclingServeFileProcessor:
     def __init__(self, config: DoclingServeFileProcessorConfig, files_api: Files) -> None:
         self.config = config
         self.files_api = files_api
+        self._scheduler = AsyncRequestScheduler(
+            max_concurrency=config.max_concurrency,
+            max_queue_size=config.max_queue_size,
+        )
 
     def _get_headers(self) -> dict[str, str]:
         headers: dict[str, str] = {}
@@ -80,12 +85,25 @@ class DoclingServeFileProcessor:
         suffix = os.path.splitext(filename)[1] or ".bin"
         mime_type = _get_mime_type(suffix)
 
+        log.debug(
+            "Submitting to scheduler",
+            filename=filename,
+            file_size_bytes=len(content),
+            active=self._scheduler.active,
+            queued=self._scheduler.queued,
+            max_concurrency=self._scheduler.max_concurrency,
+        )
+
         if chunking_strategy:
-            chunks = await self._convert_and_chunk(
-                content, filename, mime_type, document_id, chunking_strategy, document_metadata
+            chunks = await self._scheduler.submit(
+                lambda: self._convert_and_chunk(
+                    content, filename, mime_type, document_id, chunking_strategy, document_metadata
+                )
             )
         else:
-            chunks = await self._convert_no_chunk(content, filename, mime_type, document_id, document_metadata)
+            chunks = await self._scheduler.submit(
+                lambda: self._convert_no_chunk(content, filename, mime_type, document_id, document_metadata)
+            )
 
         processing_time_ms = int((time.time() - start_time) * 1000)
 
@@ -111,7 +129,7 @@ class DoclingServeFileProcessor:
         headers = self._get_headers()
 
         options = {
-            "to_formats": '["md"]',
+            "to_formats": "md",
         }
 
         async with httpx.AsyncClient(timeout=300.0) as client:
