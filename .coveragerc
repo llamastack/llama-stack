@@ -1,7 +1,6 @@
 [run]
 omit =
     */tests/*
-    */ogx/providers/*
     */ogx/templates/*
     .venv/*
     */ogx/cli/scripts/*
@@ -10,3 +9,9 @@ omit =
     */ogx/strong_typing/*
     */ogx/env.py
     */__init__.py
+
+[report]
+# Set fail_under to a few points below current coverage to avoid blocking
+# existing PRs. Ratchet this threshold up over time as coverage improves.
+fail_under = 53
+show_missing = true

@@ -10,9 +10,9 @@ PYTHON_VERSION=${PYTHON_VERSION:-3.12}
 
 set -e
 
-# Always run this at the end, even if something fails
+# Always generate the HTML report, even if tests fail
 cleanup() {
-    echo "Generating coverage report..."
+    echo "Generating HTML coverage report..."
     uv run --python "$PYTHON_VERSION" coverage html -d htmlcov-$PYTHON_VERSION
 }
 trap cleanup EXIT
@@ -25,6 +25,10 @@ if [ $FOUND_PYTHON -ne 0 ]; then
      uv python install "$PYTHON_VERSION"
 fi
 
-# Run unit tests with coverage
+# Run unit tests with coverage (pytest-cov is configured via pyproject.toml addopts).
+# The --cov-fail-under flag enforces the minimum coverage threshold.
 uv run --python "$PYTHON_VERSION" --with-editable . --group unit \
-    coverage run --source=src/ogx -m pytest -s -v tests/unit/ "$@"
+    pytest -s -v --cov-report=html:htmlcov-$PYTHON_VERSION tests/unit/ "$@"
+
+# Generate text report for CI logs (fail_under is set in .coveragerc)
+uv run --python "$PYTHON_VERSION" coverage report
