@@ -111,9 +111,11 @@ jobs:
         run: |
           CHANGED=$(gh pr diff ${{ github.event.pull_request.number }} --name-only)
           # Pass as a single-line escaped string for the argument
-          echo "files<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$CHANGED" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+          {
+            echo "files<<EOF"
+            echo "$CHANGED"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ github.token }}
 

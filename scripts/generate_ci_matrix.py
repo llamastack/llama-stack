@@ -117,8 +117,7 @@ def generate_matrix(schedule="", test_setup="", matrix_key="default", changed_fi
             if filtered:
                 matrix = filtered
                 print(
-                    f"Filtered matrix to {len(matrix)} config(s) based on changed files: "
-                    f"{', '.join(sorted(setups))}",
+                    f"Filtered matrix to {len(matrix)} config(s) based on changed files: {', '.join(sorted(setups))}",
                     file=sys.stderr,
                 )
             else:
