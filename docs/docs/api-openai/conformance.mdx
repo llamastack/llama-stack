@@ -18,12 +18,12 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 92.1% |
+| **Overall Conformance Score** | 92.0% |
 | **Endpoints Implemented** | 30/146 |
 | **Total Properties Checked** | 3487 |
-| **Schema/Type Issues** | 176 |
-| **Missing Properties** | 99 |
-| **Total Issues to Fix** | 275 |
+| **Schema/Type Issues** | 177 |
+| **Missing Properties** | 101 |
+| **Total Issues to Fix** | 278 |
 
 ## Integration Test Coverage
 
@@ -50,10 +50,10 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Embeddings | 78.6% | 14 | 3 | 0 |
 | Vector stores | 82.9% | 310 | 41 | 12 |
 | Responses | 88.9% | 225 | 25 | 0 |
+| Files | 92.9% | 42 | 1 | 2 |
 | Models | 93.3% | 15 | 1 | 0 |
 | Chat | 98.7% | 449 | 5 | 1 |
 | Conversations | 98.9% | 2165 | 19 | 4 |
-| Files | 100.0% | 42 | 0 | 0 |
 
 ## Missing Endpoints
 
@@ -780,6 +780,31 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `requestBody.content.application/json.properties.input` | Union variants added: 2; Union variants removed: 1 | Yes |
 | `requestBody.content.application/json.properties.model` | Type added: ['string']; Union variants removed: 3 | Yes |
 | `responses.200.content.application/json.properties.output.items` | Union variants added: 4 | Yes |
+
+</details>
+
+### Files
+
+**Score:** 92.9% · **Issues:** 1 · **Missing:** 2
+
+#### `/files`
+
+**POST**
+
+<details>
+<summary>Missing Properties (2)</summary>
+
+- `requestBody.content.multipart/form-data.properties.expires_after.properties.anchor`
+- `requestBody.content.multipart/form-data.properties.expires_after.properties.seconds`
+
+</details>
+
+<details>
+<summary>Schema Issues (1)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `requestBody.content.multipart/form-data.properties.expires_after` | Type removed: ['object']; Union variants added: 2 |
 
 </details>
 
