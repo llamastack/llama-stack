@@ -316,7 +316,7 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
     "messages": Suite(
         name="messages",
         roots=["tests/integration/messages"],
-        default_setup="ollama-reasoning",
+        default_setup="ollama",
     ),
     # Exercises the /v1/messages translation path: Anthropic request format is
     # translated to OpenAI Chat Completions, dispatched to OpenAI, and the response
