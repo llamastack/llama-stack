@@ -5,44 +5,28 @@
 # the root directory of this source tree.
 
 """
-OGX API Specifications
+API datatypes surface for OGX.
 
-This package contains the API definitions, data types, and protocol specifications
-for OGX. It is designed to be a lightweight dependency for external providers
-and clients that need to interact with OGX APIs without requiring the full
-server implementation.
+This namespace contains the request/response Pydantic models, content blocks,
+error types, and shared value types that describe the OGX HTTP API. These are
+the symbols consumed by HTTP clients, SDK code generation, and any code
+reading or constructing wire payloads.
 
-All imports from this package MUST use the form:
-    from ogx_api import <symbol>
+Each datatype's stability level is inherited from the highest-stability route
+that references it — see `docs/docs/concepts/apis/api_leveling.mdx`. A type
+referenced by any `/v1` route is `v1`-stable; types only referenced by
+`/v1alpha` or `/v1beta` routes follow the corresponding rules.
 
-Sub-module imports (e.g., from ogx_api.responses import Responses) are NOT supported
-and considered a code smell. All exported symbols are explicitly listed in __all__.
+Protocol classes, provider specs, and the schema-utility / decorator surface
+live in `ogx_api.provider` instead.
+
+Symbols re-exported here also remain importable from the top level (`from
+ogx_api import X`) for backwards compatibility. New code should prefer
+`from ogx_api.types import X` to make the contract explicit.
 """
 
-try:
-    from importlib.metadata import PackageNotFoundError
-    from importlib.metadata import version as _metadata_version
-
-    __version__ = _metadata_version("ogx-api")
-except PackageNotFoundError:
-    __version__ = "0.0.0.dev0"
-
-# Import submodules for those who need them
-from .schema_utils import (  # noqa: I001
-    CallableT,
-    ExtraBodyField,
-    SchemaInfo,
-    clear_dynamic_schema_types,
-    get_registered_schema_info,
-    iter_dynamic_schema_types,
-    iter_json_schema_types,
-    iter_registered_schema_types,
-    json_schema_type,
-    register_dynamic_schema_type,
-    register_schema,
-)
-from .admin import (
-    Admin,
+# Admin
+from ogx_api.admin import (
     ApiFilter,
     HealthInfo,
     InspectProviderRequest,
@@ -54,25 +38,8 @@ from .admin import (
     VersionInfo,
 )
 
-# Import all public API symbols
-from .responses import (
-    Responses,
-    CancelResponseRequest,
-    CompactResponseRequest,
-    ContextManagement,
-    CreateResponseRequest,
-    DeleteResponseRequest,
-    ListResponseInputItemsRequest,
-    ListResponsesRequest,
-    ResponseGuardrail,
-    ResponseGuardrailSpec,
-    ResponseItemInclude,
-    ResponseTruncation,
-    ResponseStreamOptions,
-    RetrieveResponseRequest,
-)
-from .batches import (
-    Batches,
+# Batches
+from ogx_api.batches import (
     BatchObject,
     CancelBatchRequest,
     CreateBatchRequest,
@@ -81,8 +48,8 @@ from .batches import (
     RetrieveBatchRequest,
 )
 
-# Import commonly used types from common submodule
-from .common.content_types import (
+# Common
+from ogx_api.common.content_types import (
     URL,
     ImageContentItem,
     InterleavedContent,
@@ -90,7 +57,7 @@ from .common.content_types import (
     TextContentItem,
     _URLOrData,
 )
-from .common.errors import (
+from ogx_api.common.errors import (
     AuthServiceUnavailableError,
     BatchNotFoundError,
     ConflictError,
@@ -112,27 +79,30 @@ from .common.errors import (
     UnsupportedModelError,
     VectorStoreNotFoundError,
 )
-from .common.job_types import Job, JobStatus
-from .common.responses import Order, PaginatedResponse
-from .common.type_system import (
+from ogx_api.common.job_types import Job, JobStatus
+from ogx_api.common.responses import Order, PaginatedResponse
+from ogx_api.common.type_system import (
     ChatCompletionInputType,
     CompletionInputType,
     NumberType,
     ParamType,
     StringType,
 )
-from .connectors import (
+
+# Connectors
+from ogx_api.connectors import (
     Connector,
     ConnectorInput,
-    Connectors,
     ConnectorType,
-    ListConnectorsResponse,
-    ListToolsResponse,
     GetConnectorRequest,
     GetConnectorToolRequest,
+    ListConnectorsResponse,
     ListConnectorToolsRequest,
+    ListToolsResponse,
 )
-from .conversations import (
+
+# Conversations
+from ogx_api.conversations import (
     AddItemsRequest,
     Conversation,
     ConversationDeletedResource,
@@ -142,7 +112,6 @@ from .conversations import (
     ConversationItemInclude,
     ConversationItemList,
     ConversationMessage,
-    Conversations,
     CreateConversationRequest,
     DeleteConversationRequest,
     DeleteItemRequest,
@@ -152,29 +121,14 @@ from .conversations import (
     RetrieveItemRequest,
     UpdateConversationRequest,
 )
-from .datatypes import (
-    Api,
-    DynamicApiMeta,
-    Error,
-    ExternalApiSpec,
-    HealthResponse,
-    HealthStatus,
-    InlineProviderSpec,
-    ModelsProtocolPrivate,
-    ProviderSpec,
-    RemoteProviderConfig,
-    RemoteProviderSpec,
-    RoutingTable,
-    ShieldsProtocolPrivate,
-    ToolGroupsProtocolPrivate,
-    VectorStoresProtocolPrivate,
-)
-from .file_processors import FileProcessors, ProcessFileRequest, ProcessFileResponse
-from .filters import COMPARISON_FILTER_TYPES, COMPOUND_FILTER_TYPES, ComparisonFilter, CompoundFilter, Filter
-from .files import (
+
+# File processors
+from ogx_api.file_processors import ProcessFileRequest, ProcessFileResponse
+
+# Files
+from ogx_api.files import (
     DeleteFileRequest,
     ExpiresAfter,
-    Files,
     ListFilesRequest,
     ListOpenAIFileResponse,
     OpenAIFileDeleteResponse,
@@ -184,7 +138,18 @@ from .files import (
     RetrieveFileRequest,
     UploadFileRequest,
 )
-from .inference import (
+
+# Filters
+from ogx_api.filters import (
+    COMPARISON_FILTER_TYPES,
+    COMPOUND_FILTER_TYPES,
+    ComparisonFilter,
+    CompoundFilter,
+    Filter,
+)
+
+# Inference
+from ogx_api.inference import (
     Bf16QuantizationConfig,
     ChatCompletionMessage,
     ChatCompletionMessageList,
@@ -196,28 +161,25 @@ from .inference import (
     GetChatCompletionRequest,
     GrammarResponseFormat,
     GreedySamplingStrategy,
-    Inference,
-    InferenceProvider,
     Int4QuantizationConfig,
     JsonSchemaResponseFormat,
     ListChatCompletionMessagesRequest,
     ListChatCompletionsRequest,
     ListOpenAIChatCompletionResponse,
     LogProbConfig,
-    ModelStore,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
-    OpenAIChatCompletionChunkWithReasoning,
-    OpenAIChatCompletionWithReasoning,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionChunkWithReasoning,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartParam,
     OpenAIChatCompletionContentPartTextParam,
-    OpenAIChatCompletionMessageContent,
-    OpenAIChatCompletionRequestWithExtraBody,
-    OpenAIChatCompletionTextOnlyMessageContent,
     OpenAIChatCompletionCustomToolCall,
     OpenAIChatCompletionCustomToolCallFunction,
+    OpenAIChatCompletionMessageContent,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionResponseMessage,
+    OpenAIChatCompletionTextOnlyMessageContent,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChatCompletionToolChoice,
@@ -227,7 +189,7 @@ from .inference import (
     OpenAIChatCompletionUsage,
     OpenAIChatCompletionUsageCompletionTokensDetails,
     OpenAIChatCompletionUsagePromptTokensDetails,
-    OpenAIChatCompletionResponseMessage,
+    OpenAIChatCompletionWithReasoning,
     OpenAIChoice,
     OpenAIChoiceDelta,
     OpenAIChoiceLogprobs,
@@ -275,15 +237,16 @@ from .inference import (
     TopPSamplingStrategy,
     UserMessage,
 )
-from .inspect_api import Inspect
-from .interactions import (
-    Interactions,
+
+# Interactions
+from ogx_api.interactions import (
     GoogleCreateInteractionRequest,
     GoogleInteractionResponse,
     GoogleUsage,
 )
-from .messages import (
-    Messages,
+
+# Messages
+from ogx_api.messages import (
     AnthropicContentBlock,
     AnthropicCountTokensRequest,
     AnthropicCountTokensResponse,
@@ -301,20 +264,23 @@ from .messages import (
     AnthropicToolUseBlock,
     AnthropicUsage,
 )
-from .models import (
+
+# Models
+from ogx_api.models import (
     CommonModelFields,
     GetModelRequest,
     ListModelsResponse,
     Model,
     ModelInput,
-    Models,
     ModelType,
     OpenAIListModelsResponse,
     OpenAIModel,
     RegisterModelRequest,
     UnregisterModelRequest,
 )
-from .openai_responses import (
+
+# OpenAI Responses (data models, not the protocol)
+from ogx_api.openai_responses import (
     AllowedToolsFilter,
     ApprovalFilter,
     ListOpenAIResponseInputItem,
@@ -421,21 +387,23 @@ from .openai_responses import (
     OpenAIResponseUsageOutputTokensDetails,
     WebSearchToolTypes,
 )
-from .prompts import (
+
+# Prompts
+from ogx_api.prompts import (
     CreatePromptRequest,
     DeletePromptRequest,
     GetPromptRequest,
     ListPromptsResponse,
     ListPromptVersionsRequest,
     Prompt,
-    Prompts,
     SetDefaultVersionBodyRequest,
     SetDefaultVersionRequest,
     UpdatePromptBodyRequest,
     UpdatePromptRequest,
 )
-from .providers import Providers
-from .rag_tool import (
+
+# RAG
+from ogx_api.rag_tool import (
     DefaultRAGQueryGeneratorConfig,
     LLMRAGQueryGeneratorConfig,
     RAGDocument,
@@ -448,30 +416,48 @@ from .rag_tool import (
     RRFRanker,
     WeightedRanker,
 )
-from .resource import Resource, ResourceType
-from .safety import (
+
+# Responses request models (the protocol class lives in ogx_api.provider)
+from ogx_api.responses import (
+    CancelResponseRequest,
+    CompactResponseRequest,
+    ContextManagement,
+    CreateResponseRequest,
+    DeleteResponseRequest,
+    ListResponseInputItemsRequest,
+    ListResponsesRequest,
+    ResponseGuardrail,
+    ResponseGuardrailSpec,
+    ResponseItemInclude,
+    ResponseStreamOptions,
+    ResponseTruncation,
+    RetrieveResponseRequest,
+)
+
+# Safety
+from ogx_api.safety import (
     ModerationObject,
     ModerationObjectResults,
     RunModerationRequest,
     RunShieldRequest,
     RunShieldResponse,
-    Safety,
     SafetyViolation,
-    ShieldStore,
     ViolationLevel,
 )
 
-from .shields import (
+# Shields
+from ogx_api.shields import (
     CommonShieldFields,
     GetShieldRequest,
     ListShieldsResponse,
     RegisterShieldRequest,
     Shield,
     ShieldInput,
-    Shields,
     UnregisterShieldRequest,
 )
-from .tools import (
+
+# Tools
+from ogx_api.tools import (
     ListToolDefsResponse,
     ListToolGroupsResponse,
     ListToolsRequest,
@@ -479,22 +465,20 @@ from .tools import (
     ToolDef,
     ToolGroup,
     ToolGroupInput,
-    ToolGroups,
     ToolInvocationResult,
-    ToolRuntime,
-    ToolStore,
 )
-from .validators import validate_embeddings_input_is_text
-from .vector_io import (
+
+# Vector IO
+from ogx_api.vector_io import (
+    DEFAULT_CHUNK_OVERLAP_TOKENS,
+    DEFAULT_CHUNK_SIZE_TOKENS,
+    MAX_PAGINATION_LIMIT,
     Chunk,
     ChunkForDeletion,
     ChunkMetadata,
-    DEFAULT_CHUNK_OVERLAP_TOKENS,
-    DEFAULT_CHUNK_SIZE_TOKENS,
     DeleteChunksRequest,
     EmbeddedChunk,
     InsertChunksRequest,
-    MAX_PAGINATION_LIMIT,
     OpenAIAttachFileRequest,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
@@ -504,7 +488,6 @@ from .vector_io import (
     QueryChunksRequest,
     QueryChunksResponse,
     SearchRankingOptions,
-    VectorIO,
     VectorStoreChunkingStrategy,
     VectorStoreChunkingStrategyAuto,
     VectorStoreChunkingStrategyContextual,
@@ -531,71 +514,78 @@ from .vector_io import (
     VectorStoreSearchResponsePage,
     VectorStoreTable,
 )
-from .vector_stores import VectorStore, VectorStoreInput
-from .version import (
-    OGX_API_V1,
-    OGX_API_V1ALPHA,
-    OGX_API_V1BETA,
-)
-from . import common  # noqa: F401
 
+# Vector stores (the registration value type)
+from ogx_api.vector_stores import VectorStore, VectorStoreInput
 
 __all__ = [
-    # Submodules
-    "schema_utils",
-    "common",
-    # Version constants
-    "OGX_API_V1",
-    "OGX_API_V1ALPHA",
-    "OGX_API_V1BETA",
-    # API Symbols
-    "Responses",
-    # Responses Request Models
-    "CancelResponseRequest",
-    "CompactResponseRequest",
-    "ContextManagement",
-    "CreateResponseRequest",
-    "DeleteResponseRequest",
-    "ListResponseInputItemsRequest",
-    "ListResponsesRequest",
-    "RetrieveResponseRequest",
-    "AllowedToolsFilter",
-    "Api",
+    # Admin
     "ApiFilter",
-    "ApprovalFilter",
-    "AuthServiceUnavailableError",
-    "Batches",
-    "BatchNotFoundError",
+    "HealthInfo",
+    "InspectProviderRequest",
+    "ListProvidersResponse",
+    "ListRoutesRequest",
+    "ListRoutesResponse",
+    "ProviderInfo",
+    "RouteInfo",
+    "VersionInfo",
+    # Batches
     "BatchObject",
     "CancelBatchRequest",
     "CreateBatchRequest",
     "ListBatchesRequest",
-    "Bf16QuantizationConfig",
-    "CallableT",
-    "ChatCompletionInputType",
-    "ChatCompletionMessage",
-    "ChatCompletionMessageList",
-    "ChatCompletionResponseEventType",
-    "Chunk",
-    "ChunkForDeletion",
-    "ChunkMetadata",
-    "DEFAULT_CHUNK_OVERLAP_TOKENS",
-    "DEFAULT_CHUNK_SIZE_TOKENS",
-    "DeleteChunksRequest",
-    "EmbeddedChunk",
+    "ListBatchesResponse",
+    "RetrieveBatchRequest",
+    # Common content types
+    "URL",
+    "_URLOrData",
+    "ImageContentItem",
+    "InterleavedContent",
+    "InterleavedContentItem",
+    "TextContentItem",
+    # Common errors
+    "AuthServiceUnavailableError",
+    "BatchNotFoundError",
     "ConflictError",
-    "CommonModelFields",
-    "CommonShieldFields",
-    "CompletionInputType",
-    "CompletionRequest",
-    "Connector",
     "ConnectorNotFoundError",
     "ConnectorToolNotFoundError",
     "ConversationItemNotFoundError",
     "ConversationNotFoundError",
+    "InternalServerError",
+    "InvalidParameterError",
+    "ModelNotFoundError",
+    "ModelTypeError",
+    "OpenAIFileObjectNotFoundError",
+    "ResourceNotFoundError",
+    "ResponseInputItemNotFoundError",
+    "ResponseNotFoundError",
+    "ServiceNotEnabledError",
+    "TokenValidationError",
+    "ToolGroupNotFoundError",
+    "UnsupportedModelError",
+    "VectorStoreNotFoundError",
+    # Common job types
+    "Job",
+    "JobStatus",
+    # Common response types
+    "Order",
+    "PaginatedResponse",
+    # Common type system
+    "ChatCompletionInputType",
+    "CompletionInputType",
+    "NumberType",
+    "ParamType",
+    "StringType",
+    # Connectors
+    "Connector",
     "ConnectorInput",
-    "Connectors",
     "ConnectorType",
+    "GetConnectorRequest",
+    "GetConnectorToolRequest",
+    "ListConnectorsResponse",
+    "ListConnectorToolsRequest",
+    "ListToolsResponse",
+    # Conversations
     "AddItemsRequest",
     "Conversation",
     "ConversationDeletedResource",
@@ -605,135 +595,75 @@ __all__ = [
     "ConversationItemInclude",
     "ConversationItemList",
     "ConversationMessage",
-    "Conversations",
     "CreateConversationRequest",
     "DeleteConversationRequest",
     "DeleteItemRequest",
     "GetConversationRequest",
     "ListItemsRequest",
+    "Metadata",
     "RetrieveItemRequest",
     "UpdateConversationRequest",
-    "DefaultRAGQueryGeneratorConfig",
+    # File processors
+    "ProcessFileRequest",
+    "ProcessFileResponse",
+    # Files
     "DeleteFileRequest",
-    "Docstring",
-    "DynamicApiMeta",
-    "EmbeddingTaskType",
-    "EmbeddingsResponse",
-    "Error",
     "ExpiresAfter",
-    "ExternalApiSpec",
-    "ExtraBodyField",
-    "FileProcessors",
-    "Files",
-    "Filter",
-    "ComparisonFilter",
-    "CompoundFilter",
+    "ListFilesRequest",
+    "ListOpenAIFileResponse",
+    "OpenAIFileDeleteResponse",
+    "OpenAIFileObject",
+    "OpenAIFilePurpose",
+    "RetrieveFileContentRequest",
+    "RetrieveFileRequest",
+    "UploadFileRequest",
+    # Filters
     "COMPARISON_FILTER_TYPES",
     "COMPOUND_FILTER_TYPES",
+    "ComparisonFilter",
+    "CompoundFilter",
+    "Filter",
+    # Inference
+    "Bf16QuantizationConfig",
+    "ChatCompletionMessage",
+    "ChatCompletionMessageList",
+    "ChatCompletionResponseEventType",
+    "CompletionRequest",
+    "EmbeddingTaskType",
+    "EmbeddingsResponse",
     "Fp8QuantizationConfig",
-    "clear_dynamic_schema_types",
-    "get_schema_identifier",
-    "get_signature",
+    "GetChatCompletionRequest",
     "GrammarResponseFormat",
     "GreedySamplingStrategy",
-    "HealthInfo",
-    "HealthResponse",
-    "HealthStatus",
-    "ImageContentItem",
-    "Inference",
-    "InferenceProvider",
-    "InlineProviderSpec",
-    "InsertChunksRequest",
-    "Inspect",
-    "InspectProviderRequest",
-    "InternalServerError",
-    "Admin",
     "Int4QuantizationConfig",
-    "InterleavedContent",
-    "InterleavedContentItem",
-    "InvalidParameterError",
-    "is_generic_list",
-    "is_type_optional",
-    "is_type_union",
-    "is_unwrapped_body_param",
-    "iter_dynamic_schema_types",
-    "iter_json_schema_types",
-    "iter_registered_schema_types",
-    "get_registered_schema_info",
-    "Job",
-    "JobStatus",
-    "json_dump_string",
-    "json_schema_type",
-    "JsonSchemaGenerator",
     "JsonSchemaResponseFormat",
-    "JsonType",
-    "LLMRAGQueryGeneratorConfig",
-    "ListBatchesResponse",
-    "RetrieveBatchRequest",
-    "GetConnectorRequest",
-    "GetConnectorToolRequest",
-    "ListConnectorToolsRequest",
-    "ListConnectorsResponse",
-    "ListFilesRequest",
-    "ListModelsResponse",
-    "GetChatCompletionRequest",
     "ListChatCompletionMessagesRequest",
     "ListChatCompletionsRequest",
     "ListOpenAIChatCompletionResponse",
-    "ListOpenAIFileResponse",
-    "ListOpenAIResponseInputItem",
-    "ListOpenAIResponseObject",
-    "ListPromptsResponse",
-    "ListProvidersResponse",
-    "ListRoutesRequest",
-    "ListRoutesResponse",
-    "ListShieldsResponse",
-    "ListToolDefsResponse",
-    "ListToolGroupsResponse",
-    "ListToolsRequest",
-    "ListToolsResponse",
     "LogProbConfig",
-    "MAX_PAGINATION_LIMIT",
-    "MCPListToolsTool",
-    "Metadata",
-    "Model",
-    "ModelInput",
-    "ModelNotFoundError",
-    "ModelStore",
-    "ModelType",
-    "ModelTypeError",
-    "Models",
-    "GetModelRequest",
-    "RegisterModelRequest",
-    "UnregisterModelRequest",
-    "ModelsProtocolPrivate",
-    "ModerationObject",
-    "ModerationObjectResults",
-    "NumberType",
-    "object_to_json",
     "OpenAIAssistantMessageParam",
     "OpenAIChatCompletion",
     "OpenAIChatCompletionChunk",
     "OpenAIChatCompletionChunkWithReasoning",
-    "OpenAIChatCompletionWithReasoning",
     "OpenAIChatCompletionContentPartImageParam",
     "OpenAIChatCompletionContentPartParam",
     "OpenAIChatCompletionContentPartTextParam",
-    "OpenAIChatCompletionMessageContent",
-    "OpenAIChatCompletionRequestWithExtraBody",
-    "OpenAIChatCompletionTextOnlyMessageContent",
     "OpenAIChatCompletionCustomToolCall",
     "OpenAIChatCompletionCustomToolCallFunction",
+    "OpenAIChatCompletionMessageContent",
+    "OpenAIChatCompletionRequestWithExtraBody",
+    "OpenAIChatCompletionResponseMessage",
+    "OpenAIChatCompletionTextOnlyMessageContent",
     "OpenAIChatCompletionToolCall",
     "OpenAIChatCompletionToolCallFunction",
+    "OpenAIChatCompletionToolChoice",
+    "OpenAIChatCompletionToolChoiceAllowedTools",
+    "OpenAIChatCompletionToolChoiceCustomTool",
+    "OpenAIChatCompletionToolChoiceFunctionTool",
     "OpenAIChatCompletionUsage",
     "OpenAIChatCompletionUsageCompletionTokensDetails",
     "OpenAIChatCompletionUsagePromptTokensDetails",
-    "OpenAIChatCompletionToolChoiceAllowedTools",
-    "OpenAIChatCompletionToolChoiceFunctionTool",
-    "OpenAIChatCompletionToolChoiceCustomTool",
-    "OpenAIChatCompletionToolChoice",
-    "OpenAIChatCompletionResponseMessage",
+    "OpenAIChatCompletionWithReasoning",
     "OpenAIChoice",
     "OpenAIChoiceDelta",
     "OpenAIChoiceLogprobs",
@@ -743,32 +673,83 @@ __all__ = [
     "OpenAICompletionLogprobs",
     "OpenAICompletionRequestWithExtraBody",
     "OpenAICompletionWithInputMessages",
-    "OpenAICreateVectorStoreFileBatchRequestWithExtraBody",
-    "OpenAICreateVectorStoreRequestWithExtraBody",
-    "OpenAICompactedResponse",
-    "OpenAIDeleteResponseObject",
     "OpenAIDeveloperMessageParam",
     "OpenAIEmbeddingData",
     "OpenAIEmbeddingUsage",
     "OpenAIEmbeddingsRequestWithExtraBody",
     "OpenAIEmbeddingsResponse",
     "OpenAIFile",
-    "OpenAIFileDeleteResponse",
     "OpenAIFileFile",
-    "OpenAIFileObject",
-    "OpenAIFileObjectNotFoundError",
-    "OpenAIFilePurpose",
     "OpenAIFinishReason",
     "OpenAIImageURL",
     "OpenAIJSONSchema",
-    "OpenAIListModelsResponse",
     "OpenAIMessageParam",
+    "OpenAIResponseFormatJSONObject",
+    "OpenAIResponseFormatJSONSchema",
+    "OpenAIResponseFormatParam",
+    "OpenAIResponseFormatText",
+    "OpenAISystemMessageParam",
+    "OpenAITokenLogProb",
+    "OpenAIToolMessageParam",
+    "OpenAITopLogProb",
+    "OpenAIUserMessageParam",
+    "QuantizationConfig",
+    "QuantizationType",
+    "RerankData",
+    "RerankResponse",
+    "ResponseFormat",
+    "ResponseFormatType",
+    "SamplingParams",
+    "SamplingStrategy",
+    "SystemMessage",
+    "SystemMessageBehavior",
+    "TextTruncation",
+    "TokenLogProbs",
+    "ToolChoice",
+    "ToolResponseMessage",
+    "TopKSamplingStrategy",
+    "TopPSamplingStrategy",
+    "UserMessage",
+    # Interactions
+    "GoogleCreateInteractionRequest",
+    "GoogleInteractionResponse",
+    "GoogleUsage",
+    # Messages (Anthropic)
+    "AnthropicContentBlock",
+    "AnthropicCountTokensRequest",
+    "AnthropicCountTokensResponse",
+    "AnthropicCreateMessageRequest",
+    "AnthropicErrorResponse",
+    "AnthropicImageBlock",
+    "AnthropicImageSource",
+    "AnthropicMessage",
+    "AnthropicMessageResponse",
+    "AnthropicTextBlock",
+    "AnthropicThinkingBlock",
+    "AnthropicThinkingConfig",
+    "AnthropicToolDef",
+    "AnthropicToolResultBlock",
+    "AnthropicToolUseBlock",
+    "AnthropicUsage",
+    # Models
+    "CommonModelFields",
+    "GetModelRequest",
+    "ListModelsResponse",
+    "Model",
+    "ModelInput",
+    "ModelType",
+    "OpenAIListModelsResponse",
     "OpenAIModel",
-    "Order",
-    "OpenAIAttachFileRequest",
-    "OpenAISearchVectorStoreRequest",
-    "OpenAIUpdateVectorStoreFileRequest",
-    "OpenAIUpdateVectorStoreRequest",
+    "RegisterModelRequest",
+    "UnregisterModelRequest",
+    # OpenAI Responses (data models)
+    "AllowedToolsFilter",
+    "ApprovalFilter",
+    "ListOpenAIResponseInputItem",
+    "ListOpenAIResponseObject",
+    "MCPListToolsTool",
+    "OpenAICompactedResponse",
+    "OpenAIDeleteResponseObject",
     "OpenAIResponseAnnotationCitation",
     "OpenAIResponseAnnotationContainerFileCitation",
     "OpenAIResponseAnnotationFileCitation",
@@ -782,10 +763,6 @@ __all__ = [
     "OpenAIResponseContentPartRefusal",
     "OpenAIResponseError",
     "OpenAIResponseIncompleteDetails",
-    "OpenAIResponseFormatJSONObject",
-    "OpenAIResponseFormatJSONSchema",
-    "OpenAIResponseFormatParam",
-    "OpenAIResponseFormatText",
     "OpenAIResponseInput",
     "OpenAIResponseInputFunctionToolCallOutput",
     "OpenAIResponseInputMessageContent",
@@ -793,19 +770,19 @@ __all__ = [
     "OpenAIResponseInputMessageContentImage",
     "OpenAIResponseInputMessageContentText",
     "OpenAIResponseInputTool",
+    "OpenAIResponseInputToolChoice",
+    "OpenAIResponseInputToolChoiceAllowedTools",
+    "OpenAIResponseInputToolChoiceCustomTool",
+    "OpenAIResponseInputToolChoiceFileSearch",
+    "OpenAIResponseInputToolChoiceFunctionTool",
+    "OpenAIResponseInputToolChoiceMCPTool",
+    "OpenAIResponseInputToolChoiceMode",
+    "OpenAIResponseInputToolChoiceObject",
+    "OpenAIResponseInputToolChoiceWebSearch",
     "OpenAIResponseInputToolFileSearch",
     "OpenAIResponseInputToolFunction",
     "OpenAIResponseInputToolMCP",
     "OpenAIResponseInputToolWebSearch",
-    "OpenAIResponseInputToolChoice",
-    "OpenAIResponseInputToolChoiceAllowedTools",
-    "OpenAIResponseInputToolChoiceFileSearch",
-    "OpenAIResponseInputToolChoiceWebSearch",
-    "OpenAIResponseInputToolChoiceFunctionTool",
-    "OpenAIResponseInputToolChoiceMCPTool",
-    "OpenAIResponseInputToolChoiceCustomTool",
-    "OpenAIResponseInputToolChoiceMode",
-    "OpenAIResponseInputToolChoiceObject",
     "OpenAIResponseMCPApprovalRequest",
     "OpenAIResponseMCPApprovalResponse",
     "OpenAIResponseMessage",
@@ -870,117 +847,88 @@ __all__ = [
     "OpenAIResponseUsage",
     "OpenAIResponseUsageInputTokensDetails",
     "OpenAIResponseUsageOutputTokensDetails",
-    "OpenAISystemMessageParam",
-    "OpenAITokenLogProb",
-    "OpenAIToolMessageParam",
-    "OpenAITopLogProb",
-    "OpenAIUserMessageParam",
-    "PaginatedResponse",
-    "ParamType",
-    "parse_type",
-    "ProcessFileRequest",
-    "ProcessFileResponse",
-    "Prompt",
-    "Prompts",
+    "WebSearchToolTypes",
+    # Prompts
     "CreatePromptRequest",
     "DeletePromptRequest",
     "GetPromptRequest",
     "ListPromptVersionsRequest",
+    "ListPromptsResponse",
+    "Prompt",
     "SetDefaultVersionBodyRequest",
     "SetDefaultVersionRequest",
     "UpdatePromptBodyRequest",
     "UpdatePromptRequest",
-    "ProviderInfo",
-    "ProviderSpec",
-    "Providers",
-    "python_type_to_name",
-    "QuantizationConfig",
-    "QuantizationType",
-    "QueryChunksRequest",
-    "QueryChunksResponse",
+    # RAG
+    "DefaultRAGQueryGeneratorConfig",
+    "LLMRAGQueryGeneratorConfig",
     "RAGDocument",
     "RAGQueryConfig",
     "RAGQueryGenerator",
     "RAGQueryGeneratorConfig",
     "RAGQueryResult",
     "RAGSearchMode",
-    "register_dynamic_schema_type",
-    "register_schema",
     "RRFRanker",
     "Ranker",
-    "RemoteProviderConfig",
-    "RemoteProviderSpec",
-    "RerankData",
-    "RerankResponse",
-    "Resource",
-    "ResourceNotFoundError",
-    "ResponseInputItemNotFoundError",
-    "ResponseNotFoundError",
-    "ResourceType",
-    "ResponseFormat",
-    "ResponseFormatType",
+    "WeightedRanker",
+    # Responses request models
+    "CancelResponseRequest",
+    "CompactResponseRequest",
+    "ContextManagement",
+    "CreateResponseRequest",
+    "DeleteResponseRequest",
+    "ListResponseInputItemsRequest",
+    "ListResponsesRequest",
     "ResponseGuardrail",
     "ResponseGuardrailSpec",
     "ResponseItemInclude",
-    "ResponseTruncation",
-    "ResponseNotFoundError",
     "ResponseStreamOptions",
-    "RetrieveFileContentRequest",
-    "RetrieveFileRequest",
-    "RouteInfo",
-    "RoutingTable",
+    "ResponseTruncation",
+    "RetrieveResponseRequest",
+    # Safety
+    "ModerationObject",
+    "ModerationObjectResults",
     "RunModerationRequest",
     "RunShieldRequest",
     "RunShieldResponse",
-    "Safety",
     "SafetyViolation",
-    "SamplingParams",
-    "SamplingStrategy",
-    "Schema",
-    "SchemaInfo",
-    "SchemaOptions",
-    "SearchRankingOptions",
-    "ServiceNotEnabledError",
+    "ViolationLevel",
+    # Shields
+    "CommonShieldFields",
+    "GetShieldRequest",
+    "ListShieldsResponse",
+    "RegisterShieldRequest",
     "Shield",
     "ShieldInput",
-    "ShieldStore",
-    "Shields",
-    "ShieldsProtocolPrivate",
-    "GetShieldRequest",
-    "RegisterShieldRequest",
     "UnregisterShieldRequest",
+    # Tools
+    "ListToolDefsResponse",
+    "ListToolGroupsResponse",
+    "ListToolsRequest",
     "SpecialToolGroup",
-    "StrictJsonType",
-    "StringType",
-    "SystemMessage",
-    "SystemMessageBehavior",
-    "TextContentItem",
-    "TextTruncation",
-    "TokenLogProbs",
-    "TokenValidationError",
-    "ToolChoice",
-    "ToolGroupNotFoundError",
     "ToolDef",
     "ToolGroup",
     "ToolGroupInput",
-    "ToolGroups",
-    "ToolGroupsProtocolPrivate",
     "ToolInvocationResult",
-    "ToolResponseMessage",
-    "ToolRuntime",
-    "ToolStore",
-    "TopKSamplingStrategy",
-    "TopPSamplingStrategy",
-    "UnsupportedModelError",
-    "unwrap_generic_list",
-    "unwrap_optional_type",
-    "unwrap_union_types",
-    "UploadFileRequest",
-    "URL",
-    "_URLOrData",
-    "UserMessage",
-    "VectorIO",
-    "VectorStore",
+    # Vector IO
+    "Chunk",
+    "ChunkForDeletion",
+    "ChunkMetadata",
+    "DEFAULT_CHUNK_OVERLAP_TOKENS",
+    "DEFAULT_CHUNK_SIZE_TOKENS",
+    "DeleteChunksRequest",
+    "EmbeddedChunk",
+    "InsertChunksRequest",
+    "MAX_PAGINATION_LIMIT",
+    "OpenAIAttachFileRequest",
+    "OpenAICreateVectorStoreFileBatchRequestWithExtraBody",
+    "OpenAICreateVectorStoreRequestWithExtraBody",
+    "OpenAISearchVectorStoreRequest",
+    "OpenAIUpdateVectorStoreFileRequest",
+    "OpenAIUpdateVectorStoreRequest",
+    "QueryChunksRequest",
+    "QueryChunksResponse",
+    "SearchRankingOptions",
     "VectorStoreChunkingStrategy",
     "VectorStoreChunkingStrategyAuto",
     "VectorStoreChunkingStrategyContextual",
@@ -998,7 +946,6 @@ __all__ = [
     "VectorStoreFileObject",
     "VectorStoreFileStatus",
     "VectorStoreFilesListInBatchResponse",
-    "VectorStoreInput",
     "VectorStoreListFilesResponse",
     "VectorStoreListResponse",
     "VectorStoreModifyRequest",
@@ -1007,37 +954,7 @@ __all__ = [
     "VectorStoreSearchResponse",
     "VectorStoreSearchResponsePage",
     "VectorStoreTable",
-    "VectorStoreNotFoundError",
-    "VectorStoresProtocolPrivate",
-    "VersionInfo",
-    "ViolationLevel",
-    "WebSearchToolTypes",
-    "WeightedRanker",
-    # Interactions API
-    "Interactions",
-    "GoogleCreateInteractionRequest",
-    "GoogleInteractionResponse",
-    "GoogleUsage",
-    # Messages API
-    "Messages",
-    "AnthropicContentBlock",
-    "AnthropicCountTokensRequest",
-    "AnthropicCountTokensResponse",
-    "AnthropicCreateMessageRequest",
-    "AnthropicErrorResponse",
-    "AnthropicImageBlock",
-    "AnthropicImageSource",
-    "AnthropicMessage",
-    "AnthropicMessageResponse",
-    "AnthropicTextBlock",
-    "AnthropicThinkingBlock",
-    "AnthropicThinkingConfig",
-    "AnthropicToolDef",
-    "AnthropicToolResultBlock",
-    "AnthropicToolUseBlock",
-    "AnthropicUsage",
-    # Validators
-    "validate_embeddings_input_is_text",
-    # helpers
-    "remove_null_from_anyof",
+    # Vector stores
+    "VectorStore",
+    "VectorStoreInput",
 ]

@@ -90,18 +90,16 @@ Providers can iterate as much as they want on functionality as long as they work
 
 OGX publishes a separate Python package, [`ogx-api`](https://pypi.org/project/ogx-api/), used by external/out-of-tree providers and by SDK code generation. They `from ogx_api import X` rather than calling over HTTP, which makes the package itself a load-bearing public contract.
 
-`ogx-api` exposes **two distinct public surfaces**, each with its own stability rules:
+`ogx-api` exposes **two distinct public surfaces**, each with its own stability rules and its own sub-namespace:
 
-| Surface | Consumers | Levelled by | Current level |
-|---|---|---|---|
-| **API datatypes** | HTTP clients, generated SDKs, codegen | the route(s) that reference the type | mixed (per type) |
-| **Provider SDK** | Out-of-tree provider authors | a single level for the whole surface | `v1` |
+| Surface | Namespace | Consumers | Levelled by | Current level |
+|---|---|---|---|---|
+| **API datatypes** | `ogx_api.types` | HTTP clients, generated SDKs, codegen | the route(s) that reference the type | mixed (per type) |
+| **Provider SDK** | `ogx_api.provider` | Out-of-tree provider authors | a single level for the whole surface | `v1` |
 
-The public surface of each is **only** what is re-exported from `ogx_api.__init__`'s `__all__`. Sub-module imports (`from ogx_api.responses import ...`) are unsupported and not covered by this policy. If a symbol you need is not re-exported from the top level, file a bug — do not reach into a submodule.
+The public surface of each is **only** what is re-exported from that namespace's `__all__`. Top-level imports (`from ogx_api import X`) remain supported for backwards compatibility and resolve to the same objects as the namespaced imports — but new code should prefer the explicit namespace path so the contract boundary is obvious. Sub-module imports (`from ogx_api.responses import ...`) are unsupported and not covered by this policy. If a symbol you need is not re-exported from one of the two namespaces, file a bug — do not reach into a submodule.
 
-> **Note:** the eventual plan is to split these surfaces into separate sub-namespaces so the boundary is explicit at import time. The bucketing rules below define which surface a symbol belongs to today regardless of its current import path.
-
-### Surface 1 — API datatypes
+### Surface 1 — API datatypes (`ogx_api.types`)
 
 These are the request/response Pydantic models, content blocks, and shared value types referenced by route signatures (e.g. `OpenAIResponseObject`, `ChatCompletionRequest`, `Message`, `ToolCall`).
 
@@ -139,7 +137,7 @@ A type cannot be downgraded by adding it to a less-stable route. Once a type is 
 - Loosening validation.
 - Adding a new model class.
 
-### Surface 2 — Provider SDK
+### Surface 2 — Provider SDK (`ogx_api.provider`)
 
 These are the symbols an external provider imports to register itself with the OGX server. They include:
 
@@ -203,7 +201,9 @@ A breaking change in *either* surface (an API datatype graduating past `v1` rule
 
 ### Datatypes outside both surfaces
 
-Internal helpers and base classes that are not part of either surface should not be re-exported from `ogx_api.__init__`. If a symbol must be public for an external provider but doesn't fit cleanly into the API datatype track, it belongs in the Provider SDK surface.
+Internal helpers and base classes that are not part of either surface should not be re-exported from `ogx_api.types` or `ogx_api.provider`. If a symbol must be public for an external provider but doesn't fit cleanly into the API datatype track, it belongs in the Provider SDK surface.
+
+Shared resource/value types (`Model`, `Shield`, `ToolGroup`, `VectorStore`) live canonically in `ogx_api.types` and are re-exported from `ogx_api.provider` for convenience — these are the only symbols intentionally present in both namespaces.
 
 ### Approval and Announcement Process for Breaking Changes
 
