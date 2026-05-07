@@ -46,6 +46,11 @@ from ogx_api.conversations import (
     ListItemsRequest,
     RetrieveItemRequest,
 )
+from ogx_api.conversations.models import (
+    Conversation,
+    ConversationDeletedResource,
+    ConversationItemList,
+)
 
 
 @pytest.fixture
@@ -257,3 +262,34 @@ async def test_create_conversation_defaults_message_type(service):
 
     assert len(listed.data) == 1
     assert listed.data[0].type == "message"
+
+
+def test_conversation_model_has_no_items_field():
+    """Conversation response model should not have an items field per OpenAI spec."""
+    conv = Conversation(id="conv_" + "a" * 48, created_at=1000, metadata=None)
+    assert "items" not in conv.model_fields
+
+
+def test_conversation_deleted_resource_object_literal():
+    """ConversationDeletedResource.object must be the literal 'conversation.deleted'."""
+    deleted = ConversationDeletedResource(id="conv_" + "a" * 48)
+    assert deleted.object == "conversation.deleted"
+    schema = ConversationDeletedResource.model_json_schema()
+    obj_schema = schema["properties"]["object"]
+    assert obj_schema.get("const") == "conversation.deleted" or obj_schema.get("enum") == ["conversation.deleted"]
+
+
+def test_conversation_item_list_object_literal():
+    """ConversationItemList.object must be the literal 'list'."""
+    schema = ConversationItemList.model_json_schema()
+    obj_schema = schema["properties"]["object"]
+    assert obj_schema.get("const") == "list" or obj_schema.get("enum") == ["list"]
+
+
+def test_conversation_item_list_first_last_id_required():
+    """first_id and last_id must be required (non-optional) strings."""
+    schema = ConversationItemList.model_json_schema()
+    assert "first_id" in schema.get("required", [])
+    assert "last_id" in schema.get("required", [])
+    assert schema["properties"]["first_id"]["type"] == "string"
+    assert schema["properties"]["last_id"]["type"] == "string"

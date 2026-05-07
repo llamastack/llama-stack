@@ -248,8 +248,8 @@ class ConversationServiceImpl(Conversations):
 
         return ConversationItemList(
             data=response_items,
-            first_id=created_items[0]["id"] if created_items else None,
-            last_id=created_items[-1]["id"] if created_items else None,
+            first_id=created_items[0]["id"] if created_items else "",
+            last_id=created_items[-1]["id"] if created_items else "",
             has_more=False,
         )
 
@@ -293,8 +293,8 @@ class ConversationServiceImpl(Conversations):
         adapter: TypeAdapter[ConversationItem] = TypeAdapter(ConversationItem)
         response_items: list[ConversationItem] = [adapter.validate_python(item) for item in items]
 
-        first_id = response_items[0].id if response_items else None
-        last_id = response_items[-1].id if response_items else None
+        first_id = response_items[0].id if response_items else ""
+        last_id = response_items[-1].id if response_items else ""
 
         return ConversationItemList(
             data=response_items,
