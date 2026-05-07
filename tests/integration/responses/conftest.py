@@ -11,7 +11,6 @@ import pytest
 # Import fixtures from common module to make them available in this test directory
 from tests.integration.fixtures.common import (  # noqa: F401
     openai_client,
-    require_server,
 )
 
 

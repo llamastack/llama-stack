@@ -84,7 +84,7 @@ class TestResponsesAccessControl:
         )
         return response
 
-    def test_user_cannot_retrieve_other_users_response(self, alice_client, bob_client, text_model_id, require_server):
+    def test_user_cannot_retrieve_other_users_response(self, alice_client, bob_client, text_model_id):
         """Test that one user cannot retrieve another user's stored response."""
         # Alice creates a stored response
         alice_response = self._create_stored_response(alice_client, text_model_id, "Hello from Alice")
@@ -112,7 +112,7 @@ class TestResponsesAccessControl:
             except Exception:
                 pass  # Ignore cleanup errors
 
-    def test_user_cannot_delete_other_users_response(self, alice_client, bob_client, text_model_id, require_server):
+    def test_user_cannot_delete_other_users_response(self, alice_client, bob_client, text_model_id):
         """Test that one user cannot delete another user's stored response."""
         # Alice creates a stored response
         alice_response = self._create_stored_response(alice_client, text_model_id, "Hello from Alice")
@@ -139,7 +139,7 @@ class TestResponsesAccessControl:
             except Exception:
                 pass
 
-    def test_users_have_isolated_responses(self, alice_client, bob_client, text_model_id, require_server):
+    def test_users_have_isolated_responses(self, alice_client, bob_client, text_model_id):
         """Test that users cannot access each other's responses."""
         # Alice creates a response
         alice_response = self._create_stored_response(alice_client, text_model_id, "Alice's secret")
@@ -176,7 +176,7 @@ class TestResponsesAccessControl:
             except Exception:
                 pass
 
-    def test_user_can_access_own_resources_after_denial(self, alice_client, bob_client, text_model_id, require_server):
+    def test_user_can_access_own_resources_after_denial(self, alice_client, bob_client, text_model_id):
         """Test that access control doesn't interfere with legitimate access."""
         # Both users create responses
         alice_response = self._create_stored_response(alice_client, text_model_id, "Alice's data")
@@ -209,7 +209,7 @@ class TestResponsesAccessControl:
                 pass
 
     def test_user_cannot_access_other_users_response_input_items(
-        self, alice_client, bob_client, text_model_id, require_server
+        self, alice_client, bob_client, text_model_id
     ):
         """Test that one user cannot access input items from another user's response."""
         # Alice creates a stored response with input
@@ -236,7 +236,7 @@ class TestResponsesAccessControl:
             except Exception:
                 pass
 
-    def test_previous_response_id_access_control(self, alice_client, bob_client, text_model_id, require_server):
+    def test_previous_response_id_access_control(self, alice_client, bob_client, text_model_id):
         """Test that users cannot use another user's response as previous_response_id."""
         # Alice creates a stored response
         alice_response = self._create_stored_response(alice_client, text_model_id, "Initial message from Alice")

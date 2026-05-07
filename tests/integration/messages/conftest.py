@@ -16,7 +16,6 @@ from ogx.core.testing_context import get_test_context
 # Import fixtures from common module to make them available in this test directory
 from tests.integration.fixtures.common import (  # noqa: F401
     openai_client,
-    require_server,
 )
 
 

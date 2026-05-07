@@ -10,5 +10,4 @@
 from tests.integration.fixtures.common import (  # noqa: F401
     ogx_client,
     openai_client,
-    require_server,
 )
