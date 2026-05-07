@@ -10,8 +10,6 @@ import struct
 import pytest
 from openai import OpenAI
 
-from ogx.core.library_client import OGXAsLibraryClient
-
 ASYMMETRIC_EMBEDDING_MODELS_BY_PROVIDER = {
     "remote::nvidia": [
         "nvidia/llama-3.2-nv-embedqa-1b-v2",
@@ -128,8 +126,6 @@ def skip_if_model_doesnt_support_variable_dimensions(client_with_models, model_i
 
 @pytest.fixture(params=["openai_client", "ogx_client"])
 def compat_client(request, client_with_models):
-    if request.param == "openai_client" and isinstance(client_with_models, OGXAsLibraryClient):
-        pytest.skip("OpenAI client tests not supported with library client")
     return request.getfixturevalue(request.param)
 
 

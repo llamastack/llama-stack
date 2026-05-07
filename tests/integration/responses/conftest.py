@@ -8,12 +8,9 @@ import os
 
 import pytest
 
-from ogx.core.library_client import OGXAsLibraryClient
-
 # Import fixtures from common module to make them available in this test directory
 from tests.integration.fixtures.common import (  # noqa: F401
     openai_client,
-    require_server,
 )
 
 
@@ -32,9 +29,7 @@ def pytest_configure(config):
 
 @pytest.fixture
 def responses_client(compat_client):
-    """Provide a client for responses tests, skipping library client mode."""
-    if isinstance(compat_client, OGXAsLibraryClient):
-        pytest.skip("Responses API tests are not supported in library client mode")
+    """Provide a client for responses tests."""
     return compat_client
 
 

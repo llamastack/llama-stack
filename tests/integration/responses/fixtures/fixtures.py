@@ -11,8 +11,6 @@ import pytest
 import yaml
 from openai import OpenAI
 
-from ogx.core.library_client import OGXAsLibraryClient
-
 # --- Helper Functions ---
 
 
@@ -107,13 +105,6 @@ def openai_client(base_url, api_key, provider):
     # Simplify running against a local OGX
     if base_url and "localhost" in base_url and not api_key:
         api_key = "empty"
-    if provider.startswith("stack:"):
-        parts = provider.split(":")
-        if len(parts) != 2:
-            raise ValueError(f"Invalid config for OGX: {provider}, it must be of the form 'stack:<config>'")
-        config = parts[1]
-        client = OGXAsLibraryClient(config, skip_logger_removal=True)
-        return client
 
     client = OpenAI(
         base_url=base_url,

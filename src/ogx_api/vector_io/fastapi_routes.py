@@ -374,7 +374,7 @@ _MISSING_REQUEST: Request = cast(Request, None)
 
 
 def _raise_or_http_400_for_value_error(request: Request, exc: ValueError) -> NoReturn:
-    # In library mode, FastAPI doesn't inject a Request.
+    # Handle cases where FastAPI doesn't inject a Request.
     if request is _MISSING_REQUEST:
         raise
     raise HTTPException(status_code=400, detail=str(exc)) from exc

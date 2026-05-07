@@ -110,7 +110,7 @@ It's worth being explicit about what the project is *not*, because the old frami
 
 **Not primarily an API standard.** OGX implements existing standards where they exist (OpenAI API, Open Responses, Anthropic Messages API, Google Interactions API). Where no frontier lab provides an equivalent — like file processing for document ingestion — OGX defines its own APIs to fill the gap. If a frontier lab later ships a standard for one of those gaps, we'll adopt it rather than maintain our own. The project's value is in the server, not in spec authorship.
 
-**Server-first, not a framework.** The primary deployment model is an HTTP server that your application talks to over the network, in any language. A library mode exists for embedding OGX in-process, but the architecture is designed around the server: pluggable providers, API translation, and agentic orchestration all happen on the server side.
+**Server-first, not a framework.** The primary deployment model is an HTTP server that your application talks to over the network, in any language. Pluggable providers, API translation, and agentic orchestration all happen on the server side.
 
 **Not Llama-only.** It never was, but now the name makes that clear. OGX works with any model accessible through its 23 inference providers.
 

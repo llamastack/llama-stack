@@ -54,8 +54,8 @@ def pytest_sessionstart(session):
         os.environ["OGX_TEST_STACK_CONFIG_TYPE"] = "server"
         logger.info(f"Test stack config type: server (stack_config={stack_config})")
     else:
-        os.environ["OGX_TEST_STACK_CONFIG_TYPE"] = "library_client"
-        logger.info(f"Test stack config type: library_client (stack_config={stack_config})")
+        os.environ["OGX_TEST_STACK_CONFIG_TYPE"] = "server"
+        logger.info(f"Test stack config type: server (stack_config={stack_config})")
 
     patch_httpx_for_test_id()
 

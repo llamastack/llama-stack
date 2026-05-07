@@ -27,7 +27,6 @@ from ogx_client import OgxClient
 from openai import OpenAI
 
 from ogx.core.datatypes import QualifiedModel, RerankerModel, VectorStoresConfig
-from ogx.core.library_client import OGXAsLibraryClient
 from ogx.core.stack import run_config_from_dynamic_config_spec
 from ogx.core.utils.config_resolution import resolve_config_or_distro
 from ogx.env import get_env_or_fail
@@ -371,29 +370,34 @@ def instantiate_ogx_client(session):
         # Handle distro::config.yaml format (e.g., ci-tests::run.yaml)
         config = str(resolve_config_or_distro(config))
 
-    client = OGXAsLibraryClient(
-        config,
-        provider_data=get_provider_data(),
-        skip_logger_removal=True,
+    # Start a server for non-URL configs (distro names, file paths, dynamic specs)
+    port = int(os.environ.get("OGX_PORT", DEFAULT_PORT))
+    base_url = f"http://localhost:{port}"
+
+    if is_port_available(port):
+        print(f"Starting ogx server with config '{config}' on port {port}...")
+        server_process = start_ogx_server(config)
+        if not wait_for_server_ready(base_url, timeout=120, process=server_process):
+            print("Server failed to start within timeout")
+            server_process.terminate()
+            raise RuntimeError(
+                f"Server failed to start within timeout. Check that config '{config}' exists and is valid. "
+                f"See server.log for details."
+            )
+        print(f"Server is ready at {base_url}")
+        session._ogx_server_process = server_process
+    else:
+        print(f"Port {port} is already in use, assuming server is already running...")
+
+    return OgxClient(
+        base_url=base_url,
+        default_headers=get_provider_data_headers(),
+        timeout=int(os.environ.get("OGX_CLIENT_TIMEOUT", "30")),
     )
-    return client
 
 
 @pytest.fixture(scope="session")
-def require_server(ogx_client):
-    """
-    Skip test if no server is running.
-
-    We use the ogx_client to tell if a server was started or not.
-
-    We use this with openai_client because it relies on a running server.
-    """
-    if isinstance(ogx_client, OGXAsLibraryClient):
-        pytest.skip("No server running")
-
-
-@pytest.fixture(scope="session")
-def openai_client(ogx_client, require_server):
+def openai_client(ogx_client):
     base_url = f"{ogx_client.base_url}/v1"
     client = OpenAI(base_url=base_url, api_key="fake", max_retries=0, timeout=30.0)
     yield client
@@ -406,15 +410,6 @@ def openai_client(ogx_client, require_server):
 
 @pytest.fixture(params=["openai_client", "client_with_models"])
 def compat_client(request, client_with_models):
-    if request.param == "openai_client" and isinstance(client_with_models, OGXAsLibraryClient):
-        # OpenAI client expects a server, so unless we also rewrite OpenAI client's requests
-        # to go via the Stack library client (which itself rewrites requests to be served inline),
-        # we cannot do this.
-        #
-        # This means when we are using Stack as a library, we will test only via the OGX client.
-        # When we are using a server setup, we can exercise both OpenAI and OGX clients.
-        pytest.skip("(OpenAI) Compat client cannot be used with Stack library client")
-
     return request.getfixturevalue(request.param)
 
 

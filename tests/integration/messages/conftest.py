@@ -11,13 +11,11 @@ from typing import Any
 import httpx
 import pytest
 
-from ogx.core.library_client import OGXAsLibraryClient
 from ogx.core.testing_context import get_test_context
 
 # Import fixtures from common module to make them available in this test directory
 from tests.integration.fixtures.common import (  # noqa: F401
     openai_client,
-    require_server,
 )
 
 
@@ -28,9 +26,7 @@ def pytest_configure(config):
 
 @pytest.fixture(scope="session")
 def messages_base_url(ogx_client):
-    """Provide the base URL for the Messages API, skipping library client mode."""
-    if isinstance(ogx_client, OGXAsLibraryClient):
-        pytest.skip("Messages API tests are not supported in library client mode")
+    """Provide the base URL for the Messages API."""
     return ogx_client.base_url
 
 

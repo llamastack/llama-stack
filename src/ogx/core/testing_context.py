@@ -47,7 +47,7 @@ def sync_test_context_from_provider_data():
     if "OGX_TEST_INFERENCE_MODE" not in os.environ:
         return None
 
-    stack_config_type = os.environ.get("OGX_TEST_STACK_CONFIG_TYPE", "library_client")
+    stack_config_type = os.environ.get("OGX_TEST_STACK_CONFIG_TYPE", "server")
     if stack_config_type != "server":
         return None
 

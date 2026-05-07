@@ -11,13 +11,11 @@ import pytest
 from google import genai
 from google.genai import types
 
-from ogx.core.library_client import OGXAsLibraryClient
 from ogx.core.testing_context import get_test_context
 
 # Import fixtures from common module to make them available in this test directory
 from tests.integration.fixtures.common import (  # noqa: F401
     openai_client,
-    require_server,
 )
 
 
@@ -28,9 +26,7 @@ def pytest_configure(config):
 
 @pytest.fixture(scope="session")
 def interactions_base_url(ogx_client):
-    """Provide the base URL for the Interactions API, skipping library client mode."""
-    if isinstance(ogx_client, OGXAsLibraryClient):
-        pytest.skip("Interactions API tests are not supported in library client mode")
+    """Provide the base URL for the Interactions API."""
     return ogx_client.base_url
 
 
@@ -38,7 +34,7 @@ def interactions_base_url(ogx_client):
 def genai_client(interactions_base_url):
     """Provide a Google GenAI client configured to point at the OGX server."""
     headers = {}
-    stack_config_type = os.environ.get("OGX_TEST_STACK_CONFIG_TYPE", "library_client")
+    stack_config_type = os.environ.get("OGX_TEST_STACK_CONFIG_TYPE", "server")
     test_id = get_test_context()
     if stack_config_type == "server" and test_id:
         provider_data = {"__test_id": test_id}

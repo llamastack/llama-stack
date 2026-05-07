@@ -6,8 +6,6 @@
 import pytest
 from openai import NotFoundError, OpenAI
 
-from ogx.core.library_client import OGXAsLibraryClient
-
 
 @pytest.mark.parametrize(
     "stream",
@@ -123,9 +121,6 @@ def test_list_response_input_items(compat_client, text_model_id):
 
 def test_list_response_input_items_with_limit_and_order(openai_client, client_with_models, text_model_id):
     """Test the list input items endpoint with limit and order parameters."""
-    if isinstance(client_with_models, OGXAsLibraryClient):
-        pytest.skip("OpenAI responses are not supported when testing with library client yet.")
-
     client = openai_client
 
     # Create a response with multiple input messages to test limit and order
@@ -216,9 +211,6 @@ def test_list_response_input_items_with_limit_and_order(openai_client, client_wi
 @pytest.mark.skip(reason="Tool calling is not reliable.")
 def test_function_call_output_response(openai_client, client_with_models, text_model_id):
     """Test handling of function call outputs in responses."""
-    if isinstance(client_with_models, OGXAsLibraryClient):
-        pytest.skip("OpenAI responses are not supported when testing with library client yet.")
-
     client = openai_client
 
     # First create a response that triggers a function call
@@ -268,9 +260,6 @@ def test_function_call_output_response(openai_client, client_with_models, text_m
 
 def test_function_call_output_response_with_none_arguments(openai_client, client_with_models, text_model_id):
     """Test handling of function call outputs in responses when function does not accept arguments."""
-    if isinstance(client_with_models, OGXAsLibraryClient):
-        pytest.skip("OpenAI responses are not supported when testing with library client yet.")
-
     client = openai_client
 
     # First create a response that triggers a function call
@@ -470,9 +459,6 @@ def test_guardrails_with_tools(compat_client, text_model_id):
 
 def test_response_with_instructions(openai_client, client_with_models, text_model_id):
     """Test instructions parameter in the responses object."""
-    if isinstance(client_with_models, OGXAsLibraryClient):
-        pytest.skip("OpenAI responses are not supported when testing with library client yet.")
-
     client = openai_client
 
     messages = [

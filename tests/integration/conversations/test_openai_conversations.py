@@ -185,7 +185,7 @@ class TestConversationAccessControl:
             timeout=30.0,
         )
 
-    def test_user_cannot_retrieve_other_users_conversation(self, alice_client, bob_client, require_server):
+    def test_user_cannot_retrieve_other_users_conversation(self, alice_client, bob_client):
         """Test that one user cannot retrieve another user's conversation."""
         # Alice creates a conversation
         alice_conv = alice_client.conversations.create(metadata={"owner": "alice"})
@@ -210,7 +210,7 @@ class TestConversationAccessControl:
             # Cleanup: Alice deletes her conversation
             alice_client.conversations.delete(alice_conv_id)
 
-    def test_user_cannot_update_other_users_conversation(self, alice_client, bob_client, require_server):
+    def test_user_cannot_update_other_users_conversation(self, alice_client, bob_client):
         """Test that one user cannot update another user's conversation."""
         # Alice creates a conversation
         alice_conv = alice_client.conversations.create(metadata={"owner": "alice"})
@@ -234,7 +234,7 @@ class TestConversationAccessControl:
         finally:
             alice_client.conversations.delete(alice_conv_id)
 
-    def test_user_cannot_delete_other_users_conversation(self, alice_client, bob_client, require_server):
+    def test_user_cannot_delete_other_users_conversation(self, alice_client, bob_client):
         """Test that one user cannot delete another user's conversation."""
         # Alice creates a conversation
         alice_conv = alice_client.conversations.create(metadata={"owner": "alice"})
@@ -257,7 +257,7 @@ class TestConversationAccessControl:
         finally:
             alice_client.conversations.delete(alice_conv_id)
 
-    def test_user_cannot_access_other_users_conversation_items(self, alice_client, bob_client, require_server):
+    def test_user_cannot_access_other_users_conversation_items(self, alice_client, bob_client):
         """Test that one user cannot access items in another user's conversation."""
         # Alice creates a conversation and adds items
         alice_conv = alice_client.conversations.create(metadata={"owner": "alice"})
@@ -293,7 +293,7 @@ class TestConversationAccessControl:
         finally:
             alice_client.conversations.delete(alice_conv_id)
 
-    def test_user_cannot_add_items_to_other_users_conversation(self, alice_client, bob_client, require_server):
+    def test_user_cannot_add_items_to_other_users_conversation(self, alice_client, bob_client):
         """Test that one user cannot add items to another user's conversation."""
         # Alice creates a conversation
         alice_conv = alice_client.conversations.create(metadata={"owner": "alice"})
@@ -322,7 +322,7 @@ class TestConversationAccessControl:
         finally:
             alice_client.conversations.delete(alice_conv_id)
 
-    def test_users_have_isolated_conversations(self, alice_client, bob_client, require_server):
+    def test_users_have_isolated_conversations(self, alice_client, bob_client):
         """Test that users cannot access each other's conversations."""
         # Alice creates a conversation
         alice_conv = alice_client.conversations.create(metadata={"owner": "alice", "test_marker": "isolation_test"})
@@ -353,7 +353,7 @@ class TestConversationAccessControl:
             alice_client.conversations.delete(alice_conv_id)
             bob_client.conversations.delete(bob_conv_id)
 
-    def test_user_can_access_own_resources_after_denial(self, alice_client, bob_client, require_server):
+    def test_user_can_access_own_resources_after_denial(self, alice_client, bob_client):
         """Test that access control doesn't interfere with legitimate access."""
         # Both users create conversations
         alice_conv = alice_client.conversations.create(metadata={"owner": "alice"})

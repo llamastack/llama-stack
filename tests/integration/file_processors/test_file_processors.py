@@ -12,8 +12,8 @@ import requests
 
 
 @pytest.fixture(autouse=True)
-def skip_if_no_file_processor_provider(ogx_client, require_server):
-    """Skip tests if not running against a server or no file_processors provider is registered."""
+def skip_if_no_file_processor_provider(ogx_client):
+    """Skip tests if no file_processors provider is registered."""
     providers = [p for p in ogx_client.providers.list() if p.api == "file_processors"]
     if not providers:
         pytest.skip("No file_processors provider registered")

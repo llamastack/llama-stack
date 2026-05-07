@@ -202,24 +202,6 @@ response = client.responses.create(
 </TabItem>
 </Tabs>
 
-### Running as a Library
-
-You can also use OGX without running a server, directly in your Python process:
-
-```python title="library.py"
-from ogx.core.library_client import OGXAsLibraryClient
-
-client = OGXAsLibraryClient("starter")
-client.initialize()
-
-# Use the same OpenAI-compatible interface
-response = client.responses.create(
-    model="ollama/llama3.2:3b",
-    input="Hello from library mode!",
-)
-print(response.output_text)
-```
-
 ## Next Steps
 
 - [Building Applications](../building_applications) - RAG, agents, safety
