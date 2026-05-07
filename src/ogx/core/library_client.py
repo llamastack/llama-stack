@@ -11,6 +11,7 @@ import logging  # allow-direct-logging
 import os
 import sys
 import typing
+import warnings
 from collections.abc import AsyncGenerator, Generator
 from enum import Enum
 from io import BytesIO
@@ -156,7 +157,12 @@ class LibraryClientHttpxResponse:
 
 
 class OGXAsLibraryClient(OgxClient):
-    """Synchronous client that runs a OGX distribution in-process as a library."""
+    """Synchronous client that runs a OGX distribution in-process as a library.
+
+    .. deprecated::
+        Library mode is deprecated and will be removed in a future release.
+        Use the HTTP server with ``ogx-client`` instead.
+    """
 
     def __init__(
         self,
@@ -165,6 +171,12 @@ class OGXAsLibraryClient(OgxClient):
         custom_provider_registry: ProviderRegistry | None = None,
         provider_data: dict[str, Any] | None = None,
     ):
+        warnings.warn(
+            "OGXAsLibraryClient is deprecated and will be removed in a future release. "
+            "Please use the OGX HTTP server with the ogx-client SDK instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__()
         self.async_client = AsyncOGXAsLibraryClient(
             config_path_or_distro_name, custom_provider_registry, provider_data, skip_logger_removal
@@ -257,7 +269,12 @@ class OGXAsLibraryClient(OgxClient):
 
 
 class AsyncOGXAsLibraryClient(AsyncOgxClient):
-    """Async client that runs a OGX distribution in-process as a library."""
+    """Async client that runs a OGX distribution in-process as a library.
+
+    .. deprecated::
+        Library mode is deprecated and will be removed in a future release.
+        Use the HTTP server with ``ogx-client`` instead.
+    """
 
     def __init__(
         self,
@@ -266,6 +283,12 @@ class AsyncOGXAsLibraryClient(AsyncOgxClient):
         provider_data: dict[str, Any] | None = None,
         skip_logger_removal: bool = False,
     ):
+        warnings.warn(
+            "AsyncOGXAsLibraryClient is deprecated and will be removed in a future release. "
+            "Please use the OGX HTTP server with the ogx-client SDK instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__()
         # Initialize logging from environment variables first
         setup_logging()
