@@ -75,7 +75,7 @@ class TestDefaultBehavior:
 
     async def test_default_does_not_strip_usage(self):
         """When coalesce_streaming_usage is False, chunks with usage are yielded as-is."""
-        from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+        from ogx.providers.utils.inference.openai_mixin import OpenAIMixin
 
         usage = CompletionUsage(prompt_tokens=10, completion_tokens=5, total_tokens=15)
         chunks = [
@@ -113,7 +113,7 @@ class TestFixStreamingUsage:
     """coalesce_streaming_usage=True — strips usage from content chunks, appends final usage chunk."""
 
     def _make_stub(self) -> Any:
-        from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+        from ogx.providers.utils.inference.openai_mixin import OpenAIMixin
 
         class _Stub(OpenAIMixin):
             config: Any = None
@@ -303,7 +303,7 @@ class TestFixStreamingUsage:
 class TestGeminiAdapterFlag:
     def test_gemini_adapter_has_coalesce_streaming_usage_enabled(self):
         """GeminiInferenceAdapter must have coalesce_streaming_usage=True."""
-        from llama_stack.providers.remote.inference.gemini.gemini import GeminiInferenceAdapter
+        from ogx.providers.remote.inference.gemini.gemini import GeminiInferenceAdapter
 
         # Pydantic intercepts class-attribute access on model fields, so read the
         # default from model_fields instead.
