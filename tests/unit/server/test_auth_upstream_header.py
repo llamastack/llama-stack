@@ -1,4 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
+# Copyright (c) The OGX Contributors.
 # All rights reserved.
 #
 # This source code is licensed under the terms described in the LICENSE file in
@@ -11,20 +11,20 @@ import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
-from llama_stack.core.datatypes import (
+from ogx.core.datatypes import (
     AuthenticationConfig,
     AuthProviderType,
     UpstreamHeaderAuthConfig,
 )
-from llama_stack.core.server.auth import AuthenticationMiddleware
-from llama_stack.core.server.auth_providers import UpstreamHeaderAuthProvider
+from ogx.core.server.auth import AuthenticationMiddleware
+from ogx.core.server.auth_providers import UpstreamHeaderAuthProvider
 
 
 @pytest.fixture
 def suppress_auth_errors(caplog):
     """Suppress expected ERROR/WARNING logs for tests that deliberately trigger authentication errors"""
-    caplog.set_level(logging.CRITICAL, logger="llama_stack.core.server.auth")
-    caplog.set_level(logging.CRITICAL, logger="llama_stack.core.server.auth_providers")
+    caplog.set_level(logging.CRITICAL, logger="ogx.core.server.auth")
+    caplog.set_level(logging.CRITICAL, logger="ogx.core.server.auth_providers")
 
 
 @pytest.fixture
