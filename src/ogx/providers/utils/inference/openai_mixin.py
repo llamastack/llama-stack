@@ -147,6 +147,17 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         return {}
 
+    def _get_extra_request_headers(self) -> dict[str, str] | None:
+        """Get extra headers to inject on individual outgoing API calls.
+
+        Child classes can override this to inject per-request headers (e.g. tenant
+        identity for upstream gateway fair scheduling). Unlike get_extra_client_params,
+        these headers are evaluated per-request so they can vary by authenticated user.
+
+        :return: A dictionary of extra headers, or None
+        """
+        return None
+
     def construct_model_from_identifier(self, identifier: str) -> Model:
         """
         Construct a Model instance corresponding to the given identifier
@@ -353,6 +364,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         )
         if extra_body := params.model_extra:
             completion_kwargs["extra_body"] = extra_body
+        if extra_headers := self._get_extra_request_headers():
+            completion_kwargs["extra_headers"] = extra_headers
         resp = await self.client.completions.create(**completion_kwargs)
 
         return await self._maybe_overwrite_id(resp, params.stream)  # type: ignore[no-any-return]
@@ -424,6 +437,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
         if extra_body := params.model_extra:
             request_params["extra_body"] = extra_body
+        if extra_headers := self._get_extra_request_headers():
+            request_params["extra_headers"] = extra_headers
         resp = await self.client.chat.completions.create(**request_params)
 
         return await self._maybe_overwrite_id(resp, params.stream)  # type: ignore[no-any-return]
@@ -456,6 +471,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             request_params["user"] = params.user
         if params.model_extra:
             request_params["extra_body"] = params.model_extra
+        if extra_headers := self._get_extra_request_headers():
+            request_params["extra_headers"] = extra_headers
 
         response = await self.client.embeddings.create(**request_params)
 

@@ -1,6 +1,6 @@
-name: Integration Auth Tests
+name: Integration Prompts Auth Tests
 
-run-name: Run the integration test suite with Kubernetes authentication
+run-name: Run prompts tenant isolation tests with Kubernetes authentication
 
 on:
   push:
@@ -19,8 +19,7 @@ on:
       - 'uv.lock'
       - 'pyproject.toml'
       - 'requirements.txt'
-      - '.github/workflows/integration-auth-tests.yml' # This workflow
-      - 'scripts/integration-auth-tests.sh'
+      - '.github/workflows/integration-prompts-auth-tests.yml'
   merge_group:
     branches:
       - main
@@ -30,13 +29,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  test-matrix:
+  test-prompts-access-control:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        auth-provider: [oauth2_token]
-      fail-fast: false # we want to run all tests regardless of failure
 
     steps:
       - name: Checkout repository
@@ -45,27 +43,20 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
 
-      - name: Install minikube
-        if: ${{ matrix.auth-provider == 'kubernetes' }}
-        uses: medyagh/setup-minikube@e9e035a86bbc3caea26a450bd4dbf9d0c453682e # v0.0.21
-
       - name: Start minikube
-        if: ${{ matrix.auth-provider == 'oauth2_token' }}
         run: |
           minikube start
           kubectl get pods -A
 
       - name: Configure Kube Auth
-        if: ${{ matrix.auth-provider == 'oauth2_token' }}
         run: |
           kubectl create namespace ogx
           for account in ogx-auth ogx-user1 ogx-user2; do
             kubectl create serviceaccount $account -n ogx
-            kubectl create token $account -n ogx > $account-token
+            kubectl create token $account -n ogx --duration=1h > $account-token
           done
 
       - name: Set Kubernetes Config
-        if: ${{ matrix.auth-provider == 'oauth2_token' }}
         run: |
           {
             echo "KUBERNETES_API_SERVER_URL=$(kubectl get --raw /.well-known/openid-configuration| jq -r .jwks_uri)"
@@ -73,30 +64,25 @@ jobs:
             echo "KUBERNETES_ISSUER=$(kubectl get --raw /.well-known/openid-configuration| jq -r .issuer)"
             echo "KUBERNETES_AUDIENCE=$(kubectl create token ogx-auth -n ogx --duration=1h | cut -d. -f2 | base64 -d | jq -r '.aud[0]')"
             echo "TOKEN=$(cat ogx-auth-token)"
+            echo "ALICE_TOKEN=$(cat ogx-user1-token)"
+            echo "BOB_TOKEN=$(cat ogx-user2-token)"
           } >> "$GITHUB_ENV"
 
-      - name: Set Kube Auth Config and run server
-        env:
-          INFERENCE_MODEL: "meta-llama/Llama-3.2-3B-Instruct"
-        if: ${{ matrix.auth-provider == 'oauth2_token' }}
+      - name: Configure and start OGX server
         run: |
           run_dir=$(mktemp -d)
           cat <<EOF > "$run_dir/config.yaml"
           version: '2'
-          image_name: kube
-          distro_name: kube
+          image_name: prompts-auth
+          distro_name: prompts-auth
           apis:
-            - files
             - inference
           providers:
-            files:
-              - provider_id: builtin-files
-                provider_type: inline::localfs
+            inference:
+              - provider_id: stub
+                provider_type: remote::openai
                 config:
-                  storage_dir: $run_dir/files
-                  metadata_store:
-                    table_name: files_metadata
-                    backend: sql_default
+                  api_key: stub
           storage:
             backends:
               kv_default:
@@ -123,30 +109,21 @@ jobs:
             auth:
               access_policy:
                 - permit:
-                    actions: [read, delete]
-                    resource: sql_record::openai_files::*
-                  when:
-                    - user with system:serviceaccount:ogx:ogx-user1 in roles
-                    - user in owners roles
-                  description: User1 can read and delete their Files
-                - permit:
                     actions: [read]
-                    resource: regex:sql_record::openai_files::file-[a-f0-9-]+
+                    resource: model::*
+                  description: Any authenticated user can use configured models
+                - permit:
+                    actions: [create]
+                    resource: sql_record::prompts::*
+                  description: Any authenticated user can create prompts
+                - permit:
+                    actions: [read, update, delete]
+                    resource: sql_record::prompts::*
                   when:
-                    - user in owners roles
-                  description: Owners can read their Files
-              route_policy:
-                - permit:
-                    paths: ["/v1/health", "/v1/version"]
-                  description: Public endpoints (no auth required)
-                - permit:
-                    paths: regex:^/v1/(files|providers)(/.*)?$
-                  description: Authenticated users can access files and providers endpoints (regex test)
-                - forbid:
-                    paths: "*"
-                  description: Forbid all other routes by default
+                    - user is owner
+                  description: Users can only access their own prompts
           EOF
-          yq eval '.server.auth.provider_config.type = "${{ matrix.auth-provider }}"' -i "$run_dir/config.yaml"
+          yq eval '.server.auth.provider_config.type = "oauth2_token"' -i "$run_dir/config.yaml"
           yq eval '.server.auth.provider_config.tls_cafile = "${{ env.KUBERNETES_CA_CERT_PATH }}"' -i "$run_dir/config.yaml"
           yq eval '.server.auth.provider_config.issuer = "${{ env.KUBERNETES_ISSUER }}"' -i "$run_dir/config.yaml"
           yq eval '.server.auth.provider_config.audience = "${{ env.KUBERNETES_AUDIENCE }}"' -i "$run_dir/config.yaml"
@@ -154,7 +131,6 @@ jobs:
           yq eval '.server.auth.provider_config.jwks.token = "${{ env.TOKEN }}"' -i "$run_dir/config.yaml"
           cat "$run_dir/config.yaml"
 
-          # avoid line breaks in the server log, especially because we grep it below.
           export OGX_LOG_WIDTH=200
           nohup uv run ogx stack run "$run_dir/config.yaml" > server.log 2>&1 &
 
@@ -162,14 +138,13 @@ jobs:
         run: |
           echo "Waiting for OGX server..."
           for _ in {1..30}; do
-            # Note: /v1/health does not require authentication
             if curl -s -L http://localhost:8321/v1/health | grep -q "OK"; then
               echo "OGX server is up!"
-              if grep -q "Enabling authentication.*provider=${{ matrix.auth-provider }}" server.log; then
-                echo "OGX server is configured to use ${{ matrix.auth-provider }} auth"
+              if grep -q "Enabling authentication.*provider=oauth2_token" server.log; then
+                echo "OGX server is configured with oauth2_token auth"
                 exit 0
               else
-                echo "OGX server is not configured to use ${{ matrix.auth-provider }} auth"
+                echo "OGX server auth not configured correctly"
                 cat server.log
                 exit 1
               fi
@@ -180,7 +155,14 @@ jobs:
           cat server.log
           exit 1
 
-      - name: Test auth
+      - name: Run prompts access control tests
         run: |
-          # Run the auth tests
-          ./scripts/integration-auth-tests.sh
+          uv run pytest tests/integration/responses/test_prompts_access_control.py \
+            --stack-config http://localhost:8321 \
+            -xvs --tb=short
+
+      - name: Server log on failure
+        if: failure()
+        run: |
+          echo "=== OGX server log (last 500 lines) ==="
+          tail -500 server.log
