@@ -3,7 +3,6 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
-import asyncio
 import concurrent.futures
 
 import pytest
@@ -108,17 +107,6 @@ def test_rerank_text(client_with_models, rerank_model_id, query, items, inferenc
 
 def test_rerank_text_parallel(client_with_models, rerank_model_id, inference_provider_type):
     skip_if_provider_doesnt_support_rerank(inference_provider_type)
-
-    # Wrapper function to isolate the event loop per-thread:
-    def make_concurrent_request(query, items):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-        try:
-            return client_with_models.alpha.inference.rerank(model=rerank_model_id, query=query, items=items)
-        finally:
-            loop.close()
-
     query_items = [
         (DUMMY_STRING, [DUMMY_STRING, DUMMY_STRING2]),
         (DUMMY_TEXT, [DUMMY_TEXT, DUMMY_TEXT2]),
@@ -129,7 +117,9 @@ def test_rerank_text_parallel(client_with_models, rerank_model_id, inference_pro
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(query_items)) as executor:
         for query, items in query_items:
-            future = executor.submit(make_concurrent_request, query, items)
+            future = executor.submit(
+                client_with_models.alpha.inference.rerank, model=rerank_model_id, query=query, items=items
+            )
             future_to_items[future] = items
 
         for future in concurrent.futures.as_completed(future_to_items):
