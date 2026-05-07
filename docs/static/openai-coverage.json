@@ -126,10 +126,10 @@
       ]
     },
     "conformance": {
-      "score": 91.8,
-      "issues": 184,
-      "missing_properties": 101,
-      "total_problems": 285,
+      "score": 92.1,
+      "issues": 176,
+      "missing_properties": 99,
+      "total_problems": 275,
       "total_properties": 3487
     }
   },
@@ -1225,9 +1225,9 @@
       ]
     },
     "Files": {
-      "score": 76.2,
-      "issues": 8,
-      "missing_properties": 2,
+      "score": 100.0,
+      "issues": 0,
+      "missing_properties": 0,
       "total_properties": 42,
       "endpoints": [
         {
@@ -1236,62 +1236,16 @@
             {
               "method": "GET",
               "missing_properties": [],
-              "conformance_issues": [
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.expires_at",
-                  "details": [
-                    "Type removed: ['integer']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.purpose",
-                  "details": [
-                    "Enum values removed: ['assistants_output', 'batch_output', 'fine-tune', 'fine-tune-results', 'vision', 'user_data']"
-                  ]
-                }
-              ],
+              "conformance_issues": [],
               "missing_count": 0,
-              "issues_count": 2
+              "issues_count": 0
             },
             {
               "method": "POST",
-              "missing_properties": [
-                "POST.requestBody.content.multipart/form-data.properties.expires_after.properties.anchor",
-                "POST.requestBody.content.multipart/form-data.properties.expires_after.properties.seconds"
-              ],
-              "conformance_issues": [
-                {
-                  "property": "POST.requestBody.content.multipart/form-data.properties.expires_after",
-                  "details": [
-                    "Type removed: ['object']",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "POST.requestBody.content.multipart/form-data.properties.purpose",
-                  "details": [
-                    "Enum values removed: ['fine-tune', 'vision', 'user_data', 'evals']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.expires_at",
-                  "details": [
-                    "Type removed: ['integer']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.purpose",
-                  "details": [
-                    "Enum values removed: ['assistants_output', 'batch_output', 'fine-tune', 'fine-tune-results', 'vision', 'user_data']"
-                  ]
-                }
-              ],
-              "missing_count": 2,
-              "issues_count": 4
+              "missing_properties": [],
+              "conformance_issues": [],
+              "missing_count": 0,
+              "issues_count": 0
             }
           ]
         },
@@ -1308,24 +1262,9 @@
             {
               "method": "GET",
               "missing_properties": [],
-              "conformance_issues": [
-                {
-                  "property": "GET.responses.200.content.application/json.properties.expires_at",
-                  "details": [
-                    "Type removed: ['integer']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.purpose",
-                  "details": [
-                    "Enum values removed: ['assistants_output', 'batch_output', 'fine-tune', 'fine-tune-results', 'vision', 'user_data']"
-                  ]
-                }
-              ],
+              "conformance_issues": [],
               "missing_count": 0,
-              "issues_count": 2
+              "issues_count": 0
             }
           ]
         },
