@@ -650,7 +650,3 @@ async def test_responses_store_input_items_reasoning_include_preserves_content()
         assert len(result.data) == 1
         assert get_reasoning_item(result.data[0]).content is not None
         assert get_reasoning_item(result.data[0]).content[0].text == "Reasoning content"
-
-
-
-
