@@ -238,7 +238,6 @@ class OAuth2TokenAuthProvider(AuthProvider):
         post_kwargs: dict[str, Any] = {
             "url": self.config.introspection.url,
             "data": form,
-            "timeout": 10.0,
         }
 
         if self.config.introspection.send_secret_in_body:
@@ -252,7 +251,7 @@ class OAuth2TokenAuthProvider(AuthProvider):
             )
 
         try:
-            async with httpx.AsyncClient(verify=ssl_ctxt) as client:
+            async with httpx.AsyncClient(verify=ssl_ctxt, timeout=httpx.Timeout(10.0, connect=5.0)) as client:
                 response = await client.post(**post_kwargs)
                 if response.status_code != httpx.codes.OK:
                     logger.warning("Token introspection failed with status code", status_code=response.status_code)
@@ -296,7 +295,7 @@ class CustomAuthProvider(AuthProvider):
 
     def __init__(self, config: CustomAuthConfig) -> None:
         self.config = config
-        self._client: httpx.AsyncClient | None = None
+        self._client = httpx.AsyncClient(timeout=httpx.Timeout(10.0, connect=5.0))
 
     async def validate_token(self, token: str, scope: Scope | None = None) -> User:
         """Validate a token using the custom authentication endpoint."""
@@ -326,24 +325,22 @@ class CustomAuthProvider(AuthProvider):
 
         # Validate with authentication endpoint
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    self.config.endpoint,
-                    json=auth_request.model_dump(),
-                    timeout=10.0,  # Add a reasonable timeout
-                )
-                if response.status_code != httpx.codes.OK:
-                    logger.warning("Authentication failed with status code", status_code=response.status_code)
-                    raise ValueError(f"Authentication failed: {response.status_code}")
+            response = await self._client.post(
+                self.config.endpoint,
+                json=auth_request.model_dump(),
+            )
+            if response.status_code != httpx.codes.OK:
+                logger.warning("Authentication failed with status code", status_code=response.status_code)
+                raise ValueError(f"Authentication failed: {response.status_code}")
 
-                # Parse and validate the auth response
-                try:
-                    response_data = response.json()
-                    auth_response = AuthResponse(**response_data)
-                    return User(principal=auth_response.principal, attributes=auth_response.attributes)
-                except Exception as e:
-                    logger.exception("Error parsing authentication response")
-                    raise ValueError("Invalid authentication response format") from e
+            # Parse and validate the auth response
+            try:
+                response_data = response.json()
+                auth_response = AuthResponse(**response_data)
+                return User(principal=auth_response.principal, attributes=auth_response.attributes)
+            except Exception as e:
+                logger.exception("Error parsing authentication response")
+                raise ValueError("Invalid authentication response format") from e
 
         except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as exc:
             logger.warning("Failed to reach custom auth endpoint", error=str(exc))
@@ -356,9 +353,7 @@ class CustomAuthProvider(AuthProvider):
 
     async def close(self) -> None:
         """Close the HTTP client."""
-        if self._client:
-            await self._client.aclose()
-            self._client = None
+        await self._client.aclose()
 
     def get_auth_error_message(self, scope: Scope | None = None) -> str:
         """Return custom auth provider-specific authentication error message."""
@@ -423,8 +418,8 @@ async def _get_github_user_info(access_token: str, github_api_base_url: str) -> 
         "User-Agent": "ogx",
     }
 
-    async with httpx.AsyncClient() as client:
-        user_response = await client.get(f"{github_api_base_url}/user", headers=headers, timeout=10.0)
+    async with httpx.AsyncClient(timeout=httpx.Timeout(10.0, connect=5.0)) as client:
+        user_response = await client.get(f"{github_api_base_url}/user", headers=headers)
         user_response.raise_for_status()
         user_data = user_response.json()
 
@@ -457,7 +452,6 @@ async def _fetch_github_organizations(
                 f"{github_api_base_url}/user/orgs",
                 headers=headers,
                 params={"per_page": per_page, "page": page},
-                timeout=10.0,
             )
             orgs_response.raise_for_status()
             orgs_payload = orgs_response.json()
@@ -517,7 +511,7 @@ class KubernetesAuthProvider(AuthProvider):
         verify = self._httpx_verify_value()
 
         try:
-            async with httpx.AsyncClient(verify=verify, timeout=10.0) as client:
+            async with httpx.AsyncClient(verify=verify, timeout=httpx.Timeout(10.0, connect=5.0)) as client:
                 response = await client.post(
                     review_api_url,
                     json=review_request,
