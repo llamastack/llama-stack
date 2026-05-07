@@ -130,7 +130,7 @@ jobs:
             PROVIDERS="$INPUT_PROVIDERS"
           else
             # Auto-trigger on PR: only ollama (no secrets exposed to any PR)
-            PROVIDERS="ollama,ollama-vision,ollama-reasoning"
+            PROVIDERS="ollama,ollama-reasoning"
           fi
 
           {
