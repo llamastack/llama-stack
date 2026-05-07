@@ -197,6 +197,7 @@ jobs:
             suite: vision
           - setup: ollama-reasoning
             suite: ollama-reasoning
+            inference-mode: record
           - setup: ollama
             suite: messages
           - setup: gpt
@@ -255,7 +256,7 @@ jobs:
           client-version: "latest"
           setup: ${{ matrix.provider.setup }}
           suite: ${{ inputs.suite || matrix.provider.suite }}
-          inference-mode: 'record-if-missing'
+          inference-mode: ${{ matrix.provider.inference-mode || 'record-if-missing' }}
 
       - name: Run and record tests
         if: steps.should_run.outputs.run == 'true'
@@ -277,7 +278,7 @@ jobs:
         with:
           stack-config: 'server:ci-tests'
           setup: ${{ matrix.provider.setup }}
-          inference-mode: 'record-if-missing'
+          inference-mode: ${{ matrix.provider.inference-mode || 'record-if-missing' }}
           suite: ${{ inputs.suite || matrix.provider.suite }}
           subdirs: ${{ inputs.subdirs || '' }}
           pattern: ${{ inputs.pattern || '' }}
