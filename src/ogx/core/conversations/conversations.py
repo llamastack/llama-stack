@@ -28,7 +28,6 @@ from ogx_api.conversations import (
     Conversation,
     ConversationDeletedResource,
     ConversationItem,
-    ConversationItemDeletedResource,
     ConversationItemList,
     Conversations,
     CreateConversationRequest,
@@ -248,8 +247,8 @@ class ConversationServiceImpl(Conversations):
 
         return ConversationItemList(
             data=response_items,
-            first_id=created_items[0]["id"] if created_items else None,
-            last_id=created_items[-1]["id"] if created_items else None,
+            first_id=created_items[0]["id"] if created_items else "",
+            last_id=created_items[-1]["id"] if created_items else "",
             has_more=False,
         )
 
@@ -271,8 +270,7 @@ class ConversationServiceImpl(Conversations):
         return adapter.validate_python(record["item_data"])
 
     async def list_items(self, request: ListItemsRequest) -> ConversationItemList:
-        """List items in the conversation."""
-        # get_conversation validates the ID format and checks existence
+        """List items in the conversation with cursor pagination."""
         await self.get_conversation(GetConversationRequest(conversation_id=request.conversation_id))
 
         result = await self.sql_store.fetch_all(
@@ -280,36 +278,44 @@ class ConversationServiceImpl(Conversations):
         )
         records = result.data
 
-        if request.order is not None and request.order == "asc":
-            records.sort(key=lambda x: x["created_at"])
-        else:
-            records.sort(key=lambda x: x["created_at"], reverse=True)
+        is_asc = request.order == "asc"
+        records.sort(key=lambda x: x["created_at"], reverse=not is_asc)
+
+        if request.after:
+            cursor_index = None
+            for i, record in enumerate(records):
+                if record["id"] == request.after:
+                    cursor_index = i
+                    break
+            if cursor_index is None:
+                raise ConversationItemNotFoundError(request.after, request.conversation_id)
+            records = records[cursor_index + 1 :]
 
         actual_limit = request.limit or 20
-
+        has_more = len(records) > actual_limit
         records = records[:actual_limit]
+
         items = [record["item_data"] for record in records]
 
         adapter: TypeAdapter[ConversationItem] = TypeAdapter(ConversationItem)
         response_items: list[ConversationItem] = [adapter.validate_python(item) for item in items]
 
-        first_id = response_items[0].id if response_items else None
-        last_id = response_items[-1].id if response_items else None
+        first_id = response_items[0].id if response_items else ""
+        last_id = response_items[-1].id if response_items else ""
 
         return ConversationItemList(
             data=response_items,
             first_id=first_id,
             last_id=last_id,
-            has_more=False,
+            has_more=has_more,
         )
 
-    async def openai_delete_conversation_item(self, request: DeleteItemRequest) -> ConversationItemDeletedResource:
-        """Delete a conversation item."""
+    async def openai_delete_conversation_item(self, request: DeleteItemRequest) -> Conversation:
+        """Delete a conversation item and return the parent conversation."""
         if not request.item_id:
             raise InvalidParameterError("item_id", request.item_id, "Must be a non-empty string.")
 
-        # _get_validated_conversation validates ID format and checks existence
-        _ = await self._get_validated_conversation(request.conversation_id)
+        conversation = await self._get_validated_conversation(request.conversation_id)
 
         record = await self.sql_store.fetch_one(
             table="conversation_items", where={"id": request.item_id, "conversation_id": request.conversation_id}
@@ -323,7 +329,7 @@ class ConversationServiceImpl(Conversations):
         )
 
         logger.debug("Deleted item from conversation", item_id=request.item_id, conversation_id=request.conversation_id)
-        return ConversationItemDeletedResource(id=request.item_id)
+        return conversation
 
     async def shutdown(self) -> None:
         pass
